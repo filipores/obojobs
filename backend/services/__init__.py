@@ -1,0 +1,3 @@
+"""
+Bewerbungsautomation Package
+"""

@@ -1,0 +1,46 @@
+FILIP ORES
+Softwareentwickler | Hamburg
++49 15254112096 | filip.ores@hotmail.com | filipores.com
+
+PROFIL
+Junior Fullstack-Entwickler mit 3 Jahren Erfahrung in produktiven Codebasen. Einstieg in die Softwareentwicklung Ende 2022 mit eigenem Start-up. Fokus auf kontinuierliche Weiterentwicklung, Lernen von anderen und Entwicklung praktischer Softwarelösungen.
+
+BERUFSERFAHRUNG
+
+YOOtheme - Softwaredeveloper (Mai 2024 - November 2025, Hamburg)
+Page Builder und Themes für Joomla und WordPress
+- Entwicklung von Datenabfragen mit PHP, GraphQL und MySQL
+- Erweiterung des Builders durch neue Elemente (JSON, PHP-Templates)
+- Betrieb lokaler LAMP-Entwicklungsumgebungen mit Docker
+- Migration des Dev Servers vom LAMP-Stack zu Frankenphp
+- Frontend-Entwicklung mit Vue
+- Automatisierung von Entwicklungsumgebungen mit Ansible Playbooks
+
+Paranote GbR - Softwaredeveloper (Dezember 2022 - April 2024, Hamburg)
+Eigenes Start-up: Recherche-App für Juristen
+- Automatische Erkennung juristischer Paragraphen in Texten
+- Konzeption und Entwicklung der App mit Swift und AppKit
+- Entwicklung des Parse-Algorithmus (Javascript → Swift)
+- Entwicklung eigener Datenfilter-Logik für effiziente Gesetzessuche
+- Firebase als Datenbank
+
+TECHNISCHE SKILLS
+Backend: PHP, Node.js, Swift, MySQL
+Frontend: JavaScript, HTML, CSS, Vue
+DevOps: Docker, GitHub, Ansible
+CMS: Joomla, Wordpress
+
+AUSBILDUNG
+TU Dortmund - Statistik (Oktober 2020 - Mai 2022)
+Schwerpunkt: Wahrscheinlichkeiten, Stochastik, Programmierung in R
+Wechsel zur Softwareentwicklung → direkter Berufseinstieg
+
+Georg-August-Universität Göttingen - Soziologie, B.A. (Oktober 2016 - September 2020)
+Nebenfächer: Rechtswissenschaften, Volkswirtschaftslehre
+Schwerpunkt entwickelte sich in Richtung Statistik
+
+SPRACHEN
+Deutsch (Muttersprache), Englisch (C2), Polnisch (Muttersprache)
+
+PERSÖNLICHES
+Calisthenics, Schlagzeug, Backpacking, Wandern, Barkeeping

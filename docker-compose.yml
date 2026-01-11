@@ -1,0 +1,45 @@
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: obojobs-backend
+    ports:
+      - "5001:5001"
+    volumes:
+      - uploads:/app/uploads
+      - database:/app/db
+    environment:
+      - DATABASE_URL=sqlite:////app/db/obojobs.db
+      - SECRET_KEY=${SECRET_KEY:-change-me-in-production}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-change-me-in-production}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - FLASK_ENV=production
+      - UPLOAD_FOLDER=/app/uploads
+      - CORS_ORIGINS=http://localhost,http://localhost:80
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: obojobs-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+volumes:
+  uploads:
+  database:

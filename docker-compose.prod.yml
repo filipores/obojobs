@@ -1,0 +1,107 @@
+version: '3.8'
+
+# Production Docker Compose for obojobs App
+# Usage: docker compose -f docker-compose.prod.yml up -d --build
+
+services:
+  # Caddy - Reverse Proxy with automatic HTTPS
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN=${DOMAIN}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - frontend
+      - backend
+    networks:
+      - obojobs-network
+
+  # Frontend - Vue.js served via Nginx
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "80"
+    depends_on:
+      - backend
+    networks:
+      - obojobs-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Backend - Flask API with Gunicorn
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    expose:
+      - "5001"
+    environment:
+      - FLASK_ENV=production
+      - DATABASE_URL=postgresql://obojobs:${DB_PASSWORD}@db:5432/obojobs
+      - SECRET_KEY=${SECRET_KEY}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - PAYPAL_CLIENT_ID=${PAYPAL_CLIENT_ID}
+      - PAYPAL_CLIENT_SECRET=${PAYPAL_CLIENT_SECRET}
+      - PAYPAL_MODE=${PAYPAL_MODE:-sandbox}
+      - CORS_ORIGINS=https://${DOMAIN}
+      - UPLOAD_FOLDER=/app/uploads
+      - MAX_CONTENT_LENGTH=10485760
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - obojobs-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER=obojobs
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=obojobs
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - obojobs-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U obojobs -d obojobs"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+    driver: local
+  uploads:
+    driver: local
+  caddy_data:
+    driver: local
+  caddy_config:
+    driver: local
+
+networks:
+  obojobs-network:
+    driver: bridge

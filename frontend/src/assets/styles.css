@@ -1,0 +1,1213 @@
+/*
+ * 和風デザイン - Japanese Design System for obo App
+ *
+ * Core Principles:
+ * - Ma (間) - Negative space is as important as content
+ * - Wabi-Sabi (侘寂) - Beauty in imperfection, asymmetric layouts
+ * - Zen Minimalism - Restraint over excess
+ * - Muji-Style - Clean, functional, unbranded simplicity
+ */
+
+/* ========================================
+   FONTS - Typography Foundation
+   ======================================== */
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Karla:wght@300;400;500;600&display=swap');
+
+/* ========================================
+   CSS VARIABLES - 和風 Design Tokens
+   ======================================== */
+:root {
+  /* Typography */
+  --font-display: 'Cormorant Garamond', serif;
+  --font-body: 'Karla', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+
+  /* Washi Paper Tones - 和紙 */
+  --color-washi: #F7F5F0;
+  --color-washi-warm: #F2EDE3;
+  --color-washi-aged: #E8E2D5;
+  --color-washi-cream: #FAF8F3;
+
+  /* Sumi Ink - 墨 */
+  --color-sumi: #2C2C2C;
+  --color-sumi-light: #4A4A4A;
+  --color-sumi-faded: #6B6B6B;
+  --color-sumi-ghost: #8A8A8A;
+
+  /* Earth Tones - 土色 */
+  --color-stone: #9B958F;
+  --color-clay: #B5A99A;
+  --color-sand: #D4C9BA;
+  --color-earth: #C4B8A5;
+
+  /* Accent - 藍色 (Indigo) */
+  --color-ai: #3D5A6C;
+  --color-ai-light: #5A7A8A;
+  --color-ai-dark: #2D4A5C;
+  --color-ai-subtle: rgba(61, 90, 108, 0.08);
+
+  /* Nature Accents */
+  --color-koke: #7A8B6E;        /* Moss green - 苔 */
+  --color-terra: #B87A5E;       /* Terracotta */
+  --color-bamboo: #8B9A6B;      /* Bamboo */
+
+  /* Seasonal Colors - 季節 */
+  --color-sakura: #E8A8B8;      /* Spring - Cherry blossom */
+  --color-natsu: #7A8B6E;       /* Summer - Moss */
+  --color-momiji: #D4695E;      /* Autumn - Maple leaves */
+  --color-yuki: #A8C8DC;        /* Winter - Snow */
+
+  /* Current Season (can be set dynamically) */
+  --color-seasonal: var(--color-yuki);
+
+  /* Semantic Colors - Muted, Natural */
+  --color-success: #7A8B6E;
+  --color-success-light: rgba(122, 139, 110, 0.15);
+  --color-warning: #C4A35A;
+  --color-warning-light: rgba(196, 163, 90, 0.15);
+  --color-error: #B87A6E;
+  --color-error-light: rgba(184, 122, 110, 0.15);
+
+  /* Background & Surface */
+  --color-bg: var(--color-washi);
+  --color-bg-elevated: var(--color-washi-cream);
+  --color-bg-subtle: var(--color-washi-warm);
+
+  /* Borders */
+  --color-border: var(--color-sand);
+  --color-border-light: var(--color-washi-aged);
+
+  /* Text Colors */
+  --color-text-primary: var(--color-sumi);
+  --color-text-secondary: var(--color-sumi-light);
+  --color-text-tertiary: var(--color-sumi-faded);
+  --color-text-ghost: var(--color-sumi-ghost);
+  --color-text-inverse: var(--color-washi);
+
+  /* Ma Spacing - 間 (Generous breathing room) */
+  --space-ma-xs: 0.5rem;
+  --space-ma-sm: 1rem;
+  --space-ma: 2rem;
+  --space-ma-lg: 3rem;
+  --space-ma-xl: 5rem;
+  --space-ma-2xl: 8rem;
+
+  /* Standard Spacing */
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+  --space-2xl: 3rem;
+  --space-3xl: 4rem;
+  --space-4xl: 6rem;
+
+  /* Border Radius - Soft, organic */
+  --radius-sm: 0.25rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+
+  /* Shadows - Like floating paper */
+  --shadow-paper: 0 2px 8px rgba(44, 44, 44, 0.04), 0 1px 2px rgba(44, 44, 44, 0.03);
+  --shadow-lifted: 0 8px 24px rgba(44, 44, 44, 0.06), 0 2px 8px rgba(44, 44, 44, 0.04);
+  --shadow-floating: 0 16px 48px rgba(44, 44, 44, 0.08), 0 4px 16px rgba(44, 44, 44, 0.04);
+
+  /* Transitions - Natural, unhurried movement */
+  --ease-zen: cubic-bezier(0.25, 0.1, 0.25, 1);
+  --transition-subtle: 200ms var(--ease-zen);
+  --transition-base: 350ms var(--ease-zen);
+  --transition-slow: 500ms var(--ease-zen);
+  --transition-drift: 800ms var(--ease-zen);
+
+  /* Z-index Scale */
+  --z-base: 1;
+  --z-elevated: 10;
+  --z-sticky: 100;
+  --z-nav: 1000;
+  --z-modal: 2000;
+  --z-toast: 3000;
+
+  /* Container */
+  --container-sm: 640px;
+  --container-md: 768px;
+  --container-lg: 1024px;
+  --container-xl: 1200px;
+
+  /* Line Height - Relaxed */
+  --leading-tight: 1.3;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.85;
+
+  /* Letter Spacing */
+  --tracking-tight: -0.02em;
+  --tracking-normal: 0.02em;
+  --tracking-wide: 0.08em;
+  --tracking-wider: 0.15em;
+}
+
+/* ========================================
+   DARK MODE - Evening Tea Ceremony (夜の茶会)
+   ======================================== */
+
+/* Dark mode via class (manual toggle) */
+:root.dark-mode,
+[data-theme="dark"] {
+  --color-washi: #1A1918;
+  --color-washi-warm: #242220;
+  --color-washi-aged: #2E2C28;
+  --color-washi-cream: #1E1D1B;
+
+  --color-sumi: #E8E4DC;
+  --color-sumi-light: #C4BFB5;
+  --color-sumi-faded: #9A958C;
+  --color-sumi-ghost: #6B675F;
+
+  --color-sand: #3A3632;
+  --color-stone: #6B665E;
+  --color-clay: #5A5448;
+  --color-earth: #4A443A;
+
+  --color-ai: #7A9AAA;
+  --color-ai-light: #9ABACC;
+  --color-ai-dark: #5A7A8A;
+  --color-ai-subtle: rgba(122, 154, 170, 0.15);
+
+  --color-koke: #8FA882;
+  --color-terra: #C89A7E;
+
+  --color-success: #8FA882;
+  --color-success-light: rgba(143, 168, 130, 0.2);
+  --color-warning: #D4B46A;
+  --color-warning-light: rgba(212, 180, 106, 0.2);
+  --color-error: #C89A8E;
+  --color-error-light: rgba(200, 154, 142, 0.2);
+
+  --shadow-paper: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --shadow-lifted: 0 8px 24px rgba(0, 0, 0, 0.4);
+  --shadow-floating: 0 16px 48px rgba(0, 0, 0, 0.5);
+}
+
+/* Dark mode via system preference (when no manual preference set) */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light-mode):not([data-theme="light"]) {
+    --color-washi: #1A1918;
+    --color-washi-warm: #242220;
+    --color-washi-aged: #2E2C28;
+    --color-washi-cream: #1E1D1B;
+
+    --color-sumi: #E8E4DC;
+    --color-sumi-light: #C4BFB5;
+    --color-sumi-faded: #9A958C;
+    --color-sumi-ghost: #6B675F;
+
+    --color-sand: #3A3632;
+    --color-stone: #6B665E;
+    --color-clay: #5A5448;
+    --color-earth: #4A443A;
+
+    --color-ai: #7A9AAA;
+    --color-ai-light: #9ABACC;
+    --color-ai-dark: #5A7A8A;
+    --color-ai-subtle: rgba(122, 154, 170, 0.15);
+
+    --color-koke: #8FA882;
+    --color-terra: #C89A7E;
+
+    --color-success: #8FA882;
+    --color-success-light: rgba(143, 168, 130, 0.2);
+    --color-warning: #D4B46A;
+    --color-warning-light: rgba(212, 180, 106, 0.2);
+    --color-error: #C89A8E;
+    --color-error-light: rgba(200, 154, 142, 0.2);
+
+    --shadow-paper: 0 2px 8px rgba(0, 0, 0, 0.3);
+    --shadow-lifted: 0 8px 24px rgba(0, 0, 0, 0.4);
+    --shadow-floating: 0 16px 48px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* ========================================
+   RESET & BASE STYLES
+   ======================================== */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: var(--leading-relaxed);
+  letter-spacing: var(--tracking-normal);
+  color: var(--color-text-primary);
+  background: var(--color-bg);
+  min-height: 100vh;
+  transition: background-color var(--transition-slow), color var(--transition-slow);
+}
+
+/* Smooth theme transition for all elements */
+*, *::before, *::after {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 0.3s;
+  transition-timing-function: var(--ease-zen);
+}
+
+/* Respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ========================================
+   TYPOGRAPHY - 書道 Calligraphy-Inspired
+   ======================================== */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  line-height: var(--leading-tight);
+  color: var(--color-sumi);
+  letter-spacing: var(--tracking-tight);
+  margin-bottom: var(--space-ma-sm);
+}
+
+h1 {
+  font-size: clamp(2.5rem, 6vw, 4rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-ma);
+}
+
+h2 {
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 500;
+}
+
+h3 {
+  font-size: clamp(1.25rem, 3vw, 1.75rem);
+  font-weight: 500;
+}
+
+h4 {
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+}
+
+p {
+  margin-bottom: var(--space-md);
+  color: var(--color-text-secondary);
+  max-width: 65ch; /* Optimal reading width */
+}
+
+a {
+  color: var(--color-ai);
+  text-decoration: none;
+  transition: color var(--transition-subtle);
+  position: relative;
+}
+
+a:hover {
+  color: var(--color-ai-dark);
+}
+
+/* Elegant underline on hover */
+a:not(.btn):not(.nav-link):not(.action-card)::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background: currentColor;
+  transition: width var(--transition-base);
+}
+
+a:not(.btn):not(.nav-link):not(.action-card):hover::after {
+  width: 100%;
+}
+
+strong, b {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+small {
+  font-size: 0.875rem;
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   LAYOUT UTILITIES
+   ======================================== */
+.container {
+  width: 100%;
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  padding: var(--space-ma) var(--space-ma-sm);
+}
+
+.container-sm { max-width: var(--container-sm); }
+.container-md { max-width: var(--container-md); }
+
+.section {
+  margin-bottom: var(--space-ma-xl);
+}
+
+/* ========================================
+   INK STROKE DIVIDER - 墨筋
+   ======================================== */
+.ink-stroke {
+  height: 1px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-sand) 20%,
+    var(--color-stone) 50%,
+    var(--color-sand) 80%,
+    transparent 100%
+  );
+  margin: var(--space-ma) 0;
+  border: none;
+}
+
+.ink-stroke-seasonal {
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    var(--color-seasonal) 20%,
+    var(--color-seasonal) 50%,
+    var(--color-seasonal) 80%,
+    transparent 100%
+  );
+  opacity: 0.4;
+}
+
+.ink-stroke-vertical {
+  width: 1px;
+  height: 100%;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    var(--color-sand) 20%,
+    var(--color-stone) 50%,
+    var(--color-sand) 80%,
+    transparent 100%
+  );
+}
+
+/* ========================================
+   ENSO CIRCLES - 円相
+   ======================================== */
+.enso {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  border: 2px solid var(--color-sumi);
+  /* Intentional imperfection - uneven borders */
+  border-width: 2px 3px 2px 2.5px;
+  opacity: 0.6;
+}
+
+.enso-sm {
+  width: 40px;
+  height: 40px;
+  border-width: 1.5px 2px 1.5px 1.8px;
+}
+
+.enso-lg {
+  width: 160px;
+  height: 160px;
+  border-width: 3px 4px 3px 3.5px;
+}
+
+.enso-broken {
+  /* Incomplete circle - gap for breath */
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 80% 100%, 0 100%);
+}
+
+.enso-gradient {
+  border-color: transparent;
+  background: conic-gradient(
+    from 0deg,
+    var(--color-sumi) 0deg,
+    var(--color-sumi-faded) 180deg,
+    transparent 270deg,
+    transparent 360deg
+  );
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
+}
+
+/* ========================================
+   ZEN CARDS - 禅カード
+   ======================================== */
+.zen-card {
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--space-ma);
+  box-shadow: var(--shadow-paper);
+  border: 1px solid var(--color-border-light);
+  transition: all var(--transition-base);
+  position: relative;
+}
+
+.zen-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: inherit;
+  background: linear-gradient(135deg, transparent 0%, var(--color-ai-subtle) 100%);
+  opacity: 0;
+  transition: opacity var(--transition-base);
+  pointer-events: none;
+}
+
+.zen-card:hover {
+  box-shadow: var(--shadow-lifted);
+  transform: translateY(-2px) rotate(0.3deg); /* Subtle organic movement */
+}
+
+.zen-card:hover::before {
+  opacity: 1;
+}
+
+.zen-card-flat {
+  box-shadow: none;
+  border: 1px solid var(--color-border);
+}
+
+.zen-card-featured {
+  background: var(--color-ai);
+  color: var(--color-text-inverse);
+  border-color: transparent;
+}
+
+.zen-card-featured h3,
+.zen-card-featured p {
+  color: var(--color-text-inverse);
+}
+
+/* ========================================
+   ZEN BUTTONS - 禅ボタン
+   ======================================== */
+.zen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 0.875rem 1.75rem;
+  font-family: var(--font-body);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  line-height: 1;
+  border: 1.5px solid var(--color-sumi);
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-sumi);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.zen-btn::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: var(--color-sumi);
+  transition: left var(--transition-base);
+  z-index: -1;
+}
+
+.zen-btn:hover {
+  color: var(--color-text-inverse);
+  transform: scale(1.02);
+}
+
+.zen-btn:hover::before {
+  left: 0;
+}
+
+.zen-btn:active {
+  transform: scale(0.98);
+}
+
+.zen-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.zen-btn:disabled::before {
+  display: none;
+}
+
+/* Filled variant */
+.zen-btn-filled {
+  background: var(--color-sumi);
+  color: var(--color-text-inverse);
+}
+
+.zen-btn-filled::before {
+  background: var(--color-ai);
+}
+
+/* Ai (indigo) variant */
+.zen-btn-ai {
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.zen-btn-ai::before {
+  background: var(--color-ai);
+}
+
+/* Ghost variant */
+.zen-btn-ghost {
+  border-color: transparent;
+  color: var(--color-text-secondary);
+}
+
+.zen-btn-ghost:hover {
+  color: var(--color-text-primary);
+  background: var(--color-ai-subtle);
+}
+
+.zen-btn-ghost::before {
+  display: none;
+}
+
+/* Size variants */
+.zen-btn-sm {
+  padding: 0.625rem 1.25rem;
+  font-size: 0.8125rem;
+}
+
+.zen-btn-lg {
+  padding: 1.125rem 2.25rem;
+  font-size: 1rem;
+}
+
+/* Keep backward compatibility with old btn classes */
+.btn { @extend .zen-btn; }
+.btn-primary {
+  background: var(--color-ai);
+  border-color: var(--color-ai);
+  color: var(--color-text-inverse);
+}
+.btn-primary::before {
+  background: var(--color-ai-dark);
+}
+.btn-primary:hover {
+  color: var(--color-text-inverse);
+}
+.btn-secondary {
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+.btn-secondary::before {
+  background: var(--color-ai);
+}
+.btn-ghost {
+  border-color: transparent;
+  color: var(--color-text-secondary);
+}
+.btn-ghost:hover {
+  background: var(--color-ai-subtle);
+  color: var(--color-text-primary);
+}
+.btn-ghost::before { display: none; }
+.btn-sm { padding: 0.625rem 1.25rem; font-size: 0.8125rem; }
+.btn-lg { padding: 1.125rem 2.25rem; font-size: 1rem; }
+.btn-danger {
+  border-color: var(--color-error);
+  color: var(--color-error);
+}
+.btn-danger::before {
+  background: var(--color-error);
+}
+
+/* ========================================
+   FORM ELEMENTS - Minimal, refined
+   ======================================== */
+.form-group {
+  margin-bottom: var(--space-ma-sm);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-sm);
+}
+
+.form-input,
+.form-textarea,
+.form-select {
+  width: 100%;
+  padding: 1rem 0;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  color: var(--color-text-primary);
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid var(--color-border);
+  border-radius: 0;
+  transition: all var(--transition-base);
+  letter-spacing: var(--tracking-normal);
+}
+
+.form-input:focus,
+.form-textarea:focus,
+.form-select:focus {
+  outline: none;
+  border-bottom-color: var(--color-ai);
+}
+
+.form-input::placeholder,
+.form-textarea::placeholder {
+  color: var(--color-text-ghost);
+  font-style: italic;
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 120px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: var(--space-md);
+}
+
+.form-textarea:focus {
+  border-color: var(--color-ai);
+}
+
+.form-error {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin-top: var(--space-sm);
+}
+
+.form-hint {
+  color: var(--color-text-ghost);
+  font-size: 0.8125rem;
+  margin-top: var(--space-sm);
+  font-style: italic;
+}
+
+/* ========================================
+   BADGE COMPONENTS
+   ======================================== */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: 0.375rem 0.875rem;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+}
+
+.badge-success {
+  background: var(--color-success-light);
+  color: var(--color-success);
+}
+
+.badge-warning {
+  background: var(--color-warning-light);
+  color: var(--color-warning);
+}
+
+.badge-error {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+.badge-neutral {
+  background: var(--color-washi-aged);
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   TABLE COMPONENTS
+   ======================================== */
+.table-container {
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--color-bg-elevated);
+}
+
+thead {
+  background: var(--color-washi-warm);
+}
+
+th {
+  padding: var(--space-md) var(--space-lg);
+  text-align: left;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  border-bottom: 1px solid var(--color-border);
+}
+
+td {
+  padding: var(--space-md) var(--space-lg);
+  color: var(--color-text-secondary);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr {
+  transition: background-color var(--transition-subtle);
+}
+
+tbody tr:hover {
+  background: var(--color-washi-warm);
+}
+
+/* ========================================
+   ALERT COMPONENTS
+   ======================================== */
+.alert {
+  padding: var(--space-lg);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  border-left: 3px solid;
+  background: var(--color-bg-elevated);
+}
+
+.alert-success {
+  border-color: var(--color-success);
+  background: var(--color-success-light);
+}
+
+.alert-warning {
+  border-color: var(--color-warning);
+  background: var(--color-warning-light);
+}
+
+.alert-error {
+  border-color: var(--color-error);
+  background: var(--color-error-light);
+}
+
+.alert-info {
+  border-color: var(--color-ai);
+  background: var(--color-ai-subtle);
+}
+
+/* ========================================
+   LOADING STATES
+   ======================================== */
+.spinner {
+  width: 32px;
+  height: 32px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-ai);
+  border-radius: 50%;
+  animation: spin 1s var(--ease-zen) infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-washi-warm) 0%,
+    var(--color-washi-aged) 50%,
+    var(--color-washi-warm) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s var(--ease-zen) infinite;
+  border-radius: var(--radius-md);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* ========================================
+   ANIMATIONS - Gentle, contemplative
+   ======================================== */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes blurIn {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    filter: blur(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes breathe {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.02); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(2deg); }
+}
+
+/* Animation utility classes */
+.animate-fade-up {
+  animation: fadeUp var(--transition-drift) backwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn var(--transition-slow) backwards;
+}
+
+.animate-blur-in {
+  animation: blurIn var(--transition-drift) backwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn var(--transition-slow) backwards;
+}
+
+/* Staggered animations */
+.stagger-item {
+  animation: fadeUp var(--transition-drift) backwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0ms; }
+.stagger-item:nth-child(2) { animation-delay: 80ms; }
+.stagger-item:nth-child(3) { animation-delay: 160ms; }
+.stagger-item:nth-child(4) { animation-delay: 240ms; }
+.stagger-item:nth-child(5) { animation-delay: 320ms; }
+.stagger-item:nth-child(6) { animation-delay: 400ms; }
+
+/* ========================================
+   KEN BURNS EFFECT - For images
+   ======================================== */
+.ken-burns {
+  animation: kenBurns 25s var(--ease-zen) infinite alternate;
+}
+
+@keyframes kenBurns {
+  0% { transform: scale(1) translate(0, 0); }
+  100% { transform: scale(1.1) translate(-2%, -2%); }
+}
+
+/* ========================================
+   UTILITY CLASSES
+   ======================================== */
+.text-center { text-align: center; }
+.text-right { text-align: right; }
+.font-display { font-family: var(--font-display); }
+.font-mono { font-family: var(--font-mono); }
+
+.text-sm { font-size: 0.875rem; }
+.text-lg { font-size: 1.125rem; }
+.text-xl { font-size: 1.25rem; }
+
+.text-primary { color: var(--color-text-primary); }
+.text-secondary { color: var(--color-text-secondary); }
+.text-tertiary { color: var(--color-text-tertiary); }
+.text-ai { color: var(--color-ai); }
+.text-seasonal { color: var(--color-seasonal); }
+
+.bg-washi { background: var(--color-washi); }
+.bg-elevated { background: var(--color-bg-elevated); }
+
+/* Margins */
+.mt-0 { margin-top: 0; }
+.mb-0 { margin-bottom: 0; }
+.mt-sm { margin-top: var(--space-sm); }
+.mb-sm { margin-bottom: var(--space-sm); }
+.mt-md { margin-top: var(--space-md); }
+.mb-md { margin-bottom: var(--space-md); }
+.mt-lg { margin-top: var(--space-lg); }
+.mb-lg { margin-bottom: var(--space-lg); }
+.mt-ma { margin-top: var(--space-ma); }
+.mb-ma { margin-bottom: var(--space-ma); }
+
+/* Flex utilities */
+.flex { display: flex; }
+.flex-col { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-between { justify-content: space-between; }
+.justify-center { justify-content: center; }
+.gap-sm { gap: var(--space-sm); }
+.gap-md { gap: var(--space-md); }
+.gap-lg { gap: var(--space-lg); }
+.gap-ma { gap: var(--space-ma); }
+
+/* Grid utilities */
+.grid { display: grid; gap: var(--space-lg); }
+.grid-2 { grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+.grid-3 { grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+.grid-4 { grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); }
+
+/* Display */
+.hidden { display: none; }
+.block { display: block; }
+.inline-block { display: inline-block; }
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+  :root {
+    --space-ma: 1.5rem;
+    --space-ma-lg: 2rem;
+    --space-ma-xl: 3rem;
+  }
+
+  .container {
+    padding: var(--space-lg) var(--space-md);
+  }
+
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+
+  h1 {
+    font-size: 2rem;
+  }
+
+  .zen-card {
+    padding: var(--space-lg);
+  }
+}
+
+/* ========================================
+   SCROLL REVEAL (placeholder for JS)
+   ======================================== */
+[data-reveal] {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity var(--transition-drift), transform var(--transition-drift);
+}
+
+[data-reveal].revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+[data-reveal="blur"] {
+  filter: blur(8px);
+}
+
+[data-reveal="blur"].revealed {
+  filter: blur(0);
+}
+
+/* ========================================
+   LEGAL PAGES - Impressum, Datenschutz
+   ======================================== */
+.legal-page {
+  min-height: 100vh;
+  background: var(--color-washi);
+  padding-bottom: var(--space-ma-xl);
+}
+
+.legal-page .page-header {
+  padding: var(--space-ma-lg) 0 var(--space-ma);
+}
+
+.legal-page .back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-text-tertiary);
+  text-decoration: none;
+  font-size: 0.875rem;
+  margin-bottom: var(--space-lg);
+  transition: color var(--transition-base);
+}
+
+.legal-page .back-link:hover {
+  color: var(--color-ai);
+}
+
+.legal-page .back-link::after {
+  display: none;
+}
+
+.legal-page .page-header h1 {
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+}
+
+.legal-page .legal-content {
+  padding: var(--space-ma-lg);
+}
+
+.legal-page .legal-section {
+  margin-bottom: var(--space-ma);
+}
+
+.legal-page .legal-section:last-of-type {
+  margin-bottom: 0;
+}
+
+.legal-page .legal-section h2 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+  color: var(--color-sumi);
+}
+
+.legal-page .legal-section h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: var(--space-lg);
+  margin-bottom: var(--space-sm);
+  color: var(--color-sumi);
+}
+
+.legal-page .legal-section p {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-md);
+}
+
+.legal-page .legal-section ul {
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-md);
+  padding-left: var(--space-lg);
+}
+
+.legal-page .legal-section li {
+  margin-bottom: var(--space-sm);
+}
+
+.legal-page .legal-section a {
+  color: var(--color-ai);
+  text-decoration: none;
+}
+
+.legal-page .legal-section a:hover {
+  text-decoration: underline;
+}
+
+.legal-page .legal-section a::after {
+  display: none;
+}
+
+.legal-page .legal-footer {
+  margin-top: var(--space-ma);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.legal-page .last-updated {
+  font-size: 0.875rem;
+  color: var(--color-text-ghost);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .legal-page .legal-content {
+    padding: var(--space-lg);
+  }
+
+  .legal-page .page-header h1 {
+    font-size: 1.75rem;
+  }
+}

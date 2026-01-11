@@ -1,0 +1,78 @@
+from flask import Flask, request
+from flask_cors import CORS
+from flask_jwt_extended import JWTManager
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
+from config import config
+from models import db
+
+
+def create_app():
+    """Create and configure Flask application"""
+    app = Flask(__name__)
+
+    # Load configuration
+    app.config.from_object(config)
+
+    # Initialize extensions
+    db.init_app(app)
+    CORS(app, origins=config.CORS_ORIGINS)
+    jwt = JWTManager(app)
+
+    # Initialize rate limiter
+    limiter = Limiter(
+        app=app,
+        key_func=get_remote_address,
+        default_limits=["200 per hour", "50 per minute"],
+        storage_uri="memory://",
+        strategy="fixed-window"
+    )
+
+    # Store limiter in app config for use in routes
+    app.limiter = limiter
+
+    # Register blueprints
+    from routes.auth import auth_bp
+    from routes.documents import documents_bp
+    from routes.templates import templates_bp
+    from routes.applications import applications_bp
+    from routes.api_keys import api_keys_bp
+    from routes.stats import stats_bp
+    from routes.payments import payments_bp
+
+    app.register_blueprint(auth_bp, url_prefix='/api/auth')
+    app.register_blueprint(documents_bp, url_prefix='/api/documents')
+    app.register_blueprint(templates_bp, url_prefix='/api/templates')
+    app.register_blueprint(applications_bp, url_prefix='/api/applications')
+    app.register_blueprint(api_keys_bp, url_prefix='/api/keys')
+    app.register_blueprint(stats_bp, url_prefix='/api')
+    app.register_blueprint(payments_bp, url_prefix='/api/payments')
+
+    # Health check endpoint (no rate limit)
+    @app.route('/api/health')
+    @limiter.exempt
+    def health():
+        return {'status': 'ok', 'message': 'Server running'}
+
+    return app
+
+
+if __name__ == '__main__':
+    app = create_app()
+
+    # Validate config
+    config.validate_config()
+
+    # Initialize database
+    with app.app_context():
+        from migrations.init_db import init_database, seed_test_data
+        init_database(app)
+        seed_test_data(app)
+
+    print("\n" + "="*60)
+    print("obojobs API Server")
+    print("="*60)
+    print("Server running on http://localhost:5001")
+    print("="*60 + "\n")
+
+    app.run(host='0.0.0.0', port=5001, debug=config.DEBUG)

@@ -1,0 +1,6 @@
+# Firmen-URLs für Batch-Verarbeitung
+# Format: URL | Firmenname (eine pro Zeile)
+# Beispiel:
+# https://example.com/karriere/software-entwickler | Example AG
+# https://another-company.de/jobs/fullstack | Another Company GmbH
+

@@ -1,0 +1,37 @@
+Softwareentwickler für Publishing-Systeme & Automatisierung (m/w/d)
+Das sind die Aufgabenschwerpunkte
+Unsere Publishing-Abteilung entwickelt die digitalen und gedruckten Lernmedien für unsere Marken. Dafür setzen wir auf eine technisch saubere, robuste und zukunftsfähige Produktionsumgebung, die wir kontinuierlich ausbauen. Genau hier kommst du ins Spiel: Du entwickelst unsere Toollandschaft weiter, baust moderne XML-basierte Transformationsprozesse auf und sorgst dafür, dass Inhalte effizient in hochwertige Web- und Printformate gelangen.
+
+Weitere Aufgaben, die du mit begleitest:
+
+Programmierung und Weiterentwicklung der bestehenden Toollandschaft
+Entwicklung und Anpassung von Transformationen (XSLT, XSL-FO, XML-Pipelines)
+Gestaltung von Ausgabeformaten für Web & Print
+Technische Umsetzung der Überführung traditioneller Studienhefte in digitale Publikationen
+Zusammenarbeit mit Produktion, Didaktik und Grafik zur Sicherstellung konsistenter Workflows
+Das suchen wir
+
+sicherer Umgang mit XML-Technologien: XML, XSLT, XPath, XSL-FO, DTD, XSD
+Erfahrung in der Umsetzung von Ausgabeformaten: XHTML, HTML5, CSS, Print-CSS
+Fähigkeit zur Erstellung und Optimierung von Produktionspipelines (XML → Print/PDF/HTML)
+Erfahrung im Umgang mit API-Schnittstellen
+Erfahrungen im Umgang mit Skript- und Systemautomationen (z. B. VBA, CLI, MSI, Signaturprozessen, Batch)
+Erfahrung mit Open-Source-Tools wie ImageMagick oder ähnlichen Werkzeugen
+Verständnis für modular aufgebaute, multimediale und KI-unterstützbare Content-Strukturen
+Erfahrung im Aufbau von Frontend-Ansichten für User mit z.B. React
+Kontaktdaten
+Willkommen in einem Unternehmen, wo du dich beruflich und persönlich entfalten kannst.
+
+Wir schätzen Vielfalt und Chancengleichheit. Bewerbungen von Menschen mit Schwerbehinderung oder Gleichstellung werden bei gleicher Qualifikation und Eignung bevorzugt berücksichtigt.
+
+Du möchtest Teil unseres Teams werden? Dann freuen wir uns auf deine aussagekräftigen Bewerbungsunterlagen direkt über unsere Karriereseite.
+
+Standort: Doberaner Weg 18-22 | 22143 Hamburg
+Kontakt: Frau Benyatip Singruang
+
+Anstellungsart
+Festanstellung
+Vollzeit
+
+Vorausgesetzte Berufserfahrung
+Berufserfahren

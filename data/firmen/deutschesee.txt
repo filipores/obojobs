@@ -1,0 +1,47 @@
+Header
+Wir sind Deutsche See, mit rund 450 Millionen Euro Umsatz Deutschlands Marktführer in der Produktion und dem Handel mit Fisch, Seafood und Feinkost. Das Herz unserer Fischmanufaktur schlägt in Bremerhaven – von hier aus beliefern wir über unsere rund 20 Niederlassungen mehr als 35.000 Kunden. Von der Spitzengastronomie, dem Foodservice über den Lebensmittelhandel oder den Online-Shop-Kunden vertrauen diese lange auf die Marke Deutsche See. Seitdem sind wir stetig gewachsen und zählen mittlerweile rund 1.700 Mitarbeiterinnen und Mitarbeiter. Menschen und Marken stehen bei uns für ein gutes Miteinander und den möglichst ressourcenschonenden Umgang mit der Natur – dafür wurden wir mit dem Deutschen Nachhaltigkeitspreis ausgezeichnet.
+
+Wir suchen für unseren Standort Hamburg zum nächstmöglichen Zeitpunkt einen
+
+Full-Stack Entwickler (m/w/d) für Web-Applikationen mit Schwerpunkt E-Commerce
+Ihre Aufgaben:
+
+PHP Entwicklung, Eigenständige Einarbeitung in größere PHP-Applikationen wie Shopware 6
+Backendentwicklung von Shopware 6 für unseren Online-Shop. Erweiterung von Core-Funktionen (z.B. Import/Export, CMS-Module, Anbindung an externe Systeme wie Buchhaltung, Versanddienstleister, Marketingplattformen usw.)
+Frontendentwicklung (HTML, SCSS, JavaScript inkl. eigenständige Entwicklung von JavaScript-Plugins)
+Entwicklung von automatisierten Tests
+Enge Zusammenarbeit mit Kolleginnen und Kollegen aus anderen Fachabteilungen und externen Dienstleistern
+Folgende Software und Systeme kommen bei uns zum Einsatz: 
+Shopware 6, Emarsys, Azure, Jenkins, Docker, ElasticSearch, REDIS
+Wünschenswert aber keine Voraussetzung: 
+DevOps: Erstellung und Verwaltung von Deploymentprozesse, Wartung von Entwicklungsumgebungen
+Ihr Profil:
+
+Sie haben ein abgeschlossenes Studium im Bereich Wirtschaftsinformatik, sind ausgebildeter Fachinformatiker (m/w/d) für Anwendungsentwicklung und/oder können vergleichbare Kompetenzen nachweisen
+Kompetenz in der Erstellung von Datenmodellen und -strukturen in SQL
+Erfahrungen in Oracle DB wünschenswert, aber keine Voraussetzung
+Viel Erfahrung in objektorientierter Programmierung und domänengetriebener Softwarearchitektur
+Erfahrung in der Verwaltung und Integration von Systemlandschaften mit der Hilfe von Docker
+Erfahrungen in der sicheren Anbindung von externen Webservices
+Die Bereitschaft sich im Team in buchhalterische als auch logistische Prozesse einzuarbeiten
+Hohe Eigeninitiative bei der Identifizierung und Bearbeitung von offenen Arbeitsfeldern
+Berufserfahrung im Bereich eCommerce von Vorteil, idealerweise im Bereich Food 
+Die Kompetenz, komplexe Themen verständlich auf den Punkt zu bringen
+Sehr gute Ausdrucksfähigkeit in deutscher Sprache
+Zudem würden Sie sich als selbständig, flexibel, kommunikativ und entscheidungsfreudig beschreiben
+ 
+
+Unser Angebot:
+
+Ein interessantes und abwechslungsreiches Tätigkeitsfeld, in dem es garantiert nie langweilig wird
+Ein motiviertes Team und ein angenehmes Arbeitsklima, das von starkem Miteinander geprägt ist
+Flache Hierarchien und die Chance, das Unternehmen aktiv mitzugestalten
+Flexible Arbeitszeiten, die Freiraum für eine persönliche Gestaltung bieten
+Leistungsgerechte Vergütung
+Zuschüsse zu vermögenswirksamen Leistungen sowie zur betrieblichen Altersvorsorge
+Umfangreiche Benefits, darunter Mitarbeiterrabatte und Corporate Benefits
+Betriebliches Gesundheitsmanagement
+Wenn Sie diese interessante Aufgabe reizt, dann bewerben Sie sich bitte ausschließlich online über den nachfolgenden Link "Jetzt bewerben" unter Angabe des frühestmöglichen Eintrittstermins und Ihrer Gehaltsvorstellung. Wir freuen uns auf Sie!
+
+Jetzt bewerben
+Deutsche See GmbH • Maifischstraße 3-9 • 27572 Bremerhaven • Impressum

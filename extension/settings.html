@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>obo Extension Settings</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; max-width: 600px; margin: 0 auto; }
+    h1 { color: #333; }
+    label { display: block; margin-top: 15px; margin-bottom: 5px; font-weight: bold; }
+    input { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; box-sizing: border-box; }
+    button { margin-top: 20px; padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .status { margin-top: 15px; padding: 10px; border-radius: 4px; }
+    .status.success { background: #d4edda; color: #155724; }
+    .status.error { background: #f8d7da; color: #721c24; }
+    .info { background: #e7f3ff; padding: 15px; border-radius: 4px; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h1>obo Extension Settings</h1>
+  <form id="settings-form">
+    <label for="server-url">Server URL:</label>
+    <input id="server-url" type="url" placeholder="http://localhost:5001" required />
+
+    <label for="api-key">API Key:</label>
+    <input id="api-key" type="password" placeholder="mlr_..." required />
+
+    <button type="submit">Save Settings</button>
+  </form>
+  <div id="status"></div>
+
+  <div class="info">
+    <strong>So erhältst du einen API Key:</strong>
+    <ol>
+      <li>Öffne das Dashboard: <a href="http://localhost:3000" target="_blank">http://localhost:3000</a></li>
+      <li>Gehe zu Settings</li>
+      <li>Klicke auf "Neuen API Key generieren"</li>
+      <li>Kopiere den Key und füge ihn hier ein</li>
+    </ol>
+  </div>
+
+  <script src="settings.js"></script>
+</body>
+</html>

@@ -1,0 +1,524 @@
+<template>
+  <div class="settings-page">
+    <div class="container">
+      <!-- Header Section -->
+      <section class="page-header animate-fade-up">
+        <h1>Einstellungen</h1>
+        <p class="page-subtitle">Verwalten Sie Ihr Konto und API-Zugang</p>
+      </section>
+
+      <!-- Account Section -->
+      <section class="settings-section animate-fade-up" style="animation-delay: 100ms;">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <h2>Konto</h2>
+        </div>
+
+        <div class="settings-card zen-card">
+          <div class="account-info">
+            <div class="info-row">
+              <span class="info-label">E-Mail</span>
+              <span class="info-value">{{ authStore.user?.email }}</span>
+            </div>
+            <div class="info-divider"></div>
+            <div class="info-row">
+              <span class="info-label">Credits verfügbar</span>
+              <span class="info-value info-value-highlight">{{ authStore.user?.credits_remaining }}</span>
+            </div>
+            <div class="info-row">
+              <span class="info-label">Insgesamt gekauft</span>
+              <span class="info-value">{{ authStore.user?.total_credits_purchased || 0 }} Credits</span>
+            </div>
+          </div>
+
+          <div class="account-actions">
+            <router-link to="/buy-credits" class="zen-btn zen-btn-ai">
+              Credits kaufen
+            </router-link>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ink Stroke -->
+      <div class="ink-stroke"></div>
+
+      <!-- API Keys Section -->
+      <section class="settings-section animate-fade-up" style="animation-delay: 200ms;">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+            </svg>
+          </div>
+          <div>
+            <h2>API Keys</h2>
+            <p class="section-description">Für die Chrome Extension</p>
+          </div>
+        </div>
+
+        <div class="settings-card zen-card">
+          <div class="api-key-header">
+            <p class="api-key-info">
+              Erstellen Sie einen API Key, um die Chrome Extension mit Ihrem Konto zu verbinden.
+            </p>
+            <button @click="generateKey" class="zen-btn zen-btn-filled">
+              Neuen Key generieren
+            </button>
+          </div>
+
+          <!-- New Key Alert -->
+          <div v-if="newKey" class="new-key-alert">
+            <div class="alert-header">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <strong>Speichern Sie diesen Key jetzt!</strong>
+            </div>
+            <p>Er wird nicht erneut angezeigt.</p>
+            <div class="key-display">
+              <code>{{ newKey }}</code>
+              <button @click="copyKey" class="copy-btn" title="Kopieren">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Existing Keys -->
+          <div v-if="apiKeys.length" class="api-keys-list">
+            <div class="list-header">
+              <span>Ihre API Keys</span>
+            </div>
+            <div class="keys-table">
+              <div v-for="key in apiKeys" :key="key.id" class="key-row">
+                <div class="key-info">
+                  <span class="key-prefix">{{ key.key_prefix }}...</span>
+                  <span class="key-meta">
+                    <span class="key-name">{{ key.name }}</span>
+                    <span class="key-date">{{ formatDate(key.created_at) }}</span>
+                  </span>
+                </div>
+                <button @click="deleteKey(key.id)" class="zen-btn zen-btn-sm zen-btn-danger">
+                  Löschen
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <div v-else class="no-keys">
+            <p>Sie haben noch keine API Keys erstellt.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Chrome Extension Info -->
+      <section class="info-section animate-fade-up" style="animation-delay: 300ms;">
+        <div class="info-banner zen-card">
+          <div class="info-icon">
+            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <div class="info-content">
+            <h3>Chrome Extension einrichten</h3>
+            <ol class="setup-steps">
+              <li>Erstellen Sie einen API Key oben</li>
+              <li>Installieren Sie die Chrome Extension</li>
+              <li>Fügen Sie den API Key in der Extension ein</li>
+              <li>Besuchen Sie eine Stellenanzeige und klicken Sie auf "Bewerbung generieren"</li>
+            </ol>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import { ref, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '../api/client'
+import { authStore } from '../store/auth'
+
+const router = useRouter()
+
+const apiKeys = ref([])
+const newKey = ref('')
+
+const generateKey = async () => {
+  try {
+    const { data } = await api.post('/keys', { name: 'Chrome Extension' })
+    newKey.value = data.api_key
+    loadKeys()
+  } catch (e) {
+    alert('Fehler beim Erstellen des Keys')
+  }
+}
+
+const copyKey = () => {
+  navigator.clipboard.writeText(newKey.value)
+  if (window.$toast) {
+    window.$toast('API Key kopiert!', 'success')
+  }
+}
+
+const deleteKey = async (id) => {
+  if (confirm('API Key wirklich löschen? Die Chrome Extension funktioniert dann nicht mehr.')) {
+    try {
+      await api.delete(`/keys/${id}`)
+      loadKeys()
+    } catch (e) {
+      alert('Fehler beim Löschen')
+    }
+  }
+}
+
+const loadKeys = async () => {
+  try {
+    const { data } = await api.get('/keys')
+    apiKeys.value = data.api_keys
+  } catch (e) {
+    console.error('Fehler beim Laden:', e)
+  }
+}
+
+const formatDate = (dateString) => {
+  return new Date(dateString).toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+onMounted(loadKeys)
+</script>
+
+<style scoped>
+.settings-page {
+  min-height: calc(100vh - 73px);
+  background: var(--color-washi);
+  padding-bottom: var(--space-ma-xl);
+}
+
+/* ========================================
+   PAGE HEADER
+   ======================================== */
+.page-header {
+  padding: var(--space-ma-lg) 0 var(--space-ma);
+}
+
+.page-header h1 {
+  font-size: clamp(2.5rem, 5vw, 3.5rem);
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  margin-bottom: var(--space-sm);
+}
+
+.page-subtitle {
+  font-size: 1.125rem;
+  color: var(--color-text-secondary);
+  margin-bottom: 0;
+}
+
+/* ========================================
+   SETTINGS SECTION
+   ======================================== */
+.settings-section {
+  margin-bottom: var(--space-ma);
+}
+
+.section-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.section-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ai-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-ai);
+  flex-shrink: 0;
+}
+
+.section-header h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.section-description {
+  font-size: 0.9375rem;
+  color: var(--color-text-tertiary);
+  margin: var(--space-xs) 0 0 0;
+}
+
+.settings-card {
+  padding: var(--space-xl);
+}
+
+/* ========================================
+   ACCOUNT INFO
+   ======================================== */
+.account-info {
+  margin-bottom: var(--space-lg);
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) 0;
+}
+
+.info-label {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+.info-value {
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.info-value-highlight {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  color: var(--color-ai);
+}
+
+.info-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: var(--space-sm) 0;
+}
+
+.account-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* ========================================
+   API KEYS SECTION
+   ======================================== */
+.api-key-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.api-key-info {
+  color: var(--color-text-secondary);
+  margin: 0;
+  flex: 1;
+}
+
+/* New Key Alert */
+.new-key-alert {
+  background: rgba(184, 122, 94, 0.1);
+  border: 1px solid var(--color-terra);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.alert-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-terra);
+  margin-bottom: var(--space-sm);
+}
+
+.new-key-alert p {
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-md) 0;
+  font-size: 0.9375rem;
+}
+
+.key-display {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  background: var(--color-washi);
+  border-radius: var(--radius-sm);
+  padding: var(--space-md);
+}
+
+.key-display code {
+  flex: 1;
+  font-family: var(--font-mono);
+  font-size: 0.875rem;
+  color: var(--color-sumi);
+  word-break: break-all;
+}
+
+.copy-btn {
+  background: none;
+  border: none;
+  color: var(--color-ai);
+  cursor: pointer;
+  padding: var(--space-xs);
+  transition: color var(--transition-base);
+}
+
+.copy-btn:hover {
+  color: var(--color-ai-light);
+}
+
+/* Keys List */
+.api-keys-list {
+  border-top: 1px solid var(--color-border-light);
+  padding-top: var(--space-lg);
+}
+
+.list-header {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+  margin-bottom: var(--space-md);
+}
+
+.keys-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.key-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--color-washi);
+  border-radius: var(--radius-sm);
+}
+
+.key-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.key-prefix {
+  font-family: var(--font-mono);
+  font-size: 0.9375rem;
+  color: var(--color-sumi);
+  font-weight: 500;
+}
+
+.key-meta {
+  display: flex;
+  gap: var(--space-md);
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+}
+
+.no-keys {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-tertiary);
+}
+
+.no-keys p {
+  margin: 0;
+}
+
+/* ========================================
+   INFO SECTION
+   ======================================== */
+.info-section {
+  margin-top: var(--space-ma);
+}
+
+.info-banner {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  background: var(--color-ai-subtle);
+  border: 1px solid rgba(61, 90, 108, 0.15);
+}
+
+.info-icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  color: var(--color-ai);
+  flex-shrink: 0;
+}
+
+.info-content h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0 0 var(--space-md) 0;
+}
+
+.setup-steps {
+  margin: 0;
+  padding-left: var(--space-lg);
+  color: var(--color-text-secondary);
+}
+
+.setup-steps li {
+  margin-bottom: var(--space-sm);
+  line-height: var(--leading-relaxed);
+}
+
+.setup-steps li:last-child {
+  margin-bottom: 0;
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
+@media (max-width: 768px) {
+  .api-key-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .key-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .info-banner {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-header h1 {
+    font-size: 2rem;
+  }
+
+  .section-header {
+    flex-direction: column;
+  }
+}
+</style>

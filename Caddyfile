@@ -1,0 +1,42 @@
+# Caddyfile - Reverse Proxy Configuration
+# Caddy automatically obtains and renews SSL certificates via Let's Encrypt
+
+{$DOMAIN} {
+    # API Proxy - route /api/* to backend (must be before catch-all)
+    handle /api/* {
+        reverse_proxy backend:5001
+    }
+
+    # Frontend - serve Vue.js SPA (catch-all)
+    handle {
+        reverse_proxy frontend:80
+    }
+
+    # Security Headers
+    header {
+        # Prevent MIME type sniffing
+        X-Content-Type-Options nosniff
+        # Prevent clickjacking
+        X-Frame-Options DENY
+        # Control referrer information
+        Referrer-Policy strict-origin-when-cross-origin
+        # XSS Protection
+        X-XSS-Protection "1; mode=block"
+        # Remove server header
+        -Server
+    }
+
+    # Enable compression
+    encode gzip zstd
+
+    # Logging
+    log {
+        output stdout
+        format console
+    }
+}
+
+# Redirect www to non-www
+www.{$DOMAIN} {
+    redir https://{$DOMAIN}{uri} permanent
+}

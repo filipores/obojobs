@@ -1,0 +1,43 @@
+BEISPIEL AG - Karriereportal
+www.beispiel-ag.de
+
+Über uns:
+Die BEISPIEL AG ist ein führendes Unternehmen im Bereich Softwareentwicklung und IT-Beratung mit Sitz in München. Seit über 20 Jahren entwickeln wir innovative Lösungen für Kunden aus verschiedenen Branchen.
+
+Fullstack Developer (m/w/d)
+
+Was wir suchen:
+Wir suchen engagierte Fullstack Developer, die mit uns die digitale Zukunft gestalten möchten. Bei uns erwarten Sie spannende Projekte, modernste Technologien und ein dynamisches Team.
+
+Ihre Aufgaben:
+- Entwicklung moderner Web-Applikationen mit React und Node.js
+- Backend-Entwicklung mit PHP und MySQL
+- Beratung unserer Kunden
+- Arbeit in agilen Teams
+- Kontinuierliche Weiterentwicklung
+
+Ihr Profil:
+- Erfahrung mit JavaScript, PHP, Node.js
+- Kenntnisse in React, Vue oder ähnlichen Frameworks
+- Docker und CI/CD Kenntnisse von Vorteil
+- Teamfähigkeit und Eigeninitiative
+
+Was wir bieten:
+- Flexible Arbeitszeiten
+- Homeoffice-Möglichkeiten
+- Weiterbildungsmöglichkeiten
+- Attraktive Vergütung
+- Moderne Arbeitsumgebung
+
+Interesse?
+Wir freuen uns auf Ihre Bewerbung!
+
+Ihr Ansprechpartner:
+Frau Sarah Schmidt
+HR Manager
+
+BEISPIEL AG
+Musterstraße 100
+80333 München
+bewerbung@beispiel-ag.de
+Tel: +49 89 1234567
