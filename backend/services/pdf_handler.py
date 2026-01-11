@@ -1,6 +1,8 @@
 from typing import Dict
 
 import PyPDF2
+from pdf2image import convert_from_path
+import pytesseract
 from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
@@ -15,7 +17,16 @@ def extract_text_from_pdf(pdf_path: str) -> str:
     with open(pdf_path, 'rb') as file:
         pdf_reader = PyPDF2.PdfReader(file)
         for page in pdf_reader.pages:
-            text += page.extract_text() + "\n"
+            page_text = page.extract_text()
+            if page_text:
+                text += page_text + "\n"
+
+    # OCR-Fallback für gescannte PDFs
+    if not text.strip():
+        images = convert_from_path(pdf_path)
+        for image in images:
+            text += pytesseract.image_to_string(image, lang='deu') + "\n"
+
     return text.strip()
 
 
