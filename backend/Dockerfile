@@ -4,8 +4,11 @@ WORKDIR /app
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+      gcc \
+      tesseract-ocr \
+      tesseract-ocr-deu \
+      poppler-utils \
+      && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
 COPY requirements.txt .
