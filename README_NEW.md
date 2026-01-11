@@ -34,10 +34,10 @@ Vollständig refaktorierte Multi-User Web-App mit Vue.js Frontend, Flask Backend
 ### 1. Backend Setup
 
 ```bash
-cd /Users/filipores/_Coding/mailer/backend
+cd backend
 
 # Create .env file
-cp ../.env.example ../.env
+cp .env.example .env
 # Edit .env and add your ANTHROPIC_API_KEY
 
 # Install dependencies
@@ -57,7 +57,7 @@ Backend läuft auf: `http://localhost:5000`
 ### 2. Frontend Setup
 
 ```bash
-cd /Users/filipores/_Coding/mailer/frontend
+cd frontend
 
 # Install dependencies
 npm install
@@ -72,7 +72,7 @@ Frontend läuft auf: `http://localhost:3000`
 
 1. Chrome öffnen → `chrome://extensions/`
 2. "Developer mode" aktivieren
-3. "Load unpacked" → `/Users/filipores/_Coding/mailer/extension/`
+3. "Load unpacked" → `extension/` Ordner auswählen
 4. Extension Icon klicken → "Settings" Button
 5. Server URL eingeben: `http://localhost:5000`
 6. API Key generieren (siehe unten)
@@ -188,8 +188,8 @@ GET /api/stats              - User statistics
 
 Falls du Daten aus `bewerbungen.json` migrieren willst:
 
-```python
-cd /Users/filipores/_Coding/mailer/backend
+```bash
+cd backend
 python -c "
 from app import create_app
 from migrations.migrate_json import migrate_bewerbungen_json
