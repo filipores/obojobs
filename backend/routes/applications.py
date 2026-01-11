@@ -5,8 +5,9 @@ from flask import Blueprint, request, jsonify, send_file
 
 from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
-from models import db, Application
+from models import db, Application, Template
 from services.generator import BewerbungsGenerator
+from services.web_scraper import WebScraper
 
 applications_bp = Blueprint('applications', __name__)
 
@@ -98,6 +99,75 @@ def generate_application(current_user):
 
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@applications_bp.route('/generate-from-url', methods=['POST'])
+@jwt_required_custom
+def generate_from_url(current_user):
+    """Generate a new application from URL (Web App)"""
+    # Check credits
+    if current_user.credits_remaining <= 0:
+        return jsonify({
+            'success': False,
+            'error': 'Keine Credits mehr vorhanden. Bitte kaufe weitere Credits.'
+        }), 402
+
+    data = request.json
+    url = data.get('url', '').strip()
+    template_id = data.get('template_id')
+
+    if not url:
+        return jsonify({'success': False, 'error': 'URL ist erforderlich'}), 400
+
+    if not url.startswith(('http://', 'https://')):
+        return jsonify({'success': False, 'error': 'Ungültige URL. Bitte mit http:// oder https:// beginnen.'}), 400
+
+    try:
+        # Scrape the job posting
+        scraper = WebScraper()
+        job_data = scraper.fetch_job_posting(url)
+
+        if not job_data.get('text'):
+            return jsonify({
+                'success': False,
+                'error': 'Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL.'
+            }), 400
+
+        # Extract company name from URL
+        company = scraper.extract_company_name_from_url(url)
+
+        # Validate template if provided
+        if template_id:
+            template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
+            if not template:
+                return jsonify({'success': False, 'error': 'Template nicht gefunden'}), 404
+
+        # Generate application using existing generator
+        generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+        pdf_path = generator.generate_bewerbung(url, company)
+
+        # Get the newly created application
+        latest = Application.query.filter_by(user_id=current_user.id).order_by(
+            Application.datum.desc()
+        ).first()
+
+        # Decrement credits
+        current_user.credits_remaining -= 1
+        db.session.commit()
+
+        return jsonify({
+            'success': True,
+            'application': latest.to_dict() if latest else None,
+            'pdf_path': pdf_path,
+            'credits_remaining': current_user.credits_remaining,
+            'message': f'Bewerbung für {company} erstellt'
+        }), 200
+
+    except ValueError as e:
+        # Missing documents error from generator
+        return jsonify({'success': False, 'error': str(e)}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'error': f'Fehler bei der Generierung: {str(e)}'}), 500
 
 
 @applications_bp.route('/<int:app_id>', methods=['GET'])

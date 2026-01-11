@@ -25,6 +25,13 @@
           <router-link to="/applications" class="nav-link" active-class="active">
             <span class="nav-text">Bewerbungen</span>
           </router-link>
+          <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span class="nav-text">Neu</span>
+          </router-link>
         </div>
 
         <!-- Actions - Credits & Settings -->
@@ -265,6 +272,32 @@ onMounted(() => {
   transition: color var(--transition-base);
 }
 
+.nav-link-cta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--color-ai);
+  color: var(--color-washi) !important;
+  border-radius: var(--radius-full);
+  padding: var(--space-xs) var(--space-md);
+  margin-left: var(--space-sm);
+  font-weight: 500;
+  transition: all var(--transition-base);
+}
+
+.nav-link-cta:hover {
+  background: var(--color-ai-light);
+  transform: translateY(-1px);
+}
+
+.nav-link-cta.active {
+  background: var(--color-sumi);
+}
+
+.nav-link-cta svg {
+  flex-shrink: 0;
+}
+
 .nav-link::after {
   content: '';
   position: absolute;
@@ -442,6 +475,14 @@ onMounted(() => {
 
   .nav-text {
     display: none;
+  }
+
+  .nav-link-cta .nav-text {
+    display: inline;
+  }
+
+  .nav-link-cta {
+    padding: var(--space-xs) var(--space-sm);
   }
 
   .brand-text {
