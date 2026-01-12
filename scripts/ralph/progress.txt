@@ -1,0 +1,81 @@
+# Ralph Progress Log - obojobs
+Started: 2025-01-12
+
+## Codebase Patterns
+
+### Frontend (Vue.js 3 + Vite)
+- Entry Point: `frontend/src/main.js`
+- Router: `frontend/src/router/index.js`
+- API Client: `frontend/src/api/client.js` (Axios + JWT Interceptor)
+- Auth Store: `frontend/src/store/auth.js` (localStorage-based)
+- Komponenten: `frontend/src/components/`
+- Seiten: `frontend/src/pages/`
+- Composables: `frontend/src/composables/`
+- Styles: `frontend/src/assets/styles.css` (Japanese Design System)
+- Dev Server: Port 3000, Proxy `/api` → `http://127.0.0.1:5001`
+
+### Backend (Flask + SQLAlchemy)
+- Entry Point: `backend/app.py`
+- Config: `backend/config.py`
+- Models: `backend/models/` (User, Document, Template, Application, APIKey, Purchase)
+- Routes: `backend/routes/` (auth, documents, templates, applications, api_keys, payments, stats)
+- Services: `backend/services/` (generator, api_client, pdf_handler, web_scraper, paypal_service)
+- Middleware: `backend/middleware/` (jwt_required, api_key_required)
+- Server Port: 5001
+- Database: SQLite (dev) at `backend/instance/obojobs.db`
+
+### API Response Format
+```json
+// Success
+{ "success": true, "data": {...}, "message": "..." }
+// Error
+{ "success": false, "error": "Fehlermeldung" }
+```
+
+### Authentication
+- JWT Token in `Authorization: Bearer {token}` Header
+- Token expires: 1 hour (access), 7 days (refresh)
+- API Keys: `X-API-Key` Header for extension
+
+### Template Variablen
+- `{{FIRMA}}` - Firmenname
+- `{{POSITION}}` - Stellenbezeichnung
+- `{{ANSPRECHPARTNER}}` - Kontaktperson
+- `{{QUELLE}}` - Stellenquelle
+- `{{EINLEITUNG}}` - AI-generierte Einleitung
+
+### Status-Werte (deutsch)
+- erstellt, versendet, antwort_erhalten, absage, zusage
+
+### Dokument-Typen
+- lebenslauf, arbeitszeugnis, anschreiben
+
+### File Storage
+- Uploads: `backend/uploads/user_{id}/documents/`
+- Generated PDFs: `backend/uploads/user_{id}/pdfs/`
+
+### Limits
+- Rate Limiting: 200/hour, 50/minute
+- PDF Upload: max 10MB
+- Template: max 500KB
+- Default Credits: 5 per new user
+
+## Key Files
+- `backend/app.py` - Flask App Entry
+- `backend/services/generator.py` - BewerbungsGenerator (Haupt-Logik)
+- `backend/services/api_client.py` - Claude API Integration
+- `frontend/src/App.vue` - Vue App Entry
+- `frontend/src/api/client.js` - HTTP Client mit Interceptors
+- `frontend/src/composables/useTemplateParser.js` - Template Parsing
+
+## Gotchas
+- Frontend nutzt Vite Proxy für `/api/*` Calls
+- Backend muss auf Port 5001 laufen
+- SQLAlchemy Models müssen mit `db.session.commit()` gespeichert werden
+- JWT Errors (401/422) → Frontend macht automatisch Logout
+- Credits werden in `User.credits_remaining` getracked
+
+---
+## Iteration Log
+
+(Ralph fügt hier nach jeder Iteration Einträge hinzu)
