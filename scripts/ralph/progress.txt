@@ -75,3 +75,52 @@ Started: Mon Jan 12 23:59:47 CET 2026
   - Provider-Icons mit Gmail/Outlook Farben (#DB4437, #0078D4)
   - Status-Badge für "Verbunden" Anzeige
   - Unused catch-Variablen müssen mit _ prefixed werden für ESLint
+
+---
+
+## 2026-01-13 - EMAIL-005
+- Implementiert: Email Composer Modal in Applications-Seite
+- Geänderte Dateien:
+  - frontend/src/pages/Applications.vue (Email Composer Modal hinzugefügt)
+- **Learnings:**
+  - Email Composer als Modal in bestehender Applications-Seite integriert
+  - Formularfelder: An (vorausgefüllt aus app.email), Betreff, Nachricht
+  - Vorschau-Modus zeigt finale Email mit Von/An/Betreff und Anhänge
+  - Template-Variablen (FIRMA, POSITION, ANSPRECHPARTNER, QUELLE) werden via replaceTemplateVariables() ersetzt
+  - Account-Selector lädt verbundene Email-Konten via GET /api/email/accounts
+  - Warning-Box wenn keine Accounts verbunden sind, mit Link zu Einstellungen
+  - Attachment-Info zeigt automatisch angehängte PDFs (Anschreiben + Lebenslauf)
+  - Senden-Button deaktiviert wenn keine Accounts/To/Subject - Versand in EMAIL-006
+
+---
+
+## 2026-01-13 - EMAIL-006
+- Implementiert: Email Versand mit Attachments über Gmail und Outlook APIs
+- Geänderte Dateien:
+  - backend/routes/email.py (POST /api/email/send Endpoint)
+  - backend/services/gmail_service.py (send_email Methode mit MIME)
+  - backend/services/outlook_service.py (send_email Methode mit Graph API)
+  - frontend/src/pages/Applications.vue (sendEmail Funktion)
+- **Learnings:**
+  - Gmail API: base64url-encoded MIME message via gmail.googleapis.com/gmail/v1/users/me/messages/send
+  - Outlook API: JSON Payload via graph.microsoft.com/v1.0/me/sendMail mit fileAttachment
+  - MIME Message Aufbau mit email.mime.multipart und email.mime.application
+  - Attachment-Größenlimit (10MB) wird serverseitig geprüft
+  - Automatische Anhänge: Anschreiben-PDF aus Application.pdf_path, Lebenslauf aus Document (doc_type='cv_pdf')
+  - Graph API Statuscode 202 für erfolgreichen Versand (kein Body in Response)
+
+---
+
+## 2026-01-13 - EMAIL-007
+- Implementiert: Sent Tracking & Status Update nach Email-Versand
+- Geänderte Dateien:
+  - backend/models/application.py (sent_at und sent_via Felder hinzugefügt)
+  - backend/routes/email.py (Status-Update nach erfolgreichem Versand)
+  - backend/migrations/add_application_sent_tracking.py (NEU)
+  - frontend/src/pages/Applications.vue (Sent-Info Anzeige und Button-Text)
+- **Learnings:**
+  - to_dict() Methode muss aktualisiert werden wenn neue Felder zum Model hinzugefügt werden
+  - datetime.utcnow() für konsistente UTC-Timestamps
+  - SQLite ALTER TABLE für neue nullable Columns ist einfach
+  - Button-Text kann mit ternärem Operator basierend auf sent_at gesetzt werden
+  - Eigene CSS-Klasse (.detail-group-sent) für visuelles Highlighting des Versandstatus

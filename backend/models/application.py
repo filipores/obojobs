@@ -21,6 +21,8 @@ class Application(db.Model):
     email_text = db.Column(db.Text)
     notizen = db.Column(db.Text)
     links_json = db.Column(db.Text)  # JSON stored as text
+    sent_at = db.Column(db.DateTime, nullable=True)
+    sent_via = db.Column(db.String(50), nullable=True)  # 'gmail' or 'outlook'
 
     # Relationships
     user = db.relationship("User", back_populates="applications")
@@ -43,4 +45,6 @@ class Application(db.Model):
             "email_text": self.email_text,
             "notizen": self.notizen,
             "links_json": self.links_json,
+            "sent_at": self.sent_at.isoformat() if self.sent_at else None,
+            "sent_via": self.sent_via,
         }

@@ -90,7 +90,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Betreff und Email-Text aus Application Model nutzen"
     },
     {
@@ -109,7 +109,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "MIME Message mit email.mime library erstellen"
     },
     {
@@ -127,7 +127,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Migration für neue Felder in Application Model"
     }
   ]

@@ -1,5 +1,6 @@
 import os
 import secrets
+from datetime import datetime
 
 from flask import Blueprint, jsonify, request, session
 from flask_jwt_extended import get_jwt_identity, jwt_required
@@ -440,6 +441,12 @@ def send_email():
                 "error": f"Unknown provider: {email_account.provider}",
             }), 400
 
+        # Update application: set sent_at, sent_via, and status
+        application.sent_at = datetime.utcnow()
+        application.sent_via = email_account.provider
+        application.status = "versendet"
+        db.session.commit()
+
         return jsonify({
             "success": True,
             "message": "Email sent successfully",
@@ -447,6 +454,8 @@ def send_email():
                 "result": result,
                 "attachments_count": len(attachments),
                 "provider": email_account.provider,
+                "sent_at": application.sent_at.isoformat(),
+                "sent_via": application.sent_via,
             },
         }), 200
 

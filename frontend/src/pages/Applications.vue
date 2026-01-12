@@ -211,6 +211,18 @@
                 </div>
               </div>
 
+              <!-- Sent Info -->
+              <div v-if="selectedApp.sent_at" class="detail-group detail-group-sent">
+                <label class="detail-label">Gesendet</label>
+                <p class="detail-value">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sent-icon">
+                    <path d="M22 2L11 13"/>
+                    <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
+                  </svg>
+                  {{ formatDateTime(selectedApp.sent_at) }} via {{ getSentViaLabel(selectedApp.sent_via) }}
+                </p>
+              </div>
+
               <!-- Betreff -->
               <div v-if="selectedApp.betreff" class="detail-group">
                 <label class="detail-label">Betreff</label>
@@ -236,7 +248,7 @@
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
-                Email senden
+                {{ selectedApp.sent_at ? 'Erneut senden' : 'Email senden' }}
               </button>
               <button @click="downloadPDF(selectedApp.id)" class="zen-btn">
                 PDF herunterladen
@@ -565,6 +577,14 @@ const getStatusLabel = (status) => {
     'zusage': 'Zusage'
   }
   return labels[status] || status
+}
+
+const getSentViaLabel = (provider) => {
+  const labels = {
+    'gmail': 'Gmail',
+    'outlook': 'Outlook'
+  }
+  return labels[provider] || provider
 }
 
 // Email Composer Functions
@@ -1041,6 +1061,25 @@ onMounted(() => {
   background: var(--color-ai-subtle);
   border-radius: var(--radius-md);
   border-left: 3px solid var(--color-ai);
+}
+
+.detail-group-sent {
+  padding: var(--space-md);
+  background: rgba(122, 139, 110, 0.1);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-koke);
+}
+
+.detail-group-sent .detail-value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-koke);
+  font-weight: 500;
+}
+
+.sent-icon {
+  flex-shrink: 0;
 }
 
 .detail-label {
