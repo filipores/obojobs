@@ -1,5 +1,32 @@
 <template>
   <div class="dashboard">
+    <!-- Email Verification Banner -->
+    <div v-if="showVerificationBanner" class="verification-banner">
+      <div class="container">
+        <div class="banner-content">
+          <div class="banner-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div class="banner-text">
+            <strong>E-Mail-Adresse nicht verifiziert</strong>
+            <span>Bitte verifizieren Sie Ihre E-Mail-Adresse, um alle Funktionen nutzen zu können.</span>
+          </div>
+          <router-link to="/email-verification" class="zen-btn zen-btn-sm">
+            Jetzt verifizieren
+          </router-link>
+          <button @click="dismissBanner" class="banner-dismiss" aria-label="Banner schließen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Hero Section with Ma (negative space) -->
     <section class="hero-section">
       <div class="container">
@@ -180,13 +207,34 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
+import { authStore } from '../store/auth'
 
 const stats = ref(null)
+const bannerDismissed = ref(false)
+
+const showVerificationBanner = computed(() => {
+  if (bannerDismissed.value) return false
+  if (!authStore.user) return false
+  return authStore.user.email_verified === false
+})
+
+const dismissBanner = () => {
+  bannerDismissed.value = true
+  // Store dismissal for this session
+  sessionStorage.setItem('verificationBannerDismissed', 'true')
+}
 
 onMounted(async () => {
+  // Check if banner was dismissed this session
+  if (sessionStorage.getItem('verificationBannerDismissed')) {
+    bannerDismissed.value = true
+  }
+
   try {
+    // Fetch fresh user data to get current email_verified status
+    await authStore.fetchUser()
     const { data } = await api.get('/stats')
     stats.value = data.stats
   } catch (error) {
@@ -199,6 +247,74 @@ onMounted(async () => {
 .dashboard {
   min-height: calc(100vh - 73px);
   background: var(--color-washi);
+}
+
+/* ========================================
+   VERIFICATION BANNER
+   ======================================== */
+.verification-banner {
+  background: var(--color-warning-subtle, #fff3e0);
+  border-bottom: 1px solid var(--color-warning, #f57c00);
+  padding: var(--space-md) 0;
+}
+
+.banner-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.banner-icon {
+  color: var(--color-warning, #f57c00);
+  flex-shrink: 0;
+}
+
+.banner-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.banner-text strong {
+  color: var(--color-sumi);
+  font-size: 0.9375rem;
+}
+
+.banner-text span {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.banner-dismiss {
+  padding: var(--space-xs);
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.banner-dismiss:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-sumi);
+}
+
+@media (max-width: 768px) {
+  .banner-content {
+    flex-wrap: wrap;
+  }
+
+  .banner-text {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .verification-banner .zen-btn {
+    width: 100%;
+    margin-top: var(--space-sm);
+  }
 }
 
 /* ========================================

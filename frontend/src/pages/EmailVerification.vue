@@ -22,10 +22,10 @@
     <div class="auth-decoration">
       <div class="enso-decoration enso-1"></div>
       <div class="enso-decoration enso-2"></div>
-      <div class="vertical-text">新</div>
+      <div class="vertical-text">確</div>
     </div>
 
-    <!-- Main Content - Asymmetric layout -->
+    <!-- Main Content -->
     <div class="auth-container">
       <!-- Form Section -->
       <div class="auth-form-section animate-fade-up">
@@ -37,86 +37,31 @@
 
         <!-- Header -->
         <div class="auth-header">
-          <h1>Konto erstellen</h1>
-          <p>Starten Sie mit KI-gestützten Bewerbungen</p>
+          <h1>E-Mail bestätigen</h1>
+          <p>Verifizieren Sie Ihre E-Mail-Adresse</p>
         </div>
 
-        <!-- Success Message -->
-        <div v-if="success" class="success-card zen-card">
-          <div class="success-icon">
-            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
-              <polyline points="22 4 12 14.01 9 11.01"/>
+        <!-- Main Card -->
+        <div class="verification-card zen-card">
+          <div class="verification-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
             </svg>
           </div>
-          <h3>Registrierung erfolgreich</h3>
-          <p>Ihr Konto wurde erstellt. Sie können sich jetzt anmelden.</p>
-          <router-link to="/login" class="zen-btn zen-btn-filled">
-            Zum Login
-          </router-link>
-        </div>
 
-        <!-- Form -->
-        <form v-else @submit.prevent="handleRegister" class="auth-form">
-          <div class="form-group">
-            <label class="form-label" for="full_name">Vollständiger Name</label>
-            <input
-              id="full_name"
-              v-model="full_name"
-              type="text"
-              class="form-input"
-              placeholder="Max Mustermann"
-              required
-              autocomplete="name"
-            />
-          </div>
+          <h3>Verifizierungs-E-Mail gesendet</h3>
+          <p class="email-info">
+            Wir haben eine Bestätigungs-E-Mail an <strong>{{ userEmail }}</strong> gesendet.
+          </p>
+          <p class="instructions">
+            Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu verifizieren.
+            Falls Sie die E-Mail nicht finden, prüfen Sie bitte auch Ihren Spam-Ordner.
+          </p>
 
-          <div class="form-group">
-            <label class="form-label" for="email">E-Mail</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              class="form-input"
-              placeholder="ihre@email.de"
-              required
-              autocomplete="email"
-            />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="password">Passwort</label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              class="form-input"
-              placeholder="Sicheres Passwort"
-              required
-              autocomplete="new-password"
-              @input="validatePassword"
-            />
-            <div class="password-requirements">
-              <p class="requirements-label">Passwort-Anforderungen:</p>
-              <ul class="requirements-list">
-                <li :class="{ 'requirement-met': passwordChecks.min_length }">
-                  <span class="check-icon">{{ passwordChecks.min_length ? '✓' : '○' }}</span>
-                  Mindestens 8 Zeichen
-                </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_uppercase }">
-                  <span class="check-icon">{{ passwordChecks.has_uppercase ? '✓' : '○' }}</span>
-                  Mindestens ein Großbuchstabe (A-Z)
-                </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_lowercase }">
-                  <span class="check-icon">{{ passwordChecks.has_lowercase ? '✓' : '○' }}</span>
-                  Mindestens ein Kleinbuchstabe (a-z)
-                </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_number }">
-                  <span class="check-icon">{{ passwordChecks.has_number ? '✓' : '○' }}</span>
-                  Mindestens eine Zahl (0-9)
-                </li>
-              </ul>
-            </div>
+          <!-- Success Message -->
+          <div v-if="successMessage" class="alert alert-success">
+            {{ successMessage }}
           </div>
 
           <!-- Error Message -->
@@ -124,52 +69,59 @@
             {{ error }}
           </div>
 
-          <!-- Submit Button -->
-          <button type="submit" class="zen-btn zen-btn-filled zen-btn-lg" :disabled="loading">
-            <span v-if="!loading">Kostenlos registrieren</span>
-            <span v-else>Wird registriert...</span>
+          <!-- Resend Button -->
+          <button
+            @click="resendVerification"
+            class="zen-btn zen-btn-filled zen-btn-lg"
+            :disabled="loading || cooldownSeconds > 0"
+          >
+            <span v-if="loading">Wird gesendet...</span>
+            <span v-else-if="cooldownSeconds > 0">
+              Erneut senden in {{ cooldownSeconds }}s
+            </span>
+            <span v-else>Erneut senden</span>
           </button>
 
-          <!-- Info -->
-          <p class="credits-info">
-            Sie erhalten <strong>5 kostenlose Credits</strong> bei der Registrierung
+          <p class="rate-limit-info" v-if="cooldownSeconds > 0">
+            Sie können maximal 3 Verifizierungs-E-Mails pro Stunde anfordern.
           </p>
-        </form>
+        </div>
 
         <!-- Divider -->
         <div class="ink-stroke"></div>
 
         <!-- Footer -->
         <div class="auth-footer">
-          <p>Bereits ein Konto? <router-link to="/login">Anmelden</router-link></p>
+          <p>Falsche E-Mail? <router-link to="/register">Neu registrieren</router-link></p>
+          <p>Bereits verifiziert? <router-link to="/login">Anmelden</router-link></p>
         </div>
       </div>
 
       <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2>Starten Sie<br/>in Minuten</h2>
+          <h2>Warum E-Mail<br/>verifizieren?</h2>
           <p class="info-description">
-            Alles was Sie brauchen, um professionelle Bewerbungen zu
-            erstellen - kostenlos starten mit 5 Credits.
+            Die Verifizierung schützt Ihr Konto und ermöglicht uns,
+            wichtige Informationen sicher zuzustellen.
           </p>
 
           <ul class="feature-list">
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>5 kostenlose Credits zum Start</span>
+              <span>Schutz vor unbefugtem Zugriff</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>KI-gestützte Anschreiben-Generierung</span>
+              <span>Passwort-Wiederherstellung möglich</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Sichere Datenverwaltung</span>
+              <span>Wichtige Benachrichtigungen</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Chrome Extension inklusive</span>
+              <span>Voller Funktionsumfang</span>
             </li>
           </ul>
         </div>
@@ -182,41 +134,20 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { authStore } from '../store/auth'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { useRoute } from 'vue-router'
+import api from '../api/client'
 
-const router = useRouter()
+const route = useRoute()
 
-const full_name = ref('')
-const email = ref('')
-const password = ref('')
-const error = ref('')
-const success = ref(false)
+const userEmail = ref('')
 const loading = ref(false)
+const error = ref('')
+const successMessage = ref('')
+const cooldownSeconds = ref(0)
 const isDarkMode = ref(false)
 
-const passwordChecks = reactive({
-  min_length: false,
-  has_uppercase: false,
-  has_lowercase: false,
-  has_number: false,
-})
-
-const validatePassword = () => {
-  const pwd = password.value
-  passwordChecks.min_length = pwd.length >= 8
-  passwordChecks.has_uppercase = /[A-Z]/.test(pwd)
-  passwordChecks.has_lowercase = /[a-z]/.test(pwd)
-  passwordChecks.has_number = /\d/.test(pwd)
-}
-
-const isPasswordValid = () => {
-  return passwordChecks.min_length &&
-         passwordChecks.has_uppercase &&
-         passwordChecks.has_lowercase &&
-         passwordChecks.has_number
-}
+let cooldownInterval = null
 
 const THEME_KEY = 'obojobs-theme'
 
@@ -245,30 +176,38 @@ const toggleTheme = () => {
   }
 }
 
-const handleRegister = async () => {
-  // Frontend validation
-  if (!isPasswordValid()) {
-    error.value = 'Bitte erfüllen Sie alle Passwort-Anforderungen.'
-    return
+const startCooldown = (seconds) => {
+  cooldownSeconds.value = seconds
+  if (cooldownInterval) {
+    clearInterval(cooldownInterval)
   }
+  cooldownInterval = setInterval(() => {
+    cooldownSeconds.value--
+    if (cooldownSeconds.value <= 0) {
+      clearInterval(cooldownInterval)
+      cooldownInterval = null
+    }
+  }, 1000)
+}
 
+const resendVerification = async () => {
   try {
     loading.value = true
     error.value = ''
-    success.value = false
-    await authStore.register(email.value, password.value, full_name.value)
-    // Log in the user automatically after registration
-    await authStore.login(email.value, password.value)
-    // Send verification email
-    try {
-      await authStore.sendVerificationEmail()
-    } catch {
-      // Ignore errors - verification email will be sent
-    }
-    // Redirect to email verification page
-    router.push({ path: '/email-verification', query: { email: email.value } })
+    successMessage.value = ''
+
+    await api.post('/auth/send-verification')
+
+    successMessage.value = 'Verifizierungs-E-Mail wurde erneut gesendet!'
+    startCooldown(60) // 60 seconds cooldown
   } catch (e) {
-    error.value = e.response?.data?.error || 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.'
+    const errorMsg = e.response?.data?.error || 'Fehler beim Senden der E-Mail.'
+    error.value = errorMsg
+
+    // If rate limited, show cooldown
+    if (e.response?.status === 429) {
+      startCooldown(60)
+    }
   } finally {
     loading.value = false
   }
@@ -276,6 +215,14 @@ const handleRegister = async () => {
 
 onMounted(() => {
   initTheme()
+  // Get email from query param or localStorage
+  userEmail.value = route.query.email || localStorage.getItem('pendingVerificationEmail') || 'ihre@email.de'
+})
+
+onUnmounted(() => {
+  if (cooldownInterval) {
+    clearInterval(cooldownInterval)
+  }
 })
 </script>
 
@@ -390,7 +337,7 @@ onMounted(() => {
    FORM SECTION
    ======================================== */
 .auth-form-section {
-  max-width: 420px;
+  max-width: 480px;
 }
 
 .auth-brand {
@@ -431,29 +378,69 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-.auth-form {
+/* Verification Card */
+.verification-card {
+  text-align: center;
+  padding: var(--space-ma-lg);
   margin-bottom: var(--space-ma);
 }
 
-.auth-form .form-group {
+.verification-icon {
+  color: var(--color-ai);
   margin-bottom: var(--space-lg);
 }
 
-.auth-form .zen-btn {
+.verification-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-md);
+}
+
+.email-info {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.email-info strong {
+  color: var(--color-sumi);
+}
+
+.instructions {
+  color: var(--color-text-tertiary);
+  font-size: 0.9375rem;
+  margin-bottom: var(--space-lg);
+  line-height: var(--leading-relaxed);
+}
+
+.verification-card .zen-btn {
   width: 100%;
   margin-top: var(--space-md);
 }
 
-.credits-info {
-  text-align: center;
-  font-size: 0.875rem;
-  color: var(--color-text-tertiary);
+.rate-limit-info {
+  font-size: 0.8125rem;
+  color: var(--color-text-ghost);
   margin-top: var(--space-md);
   margin-bottom: 0;
 }
 
-.credits-info strong {
-  color: var(--color-ai);
+/* Alerts */
+.alert {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  font-size: 0.9375rem;
+}
+
+.alert-success {
+  background: var(--color-success-subtle, #e8f5e9);
+  color: var(--color-success, #2e7d32);
+  border: 1px solid var(--color-success, #2e7d32);
+}
+
+.alert-error {
+  background: var(--color-error-subtle, #fbe9e7);
+  color: var(--color-error, #c62828);
+  border: 1px solid var(--color-error, #c62828);
 }
 
 .auth-footer {
@@ -462,33 +449,16 @@ onMounted(() => {
 
 .auth-footer p {
   color: var(--color-text-tertiary);
+  margin-bottom: var(--space-sm);
+}
+
+.auth-footer p:last-child {
   margin-bottom: 0;
 }
 
 .auth-footer a {
   color: var(--color-ai);
   font-weight: 500;
-}
-
-/* Success Card */
-.success-card {
-  text-align: center;
-  padding: var(--space-ma-lg);
-}
-
-.success-icon {
-  color: var(--color-success);
-  margin-bottom: var(--space-lg);
-}
-
-.success-card h3 {
-  font-size: 1.5rem;
-  margin-bottom: var(--space-sm);
-}
-
-.success-card p {
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-lg);
 }
 
 /* ========================================
@@ -600,55 +570,9 @@ onMounted(() => {
     width: 24px;
     height: 24px;
   }
-}
 
-/* ========================================
-   PASSWORD REQUIREMENTS
-   ======================================== */
-.password-requirements {
-  margin-top: var(--space-sm);
-  padding: var(--space-md);
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-light);
-}
-
-.requirements-label {
-  font-size: 0.8125rem;
-  color: var(--color-text-tertiary);
-  margin-bottom: var(--space-sm);
-  font-weight: 500;
-}
-
-.requirements-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.requirements-list li {
-  font-size: 0.8125rem;
-  color: var(--color-text-tertiary);
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  transition: color var(--transition-base);
-}
-
-.requirements-list li.requirement-met {
-  color: var(--color-success, #4CAF50);
-}
-
-.check-icon {
-  font-size: 0.75rem;
-  width: 1rem;
-  text-align: center;
-}
-
-.requirements-list li.requirement-met .check-icon {
-  color: var(--color-success, #4CAF50);
+  .verification-card {
+    padding: var(--space-lg);
+  }
 }
 </style>

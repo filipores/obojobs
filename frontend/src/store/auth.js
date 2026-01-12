@@ -14,7 +14,14 @@ export const authStore = reactive({
   },
 
   async register(email, password, full_name) {
-    await api.post('/auth/register', { email, password, full_name })
+    const { data } = await api.post('/auth/register', { email, password, full_name })
+    // Store email for verification page
+    localStorage.setItem('pendingVerificationEmail', email)
+    return data
+  },
+
+  async sendVerificationEmail() {
+    await api.post('/auth/send-verification')
   },
 
   async fetchUser() {
