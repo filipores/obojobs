@@ -18,6 +18,11 @@ class User(db.Model):
     total_credits_purchased = db.Column(db.Integer, default=0)  # NEW: Track lifetime purchases
     is_active = db.Column(db.Boolean, default=True)
 
+    # Email verification fields
+    email_verified = db.Column(db.Boolean, default=False)
+    email_verification_token = db.Column(db.String(255), nullable=True)
+    email_verification_sent_at = db.Column(db.DateTime, nullable=True)
+
     # Relationships
     documents = db.relationship("Document", back_populates="user", cascade="all, delete-orphan")
     templates = db.relationship("Template", back_populates="user", cascade="all, delete-orphan")
@@ -41,4 +46,5 @@ class User(db.Model):
             "credits_max": self.credits_max,
             "total_credits_purchased": self.total_credits_purchased,
             "is_active": self.is_active,
+            "email_verified": self.email_verified,
         }
