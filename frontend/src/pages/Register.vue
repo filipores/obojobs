@@ -91,12 +91,32 @@
               v-model="password"
               type="password"
               class="form-input"
-              placeholder="Mindestens 6 Zeichen"
+              placeholder="Sicheres Passwort"
               required
               autocomplete="new-password"
-              minlength="6"
+              @input="validatePassword"
             />
-            <p class="form-hint">Mindestens 6 Zeichen</p>
+            <div class="password-requirements">
+              <p class="requirements-label">Passwort-Anforderungen:</p>
+              <ul class="requirements-list">
+                <li :class="{ 'requirement-met': passwordChecks.min_length }">
+                  <span class="check-icon">{{ passwordChecks.min_length ? '✓' : '○' }}</span>
+                  Mindestens 8 Zeichen
+                </li>
+                <li :class="{ 'requirement-met': passwordChecks.has_uppercase }">
+                  <span class="check-icon">{{ passwordChecks.has_uppercase ? '✓' : '○' }}</span>
+                  Mindestens ein Großbuchstabe (A-Z)
+                </li>
+                <li :class="{ 'requirement-met': passwordChecks.has_lowercase }">
+                  <span class="check-icon">{{ passwordChecks.has_lowercase ? '✓' : '○' }}</span>
+                  Mindestens ein Kleinbuchstabe (a-z)
+                </li>
+                <li :class="{ 'requirement-met': passwordChecks.has_number }">
+                  <span class="check-icon">{{ passwordChecks.has_number ? '✓' : '○' }}</span>
+                  Mindestens eine Zahl (0-9)
+                </li>
+              </ul>
+            </div>
           </div>
 
           <!-- Error Message -->
@@ -162,7 +182,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { authStore } from '../store/auth'
 
 const full_name = ref('')
@@ -172,6 +192,28 @@ const error = ref('')
 const success = ref(false)
 const loading = ref(false)
 const isDarkMode = ref(false)
+
+const passwordChecks = reactive({
+  min_length: false,
+  has_uppercase: false,
+  has_lowercase: false,
+  has_number: false,
+})
+
+const validatePassword = () => {
+  const pwd = password.value
+  passwordChecks.min_length = pwd.length >= 8
+  passwordChecks.has_uppercase = /[A-Z]/.test(pwd)
+  passwordChecks.has_lowercase = /[a-z]/.test(pwd)
+  passwordChecks.has_number = /\d/.test(pwd)
+}
+
+const isPasswordValid = () => {
+  return passwordChecks.min_length &&
+         passwordChecks.has_uppercase &&
+         passwordChecks.has_lowercase &&
+         passwordChecks.has_number
+}
 
 const THEME_KEY = 'obojobs-theme'
 
@@ -201,6 +243,12 @@ const toggleTheme = () => {
 }
 
 const handleRegister = async () => {
+  // Frontend validation
+  if (!isPasswordValid()) {
+    error.value = 'Bitte erfüllen Sie alle Passwort-Anforderungen.'
+    return
+  }
+
   try {
     loading.value = true
     error.value = ''
@@ -540,5 +588,55 @@ onMounted(() => {
     width: 24px;
     height: 24px;
   }
+}
+
+/* ========================================
+   PASSWORD REQUIREMENTS
+   ======================================== */
+.password-requirements {
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.requirements-label {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-sm);
+  font-weight: 500;
+}
+
+.requirements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.requirements-list li {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  transition: color var(--transition-base);
+}
+
+.requirements-list li.requirement-met {
+  color: var(--color-success, #4CAF50);
+}
+
+.check-icon {
+  font-size: 0.75rem;
+  width: 1rem;
+  text-align: center;
+}
+
+.requirements-list li.requirement-met .check-icon {
+  color: var(--color-success, #4CAF50);
 }
 </style>

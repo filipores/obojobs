@@ -1,6 +1,7 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 from models import User, db
+from services.password_validator import PasswordValidator
 
 
 class AuthService:
@@ -22,6 +23,11 @@ class AuthService:
         Raises:
             ValueError: If user already exists
         """
+        # Validate password strength
+        password_check = PasswordValidator.validate(password)
+        if not password_check["valid"]:
+            raise ValueError(password_check["errors"][0])
+
         # Check if user exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:

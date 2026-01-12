@@ -2,6 +2,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
 from services.auth_service import AuthService
+from services.password_validator import PasswordValidator
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -63,3 +64,19 @@ def me():
         return jsonify({"error": "User not found"}), 404
 
     return jsonify(user.to_dict()), 200
+
+
+@auth_bp.route("/password-requirements", methods=["GET"])
+def password_requirements():
+    """Get password requirements for frontend display"""
+    return jsonify({"requirements": PasswordValidator.get_requirements()}), 200
+
+
+@auth_bp.route("/validate-password", methods=["POST"])
+def validate_password():
+    """Validate password strength"""
+    data = request.json
+    password = data.get("password", "")
+
+    result = PasswordValidator.validate(password)
+    return jsonify(result), 200

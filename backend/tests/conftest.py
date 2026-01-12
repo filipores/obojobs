@@ -53,7 +53,7 @@ def test_user(app):
             credits_remaining=5,
             credits_max=50,
         )
-        user.set_password("testpassword123")
+        user.set_password("TestPass123")  # Meets new password requirements
         db.session.add(user)
         db.session.commit()
 
@@ -62,7 +62,7 @@ def test_user(app):
             "id": user.id,
             "email": user.email,
             "full_name": user.full_name,
-            "password": "testpassword123",
+            "password": "TestPass123",
         }
 
 
