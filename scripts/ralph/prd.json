@@ -67,7 +67,7 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Banner im Dashboard wenn Email noch nicht verifiziert"
     },
     {
@@ -86,7 +86,7 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Gibt immer 200 OK zurück (verhindert Email-Enumeration)"
     },
     {
@@ -104,8 +104,8 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 6,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Success-Card mit Link zu Login statt automatischer Redirect mit Toast"
     },
     {
       "id": "AUTH-007",

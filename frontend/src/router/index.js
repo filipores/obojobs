@@ -7,6 +7,8 @@ const routes = [
   { path: '/register', component: () => import('../pages/Register.vue') },
   { path: '/email-verification', component: () => import('../pages/EmailVerification.vue') },
   { path: '/verify-email', component: () => import('../pages/VerifyEmail.vue') },
+  { path: '/forgot-password', component: () => import('../pages/ForgotPassword.vue') },
+  { path: '/reset-password', component: () => import('../pages/ResetPassword.vue') },
   { path: '/impressum', component: () => import('../pages/Impressum.vue') },
   { path: '/datenschutz', component: () => import('../pages/Datenschutz.vue') },
 

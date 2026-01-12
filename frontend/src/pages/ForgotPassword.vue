@@ -22,10 +22,10 @@
     <div class="auth-decoration">
       <div class="enso-decoration enso-1"></div>
       <div class="enso-decoration enso-2"></div>
-      <div class="vertical-text">書</div>
+      <div class="vertical-text">鍵</div>
     </div>
 
-    <!-- Main Content - Asymmetric layout -->
+    <!-- Main Content -->
     <div class="auth-container">
       <!-- Form Section -->
       <div class="auth-form-section animate-fade-up">
@@ -37,12 +37,34 @@
 
         <!-- Header -->
         <div class="auth-header">
-          <h1>Willkommen</h1>
-          <p>Melden Sie sich an, um fortzufahren</p>
+          <h1>Passwort vergessen</h1>
+          <p>Setzen Sie Ihr Passwort zurück</p>
+        </div>
+
+        <!-- Success Card -->
+        <div v-if="submitted" class="success-card zen-card">
+          <div class="success-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <h3>E-Mail gesendet</h3>
+          <p class="success-message">
+            Falls ein Konto mit der E-Mail-Adresse <strong>{{ email }}</strong> existiert,
+            wurde ein Link zum Zurücksetzen des Passworts gesendet.
+          </p>
+          <p class="instructions">
+            Bitte prüfen Sie Ihr Postfach und Ihren Spam-Ordner.
+            Der Link ist 1 Stunde gültig.
+          </p>
+          <router-link to="/login" class="zen-btn zen-btn-filled">
+            Zurück zum Login
+          </router-link>
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleLogin" class="auth-form">
+        <form v-else @submit.prevent="handleSubmit" class="auth-form">
           <div class="form-group">
             <label class="form-label" for="email">E-Mail</label>
             <input
@@ -56,22 +78,6 @@
             />
           </div>
 
-          <div class="form-group">
-            <label class="form-label" for="password">Passwort</label>
-            <input
-              id="password"
-              v-model="password"
-              type="password"
-              class="form-input"
-              placeholder="••••••••"
-              required
-              autocomplete="current-password"
-            />
-            <div class="forgot-password-link">
-              <router-link to="/forgot-password">Passwort vergessen?</router-link>
-            </div>
-          </div>
-
           <!-- Error Message -->
           <div v-if="error" class="alert alert-error">
             {{ error }}
@@ -79,8 +85,8 @@
 
           <!-- Submit Button -->
           <button type="submit" class="zen-btn zen-btn-filled zen-btn-lg" :disabled="loading">
-            <span v-if="!loading">Anmelden</span>
-            <span v-else>Wird angemeldet...</span>
+            <span v-if="!loading">Link anfordern</span>
+            <span v-else>Wird gesendet...</span>
           </button>
         </form>
 
@@ -89,31 +95,31 @@
 
         <!-- Footer -->
         <div class="auth-footer">
-          <p>Noch kein Konto? <router-link to="/register">Registrieren</router-link></p>
+          <p>Passwort wieder eingefallen? <router-link to="/login">Anmelden</router-link></p>
         </div>
       </div>
 
-      <!-- Info Section - Offset for asymmetry -->
+      <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2>KI-gestützte<br/>Bewerbungen</h2>
+          <h2>Passwort<br/>zurücksetzen</h2>
           <p class="info-description">
-            Erstellen Sie professionelle, personalisierte Anschreiben
-            in Sekunden mit Künstlicher Intelligenz.
+            Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen
+            Link zum Zurücksetzen Ihres Passworts.
           </p>
 
           <ul class="feature-list">
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Automatische Anschreiben-Generierung</span>
+              <span>Sicherer Reset-Link per E-Mail</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Chrome Extension für 1-Klick Bewerbungen</span>
+              <span>Link ist 1 Stunde gültig</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Template-Verwaltung</span>
+              <span>Neues sicheres Passwort wählen</span>
             </li>
           </ul>
         </div>
@@ -127,19 +133,16 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { authStore } from '../store/auth'
+import api from '../api/client'
 
-const router = useRouter()
 const email = ref('')
-const password = ref('')
 const error = ref('')
 const loading = ref(false)
+const submitted = ref(false)
 const isDarkMode = ref(false)
 
 const THEME_KEY = 'obojobs-theme'
 
-// Initialize theme state
 const initTheme = () => {
   const savedTheme = localStorage.getItem(THEME_KEY)
   if (savedTheme) {
@@ -149,7 +152,6 @@ const initTheme = () => {
   }
 }
 
-// Toggle theme
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value
   localStorage.setItem(THEME_KEY, isDarkMode.value ? 'dark' : 'light')
@@ -164,14 +166,22 @@ const toggleTheme = () => {
   }
 }
 
-const handleLogin = async () => {
+const handleSubmit = async () => {
   try {
     loading.value = true
     error.value = ''
-    await authStore.login(email.value, password.value)
-    router.push('/')
+
+    await api.post('/auth/forgot-password', { email: email.value })
+    submitted.value = true
   } catch (e) {
-    error.value = e.response?.data?.error || 'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.'
+    // Only show error for non-200 responses that aren't rate limiting
+    if (e.response?.status === 429) {
+      error.value = 'Zu viele Anfragen. Bitte warten Sie einen Moment.'
+    } else {
+      // Backend always returns 200 to prevent email enumeration
+      // so this case should rarely happen
+      error.value = e.response?.data?.error || 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
+    }
   } finally {
     loading.value = false
   }
@@ -347,20 +357,56 @@ onMounted(() => {
   margin-top: var(--space-md);
 }
 
-.forgot-password-link {
-  text-align: right;
-  margin-top: var(--space-sm);
+/* Success Card */
+.success-card {
+  text-align: center;
+  padding: var(--space-ma-lg);
+  margin-bottom: var(--space-ma);
 }
 
-.forgot-password-link a {
-  font-size: 0.875rem;
-  color: var(--color-text-tertiary);
-  text-decoration: none;
-  transition: color var(--transition-base);
-}
-
-.forgot-password-link a:hover {
+.success-icon {
   color: var(--color-ai);
+  margin-bottom: var(--space-lg);
+}
+
+.success-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-md);
+}
+
+.success-message {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-sm);
+}
+
+.success-message strong {
+  color: var(--color-sumi);
+}
+
+.instructions {
+  color: var(--color-text-tertiary);
+  font-size: 0.9375rem;
+  margin-bottom: var(--space-lg);
+  line-height: var(--leading-relaxed);
+}
+
+.success-card .zen-btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* Alerts */
+.alert {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  font-size: 0.9375rem;
+}
+
+.alert-error {
+  background: var(--color-error-subtle, #fbe9e7);
+  color: var(--color-error, #c62828);
+  border: 1px solid var(--color-error, #c62828);
 }
 
 .auth-footer {
@@ -431,7 +477,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* Seasonal accent - subtle color touch */
+/* Seasonal accent */
 .seasonal-accent {
   position: absolute;
   bottom: 0;
@@ -485,6 +531,10 @@ onMounted(() => {
   .brand-enso {
     width: 24px;
     height: 24px;
+  }
+
+  .success-card {
+    padding: var(--space-lg);
   }
 }
 </style>

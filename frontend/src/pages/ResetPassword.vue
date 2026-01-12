@@ -22,10 +22,10 @@
     <div class="auth-decoration">
       <div class="enso-decoration enso-1"></div>
       <div class="enso-decoration enso-2"></div>
-      <div class="vertical-text">書</div>
+      <div class="vertical-text">新</div>
     </div>
 
-    <!-- Main Content - Asymmetric layout -->
+    <!-- Main Content -->
     <div class="auth-container">
       <!-- Form Section -->
       <div class="auth-form-section animate-fade-up">
@@ -37,39 +37,94 @@
 
         <!-- Header -->
         <div class="auth-header">
-          <h1>Willkommen</h1>
-          <p>Melden Sie sich an, um fortzufahren</p>
+          <h1>Neues Passwort</h1>
+          <p>Wählen Sie ein neues sicheres Passwort</p>
+        </div>
+
+        <!-- Success Card -->
+        <div v-if="success" class="success-card zen-card">
+          <div class="success-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
+              <polyline points="22 4 12 14.01 9 11.01"/>
+            </svg>
+          </div>
+          <h3>Passwort geändert</h3>
+          <p class="success-message">
+            Ihr Passwort wurde erfolgreich zurückgesetzt.
+            Sie können sich jetzt mit Ihrem neuen Passwort anmelden.
+          </p>
+          <router-link to="/login" class="zen-btn zen-btn-filled">
+            Zum Login
+          </router-link>
+        </div>
+
+        <!-- Invalid Token Card -->
+        <div v-else-if="invalidToken" class="error-card zen-card">
+          <div class="error-icon">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <h3>Ungültiger Link</h3>
+          <p class="error-message">
+            {{ tokenError }}
+          </p>
+          <router-link to="/forgot-password" class="zen-btn zen-btn-filled">
+            Neuen Link anfordern
+          </router-link>
         </div>
 
         <!-- Form -->
-        <form @submit.prevent="handleLogin" class="auth-form">
+        <form v-else @submit.prevent="handleSubmit" class="auth-form">
           <div class="form-group">
-            <label class="form-label" for="email">E-Mail</label>
-            <input
-              id="email"
-              v-model="email"
-              type="email"
-              class="form-input"
-              placeholder="ihre@email.de"
-              required
-              autocomplete="email"
-            />
-          </div>
-
-          <div class="form-group">
-            <label class="form-label" for="password">Passwort</label>
+            <label class="form-label" for="password">Neues Passwort</label>
             <input
               id="password"
               v-model="password"
               type="password"
               class="form-input"
-              placeholder="••••••••"
+              placeholder="Sicheres Passwort"
               required
-              autocomplete="current-password"
+              autocomplete="new-password"
+              @input="validatePassword"
             />
-            <div class="forgot-password-link">
-              <router-link to="/forgot-password">Passwort vergessen?</router-link>
+            <div class="password-requirements">
+              <p class="requirements-label">Passwort-Anforderungen:</p>
+              <ul class="requirements-list">
+                <li :class="{ 'requirement-met': passwordChecks.min_length }">
+                  <span class="check-icon">{{ passwordChecks.min_length ? '✓' : '○' }}</span>
+                  Mindestens 8 Zeichen
+                </li>
+                <li :class="{ 'requirement-met': passwordChecks.has_uppercase }">
+                  <span class="check-icon">{{ passwordChecks.has_uppercase ? '✓' : '○' }}</span>
+                  Mindestens ein Großbuchstabe (A-Z)
+                </li>
+                <li :class="{ 'requirement-met': passwordChecks.has_lowercase }">
+                  <span class="check-icon">{{ passwordChecks.has_lowercase ? '✓' : '○' }}</span>
+                  Mindestens ein Kleinbuchstabe (a-z)
+                </li>
+                <li :class="{ 'requirement-met': passwordChecks.has_number }">
+                  <span class="check-icon">{{ passwordChecks.has_number ? '✓' : '○' }}</span>
+                  Mindestens eine Zahl (0-9)
+                </li>
+              </ul>
             </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label" for="confirmPassword">Passwort bestätigen</label>
+            <input
+              id="confirmPassword"
+              v-model="confirmPassword"
+              type="password"
+              class="form-input"
+              placeholder="Passwort wiederholen"
+              required
+              autocomplete="new-password"
+            />
           </div>
 
           <!-- Error Message -->
@@ -79,8 +134,8 @@
 
           <!-- Submit Button -->
           <button type="submit" class="zen-btn zen-btn-filled zen-btn-lg" :disabled="loading">
-            <span v-if="!loading">Anmelden</span>
-            <span v-else>Wird angemeldet...</span>
+            <span v-if="!loading">Passwort ändern</span>
+            <span v-else>Wird gespeichert...</span>
           </button>
         </form>
 
@@ -89,31 +144,35 @@
 
         <!-- Footer -->
         <div class="auth-footer">
-          <p>Noch kein Konto? <router-link to="/register">Registrieren</router-link></p>
+          <p>Passwort wieder eingefallen? <router-link to="/login">Anmelden</router-link></p>
         </div>
       </div>
 
-      <!-- Info Section - Offset for asymmetry -->
+      <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2>KI-gestützte<br/>Bewerbungen</h2>
+          <h2>Sicheres<br/>Passwort wählen</h2>
           <p class="info-description">
-            Erstellen Sie professionelle, personalisierte Anschreiben
-            in Sekunden mit Künstlicher Intelligenz.
+            Wählen Sie ein starkes Passwort, das Sie nicht für
+            andere Dienste verwenden.
           </p>
 
           <ul class="feature-list">
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Automatische Anschreiben-Generierung</span>
+              <span>Mindestens 8 Zeichen</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Chrome Extension für 1-Klick Bewerbungen</span>
+              <span>Groß- und Kleinbuchstaben</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Template-Verwaltung</span>
+              <span>Mindestens eine Zahl</span>
+            </li>
+            <li class="feature-item stagger-item">
+              <span class="feature-marker"></span>
+              <span>Einzigartig für diesen Dienst</span>
             </li>
           </ul>
         </div>
@@ -126,20 +185,31 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
-import { authStore } from '../store/auth'
+import { ref, reactive, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import api from '../api/client'
 
-const router = useRouter()
-const email = ref('')
+const route = useRoute()
+
 const password = ref('')
+const confirmPassword = ref('')
 const error = ref('')
 const loading = ref(false)
+const success = ref(false)
+const invalidToken = ref(false)
+const tokenError = ref('')
 const isDarkMode = ref(false)
+const token = ref('')
+
+const passwordChecks = reactive({
+  min_length: false,
+  has_uppercase: false,
+  has_lowercase: false,
+  has_number: false,
+})
 
 const THEME_KEY = 'obojobs-theme'
 
-// Initialize theme state
 const initTheme = () => {
   const savedTheme = localStorage.getItem(THEME_KEY)
   if (savedTheme) {
@@ -149,7 +219,6 @@ const initTheme = () => {
   }
 }
 
-// Toggle theme
 const toggleTheme = () => {
   isDarkMode.value = !isDarkMode.value
   localStorage.setItem(THEME_KEY, isDarkMode.value ? 'dark' : 'light')
@@ -164,14 +233,56 @@ const toggleTheme = () => {
   }
 }
 
-const handleLogin = async () => {
+const validatePassword = () => {
+  const pwd = password.value
+  passwordChecks.min_length = pwd.length >= 8
+  passwordChecks.has_uppercase = /[A-Z]/.test(pwd)
+  passwordChecks.has_lowercase = /[a-z]/.test(pwd)
+  passwordChecks.has_number = /\d/.test(pwd)
+}
+
+const isPasswordValid = () => {
+  return passwordChecks.min_length &&
+         passwordChecks.has_uppercase &&
+         passwordChecks.has_lowercase &&
+         passwordChecks.has_number
+}
+
+const handleSubmit = async () => {
+  // Frontend validation
+  if (!isPasswordValid()) {
+    error.value = 'Bitte erfüllen Sie alle Passwort-Anforderungen.'
+    return
+  }
+
+  if (password.value !== confirmPassword.value) {
+    error.value = 'Die Passwörter stimmen nicht überein.'
+    return
+  }
+
   try {
     loading.value = true
     error.value = ''
-    await authStore.login(email.value, password.value)
-    router.push('/')
+
+    await api.post('/auth/reset-password', {
+      token: token.value,
+      new_password: password.value
+    })
+
+    success.value = true
   } catch (e) {
-    error.value = e.response?.data?.error || 'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.'
+    const errorMsg = e.response?.data?.error || 'Ein Fehler ist aufgetreten.'
+
+    // Check for specific token errors
+    if (errorMsg.includes('abgelaufen') || errorMsg.includes('expired')) {
+      invalidToken.value = true
+      tokenError.value = 'Der Reset-Link ist abgelaufen. Bitte fordern Sie einen neuen Link an.'
+    } else if (errorMsg.includes('ungültig') || errorMsg.includes('invalid')) {
+      invalidToken.value = true
+      tokenError.value = 'Der Reset-Link ist ungültig. Bitte fordern Sie einen neuen Link an.'
+    } else {
+      error.value = errorMsg
+    }
   } finally {
     loading.value = false
   }
@@ -179,6 +290,14 @@ const handleLogin = async () => {
 
 onMounted(() => {
   initTheme()
+
+  // Get token from query parameter
+  token.value = route.query.token || ''
+
+  if (!token.value) {
+    invalidToken.value = true
+    tokenError.value = 'Kein Reset-Token gefunden. Bitte fordern Sie einen neuen Link an.'
+  }
 })
 </script>
 
@@ -347,20 +466,74 @@ onMounted(() => {
   margin-top: var(--space-md);
 }
 
-.forgot-password-link {
-  text-align: right;
-  margin-top: var(--space-sm);
+/* Success Card */
+.success-card {
+  text-align: center;
+  padding: var(--space-ma-lg);
+  margin-bottom: var(--space-ma);
 }
 
-.forgot-password-link a {
-  font-size: 0.875rem;
-  color: var(--color-text-tertiary);
+.success-icon {
+  color: var(--color-success, #4CAF50);
+  margin-bottom: var(--space-lg);
+}
+
+.success-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-md);
+}
+
+.success-message {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-lg);
+  line-height: var(--leading-relaxed);
+}
+
+.success-card .zen-btn {
+  display: inline-block;
   text-decoration: none;
-  transition: color var(--transition-base);
 }
 
-.forgot-password-link a:hover {
-  color: var(--color-ai);
+/* Error Card */
+.error-card {
+  text-align: center;
+  padding: var(--space-ma-lg);
+  margin-bottom: var(--space-ma);
+}
+
+.error-icon {
+  color: var(--color-error, #c62828);
+  margin-bottom: var(--space-lg);
+}
+
+.error-card h3 {
+  font-size: 1.5rem;
+  margin-bottom: var(--space-md);
+}
+
+.error-message {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-lg);
+  line-height: var(--leading-relaxed);
+}
+
+.error-card .zen-btn {
+  display: inline-block;
+  text-decoration: none;
+}
+
+/* Alerts */
+.alert {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  font-size: 0.9375rem;
+}
+
+.alert-error {
+  background: var(--color-error-subtle, #fbe9e7);
+  color: var(--color-error, #c62828);
+  border: 1px solid var(--color-error, #c62828);
 }
 
 .auth-footer {
@@ -375,6 +548,56 @@ onMounted(() => {
 .auth-footer a {
   color: var(--color-ai);
   font-weight: 500;
+}
+
+/* ========================================
+   PASSWORD REQUIREMENTS
+   ======================================== */
+.password-requirements {
+  margin-top: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.requirements-label {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-sm);
+  font-weight: 500;
+}
+
+.requirements-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.requirements-list li {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  transition: color var(--transition-base);
+}
+
+.requirements-list li.requirement-met {
+  color: var(--color-success, #4CAF50);
+}
+
+.check-icon {
+  font-size: 0.75rem;
+  width: 1rem;
+  text-align: center;
+}
+
+.requirements-list li.requirement-met .check-icon {
+  color: var(--color-success, #4CAF50);
 }
 
 /* ========================================
@@ -431,7 +654,7 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
-/* Seasonal accent - subtle color touch */
+/* Seasonal accent */
 .seasonal-accent {
   position: absolute;
   bottom: 0;
@@ -485,6 +708,11 @@ onMounted(() => {
   .brand-enso {
     width: 24px;
     height: 24px;
+  }
+
+  .success-card,
+  .error-card {
+    padding: var(--space-lg);
   }
 }
 </style>

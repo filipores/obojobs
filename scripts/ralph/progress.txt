@@ -6,6 +6,8 @@ Started: Mon Jan 12 16:29:43 CET 2026
 - **Passwort-Validierung**: PasswordValidator in `backend/services/password_validator.py` für wiederverwendbare Validierung
 - **Email-Verifizierung**: EmailVerificationService in `backend/services/email_verification_service.py` für Token-Management
 - **Rate Limiting**: In-memory Rate Limiting via dict[str, list[datetime]] in routes (für Dev); Redis in Prod
+- **Password Reset**: PasswordResetService in `backend/services/password_reset_service.py` - Token läuft nach 1 Stunde ab
+- **Email-Enumeration Prevention**: forgot-password Endpoint gibt immer 200 OK zurück, unabhängig ob Email existiert
 - **Test-Passwort**: Test-Fixtures müssen Passwort-Stärke-Anforderungen erfüllen (z.B. "TestPass123")
 - **Type Hints**: Python verwendet moderne `dict` und `list` statt `Dict`/`List` aus typing
 - **User to_dict()**: Wenn User-Model erweitert wird, `to_dict()` Methode aktualisieren falls Feld im API-Response erscheinen soll
@@ -54,3 +56,57 @@ Started: Mon Jan 12 16:29:43 CET 2026
   - In Prod sollte Redis verwendet werden für Rate Limiting
   - Token-Logik bereits im EmailVerificationService vorhanden, Endpoint ruft nur Service auf
   - GET /api/auth/me gibt bereits email_verified zurück (via User.to_dict())
+
+---
+
+## 2026-01-12 - AUTH-004
+- Was implementiert wurde: Email-Verifizierung Frontend Flow
+- Geänderte Dateien:
+  - `frontend/src/pages/EmailVerification.vue` (NEU - Seite nach Registrierung)
+  - `frontend/src/pages/VerifyEmail.vue` (NEU - Token-Verifizierung)
+  - `frontend/src/pages/Register.vue` (erweitert mit Auto-Login + Weiterleitung)
+  - `frontend/src/pages/Dashboard.vue` (erweitert mit Verifizierungs-Banner)
+  - `frontend/src/router/index.js` (neue Routen)
+  - `frontend/src/store/auth.js` (erweitert mit sendVerificationEmail)
+  - `frontend/src/__tests__/EmailVerification.test.js` (NEU - 15 Tests)
+- **Learnings:**
+  - Nach Registrierung: Auto-Login + Verifizierungs-Email senden + Weiterleitung zu /email-verification
+  - Cooldown für "Erneut senden" Button (60 Sekunden) verhindert Spam
+  - sessionStorage für Banner-Dismissal (nur für Session, nicht persistent)
+  - pendingVerificationEmail in localStorage für Email-Anzeige auf Verifizierungsseite
+  - ESLint erfordert `globalThis` statt `global` in Tests
+
+---
+
+## 2026-01-12 - AUTH-005
+- Was implementiert wurde: Passwort-Reset Backend Token-System
+- Geänderte Dateien:
+  - `backend/models/user.py` (erweitert mit password_reset_token, password_reset_sent_at)
+  - `backend/migrations/add_password_reset.py` (NEU)
+  - `backend/services/password_reset_service.py` (NEU)
+  - `backend/services/auth_service.py` (erweitert mit get_user_by_email)
+  - `backend/routes/auth.py` (erweitert mit forgot-password und reset-password Endpoints)
+  - `backend/tests/test_password_reset.py` (NEU - 36 Tests)
+- **Learnings:**
+  - PasswordResetService folgt dem gleichen Pattern wie EmailVerificationService
+  - Token-Ablauf kürzer (1 Stunde statt 24 Stunden) für erhöhte Sicherheit
+  - forgot-password gibt IMMER 200 OK zurück um Email-Enumeration zu verhindern
+  - Rate Limiting ist per Email (case-insensitive), nicht per User-ID
+  - PasswordValidator.validate() gibt "valid" zurück, nicht "is_valid"
+
+---
+
+## 2026-01-12 - AUTH-006
+- Was implementiert wurde: Passwort-Reset Frontend Flow
+- Geänderte Dateien:
+  - `frontend/src/pages/ForgotPassword.vue` (NEU - Email-Eingabe für Reset-Link)
+  - `frontend/src/pages/ResetPassword.vue` (NEU - Token-Verifizierung + neues Passwort)
+  - `frontend/src/pages/Login.vue` (erweitert mit "Passwort vergessen?" Link)
+  - `frontend/src/router/index.js` (neue Routen /forgot-password und /reset-password)
+  - `frontend/src/__tests__/PasswordReset.test.js` (NEU - 28 Tests)
+- **Learnings:**
+  - Auth-Pages folgen gleichem Pattern: Theme-Toggle, Decorative Elements, Asymmetric Grid
+  - Passwort-Validierung direkt aus Register.vue kopiert (gleiche Regeln)
+  - Error-Handling unterscheidet zwischen Token-Fehlern (invalidToken Card) und generischen Fehlern
+  - Backend gibt immer 200 OK auf forgot-password zurück - Frontend zeigt immer Success-Message
+  - ESLint warnt bei ungenutzten Imports (router entfernt wenn nicht gebraucht)
