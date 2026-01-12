@@ -15,7 +15,7 @@
         "Befehl 'cd backend && pytest' läuft ohne Fehler"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Test-DB sollte isoliert sein und keine echten Daten beeinflussen"
     },
     {

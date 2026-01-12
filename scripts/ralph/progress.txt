@@ -75,7 +75,31 @@ Started: 2025-01-12
 - JWT Errors (401/422) → Frontend macht automatisch Logout
 - Credits werden in `User.credits_remaining` getracked
 
+### Testing (Backend)
+- Tests in `backend/tests/`
+- Fixtures in `backend/tests/conftest.py`
+- Test-DB: SQLite in-memory (`:memory:`)
+- Run: `cd backend && source venv/bin/activate && pytest`
+- Important: Return user data from fixtures as dict, not ORM object (avoids detached session issues)
+
 ---
 ## Iteration Log
 
-(Ralph fügt hier nach jeder Iteration Einträge hinzu)
+---
+## 2026-01-12 - INFRA-001
+- **Story**: Backend: pytest Setup
+- **Implementiert**:
+  - pytest und pytest-cov zu requirements.txt hinzugefügt
+  - `backend/tests/` Verzeichnis mit `__init__.py`, `conftest.py`, `test_setup.py` erstellt
+  - Fixtures: `app`, `client`, `test_user`, `auth_token`, `auth_headers`
+  - `backend/pytest.ini` mit Testkonfiguration
+- **Geänderte Dateien**:
+  - `backend/requirements.txt` (pytest deps)
+  - `backend/pytest.ini` (neu)
+  - `backend/tests/__init__.py` (neu)
+  - `backend/tests/conftest.py` (neu)
+  - `backend/tests/test_setup.py` (neu)
+- **Learnings**:
+  - Environment vars müssen VOR app import gesetzt werden
+  - User-Fixtures sollten Dict zurückgeben statt ORM-Objekt (detached session)
+  - Exit code 5 = "no tests collected" (nicht Fehler, nur leeres Testverzeichnis)

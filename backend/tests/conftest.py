@@ -70,7 +70,7 @@ def auth_token(client, test_user):
         'password': test_user['password'],
     })
     data = response.get_json()
-    return data['data']['token']
+    return data['access_token']
 
 
 @pytest.fixture(scope='function')
