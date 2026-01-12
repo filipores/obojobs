@@ -2,10 +2,12 @@
 Tests for ATS (Applicant Tracking System) API routes.
 """
 
+import json
 import os
+from datetime import datetime, timedelta
 from unittest.mock import MagicMock, patch
 
-from models import Document, User, db
+from models import ATSAnalysis, Document, User, db
 
 
 class TestATSAnalyze:
@@ -479,3 +481,339 @@ class TestATSAnalyze:
         assert response.status_code == 200
         data = response.get_json()
         assert data["data"]["job_url"] == "https://example.com/job"
+
+    def test_analyze_saves_result_to_database(self, app, client, test_user, auth_headers):
+        """Test that successful analysis is saved to database."""
+        with app.app_context():
+            user = User.query.get(test_user["id"])
+
+            user_dir = os.path.join(app.config.get("UPLOAD_FOLDER", "/tmp"), f"user_{user.id}", "documents")
+            os.makedirs(user_dir, exist_ok=True)
+            cv_path = os.path.join(user_dir, "lebenslauf.txt")
+
+            with open(cv_path, "w", encoding="utf-8") as f:
+                f.write("Python Developer with 5 years experience.")
+
+            document = Document(
+                user_id=user.id,
+                doc_type="lebenslauf",
+                file_path=cv_path,
+                original_filename="cv.pdf",
+            )
+            db.session.add(document)
+            db.session.commit()
+
+        mock_result = {
+            "score": 85,
+            "matched_keywords": ["Python"],
+            "missing_keywords": [],
+            "suggestions": [],
+            "categories": {
+                "hard_skills": {"matched": ["Python"], "missing": []},
+                "soft_skills": {"matched": [], "missing": []},
+                "qualifications": {"matched": [], "missing": []},
+                "experience": {"matched": [], "missing": []},
+            },
+        }
+
+        with patch("routes.ats.ATSService") as mock_service_class:
+            mock_service = MagicMock()
+            mock_service.analyze_cv_against_job.return_value = mock_result
+            mock_service_class.return_value = mock_service
+
+            response = client.post(
+                "/api/ats/analyze",
+                json={"job_text": "Looking for Python developer"},
+                headers=auth_headers,
+            )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert "analysis_id" in data["data"]
+        assert data["data"]["cached"] is False
+
+        # Verify saved in database
+        with app.app_context():
+            analysis = ATSAnalysis.query.get(data["data"]["analysis_id"])
+            assert analysis is not None
+            assert analysis.score == 85
+            assert analysis.user_id == test_user["id"]
+
+    def test_analyze_returns_cached_result_for_same_url(self, app, client, test_user, auth_headers):
+        """Test that same URL within 24h returns cached result."""
+        job_url = "https://example.com/cached-job"
+
+        # Create cached analysis
+        with app.app_context():
+            user = User.query.get(test_user["id"])
+
+            user_dir = os.path.join(app.config.get("UPLOAD_FOLDER", "/tmp"), f"user_{user.id}", "documents")
+            os.makedirs(user_dir, exist_ok=True)
+            cv_path = os.path.join(user_dir, "lebenslauf.txt")
+
+            with open(cv_path, "w", encoding="utf-8") as f:
+                f.write("CV content")
+
+            document = Document(
+                user_id=user.id,
+                doc_type="lebenslauf",
+                file_path=cv_path,
+                original_filename="cv.pdf",
+            )
+            db.session.add(document)
+
+            cached_result = {
+                "score": 70,
+                "matched_keywords": ["cached"],
+                "missing_keywords": [],
+                "suggestions": [],
+                "categories": {
+                    "hard_skills": {"matched": [], "missing": []},
+                    "soft_skills": {"matched": [], "missing": []},
+                    "qualifications": {"matched": [], "missing": []},
+                    "experience": {"matched": [], "missing": []},
+                },
+            }
+
+            analysis = ATSAnalysis(
+                user_id=user.id,
+                job_url=job_url,
+                score=70,
+                result_json=json.dumps(cached_result),
+                created_at=datetime.utcnow() - timedelta(hours=1),  # 1 hour ago
+            )
+            db.session.add(analysis)
+            db.session.commit()
+
+        # Request should return cached result without calling ATSService
+        with patch("routes.ats.ATSService") as mock_service_class:
+            response = client.post(
+                "/api/ats/analyze",
+                json={"job_url": job_url},
+                headers=auth_headers,
+            )
+
+            # ATSService should NOT be called because we have cached result
+            mock_service_class.assert_not_called()
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["cached"] is True
+        assert data["data"]["score"] == 70
+
+
+class TestATSHistory:
+    """Tests for GET /api/ats/history endpoint."""
+
+    def test_history_requires_authentication(self, client):
+        """Test that /api/ats/history requires JWT authentication."""
+        response = client.get("/api/ats/history")
+        assert response.status_code == 401
+
+    def test_history_returns_empty_list(self, client, auth_headers):
+        """Test that history returns empty list when no analyses exist."""
+        response = client.get("/api/ats/history", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["analyses"] == []
+
+    def test_history_returns_user_analyses(self, app, client, test_user, auth_headers):
+        """Test that history returns user's analyses."""
+        with app.app_context():
+            result_json = json.dumps({
+                "score": 75,
+                "matched_keywords": ["Python", "Django"],
+                "missing_keywords": ["Docker"],
+                "suggestions": [],
+                "categories": {},
+            })
+
+            analysis1 = ATSAnalysis(
+                user_id=test_user["id"],
+                job_url="https://example.com/job1",
+                score=75,
+                result_json=result_json,
+            )
+            analysis2 = ATSAnalysis(
+                user_id=test_user["id"],
+                job_url="https://example.com/job2",
+                score=80,
+                result_json=result_json,
+            )
+            db.session.add_all([analysis1, analysis2])
+            db.session.commit()
+
+        response = client.get("/api/ats/history", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert len(data["data"]["analyses"]) == 2
+
+    def test_history_returns_max_20_analyses(self, app, client, test_user, auth_headers):
+        """Test that history returns maximum 20 analyses."""
+        with app.app_context():
+            result_json = json.dumps({"score": 50, "matched_keywords": [], "missing_keywords": [], "suggestions": []})
+
+            for i in range(25):
+                analysis = ATSAnalysis(
+                    user_id=test_user["id"],
+                    job_url=f"https://example.com/job{i}",
+                    score=50 + i,
+                    result_json=result_json,
+                )
+                db.session.add(analysis)
+            db.session.commit()
+
+        response = client.get("/api/ats/history", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["analyses"]) == 20
+
+    def test_history_ordered_by_date_desc(self, app, client, test_user, auth_headers):
+        """Test that history is ordered by created_at descending."""
+        with app.app_context():
+            result_json = json.dumps({"score": 50, "matched_keywords": [], "missing_keywords": [], "suggestions": []})
+
+            old_analysis = ATSAnalysis(
+                user_id=test_user["id"],
+                job_url="https://example.com/old",
+                score=50,
+                result_json=result_json,
+                created_at=datetime.utcnow() - timedelta(days=1),
+            )
+            new_analysis = ATSAnalysis(
+                user_id=test_user["id"],
+                job_url="https://example.com/new",
+                score=90,
+                result_json=result_json,
+                created_at=datetime.utcnow(),
+            )
+            db.session.add_all([old_analysis, new_analysis])
+            db.session.commit()
+
+        response = client.get("/api/ats/history", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        analyses = data["data"]["analyses"]
+        assert analyses[0]["score"] == 90  # Newest first
+        assert analyses[1]["score"] == 50
+
+    def test_history_does_not_show_other_users_analyses(self, app, client, test_user, auth_headers):
+        """Test that history only shows current user's analyses."""
+        with app.app_context():
+            # Create another user and their analysis
+            other_user = User(email="other@example.com", full_name="Other User")
+            other_user.set_password("password123")
+            db.session.add(other_user)
+            db.session.commit()
+
+            result_json = json.dumps({"score": 50, "matched_keywords": [], "missing_keywords": [], "suggestions": []})
+
+            other_analysis = ATSAnalysis(
+                user_id=other_user.id,
+                job_url="https://example.com/other",
+                score=99,
+                result_json=result_json,
+            )
+            my_analysis = ATSAnalysis(
+                user_id=test_user["id"],
+                job_url="https://example.com/mine",
+                score=75,
+                result_json=result_json,
+            )
+            db.session.add_all([other_analysis, my_analysis])
+            db.session.commit()
+
+        response = client.get("/api/ats/history", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["data"]["analyses"]) == 1
+        assert data["data"]["analyses"][0]["score"] == 75
+
+
+class TestATSHistoryDetail:
+    """Tests for GET /api/ats/history/<id> endpoint."""
+
+    def test_history_detail_requires_authentication(self, client):
+        """Test that /api/ats/history/<id> requires JWT authentication."""
+        response = client.get("/api/ats/history/1")
+        assert response.status_code == 401
+
+    def test_history_detail_returns_404_for_nonexistent(self, client, auth_headers):
+        """Test that nonexistent analysis returns 404."""
+        response = client.get("/api/ats/history/99999", headers=auth_headers)
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False
+        assert "nicht gefunden" in data["error"]
+
+    def test_history_detail_returns_full_analysis(self, app, client, test_user, auth_headers):
+        """Test that history detail returns full analysis result."""
+        with app.app_context():
+            result_data = {
+                "score": 85,
+                "matched_keywords": ["Python", "Django"],
+                "missing_keywords": ["Docker"],
+                "suggestions": [{"content": "Add Docker", "priority": "high"}],
+                "categories": {
+                    "hard_skills": {"matched": ["Python", "Django"], "missing": ["Docker"]},
+                    "soft_skills": {"matched": [], "missing": []},
+                    "qualifications": {"matched": [], "missing": []},
+                    "experience": {"matched": [], "missing": []},
+                },
+            }
+
+            analysis = ATSAnalysis(
+                user_id=test_user["id"],
+                job_url="https://example.com/job",
+                score=85,
+                result_json=json.dumps(result_data),
+            )
+            db.session.add(analysis)
+            db.session.commit()
+            analysis_id = analysis.id
+
+        response = client.get(f"/api/ats/history/{analysis_id}", headers=auth_headers)
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["data"]["score"] == 85
+        assert data["data"]["job_url"] == "https://example.com/job"
+        assert "result" in data["data"]
+        assert data["data"]["result"]["matched_keywords"] == ["Python", "Django"]
+
+    def test_history_detail_returns_404_for_other_users_analysis(self, app, client, test_user, auth_headers):
+        """Test that trying to access other user's analysis returns 404."""
+        with app.app_context():
+            other_user = User(email="other2@example.com", full_name="Other User")
+            other_user.set_password("password123")
+            db.session.add(other_user)
+            db.session.commit()
+
+            result_json = json.dumps({"score": 50, "matched_keywords": [], "missing_keywords": [], "suggestions": []})
+
+            other_analysis = ATSAnalysis(
+                user_id=other_user.id,
+                job_url="https://example.com/secret",
+                score=99,
+                result_json=result_json,
+            )
+            db.session.add(other_analysis)
+            db.session.commit()
+            other_analysis_id = other_analysis.id
+
+        response = client.get(f"/api/ats/history/{other_analysis_id}", headers=auth_headers)
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert data["success"] is False

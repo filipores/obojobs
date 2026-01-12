@@ -4,16 +4,21 @@ ATS (Applicant Tracking System) API Routes.
 Provides endpoints for analyzing CVs against job descriptions.
 """
 
+import json
 import os
+from datetime import datetime, timedelta
 
 from flask import Blueprint, current_app, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import Document
+from models import ATSAnalysis, Document, db
 from services.ats_service import ATSService
 from services.web_scraper import WebScraper
 
 ats_bp = Blueprint("ats", __name__)
+
+# Cache duration in hours
+CACHE_DURATION_HOURS = 24
 
 
 @ats_bp.route("/analyze", methods=["POST"])
@@ -53,6 +58,28 @@ def analyze_cv(current_user):
                 "success": False,
                 "error": "job_url oder job_text ist erforderlich"
             }), 400
+
+        # Check cache first (only for job_url, within 24 hours)
+        if job_url:
+            cache_cutoff = datetime.utcnow() - timedelta(hours=CACHE_DURATION_HOURS)
+            cached_result = ATSAnalysis.query.filter(
+                ATSAnalysis.user_id == current_user.id,
+                ATSAnalysis.job_url == job_url,
+                ATSAnalysis.created_at >= cache_cutoff
+            ).order_by(ATSAnalysis.created_at.desc()).first()
+
+            if cached_result:
+                try:
+                    result_data = json.loads(cached_result.result_json)
+                    result_data["job_url"] = job_url
+                    result_data["cached"] = True
+                    result_data["analysis_id"] = cached_result.id
+                    return jsonify({
+                        "success": True,
+                        "data": result_data
+                    }), 200
+                except json.JSONDecodeError:
+                    pass  # Continue with fresh analysis
 
         # Get user's CV
         cv_document = Document.query.filter_by(
@@ -117,6 +144,24 @@ def analyze_cv(current_user):
                 "categories": result.get("categories", {})
             }
 
+            # Save analysis to database
+            job_text_hash = None
+            if job_text and not job_url:
+                job_text_hash = ATSAnalysis.hash_job_text(job_text)
+
+            ats_analysis = ATSAnalysis(
+                user_id=current_user.id,
+                job_url=scraped_url,
+                job_text_hash=job_text_hash,
+                score=response_data["score"],
+                result_json=json.dumps(response_data)
+            )
+            db.session.add(ats_analysis)
+            db.session.commit()
+
+            response_data["analysis_id"] = ats_analysis.id
+            response_data["cached"] = False
+
             if scraped_url:
                 response_data["job_url"] = scraped_url
 
@@ -131,9 +176,62 @@ def analyze_cv(current_user):
                 "error": str(e)
             }), 400
         except Exception as e:
+            db.session.rollback()
             return jsonify({
                 "success": False,
                 "error": f"Analyse fehlgeschlagen: {str(e)}"
             }), 500
 
     return rate_limited_analyze()
+
+
+@ats_bp.route("/history", methods=["GET"])
+@jwt_required_custom
+def get_history(current_user):
+    """
+    Get the user's ATS analysis history.
+
+    Returns the last 20 analyses ordered by date (newest first).
+
+    Returns:
+        200: { success: true, data: { analyses: [...] } }
+    """
+    analyses = ATSAnalysis.query.filter_by(
+        user_id=current_user.id
+    ).order_by(
+        ATSAnalysis.created_at.desc()
+    ).limit(20).all()
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "analyses": [a.to_summary_dict() for a in analyses]
+        }
+    }), 200
+
+
+@ats_bp.route("/history/<int:analysis_id>", methods=["GET"])
+@jwt_required_custom
+def get_analysis(current_user, analysis_id):
+    """
+    Get a specific ATS analysis by ID.
+
+    Returns:
+        200: { success: true, data: { ... full analysis result ... } }
+        404: Analysis not found
+    """
+    analysis = ATSAnalysis.query.filter_by(
+        id=analysis_id,
+        user_id=current_user.id
+    ).first()
+
+    if not analysis:
+        return jsonify({
+            "success": False,
+            "error": "Analyse nicht gefunden"
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "data": analysis.to_dict()
+    }), 200

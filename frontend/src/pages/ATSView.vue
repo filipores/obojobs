@@ -107,6 +107,36 @@
         </div>
       </section>
 
+      <!-- History Section -->
+      <section v-if="history.length > 0" class="history-section animate-fade-up" style="animation-delay: 150ms;">
+        <div class="history-card zen-card">
+          <h3 class="history-title">Letzte Analysen</h3>
+          <ul class="history-list">
+            <li
+              v-for="item in history"
+              :key="item.id"
+              class="history-item"
+              @click="loadHistoryItem(item)"
+            >
+              <div class="history-info">
+                <span class="history-url" :title="item.job_url || 'Manuelle Eingabe'">
+                  {{ formatHistoryUrl(item.job_url) }}
+                </span>
+                <span class="history-date">{{ formatDate(item.created_at) }}</span>
+              </div>
+              <div class="history-stats">
+                <span :class="['history-score', getScoreClass(item.score)]">{{ item.score }}</span>
+                <span class="history-keywords">
+                  <span class="matched">{{ item.matched_count }}</span>
+                  /
+                  <span class="missing">{{ item.missing_count }}</span>
+                </span>
+              </div>
+            </li>
+          </ul>
+        </div>
+      </section>
+
       <!-- Results Section -->
       <section v-if="result" class="results-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="results-card zen-card">
@@ -237,7 +267,7 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
 
 const inputMode = ref('url')
@@ -246,6 +276,8 @@ const jobText = ref('')
 const analyzing = ref(false)
 const error = ref('')
 const result = ref(null)
+const history = ref([])
+const loadingHistory = ref(false)
 
 const canAnalyze = computed(() => {
   if (inputMode.value === 'url') {
@@ -318,6 +350,8 @@ const analyzeCV = async () => {
       if (window.$toast) {
         window.$toast('Analyse abgeschlossen!', 'success')
       }
+      // Refresh history after successful analysis
+      fetchHistory()
     } else {
       error.value = data.error || 'Unbekannter Fehler'
     }
@@ -335,6 +369,74 @@ const analyzeCV = async () => {
     analyzing.value = false
   }
 }
+
+const fetchHistory = async () => {
+  loadingHistory.value = true
+  try {
+    const { data } = await api.get('/ats/history')
+    if (data.success) {
+      history.value = data.data.analyses || []
+    }
+  } catch (e) {
+    // Silently fail - history is not critical
+    console.error('Failed to fetch history:', e)
+  } finally {
+    loadingHistory.value = false
+  }
+}
+
+const loadHistoryItem = async (item) => {
+  error.value = ''
+  analyzing.value = true
+
+  try {
+    const { data } = await api.get(`/ats/history/${item.id}`)
+    if (data.success && data.data.result) {
+      result.value = data.data.result
+      result.value.job_url = data.data.job_url
+      if (window.$toast) {
+        window.$toast('Analyse geladen', 'success')
+      }
+    } else {
+      error.value = 'Konnte Analyse nicht laden'
+    }
+  } catch {
+    error.value = 'Fehler beim Laden der Analyse'
+  } finally {
+    analyzing.value = false
+  }
+}
+
+const formatHistoryUrl = (url) => {
+  if (!url) return 'Manuelle Eingabe'
+  try {
+    const hostname = new URL(url).hostname.replace('www.', '')
+    return hostname.length > 25 ? hostname.slice(0, 25) + '...' : hostname
+  } catch {
+    return url.slice(0, 25) + '...'
+  }
+}
+
+const formatDate = (isoDate) => {
+  if (!isoDate) return ''
+  const date = new Date(isoDate)
+  return date.toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+const getScoreClass = (score) => {
+  if (score >= 75) return 'score-high'
+  if (score >= 50) return 'score-medium'
+  return 'score-low'
+}
+
+onMounted(() => {
+  fetchHistory()
+})
 </script>
 
 <style scoped>
@@ -767,11 +869,121 @@ const analyzeCV = async () => {
 }
 
 /* ========================================
+   HISTORY SECTION
+   ======================================== */
+.history-section {
+  margin-top: var(--space-lg);
+  max-width: 640px;
+}
+
+.history-card {
+  padding: var(--space-lg);
+}
+
+.history-title {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+  color: var(--color-text-secondary);
+}
+
+.history-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.history-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-washi-warm);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.history-item:hover {
+  background: var(--color-washi-aged);
+  transform: translateX(4px);
+}
+
+.history-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history-url {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.history-date {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.history-stats {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-shrink: 0;
+}
+
+.history-score {
+  font-size: 1rem;
+  font-weight: 600;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-xs);
+  min-width: 40px;
+  text-align: center;
+}
+
+.history-score.score-high {
+  background: rgba(122, 139, 110, 0.2);
+  color: var(--color-koke);
+}
+
+.history-score.score-medium {
+  background: rgba(201, 162, 39, 0.15);
+  color: #c9a227;
+}
+
+.history-score.score-low {
+  background: rgba(180, 80, 80, 0.15);
+  color: #b45050;
+}
+
+.history-keywords {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.history-keywords .matched {
+  color: var(--color-koke);
+}
+
+.history-keywords .missing {
+  color: #b45050;
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
   .form-card,
-  .results-card {
+  .results-card,
+  .history-card {
     padding: var(--space-lg);
   }
 
@@ -791,6 +1003,17 @@ const analyzeCV = async () => {
   .suggestion-item {
     flex-direction: column;
     gap: var(--space-sm);
+  }
+
+  .history-item {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .history-stats {
+    width: 100%;
+    justify-content: space-between;
   }
 }
 </style>
