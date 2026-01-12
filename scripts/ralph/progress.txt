@@ -148,3 +148,30 @@ Started: 2025-01-12
   - `ruff check --fix .` für automatische Fixes
   - `ruff format .` für Code-Formatierung
   - E402 (module level import not at top) erscheint bei `models/__init__.py` Pattern - muss in INFRA-004 adressiert werden
+
+---
+## 2026-01-12 - INFRA-004
+- **Story**: Backend: Bestehenden Code lint-konform machen
+- **Implementiert**:
+  - `ruff check --fix .` ausgeführt (67 automatische Fixes)
+  - Manuelle Fixes für verbleibende 12 Errors:
+    - `app.py`: Unused variable `jwt` → entfernt (JWTManager wird inline initialisiert)
+    - `models/__init__.py`: E402 → `# noqa: E402` Kommentare (intentional late imports)
+    - `services/api_client.py`: B904 → `raise ... from e` für Exception-Chaining
+    - `services/api_client.py`: F841 → Unused `attachments_text` entfernt
+    - `services/web_scraper.py`: B904 → `raise ... from e` für Exception-Chaining
+  - `ruff format .` formatiert 30 Dateien
+- **Geänderte Dateien**:
+  - `backend/app.py`
+  - `backend/config.py`
+  - `backend/models/__init__.py`
+  - `backend/models/*.py` (alle 6 Model-Dateien)
+  - `backend/routes/*.py` (alle 7 Route-Dateien)
+  - `backend/services/*.py` (alle 6 Service-Dateien)
+  - `backend/middleware/*.py` (2 Dateien)
+  - `backend/tests/*.py` (4 Test-Dateien)
+  - `backend/migrations/init_db.py`
+- **Learnings**:
+  - `# noqa: E402` ist der richtige Weg für intentionale late imports (wie in `models/__init__.py`)
+  - B904: Exception-Chaining mit `raise ... from e` bewahrt den Original-Traceback
+  - Ruff-Format nutzt Double-Quotes statt Single-Quotes (konsistent)

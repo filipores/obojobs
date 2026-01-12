@@ -61,7 +61,7 @@
         "App startet noch korrekt"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Nutze 'ruff check --fix .' für automatische Fixes"
     },
     {
