@@ -103,16 +103,51 @@ backend/uploads/
 - Models in `backend/models/`
 - User, Document, Template, Application, APIKey, Purchase
 
-## Testing
+## Testing & Linting
 
-Aktuell keine automatisierten Tests. Quality Checks:
+### Backend (Python)
 ```bash
-# Frontend Build (fängt Vue/JS Fehler)
-cd frontend && npm run build
+# Tests ausführen (pytest)
+cd backend && source venv/bin/activate && pytest
 
-# Python Syntax Check
-python3 -m py_compile backend/app.py
+# Linting prüfen (Ruff)
+cd backend && source venv/bin/activate && ruff check .
+
+# Code formatieren (Ruff)
+cd backend && source venv/bin/activate && ruff format .
+
+# Auto-fix Linting-Fehler
+cd backend && source venv/bin/activate && ruff check --fix .
 ```
+
+Konfiguration:
+- pytest: `backend/pytest.ini`
+- Ruff: `backend/ruff.toml`
+- Tests: `backend/tests/`
+- Fixtures: `backend/tests/conftest.py` (Test-Client, Test-DB, Test-User)
+
+### Frontend (Vue.js)
+```bash
+# Tests ausführen (Vitest)
+cd frontend && npm test
+
+# Tests im Watch-Modus
+cd frontend && npm run test:watch
+
+# Linting prüfen (ESLint)
+cd frontend && npm run lint
+
+# Auto-fix Linting-Fehler
+cd frontend && npm run lint:fix
+
+# Build prüfen
+cd frontend && npm run build
+```
+
+Konfiguration:
+- Vitest: `frontend/vitest.config.js`
+- ESLint: `frontend/eslint.config.js` (Flat Config)
+- Tests: `frontend/src/__tests__/`
 
 ## Deployment
 

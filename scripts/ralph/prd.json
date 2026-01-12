@@ -121,7 +121,7 @@
         "App funktioniert noch korrekt im Browser"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Nutze 'npm run lint:fix' für automatische Fixes"
     },
     {
@@ -134,7 +134,7 @@
         "AGENTS.md aktualisiert mit neuen Test/Lint Befehlen"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": "Dies ist die letzte Story - danach ist Ralph bereit für Feature-Stories"
     }
   ]

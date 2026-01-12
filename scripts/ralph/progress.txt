@@ -244,3 +244,44 @@ Started: 2025-01-12
   - `flat/essential` ist besser für bestehenden Code (weniger Style-Rules, mehr Error-Detection)
   - Browser globals müssen manuell definiert werden (kein `env: { browser: true }` in Flat Config)
   - Node 19.7.0 funktioniert trotz Engine-Warnings (erwartet >=20)
+  - `caughtErrorsIgnorePattern: '^_'` für catch-Clause Errors (anders als `argsIgnorePattern`)
+
+---
+## 2026-01-12 - INFRA-008
+- **Story**: Frontend: Bestehenden Code lint-konform machen
+- **Implementiert**:
+  - ESLint-Konfiguration erweitert um `caughtErrorsIgnorePattern: '^_'`
+  - Unused v-for index-Variablen entfernt (Applications, BuyCredits, Templates)
+  - Unused router-Variablen mit `_` prefix versehen (PaymentSuccess, Settings)
+  - Unused catch-Variablen mit `_e` prefix versehen
+  - Assignment in while-Loops mit expliziten `!== null` Checks versehen
+  - Unused imports mit `_` prefix versehen (TemplateEditor)
+- **Geänderte Dateien**:
+  - `frontend/eslint.config.js` (caughtErrorsIgnorePattern)
+  - `frontend/src/components/TemplateEditor/TemplateEditor.vue`
+  - `frontend/src/pages/Applications.vue`
+  - `frontend/src/pages/BuyCredits.vue`
+  - `frontend/src/pages/PaymentSuccess.vue`
+  - `frontend/src/pages/Settings.vue`
+  - `frontend/src/pages/Templates.vue`
+- **Learnings**:
+  - ESLint `no-unused-vars` hat separate Patterns: `argsIgnorePattern`, `varsIgnorePattern`, `caughtErrorsIgnorePattern`
+  - `while (node = walker.nextNode())` braucht entweder Klammern `((node = ...) !== null)` oder `no-cond-assign` Ausnahme
+  - v-for mit unused index: `v-for="(item, index)"` → `v-for="item"` wenn index nicht gebraucht wird
+  - console-Statements als Warnings belassen (für Debugging nützlich)
+
+---
+## 2026-01-12 - INFRA-009
+- **Story**: prompt.md mit neuen Quality Checks aktualisieren
+- **Implementiert**:
+  - `scripts/ralph/prompt.md` Quality Checks erweitert: pytest, ruff, npm test, npm run lint, npm run build
+  - `AGENTS.md` "Testing" Sektion komplett überarbeitet zu "Testing & Linting"
+  - Alle Befehle getestet und verifiziert
+- **Geänderte Dateien**:
+  - `scripts/ralph/prompt.md` (Quality Checks erweitert)
+  - `AGENTS.md` (Testing & Linting Sektion neu geschrieben)
+- **Learnings**:
+  - Test- und Lint-Infrastruktur ist jetzt vollständig eingerichtet
+  - Backend: pytest + ruff (Tests + Linting)
+  - Frontend: vitest + eslint (Tests + Linting)
+  - Alle Quality Checks sollten vor jedem Commit ausgeführt werden

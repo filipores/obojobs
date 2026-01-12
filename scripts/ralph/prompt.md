@@ -27,11 +27,20 @@ Implementiere NUR diese EINE Story.
 
 ### 5. Quality Checks ausführen
 ```bash
+# Backend - Tests ausführen
+cd backend && source venv/bin/activate && pytest
+
+# Backend - Linting (Ruff)
+cd backend && source venv/bin/activate && ruff check .
+
+# Frontend - Tests ausführen
+cd frontend && npm test
+
+# Frontend - Linting (ESLint)
+cd frontend && npm run lint
+
 # Frontend - Build testen (fängt Vue/JS Fehler ab)
 cd frontend && npm run build
-
-# Backend - Python Syntax prüfen (eingebautes Modul)
-python3 -m py_compile backend/app.py
 ```
 
 ### 6. AGENTS.md aktualisieren (optional)
