@@ -1,7 +1,13 @@
+from datetime import datetime, timedelta
+
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 from models import User, db
 from services.password_validator import PasswordValidator
+
+# Lockout configuration
+MAX_FAILED_ATTEMPTS = 5
+LOCKOUT_DURATION_MINUTES = 15
 
 
 class AuthService:
@@ -55,15 +61,50 @@ class AuthService:
             dict with access_token, refresh_token, and user data
 
         Raises:
-            ValueError: If credentials are invalid
+            ValueError: If credentials are invalid or account is locked
         """
         user = User.query.filter_by(email=email).first()
 
+        # Check if account is locked
+        if user and user.locked_until:
+            if datetime.utcnow() < user.locked_until:
+                remaining = user.locked_until - datetime.utcnow()
+                remaining_minutes = max(1, int(remaining.total_seconds() / 60))
+                raise ValueError(
+                    f"Account is temporarily locked. Try again in {remaining_minutes} minutes."
+                )
+            else:
+                # Lock expired, reset lockout
+                user.locked_until = None
+                user.failed_login_attempts = 0
+                db.session.commit()
+
         if not user or not user.check_password(password):
+            # Increment failed attempts if user exists
+            if user:
+                user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+
+                if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
+                    user.locked_until = datetime.utcnow() + timedelta(
+                        minutes=LOCKOUT_DURATION_MINUTES
+                    )
+                    db.session.commit()
+                    raise ValueError(
+                        f"Account locked due to too many failed login attempts. "
+                        f"Try again in {LOCKOUT_DURATION_MINUTES} minutes."
+                    )
+                db.session.commit()
+
             raise ValueError("Invalid email or password")
 
         if not user.is_active:
             raise ValueError("Account is disabled")
+
+        # Successful login - reset failed attempts
+        if user.failed_login_attempts and user.failed_login_attempts > 0:
+            user.failed_login_attempts = 0
+            user.locked_until = None
+            db.session.commit()
 
         # Create tokens (identity must be a string)
         access_token = create_access_token(identity=str(user.id))

@@ -27,6 +27,10 @@ class User(db.Model):
     password_reset_token = db.Column(db.String(255), nullable=True)
     password_reset_sent_at = db.Column(db.DateTime, nullable=True)
 
+    # Account lockout fields
+    failed_login_attempts = db.Column(db.Integer, default=0)
+    locked_until = db.Column(db.DateTime, nullable=True)
+
     # Relationships
     documents = db.relationship("Document", back_populates="user", cascade="all, delete-orphan")
     templates = db.relationship("Template", back_populates="user", cascade="all, delete-orphan")
