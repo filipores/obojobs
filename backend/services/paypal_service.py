@@ -6,11 +6,13 @@ from config import config
 class PayPalService:
     def __init__(self):
         """Initialize PayPal SDK with credentials from config"""
-        paypalrestsdk.configure({
-            "mode": config.PAYPAL_MODE,  # sandbox or live
-            "client_id": config.PAYPAL_CLIENT_ID,
-            "client_secret": config.PAYPAL_CLIENT_SECRET
-        })
+        paypalrestsdk.configure(
+            {
+                "mode": config.PAYPAL_MODE,  # sandbox or live
+                "client_id": config.PAYPAL_CLIENT_ID,
+                "client_secret": config.PAYPAL_CLIENT_SECRET,
+            }
+        )
 
     def create_order(self, package_name: str, return_url: str, cancel_url: str):
         """
@@ -32,45 +34,40 @@ class PayPalService:
         if not package:
             raise ValueError(f"Invalid package: {package_name}")
 
-        payment = paypalrestsdk.Payment({
-            "intent": "sale",
-            "payer": {
-                "payment_method": "paypal"
-            },
-            "redirect_urls": {
-                "return_url": return_url,
-                "cancel_url": cancel_url
-            },
-            "transactions": [{
-                "item_list": {
-                    "items": [{
-                        "name": f"{package['name']} - {package['credits']} Credits",
-                        "sku": package_name,
-                        "price": f"{package['price']:.2f}",
-                        "currency": "EUR",
-                        "quantity": 1
-                    }]
-                },
-                "amount": {
-                    "total": f"{package['price']:.2f}",
-                    "currency": "EUR"
-                },
-                "description": f"Kauf von {package['credits']} Credits für obo"
-            }]
-        })
+        payment = paypalrestsdk.Payment(
+            {
+                "intent": "sale",
+                "payer": {"payment_method": "paypal"},
+                "redirect_urls": {"return_url": return_url, "cancel_url": cancel_url},
+                "transactions": [
+                    {
+                        "item_list": {
+                            "items": [
+                                {
+                                    "name": f"{package['name']} - {package['credits']} Credits",
+                                    "sku": package_name,
+                                    "price": f"{package['price']:.2f}",
+                                    "currency": "EUR",
+                                    "quantity": 1,
+                                }
+                            ]
+                        },
+                        "amount": {"total": f"{package['price']:.2f}", "currency": "EUR"},
+                        "description": f"Kauf von {package['credits']} Credits für obo",
+                    }
+                ],
+            }
+        )
 
         if payment.create():
             # Find approval URL
             approval_url = None
             for link in payment.links:
-                if link.rel == 'approval_url':
+                if link.rel == "approval_url":
                     approval_url = link.href
                     break
 
-            return {
-                'payment_id': payment.id,
-                'approval_url': approval_url
-            }
+            return {"payment_id": payment.id, "approval_url": approval_url}
         else:
             raise Exception(f"PayPal Error: {payment.error}")
 
@@ -95,11 +92,7 @@ class PayPalService:
             payer_email = payment.payer.payer_info.email
             transaction_id = payment.transactions[0].related_resources[0].sale.id
 
-            return {
-                'success': True,
-                'payer_email': payer_email,
-                'transaction_id': transaction_id
-            }
+            return {"success": True, "payer_email": payer_email, "transaction_id": transaction_id}
         else:
             raise Exception(f"Payment execution failed: {payment.error}")
 

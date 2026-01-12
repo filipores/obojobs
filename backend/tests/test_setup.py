@@ -12,7 +12,7 @@ def test_pytest_setup():
 def test_app_fixture(app):
     """Verify Flask test app fixture works."""
     assert app is not None
-    assert app.config['TESTING'] is True
+    assert app.config["TESTING"] is True
 
 
 def test_client_fixture(client):

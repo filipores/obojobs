@@ -1,5 +1,4 @@
 import time
-from typing import Dict, Optional
 
 from anthropic import Anthropic
 
@@ -7,7 +6,7 @@ from config import config
 
 
 class ClaudeAPIClient:
-    def __init__(self, api_key: Optional[str] = None):
+    def __init__(self, api_key: str | None = None):
         self.api_key = api_key or config.ANTHROPIC_API_KEY
         if not self.api_key:
             raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
@@ -16,17 +15,15 @@ class ClaudeAPIClient:
         self.max_tokens = config.MAX_TOKENS
         self.temperature = config.TEMPERATURE
 
-    def extract_bewerbung_details(self, stellenanzeige_text: str, firma_name: str,
-                                  retry_count: int = 3) -> Dict[str, str]:
+    def extract_bewerbung_details(
+        self, stellenanzeige_text: str, firma_name: str, retry_count: int = 3
+    ) -> dict[str, str]:
         prompt = self._create_details_extraction_prompt(stellenanzeige_text, firma_name)
 
         for attempt in range(retry_count):
             try:
                 response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=500,
-                    temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}]
+                    model=self.model, max_tokens=500, temperature=0.3, messages=[{"role": "user", "content": prompt}]
                 )
                 extracted_text = response.content[0].text.strip()
                 return self._parse_extracted_details(extracted_text, firma_name)
@@ -35,48 +32,48 @@ class ClaudeAPIClient:
                     print(f"Detail-Extraktion fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
                     time.sleep(2)
                 else:
-                    print(f"⚠ Detail-Extraktion fehlgeschlagen, verwende Defaults")
+                    print("⚠ Detail-Extraktion fehlgeschlagen, verwende Defaults")
                     return self._get_default_details(firma_name)
 
-    def _parse_extracted_details(self, text: str, firma_name: str) -> Dict[str, str]:
+    def _parse_extracted_details(self, text: str, firma_name: str) -> dict[str, str]:
         details = {
-            'firma': firma_name,
-            'ansprechpartner': f'Moin Moin liebes {firma_name} Team',
-            'position': 'Softwareentwickler',
-            'quelle': 'eure Website',
-            'email': '',
-            'stellenanzeige_kompakt': text
+            "firma": firma_name,
+            "ansprechpartner": f"Moin Moin liebes {firma_name} Team",
+            "position": "Softwareentwickler",
+            "quelle": "eure Website",
+            "email": "",
+            "stellenanzeige_kompakt": text,
         }
 
-        for line in text.split('\n'):
+        for line in text.split("\n"):
             line = line.strip()
-            if line.startswith('ANSPRECHPARTNER:'):
-                anrede = line.replace('ANSPRECHPARTNER:', '').strip()
-                if anrede and anrede.lower() not in ['keine angabe', 'nicht vorhanden', 'n/a']:
-                    details['ansprechpartner'] = anrede
-            elif line.startswith('POSITION:'):
-                pos = line.replace('POSITION:', '').strip()
-                if pos and pos.lower() not in ['keine angabe', 'initiativ', 'n/a']:
-                    details['position'] = pos
-            elif line.startswith('QUELLE:'):
-                quelle = line.replace('QUELLE:', '').strip()
-                if quelle and quelle.lower() not in ['keine angabe', 'nicht vorhanden', 'n/a']:
-                    details['quelle'] = quelle
-            elif line.startswith('EMAIL:'):
-                email = line.replace('EMAIL:', '').strip()
-                if email and email.lower() not in ['keine angabe', 'nicht vorhanden', 'n/a']:
-                    details['email'] = email
+            if line.startswith("ANSPRECHPARTNER:"):
+                anrede = line.replace("ANSPRECHPARTNER:", "").strip()
+                if anrede and anrede.lower() not in ["keine angabe", "nicht vorhanden", "n/a"]:
+                    details["ansprechpartner"] = anrede
+            elif line.startswith("POSITION:"):
+                pos = line.replace("POSITION:", "").strip()
+                if pos and pos.lower() not in ["keine angabe", "initiativ", "n/a"]:
+                    details["position"] = pos
+            elif line.startswith("QUELLE:"):
+                quelle = line.replace("QUELLE:", "").strip()
+                if quelle and quelle.lower() not in ["keine angabe", "nicht vorhanden", "n/a"]:
+                    details["quelle"] = quelle
+            elif line.startswith("EMAIL:"):
+                email = line.replace("EMAIL:", "").strip()
+                if email and email.lower() not in ["keine angabe", "nicht vorhanden", "n/a"]:
+                    details["email"] = email
 
         return details
 
-    def _get_default_details(self, firma_name: str) -> Dict[str, str]:
+    def _get_default_details(self, firma_name: str) -> dict[str, str]:
         return {
-            'firma': firma_name,
-            'ansprechpartner': f'Moin Moin liebes {firma_name} Team',
-            'position': 'Softwareentwickler',
-            'quelle': 'eure Website',
-            'email': '',
-            'stellenanzeige_kompakt': ''
+            "firma": firma_name,
+            "ansprechpartner": f"Moin Moin liebes {firma_name} Team",
+            "position": "Softwareentwickler",
+            "quelle": "eure Website",
+            "email": "",
+            "stellenanzeige_kompakt": "",
         }
 
     def extract_key_information(self, stellenanzeige_text: str, retry_count: int = 3) -> str:
@@ -85,10 +82,7 @@ class ClaudeAPIClient:
         for attempt in range(retry_count):
             try:
                 response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=400,
-                    temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}]
+                    model=self.model, max_tokens=400, temperature=0.3, messages=[{"role": "user", "content": prompt}]
                 )
                 return response.content[0].text.strip()
             except Exception as e:
@@ -96,21 +90,27 @@ class ClaudeAPIClient:
                     print(f"Extraktion fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
                     time.sleep(2)
                 else:
-                    raise Exception(f"Informationsextraktion fehlgeschlagen: {str(e)}")
+                    raise Exception(f"Informationsextraktion fehlgeschlagen: {str(e)}") from e
 
-    def generate_einleitung(self, cv_text: str, stellenanzeige_text: str,
-                           firma_name: Optional[str] = None, zeugnis_text: Optional[str] = None,
-                           details: Optional[Dict[str, str]] = None, use_extraction: bool = True,
-                           retry_count: int = 3) -> str:
-        if details and details.get('stellenanzeige_kompakt'):
-            stellenanzeige_text = details['stellenanzeige_kompakt']
+    def generate_einleitung(
+        self,
+        cv_text: str,
+        stellenanzeige_text: str,
+        firma_name: str | None = None,
+        zeugnis_text: str | None = None,
+        details: dict[str, str] | None = None,
+        use_extraction: bool = True,
+        retry_count: int = 3,
+    ) -> str:
+        if details and details.get("stellenanzeige_kompakt"):
+            stellenanzeige_text = details["stellenanzeige_kompakt"]
         elif use_extraction:
             print("  → Extrahiere Kerninformationen aus Stellenanzeige...")
             stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
             print(f"  → Extraktion abgeschlossen ({len(stellenanzeige_text)} Zeichen)")
 
-        position = details.get('position', 'Softwareentwickler') if details else 'Softwareentwickler'
-        quelle = details.get('quelle', 'eure Website') if details else 'eure Website'
+        position = details.get("position", "Softwareentwickler") if details else "Softwareentwickler"
+        quelle = details.get("quelle", "eure Website") if details else "eure Website"
 
         system_blocks = self._create_cached_system_blocks(cv_text, zeugnis_text, position, quelle)
         user_prompt = self._create_user_prompt(stellenanzeige_text, firma_name)
@@ -122,7 +122,7 @@ class ClaudeAPIClient:
                     max_tokens=self.max_tokens,
                     temperature=self.temperature,
                     system=system_blocks,
-                    messages=[{"role": "user", "content": user_prompt}]
+                    messages=[{"role": "user", "content": user_prompt}],
                 )
 
                 einleitung = response.content[0].text.strip()
@@ -135,7 +135,7 @@ class ClaudeAPIClient:
                     print("Warte 2 Sekunden vor erneutem Versuch...")
                     time.sleep(2)
                 else:
-                    raise Exception(f"Claude API Fehler nach {retry_count} Versuchen: {str(e)}")
+                    raise Exception(f"Claude API Fehler nach {retry_count} Versuchen: {str(e)}") from e
 
     def _create_details_extraction_prompt(self, stellenanzeige_text: str, firma_name: str) -> str:
         return f"""Extrahiere folgende Informationen aus dieser Stellenanzeige für eine Bewerbung:
@@ -182,8 +182,7 @@ Extrahiere folgende Informationen in kompakter Form:
 WICHTIG: Fasse dich sehr kurz. Keine langen Beschreibungen. Nur die Kernfakten.
 Schreibe die Extraktion in Stichpunkten oder kurzen Sätzen:"""
 
-    def _create_cached_system_blocks(self, cv_text: str, zeugnis_text: Optional[str],
-                                     position: str, quelle: str) -> list:
+    def _create_cached_system_blocks(self, cv_text: str, zeugnis_text: str | None, position: str, quelle: str) -> list:
         system_blocks = []
 
         instructions = f"""Du bist ein professioneller Bewerbungsschreiber. Deine Aufgabe ist es, einen kurzen, prägnanten Einleitungsabsatz für ein Anschreiben zu verfassen.
@@ -205,34 +204,33 @@ WICHTIGE ANFORDERUNGEN:
 
 Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil von Filip. Beginne direkt mit dem Text, ohne Anrede."""
 
-        system_blocks.append({
-            "type": "text",
-            "text": instructions,
-            "cache_control": {"type": "ephemeral"}
-        })
+        system_blocks.append({"type": "text", "text": instructions, "cache_control": {"type": "ephemeral"}})
 
-        system_blocks.append({
-            "type": "text",
-            "text": f"LEBENSLAUF DES BEWERBERS:\n{cv_text[:2000]}",
-            "cache_control": {"type": "ephemeral"}
-        })
+        system_blocks.append(
+            {
+                "type": "text",
+                "text": f"LEBENSLAUF DES BEWERBERS:\n{cv_text[:2000]}",
+                "cache_control": {"type": "ephemeral"},
+            }
+        )
 
         if zeugnis_text:
-            system_blocks.append({
-                "type": "text",
-                "text": f"ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}",
-                "cache_control": {"type": "ephemeral"}
-            })
+            system_blocks.append(
+                {
+                    "type": "text",
+                    "text": f"ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}",
+                    "cache_control": {"type": "ephemeral"},
+                }
+            )
 
         return system_blocks
 
-    def generate_email_text(self, position: str, ansprechperson: str, firma_name: str = None,
-                           attachments: list = None) -> str:
+    def generate_email_text(
+        self, position: str, ansprechperson: str, firma_name: str = None, attachments: list = None
+    ) -> str:
         """Generate personalized email text for job application"""
         if attachments is None:
-            attachments = ['Anschreiben', 'Lebenslauf', 'Bachelorzeugnis', 'Arbeitszeugnis']
-
-        attachments_text = ', '.join(attachments[:-1]) + ' und ' + attachments[-1] if len(attachments) > 1 else attachments[0]
+            attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis", "Arbeitszeugnis"]
 
         # Add company context if available
         position_text = f"die Position als {position}"
@@ -252,16 +250,20 @@ Hamburg | +49 15254112096
 filip.ores@hotmail.com
 filipores.com"""
 
-    def generate_betreff(self, position: str, firma_name: str = None, style: str = 'professional') -> str:
+    def generate_betreff(self, position: str, firma_name: str = None, style: str = "professional") -> str:
         """Generate professional email subject line"""
-        if style == 'professional':
+        if style == "professional":
             return f"Bewerbung als {position} - Filip Ores" if firma_name else f"Bewerbung als {position}"
-        if style == 'informal':
+        if style == "informal":
             return f"Bewerbung: {position}"
         # formal style
-        return f"Bewerbung um die Position als {position} bei {firma_name}" if firma_name else f"Bewerbung um die Position als {position}"
+        return (
+            f"Bewerbung um die Position als {position} bei {firma_name}"
+            if firma_name
+            else f"Bewerbung um die Position als {position}"
+        )
 
-    def _create_user_prompt(self, stellenanzeige_text: str, firma_name: Optional[str]) -> str:
+    def _create_user_prompt(self, stellenanzeige_text: str, firma_name: str | None) -> str:
         firma_info = f" (Firma: {firma_name})" if firma_name else ""
         return f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
 {stellenanzeige_text[:2000]}
