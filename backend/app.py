@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
@@ -18,7 +18,18 @@ def create_app():
     # Initialize extensions
     db.init_app(app)
     CORS(app, origins=config.CORS_ORIGINS)
-    JWTManager(app)
+    jwt = JWTManager(app)
+
+    # Register JWT token blacklist callback
+    @jwt.token_in_blocklist_loader
+    def check_if_token_revoked(jwt_header, jwt_payload):
+        from models import TokenBlacklist
+        jti = jwt_payload["jti"]
+        return TokenBlacklist.is_token_blacklisted(jti)
+
+    @jwt.revoked_token_loader
+    def revoked_token_callback(jwt_header, jwt_payload):
+        return jsonify({"error": "Token has been revoked"}), 401
 
     # Initialize rate limiter
     limiter = Limiter(

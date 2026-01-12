@@ -30,11 +30,22 @@ export const authStore = reactive({
     localStorage.setItem('user', JSON.stringify(data))
   },
 
-  logout() {
-    this.user = null
-    this.token = null
-    localStorage.removeItem('token')
-    localStorage.removeItem('user')
+  async logout() {
+    try {
+      // Call logout endpoint to invalidate token on server
+      if (this.token) {
+        await api.post('/auth/logout')
+      }
+    } catch (error) {
+      // Even if server logout fails, clear local state
+      console.warn('Server logout failed:', error)
+    } finally {
+      // Always clear local state
+      this.user = null
+      this.token = null
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+    }
   },
 
   isAuthenticated() {

@@ -882,3 +882,132 @@ class TestChangePassword:
         )
 
         assert response.status_code == 401
+
+
+class TestLogout:
+    """Tests for POST /api/auth/logout"""
+
+    def test_logout_requires_authentication(self, client):
+        """Test that logout requires authentication."""
+        response = client.post("/api/auth/logout")
+
+        assert response.status_code == 401
+
+    def test_logout_success_returns_200(self, client, auth_headers):
+        """Test successful logout returns 200."""
+        response = client.post(
+            "/api/auth/logout",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "message" in data
+        assert "logged out" in data["message"].lower()
+
+    def test_logout_invalidates_token(self, client, auth_headers):
+        """Test that token is invalid after logout."""
+        # First logout
+        response = client.post(
+            "/api/auth/logout",
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+
+        # Try to use the same token again
+        response = client.get(
+            "/api/auth/me",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 401
+        data = response.get_json()
+        assert "revoked" in data["error"]
+
+    def test_logout_token_cannot_be_used_for_other_endpoints(
+        self, client, auth_headers
+    ):
+        """Test that logged out token cannot be used for any authenticated endpoint."""
+        # First logout
+        client.post(
+            "/api/auth/logout",
+            headers=auth_headers,
+        )
+
+        # Try to use token for send-verification
+        response = client.post(
+            "/api/auth/send-verification",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 401
+
+    def test_logout_does_not_affect_other_tokens(self, client, test_user):
+        """Test that logging out one token doesn't affect other tokens."""
+        # Get two tokens by logging in twice
+        response1 = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        token1 = response1.get_json()["access_token"]
+
+        response2 = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        token2 = response2.get_json()["access_token"]
+
+        # Logout with token1
+        client.post(
+            "/api/auth/logout",
+            headers={"Authorization": f"Bearer {token1}"},
+        )
+
+        # Token1 should be revoked
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {token1}"},
+        )
+        assert response.status_code == 401
+
+        # Token2 should still work
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {token2}"},
+        )
+        assert response.status_code == 200
+
+    def test_logout_can_login_again_after_logout(self, client, test_user, auth_headers):
+        """Test that user can login again after logout."""
+        # First logout
+        client.post(
+            "/api/auth/logout",
+            headers=auth_headers,
+        )
+
+        # Login again
+        response = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "access_token" in data
+
+        # New token should work
+        new_headers = {"Authorization": f"Bearer {data['access_token']}"}
+        response = client.get(
+            "/api/auth/me",
+            headers=new_headers,
+        )
+        assert response.status_code == 200

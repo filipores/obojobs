@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
+from models import TokenBlacklist
 from services.auth_service import AuthService
 from services.email_verification_service import EmailVerificationService
 from services.password_reset_service import PasswordResetService
@@ -337,3 +338,32 @@ def change_password():
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
+
+
+@auth_bp.route("/logout", methods=["POST"])
+@jwt_required()
+def logout():
+    """
+    Logout user by adding current token to blacklist.
+
+    Requires authentication. The token's JTI is added to the blacklist,
+    making it invalid for future use even if it hasn't expired yet.
+    """
+    jwt = get_jwt()
+    jti = jwt["jti"]
+    token_type = jwt.get("type", "access")
+    user_id = int(get_jwt_identity())
+
+    # Get token expiration time
+    exp_timestamp = jwt["exp"]
+    expires_at = datetime.utcfromtimestamp(exp_timestamp)
+
+    # Add token to blacklist
+    TokenBlacklist.add_token(
+        jti=jti,
+        token_type=token_type,
+        user_id=user_id,
+        expires_at=expires_at
+    )
+
+    return jsonify({"message": "Successfully logged out"}), 200
