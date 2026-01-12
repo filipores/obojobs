@@ -270,22 +270,18 @@
 
           <div class="form-group">
             <label class="form-label">Anschreiben-Text</label>
-            <div class="placeholder-hints">
-              <span class="placeholder-tag">{{FIRMA}}</span>
-              <span class="placeholder-tag">{{POSITION}}</span>
-              <span class="placeholder-tag">{{ANSPRECHPARTNER}}</span>
-            </div>
-            <textarea
+            <p class="editor-hint">
+              Markiere Text und wähle eine Variable aus der Liste, um dynamische Platzhalter einzufügen.
+            </p>
+            <TemplateEditor
               v-model="form.content"
-              rows="16"
+              :suggestions="suggestions"
               placeholder="Sehr geehrte Damen und Herren,
 
-mit großem Interesse habe ich Ihre Stellenausschreibung für die Position {{POSITION}} bei {{FIRMA}} gelesen.
-
-[Ihr Anschreiben...]"
-              class="form-textarea"
-            ></textarea>
-            <div class="character-count">{{ form.content.length }} Zeichen</div>
+mit großem Interesse habe ich Ihre Stellenausschreibung gelesen..."
+              @suggestion-accepted="onSuggestionAccepted"
+              @suggestion-rejected="onSuggestionRejected"
+            />
           </div>
 
           <div class="form-group">
@@ -321,6 +317,7 @@ mit großem Interesse habe ich Ihre Stellenausschreibung für die Position {{POS
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import api from '../api/client'
+import { TemplateEditor } from '../components/TemplateEditor'
 
 const templates = ref([])
 const hasLebenslauf = ref(false)
@@ -345,6 +342,8 @@ const form = ref({
   content: '',
   is_default: false
 })
+
+const suggestions = ref([])
 
 const isStepValid = computed(() => {
   switch (wizardStep.value) {
@@ -386,6 +385,7 @@ const cancelEdit = () => {
   showManualForm.value = false
   editingTemplate.value = null
   form.value = { name: '', content: '', is_default: false }
+  suggestions.value = []
 }
 
 const generateWithAI = async () => {
@@ -401,6 +401,13 @@ const generateWithAI = async () => {
       is_default: true
     }
     editingTemplate.value = data.template
+
+    // Apply AI suggestions if available
+    if (data.template.suggestions && data.template.suggestions.length > 0) {
+      suggestions.value = data.template.suggestions
+    } else {
+      suggestions.value = []
+    }
 
     showWizard.value = false
     showManualForm.value = true
@@ -442,8 +449,19 @@ const editTemplate = (template) => {
     content: template.content,
     is_default: template.is_default
   }
+  suggestions.value = [] // Clear suggestions when editing existing template
   showManualForm.value = true
   showWizard.value = false
+}
+
+const onSuggestionAccepted = (suggestionId) => {
+  // Remove the accepted suggestion from the list
+  suggestions.value = suggestions.value.filter(s => s.id !== suggestionId)
+}
+
+const onSuggestionRejected = (suggestionId) => {
+  // Remove the rejected suggestion from the list
+  suggestions.value = suggestions.value.filter(s => s.id !== suggestionId)
 }
 
 const deleteTemplate = async (id) => {
@@ -869,29 +887,11 @@ onMounted(() => {
   color: var(--color-text-secondary);
 }
 
-.placeholder-hints {
-  display: flex;
-  gap: var(--space-sm);
-  margin-bottom: var(--space-sm);
-  flex-wrap: wrap;
-}
-
-.placeholder-tag {
-  display: inline-block;
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--color-ai);
-  color: var(--color-text-inverse);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-mono);
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.character-count {
-  text-align: right;
-  font-size: 0.8125rem;
+.editor-hint {
+  font-size: 0.875rem;
   color: var(--color-text-tertiary);
-  margin-top: var(--space-xs);
+  margin-bottom: var(--space-md);
+  line-height: var(--leading-relaxed);
 }
 
 .form-checkbox {
