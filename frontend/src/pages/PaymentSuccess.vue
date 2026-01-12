@@ -82,7 +82,7 @@ import { useRouter, useRoute } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../store/auth'
 
-const router = useRouter()
+const _router = useRouter()
 const route = useRoute()
 
 const loading = ref(true)

@@ -25,7 +25,7 @@
         <h2 class="section-title">Ihre Templates</h2>
         <div class="templates-grid">
           <div
-            v-for="(template, index) in templates"
+            v-for="template in templates"
             :key="template.id"
             class="template-card zen-card stagger-item"
           >
@@ -471,7 +471,7 @@ const deleteTemplate = async (id) => {
     await loadTemplates()
     message.value = 'Template gelöscht!'
     messageClass.value = 'success'
-  } catch (e) {
+  } catch (_e) {
     message.value = 'Fehler beim Löschen'
     messageClass.value = 'error'
   }
@@ -483,7 +483,7 @@ const setDefault = async (id) => {
     await loadTemplates()
     message.value = 'Standard-Template gesetzt!'
     messageClass.value = 'success'
-  } catch (e) {
+  } catch (_e) {
     message.value = 'Fehler'
     messageClass.value = 'error'
   }
@@ -493,8 +493,8 @@ const loadTemplates = async () => {
   try {
     const { data } = await api.get('/templates')
     templates.value = data.templates
-  } catch (e) {
-    console.error('Fehler beim Laden:', e)
+  } catch (err) {
+    console.error('Fehler beim Laden:', err)
   }
 }
 
@@ -502,8 +502,8 @@ const checkLebenslauf = async () => {
   try {
     const { data } = await api.get('/documents')
     hasLebenslauf.value = data.documents.some(doc => doc.doc_type === 'lebenslauf')
-  } catch (e) {
-    console.error('Fehler beim Prüfen:', e)
+  } catch (err) {
+    console.error('Fehler beim Prüfen:', err)
   }
 }
 

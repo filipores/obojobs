@@ -56,7 +56,8 @@ export default [
       // JavaScript rules
       'no-unused-vars': ['error', {
         argsIgnorePattern: '^_',
-        varsIgnorePattern: '^_'
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
       }],
       'no-console': 'warn',
       'no-debugger': 'error',
