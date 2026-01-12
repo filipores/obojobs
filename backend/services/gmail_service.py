@@ -1,6 +1,11 @@
+import base64
 import os
 from datetime import datetime, timedelta
+from email.mime.application import MIMEApplication
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
+import requests
 from google_auth_oauthlib.flow import Flow
 
 from models import EmailAccount, db
@@ -115,8 +120,6 @@ class GmailService:
         Returns:
             str: User's email address
         """
-        import requests
-
         response = requests.get(
             "https://www.googleapis.com/oauth2/v2/userinfo",
             headers={"Authorization": f"Bearer {access_token}"},
@@ -137,8 +140,6 @@ class GmailService:
         Returns:
             str: New access token
         """
-        import requests
-
         client_id = os.environ.get("GOOGLE_CLIENT_ID")
         client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
 
@@ -227,3 +228,68 @@ class GmailService:
         db.session.commit()
 
         return account
+
+    @staticmethod
+    def send_email(email_account, to_email, subject, body, attachments=None):
+        """
+        Send an email via Gmail API.
+
+        Args:
+            email_account: EmailAccount model instance
+            to_email: Recipient email address
+            subject: Email subject
+            body: Email body (plain text)
+            attachments: List of dicts with 'path' and 'filename' keys
+
+        Returns:
+            dict: Response from Gmail API with message ID
+
+        Raises:
+            ValueError: If sending fails
+        """
+        access_token = GmailService.get_valid_access_token(email_account)
+
+        # Create MIME message
+        if attachments:
+            message = MIMEMultipart()
+            message.attach(MIMEText(body, "plain"))
+
+            # Add attachments
+            for attachment in attachments:
+                file_path = attachment.get("path")
+                filename = attachment.get("filename")
+
+                if not os.path.exists(file_path):
+                    raise ValueError(f"Attachment file not found: {file_path}")
+
+                with open(file_path, "rb") as f:
+                    part = MIMEApplication(f.read(), Name=filename)
+                    part["Content-Disposition"] = f'attachment; filename="{filename}"'
+                    message.attach(part)
+        else:
+            message = MIMEText(body, "plain")
+
+        message["To"] = to_email
+        message["From"] = email_account.email
+        message["Subject"] = subject
+
+        # Encode the message
+        raw_message = base64.urlsafe_b64encode(message.as_bytes()).decode()
+
+        # Send via Gmail API
+        response = requests.post(
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json={"raw": raw_message},
+            timeout=30,
+        )
+
+        if response.status_code != 200:
+            error_data = response.json()
+            error_msg = error_data.get("error", {}).get("message", "Unknown error")
+            raise ValueError(f"Failed to send email: {error_msg}")
+
+        return response.json()

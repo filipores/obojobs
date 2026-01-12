@@ -390,10 +390,9 @@
                   Abbrechen
                 </button>
                 <button
-                  @click="closeEmailComposer"
+                  @click="sendEmail"
                   :disabled="!hasConnectedAccounts || !emailForm.to || !emailForm.subject || isSendingEmail"
                   class="zen-btn zen-btn-ai"
-                  title="Versand wird in EMAIL-006 implementiert"
                 >
                   <span v-if="isSendingEmail">Wird gesendet...</span>
                   <span v-else>Senden</span>
@@ -618,6 +617,32 @@ const getSelectedAccount = () => {
 }
 
 const hasConnectedAccounts = computed(() => emailAccounts.value.length > 0)
+
+const sendEmail = async () => {
+  if (!emailComposerApp.value || !selectedEmailAccountId.value) return
+
+  isSendingEmail.value = true
+
+  try {
+    await api.post('/email/send', {
+      application_id: emailComposerApp.value.id,
+      email_account_id: selectedEmailAccountId.value,
+      to_email: emailForm.value.to,
+      subject: emailForm.value.subject,
+      body: emailForm.value.body,
+      attachments: ['anschreiben', 'lebenslauf']
+    })
+
+    alert('Email erfolgreich gesendet!')
+    closeEmailComposer()
+    loadApplications()
+  } catch (err) {
+    const errorMsg = err.response?.data?.error || 'Fehler beim Senden der Email'
+    alert(errorMsg)
+  } finally {
+    isSendingEmail.value = false
+  }
+}
 
 onMounted(() => {
   loadApplications()

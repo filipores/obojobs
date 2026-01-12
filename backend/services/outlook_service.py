@@ -1,7 +1,9 @@
+import base64
 import os
 from datetime import datetime, timedelta
 
 import msal
+import requests
 
 from models import EmailAccount, db
 
@@ -114,8 +116,6 @@ class OutlookService:
         Returns:
             str: User's email address
         """
-        import requests
-
         response = requests.get(
             "https://graph.microsoft.com/v1.0/me",
             headers={"Authorization": f"Bearer {access_token}"},
@@ -224,3 +224,81 @@ class OutlookService:
         db.session.commit()
 
         return account
+
+    @staticmethod
+    def send_email(email_account, to_email, subject, body, attachments=None):
+        """
+        Send an email via Microsoft Graph API.
+
+        Args:
+            email_account: EmailAccount model instance
+            to_email: Recipient email address
+            subject: Email subject
+            body: Email body (plain text)
+            attachments: List of dicts with 'path' and 'filename' keys
+
+        Returns:
+            dict: Response from Graph API
+
+        Raises:
+            ValueError: If sending fails
+        """
+        access_token = OutlookService.get_valid_access_token(email_account)
+
+        # Build the message payload
+        message_payload = {
+            "message": {
+                "subject": subject,
+                "body": {
+                    "contentType": "Text",
+                    "content": body,
+                },
+                "toRecipients": [
+                    {
+                        "emailAddress": {
+                            "address": to_email,
+                        }
+                    }
+                ],
+            },
+            "saveToSentItems": "true",
+        }
+
+        # Add attachments if provided
+        if attachments:
+            attachment_list = []
+            for attachment in attachments:
+                file_path = attachment.get("path")
+                filename = attachment.get("filename")
+
+                if not os.path.exists(file_path):
+                    raise ValueError(f"Attachment file not found: {file_path}")
+
+                with open(file_path, "rb") as f:
+                    content = base64.b64encode(f.read()).decode()
+
+                attachment_list.append({
+                    "@odata.type": "#microsoft.graph.fileAttachment",
+                    "name": filename,
+                    "contentBytes": content,
+                })
+
+            message_payload["message"]["attachments"] = attachment_list
+
+        # Send via Microsoft Graph API
+        response = requests.post(
+            "https://graph.microsoft.com/v1.0/me/sendMail",
+            headers={
+                "Authorization": f"Bearer {access_token}",
+                "Content-Type": "application/json",
+            },
+            json=message_payload,
+            timeout=30,
+        )
+
+        if response.status_code not in (200, 202):
+            error_data = response.json() if response.content else {}
+            error_msg = error_data.get("error", {}).get("message", "Unknown error")
+            raise ValueError(f"Failed to send email: {error_msg}")
+
+        return {"status": "sent", "code": response.status_code}
