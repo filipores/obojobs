@@ -1,141 +1,179 @@
 {
   "project": "obojobs",
-  "branchName": "ralph/test-and-lint-infrastructure",
-  "description": "Test- und Linting-Infrastruktur für Backend und Frontend einrichten",
+  "branchName": "ralph/production-auth",
+  "description": "Produktionsreifes Authentifizierungs-System mit Email-Verifizierung, Passwort-Reset und Security-Features",
   "userStories": [
     {
-      "id": "INFRA-001",
-      "title": "Backend: pytest Setup",
-      "description": "Grundlegende pytest-Konfiguration für Flask Backend einrichten",
+      "id": "AUTH-001",
+      "title": "Passwort-Stärke Validierung",
+      "description": "Backend und Frontend sollen sichere Passwörter erzwingen",
       "acceptanceCriteria": [
-        "pytest und pytest-cov in requirements.txt hinzugefügt",
-        "backend/tests/ Verzeichnis erstellt",
-        "backend/tests/conftest.py mit Test-Client, Test-DB (SQLite :memory:), und Test-User Fixture",
-        "backend/pytest.ini oder pyproject.toml mit pytest Config",
-        "Befehl 'cd backend && pytest' läuft ohne Fehler"
+        "Backend: Passwort muss min. 8 Zeichen haben",
+        "Backend: Passwort muss Groß-, Kleinbuchstaben und Zahl enthalten",
+        "Backend: Gibt spezifische Fehlermeldung zurück welche Regel verletzt wurde",
+        "Frontend: Zeigt Passwort-Anforderungen beim Registrieren an",
+        "Frontend: Live-Feedback während Eingabe (welche Regeln erfüllt/nicht erfüllt)",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
-      "passes": true,
-      "notes": "Test-DB sollte isoliert sein und keine echten Daten beeinflussen"
+      "passes": false,
+      "notes": "Validierung als eigene Funktion in services/ für Wiederverwendung"
     },
     {
-      "id": "INFRA-002",
-      "title": "Backend: Health & Auth Tests",
-      "description": "Erste Tests für Health-Endpoint und Auth-Routen",
+      "id": "AUTH-002",
+      "title": "Email-Verifizierung: Backend Token-System",
+      "description": "Backend generiert Verifizierungs-Tokens und speichert Verifizierungs-Status",
       "acceptanceCriteria": [
-        "Test: GET /api/health → 200",
-        "Test: POST /api/auth/register mit validen Daten → 201",
-        "Test: POST /api/auth/register mit existierender Email → 400",
-        "Test: POST /api/auth/login mit korrekten Daten → 200 + Token",
-        "Test: POST /api/auth/login mit falschen Daten → 401",
-        "Alle Tests grün mit 'cd backend && pytest'"
+        "User Model: Neues Feld 'email_verified' (Boolean, default False)",
+        "User Model: Neues Feld 'email_verification_token' (String, nullable)",
+        "User Model: Neues Feld 'email_verification_sent_at' (DateTime, nullable)",
+        "Migration für neue Felder erstellt und angewendet",
+        "Service-Funktion zum Generieren eines sicheren Tokens (secrets.token_urlsafe)",
+        "Token läuft nach 24 Stunden ab",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Nutze die Fixtures aus conftest.py"
+      "passes": false,
+      "notes": "Noch kein Email-Versand - nur Token-Logik"
     },
     {
-      "id": "INFRA-003",
-      "title": "Backend: Ruff Linter Setup",
-      "description": "Ruff als schnellen Python Linter einrichten",
+      "id": "AUTH-003",
+      "title": "Email-Verifizierung: API Endpoints",
+      "description": "Endpoints für Token-Versand und Verifizierung",
       "acceptanceCriteria": [
-        "ruff in requirements.txt (dev dependencies oder separate requirements-dev.txt)",
-        "ruff.toml oder pyproject.toml mit Ruff-Konfiguration",
-        "Ignoriere migrations/, __pycache__/, venv/",
-        "Line length: 120",
-        "Befehl 'cd backend && ruff check .' läuft ohne Errors (Warnings OK)",
-        "Befehl 'cd backend && ruff format --check .' prüft Formatierung"
+        "POST /api/auth/send-verification - Sendet neuen Verifizierungs-Token (logged in)",
+        "POST /api/auth/verify-email - Verifiziert Email mit Token",
+        "GET /api/auth/me gibt 'email_verified' Status zurück",
+        "Rate Limiting: Max 3 Verification-Emails pro Stunde",
+        "Tests für alle neuen Endpoints",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Ruff ist schneller als flake8+black kombiniert"
+      "passes": false,
+      "notes": "Email-Versand wird geloggt statt wirklich gesendet (für Dev)"
     },
     {
-      "id": "INFRA-004",
-      "title": "Backend: Bestehenden Code lint-konform machen",
-      "description": "Alle Ruff-Fehler im bestehenden Backend-Code beheben",
+      "id": "AUTH-004",
+      "title": "Email-Verifizierung: Frontend Flow",
+      "description": "UI für Email-Verifizierung nach Registrierung",
       "acceptanceCriteria": [
-        "'cd backend && ruff check .' zeigt keine Errors",
-        "'cd backend && ruff format .' formatiert den Code",
-        "Alle bestehenden Tests laufen noch durch",
-        "App startet noch korrekt"
+        "Nach Registrierung: Weiterleitung zu 'Email verifizieren' Seite",
+        "Seite zeigt: 'Verifizierungs-Email wurde gesendet an [email]'",
+        "Button: 'Erneut senden' (mit Cooldown-Anzeige)",
+        "Route /verify-email?token=xxx für Verifizierung",
+        "Erfolg: Toast + Weiterleitung zum Dashboard",
+        "Fehler: Klare Fehlermeldung (Token abgelaufen, ungültig, etc.)",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "Nutze 'ruff check --fix .' für automatische Fixes"
+      "passes": false,
+      "notes": "Banner im Dashboard wenn Email noch nicht verifiziert"
     },
     {
-      "id": "INFRA-005",
-      "title": "Frontend: Vitest Setup",
-      "description": "Vitest als Test-Runner für Vue Frontend einrichten",
+      "id": "AUTH-005",
+      "title": "Passwort-Reset: Backend Token-System",
+      "description": "Backend für Passwort-Vergessen Funktion",
       "acceptanceCriteria": [
-        "vitest, @vue/test-utils, jsdom in devDependencies",
-        "vitest.config.js mit korrekter Vue-Konfiguration",
-        "frontend/src/__tests__/ Verzeichnis erstellt",
-        "'test' Script in package.json: 'vitest run'",
-        "'test:watch' Script in package.json: 'vitest'",
-        "Befehl 'cd frontend && npm test' läuft ohne Fehler"
+        "User Model: Neues Feld 'password_reset_token' (String, nullable)",
+        "User Model: Neues Feld 'password_reset_sent_at' (DateTime, nullable)",
+        "Migration für neue Felder",
+        "POST /api/auth/forgot-password - Generiert Reset-Token (public)",
+        "POST /api/auth/reset-password - Setzt neues Passwort mit Token",
+        "Token läuft nach 1 Stunde ab",
+        "Rate Limiting: Max 3 Reset-Requests pro Stunde pro Email",
+        "Tests für alle Endpoints",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Vitest ist kompatibel mit Vite und sehr schnell"
+      "passes": false,
+      "notes": "Gibt immer 200 OK zurück (verhindert Email-Enumeration)"
     },
     {
-      "id": "INFRA-006",
-      "title": "Frontend: Erste Component Tests",
-      "description": "Beispiel-Tests für eine einfache Komponente",
+      "id": "AUTH-006",
+      "title": "Passwort-Reset: Frontend Flow",
+      "description": "UI für Passwort-Vergessen Funktion",
       "acceptanceCriteria": [
-        "Mindestens ein Test für eine existierende Komponente",
-        "Test prüft dass Komponente rendert",
-        "Test prüft grundlegende Interaktion (wenn vorhanden)",
-        "Alle Tests grün mit 'cd frontend && npm test'"
+        "Link 'Passwort vergessen?' auf Login-Seite",
+        "Seite /forgot-password mit Email-Eingabe",
+        "Nach Submit: 'Falls Email existiert, wurde Link gesendet'",
+        "Seite /reset-password?token=xxx für neues Passwort",
+        "Passwort-Stärke Validierung (wie bei Registrierung)",
+        "Erfolg: Toast + Weiterleitung zu Login",
+        "Fehler: Klare Fehlermeldung",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 6,
-      "passes": true,
-      "notes": "Wähle eine einfache Komponente als Startpunkt"
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "INFRA-007",
-      "title": "Frontend: ESLint Setup",
-      "description": "ESLint für Vue/JavaScript Linting einrichten",
+      "id": "AUTH-007",
+      "title": "Account-Sperre bei Fehlversuchen",
+      "description": "Temporäre Sperre nach zu vielen fehlgeschlagenen Login-Versuchen",
       "acceptanceCriteria": [
-        "eslint, eslint-plugin-vue in devDependencies",
-        "eslint.config.js (Flat Config) oder .eslintrc.cjs",
-        "Vue 3 recommended Rules aktiviert",
-        "'lint' Script in package.json: 'eslint src/'",
-        "'lint:fix' Script in package.json: 'eslint src/ --fix'",
-        "Befehl 'cd frontend && npm run lint' läuft ohne Errors"
+        "User Model: Neues Feld 'failed_login_attempts' (Integer, default 0)",
+        "User Model: Neues Feld 'locked_until' (DateTime, nullable)",
+        "Nach 5 Fehlversuchen: Account für 15 Minuten gesperrt",
+        "Login-Endpoint prüft Sperre und gibt entsprechende Meldung",
+        "Erfolgreicher Login setzt failed_attempts auf 0",
+        "Tests für Lockout-Logik",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 7,
-      "passes": true,
-      "notes": "Nutze ESLint Flat Config (neuer Standard)"
+      "passes": false,
+      "notes": "Sperre ist zeitbasiert, kein Admin-Unlock nötig"
     },
     {
-      "id": "INFRA-008",
-      "title": "Frontend: Bestehenden Code lint-konform machen",
-      "description": "Alle ESLint-Fehler im bestehenden Frontend-Code beheben",
+      "id": "AUTH-008",
+      "title": "Passwort ändern (eingeloggt)",
+      "description": "Eingeloggte User können ihr Passwort ändern",
       "acceptanceCriteria": [
-        "'cd frontend && npm run lint' zeigt keine Errors",
-        "Frontend Build läuft noch durch",
-        "Alle Frontend Tests laufen noch durch",
-        "App funktioniert noch korrekt im Browser"
+        "PUT /api/auth/change-password Endpoint",
+        "Erfordert: current_password, new_password",
+        "Validiert aktuelles Passwort",
+        "Validiert neues Passwort (Stärke-Regeln)",
+        "Frontend: Formular in Settings-Seite",
+        "Erfolg: Toast 'Passwort geändert'",
+        "Tests für Endpoint",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 8,
-      "passes": true,
-      "notes": "Nutze 'npm run lint:fix' für automatische Fixes"
+      "passes": false,
+      "notes": ""
     },
     {
-      "id": "INFRA-009",
-      "title": "prompt.md mit neuen Quality Checks aktualisieren",
-      "description": "Ralph prompt.md aktualisieren um Tests und Linting zu nutzen",
+      "id": "AUTH-009",
+      "title": "Logout Endpoint",
+      "description": "Expliziter Logout mit Token-Invalidierung",
       "acceptanceCriteria": [
-        "prompt.md Quality Checks Sektion enthält: pytest, ruff, npm test, npm run lint",
-        "Alle Befehle in prompt.md funktionieren",
-        "AGENTS.md aktualisiert mit neuen Test/Lint Befehlen"
+        "POST /api/auth/logout Endpoint",
+        "Fügt aktuellen Token zu Blacklist hinzu (oder nutzt Token-Version)",
+        "Neues Model oder Redis-Cache für Token-Blacklist",
+        "JWT-Middleware prüft Blacklist",
+        "Frontend: Logout-Button ruft Endpoint auf vor localStorage-Clear",
+        "Test für Logout-Funktionalität",
+        "Alle Tests grün, Linting OK"
       ],
       "priority": 9,
-      "passes": true,
-      "notes": "Dies ist die letzte Story - danach ist Ralph bereit für Feature-Stories"
+      "passes": false,
+      "notes": "Einfache DB-Blacklist ist OK für MVP, Redis später"
+    },
+    {
+      "id": "AUTH-010",
+      "title": "Security Headers & HTTPS-Redirect",
+      "description": "Sicherheits-Header für Production",
+      "acceptanceCriteria": [
+        "Middleware für Security Headers (X-Content-Type-Options, X-Frame-Options, etc.)",
+        "HSTS Header wenn HTTPS aktiv",
+        "CORS korrekt konfiguriert für Production-Domain",
+        "Secure & HttpOnly Flags für Cookies (falls verwendet)",
+        "Dokumentation in AGENTS.md aktualisiert",
+        "Alle Tests grün, Linting OK"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "Headers nur in Production aktivieren, nicht in Dev"
     }
   ]
 }
