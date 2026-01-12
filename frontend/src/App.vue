@@ -25,6 +25,9 @@
           <router-link to="/applications" class="nav-link" active-class="active">
             <span class="nav-text">Bewerbungen</span>
           </router-link>
+          <router-link to="/ats" class="nav-link" active-class="active">
+            <span class="nav-text">ATS</span>
+          </router-link>
           <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
