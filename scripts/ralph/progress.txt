@@ -2,6 +2,55 @@
 Started: Mon Jan 12 16:29:43 CET 2026
 
 ## Codebase Patterns
-(Patterns werden hier gesammelt)
+- **Backend Services**: Eigenständige Service-Klassen in `backend/services/` für Business-Logik
+- **Passwort-Validierung**: PasswordValidator in `backend/services/password_validator.py` für wiederverwendbare Validierung
+- **Email-Verifizierung**: EmailVerificationService in `backend/services/email_verification_service.py` für Token-Management
+- **Rate Limiting**: In-memory Rate Limiting via dict[str, list[datetime]] in routes (für Dev); Redis in Prod
+- **Test-Passwort**: Test-Fixtures müssen Passwort-Stärke-Anforderungen erfüllen (z.B. "TestPass123")
+- **Type Hints**: Python verwendet moderne `dict` und `list` statt `Dict`/`List` aus typing
+- **User to_dict()**: Wenn User-Model erweitert wird, `to_dict()` Methode aktualisieren falls Feld im API-Response erscheinen soll
 
 ---
+
+## 2026-01-12 - AUTH-001
+- Was implementiert wurde: Passwort-Stärke Validierung (Backend + Frontend)
+- Geänderte Dateien:
+  - `backend/services/password_validator.py` (NEU)
+  - `backend/services/auth_service.py`
+  - `backend/routes/auth.py`
+  - `backend/tests/conftest.py`
+  - `backend/tests/test_auth.py`
+  - `frontend/src/pages/Register.vue`
+  - `frontend/src/__tests__/PasswordValidation.test.js` (NEU)
+- **Learnings:**
+  - Ruff erfordert moderne Type Hints (`dict` statt `Dict`)
+  - Frontend-Validierung spiegelt Backend-Regeln für UX
+  - Test-User-Passwörter müssen die neuen Regeln erfüllen
+
+---
+
+## 2026-01-12 - AUTH-002
+- Was implementiert wurde: Email-Verifizierung Backend Token-System
+- Geänderte Dateien:
+  - `backend/models/user.py` (erweitert mit email_verified, email_verification_token, email_verification_sent_at)
+  - `backend/migrations/add_email_verification.py` (NEU)
+  - `backend/services/email_verification_service.py` (NEU)
+  - `backend/tests/test_email_verification.py` (NEU - 21 Tests)
+- **Learnings:**
+  - EmailVerificationService folgt dem gleichen Pattern wie PasswordValidator (Service-Klassen für Business-Logik)
+  - secrets.token_urlsafe(32) generiert 43-Zeichen URL-sichere Tokens
+  - Migration-Dateien sollten idempotent sein (prüfen ob Spalten schon existieren)
+  - to_dict() in Models muss aktualisiert werden wenn neue Felder zum API-Response gehören sollen
+
+---
+
+## 2026-01-12 - AUTH-003
+- Was implementiert wurde: Email-Verifizierung API Endpoints
+- Geänderte Dateien:
+  - `backend/routes/auth.py` (erweitert mit send-verification und verify-email Endpoints)
+  - `backend/tests/test_auth.py` (erweitert mit 15 neuen Tests für die Endpoints)
+- **Learnings:**
+  - Rate Limiting kann in-memory mit dict[str, list[datetime]] implementiert werden (für Dev)
+  - In Prod sollte Redis verwendet werden für Rate Limiting
+  - Token-Logik bereits im EmailVerificationService vorhanden, Endpoint ruft nur Service auf
+  - GET /api/auth/me gibt bereits email_verified zurück (via User.to_dict())

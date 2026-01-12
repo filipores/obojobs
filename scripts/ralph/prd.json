@@ -17,7 +17,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "notes": "Validierung als eigene Funktion in services/ für Wiederverwendung"
     },
     {
@@ -34,7 +34,7 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Noch kein Email-Versand - nur Token-Logik"
     },
     {
@@ -50,7 +50,7 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Email-Versand wird geloggt statt wirklich gesendet (für Dev)"
     },
     {

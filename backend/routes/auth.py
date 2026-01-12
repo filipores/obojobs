@@ -1,7 +1,10 @@
+from datetime import datetime, timedelta
+
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
 from services.auth_service import AuthService
+from services.email_verification_service import EmailVerificationService
 from services.password_validator import PasswordValidator
 
 auth_bp = Blueprint("auth", __name__)
@@ -80,3 +83,112 @@ def validate_password():
 
     result = PasswordValidator.validate(password)
     return jsonify(result), 200
+
+
+# Rate limiting storage (in-memory for development)
+# In production, this should use Redis
+_verification_rate_limits: dict[str, list[datetime]] = {}
+
+# Maximum verification emails per hour
+MAX_VERIFICATION_EMAILS_PER_HOUR = 3
+
+
+def _check_verification_rate_limit(user_id: int) -> bool:
+    """
+    Check if user has exceeded verification email rate limit.
+
+    Args:
+        user_id: User ID to check
+
+    Returns:
+        True if under limit (can send), False if rate limited
+    """
+    key = str(user_id)
+    now = datetime.utcnow()
+    one_hour_ago = now - timedelta(hours=1)
+
+    # Clean up old entries and get recent requests
+    if key in _verification_rate_limits:
+        _verification_rate_limits[key] = [
+            ts for ts in _verification_rate_limits[key] if ts > one_hour_ago
+        ]
+    else:
+        _verification_rate_limits[key] = []
+
+    # Check if under limit
+    return len(_verification_rate_limits[key]) < MAX_VERIFICATION_EMAILS_PER_HOUR
+
+
+def _record_verification_request(user_id: int) -> None:
+    """Record a verification email request for rate limiting."""
+    key = str(user_id)
+    if key not in _verification_rate_limits:
+        _verification_rate_limits[key] = []
+    _verification_rate_limits[key].append(datetime.utcnow())
+
+
+@auth_bp.route("/send-verification", methods=["POST"])
+@jwt_required()
+def send_verification():
+    """
+    Send a new email verification token.
+
+    Requires authentication. Rate limited to 3 requests per hour.
+    In development mode, logs the token instead of sending email.
+    """
+    current_user_id = get_jwt_identity()
+    user = AuthService.get_user_by_id(int(current_user_id))
+
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+
+    # Check if already verified
+    if user.email_verified:
+        return jsonify({"error": "Email is already verified"}), 400
+
+    # Check rate limit
+    if not _check_verification_rate_limit(user.id):
+        return jsonify({
+            "error": "Too many verification requests. Please try again later.",
+            "retry_after_minutes": 60
+        }), 429
+
+    # Generate and store token
+    token = EmailVerificationService.create_verification_token(user)
+
+    # Record the request for rate limiting
+    _record_verification_request(user.id)
+
+    # In development, log the token (in production, send email)
+    # TODO: Integrate actual email sending service
+    print(f"[DEV] Verification token for {user.email}: {token}")
+
+    return jsonify({
+        "message": "Verification email sent",
+        "email": user.email
+    }), 200
+
+
+@auth_bp.route("/verify-email", methods=["POST"])
+def verify_email():
+    """
+    Verify email using the provided token.
+
+    Public endpoint - does not require authentication.
+    """
+    data = request.json or {}
+    token = data.get("token")
+
+    if not token:
+        return jsonify({"error": "Token is required"}), 400
+
+    result = EmailVerificationService.verify_token(token)
+
+    if not result["success"]:
+        return jsonify({"error": result["message"]}), 400
+
+    user = result["user"]
+    return jsonify({
+        "message": "Email verified successfully",
+        "user": user.to_dict()
+    }), 200

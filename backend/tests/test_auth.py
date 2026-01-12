@@ -2,6 +2,16 @@
 Tests for authentication endpoints.
 """
 
+from datetime import datetime, timedelta
+
+from models import User, db
+from routes.auth import (
+    MAX_VERIFICATION_EMAILS_PER_HOUR,
+    _check_verification_rate_limit,
+    _record_verification_request,
+    _verification_rate_limits,
+)
+from services.email_verification_service import EmailVerificationService
 from services.password_validator import PasswordValidator
 
 
@@ -232,3 +242,269 @@ class TestValidatePassword:
         data = response.get_json()
         assert data["valid"] is False
         assert len(data["errors"]) > 0
+
+
+class TestSendVerification:
+    """Tests for POST /api/auth/send-verification"""
+
+    def setup_method(self):
+        """Clear rate limit storage before each test."""
+        _verification_rate_limits.clear()
+
+    def test_send_verification_requires_authentication(self, client):
+        """Test that send-verification requires JWT token."""
+        response = client.post("/api/auth/send-verification")
+
+        assert response.status_code == 401
+
+    def test_send_verification_returns_200_for_unverified_user(
+        self, client, test_user, auth_headers
+    ):
+        """Test successful verification email request."""
+        response = client.post(
+            "/api/auth/send-verification",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "message" in data
+        assert data["email"] == test_user["email"]
+
+    def test_send_verification_returns_400_for_already_verified_user(
+        self, app, client, test_user, auth_headers
+    ):
+        """Test that already verified users get 400."""
+        # Mark user as verified
+        with app.app_context():
+            user = User.query.filter_by(email=test_user["email"]).first()
+            user.email_verified = True
+            db.session.commit()
+
+        response = client.post(
+            "/api/auth/send-verification",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "already verified" in data["error"]
+
+    def test_send_verification_rate_limited_after_max_requests(
+        self, client, test_user, auth_headers
+    ):
+        """Test that rate limiting kicks in after max requests."""
+        # Send max allowed requests
+        for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR):
+            response = client.post(
+                "/api/auth/send-verification",
+                headers=auth_headers,
+            )
+            assert response.status_code == 200
+
+        # Next request should be rate limited
+        response = client.post(
+            "/api/auth/send-verification",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 429
+        data = response.get_json()
+        assert "Too many verification requests" in data["error"]
+        assert "retry_after_minutes" in data
+
+    def test_send_verification_creates_token(self, app, client, test_user, auth_headers):
+        """Test that send-verification creates a token for the user."""
+        response = client.post(
+            "/api/auth/send-verification",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+
+        with app.app_context():
+            user = User.query.filter_by(email=test_user["email"]).first()
+            assert user.email_verification_token is not None
+            assert user.email_verification_sent_at is not None
+
+
+class TestVerifyEmail:
+    """Tests for POST /api/auth/verify-email"""
+
+    def test_verify_email_with_valid_token_returns_200(self, app, client):
+        """Test successful email verification with valid token."""
+        # Create user with verification token
+        with app.app_context():
+            user = User(
+                email="toverify@example.com",
+                full_name="To Verify",
+                credits_remaining=5,
+            )
+            user.set_password("TestPass123")
+            db.session.add(user)
+            db.session.commit()
+
+            token = EmailVerificationService.create_verification_token(user)
+
+        response = client.post(
+            "/api/auth/verify-email",
+            json={"token": token},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["message"] == "Email verified successfully"
+        assert data["user"]["email_verified"] is True
+
+    def test_verify_email_with_invalid_token_returns_400(self, client):
+        """Test verification fails with invalid token."""
+        response = client.post(
+            "/api/auth/verify-email",
+            json={"token": "invalid-token-12345"},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Invalid verification token" in data["error"]
+
+    def test_verify_email_without_token_returns_400(self, client):
+        """Test verification fails without token."""
+        response = client.post(
+            "/api/auth/verify-email",
+            json={},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Token is required" in data["error"]
+
+    def test_verify_email_with_expired_token_returns_400(self, app, client):
+        """Test verification fails with expired token."""
+        with app.app_context():
+            user = User(
+                email="expired@example.com",
+                full_name="Expired Token",
+                credits_remaining=5,
+            )
+            user.set_password("TestPass123")
+            user.email_verification_token = "expired-token"
+            user.email_verification_sent_at = datetime.utcnow() - timedelta(hours=25)
+            db.session.add(user)
+            db.session.commit()
+
+        response = client.post(
+            "/api/auth/verify-email",
+            json={"token": "expired-token"},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "expired" in data["error"]
+
+    def test_verify_email_for_already_verified_returns_400(self, app, client):
+        """Test verification fails when email already verified."""
+        with app.app_context():
+            user = User(
+                email="alreadyverified@example.com",
+                full_name="Already Verified",
+                credits_remaining=5,
+                email_verified=True,
+            )
+            user.set_password("TestPass123")
+            user.email_verification_token = "some-token"
+            user.email_verification_sent_at = datetime.utcnow()
+            db.session.add(user)
+            db.session.commit()
+
+        response = client.post(
+            "/api/auth/verify-email",
+            json={"token": "some-token"},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "already verified" in data["error"]
+
+
+class TestMeEndpointEmailVerified:
+    """Tests for GET /api/auth/me returning email_verified"""
+
+    def test_me_returns_email_verified_false_for_new_user(
+        self, client, test_user, auth_headers
+    ):
+        """Test that /me returns email_verified: false for new users."""
+        response = client.get(
+            "/api/auth/me",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "email_verified" in data
+        assert data["email_verified"] is False
+
+    def test_me_returns_email_verified_true_after_verification(
+        self, app, client, test_user, auth_headers
+    ):
+        """Test that /me returns email_verified: true after verification."""
+        # Mark user as verified
+        with app.app_context():
+            user = User.query.filter_by(email=test_user["email"]).first()
+            user.email_verified = True
+            db.session.commit()
+
+        response = client.get(
+            "/api/auth/me",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["email_verified"] is True
+
+
+class TestVerificationRateLimiting:
+    """Tests for verification email rate limiting"""
+
+    def setup_method(self):
+        """Clear rate limit storage before each test."""
+        _verification_rate_limits.clear()
+
+    def test_rate_limit_allows_up_to_max_requests(self):
+        """Test that rate limit allows exactly max requests."""
+        user_id = 999
+
+        for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR):
+            assert _check_verification_rate_limit(user_id) is True
+            _record_verification_request(user_id)
+
+        assert _check_verification_rate_limit(user_id) is False
+
+    def test_rate_limit_resets_after_one_hour(self):
+        """Test that rate limit resets after entries expire."""
+        user_id = 888
+
+        # Record requests with old timestamps
+        key = str(user_id)
+        _verification_rate_limits[key] = [
+            datetime.utcnow() - timedelta(hours=2)
+            for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR)
+        ]
+
+        # Should allow new requests since old ones expired
+        assert _check_verification_rate_limit(user_id) is True
+
+    def test_rate_limit_is_per_user(self):
+        """Test that rate limits are separate per user."""
+        user_id_1 = 111
+        user_id_2 = 222
+
+        # Max out user 1
+        for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR):
+            _record_verification_request(user_id_1)
+
+        # User 1 should be rate limited
+        assert _check_verification_rate_limit(user_id_1) is False
+
+        # User 2 should still be allowed
+        assert _check_verification_rate_limit(user_id_2) is True
