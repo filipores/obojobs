@@ -86,7 +86,21 @@ class TestATSAnalyze:
             "score": 75,
             "matched_keywords": ["Python", "Entwickler"],
             "missing_keywords": ["Docker"],
-            "suggestions": ["Docker Erfahrung hinzufügen"],
+            "suggestions": [
+                {"content": "Docker Erfahrung hinzufügen", "priority": "high"}
+            ],
+            "categories": {
+                "hard_skills": {
+                    "matched": ["Python"],
+                    "missing": ["Docker"],
+                },
+                "soft_skills": {"matched": [], "missing": []},
+                "qualifications": {"matched": [], "missing": []},
+                "experience": {
+                    "matched": ["Entwickler"],
+                    "missing": [],
+                },
+            },
         }
 
         with patch("routes.ats.ATSService") as mock_service_class:
@@ -106,6 +120,12 @@ class TestATSAnalyze:
         assert data["data"]["score"] == 75
         assert "Python" in data["data"]["matched_keywords"]
         assert "Docker" in data["data"]["missing_keywords"]
+        # Check categories are included in response
+        assert "categories" in data["data"]
+        assert "hard_skills" in data["data"]["categories"]
+        assert "Python" in data["data"]["categories"]["hard_skills"]["matched"]
+        # Check suggestions have priority
+        assert data["data"]["suggestions"][0]["priority"] == "high"
 
     def test_analyze_with_job_url_success(self, app, client, test_user, auth_headers):
         """Test successful analysis with job_url."""
@@ -141,7 +161,16 @@ class TestATSAnalyze:
             "score": 80,
             "matched_keywords": ["React", "Node.js"],
             "missing_keywords": ["TypeScript"],
-            "suggestions": ["TypeScript lernen"],
+            "suggestions": [{"content": "TypeScript lernen", "priority": "medium"}],
+            "categories": {
+                "hard_skills": {
+                    "matched": ["React", "Node.js"],
+                    "missing": ["TypeScript"],
+                },
+                "soft_skills": {"matched": [], "missing": []},
+                "qualifications": {"matched": [], "missing": []},
+                "experience": {"matched": [], "missing": []},
+            },
         }
 
         with patch("routes.ats.WebScraper") as mock_scraper_class:
@@ -416,6 +445,12 @@ class TestATSAnalyze:
             "matched_keywords": [],
             "missing_keywords": [],
             "suggestions": [],
+            "categories": {
+                "hard_skills": {"matched": [], "missing": []},
+                "soft_skills": {"matched": [], "missing": []},
+                "qualifications": {"matched": [], "missing": []},
+                "experience": {"matched": [], "missing": []},
+            },
         }
 
         with patch("routes.ats.WebScraper") as mock_scraper_class:

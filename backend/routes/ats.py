@@ -113,7 +113,8 @@ def analyze_cv(current_user):
                 "score": result.get("score", 0),
                 "matched_keywords": result.get("matched_keywords", []),
                 "missing_keywords": result.get("missing_keywords", []),
-                "suggestions": result.get("suggestions", [])
+                "suggestions": result.get("suggestions", []),
+                "categories": result.get("categories", {})
             }
 
             if scraped_url:

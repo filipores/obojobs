@@ -3,6 +3,15 @@ ATS (Applicant Tracking System) Service.
 
 Analyzes a CV against a job description to provide a match score,
 matched/missing keywords, and improvement suggestions.
+
+Keywords are categorized into:
+- hard_skills: Technical skills, programming languages, tools
+- soft_skills: Communication, leadership, teamwork, etc.
+- qualifications: Degrees, certifications, licenses
+- experience: Years of experience, specific roles
+
+Score is weighted: hard_skills (40%), qualifications (25%),
+experience (20%), soft_skills (15%)
 """
 
 import json
@@ -11,6 +20,14 @@ import re
 from anthropic import Anthropic
 
 from config import config
+
+# Weights for score calculation
+CATEGORY_WEIGHTS = {
+    "hard_skills": 0.40,
+    "qualifications": 0.25,
+    "experience": 0.20,
+    "soft_skills": 0.15,
+}
 
 
 class ATSService:
@@ -36,10 +53,12 @@ class ATSService:
 
         Returns:
             dict with keys:
-                - score: int (0-100) match percentage
-                - matched_keywords: list of keywords found in both CV and job
-                - missing_keywords: list of keywords in job but not in CV
-                - suggestions: list of improvement suggestions
+                - score: int (0-100) weighted match percentage
+                - matched_keywords: list of all keywords found in both CV and job
+                - missing_keywords: list of all keywords in job but not in CV
+                - suggestions: list of dicts with content and priority
+                - categories: dict with hard_skills, soft_skills, qualifications,
+                              experience, each containing matched and missing lists
 
         Raises:
             ValueError: If cv_text or job_description is empty
@@ -81,18 +100,42 @@ LEBENSLAUF:
 STELLENANZEIGE:
 {job_description[:4000]}
 
-Analysiere:
-1. Welche Keywords/Skills aus der Stellenanzeige sind im Lebenslauf vorhanden?
-2. Welche wichtigen Keywords/Skills fehlen im Lebenslauf?
-3. Berechne einen Match-Score (0-100) basierend auf der Übereinstimmung
-4. Gib konkrete Verbesserungsvorschläge
+Analysiere und kategorisiere die Keywords in folgende Kategorien:
+1. hard_skills: Technische Fähigkeiten, Programmiersprachen, Tools, Software
+2. soft_skills: Kommunikation, Führung, Teamarbeit, Problemlösung
+3. qualifications: Abschlüsse, Zertifikate, Lizenzen, Ausbildungen
+4. experience: Berufserfahrung in Jahren, spezifische Rollen, Branchen
+
+Für jeden Verbesserungsvorschlag, gib eine Priorität an:
+- high: Kritisch für die Bewerbung, sollte unbedingt hinzugefügt werden
+- medium: Wichtig, würde die Bewerbung deutlich verbessern
+- low: Nice-to-have, würde die Bewerbung leicht verbessern
 
 WICHTIG: Antworte NUR mit einem JSON-Objekt in genau diesem Format:
 {{
-  "score": <zahl 0-100>,
-  "matched_keywords": ["keyword1", "keyword2", ...],
-  "missing_keywords": ["keyword1", "keyword2", ...],
-  "suggestions": ["Vorschlag 1", "Vorschlag 2", ...]
+  "categories": {{
+    "hard_skills": {{
+      "matched": ["skill1", "skill2"],
+      "missing": ["skill3", "skill4"]
+    }},
+    "soft_skills": {{
+      "matched": ["skill1"],
+      "missing": ["skill2"]
+    }},
+    "qualifications": {{
+      "matched": ["qual1"],
+      "missing": ["qual2"]
+    }},
+    "experience": {{
+      "matched": ["exp1"],
+      "missing": ["exp2"]
+    }}
+  }},
+  "suggestions": [
+    {{"content": "Vorschlag 1", "priority": "high"}},
+    {{"content": "Vorschlag 2", "priority": "medium"}},
+    {{"content": "Vorschlag 3", "priority": "low"}}
+  ]
 }}
 
 Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
@@ -106,34 +149,97 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         try:
             data = json.loads(json_match.group())
 
-            score = data.get("score", 0)
-            if not isinstance(score, (int, float)):
-                score = 0
-            score = max(0, min(100, int(score)))
+            # Parse categories
+            categories = self._parse_categories(data.get("categories", {}))
 
-            matched = data.get("matched_keywords", [])
+            # Calculate weighted score
+            score = self._calculate_weighted_score(categories)
+
+            # Flatten keywords for backward compatibility
+            matched_keywords = []
+            missing_keywords = []
+            for cat_data in categories.values():
+                matched_keywords.extend(cat_data.get("matched", []))
+                missing_keywords.extend(cat_data.get("missing", []))
+
+            # Parse suggestions with priority
+            suggestions = self._parse_suggestions(data.get("suggestions", []))
+
+            return {
+                "score": score,
+                "matched_keywords": matched_keywords,
+                "missing_keywords": missing_keywords,
+                "suggestions": suggestions,
+                "categories": categories,
+            }
+        except json.JSONDecodeError:
+            return self._get_default_response()
+
+    def _parse_categories(self, categories_data: dict) -> dict:
+        """Parse and validate category data."""
+        valid_categories = ["hard_skills", "soft_skills", "qualifications", "experience"]
+        result = {}
+
+        for category in valid_categories:
+            cat_data = categories_data.get(category, {})
+            if not isinstance(cat_data, dict):
+                cat_data = {}
+
+            matched = cat_data.get("matched", [])
             if not isinstance(matched, list):
                 matched = []
             matched = [str(k) for k in matched if k]
 
-            missing = data.get("missing_keywords", [])
+            missing = cat_data.get("missing", [])
             if not isinstance(missing, list):
                 missing = []
             missing = [str(k) for k in missing if k]
 
-            suggestions = data.get("suggestions", [])
-            if not isinstance(suggestions, list):
-                suggestions = []
-            suggestions = [str(s) for s in suggestions if s]
+            result[category] = {"matched": matched, "missing": missing}
 
-            return {
-                "score": score,
-                "matched_keywords": matched,
-                "missing_keywords": missing,
-                "suggestions": suggestions,
-            }
-        except json.JSONDecodeError:
-            return self._get_default_response()
+        return result
+
+    def _calculate_weighted_score(self, categories: dict) -> int:
+        """Calculate weighted score based on category matches."""
+        total_score = 0.0
+
+        for category, weight in CATEGORY_WEIGHTS.items():
+            cat_data = categories.get(category, {})
+            matched = len(cat_data.get("matched", []))
+            missing = len(cat_data.get("missing", []))
+            total = matched + missing
+
+            if total > 0:
+                category_score = (matched / total) * 100
+            else:
+                # If no keywords in this category, give full score for this weight
+                category_score = 100
+
+            total_score += category_score * weight
+
+        return max(0, min(100, int(round(total_score))))
+
+    def _parse_suggestions(self, suggestions_data: list) -> list:
+        """Parse suggestions with priority validation."""
+        if not isinstance(suggestions_data, list):
+            return []
+
+        valid_priorities = ["high", "medium", "low"]
+        result = []
+
+        for suggestion in suggestions_data:
+            if isinstance(suggestion, dict):
+                content = suggestion.get("content", "")
+                priority = suggestion.get("priority", "medium")
+                if content and isinstance(content, str):
+                    if priority not in valid_priorities:
+                        priority = "medium"
+                    result.append({"content": content, "priority": priority})
+            elif isinstance(suggestion, str) and suggestion:
+                # Backward compatibility: plain string suggestions
+                result.append({"content": suggestion, "priority": "medium"})
+
+        return result
 
     def _get_default_response(self) -> dict:
         """Return a default response when parsing fails."""
@@ -141,7 +247,15 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
             "score": 0,
             "matched_keywords": [],
             "missing_keywords": [],
-            "suggestions": ["Analyse konnte nicht durchgeführt werden"],
+            "suggestions": [
+                {"content": "Analyse konnte nicht durchgeführt werden", "priority": "high"}
+            ],
+            "categories": {
+                "hard_skills": {"matched": [], "missing": []},
+                "soft_skills": {"matched": [], "missing": []},
+                "qualifications": {"matched": [], "missing": []},
+                "experience": {"matched": [], "missing": []},
+            },
         }
 
 
