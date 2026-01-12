@@ -17,7 +17,7 @@ Falls nicht, wechsle zum Branch oder erstelle ihn.
 ### 3. Story auswählen
 Wähle die Story mit der **niedrigsten `priority`-Zahl** wo `passes: false`.
 (priority: 1 = zuerst, priority: 9 = zuletzt)
-Falls keine Story übrig ist, gehe zu Schritt 10.
+Falls keine Story übrig ist, gehe zu Schritt 11.
 
 ### 4. Story implementieren
 Implementiere NUR diese EINE Story.
@@ -63,10 +63,31 @@ git add -A
 git commit -m "feat: [STORY-ID] - [Story Title]"
 ```
 
-### 8. prd.json aktualisieren
+### 8. Push und Pull Request
+Nach jedem Commit: Push und PR erstellen/aktualisieren.
+
+```bash
+# Push zum Remote
+git push -u origin [BRANCH_NAME]
+```
+
+**Falls noch keine PR existiert**, erstelle eine:
+```bash
+gh pr create --base main --head [BRANCH_NAME] \
+  --title "feat: [PRD Description]" \
+  --body "## Stories
+- [x] Abgeschlossene Stories auflisten
+- [ ] Offene Stories auflisten
+
+🤖 Generated with Ralph + Claude Code"
+```
+
+**Falls PR bereits existiert**, wird sie automatisch durch den Push aktualisiert.
+
+### 9. prd.json aktualisieren
 Setze `passes: true` für die abgeschlossene Story.
 
-### 9. Learnings dokumentieren
+### 10. Learnings dokumentieren
 Füge am ENDE von `scripts/ralph/progress.txt` hinzu:
 
 ```
@@ -82,7 +103,7 @@ Füge am ENDE von `scripts/ralph/progress.txt` hinzu:
 Falls du ein WIEDERVERWENDBARES Pattern entdeckt hast, füge es auch zum
 "Codebase Patterns" Abschnitt am ANFANG der Datei hinzu.
 
-### 10. Stop-Bedingung prüfen
+### 11. Stop-Bedingung prüfen
 
 Lies prd.json erneut. Wenn ALLE Stories `passes: true` haben, antworte mit:
 
