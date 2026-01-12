@@ -31,7 +31,7 @@
         "Alle Tests grün mit 'cd backend && pytest'"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Nutze die Fixtures aus conftest.py"
     },
     {
@@ -47,7 +47,7 @@
         "Befehl 'cd backend && ruff format --check .' prüft Formatierung"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "Ruff ist schneller als flake8+black kombiniert"
     },
     {

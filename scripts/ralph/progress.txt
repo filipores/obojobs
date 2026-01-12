@@ -26,10 +26,14 @@ Started: 2025-01-12
 
 ### API Response Format
 ```json
-// Success
+// Standard Success (most endpoints)
 { "success": true, "data": {...}, "message": "..." }
-// Error
+// Standard Error
 { "success": false, "error": "Fehlermeldung" }
+// Auth Login Response (direct format)
+{ "access_token": "...", "refresh_token": "...", "user": {...} }
+// Auth Register Response
+{ "message": "...", "user": {...} }
 ```
 
 ### Authentication
@@ -82,6 +86,13 @@ Started: 2025-01-12
 - Run: `cd backend && source venv/bin/activate && pytest`
 - Important: Return user data from fixtures as dict, not ORM object (avoids detached session issues)
 
+### Linting (Backend)
+- Tool: Ruff (schneller Python Linter + Formatter)
+- Config: `backend/ruff.toml`
+- Check: `cd backend && source venv/bin/activate && ruff check .`
+- Format: `cd backend && source venv/bin/activate && ruff format .`
+- Auto-fix: `cd backend && source venv/bin/activate && ruff check --fix .`
+
 ---
 ## Iteration Log
 
@@ -103,3 +114,37 @@ Started: 2025-01-12
   - Environment vars müssen VOR app import gesetzt werden
   - User-Fixtures sollten Dict zurückgeben statt ORM-Objekt (detached session)
   - Exit code 5 = "no tests collected" (nicht Fehler, nur leeres Testverzeichnis)
+
+---
+## 2026-01-12 - INFRA-002
+- **Story**: Backend: Health & Auth Tests
+- **Implementiert**:
+  - `test_health.py` mit Health-Endpoint Test
+  - `test_auth.py` mit Auth-Tests (Register + Login)
+  - Korrektur der `auth_token` Fixture (nutzt `access_token` statt `data['data']['token']`)
+- **Geänderte Dateien**:
+  - `backend/tests/test_health.py` (neu)
+  - `backend/tests/test_auth.py` (neu)
+  - `backend/tests/conftest.py` (auth_token Fixture Fix)
+- **Learnings**:
+  - Login Response Format: `{ access_token, refresh_token, user }` (ohne wrapper `data` object)
+  - pytest Test-Klassen helfen bei Gruppierung: `class TestRegister`, `class TestLogin`
+
+---
+## 2026-01-12 - INFRA-003
+- **Story**: Backend: Ruff Linter Setup
+- **Implementiert**:
+  - `ruff>=0.8.0` zu requirements.txt hinzugefügt
+  - `backend/ruff.toml` mit Konfiguration:
+    - Line length: 120
+    - Target: Python 3.11
+    - Excludes: migrations/, __pycache__/, venv/, instance/
+    - Rules: E, W, F, I, B, C4, UP (pycodestyle, pyflakes, isort, bugbear, comprehensions, pyupgrade)
+- **Geänderte Dateien**:
+  - `backend/requirements.txt` (ruff hinzugefügt)
+  - `backend/ruff.toml` (neu)
+- **Learnings**:
+  - Ruff kombiniert flake8 + black + isort in einem schnellen Tool
+  - `ruff check --fix .` für automatische Fixes
+  - `ruff format .` für Code-Formatierung
+  - E402 (module level import not at top) erscheint bei `models/__init__.py` Pattern - muss in INFRA-004 adressiert werden
