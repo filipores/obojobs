@@ -91,7 +91,7 @@
         "Alle Tests grün mit 'cd frontend && npm test'"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "Wähle eine einfache Komponente als Startpunkt"
     },
     {
@@ -107,7 +107,7 @@
         "Befehl 'cd frontend && npm run lint' läuft ohne Errors"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Nutze ESLint Flat Config (neuer Standard)"
     },
     {

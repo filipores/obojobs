@@ -101,6 +101,13 @@ Started: 2025-01-12
 - Watch: `cd frontend && npm run test:watch`
 - Test environment: jsdom (Browser-like)
 
+### Linting (Frontend)
+- Tool: ESLint 9 mit eslint-plugin-vue (Flat Config)
+- Config: `frontend/eslint.config.js`
+- Check: `cd frontend && npm run lint`
+- Auto-fix: `cd frontend && npm run lint:fix`
+- Rules: Vue 3 essential + JS recommended
+
 ---
 ## Iteration Log
 
@@ -202,3 +209,38 @@ Started: 2025-01-12
   - `globals: true` ermöglicht `describe`, `it`, `expect` ohne imports
   - jsdom environment simuliert Browser für Vue Component Tests
   - Node.js 19.7.0 zeigt Warnings für Vite/Vitest (erwartet >=20), funktioniert aber
+
+---
+## 2026-01-12 - INFRA-006
+- **Story**: Frontend: Erste Component Tests
+- **Implementiert**:
+  - Tests für `Toast.vue` Komponente erstellt
+  - Rendering Tests: leerer Container, Toast hinzufügen, Icons für alle Typen
+  - Interaktions Tests: Close-Button, Auto-Remove nach Duration, Multiple Toasts
+- **Geänderte Dateien**:
+  - `frontend/src/__tests__/Toast.test.js` (neu)
+- **Learnings**:
+  - `vi.useFakeTimers()` beeinflusst `Date.now()` - bei mehreren Toasts mit gleicher Zeit bekommen sie gleiche IDs
+  - `vi.advanceTimersByTime(1)` zwischen adds hilft, unterschiedliche IDs zu erzeugen
+  - `wrapper.vm.add()` ruft exposed Methoden der Komponente direkt auf
+  - `wrapper.vm.$nextTick()` nach State-Änderungen warten für DOM-Update
+
+---
+## 2026-01-12 - INFRA-007
+- **Story**: Frontend: ESLint Setup
+- **Implementiert**:
+  - eslint und eslint-plugin-vue zu devDependencies hinzugefügt
+  - `frontend/eslint.config.js` mit ESLint Flat Config (neuer Standard)
+  - Vue 3 essential rules (weniger strikt als recommended, fokussiert auf echte Fehler)
+  - Browser globals (window, document, console, etc.) konfiguriert
+  - DOM API globals (Node, NodeFilter, etc.) konfiguriert
+  - `lint` und `lint:fix` Scripts in package.json
+- **Geänderte Dateien**:
+  - `frontend/package.json` (deps + scripts)
+  - `frontend/eslint.config.js` (neu)
+- **Learnings**:
+  - ESLint 9 nutzt "Flat Config" Format (Array statt Object)
+  - `eslint-plugin-vue` bietet verschiedene Rule-Sets: essential < strongly-recommended < recommended
+  - `flat/essential` ist besser für bestehenden Code (weniger Style-Rules, mehr Error-Detection)
+  - Browser globals müssen manuell definiert werden (kein `env: { browser: true }` in Flat Config)
+  - Node 19.7.0 funktioniert trotz Engine-Warnings (erwartet >=20)
