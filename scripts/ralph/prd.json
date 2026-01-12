@@ -1,179 +1,134 @@
 {
   "project": "obojobs",
-  "branchName": "ralph/production-auth",
-  "description": "Produktionsreifes Authentifizierungs-System mit Email-Verifizierung, Passwort-Reset und Security-Features",
+  "branchName": "ralph/email-integration",
+  "description": "Email-Versand Integration - Gmail/Outlook OAuth für direkten Bewerbungsversand aus der App",
   "userStories": [
     {
-      "id": "AUTH-001",
-      "title": "Passwort-Stärke Validierung",
-      "description": "Backend und Frontend sollen sichere Passwörter erzwingen",
+      "id": "EMAIL-001",
+      "title": "OAuth Token Storage Model",
+      "description": "Datenbank-Model und Verschlüsselung für OAuth Tokens",
       "acceptanceCriteria": [
-        "Backend: Passwort muss min. 8 Zeichen haben",
-        "Backend: Passwort muss Groß-, Kleinbuchstaben und Zahl enthalten",
-        "Backend: Gibt spezifische Fehlermeldung zurück welche Regel verletzt wurde",
-        "Frontend: Zeigt Passwort-Anforderungen beim Registrieren an",
-        "Frontend: Live-Feedback während Eingabe (welche Regeln erfüllt/nicht erfüllt)",
+        "Neues Model: EmailAccount (user_id, provider, email, access_token_encrypted, refresh_token_encrypted, token_expires_at, created_at)",
+        "Fernet-Verschlüsselung für Tokens (cryptography library)",
+        "Encryption Key aus Environment Variable (EMAIL_ENCRYPTION_KEY)",
+        "Helper-Funktionen: encrypt_token(), decrypt_token()",
+        "Migration für neues Model",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "Validierung als eigene Funktion in services/ für Wiederverwendung"
+      "notes": "cryptography bereits in requirements.txt oder hinzufügen"
     },
     {
-      "id": "AUTH-002",
-      "title": "Email-Verifizierung: Backend Token-System",
-      "description": "Backend generiert Verifizierungs-Tokens und speichert Verifizierungs-Status",
+      "id": "EMAIL-002",
+      "title": "Gmail OAuth 2.0 Flow",
+      "description": "Google OAuth Integration für Gmail-Zugriff",
       "acceptanceCriteria": [
-        "User Model: Neues Feld 'email_verified' (Boolean, default False)",
-        "User Model: Neues Feld 'email_verification_token' (String, nullable)",
-        "User Model: Neues Feld 'email_verification_sent_at' (DateTime, nullable)",
-        "Migration für neue Felder erstellt und angewendet",
-        "Service-Funktion zum Generieren eines sicheren Tokens (secrets.token_urlsafe)",
-        "Token läuft nach 24 Stunden ab",
-        "Alle Tests grün, Linting OK"
+        "Neuer Service: backend/services/gmail_service.py",
+        "GET /api/email/gmail/auth-url - Generiert OAuth Authorization URL",
+        "GET /api/email/gmail/callback - Verarbeitet OAuth Callback, speichert Tokens",
+        "Scopes: gmail.send, userinfo.email",
+        "Environment Variables: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI",
+        "Token-Refresh wenn abgelaufen",
+        "Fehlerbehandlung für OAuth-Fehler",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Noch kein Email-Versand - nur Token-Logik"
+      "notes": "google-auth-oauthlib library verwenden"
     },
     {
-      "id": "AUTH-003",
-      "title": "Email-Verifizierung: API Endpoints",
-      "description": "Endpoints für Token-Versand und Verifizierung",
+      "id": "EMAIL-003",
+      "title": "Outlook OAuth 2.0 Flow",
+      "description": "Microsoft Graph API Integration für Outlook-Zugriff",
       "acceptanceCriteria": [
-        "POST /api/auth/send-verification - Sendet neuen Verifizierungs-Token (logged in)",
-        "POST /api/auth/verify-email - Verifiziert Email mit Token",
-        "GET /api/auth/me gibt 'email_verified' Status zurück",
-        "Rate Limiting: Max 3 Verification-Emails pro Stunde",
-        "Tests für alle neuen Endpoints",
-        "Alle Tests grün, Linting OK"
+        "Neuer Service: backend/services/outlook_service.py",
+        "GET /api/email/outlook/auth-url - Generiert OAuth Authorization URL",
+        "GET /api/email/outlook/callback - Verarbeitet OAuth Callback, speichert Tokens",
+        "Scopes: Mail.Send, User.Read",
+        "Environment Variables: MICROSOFT_CLIENT_ID, MICROSOFT_CLIENT_SECRET, MICROSOFT_REDIRECT_URI",
+        "Token-Refresh wenn abgelaufen",
+        "Fehlerbehandlung für OAuth-Fehler",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 3,
       "passes": true,
-      "notes": "Email-Versand wird geloggt statt wirklich gesendet (für Dev)"
+      "notes": "msal library für Microsoft Authentication"
     },
     {
-      "id": "AUTH-004",
-      "title": "Email-Verifizierung: Frontend Flow",
-      "description": "UI für Email-Verifizierung nach Registrierung",
+      "id": "EMAIL-004",
+      "title": "Email Provider Management UI",
+      "description": "Frontend für Verbinden/Trennen von Email-Accounts",
       "acceptanceCriteria": [
-        "Nach Registrierung: Weiterleitung zu 'Email verifizieren' Seite",
-        "Seite zeigt: 'Verifizierungs-Email wurde gesendet an [email]'",
-        "Button: 'Erneut senden' (mit Cooldown-Anzeige)",
-        "Route /verify-email?token=xxx für Verifizierung",
-        "Erfolg: Toast + Weiterleitung zum Dashboard",
-        "Fehler: Klare Fehlermeldung (Token abgelaufen, ungültig, etc.)",
-        "Alle Tests grün, Linting OK"
+        "Neue Sektion in Settings-Seite: 'Email-Konto verbinden'",
+        "Buttons: 'Mit Gmail verbinden', 'Mit Outlook verbinden'",
+        "GET /api/email/accounts - Liste verbundener Accounts",
+        "DELETE /api/email/accounts/<id> - Account trennen",
+        "Anzeige: Verbundene Email-Adresse, Provider-Icon",
+        "Status-Anzeige: Verbunden/Nicht verbunden",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
       "passes": true,
-      "notes": "Banner im Dashboard wenn Email noch nicht verifiziert"
+      "notes": "OAuth Popup-Flow oder Redirect-Flow"
     },
     {
-      "id": "AUTH-005",
-      "title": "Passwort-Reset: Backend Token-System",
-      "description": "Backend für Passwort-Vergessen Funktion",
+      "id": "EMAIL-005",
+      "title": "Email Composer",
+      "description": "UI zum Verfassen und Vorschau von Bewerbungs-Emails",
       "acceptanceCriteria": [
-        "User Model: Neues Feld 'password_reset_token' (String, nullable)",
-        "User Model: Neues Feld 'password_reset_sent_at' (DateTime, nullable)",
-        "Migration für neue Felder",
-        "POST /api/auth/forgot-password - Generiert Reset-Token (public)",
-        "POST /api/auth/reset-password - Setzt neues Passwort mit Token",
-        "Token läuft nach 1 Stunde ab",
-        "Rate Limiting: Max 3 Reset-Requests pro Stunde pro Email",
-        "Tests für alle Endpoints",
-        "Alle Tests grün, Linting OK"
+        "Neue View: EmailComposerView.vue (oder Modal in ApplicationsView)",
+        "Felder: An (vorausgefüllt aus Application), Betreff (vorausgefüllt), Nachricht (vorausgefüllt)",
+        "Vorschau-Modus: Zeigt finale Email",
+        "Template-Variablen werden ersetzt (FIRMA, POSITION, etc.)",
+        "Auswahl welcher verbundener Account zum Senden verwendet wird",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Gibt immer 200 OK zurück (verhindert Email-Enumeration)"
+      "passes": false,
+      "notes": "Betreff und Email-Text aus Application Model nutzen"
     },
     {
-      "id": "AUTH-006",
-      "title": "Passwort-Reset: Frontend Flow",
-      "description": "UI für Passwort-Vergessen Funktion",
+      "id": "EMAIL-006",
+      "title": "Email Versand mit Attachments",
+      "description": "Backend-Logik für Email-Versand mit Anhängen",
       "acceptanceCriteria": [
-        "Link 'Passwort vergessen?' auf Login-Seite",
-        "Seite /forgot-password mit Email-Eingabe",
-        "Nach Submit: 'Falls Email existiert, wurde Link gesendet'",
-        "Seite /reset-password?token=xxx für neues Passwort",
-        "Passwort-Stärke Validierung (wie bei Registrierung)",
-        "Erfolg: Toast + Weiterleitung zu Login",
-        "Fehler: Klare Fehlermeldung",
-        "Alle Tests grün, Linting OK"
+        "POST /api/email/send - Sendet Email über verbundenen Account",
+        "Parameter: application_id, email_account_id, subject, body, attachments[]",
+        "Automatische Anhänge: Generiertes PDF (Anschreiben), Lebenslauf",
+        "Gmail: Verwendet Gmail API (messages.send mit MIME)",
+        "Outlook: Verwendet Microsoft Graph API (/me/sendMail)",
+        "Max Attachment Size: 10MB total",
+        "Fehlerbehandlung: Token abgelaufen, Sendefehler",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 6,
-      "passes": true,
-      "notes": "Success-Card mit Link zu Login statt automatischer Redirect mit Toast"
+      "passes": false,
+      "notes": "MIME Message mit email.mime library erstellen"
     },
     {
-      "id": "AUTH-007",
-      "title": "Account-Sperre bei Fehlversuchen",
-      "description": "Temporäre Sperre nach zu vielen fehlgeschlagenen Login-Versuchen",
+      "id": "EMAIL-007",
+      "title": "Sent Tracking & Status Update",
+      "description": "Bewerbungsstatus nach Versand aktualisieren",
       "acceptanceCriteria": [
-        "User Model: Neues Feld 'failed_login_attempts' (Integer, default 0)",
-        "User Model: Neues Feld 'locked_until' (DateTime, nullable)",
-        "Nach 5 Fehlversuchen: Account für 15 Minuten gesperrt",
-        "Login-Endpoint prüft Sperre und gibt entsprechende Meldung",
-        "Erfolgreicher Login setzt failed_attempts auf 0",
-        "Tests für Lockout-Logik",
-        "Alle Tests grün, Linting OK"
+        "Application Model: Neues Feld 'sent_at' (DateTime, nullable)",
+        "Application Model: Neues Feld 'sent_via' (String, nullable - 'gmail'/'outlook')",
+        "Nach erfolgreichem Versand: Status automatisch auf 'versendet'",
+        "sent_at wird gesetzt",
+        "UI zeigt 'Gesendet am X via Gmail/Outlook' in Application-Details",
+        "Versand-Button wird zu 'Erneut senden' nach erstem Versand",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 7,
-      "passes": true,
-      "notes": "Sperre ist zeitbasiert, kein Admin-Unlock nötig"
-    },
-    {
-      "id": "AUTH-008",
-      "title": "Passwort ändern (eingeloggt)",
-      "description": "Eingeloggte User können ihr Passwort ändern",
-      "acceptanceCriteria": [
-        "PUT /api/auth/change-password Endpoint",
-        "Erfordert: current_password, new_password",
-        "Validiert aktuelles Passwort",
-        "Validiert neues Passwort (Stärke-Regeln)",
-        "Frontend: Formular in Settings-Seite",
-        "Erfolg: Toast 'Passwort geändert'",
-        "Tests für Endpoint",
-        "Alle Tests grün, Linting OK"
-      ],
-      "priority": 8,
-      "passes": true,
-      "notes": "Endpoint in auth.py, Service in auth_service.py"
-    },
-    {
-      "id": "AUTH-009",
-      "title": "Logout Endpoint",
-      "description": "Expliziter Logout mit Token-Invalidierung",
-      "acceptanceCriteria": [
-        "POST /api/auth/logout Endpoint",
-        "Fügt aktuellen Token zu Blacklist hinzu (oder nutzt Token-Version)",
-        "Neues Model oder Redis-Cache für Token-Blacklist",
-        "JWT-Middleware prüft Blacklist",
-        "Frontend: Logout-Button ruft Endpoint auf vor localStorage-Clear",
-        "Test für Logout-Funktionalität",
-        "Alle Tests grün, Linting OK"
-      ],
-      "priority": 9,
-      "passes": true,
-      "notes": "Einfache DB-Blacklist ist OK für MVP, Redis später"
-    },
-    {
-      "id": "AUTH-010",
-      "title": "Security Headers & HTTPS-Redirect",
-      "description": "Sicherheits-Header für Production",
-      "acceptanceCriteria": [
-        "Middleware für Security Headers (X-Content-Type-Options, X-Frame-Options, etc.)",
-        "HSTS Header wenn HTTPS aktiv",
-        "CORS korrekt konfiguriert für Production-Domain",
-        "Secure & HttpOnly Flags für Cookies (falls verwendet)",
-        "Dokumentation in AGENTS.md aktualisiert",
-        "Alle Tests grün, Linting OK"
-      ],
-      "priority": 10,
-      "passes": true,
-      "notes": "Headers nur in Production aktivieren, nicht in Dev"
+      "passes": false,
+      "notes": "Migration für neue Felder in Application Model"
     }
   ]
 }

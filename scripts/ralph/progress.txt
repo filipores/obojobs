@@ -1,182 +1,77 @@
 # Ralph Progress Log - obojobs
-Started: Mon Jan 12 16:29:43 CET 2026
+Started: Mon Jan 12 23:59:47 CET 2026
 
 ## Codebase Patterns
-- **Backend Services**: Eigenständige Service-Klassen in `backend/services/` für Business-Logik
-- **Passwort-Validierung**: PasswordValidator in `backend/services/password_validator.py` für wiederverwendbare Validierung
-- **Email-Verifizierung**: EmailVerificationService in `backend/services/email_verification_service.py` für Token-Management
-- **Rate Limiting**: In-memory Rate Limiting via dict[str, list[datetime]] in routes (für Dev); Redis in Prod
-- **Password Reset**: PasswordResetService in `backend/services/password_reset_service.py` - Token läuft nach 1 Stunde ab
-- **Email-Enumeration Prevention**: forgot-password Endpoint gibt immer 200 OK zurück, unabhängig ob Email existiert
-- **Test-Passwort**: Test-Fixtures müssen Passwort-Stärke-Anforderungen erfüllen (z.B. "TestPass123")
-- **Type Hints**: Python verwendet moderne `dict` und `list` statt `Dict`/`List` aus typing
-- **User to_dict()**: Wenn User-Model erweitert wird, `to_dict()` Methode aktualisieren falls Feld im API-Response erscheinen soll
-- **JWT Token Blacklist**: flask_jwt_extended Blocklist via `@jwt.token_in_blocklist_loader` in app.py registrieren, TokenBlacklist Model speichert JTI
-- **Security Headers**: Middleware in `backend/middleware/security_headers.py` - automatisch in Production (DEBUG=False), forcierbar via SECURITY_HEADERS_ENABLED=true
+
+- **Model Registration**: Neue Models in `backend/models/__init__.py` registrieren und zu `__all__` hinzufügen
+- **Relationships**: Back-populates in beiden Models definieren (z.B. User.email_accounts und EmailAccount.user)
+- **Migrations**: Einfaches Python-Script Pattern mit upgrade(app) und downgrade(app) Funktionen
+- **Encryption**: Fernet aus cryptography library für Token-Verschlüsselung, Key aus Environment Variable
+- **OAuth Services**: Pattern für OAuth-Services in backend/services/ - get_authorization_url(), exchange_code_for_tokens(), refresh_access_token()
+- **Route Registration**: Neue Blueprints in app.py importieren und mit register_blueprint() registrieren
 
 ---
 
-## 2026-01-12 - AUTH-001
-- Was implementiert wurde: Passwort-Stärke Validierung (Backend + Frontend)
+## 2026-01-13 - EMAIL-001
+- Implementiert: EmailAccount Model mit Fernet-Verschlüsselung für OAuth Tokens
 - Geänderte Dateien:
-  - `backend/services/password_validator.py` (NEU)
-  - `backend/services/auth_service.py`
-  - `backend/routes/auth.py`
-  - `backend/tests/conftest.py`
-  - `backend/tests/test_auth.py`
-  - `frontend/src/pages/Register.vue`
-  - `frontend/src/__tests__/PasswordValidation.test.js` (NEU)
+  - backend/models/email_account.py (NEU)
+  - backend/models/__init__.py
+  - backend/models/user.py
+  - backend/migrations/add_email_accounts.py (NEU)
+  - backend/requirements.txt
 - **Learnings:**
-  - Ruff erfordert moderne Type Hints (`dict` statt `Dict`)
-  - Frontend-Validierung spiegelt Backend-Regeln für UX
-  - Test-User-Passwörter müssen die neuen Regeln erfüllen
+  - cryptography library muss zu requirements.txt hinzugefügt werden
+  - EMAIL_ENCRYPTION_KEY muss als Environment Variable gesetzt sein
+  - Token-Encryption nutzt Fernet.encrypt() / Fernet.decrypt()
 
 ---
 
-## 2026-01-12 - AUTH-002
-- Was implementiert wurde: Email-Verifizierung Backend Token-System
+## 2026-01-13 - EMAIL-002
+- Implementiert: Gmail OAuth 2.0 Flow mit Authorization URL und Callback
 - Geänderte Dateien:
-  - `backend/models/user.py` (erweitert mit email_verified, email_verification_token, email_verification_sent_at)
-  - `backend/migrations/add_email_verification.py` (NEU)
-  - `backend/services/email_verification_service.py` (NEU)
-  - `backend/tests/test_email_verification.py` (NEU - 21 Tests)
+  - backend/services/gmail_service.py (NEU)
+  - backend/routes/email.py (NEU)
+  - backend/app.py
+  - backend/requirements.txt
 - **Learnings:**
-  - EmailVerificationService folgt dem gleichen Pattern wie PasswordValidator (Service-Klassen für Business-Logik)
-  - secrets.token_urlsafe(32) generiert 43-Zeichen URL-sichere Tokens
-  - Migration-Dateien sollten idempotent sein (prüfen ob Spalten schon existieren)
-  - to_dict() in Models muss aktualisiert werden wenn neue Felder zum API-Response gehören sollen
+  - google-auth-oauthlib library für Google OAuth Flow
+  - Flow.from_client_config() akzeptiert client config dict
+  - Token-Refresh via POST zu oauth2.googleapis.com/token
+  - User-Email via googleapis.com/oauth2/v2/userinfo Endpoint
+  - OAuth State in Flask session für CSRF-Schutz
+  - Scopes: gmail.send, userinfo.email, openid
 
 ---
 
-## 2026-01-12 - AUTH-003
-- Was implementiert wurde: Email-Verifizierung API Endpoints
+## 2026-01-13 - EMAIL-003
+- Implementiert: Outlook OAuth 2.0 Flow mit Microsoft Graph API
 - Geänderte Dateien:
-  - `backend/routes/auth.py` (erweitert mit send-verification und verify-email Endpoints)
-  - `backend/tests/test_auth.py` (erweitert mit 15 neuen Tests für die Endpoints)
+  - backend/services/outlook_service.py (NEU)
+  - backend/routes/email.py (erweitert)
+  - backend/requirements.txt
 - **Learnings:**
-  - Rate Limiting kann in-memory mit dict[str, list[datetime]] implementiert werden (für Dev)
-  - In Prod sollte Redis verwendet werden für Rate Limiting
-  - Token-Logik bereits im EmailVerificationService vorhanden, Endpoint ruft nur Service auf
-  - GET /api/auth/me gibt bereits email_verified zurück (via User.to_dict())
+  - msal library für Microsoft Authentication Library
+  - ConfidentialClientApplication für OAuth mit client secret
+  - get_authorization_request_url() für Auth URL generierung
+  - acquire_token_by_authorization_code() für Token-Exchange
+  - acquire_token_by_refresh_token() für Token-Refresh
+  - Microsoft Graph API Endpoint für User-Info: /v1.0/me
+  - Email-Adresse kommt von "mail" oder "userPrincipalName" Feld
+  - Scopes: Mail.Send, User.Read (mit https://graph.microsoft.com/ Prefix)
+  - Authority: https://login.microsoftonline.com/common für Multi-Tenant
 
 ---
 
-## 2026-01-12 - AUTH-004
-- Was implementiert wurde: Email-Verifizierung Frontend Flow
+## 2026-01-13 - EMAIL-004
+- Implementiert: Email Provider Management UI in Settings-Seite
 - Geänderte Dateien:
-  - `frontend/src/pages/EmailVerification.vue` (NEU - Seite nach Registrierung)
-  - `frontend/src/pages/VerifyEmail.vue` (NEU - Token-Verifizierung)
-  - `frontend/src/pages/Register.vue` (erweitert mit Auto-Login + Weiterleitung)
-  - `frontend/src/pages/Dashboard.vue` (erweitert mit Verifizierungs-Banner)
-  - `frontend/src/router/index.js` (neue Routen)
-  - `frontend/src/store/auth.js` (erweitert mit sendVerificationEmail)
-  - `frontend/src/__tests__/EmailVerification.test.js` (NEU - 15 Tests)
+  - backend/routes/email.py (erweitert mit accounts endpoints)
+  - frontend/src/pages/Settings.vue (neue Email-Sektion)
 - **Learnings:**
-  - Nach Registrierung: Auto-Login + Verifizierungs-Email senden + Weiterleitung zu /email-verification
-  - Cooldown für "Erneut senden" Button (60 Sekunden) verhindert Spam
-  - sessionStorage für Banner-Dismissal (nur für Session, nicht persistent)
-  - pendingVerificationEmail in localStorage für Email-Anzeige auf Verifizierungsseite
-  - ESLint erfordert `globalThis` statt `global` in Tests
-
----
-
-## 2026-01-12 - AUTH-005
-- Was implementiert wurde: Passwort-Reset Backend Token-System
-- Geänderte Dateien:
-  - `backend/models/user.py` (erweitert mit password_reset_token, password_reset_sent_at)
-  - `backend/migrations/add_password_reset.py` (NEU)
-  - `backend/services/password_reset_service.py` (NEU)
-  - `backend/services/auth_service.py` (erweitert mit get_user_by_email)
-  - `backend/routes/auth.py` (erweitert mit forgot-password und reset-password Endpoints)
-  - `backend/tests/test_password_reset.py` (NEU - 36 Tests)
-- **Learnings:**
-  - PasswordResetService folgt dem gleichen Pattern wie EmailVerificationService
-  - Token-Ablauf kürzer (1 Stunde statt 24 Stunden) für erhöhte Sicherheit
-  - forgot-password gibt IMMER 200 OK zurück um Email-Enumeration zu verhindern
-  - Rate Limiting ist per Email (case-insensitive), nicht per User-ID
-  - PasswordValidator.validate() gibt "valid" zurück, nicht "is_valid"
-
----
-
-## 2026-01-12 - AUTH-006
-- Was implementiert wurde: Passwort-Reset Frontend Flow
-- Geänderte Dateien:
-  - `frontend/src/pages/ForgotPassword.vue` (NEU - Email-Eingabe für Reset-Link)
-  - `frontend/src/pages/ResetPassword.vue` (NEU - Token-Verifizierung + neues Passwort)
-  - `frontend/src/pages/Login.vue` (erweitert mit "Passwort vergessen?" Link)
-  - `frontend/src/router/index.js` (neue Routen /forgot-password und /reset-password)
-  - `frontend/src/__tests__/PasswordReset.test.js` (NEU - 28 Tests)
-- **Learnings:**
-  - Auth-Pages folgen gleichem Pattern: Theme-Toggle, Decorative Elements, Asymmetric Grid
-  - Passwort-Validierung direkt aus Register.vue kopiert (gleiche Regeln)
-  - Error-Handling unterscheidet zwischen Token-Fehlern (invalidToken Card) und generischen Fehlern
-  - Backend gibt immer 200 OK auf forgot-password zurück - Frontend zeigt immer Success-Message
-  - ESLint warnt bei ungenutzten Imports (router entfernt wenn nicht gebraucht)
-
----
-
-## 2026-01-12 - AUTH-007
-- Was implementiert wurde: Account-Sperre bei Fehlversuchen
-- Geänderte Dateien:
-  - `backend/models/user.py` (erweitert mit failed_login_attempts, locked_until)
-  - `backend/migrations/add_account_lockout.py` (NEU)
-  - `backend/services/auth_service.py` (erweitert mit Lockout-Logik)
-  - `backend/tests/test_auth.py` (erweitert mit 10 neuen Tests für Lockout)
-- **Learnings:**
-  - Lockout-Logik direkt in AuthService.login_user() integriert (keine eigene Service-Klasse nötig)
-  - Konstanten MAX_FAILED_ATTEMPTS und LOCKOUT_DURATION_MINUTES am Anfang des Services definiert
-  - Bei abgelaufenem Lock wird User direkt wieder freigeschaltet (kein Admin-Eingriff nötig)
-  - Fehlgeschlagener Login für nicht-existierende User verursacht keinen Fehler (keine User-Enumeration)
-  - Lock-Status wird auch bei erfolgreicher Passwort-Eingabe geprüft (Account muss entsperrt sein)
-
----
-
-## 2026-01-12 - AUTH-008
-- Was implementiert wurde: Passwort ändern (eingeloggt)
-- Geänderte Dateien:
-  - `backend/services/auth_service.py` (erweitert mit change_password Methode)
-  - `backend/routes/auth.py` (erweitert mit PUT /api/auth/change-password Endpoint)
-  - `backend/tests/test_auth.py` (erweitert mit 9 neuen Tests für change-password)
-  - `frontend/src/pages/Settings.vue` (erweitert mit Passwort-Änderung Formular)
-- **Learnings:**
-  - change_password Logik in AuthService statt eigener Service-Klasse (wie Lockout)
-  - Frontend-Passwort-Validierung kopiert aus Register.vue für konsistentes UX
-  - Prüfung dass neues Passwort != aktuelles Passwort verhindert sinnlose Änderungen
-  - Fehlermeldungen auf Deutsch für konsistente User-Experience
-
----
-
-## 2026-01-12 - AUTH-009
-- Was implementiert wurde: Logout Endpoint mit Token-Blacklist
-- Geänderte Dateien:
-  - `backend/models/token_blacklist.py` (NEU - TokenBlacklist Model)
-  - `backend/models/__init__.py` (exportiert TokenBlacklist)
-  - `backend/migrations/add_token_blacklist.py` (NEU)
-  - `backend/app.py` (erweitert mit JWT blocklist callbacks)
-  - `backend/routes/auth.py` (erweitert mit POST /api/auth/logout Endpoint)
-  - `backend/tests/test_auth.py` (erweitert mit 7 neuen Tests für Logout)
-  - `frontend/src/store/auth.js` (logout() ist jetzt async, ruft Endpoint auf)
-  - `frontend/src/App.vue` (logout Funktion ist jetzt async)
-- **Learnings:**
-  - flask_jwt_extended hat eingebaute Blocklist-Unterstützung via `@jwt.token_in_blocklist_loader`
-  - TokenBlacklist Model speichert JTI (JWT ID), nicht den ganzen Token
-  - Blacklist-Callback wird in app.py registriert, nicht in der Middleware
-  - Frontend logout() muss async sein um auf API-Call zu warten
-  - Bei API-Fehlern trotzdem localStorage leeren (try-finally Pattern)
-
----
-
-## 2026-01-12 - AUTH-010
-- Was implementiert wurde: Security Headers & HTTPS-Redirect Middleware
-- Geänderte Dateien:
-  - `backend/middleware/security_headers.py` (NEU - Security Headers Middleware)
-  - `backend/config.py` (erweitert mit SECURITY_HEADERS_ENABLED, FORCE_HTTPS)
-  - `backend/app.py` (erweitert mit init_security_headers)
-  - `backend/tests/test_security_headers.py` (NEU - 14 Tests)
-  - `AGENTS.md` (erweitert mit Security Headers Dokumentation)
-- **Learnings:**
-  - Flask after_request Hook ideal für Response-Modifikation
-  - Security Headers nur in Production (DEBUG=False) um Dev-Workflow nicht zu stören
-  - HSTS nur bei FORCE_HTTPS=true aktivieren, nicht automatisch bei HTTPS-Anfragen
-  - CSP muss 'unsafe-inline' für Vue.js erlauben (Scoped Styles)
-  - Permissions-Policy deaktiviert sensible Browser-Features (Kamera, Mikrofon, etc.)
+  - GET /api/email/accounts für Liste verbundener Accounts
+  - DELETE /api/email/accounts/<id> zum Trennen
+  - OAuth Popup-Flow mit window.open() und polling für popup.closed
+  - Provider-Icons mit Gmail/Outlook Farben (#DB4437, #0078D4)
+  - Status-Badge für "Verbunden" Anzeige
+  - Unused catch-Variablen müssen mit _ prefixed werden für ESLint

@@ -64,25 +64,12 @@ git commit -m "feat: [STORY-ID] - [Story Title]"
 ```
 
 ### 8. Push und Pull Request
-Nach jedem Commit: Push und PR erstellen/aktualisieren.
+Nach jedem Commit: Push
 
 ```bash
 # Push zum Remote
 git push -u origin [BRANCH_NAME]
 ```
-
-**Falls noch keine PR existiert**, erstelle eine:
-```bash
-gh pr create --base main --head [BRANCH_NAME] \
-  --title "feat: [PRD Description]" \
-  --body "## Stories
-- [x] Abgeschlossene Stories auflisten
-- [ ] Offene Stories auflisten
-
-🤖 Generated with Ralph + Claude Code"
-```
-
-**Falls PR bereits existiert**, wird sie automatisch durch den Push aktualisiert.
 
 ### 9. prd.json aktualisieren
 Setze `passes: true` für die abgeschlossene Story.

@@ -231,12 +231,174 @@
             </div>
 
             <div class="modal-footer">
-              <button @click="downloadPDF(selectedApp.id)" class="zen-btn zen-btn-ai">
+              <button @click="openEmailComposer(selectedApp)" class="zen-btn zen-btn-ai">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                Email senden
+              </button>
+              <button @click="downloadPDF(selectedApp.id)" class="zen-btn">
                 PDF herunterladen
               </button>
               <button @click="deleteApp(selectedApp.id)" class="zen-btn zen-btn-danger">
-                Bewerbung löschen
+                Löschen
               </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+
+      <!-- Email Composer Modal -->
+      <Teleport to="body">
+        <div v-if="showEmailComposer && emailComposerApp" class="modal-overlay" @click="closeEmailComposer">
+          <div class="modal email-composer-modal zen-card animate-fade-up" @click.stop>
+            <div class="modal-header">
+              <div class="modal-header-content">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <div>
+                  <h2>Bewerbung versenden</h2>
+                  <p class="modal-subtitle">{{ emailComposerApp.firma }} - {{ emailComposerApp.position }}</p>
+                </div>
+              </div>
+              <button @click="closeEmailComposer" class="modal-close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="modal-content">
+              <!-- No accounts warning -->
+              <div v-if="!hasConnectedAccounts" class="warning-box">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <div>
+                  <strong>Kein E-Mail-Konto verbunden</strong>
+                  <p>Verbinde zuerst ein Gmail- oder Outlook-Konto in den <router-link to="/settings">Einstellungen</router-link>.</p>
+                </div>
+              </div>
+
+              <!-- Edit Mode -->
+              <div v-if="!isPreviewMode" class="email-form">
+                <!-- Account Selector -->
+                <div v-if="hasConnectedAccounts" class="form-group">
+                  <label class="form-label">Absender</label>
+                  <select v-model="selectedEmailAccountId" class="form-select account-selector">
+                    <option v-for="account in emailAccounts" :key="account.id" :value="account.id">
+                      <span>{{ account.email }}</span> ({{ account.provider === 'gmail' ? 'Gmail' : 'Outlook' }})
+                    </option>
+                  </select>
+                </div>
+
+                <!-- To Field -->
+                <div class="form-group">
+                  <label class="form-label">An</label>
+                  <input
+                    v-model="emailForm.to"
+                    type="email"
+                    placeholder="email@beispiel.de"
+                    class="form-input"
+                  />
+                </div>
+
+                <!-- Subject Field -->
+                <div class="form-group">
+                  <label class="form-label">Betreff</label>
+                  <input
+                    v-model="emailForm.subject"
+                    type="text"
+                    placeholder="Bewerbung als..."
+                    class="form-input"
+                  />
+                </div>
+
+                <!-- Body Field -->
+                <div class="form-group">
+                  <label class="form-label">Nachricht</label>
+                  <textarea
+                    v-model="emailForm.body"
+                    rows="12"
+                    placeholder="Ihre Nachricht..."
+                    class="form-textarea email-body-textarea"
+                  ></textarea>
+                </div>
+
+                <!-- Attachment Info -->
+                <div class="attachment-info">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/>
+                  </svg>
+                  <span>Anschreiben (PDF) und Lebenslauf werden automatisch angehängt</span>
+                </div>
+              </div>
+
+              <!-- Preview Mode -->
+              <div v-else class="email-preview">
+                <div class="preview-header">
+                  <div class="preview-row">
+                    <span class="preview-label">Von:</span>
+                    <span class="preview-value">{{ getSelectedAccount()?.email || 'Nicht ausgewählt' }}</span>
+                  </div>
+                  <div class="preview-row">
+                    <span class="preview-label">An:</span>
+                    <span class="preview-value">{{ emailForm.to || 'Keine Adresse' }}</span>
+                  </div>
+                  <div class="preview-row">
+                    <span class="preview-label">Betreff:</span>
+                    <span class="preview-value preview-subject">{{ emailForm.subject || 'Kein Betreff' }}</span>
+                  </div>
+                </div>
+                <div class="preview-body">
+                  <pre>{{ emailForm.body || 'Keine Nachricht' }}</pre>
+                </div>
+                <div class="preview-attachments">
+                  <div class="preview-label">Anhänge:</div>
+                  <div class="attachment-list">
+                    <div class="attachment-item">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      <span>Anschreiben_{{ emailComposerApp.firma }}.pdf</span>
+                    </div>
+                    <div class="attachment-item">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                        <polyline points="14 2 14 8 20 8"/>
+                      </svg>
+                      <span>Lebenslauf.pdf</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="modal-footer email-composer-footer">
+              <button @click="togglePreview" class="zen-btn">
+                {{ isPreviewMode ? 'Bearbeiten' : 'Vorschau' }}
+              </button>
+              <div class="footer-actions">
+                <button @click="closeEmailComposer" class="zen-btn">
+                  Abbrechen
+                </button>
+                <button
+                  @click="closeEmailComposer"
+                  :disabled="!hasConnectedAccounts || !emailForm.to || !emailForm.subject || isSendingEmail"
+                  class="zen-btn zen-btn-ai"
+                  title="Versand wird in EMAIL-006 implementiert"
+                >
+                  <span v-if="isSendingEmail">Wird gesendet...</span>
+                  <span v-else>Senden</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -254,6 +416,19 @@ const selectedApp = ref(null)
 const loading = ref(false)
 const searchQuery = ref('')
 const filterStatus = ref('')
+
+// Email Composer State
+const showEmailComposer = ref(false)
+const emailComposerApp = ref(null)
+const emailAccounts = ref([])
+const selectedEmailAccountId = ref(null)
+const emailForm = ref({
+  to: '',
+  subject: '',
+  body: ''
+})
+const isPreviewMode = ref(false)
+const isSendingEmail = ref(false)
 
 const stats = computed(() => {
   return {
@@ -393,7 +568,61 @@ const getStatusLabel = (status) => {
   return labels[status] || status
 }
 
-onMounted(loadApplications)
+// Email Composer Functions
+const loadEmailAccounts = async () => {
+  try {
+    const { data } = await api.get('/email/accounts')
+    emailAccounts.value = data.data || []
+    if (emailAccounts.value.length > 0) {
+      selectedEmailAccountId.value = emailAccounts.value[0].id
+    }
+  } catch (err) {
+    console.error('Fehler beim Laden der Email-Konten:', err)
+  }
+}
+
+const replaceTemplateVariables = (text, app) => {
+  if (!text) return ''
+  return text
+    .replace(/\{\{FIRMA\}\}/g, app.firma || '')
+    .replace(/\{\{POSITION\}\}/g, app.position || '')
+    .replace(/\{\{ANSPRECHPARTNER\}\}/g, app.ansprechpartner || '')
+    .replace(/\{\{QUELLE\}\}/g, app.quelle || '')
+}
+
+const openEmailComposer = (app) => {
+  emailComposerApp.value = { ...app }
+  emailForm.value = {
+    to: app.email || '',
+    subject: replaceTemplateVariables(app.betreff, app),
+    body: replaceTemplateVariables(app.email_text, app)
+  }
+  isPreviewMode.value = false
+  isSendingEmail.value = false
+  showEmailComposer.value = true
+  loadEmailAccounts()
+}
+
+const closeEmailComposer = () => {
+  showEmailComposer.value = false
+  emailComposerApp.value = null
+  isPreviewMode.value = false
+}
+
+const togglePreview = () => {
+  isPreviewMode.value = !isPreviewMode.value
+}
+
+const getSelectedAccount = () => {
+  return emailAccounts.value.find(a => a.id === selectedEmailAccountId.value)
+}
+
+const hasConnectedAccounts = computed(() => emailAccounts.value.length > 0)
+
+onMounted(() => {
+  loadApplications()
+  loadEmailAccounts()
+})
 </script>
 
 <style scoped>
@@ -873,6 +1102,226 @@ onMounted(loadApplications)
 
   .card-actions {
     flex-direction: column;
+  }
+}
+
+/* ========================================
+   EMAIL COMPOSER MODAL
+   ======================================== */
+.email-composer-modal {
+  max-width: 720px;
+}
+
+.modal-header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+}
+
+.modal-header-content svg {
+  color: var(--color-ai);
+  flex-shrink: 0;
+  margin-top: var(--space-xs);
+}
+
+/* Warning Box */
+.warning-box {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: rgba(184, 122, 94, 0.1);
+  border: 1px solid var(--color-terra);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.warning-box svg {
+  flex-shrink: 0;
+  color: var(--color-terra);
+}
+
+.warning-box strong {
+  display: block;
+  color: var(--color-terra);
+  margin-bottom: var(--space-xs);
+}
+
+.warning-box p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+.warning-box a {
+  color: var(--color-ai);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.warning-box a:hover {
+  text-decoration: underline;
+}
+
+/* Email Form */
+.email-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.form-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+  margin-bottom: var(--space-sm);
+}
+
+.account-selector {
+  background: var(--color-washi);
+}
+
+.email-body-textarea {
+  min-height: 240px;
+  line-height: var(--leading-relaxed);
+  font-family: inherit;
+  resize: vertical;
+}
+
+/* Attachment Info */
+.attachment-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: var(--color-ai-subtle);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--color-ai);
+}
+
+.attachment-info svg {
+  flex-shrink: 0;
+}
+
+/* Email Preview */
+.email-preview {
+  background: var(--color-washi);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.preview-header {
+  padding: var(--space-lg);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.preview-row {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-sm);
+}
+
+.preview-row:last-child {
+  margin-bottom: 0;
+}
+
+.preview-label {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-tertiary);
+  min-width: 60px;
+}
+
+.preview-value {
+  font-size: 0.9375rem;
+  color: var(--color-sumi);
+}
+
+.preview-subject {
+  font-weight: 500;
+}
+
+.preview-body {
+  padding: var(--space-lg);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.preview-body pre {
+  margin: 0;
+  font-family: inherit;
+  font-size: 0.9375rem;
+  line-height: var(--leading-relaxed);
+  color: var(--color-sumi);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.preview-attachments {
+  padding: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-washi-warm);
+}
+
+.attachment-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.attachment-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--color-sumi);
+}
+
+.attachment-item svg {
+  color: var(--color-ai);
+  flex-shrink: 0;
+}
+
+/* Email Composer Footer */
+.email-composer-footer {
+  justify-content: space-between;
+}
+
+.footer-actions {
+  display: flex;
+  gap: var(--space-md);
+}
+
+/* Modal Footer Button with Icon */
+.modal-footer .zen-btn svg {
+  margin-right: var(--space-xs);
+  vertical-align: middle;
+}
+
+@media (max-width: 768px) {
+  .email-composer-modal {
+    max-width: 100%;
+  }
+
+  .email-composer-footer {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .footer-actions {
+    width: 100%;
+    justify-content: stretch;
+  }
+
+  .footer-actions .zen-btn {
+    flex: 1;
   }
 }
 </style>
