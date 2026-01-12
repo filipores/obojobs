@@ -54,6 +54,7 @@ def create_app():
     from routes.ats import ats_bp
     from routes.auth import auth_bp
     from routes.documents import documents_bp
+    from routes.email import email_bp
     from routes.payments import payments_bp
     from routes.stats import stats_bp
     from routes.templates import templates_bp
@@ -66,6 +67,7 @@ def create_app():
     app.register_blueprint(stats_bp, url_prefix="/api")
     app.register_blueprint(payments_bp, url_prefix="/api/payments")
     app.register_blueprint(ats_bp, url_prefix="/api/ats")
+    app.register_blueprint(email_bp, url_prefix="/api/email")
 
     # Health check endpoint (no rate limit)
     @app.route("/api/health")
