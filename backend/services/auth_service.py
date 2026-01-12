@@ -1,6 +1,6 @@
 from flask_jwt_extended import create_access_token, create_refresh_token
 
-from models import db, User
+from models import User, db
 
 
 class AuthService:
@@ -28,12 +28,7 @@ class AuthService:
             raise ValueError("User with this email already exists")
 
         # Create new user
-        user = User(
-            email=email,
-            full_name=full_name,
-            credits_remaining=50,
-            credits_max=50
-        )
+        user = User(email=email, full_name=full_name, credits_remaining=50, credits_max=50)
         user.set_password(password)
 
         db.session.add(user)
@@ -68,11 +63,7 @@ class AuthService:
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
 
-        return {
-            'access_token': access_token,
-            'refresh_token': refresh_token,
-            'user': user.to_dict()
-        }
+        return {"access_token": access_token, "refresh_token": refresh_token, "user": user.to_dict()}
 
     @staticmethod
     def get_user_by_id(user_id):

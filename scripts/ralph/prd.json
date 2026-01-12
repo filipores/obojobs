@@ -1,0 +1,141 @@
+{
+  "project": "obojobs",
+  "branchName": "ralph/test-and-lint-infrastructure",
+  "description": "Test- und Linting-Infrastruktur für Backend und Frontend einrichten",
+  "userStories": [
+    {
+      "id": "INFRA-001",
+      "title": "Backend: pytest Setup",
+      "description": "Grundlegende pytest-Konfiguration für Flask Backend einrichten",
+      "acceptanceCriteria": [
+        "pytest und pytest-cov in requirements.txt hinzugefügt",
+        "backend/tests/ Verzeichnis erstellt",
+        "backend/tests/conftest.py mit Test-Client, Test-DB (SQLite :memory:), und Test-User Fixture",
+        "backend/pytest.ini oder pyproject.toml mit pytest Config",
+        "Befehl 'cd backend && pytest' läuft ohne Fehler"
+      ],
+      "priority": 1,
+      "passes": true,
+      "notes": "Test-DB sollte isoliert sein und keine echten Daten beeinflussen"
+    },
+    {
+      "id": "INFRA-002",
+      "title": "Backend: Health & Auth Tests",
+      "description": "Erste Tests für Health-Endpoint und Auth-Routen",
+      "acceptanceCriteria": [
+        "Test: GET /api/health → 200",
+        "Test: POST /api/auth/register mit validen Daten → 201",
+        "Test: POST /api/auth/register mit existierender Email → 400",
+        "Test: POST /api/auth/login mit korrekten Daten → 200 + Token",
+        "Test: POST /api/auth/login mit falschen Daten → 401",
+        "Alle Tests grün mit 'cd backend && pytest'"
+      ],
+      "priority": 2,
+      "passes": true,
+      "notes": "Nutze die Fixtures aus conftest.py"
+    },
+    {
+      "id": "INFRA-003",
+      "title": "Backend: Ruff Linter Setup",
+      "description": "Ruff als schnellen Python Linter einrichten",
+      "acceptanceCriteria": [
+        "ruff in requirements.txt (dev dependencies oder separate requirements-dev.txt)",
+        "ruff.toml oder pyproject.toml mit Ruff-Konfiguration",
+        "Ignoriere migrations/, __pycache__/, venv/",
+        "Line length: 120",
+        "Befehl 'cd backend && ruff check .' läuft ohne Errors (Warnings OK)",
+        "Befehl 'cd backend && ruff format --check .' prüft Formatierung"
+      ],
+      "priority": 3,
+      "passes": true,
+      "notes": "Ruff ist schneller als flake8+black kombiniert"
+    },
+    {
+      "id": "INFRA-004",
+      "title": "Backend: Bestehenden Code lint-konform machen",
+      "description": "Alle Ruff-Fehler im bestehenden Backend-Code beheben",
+      "acceptanceCriteria": [
+        "'cd backend && ruff check .' zeigt keine Errors",
+        "'cd backend && ruff format .' formatiert den Code",
+        "Alle bestehenden Tests laufen noch durch",
+        "App startet noch korrekt"
+      ],
+      "priority": 4,
+      "passes": true,
+      "notes": "Nutze 'ruff check --fix .' für automatische Fixes"
+    },
+    {
+      "id": "INFRA-005",
+      "title": "Frontend: Vitest Setup",
+      "description": "Vitest als Test-Runner für Vue Frontend einrichten",
+      "acceptanceCriteria": [
+        "vitest, @vue/test-utils, jsdom in devDependencies",
+        "vitest.config.js mit korrekter Vue-Konfiguration",
+        "frontend/src/__tests__/ Verzeichnis erstellt",
+        "'test' Script in package.json: 'vitest run'",
+        "'test:watch' Script in package.json: 'vitest'",
+        "Befehl 'cd frontend && npm test' läuft ohne Fehler"
+      ],
+      "priority": 5,
+      "passes": true,
+      "notes": "Vitest ist kompatibel mit Vite und sehr schnell"
+    },
+    {
+      "id": "INFRA-006",
+      "title": "Frontend: Erste Component Tests",
+      "description": "Beispiel-Tests für eine einfache Komponente",
+      "acceptanceCriteria": [
+        "Mindestens ein Test für eine existierende Komponente",
+        "Test prüft dass Komponente rendert",
+        "Test prüft grundlegende Interaktion (wenn vorhanden)",
+        "Alle Tests grün mit 'cd frontend && npm test'"
+      ],
+      "priority": 6,
+      "passes": true,
+      "notes": "Wähle eine einfache Komponente als Startpunkt"
+    },
+    {
+      "id": "INFRA-007",
+      "title": "Frontend: ESLint Setup",
+      "description": "ESLint für Vue/JavaScript Linting einrichten",
+      "acceptanceCriteria": [
+        "eslint, eslint-plugin-vue in devDependencies",
+        "eslint.config.js (Flat Config) oder .eslintrc.cjs",
+        "Vue 3 recommended Rules aktiviert",
+        "'lint' Script in package.json: 'eslint src/'",
+        "'lint:fix' Script in package.json: 'eslint src/ --fix'",
+        "Befehl 'cd frontend && npm run lint' läuft ohne Errors"
+      ],
+      "priority": 7,
+      "passes": true,
+      "notes": "Nutze ESLint Flat Config (neuer Standard)"
+    },
+    {
+      "id": "INFRA-008",
+      "title": "Frontend: Bestehenden Code lint-konform machen",
+      "description": "Alle ESLint-Fehler im bestehenden Frontend-Code beheben",
+      "acceptanceCriteria": [
+        "'cd frontend && npm run lint' zeigt keine Errors",
+        "Frontend Build läuft noch durch",
+        "Alle Frontend Tests laufen noch durch",
+        "App funktioniert noch korrekt im Browser"
+      ],
+      "priority": 8,
+      "passes": true,
+      "notes": "Nutze 'npm run lint:fix' für automatische Fixes"
+    },
+    {
+      "id": "INFRA-009",
+      "title": "prompt.md mit neuen Quality Checks aktualisieren",
+      "description": "Ralph prompt.md aktualisieren um Tests und Linting zu nutzen",
+      "acceptanceCriteria": [
+        "prompt.md Quality Checks Sektion enthält: pytest, ruff, npm test, npm run lint",
+        "Alle Befehle in prompt.md funktionieren",
+        "AGENTS.md aktualisiert mit neuen Test/Lint Befehlen"
+      ],
+      "priority": 9,
+      "passes": true,
+      "notes": "Dies ist die letzte Story - danach ist Ralph bereit für Feature-Stories"
+    }
+  ]
+}

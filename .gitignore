@@ -41,3 +41,7 @@ Thumbs.db
 
 # Claude
 .claude/
+
+# Ralph (AI agent loop)
+scripts/ralph/.last-branch
+scripts/ralph/archive/

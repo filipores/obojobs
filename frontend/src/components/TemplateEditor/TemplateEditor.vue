@@ -55,13 +55,14 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, nextTick } from 'vue'
-import VariableChip from './VariableChip.vue'
-import SuggestionChip from './SuggestionChip.vue'
+// VariableChip and SuggestionChip are created dynamically in createVariableChipElement/createSuggestionChipElement
+import _VariableChip from './VariableChip.vue'
+import _SuggestionChip from './SuggestionChip.vue'
 import VariableDropdown from './VariableDropdown.vue'
 import {
   useTemplateParser,
-  parseTemplate,
-  serializeTemplate,
+  parseTemplate as _parseTemplate,
+  serializeTemplate as _serializeTemplate,
   VARIABLE_TYPES
 } from '../../composables/useTemplateParser'
 
@@ -294,7 +295,7 @@ function handleRejectAll() {
 }
 
 // Handle text input
-function handleInput(event) {
+function handleInput(_event) {
   if (isRendering.value) return
 
   // Parse the current content back to segments
@@ -314,7 +315,7 @@ function getPlainTextFromEditor() {
   )
 
   let node
-  while (node = walker.nextNode()) {
+  while ((node = walker.nextNode()) !== null) {
     if (node.nodeType === Node.TEXT_NODE) {
       text += node.textContent
     } else if (node.nodeType === Node.ELEMENT_NODE) {
@@ -505,7 +506,7 @@ function restoreSelection(savedSelection) {
       selection.removeAllRanges()
       selection.addRange(range)
     }
-  } catch (e) {
+  } catch (_e) {
     // Ignore selection restore errors
   }
 }
@@ -520,7 +521,7 @@ function getAbsoluteOffset(node, offset) {
   )
 
   let currentNode
-  while (currentNode = walker.nextNode()) {
+  while ((currentNode = walker.nextNode()) !== null) {
     if (currentNode === node) {
       return absoluteOffset + offset
     }
@@ -540,7 +541,7 @@ function getNodeAtOffset(targetOffset) {
   )
 
   let node
-  while (node = walker.nextNode()) {
+  while ((node = walker.nextNode()) !== null) {
     const nodeLength = node.textContent.length
     if (currentOffset + nodeLength >= targetOffset) {
       return { node, offset: targetOffset - currentOffset }

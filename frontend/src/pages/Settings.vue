@@ -151,7 +151,7 @@ import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../store/auth'
 
-const router = useRouter()
+const _router = useRouter()
 
 const apiKeys = ref([])
 const newKey = ref('')
@@ -161,7 +161,7 @@ const generateKey = async () => {
     const { data } = await api.post('/keys', { name: 'Chrome Extension' })
     newKey.value = data.api_key
     loadKeys()
-  } catch (e) {
+  } catch (_e) {
     alert('Fehler beim Erstellen des Keys')
   }
 }
@@ -178,7 +178,7 @@ const deleteKey = async (id) => {
     try {
       await api.delete(`/keys/${id}`)
       loadKeys()
-    } catch (e) {
+    } catch (_e) {
       alert('Fehler beim Löschen')
     }
   }
@@ -188,8 +188,8 @@ const loadKeys = async () => {
   try {
     const { data } = await api.get('/keys')
     apiKeys.value = data.api_keys
-  } catch (e) {
-    console.error('Fehler beim Laden:', e)
+  } catch (err) {
+    console.error('Fehler beim Laden:', err)
   }
 }
 

@@ -32,7 +32,7 @@
 
         <div class="packages-grid">
           <div
-            v-for="(pkg, index) in packages"
+            v-for="pkg in packages"
             :key="pkg.id"
             class="package-card zen-card stagger-item"
             :class="{ 'package-featured': pkg.id === 'medium' }"

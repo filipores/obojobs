@@ -1,61 +1,58 @@
-from flask import Blueprint, request, jsonify
-from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+from flask import Blueprint, jsonify, request
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 
 from services.auth_service import AuthService
 
-auth_bp = Blueprint('auth', __name__)
+auth_bp = Blueprint("auth", __name__)
 
 
-@auth_bp.route('/register', methods=['POST'])
+@auth_bp.route("/register", methods=["POST"])
 def register():
     """Register a new user"""
     data = request.json
 
-    email = data.get('email')
-    password = data.get('password')
-    full_name = data.get('full_name')
+    email = data.get("email")
+    password = data.get("password")
+    full_name = data.get("full_name")
 
     if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
+        return jsonify({"error": "Email and password are required"}), 400
 
     try:
         user = AuthService.register_user(email, password, full_name)
-        return jsonify({
-            'message': 'User registered successfully',
-            'user': user.to_dict()
-        }), 201
+        return jsonify({"message": "User registered successfully", "user": user.to_dict()}), 201
     except ValueError as e:
-        return jsonify({'error': str(e)}), 400
+        return jsonify({"error": str(e)}), 400
 
 
-@auth_bp.route('/login', methods=['POST'])
+@auth_bp.route("/login", methods=["POST"])
 def login():
     """Login user"""
     data = request.json
 
-    email = data.get('email')
-    password = data.get('password')
+    email = data.get("email")
+    password = data.get("password")
 
     if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
+        return jsonify({"error": "Email and password are required"}), 400
 
     try:
         result = AuthService.login_user(email, password)
         return jsonify(result), 200
     except ValueError as e:
-        return jsonify({'error': str(e)}), 401
+        return jsonify({"error": str(e)}), 401
 
 
-@auth_bp.route('/refresh', methods=['POST'])
+@auth_bp.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
 def refresh():
     """Refresh access token"""
     current_user_id = get_jwt_identity()
     access_token = create_access_token(identity=current_user_id)
-    return jsonify({'access_token': access_token}), 200
+    return jsonify({"access_token": access_token}), 200
 
 
-@auth_bp.route('/me', methods=['GET'])
+@auth_bp.route("/me", methods=["GET"])
 @jwt_required()
 def me():
     """Get current user info"""
@@ -63,6 +60,6 @@ def me():
     user = AuthService.get_user_by_id(int(current_user_id))
 
     if not user:
-        return jsonify({'error': 'User not found'}), 404
+        return jsonify({"error": "User not found"}), 404
 
     return jsonify(user.to_dict()), 200

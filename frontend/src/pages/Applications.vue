@@ -79,7 +79,7 @@
       <section v-else-if="filteredApplications.length > 0" class="applications-section">
         <div class="applications-grid">
           <div
-            v-for="(app, index) in filteredApplications"
+            v-for="app in filteredApplications"
             :key="app.id"
             class="application-card zen-card stagger-item"
             @click="openDetails(app)"
@@ -285,8 +285,8 @@ const loadApplications = async () => {
   try {
     const { data } = await api.get('/applications')
     applications.value = data.applications || []
-  } catch (e) {
-    console.error('Fehler beim Laden:', e)
+  } catch (err) {
+    console.error('Fehler beim Laden:', err)
   } finally {
     loading.value = false
   }
@@ -295,7 +295,7 @@ const loadApplications = async () => {
 const downloadPDF = async (id) => {
   try {
     window.open(`/api/applications/${id}/pdf`, '_blank')
-  } catch (e) {
+  } catch (_e) {
     alert('Fehler beim PDF-Download')
   }
 }
@@ -317,7 +317,7 @@ const updateStatus = async (app) => {
     if (index !== -1) {
       applications.value[index].status = app.status
     }
-  } catch (e) {
+  } catch (_e) {
     alert('Fehler beim Aktualisieren')
   }
 }
@@ -331,7 +331,7 @@ const updateNotes = async (app) => {
     if (index !== -1) {
       applications.value[index].notizen = app.notizen
     }
-  } catch (e) {
+  } catch (_e) {
     alert('Fehler beim Speichern der Notizen')
   }
 }
@@ -345,7 +345,7 @@ const deleteApp = async (id) => {
     if (selectedApp.value && selectedApp.value.id === id) {
       selectedApp.value = null
     }
-  } catch (e) {
+  } catch (_e) {
     alert('Fehler beim Löschen')
   }
 }
