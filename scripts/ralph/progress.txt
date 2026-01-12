@@ -110,3 +110,34 @@ Started: Mon Jan 12 16:29:43 CET 2026
   - Error-Handling unterscheidet zwischen Token-Fehlern (invalidToken Card) und generischen Fehlern
   - Backend gibt immer 200 OK auf forgot-password zurück - Frontend zeigt immer Success-Message
   - ESLint warnt bei ungenutzten Imports (router entfernt wenn nicht gebraucht)
+
+---
+
+## 2026-01-12 - AUTH-007
+- Was implementiert wurde: Account-Sperre bei Fehlversuchen
+- Geänderte Dateien:
+  - `backend/models/user.py` (erweitert mit failed_login_attempts, locked_until)
+  - `backend/migrations/add_account_lockout.py` (NEU)
+  - `backend/services/auth_service.py` (erweitert mit Lockout-Logik)
+  - `backend/tests/test_auth.py` (erweitert mit 10 neuen Tests für Lockout)
+- **Learnings:**
+  - Lockout-Logik direkt in AuthService.login_user() integriert (keine eigene Service-Klasse nötig)
+  - Konstanten MAX_FAILED_ATTEMPTS und LOCKOUT_DURATION_MINUTES am Anfang des Services definiert
+  - Bei abgelaufenem Lock wird User direkt wieder freigeschaltet (kein Admin-Eingriff nötig)
+  - Fehlgeschlagener Login für nicht-existierende User verursacht keinen Fehler (keine User-Enumeration)
+  - Lock-Status wird auch bei erfolgreicher Passwort-Eingabe geprüft (Account muss entsperrt sein)
+
+---
+
+## 2026-01-12 - AUTH-008
+- Was implementiert wurde: Passwort ändern (eingeloggt)
+- Geänderte Dateien:
+  - `backend/services/auth_service.py` (erweitert mit change_password Methode)
+  - `backend/routes/auth.py` (erweitert mit PUT /api/auth/change-password Endpoint)
+  - `backend/tests/test_auth.py` (erweitert mit 9 neuen Tests für change-password)
+  - `frontend/src/pages/Settings.vue` (erweitert mit Passwort-Änderung Formular)
+- **Learnings:**
+  - change_password Logik in AuthService statt eigener Service-Klasse (wie Lockout)
+  - Frontend-Passwort-Validierung kopiert aus Register.vue für konsistentes UX
+  - Prüfung dass neues Passwort != aktuelles Passwort verhindert sinnlose Änderungen
+  - Fehlermeldungen auf Deutsch für konsistente User-Experience

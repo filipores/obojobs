@@ -47,6 +47,92 @@
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
+      <!-- Password Change Section -->
+      <section class="settings-section animate-fade-up" style="animation-delay: 150ms;">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+            </svg>
+          </div>
+          <h2>Passwort ändern</h2>
+        </div>
+
+        <div class="settings-card zen-card">
+          <form @submit.prevent="changePassword" class="password-change-form">
+            <div class="form-group">
+              <label for="current-password">Aktuelles Passwort</label>
+              <input
+                id="current-password"
+                v-model="passwordForm.currentPassword"
+                type="password"
+                class="zen-input"
+                required
+              />
+            </div>
+
+            <div class="form-group">
+              <label for="new-password">Neues Passwort</label>
+              <input
+                id="new-password"
+                v-model="passwordForm.newPassword"
+                type="password"
+                class="zen-input"
+                @input="validatePassword"
+                required
+              />
+              <!-- Password Requirements -->
+              <div v-if="passwordForm.newPassword" class="password-requirements">
+                <div
+                  v-for="req in passwordRequirements"
+                  :key="req.key"
+                  class="requirement-item"
+                  :class="{ 'met': passwordChecks[req.key] }"
+                >
+                  <svg v-if="passwordChecks[req.key]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                  </svg>
+                  <span>{{ req.label }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="confirm-password">Neues Passwort bestätigen</label>
+              <input
+                id="confirm-password"
+                v-model="passwordForm.confirmPassword"
+                type="password"
+                class="zen-input"
+                required
+              />
+              <p v-if="passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword" class="form-error">
+                Passwörter stimmen nicht überein
+              </p>
+            </div>
+
+            <div v-if="passwordError" class="password-error-message">
+              {{ passwordError }}
+            </div>
+
+            <button
+              type="submit"
+              class="zen-btn zen-btn-filled"
+              :disabled="!canSubmitPassword || isChangingPassword"
+            >
+              {{ isChangingPassword ? 'Wird geändert...' : 'Passwort ändern' }}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Ink Stroke -->
+      <div class="ink-stroke"></div>
+
       <!-- API Keys Section -->
       <section class="settings-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="section-header">
@@ -146,7 +232,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../store/auth'
@@ -155,6 +241,75 @@ const _router = useRouter()
 
 const apiKeys = ref([])
 const newKey = ref('')
+
+// Password change form state
+const passwordForm = reactive({
+  currentPassword: '',
+  newPassword: '',
+  confirmPassword: ''
+})
+const passwordChecks = reactive({
+  min_length: false,
+  has_uppercase: false,
+  has_lowercase: false,
+  has_number: false
+})
+const passwordRequirements = ref([
+  { key: 'min_length', label: 'Mindestens 8 Zeichen' },
+  { key: 'has_uppercase', label: 'Mindestens ein Großbuchstabe (A-Z)' },
+  { key: 'has_lowercase', label: 'Mindestens ein Kleinbuchstabe (a-z)' },
+  { key: 'has_number', label: 'Mindestens eine Zahl (0-9)' }
+])
+const isChangingPassword = ref(false)
+const passwordError = ref('')
+
+const canSubmitPassword = computed(() => {
+  return (
+    passwordForm.currentPassword &&
+    passwordForm.newPassword &&
+    passwordForm.confirmPassword &&
+    passwordForm.newPassword === passwordForm.confirmPassword &&
+    Object.values(passwordChecks).every(v => v)
+  )
+})
+
+const validatePassword = () => {
+  const pw = passwordForm.newPassword
+  passwordChecks.min_length = pw.length >= 8
+  passwordChecks.has_uppercase = /[A-Z]/.test(pw)
+  passwordChecks.has_lowercase = /[a-z]/.test(pw)
+  passwordChecks.has_number = /\d/.test(pw)
+}
+
+const changePassword = async () => {
+  if (!canSubmitPassword.value) return
+
+  isChangingPassword.value = true
+  passwordError.value = ''
+
+  try {
+    await api.put('/auth/change-password', {
+      current_password: passwordForm.currentPassword,
+      new_password: passwordForm.newPassword
+    })
+
+    // Reset form
+    passwordForm.currentPassword = ''
+    passwordForm.newPassword = ''
+    passwordForm.confirmPassword = ''
+    Object.keys(passwordChecks).forEach(key => {
+      passwordChecks[key] = false
+    })
+
+    if (window.$toast) {
+      window.$toast('Passwort erfolgreich geändert!', 'success')
+    }
+  } catch (err) {
+    passwordError.value = err.response?.data?.error || 'Fehler beim Ändern des Passworts'
+  } finally {
+    isChangingPassword.value = false
+  }
+}
 
 const generateKey = async () => {
   try {
@@ -442,6 +597,94 @@ onMounted(loadKeys)
 
 .no-keys p {
   margin: 0;
+}
+
+/* ========================================
+   PASSWORD CHANGE FORM
+   ======================================== */
+.password-change-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 400px;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.form-group label {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.zen-input {
+  width: 100%;
+  padding: var(--space-md);
+  font-size: 1rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-washi);
+  color: var(--color-sumi);
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.zen-input:focus {
+  outline: none;
+  border-color: var(--color-ai);
+  box-shadow: 0 0 0 3px rgba(61, 90, 108, 0.1);
+}
+
+.password-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+.requirement-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-base);
+}
+
+.requirement-item.met {
+  color: var(--color-koke);
+}
+
+.requirement-item svg {
+  flex-shrink: 0;
+}
+
+.form-error {
+  font-size: 0.8125rem;
+  color: var(--color-terra);
+  margin: 0;
+}
+
+.password-error-message {
+  padding: var(--space-md);
+  background: rgba(184, 122, 94, 0.1);
+  border: 1px solid var(--color-terra);
+  border-radius: var(--radius-sm);
+  color: var(--color-terra);
+  font-size: 0.9375rem;
+}
+
+.password-change-form .zen-btn {
+  align-self: flex-start;
+  margin-top: var(--space-sm);
+}
+
+.password-change-form .zen-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ========================================

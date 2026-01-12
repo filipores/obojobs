@@ -308,3 +308,32 @@ def reset_password():
         return jsonify({"error": result["message"]}), 400
 
     return jsonify({"message": "Password reset successfully"}), 200
+
+
+@auth_bp.route("/change-password", methods=["PUT"])
+@jwt_required()
+def change_password():
+    """
+    Change password for authenticated user.
+
+    Requires authentication. Validates current password and new password strength.
+    """
+    current_user_id = get_jwt_identity()
+    data = request.json or {}
+
+    current_password = data.get("current_password")
+    new_password = data.get("new_password")
+
+    if not current_password:
+        return jsonify({"error": "Aktuelles Passwort ist erforderlich"}), 400
+
+    if not new_password:
+        return jsonify({"error": "Neues Passwort ist erforderlich"}), 400
+
+    try:
+        result = AuthService.change_password(
+            int(current_user_id), current_password, new_password
+        )
+        return jsonify(result), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400

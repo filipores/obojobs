@@ -121,7 +121,7 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Sperre ist zeitbasiert, kein Admin-Unlock nötig"
     },
     {
@@ -139,8 +139,8 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 8,
-      "passes": false,
-      "notes": ""
+      "passes": true,
+      "notes": "Endpoint in auth.py, Service in auth_service.py"
     },
     {
       "id": "AUTH-009",

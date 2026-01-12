@@ -121,3 +121,42 @@ class AuthService:
     def get_user_by_email(email: str):
         """Get user by email"""
         return User.query.filter_by(email=email.lower()).first()
+
+    @staticmethod
+    def change_password(user_id: int, current_password: str, new_password: str) -> dict:
+        """
+        Change password for authenticated user.
+
+        Args:
+            user_id: User ID
+            current_password: Current password for verification
+            new_password: New password to set
+
+        Returns:
+            dict with success status and message
+
+        Raises:
+            ValueError: If current password is wrong or new password is invalid
+        """
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError("User not found")
+
+        # Verify current password
+        if not user.check_password(current_password):
+            raise ValueError("Aktuelles Passwort ist falsch")
+
+        # Validate new password strength
+        password_check = PasswordValidator.validate(new_password)
+        if not password_check["valid"]:
+            raise ValueError(password_check["errors"][0])
+
+        # Check that new password is different from current
+        if user.check_password(new_password):
+            raise ValueError("Neues Passwort muss sich vom aktuellen unterscheiden")
+
+        # Set new password
+        user.set_password(new_password)
+        db.session.commit()
+
+        return {"success": True, "message": "Passwort erfolgreich geändert"}

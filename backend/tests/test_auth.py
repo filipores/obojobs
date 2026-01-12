@@ -719,3 +719,166 @@ class TestAccountLockout:
             user = User.query.filter_by(email=test_user["email"]).first()
             assert user.locked_until is None
             assert user.failed_login_attempts == 1
+
+
+class TestChangePassword:
+    """Tests for PUT /api/auth/change-password"""
+
+    def test_change_password_success(self, client, test_user, auth_headers):
+        """Test successful password change."""
+        response = client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": test_user["password"],
+                "new_password": "NewSecure456",
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert "erfolgreich" in data["message"]
+
+    def test_change_password_can_login_with_new_password(
+        self, client, test_user, auth_headers
+    ):
+        """Test that user can login with new password after change."""
+        new_password = "ChangedPass789"
+
+        # Change password
+        client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": test_user["password"],
+                "new_password": new_password,
+            },
+            headers=auth_headers,
+        )
+
+        # Login with new password
+        response = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": new_password,
+            },
+        )
+
+        assert response.status_code == 200
+
+    def test_change_password_wrong_current_password(self, client, auth_headers):
+        """Test that wrong current password is rejected."""
+        response = client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": "wrongpassword",
+                "new_password": "NewSecure456",
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Aktuelles Passwort ist falsch" in data["error"]
+
+    def test_change_password_weak_new_password(
+        self, client, test_user, auth_headers
+    ):
+        """Test that weak new password is rejected."""
+        response = client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": test_user["password"],
+                "new_password": "weak",
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "error" in data
+
+    def test_change_password_same_as_current(self, client, test_user, auth_headers):
+        """Test that same password as current is rejected."""
+        response = client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": test_user["password"],
+                "new_password": test_user["password"],
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "unterscheiden" in data["error"]
+
+    def test_change_password_missing_current_password(self, client, auth_headers):
+        """Test that missing current password returns 400."""
+        response = client.put(
+            "/api/auth/change-password",
+            json={
+                "new_password": "NewSecure456",
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Aktuelles Passwort ist erforderlich" in data["error"]
+
+    def test_change_password_missing_new_password(
+        self, client, test_user, auth_headers
+    ):
+        """Test that missing new password returns 400."""
+        response = client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": test_user["password"],
+            },
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Neues Passwort ist erforderlich" in data["error"]
+
+    def test_change_password_requires_authentication(self, client):
+        """Test that change-password requires authentication."""
+        response = client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": "TestPass123",
+                "new_password": "NewSecure456",
+            },
+        )
+
+        assert response.status_code == 401
+
+    def test_change_password_old_password_cannot_login(
+        self, client, test_user, auth_headers
+    ):
+        """Test that old password no longer works after change."""
+        new_password = "ChangedPass789"
+
+        # Change password
+        client.put(
+            "/api/auth/change-password",
+            json={
+                "current_password": test_user["password"],
+                "new_password": new_password,
+            },
+            headers=auth_headers,
+        )
+
+        # Try to login with old password
+        response = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+
+        assert response.status_code == 401
