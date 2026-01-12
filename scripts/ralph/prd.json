@@ -77,7 +77,7 @@
         "Befehl 'cd frontend && npm test' läuft ohne Fehler"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Vitest ist kompatibel mit Vite und sehr schnell"
     },
     {

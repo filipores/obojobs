@@ -93,6 +93,14 @@ Started: 2025-01-12
 - Format: `cd backend && source venv/bin/activate && ruff format .`
 - Auto-fix: `cd backend && source venv/bin/activate && ruff check --fix .`
 
+### Testing (Frontend)
+- Tool: Vitest (schneller Test-Runner für Vite)
+- Config: `frontend/vitest.config.js`
+- Tests in: `frontend/src/__tests__/`
+- Run: `cd frontend && npm test`
+- Watch: `cd frontend && npm run test:watch`
+- Test environment: jsdom (Browser-like)
+
 ---
 ## Iteration Log
 
@@ -175,3 +183,22 @@ Started: 2025-01-12
   - `# noqa: E402` ist der richtige Weg für intentionale late imports (wie in `models/__init__.py`)
   - B904: Exception-Chaining mit `raise ... from e` bewahrt den Original-Traceback
   - Ruff-Format nutzt Double-Quotes statt Single-Quotes (konsistent)
+
+---
+## 2026-01-12 - INFRA-005
+- **Story**: Frontend: Vitest Setup
+- **Implementiert**:
+  - vitest, @vue/test-utils, jsdom zu devDependencies hinzugefügt
+  - `frontend/vitest.config.js` mit Vue-Plugin und jsdom environment
+  - `frontend/src/__tests__/` Verzeichnis erstellt
+  - `test` und `test:watch` Scripts in package.json
+  - Setup-Test (`setup.test.js`) zur Verifizierung
+- **Geänderte Dateien**:
+  - `frontend/package.json` (deps + scripts)
+  - `frontend/vitest.config.js` (neu)
+  - `frontend/src/__tests__/setup.test.js` (neu)
+- **Learnings**:
+  - Vitest nutzt separate config (`vitest.config.js`) um Konflikte mit vite.config.js zu vermeiden
+  - `globals: true` ermöglicht `describe`, `it`, `expect` ohne imports
+  - jsdom environment simuliert Browser für Vue Component Tests
+  - Node.js 19.7.0 zeigt Warnings für Vite/Vitest (erwartet >=20), funktioniert aber
