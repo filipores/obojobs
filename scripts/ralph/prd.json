@@ -156,7 +156,7 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": "Einfache DB-Blacklist ist OK für MVP, Redis später"
     },
     {
@@ -172,7 +172,7 @@
         "Alle Tests grün, Linting OK"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": "Headers nur in Production aktivieren, nicht in Dev"
     }
   ]

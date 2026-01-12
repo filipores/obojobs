@@ -61,6 +61,21 @@ Templates nutzen `{{VARIABLE}}` Syntax:
 - API Keys für Chrome Extension (`X-API-Key` Header)
 - Middleware: `backend/middleware/jwt_required.py`, `api_key_required.py`
 
+### Security Headers (Production)
+Security headers werden automatisch hinzugefügt wenn `DEBUG=False`:
+- `X-Content-Type-Options: nosniff` - Verhindert MIME-Sniffing
+- `X-Frame-Options: DENY` - Verhindert Clickjacking
+- `X-XSS-Protection: 1; mode=block` - Legacy XSS-Schutz
+- `Referrer-Policy: strict-origin-when-cross-origin`
+- `Content-Security-Policy` - Restriktive Ressourcen-Ladung
+- `Permissions-Policy` - Deaktiviert Kamera, Mikrofon, etc.
+- `Strict-Transport-Security` - HSTS (nur wenn `FORCE_HTTPS=true`)
+
+Environment-Variablen:
+- `SECURITY_HEADERS_ENABLED=true` - Forciert Header auch in Dev
+- `FORCE_HTTPS=true` - Aktiviert HSTS Header
+- `CORS_ORIGINS=https://example.com,https://app.example.com` - Komma-getrennte Origins
+
 ### File Storage
 ```
 backend/uploads/
@@ -76,6 +91,8 @@ backend/uploads/
 - **PDF Upload**: Nur PDF erlaubt, max 10MB
 - **Rate Limiting**: 200/hour, 50/minute global
 - **Credits**: Jede Generierung kostet 1 Credit, neue User starten mit 5
+- **Security Headers**: Automatisch in Production (DEBUG=False), kann mit `SECURITY_HEADERS_ENABLED=true` forciert werden
+- **HSTS**: Nur aktiv wenn `FORCE_HTTPS=true` gesetzt ist
 
 ### Frontend
 - **Auth Errors**: 401/422 → automatischer Logout + Redirect zu /login

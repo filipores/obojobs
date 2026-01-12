@@ -43,6 +43,11 @@ def create_app():
     # Store limiter in app config for use in routes
     app.limiter = limiter
 
+    # Initialize security headers middleware
+    from middleware.security_headers import init_security_headers
+
+    init_security_headers(app)
+
     # Register blueprints
     from routes.api_keys import api_keys_bp
     from routes.applications import applications_bp

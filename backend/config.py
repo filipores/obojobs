@@ -37,6 +37,10 @@ class Config:
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
+    # Security Headers (only in production by default)
+    SECURITY_HEADERS_ENABLED = os.getenv("SECURITY_HEADERS_ENABLED", "false").lower() == "true"
+    FORCE_HTTPS = os.getenv("FORCE_HTTPS", "false").lower() == "true"
+
     # Credits
     DEFAULT_CREDITS = 5  # Changed from 50 to 5 (free credits)
 

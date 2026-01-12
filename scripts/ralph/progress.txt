@@ -11,6 +11,8 @@ Started: Mon Jan 12 16:29:43 CET 2026
 - **Test-Passwort**: Test-Fixtures müssen Passwort-Stärke-Anforderungen erfüllen (z.B. "TestPass123")
 - **Type Hints**: Python verwendet moderne `dict` und `list` statt `Dict`/`List` aus typing
 - **User to_dict()**: Wenn User-Model erweitert wird, `to_dict()` Methode aktualisieren falls Feld im API-Response erscheinen soll
+- **JWT Token Blacklist**: flask_jwt_extended Blocklist via `@jwt.token_in_blocklist_loader` in app.py registrieren, TokenBlacklist Model speichert JTI
+- **Security Headers**: Middleware in `backend/middleware/security_headers.py` - automatisch in Production (DEBUG=False), forcierbar via SECURITY_HEADERS_ENABLED=true
 
 ---
 
@@ -141,3 +143,40 @@ Started: Mon Jan 12 16:29:43 CET 2026
   - Frontend-Passwort-Validierung kopiert aus Register.vue für konsistentes UX
   - Prüfung dass neues Passwort != aktuelles Passwort verhindert sinnlose Änderungen
   - Fehlermeldungen auf Deutsch für konsistente User-Experience
+
+---
+
+## 2026-01-12 - AUTH-009
+- Was implementiert wurde: Logout Endpoint mit Token-Blacklist
+- Geänderte Dateien:
+  - `backend/models/token_blacklist.py` (NEU - TokenBlacklist Model)
+  - `backend/models/__init__.py` (exportiert TokenBlacklist)
+  - `backend/migrations/add_token_blacklist.py` (NEU)
+  - `backend/app.py` (erweitert mit JWT blocklist callbacks)
+  - `backend/routes/auth.py` (erweitert mit POST /api/auth/logout Endpoint)
+  - `backend/tests/test_auth.py` (erweitert mit 7 neuen Tests für Logout)
+  - `frontend/src/store/auth.js` (logout() ist jetzt async, ruft Endpoint auf)
+  - `frontend/src/App.vue` (logout Funktion ist jetzt async)
+- **Learnings:**
+  - flask_jwt_extended hat eingebaute Blocklist-Unterstützung via `@jwt.token_in_blocklist_loader`
+  - TokenBlacklist Model speichert JTI (JWT ID), nicht den ganzen Token
+  - Blacklist-Callback wird in app.py registriert, nicht in der Middleware
+  - Frontend logout() muss async sein um auf API-Call zu warten
+  - Bei API-Fehlern trotzdem localStorage leeren (try-finally Pattern)
+
+---
+
+## 2026-01-12 - AUTH-010
+- Was implementiert wurde: Security Headers & HTTPS-Redirect Middleware
+- Geänderte Dateien:
+  - `backend/middleware/security_headers.py` (NEU - Security Headers Middleware)
+  - `backend/config.py` (erweitert mit SECURITY_HEADERS_ENABLED, FORCE_HTTPS)
+  - `backend/app.py` (erweitert mit init_security_headers)
+  - `backend/tests/test_security_headers.py` (NEU - 14 Tests)
+  - `AGENTS.md` (erweitert mit Security Headers Dokumentation)
+- **Learnings:**
+  - Flask after_request Hook ideal für Response-Modifikation
+  - Security Headers nur in Production (DEBUG=False) um Dev-Workflow nicht zu stören
+  - HSTS nur bei FORCE_HTTPS=true aktivieren, nicht automatisch bei HTTPS-Anfragen
+  - CSP muss 'unsafe-inline' für Vue.js erlauben (Scoped Styles)
+  - Permissions-Policy deaktiviert sensible Browser-Features (Kamera, Mikrofon, etc.)
