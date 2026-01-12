@@ -3,10 +3,65 @@ import secrets
 from flask import Blueprint, jsonify, request, session
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
+from models import db
+from models.email_account import EmailAccount
 from services.gmail_service import GmailService
 from services.outlook_service import OutlookService
 
 email_bp = Blueprint("email", __name__)
+
+
+@email_bp.route("/accounts", methods=["GET"])
+@jwt_required()
+def list_email_accounts():
+    """
+    List all connected email accounts for the current user.
+
+    Returns:
+        JSON with list of email accounts
+    """
+    user_id = get_jwt_identity()
+
+    accounts = EmailAccount.query.filter_by(user_id=int(user_id)).all()
+
+    return jsonify({
+        "success": True,
+        "data": [account.to_dict() for account in accounts],
+    }), 200
+
+
+@email_bp.route("/accounts/<int:account_id>", methods=["DELETE"])
+@jwt_required()
+def delete_email_account(account_id):
+    """
+    Disconnect an email account.
+
+    Args:
+        account_id: ID of the email account to delete
+
+    Returns:
+        JSON with success status
+    """
+    user_id = get_jwt_identity()
+
+    account = EmailAccount.query.filter_by(
+        id=account_id,
+        user_id=int(user_id)
+    ).first()
+
+    if not account:
+        return jsonify({
+            "success": False,
+            "error": "Email account not found",
+        }), 404
+
+    db.session.delete(account)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Email account disconnected successfully",
+    }), 200
 
 
 @email_bp.route("/gmail/auth-url", methods=["GET"])

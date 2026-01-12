@@ -47,6 +47,81 @@
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
+      <!-- Email Accounts Section -->
+      <section class="settings-section animate-fade-up" style="animation-delay: 125ms;">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+          </div>
+          <div>
+            <h2>E-Mail-Konto verbinden</h2>
+            <p class="section-description">Bewerbungen direkt aus der App versenden</p>
+          </div>
+        </div>
+
+        <div class="settings-card zen-card">
+          <!-- Connected Accounts -->
+          <div v-if="emailAccounts.length" class="email-accounts-list">
+            <div class="list-header">
+              <span>Verbundene Konten</span>
+            </div>
+            <div class="accounts-table">
+              <div v-for="account in emailAccounts" :key="account.id" class="account-row">
+                <div class="account-info">
+                  <div class="provider-icon" :class="account.provider">
+                    <!-- Gmail Icon -->
+                    <svg v-if="account.provider === 'gmail'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M20 18h-2V9.25L12 13 6 9.25V18H4V6h1.2l6.8 4.25L18.8 6H20m0-2H4c-1.11 0-2 .89-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/>
+                    </svg>
+                    <!-- Outlook Icon -->
+                    <svg v-else-if="account.provider === 'outlook'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.38q0-.46.33-.8.33-.32.8-.32h14.74q.46 0 .8.33.32.33.32.8V12zM7.5 18H1V7h6.5v11zm-5.65-6q0 .28.06.55.08.27.22.51.15.24.38.44.24.2.57.35-.2.3-.41.62-.22.32-.41.62-.2.32-.34.61-.14.3-.15.55-.01.25.17.47.2.22.46.22.39 0 .55-.36.1-.24.19-.5.1-.24.19-.46.1-.22.15-.37.05-.16.05-.19h-.02q.09.08.21.17.1.09.2.17l.03.02q.18.16.32.26.1.09.2.14.13.07.24.07.21 0 .37-.16.17-.17.17-.37 0-.16-.08-.27-.08-.12-.23-.21-.15-.1-.36-.17-.21-.08-.47-.12-.15-.02-.24-.04-.1-.03-.17-.07-.08-.05-.14-.13-.06-.09-.06-.22 0-.13.06-.23.06-.11.14-.2.09-.09.2-.17.1-.09.19-.17-.2 0-.32-.01-.12-.02-.23-.07-.1-.06-.18-.16-.09-.1-.14-.25-.04-.15-.04-.35 0-.26.08-.51.09-.26.26-.48.17-.23.43-.39.26-.16.61-.2l-.04-.27q-.04-.27-.04-.52 0-.26.06-.51.05-.25.17-.47t.31-.38q.19-.17.46-.24l-.03-.03zm.58 4.62q-.02.06-.04.13-.03.09-.03.2 0 .19.1.29.11.1.28.1.15 0 .27-.06.12-.07.23-.16.1-.09.18-.18.09-.09.14-.16l.05-.05-.06-.06-.15-.11q-.11-.08-.22-.13-.11-.07-.24-.09-.14-.02-.31 0z"/>
+                    </svg>
+                  </div>
+                  <div class="account-details">
+                    <span class="account-email">{{ account.email }}</span>
+                    <span class="account-provider">{{ account.provider === 'gmail' ? 'Gmail' : 'Outlook' }}</span>
+                  </div>
+                </div>
+                <div class="account-status">
+                  <span class="status-badge connected">Verbunden</span>
+                  <button @click="disconnectAccount(account.id)" class="zen-btn zen-btn-sm zen-btn-danger">
+                    Trennen
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- No accounts connected -->
+          <div v-else class="no-accounts">
+            <p>Noch kein E-Mail-Konto verbunden.</p>
+          </div>
+
+          <!-- Connect Buttons -->
+          <div class="connect-buttons">
+            <button @click="connectGmail" class="connect-btn gmail" :disabled="isConnecting">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M20 18h-2V9.25L12 13 6 9.25V18H4V6h1.2l6.8 4.25L18.8 6H20m0-2H4c-1.11 0-2 .89-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/>
+              </svg>
+              <span>Mit Gmail verbinden</span>
+            </button>
+            <button @click="connectOutlook" class="connect-btn outlook" :disabled="isConnecting">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.38q0-.46.33-.8.33-.32.8-.32h14.74q.46 0 .8.33.32.33.32.8V12z"/>
+              </svg>
+              <span>Mit Outlook verbinden</span>
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <!-- Ink Stroke -->
+      <div class="ink-stroke"></div>
+
       <!-- Password Change Section -->
       <section class="settings-section animate-fade-up" style="animation-delay: 150ms;">
         <div class="section-header">
@@ -242,6 +317,10 @@ const _router = useRouter()
 const apiKeys = ref([])
 const newKey = ref('')
 
+// Email accounts state
+const emailAccounts = ref([])
+const isConnecting = ref(false)
+
 // Password change form state
 const passwordForm = reactive({
   currentPassword: '',
@@ -356,7 +435,88 @@ const formatDate = (dateString) => {
   })
 }
 
-onMounted(loadKeys)
+// Email account functions
+const loadEmailAccounts = async () => {
+  try {
+    const { data } = await api.get('/email/accounts')
+    emailAccounts.value = data.data
+  } catch (err) {
+    console.error('Fehler beim Laden der Email-Konten:', err)
+  }
+}
+
+const connectGmail = async () => {
+  isConnecting.value = true
+  try {
+    const { data } = await api.get('/email/gmail/auth-url')
+    // Open OAuth popup
+    const popup = window.open(
+      data.authorization_url,
+      'gmail-oauth',
+      'width=600,height=700,scrollbars=yes'
+    )
+    // Poll for popup close and reload accounts
+    const pollTimer = setInterval(() => {
+      if (popup && popup.closed) {
+        clearInterval(pollTimer)
+        isConnecting.value = false
+        loadEmailAccounts()
+      }
+    }, 500)
+  } catch (_err) {
+    isConnecting.value = false
+    if (window.$toast) {
+      window.$toast('Fehler beim Verbinden mit Gmail', 'error')
+    }
+  }
+}
+
+const connectOutlook = async () => {
+  isConnecting.value = true
+  try {
+    const { data } = await api.get('/email/outlook/auth-url')
+    // Open OAuth popup
+    const popup = window.open(
+      data.authorization_url,
+      'outlook-oauth',
+      'width=600,height=700,scrollbars=yes'
+    )
+    // Poll for popup close and reload accounts
+    const pollTimer = setInterval(() => {
+      if (popup && popup.closed) {
+        clearInterval(pollTimer)
+        isConnecting.value = false
+        loadEmailAccounts()
+      }
+    }, 500)
+  } catch (_err) {
+    isConnecting.value = false
+    if (window.$toast) {
+      window.$toast('Fehler beim Verbinden mit Outlook', 'error')
+    }
+  }
+}
+
+const disconnectAccount = async (accountId) => {
+  if (confirm('E-Mail-Konto wirklich trennen? Sie können dann keine Bewerbungen mehr über dieses Konto versenden.')) {
+    try {
+      await api.delete(`/email/accounts/${accountId}`)
+      loadEmailAccounts()
+      if (window.$toast) {
+        window.$toast('E-Mail-Konto getrennt', 'success')
+      }
+    } catch (_err) {
+      if (window.$toast) {
+        window.$toast('Fehler beim Trennen des Kontos', 'error')
+      }
+    }
+  }
+}
+
+onMounted(() => {
+  loadKeys()
+  loadEmailAccounts()
+})
 </script>
 
 <style scoped>
@@ -600,6 +760,142 @@ onMounted(loadKeys)
 }
 
 /* ========================================
+   EMAIL ACCOUNTS SECTION
+   ======================================== */
+.email-accounts-list {
+  margin-bottom: var(--space-lg);
+}
+
+.accounts-table {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.account-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md);
+  background: var(--color-washi);
+  border-radius: var(--radius-sm);
+}
+
+.account-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.provider-icon {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  flex-shrink: 0;
+}
+
+.provider-icon.gmail {
+  background: rgba(219, 68, 55, 0.1);
+  color: #DB4437;
+}
+
+.provider-icon.outlook {
+  background: rgba(0, 120, 212, 0.1);
+  color: #0078D4;
+}
+
+.account-details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.account-email {
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.account-provider {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+}
+
+.account-status {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.status-badge.connected {
+  background: rgba(122, 139, 110, 0.15);
+  color: var(--color-koke);
+}
+
+.no-accounts {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-lg);
+}
+
+.no-accounts p {
+  margin: 0;
+}
+
+.connect-buttons {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.connect-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-md) var(--space-lg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-elevated);
+  color: var(--color-sumi);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.connect-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-lifted);
+}
+
+.connect-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.connect-btn.gmail:hover:not(:disabled) {
+  border-color: #DB4437;
+  color: #DB4437;
+}
+
+.connect-btn.outlook:hover:not(:disabled) {
+  border-color: #0078D4;
+  color: #0078D4;
+}
+
+/* ========================================
    PASSWORD CHANGE FORM
    ======================================== */
 .password-change-form {
@@ -752,6 +1048,26 @@ onMounted(loadKeys)
 
   .info-banner {
     flex-direction: column;
+  }
+
+  .account-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .account-status {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .connect-buttons {
+    flex-direction: column;
+  }
+
+  .connect-btn {
+    width: 100%;
+    justify-content: center;
   }
 }
 
