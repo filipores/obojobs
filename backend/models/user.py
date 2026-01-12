@@ -23,6 +23,10 @@ class User(db.Model):
     email_verification_token = db.Column(db.String(255), nullable=True)
     email_verification_sent_at = db.Column(db.DateTime, nullable=True)
 
+    # Password reset fields
+    password_reset_token = db.Column(db.String(255), nullable=True)
+    password_reset_sent_at = db.Column(db.DateTime, nullable=True)
+
     # Relationships
     documents = db.relationship("Document", back_populates="user", cascade="all, delete-orphan")
     templates = db.relationship("Template", back_populates="user", cascade="all, delete-orphan")

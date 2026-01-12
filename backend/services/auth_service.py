@@ -75,3 +75,8 @@ class AuthService:
     def get_user_by_id(user_id):
         """Get user by ID"""
         return User.query.get(user_id)
+
+    @staticmethod
+    def get_user_by_email(email: str):
+        """Get user by email"""
+        return User.query.filter_by(email=email.lower()).first()
