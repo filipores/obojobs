@@ -76,6 +76,12 @@ Environment-Variablen:
 - `FORCE_HTTPS=true` - Aktiviert HSTS Header
 - `CORS_ORIGINS=https://example.com,https://app.example.com` - Komma-getrennte Origins
 
+### Stripe (Subscriptions)
+Environment-Variablen für Stripe Integration:
+- `STRIPE_SECRET_KEY` - sk_test_xxx (Backend API calls)
+- `STRIPE_PUBLISHABLE_KEY` - pk_test_xxx (Frontend)
+- `STRIPE_WEBHOOK_SECRET` - whsec_xxx (Webhook signature verification)
+
 ### File Storage
 ```
 backend/uploads/
@@ -88,6 +94,7 @@ backend/uploads/
 
 ### Backend
 - **SQLAlchemy**: Immer `db.session.commit()` nach Änderungen
+- **DB Migrationen**: Bei neuen Model-Spalten MUSS ein Migrations-Script in `backend/migrations/` erstellt und ausgeführt werden! Sonst: `no such column` Fehler
 - **PDF Upload**: Nur PDF erlaubt, max 10MB
 - **Rate Limiting**: 200/hour, 50/minute global
 - **Credits**: Jede Generierung kostet 1 Credit, neue User starten mit 5

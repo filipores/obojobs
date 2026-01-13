@@ -25,6 +25,39 @@ Implementiere NUR diese EINE Story.
 - Schau in progress.txt nach bekannten Patterns
 - Mache keine zusätzlichen Änderungen
 
+### 4b. Datenbank-Migrationen ausführen (falls nötig)
+Falls du **neue Spalten/Tabellen** zu Models hinzugefügt hast:
+
+1. Erstelle ein Migrations-Script in `backend/migrations/`:
+```python
+# backend/migrations/add_[feature_name].py
+def upgrade(app):
+    from models import db
+    with app.app_context():
+        connection = db.engine.connect()
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        columns = [col["name"] for col in inspector.get_columns("table_name")]
+
+        if "new_column" not in columns:
+            connection.execute(db.text("ALTER TABLE table_name ADD COLUMN new_column TYPE"))
+            print("✓ Added new_column")
+        connection.commit()
+        connection.close()
+```
+
+2. Führe die Migration aus:
+```bash
+cd backend && python3 -c "
+from app import create_app
+from migrations.add_[feature_name] import upgrade
+app = create_app()
+upgrade(app)
+"
+```
+
+**WICHTIG**: Ohne Migration schlagen alle API-Calls fehl mit `no such column` Fehler!
+
 ### 5. Quality Checks ausführen
 ```bash
 # Backend - Tests ausführen
