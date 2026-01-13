@@ -6,8 +6,8 @@ Führe diese Schritte in GENAU dieser Reihenfolge aus:
 
 ### 1. Status lesen
 ```
-Lies: scripts/ralph/prd.json
-Lies: scripts/ralph/progress.txt (besonders "Codebase Patterns" am Anfang)
+Lies: ralph/prd.json
+Lies: ralph/progress.txt (besonders "Codebase Patterns" am Anfang)
 ```
 
 ### 2. Branch prüfen
