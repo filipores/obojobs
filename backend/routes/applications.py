@@ -160,6 +160,79 @@ def generate_application(current_user):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@applications_bp.route("/preview-job", methods=["POST"])
+@jwt_required_custom
+def preview_job(current_user):
+    """Preview job posting data from URL before generating application.
+
+    Returns structured job data including detected portal and all extracted fields.
+    This allows the user to review and edit data before generating.
+    """
+    data = request.json
+    url = data.get("url", "").strip()
+
+    if not url:
+        return jsonify({"success": False, "error": "URL ist erforderlich"}), 400
+
+    if not url.startswith(("http://", "https://")):
+        return jsonify({"success": False, "error": "Ungültige URL. Bitte mit http:// oder https:// beginnen."}), 400
+
+    try:
+        scraper = WebScraper()
+
+        # Detect job board
+        job_board = scraper.detect_job_board(url)
+
+        # Fetch structured job data
+        job_data = scraper.fetch_structured_job_posting(url)
+
+        if not job_data.get("text") and not job_data.get("title"):
+            return jsonify(
+                {"success": False, "error": "Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL."}
+            ), 400
+
+        # Map job board to display name
+        portal_names = {
+            "stepstone": "StepStone",
+            "indeed": "Indeed",
+            "xing": "XING",
+        }
+
+        # Check for missing important fields
+        missing_fields = []
+        if not job_data.get("title"):
+            missing_fields.append("Titel")
+        if not job_data.get("company"):
+            missing_fields.append("Firma")
+        if not job_data.get("description"):
+            missing_fields.append("Beschreibung")
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "portal": portal_names.get(job_board, "Sonstige"),
+                "portal_id": job_board or "generic",
+                "url": url,
+                "title": job_data.get("title"),
+                "company": job_data.get("company"),
+                "location": job_data.get("location"),
+                "description": job_data.get("description"),
+                "requirements": job_data.get("requirements"),
+                "contact_email": job_data.get("contact_email"),
+                "contact_person": job_data.get("contact_person"),
+                "posted_date": job_data.get("posted_date"),
+                "application_deadline": job_data.get("application_deadline"),
+                "employment_type": job_data.get("employment_type"),
+                "salary": job_data.get("salary"),
+                "company_profile_url": job_data.get("company_profile_url"),
+                "missing_fields": missing_fields,
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Fehler beim Laden der Stellenanzeige: {str(e)}"}), 500
+
+
 @applications_bp.route("/generate-from-url", methods=["POST"])
 @jwt_required_custom
 @check_subscription_limit

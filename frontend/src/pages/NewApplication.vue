@@ -10,7 +10,7 @@
       <!-- Form Section -->
       <section class="form-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="form-card zen-card">
-          <!-- URL Input -->
+          <!-- URL Input with Portal Detection -->
           <div class="form-group">
             <label class="form-label">Stellenanzeigen-URL</label>
             <div class="url-input-wrapper">
@@ -23,14 +23,212 @@
                 type="url"
                 placeholder="https://example.com/jobs/stellenanzeige"
                 class="form-input url-input"
-                :disabled="generating"
+                :disabled="loading || generating"
+                @input="onUrlInput"
               />
+              <!-- Portal Badge -->
+              <span v-if="detectedPortal" :class="['portal-badge', `portal-${detectedPortal.id}`]">
+                {{ detectedPortal.name }}
+              </span>
             </div>
             <p class="form-hint">Kopiere die URL der Stellenanzeige und füge sie hier ein</p>
           </div>
 
+          <!-- Preview Button (only show if no preview yet) -->
+          <div v-if="!previewData" class="form-actions preview-actions">
+            <button
+              @click="loadPreview"
+              :disabled="!url || loading"
+              class="zen-btn zen-btn-lg"
+            >
+              <span v-if="loading" class="btn-loading">
+                <span class="loading-spinner"></span>
+                Lade Stellenanzeige...
+              </span>
+              <span v-else>
+                Stellenanzeige laden
+              </span>
+            </button>
+          </div>
+
+          <!-- Error Message -->
+          <div v-if="error && !previewData" class="error-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <span>{{ error }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Preview Section (shown after loading) -->
+      <section v-if="previewData" class="preview-section animate-fade-up" style="animation-delay: 150ms;">
+        <div class="preview-card zen-card">
+          <div class="preview-header">
+            <div class="preview-title-row">
+              <h2>Stellenanzeige Preview</h2>
+              <span :class="['portal-tag', `portal-${previewData.portal_id}`]">
+                {{ previewData.portal }}
+              </span>
+            </div>
+            <button @click="resetPreview" class="reset-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                <path d="M21 3v5h-5"/>
+                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                <path d="M8 16H3v5"/>
+              </svg>
+              Neu laden
+            </button>
+          </div>
+
+          <!-- Missing Fields Warning -->
+          <div v-if="previewData.missing_fields?.length > 0" class="warning-box">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div>
+              <strong>Fehlende Daten</strong>
+              <p>Folgende wichtige Felder konnten nicht automatisch erkannt werden: {{ previewData.missing_fields.join(', ') }}</p>
+            </div>
+          </div>
+
+          <!-- Editable Preview Form -->
+          <div class="preview-form">
+            <!-- Core Fields Row -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label required">Firma</label>
+                <input
+                  v-model="editableData.company"
+                  type="text"
+                  class="form-input"
+                  :class="{ 'field-warning': !editableData.company }"
+                  placeholder="Firmenname eingeben"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label required">Position</label>
+                <input
+                  v-model="editableData.title"
+                  type="text"
+                  class="form-input"
+                  :class="{ 'field-warning': !editableData.title }"
+                  placeholder="Stellentitel eingeben"
+                />
+              </div>
+            </div>
+
+            <!-- Location and Employment Type Row -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Standort</label>
+                <input
+                  v-model="editableData.location"
+                  type="text"
+                  class="form-input"
+                  placeholder="z.B. Berlin, Hamburg"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Anstellungsart</label>
+                <input
+                  v-model="editableData.employment_type"
+                  type="text"
+                  class="form-input"
+                  placeholder="z.B. Vollzeit, Teilzeit"
+                />
+              </div>
+            </div>
+
+            <!-- Contact Fields Row -->
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label">Ansprechpartner</label>
+                <input
+                  v-model="editableData.contact_person"
+                  type="text"
+                  class="form-input"
+                  placeholder="Name des Ansprechpartners"
+                />
+              </div>
+              <div class="form-group">
+                <label class="form-label">Kontakt-Email</label>
+                <input
+                  v-model="editableData.contact_email"
+                  type="email"
+                  class="form-input"
+                  placeholder="email@firma.de"
+                />
+              </div>
+            </div>
+
+            <!-- Salary (if available) -->
+            <div v-if="editableData.salary || previewData.salary" class="form-group">
+              <label class="form-label">Gehalt</label>
+              <input
+                v-model="editableData.salary"
+                type="text"
+                class="form-input"
+                placeholder="Gehaltsangabe"
+              />
+            </div>
+
+            <!-- Description (collapsible) -->
+            <div class="form-group description-group">
+              <div class="description-header" @click="showDescription = !showDescription">
+                <label class="form-label">Stellenbeschreibung</label>
+                <button type="button" class="toggle-btn">
+                  <svg
+                    :class="['toggle-icon', { rotated: showDescription }]"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="2"
+                  >
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </button>
+              </div>
+              <div v-show="showDescription" class="description-content">
+                <textarea
+                  v-model="editableData.description"
+                  class="form-textarea"
+                  rows="8"
+                  placeholder="Stellenbeschreibung..."
+                ></textarea>
+              </div>
+            </div>
+
+            <!-- Template Variables Info -->
+            <div class="template-variables-info">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <div>
+                <strong>Template-Variablen werden automatisch befüllt:</strong>
+                <span class="variable-list">
+                  <code
+                    v-for="(value, key) in templateVariables"
+                    :key="key"
+                    :title="value || 'nicht verfügbar'"
+                    :class="{ missing: !value }"
+                  >{{ getVariableDisplay(key) }}</code>
+                </span>
+              </div>
+            </div>
+          </div>
+
           <!-- Template Selection -->
-          <div class="form-group">
+          <div class="form-group template-selection">
             <label class="form-label">Anschreiben-Template</label>
             <select v-model="selectedTemplateId" class="form-select" :disabled="generating || loadingTemplates">
               <option :value="null">Standard-Template verwenden</option>
@@ -40,28 +238,11 @@
             </select>
           </div>
 
-          <!-- Info Box -->
-          <div class="info-box">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-            <div class="info-content">
-              <strong>So funktioniert's:</strong>
-              <ul>
-                <li>Die Stellenanzeige wird automatisch analysiert</li>
-                <li>Firma und Position werden extrahiert</li>
-                <li>Ein personalisiertes Anschreiben wird generiert</li>
-              </ul>
-            </div>
-          </div>
-
-          <!-- Submit Button -->
+          <!-- Generate Button -->
           <div class="form-actions">
             <button
               @click="generateApplication"
-              :disabled="!url || generating"
+              :disabled="!canGenerate || generating"
               class="zen-btn zen-btn-ai zen-btn-lg"
             >
               <span v-if="generating" class="btn-loading">
@@ -79,13 +260,42 @@
           </div>
 
           <!-- Error Message -->
-          <div v-if="error" class="error-box">
+          <div v-if="error && previewData" class="error-box">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="15" y1="9" x2="9" y2="15"/>
               <line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
             <span>{{ error }}</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Info Box (show when no preview) -->
+      <section v-if="!previewData" class="info-section animate-fade-up" style="animation-delay: 200ms;">
+        <div class="info-box zen-card">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          <div class="info-content">
+            <strong>So funktioniert's:</strong>
+            <ul>
+              <li>Füge eine Stellenanzeigen-URL ein</li>
+              <li>Die Daten werden automatisch extrahiert (Firma, Position, Kontakt...)</li>
+              <li>Prüfe und bearbeite die Daten vor der Generierung</li>
+              <li>Ein personalisiertes Anschreiben wird erstellt</li>
+            </ul>
+            <div class="supported-portals">
+              <strong>Unterstützte Job-Portale:</strong>
+              <div class="portal-list">
+                <span class="portal-item portal-stepstone">StepStone</span>
+                <span class="portal-item portal-indeed">Indeed</span>
+                <span class="portal-item portal-xing">XING</span>
+                <span class="portal-item portal-generic">+ Weitere</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -162,21 +372,166 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 
 const router = useRouter()
 
+// State
 const url = ref('')
 const selectedTemplateId = ref(null)
 const templates = ref([])
 const loadingTemplates = ref(false)
+const loading = ref(false)
 const generating = ref(false)
 const error = ref('')
 const usage = ref(null)
 const generatedApp = ref(null)
 
+// Preview state
+const previewData = ref(null)
+const editableData = ref({
+  company: '',
+  title: '',
+  location: '',
+  employment_type: '',
+  contact_person: '',
+  contact_email: '',
+  salary: '',
+  description: ''
+})
+const showDescription = ref(false)
+
+// Portal detection (real-time based on URL)
+const detectedPortal = computed(() => {
+  if (!url.value) return null
+
+  const urlLower = url.value.toLowerCase()
+
+  if (urlLower.includes('stepstone.de')) {
+    return { id: 'stepstone', name: 'StepStone' }
+  }
+  if (urlLower.includes('indeed.com') || urlLower.includes('indeed.de')) {
+    return { id: 'indeed', name: 'Indeed' }
+  }
+  if (urlLower.includes('xing.com')) {
+    return { id: 'xing', name: 'XING' }
+  }
+  if (urlLower.includes('arbeitsagentur.de')) {
+    return { id: 'arbeitsagentur', name: 'Arbeitsagentur' }
+  }
+
+  // Generic if it looks like a URL
+  if (url.value.startsWith('http')) {
+    return { id: 'generic', name: 'Sonstige' }
+  }
+
+  return null
+})
+
+// Template variables computed from editable data
+const templateVariables = computed(() => ({
+  FIRMA: editableData.value.company,
+  POSITION: editableData.value.title,
+  ANSPRECHPARTNER: editableData.value.contact_person,
+  STANDORT: editableData.value.location,
+  QUELLE: previewData.value?.portal || ''
+}))
+
+// Can generate check
+const canGenerate = computed(() => {
+  return editableData.value.company && editableData.value.title
+})
+
+// Helper to display template variable name with double braces
+const getVariableDisplay = (key) => {
+  return `{{${key}}}`
+}
+
+// Debounce URL input
+let urlInputTimeout = null
+const onUrlInput = () => {
+  // Clear any existing timeout
+  if (urlInputTimeout) clearTimeout(urlInputTimeout)
+
+  // Reset preview when URL changes significantly
+  if (previewData.value && url.value !== previewData.value.url) {
+    previewData.value = null
+    editableData.value = {
+      company: '',
+      title: '',
+      location: '',
+      employment_type: '',
+      contact_person: '',
+      contact_email: '',
+      salary: '',
+      description: ''
+    }
+  }
+}
+
+// Load preview data from URL
+const loadPreview = async () => {
+  if (!url.value) return
+
+  error.value = ''
+  loading.value = true
+
+  try {
+    const { data } = await api.post('/applications/preview-job', {
+      url: url.value
+    })
+
+    if (data.success) {
+      previewData.value = data.data
+
+      // Populate editable data from preview
+      editableData.value = {
+        company: data.data.company || '',
+        title: data.data.title || '',
+        location: data.data.location || '',
+        employment_type: data.data.employment_type || '',
+        contact_person: data.data.contact_person || '',
+        contact_email: data.data.contact_email || '',
+        salary: data.data.salary || '',
+        description: data.data.description || ''
+      }
+
+      if (window.$toast) {
+        window.$toast('Stellenanzeige geladen!', 'success')
+      }
+    } else {
+      error.value = data.error || 'Unbekannter Fehler'
+    }
+  } catch (e) {
+    if (e.response?.data?.error) {
+      error.value = e.response.data.error
+    } else {
+      error.value = 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.'
+    }
+  } finally {
+    loading.value = false
+  }
+}
+
+// Reset preview and start fresh
+const resetPreview = () => {
+  previewData.value = null
+  editableData.value = {
+    company: '',
+    title: '',
+    location: '',
+    employment_type: '',
+    contact_person: '',
+    contact_email: '',
+    salary: '',
+    description: ''
+  }
+  error.value = ''
+}
+
+// Load templates
 const loadTemplates = async () => {
   loadingTemplates.value = true
   try {
@@ -189,6 +544,7 @@ const loadTemplates = async () => {
   }
 }
 
+// Load usage
 const loadUsage = async () => {
   try {
     const { data } = await api.get('/stats')
@@ -203,8 +559,9 @@ const getPlanLabel = () => {
   return plan.charAt(0).toUpperCase() + plan.slice(1)
 }
 
+// Generate application
 const generateApplication = async () => {
-  if (!url.value) return
+  if (!canGenerate.value) return
 
   error.value = ''
   generating.value = true
@@ -219,7 +576,19 @@ const generateApplication = async () => {
       generatedApp.value = data.application
       // Reload usage after generation
       await loadUsage()
+      // Reset form
       url.value = ''
+      previewData.value = null
+      editableData.value = {
+        company: '',
+        title: '',
+        location: '',
+        employment_type: '',
+        contact_person: '',
+        contact_email: '',
+        salary: '',
+        description: ''
+      }
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
@@ -310,6 +679,17 @@ onMounted(() => {
   margin-bottom: var(--space-sm);
 }
 
+.form-label.required::after {
+  content: ' *';
+  color: #b45050;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+}
+
 .url-input-wrapper {
   position: relative;
 }
@@ -325,6 +705,7 @@ onMounted(() => {
 
 .url-input {
   padding-left: calc(var(--space-md) + 28px);
+  padding-right: 100px;
 }
 
 .form-hint {
@@ -334,16 +715,271 @@ onMounted(() => {
 }
 
 /* ========================================
-   INFO BOX
+   PORTAL BADGE
    ======================================== */
+.portal-badge {
+  position: absolute;
+  right: var(--space-md);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
+}
+
+.portal-badge.portal-stepstone {
+  background: rgba(0, 102, 204, 0.15);
+  color: #0066cc;
+}
+
+.portal-badge.portal-indeed {
+  background: rgba(46, 92, 168, 0.15);
+  color: #2e5ca8;
+}
+
+.portal-badge.portal-xing {
+  background: rgba(0, 111, 107, 0.15);
+  color: #006f6b;
+}
+
+.portal-badge.portal-arbeitsagentur {
+  background: rgba(0, 68, 103, 0.15);
+  color: #004467;
+}
+
+.portal-badge.portal-generic {
+  background: var(--color-washi-aged);
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   PREVIEW SECTION
+   ======================================== */
+.preview-section {
+  max-width: 800px;
+}
+
+.preview-card {
+  padding: var(--space-xl);
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.preview-title-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.preview-title-row h2 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.portal-tag {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.portal-tag.portal-stepstone {
+  background: rgba(0, 102, 204, 0.15);
+  color: #0066cc;
+}
+
+.portal-tag.portal-indeed {
+  background: rgba(46, 92, 168, 0.15);
+  color: #2e5ca8;
+}
+
+.portal-tag.portal-xing {
+  background: rgba(0, 111, 107, 0.15);
+  color: #006f6b;
+}
+
+.portal-tag.portal-generic {
+  background: var(--color-washi-aged);
+  color: var(--color-text-tertiary);
+}
+
+.reset-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.reset-btn:hover {
+  background: var(--color-washi-warm);
+  color: var(--color-text-primary);
+}
+
+/* ========================================
+   WARNING BOX
+   ======================================== */
+.warning-box {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.warning-box svg {
+  flex-shrink: 0;
+  color: #c9a227;
+}
+
+.warning-box strong {
+  display: block;
+  color: #8a6d17;
+  margin-bottom: var(--space-xs);
+  font-size: 0.875rem;
+}
+
+.warning-box p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
+   PREVIEW FORM
+   ======================================== */
+.preview-form {
+  margin-bottom: var(--space-lg);
+}
+
+.field-warning {
+  border-color: rgba(201, 162, 39, 0.5);
+  background: rgba(201, 162, 39, 0.05);
+}
+
+/* Description Toggle */
+.description-group {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.description-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  cursor: pointer;
+}
+
+.description-header .form-label {
+  margin-bottom: 0;
+  cursor: pointer;
+}
+
+.toggle-btn {
+  background: none;
+  border: none;
+  padding: var(--space-xs);
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+}
+
+.toggle-icon {
+  transition: transform var(--transition-base);
+}
+
+.toggle-icon.rotated {
+  transform: rotate(180deg);
+}
+
+.description-content {
+  margin-top: var(--space-md);
+}
+
+/* ========================================
+   TEMPLATE VARIABLES INFO
+   ======================================== */
+.template-variables-info {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-ai-subtle);
+  border-radius: var(--radius-md);
+  margin-top: var(--space-lg);
+}
+
+.template-variables-info svg {
+  flex-shrink: 0;
+  color: var(--color-ai);
+  margin-top: 2px;
+}
+
+.template-variables-info strong {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--color-sumi);
+  margin-bottom: var(--space-sm);
+}
+
+.variable-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+}
+
+.variable-list code {
+  padding: 2px var(--space-xs);
+  background: var(--color-washi);
+  border-radius: var(--radius-xs);
+  font-size: 0.75rem;
+  color: var(--color-ai);
+}
+
+.variable-list code.missing {
+  color: var(--color-text-tertiary);
+  opacity: 0.6;
+}
+
+/* ========================================
+   TEMPLATE SELECTION
+   ======================================== */
+.template-selection {
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+/* ========================================
+   INFO SECTION
+   ======================================== */
+.info-section {
+  max-width: 640px;
+}
+
 .info-box {
   display: flex;
   gap: var(--space-md);
   padding: var(--space-lg);
-  background: var(--color-ai-subtle);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--color-ai);
-  margin-bottom: var(--space-lg);
 }
 
 .info-box svg {
@@ -363,7 +999,7 @@ onMounted(() => {
 }
 
 .info-content ul {
-  margin: 0;
+  margin: 0 0 var(--space-lg) 0;
   padding-left: var(--space-lg);
 }
 
@@ -371,11 +1007,55 @@ onMounted(() => {
   margin-bottom: var(--space-xs);
 }
 
+.supported-portals {
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.portal-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  margin-top: var(--space-sm);
+}
+
+.portal-item {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.portal-item.portal-stepstone {
+  background: rgba(0, 102, 204, 0.15);
+  color: #0066cc;
+}
+
+.portal-item.portal-indeed {
+  background: rgba(46, 92, 168, 0.15);
+  color: #2e5ca8;
+}
+
+.portal-item.portal-xing {
+  background: rgba(0, 111, 107, 0.15);
+  color: #006f6b;
+}
+
+.portal-item.portal-generic {
+  background: var(--color-washi-aged);
+  color: var(--color-text-tertiary);
+}
+
 /* ========================================
    FORM ACTIONS
    ======================================== */
 .form-actions {
   text-align: center;
+}
+
+.preview-actions {
+  margin-top: var(--space-lg);
 }
 
 .zen-btn-lg {
@@ -561,8 +1241,19 @@ onMounted(() => {
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
-  .form-card {
+  .form-card,
+  .preview-card {
     padding: var(--space-lg);
+  }
+
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-md);
   }
 
   .info-grid {
@@ -575,6 +1266,22 @@ onMounted(() => {
 
   .zen-btn-lg {
     width: 100%;
+  }
+
+  .url-input {
+    padding-right: var(--space-md);
+  }
+
+  .portal-badge {
+    position: static;
+    transform: none;
+    display: inline-block;
+    margin-top: var(--space-sm);
+  }
+
+  .url-input-wrapper {
+    display: flex;
+    flex-direction: column;
   }
 }
 </style>
