@@ -25,6 +25,9 @@
           <router-link to="/applications" class="nav-link" active-class="active">
             <span class="nav-text">Bewerbungen</span>
           </router-link>
+          <router-link to="/timeline" class="nav-link" active-class="active">
+            <span class="nav-text">Timeline</span>
+          </router-link>
           <router-link to="/ats" class="nav-link" active-class="active">
             <span class="nav-text">ATS</span>
           </router-link>

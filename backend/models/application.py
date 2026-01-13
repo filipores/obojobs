@@ -1,3 +1,4 @@
+import json
 from datetime import datetime
 
 from . import db
@@ -23,6 +24,7 @@ class Application(db.Model):
     links_json = db.Column(db.Text)  # JSON stored as text
     sent_at = db.Column(db.DateTime, nullable=True)
     sent_via = db.Column(db.String(50), nullable=True)  # 'gmail' or 'outlook'
+    status_history = db.Column(db.Text, nullable=True)  # JSON array of status changes
 
     # Relationships
     user = db.relationship("User", back_populates="applications")
@@ -47,4 +49,25 @@ class Application(db.Model):
             "links_json": self.links_json,
             "sent_at": self.sent_at.isoformat() if self.sent_at else None,
             "sent_via": self.sent_via,
+            "status_history": self.get_status_history(),
         }
+
+    def get_status_history(self):
+        """Parse status_history JSON or return empty list."""
+        if not self.status_history:
+            return []
+        try:
+            return json.loads(self.status_history)
+        except (json.JSONDecodeError, TypeError):
+            return []
+
+    def add_status_change(self, new_status, timestamp=None):
+        """Add a status change to the history."""
+        history = self.get_status_history()
+        if timestamp is None:
+            timestamp = datetime.utcnow()
+        history.append({
+            "status": new_status,
+            "timestamp": timestamp.isoformat()
+        })
+        self.status_history = json.dumps(history)

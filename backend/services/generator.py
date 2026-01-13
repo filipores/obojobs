@@ -169,6 +169,8 @@ class BewerbungsGenerator:
             email_text=email_text,
             links_json=json.dumps(extracted_info),
         )
+        # Initialize status history with 'erstellt'
+        application.add_status_change("erstellt")
         db.session.add(application)
         db.session.commit()
 

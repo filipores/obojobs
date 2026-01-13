@@ -1,5 +1,6 @@
 import os
 import tempfile
+from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request, send_file
 
@@ -38,6 +39,52 @@ def list_applications(current_user):
             "page": page,
             "per_page": per_page,
             "pages": pagination.pages,
+        }
+    ), 200
+
+
+@applications_bp.route("/timeline", methods=["GET"])
+@jwt_required_custom
+def get_timeline(current_user):
+    """Get all applications with status history for timeline view.
+    Supports filtering by time period: 7, 30, 90 days or all."""
+    days_filter = request.args.get("days", "all")
+
+    query = Application.query.filter_by(user_id=current_user.id)
+
+    # Apply time filter
+    if days_filter != "all":
+        try:
+            days = int(days_filter)
+            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            query = query.filter(Application.datum >= cutoff_date)
+        except ValueError:
+            pass  # Invalid filter, show all
+
+    # Order by date descending
+    applications = query.order_by(Application.datum.desc()).all()
+
+    # Build timeline data
+    timeline_data = []
+    for app in applications:
+        app_dict = app.to_dict()
+        # Ensure status_history is included (it's in to_dict now)
+        # Add a timeline-specific format if no history exists
+        if not app_dict.get("status_history"):
+            # Create initial history from datum if none exists
+            app_dict["status_history"] = [
+                {"status": "erstellt", "timestamp": app_dict["datum"]}
+            ]
+        timeline_data.append(app_dict)
+
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "applications": timeline_data,
+                "total": len(timeline_data),
+                "filter": days_filter,
+            },
         }
     ), 200
 
@@ -194,7 +241,11 @@ def update_application(app_id, current_user):
     data = request.json
 
     if "status" in data:
-        app.status = data["status"]
+        new_status = data["status"]
+        # Only add to history if status actually changed
+        if new_status != app.status:
+            app.add_status_change(new_status)
+        app.status = new_status
     if "notizen" in data:
         app.notizen = data["notizen"]
 

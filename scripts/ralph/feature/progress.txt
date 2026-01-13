@@ -5,10 +5,53 @@ Started: 2026-01-13
 Branch: ralph/analytics-dashboard
 
 ### Pending Stories:
-- [ ] ANALYTICS-001: Extended Stats API
-- [ ] ANALYTICS-002: Timeline View
+- [x] ANALYTICS-001: Extended Stats API ✅
+- [x] ANALYTICS-002: Timeline View ✅
 - [ ] ANALYTICS-003: Company Insights
 - [ ] ANALYTICS-004: Export Funktionalität
+
+---
+
+## [2026-01-13] - ANALYTICS-002: Timeline View
+- **Was implementiert wurde:**
+  - GET /api/applications/timeline Endpoint mit Zeitraum-Filter (7/30/90 Tage, alle)
+  - Application Model: status_history Feld (JSON Array) hinzugefügt
+  - Status-History wird bei jedem Status-Update automatisch ergänzt
+  - Initiale History beim Erstellen einer Bewerbung
+  - Frontend: Timeline.vue Seite mit visueller Status-History
+  - Navigation: Link zur Timeline in der Hauptnavigation
+  - DB-Migration: add_status_history.py
+- **Geänderte Dateien:**
+  - backend/models/application.py (status_history Feld + Helper-Methoden)
+  - backend/routes/applications.py (Timeline Endpoint + Status-History Tracking)
+  - backend/services/generator.py (Initiale History bei Erstellung)
+  - backend/migrations/add_status_history.py (neu)
+  - frontend/src/pages/Timeline.vue (neu)
+  - frontend/src/router/index.js (Route)
+  - frontend/src/App.vue (Navigation)
+- **Learnings:**
+  - JSON als Text in SQLite speichern mit Helper-Methoden für Serialisierung
+  - Bestehende Bewerbungen ohne History werden automatisch mit datum als erstellt-Timestamp angezeigt
+
+---
+
+## [2026-01-13] - ANALYTICS-001: Extended Stats API
+- **Was implementiert wurde:**
+  - GET /api/stats/extended Endpoint
+  - Erfolgsquote-Berechnung (Funnel: Bewerbungen → Antworten → Interviews → Zusagen)
+  - Durchschnittliche Antwortzeit (erstellt_zu_versendet)
+  - Bewerbungen pro Woche/Monat (letzte 12)
+  - Top 5 Firmen nach Bewerbungsanzahl
+  - Status-Verteilung
+- **Geänderte Dateien:**
+  - backend/routes/stats.py (neuer Endpoint)
+  - backend/tests/test_stats.py (neu erstellt)
+  - backend/tests/test_auth.py (Whitespace-Fixes)
+  - backend/tests/test_email_verification.py (Whitespace-Fixes)
+  - backend/tests/test_password_reset.py (Whitespace-Fixes)
+- **Learnings:**
+  - SQLAlchemy func.count() mit GROUP BY für aggregierte Statistiken
+  - Python datetime-Manipulation für Wochen-/Monats-Berechnungen
 
 ---
 
