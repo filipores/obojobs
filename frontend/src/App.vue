@@ -37,12 +37,11 @@
           </router-link>
         </div>
 
-        <!-- Actions - Credits & Settings -->
+        <!-- Actions - Subscription & Settings -->
         <div class="nav-actions">
-          <!-- Credits Display -->
-          <router-link to="/buy-credits" class="credits-display">
-            <span class="credits-number">{{ authStore.user?.credits_remaining || 0 }}</span>
-            <span class="credits-label">Credits</span>
+          <!-- Subscription Display -->
+          <router-link to="/subscription" class="subscription-display">
+            <span class="subscription-plan">{{ getPlanLabel() }}</span>
           </router-link>
 
           <!-- Theme Toggle -->
@@ -171,6 +170,12 @@ const toggleTheme = () => {
 const logout = async () => {
   await authStore.logout()
   router.push('/login')
+}
+
+const getPlanLabel = () => {
+  const subscription = authStore.user?.subscription
+  if (!subscription) return 'Free'
+  return subscription.plan?.charAt(0).toUpperCase() + subscription.plan?.slice(1) || 'Free'
 }
 
 // Watch for system preference changes
@@ -338,10 +343,9 @@ onMounted(() => {
   gap: var(--space-md);
 }
 
-.credits-display {
+.subscription-display {
   display: flex;
-  align-items: baseline;
-  gap: var(--space-xs);
+  align-items: center;
   padding: var(--space-sm) var(--space-md);
   background: var(--color-ai-subtle);
   border-radius: var(--radius-sm);
@@ -349,25 +353,16 @@ onMounted(() => {
   transition: all var(--transition-base);
 }
 
-.credits-display:hover {
+.subscription-display:hover {
   background: var(--color-ai);
 }
 
-.credits-display:hover .credits-number,
-.credits-display:hover .credits-label {
+.subscription-display:hover .subscription-plan {
   color: var(--color-text-inverse);
 }
 
-.credits-number {
-  font-family: var(--font-display);
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: var(--color-ai);
-  transition: color var(--transition-base);
-}
-
-.credits-label {
-  font-size: 0.75rem;
+.subscription-plan {
+  font-size: 0.8125rem;
   font-weight: 500;
   letter-spacing: var(--tracking-wide);
   text-transform: uppercase;
@@ -491,10 +486,6 @@ onMounted(() => {
   .brand-text {
     display: none;
   }
-
-  .credits-label {
-    display: none;
-  }
 }
 
 @media (max-width: 480px) {
@@ -507,7 +498,7 @@ onMounted(() => {
     height: 36px;
   }
 
-  .credits-display {
+  .subscription-display {
     padding: var(--space-xs) var(--space-sm);
   }
 }

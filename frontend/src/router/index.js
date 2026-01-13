@@ -20,8 +20,8 @@ const routes = [
   { path: '/new-application', component: () => import('../pages/NewApplication.vue'), meta: { requiresAuth: true } },
   { path: '/ats', component: () => import('../pages/ATSView.vue'), meta: { requiresAuth: true } },
   { path: '/settings', component: () => import('../pages/Settings.vue'), meta: { requiresAuth: true } },
-  { path: '/buy-credits', component: () => import('../pages/BuyCredits.vue'), meta: { requiresAuth: true } },
-  { path: '/payment/success', component: () => import('../pages/PaymentSuccess.vue'), meta: { requiresAuth: true } }
+  { path: '/subscription', component: () => import('../pages/SubscriptionView.vue'), meta: { requiresAuth: true } },
+  { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({

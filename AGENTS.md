@@ -7,7 +7,7 @@ Diese Datei enthält wichtige Informationen für AI-Agenten (Claude Code, Amp, e
 obojobs ist eine **Bewerbungsautomations-Plattform** (deutsch):
 - Generiert personalisierte Bewerbungen aus Templates + CV
 - Nutzt Claude API für Textgenerierung
-- PayPal für Credit-System
+- Stripe Subscriptions für Monetarisierung (Free/Basic/Pro Pläne)
 
 ## Tech Stack
 
@@ -97,7 +97,7 @@ backend/uploads/
 - **DB Migrationen**: Bei neuen Model-Spalten MUSS ein Migrations-Script in `backend/migrations/` erstellt und ausgeführt werden! Sonst: `no such column` Fehler
 - **PDF Upload**: Nur PDF erlaubt, max 10MB
 - **Rate Limiting**: 200/hour, 50/minute global
-- **Credits**: Jede Generierung kostet 1 Credit, neue User starten mit 5
+- **Subscription Limits**: Free=3/Monat, Basic=20/Monat, Pro=unbegrenzt (middleware/subscription_limit.py)
 - **Security Headers**: Automatisch in Production (DEBUG=False), kann mit `SECURITY_HEADERS_ENABLED=true` forciert werden
 - **HSTS**: Nur aktiv wenn `FORCE_HTTPS=true` gesetzt ist
 
@@ -125,7 +125,7 @@ backend/uploads/
 
 ### Database
 - Models in `backend/models/`
-- User, Document, Template, Application, APIKey, Purchase
+- User, Document, Template, Application, APIKey, Subscription
 
 ## Testing & Linting
 

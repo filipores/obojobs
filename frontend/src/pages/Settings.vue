@@ -27,18 +27,14 @@
             </div>
             <div class="info-divider"></div>
             <div class="info-row">
-              <span class="info-label">Credits verfügbar</span>
-              <span class="info-value info-value-highlight">{{ authStore.user?.credits_remaining }}</span>
-            </div>
-            <div class="info-row">
-              <span class="info-label">Insgesamt gekauft</span>
-              <span class="info-value">{{ authStore.user?.total_credits_purchased || 0 }} Credits</span>
+              <span class="info-label">Aktueller Plan</span>
+              <span class="info-value info-value-highlight">{{ getPlanLabel() }}</span>
             </div>
           </div>
 
           <div class="account-actions">
-            <router-link to="/buy-credits" class="zen-btn zen-btn-ai">
-              Credits kaufen
+            <router-link to="/subscription" class="zen-btn zen-btn-ai">
+              Abo verwalten
             </router-link>
           </div>
         </div>
@@ -316,6 +312,12 @@ const _router = useRouter()
 
 const apiKeys = ref([])
 const newKey = ref('')
+
+const getPlanLabel = () => {
+  const subscription = authStore.user?.subscription
+  if (!subscription) return 'Free'
+  return subscription.plan?.charAt(0).toUpperCase() + subscription.plan?.slice(1) || 'Free'
+}
 
 // Email accounts state
 const emailAccounts = ref([])

@@ -72,8 +72,9 @@
                 Bewerbung generieren
               </span>
             </button>
-            <p class="credits-info">
-              Du hast noch <strong>{{ credits }}</strong> Credits
+            <p class="usage-info">
+              <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
+              <span v-else>{{ usage?.remaining || 0 }}/{{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
             </p>
           </div>
 
@@ -173,7 +174,7 @@ const templates = ref([])
 const loadingTemplates = ref(false)
 const generating = ref(false)
 const error = ref('')
-const credits = ref(0)
+const usage = ref(null)
 const generatedApp = ref(null)
 
 const loadTemplates = async () => {
@@ -188,13 +189,18 @@ const loadTemplates = async () => {
   }
 }
 
-const loadCredits = async () => {
+const loadUsage = async () => {
   try {
     const { data } = await api.get('/stats')
-    credits.value = data.credits_remaining || 0
+    usage.value = data.usage
   } catch (e) {
-    console.error('Fehler beim Laden der Credits:', e)
+    console.error('Fehler beim Laden der Nutzung:', e)
   }
+}
+
+const getPlanLabel = () => {
+  const plan = usage.value?.plan || 'free'
+  return plan.charAt(0).toUpperCase() + plan.slice(1)
 }
 
 const generateApplication = async () => {
@@ -211,7 +217,8 @@ const generateApplication = async () => {
 
     if (data.success) {
       generatedApp.value = data.application
-      credits.value = data.credits_remaining
+      // Reload usage after generation
+      await loadUsage()
       url.value = ''
 
       if (window.$toast) {
@@ -221,8 +228,8 @@ const generateApplication = async () => {
       error.value = data.error || 'Unbekannter Fehler'
     }
   } catch (e) {
-    if (e.response?.status === 402) {
-      error.value = 'Keine Credits mehr vorhanden. Bitte kaufe weitere Credits.'
+    if (e.response?.status === 403 && e.response?.data?.error_code === 'SUBSCRIPTION_LIMIT_REACHED') {
+      error.value = e.response.data.error
     } else if (e.response?.data?.error) {
       error.value = e.response.data.error
     } else {
@@ -249,7 +256,7 @@ const closeModal = () => {
 
 onMounted(() => {
   loadTemplates()
-  loadCredits()
+  loadUsage()
 })
 </script>
 
@@ -397,14 +404,10 @@ onMounted(() => {
   to { transform: rotate(360deg); }
 }
 
-.credits-info {
+.usage-info {
   margin-top: var(--space-md);
   font-size: 0.875rem;
   color: var(--color-text-tertiary);
-}
-
-.credits-info strong {
-  color: var(--color-ai);
 }
 
 /* ========================================

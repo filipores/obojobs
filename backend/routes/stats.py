@@ -1,6 +1,7 @@
 from flask import Blueprint, jsonify
 
 from middleware.jwt_required import jwt_required_custom
+from middleware.subscription_limit import get_subscription_usage
 from models import Application
 
 stats_bp = Blueprint("stats", __name__)
@@ -16,6 +17,9 @@ def get_stats(current_user):
     versendet = Application.query.filter_by(user_id=current_user.id, status="versendet").count()
     antwort_erhalten = Application.query.filter_by(user_id=current_user.id, status="antwort_erhalten").count()
 
+    # Get subscription usage
+    usage = get_subscription_usage(current_user)
+
     return jsonify(
         {
             "success": True,
@@ -24,8 +28,7 @@ def get_stats(current_user):
                 "erstellt": erstellt,
                 "versendet": versendet,
                 "antwort_erhalten": antwort_erhalten,
-                "credits_remaining": current_user.credits_remaining,
-                "credits_max": current_user.credits_max,
             },
+            "usage": usage,
         }
     ), 200

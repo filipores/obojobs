@@ -13,9 +13,6 @@ class User(db.Model):
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    credits_remaining = db.Column(db.Integer, default=5)  # Changed from 50 to 5
-    credits_max = db.Column(db.Integer, default=50)  # Kept for backward compatibility
-    total_credits_purchased = db.Column(db.Integer, default=0)  # NEW: Track lifetime purchases
     is_active = db.Column(db.Boolean, default=True)
 
     # Email verification fields
@@ -31,13 +28,20 @@ class User(db.Model):
     failed_login_attempts = db.Column(db.Integer, default=0)
     locked_until = db.Column(db.DateTime, nullable=True)
 
+    # Stripe fields
+    stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
+
+    # Subscription usage tracking
+    applications_this_month = db.Column(db.Integer, default=0, nullable=False)
+    month_reset_at = db.Column(db.DateTime, nullable=True)
+
     # Relationships
     documents = db.relationship("Document", back_populates="user", cascade="all, delete-orphan")
     templates = db.relationship("Template", back_populates="user", cascade="all, delete-orphan")
     applications = db.relationship("Application", back_populates="user", cascade="all, delete-orphan")
     api_keys = db.relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
-    purchases = db.relationship("Purchase", back_populates="user", cascade="all, delete-orphan")
     email_accounts = db.relationship("EmailAccount", back_populates="user", cascade="all, delete-orphan")
+    subscription = db.relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -51,9 +55,10 @@ class User(db.Model):
             "email": self.email,
             "full_name": self.full_name,
             "created_at": self.created_at.isoformat() if self.created_at else None,
-            "credits_remaining": self.credits_remaining,
-            "credits_max": self.credits_max,
-            "total_credits_purchased": self.total_credits_purchased,
             "is_active": self.is_active,
             "email_verified": self.email_verified,
+            "stripe_customer_id": self.stripe_customer_id,
+            "applications_this_month": self.applications_this_month,
+            "month_reset_at": self.month_reset_at.isoformat() if self.month_reset_at else None,
+            "subscription": self.subscription.to_dict() if self.subscription else None,
         }

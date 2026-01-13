@@ -41,14 +41,6 @@ class Config:
     SECURITY_HEADERS_ENABLED = os.getenv("SECURITY_HEADERS_ENABLED", "false").lower() == "true"
     FORCE_HTTPS = os.getenv("FORCE_HTTPS", "false").lower() == "true"
 
-    # Credits
-    DEFAULT_CREDITS = 5  # Changed from 50 to 5 (free credits)
-
-    # PayPal (Legacy - to be removed)
-    PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID")
-    PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET")
-    PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")  # sandbox or live
-
     # Stripe
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
     STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
@@ -57,13 +49,6 @@ class Config:
     # Stripe Subscription Plans (Price IDs from Stripe Dashboard)
     STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC")  # €9.99/month
     STRIPE_PRICE_PRO = os.getenv("STRIPE_PRICE_PRO")  # €19.99/month
-
-    # Credit Packages
-    CREDIT_PACKAGES = {
-        "small": {"credits": 10, "price": 1.00, "name": "Small Paket"},
-        "medium": {"credits": 50, "price": 4.00, "name": "Medium Paket"},
-        "large": {"credits": 100, "price": 7.00, "name": "Large Paket"},
-    }
 
     @staticmethod
     def validate_config():

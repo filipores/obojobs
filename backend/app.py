@@ -55,9 +55,10 @@ def create_app():
     from routes.auth import auth_bp
     from routes.documents import documents_bp
     from routes.email import email_bp
-    from routes.payments import payments_bp
     from routes.stats import stats_bp
+    from routes.subscriptions import subscriptions_bp
     from routes.templates import templates_bp
+    from routes.webhooks import webhooks_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(documents_bp, url_prefix="/api/documents")
@@ -65,9 +66,10 @@ def create_app():
     app.register_blueprint(applications_bp, url_prefix="/api/applications")
     app.register_blueprint(api_keys_bp, url_prefix="/api/keys")
     app.register_blueprint(stats_bp, url_prefix="/api")
-    app.register_blueprint(payments_bp, url_prefix="/api/payments")
+    app.register_blueprint(subscriptions_bp, url_prefix="/api/subscriptions")
     app.register_blueprint(ats_bp, url_prefix="/api/ats")
     app.register_blueprint(email_bp, url_prefix="/api/email")
+    app.register_blueprint(webhooks_bp, url_prefix="/api/webhooks")
 
     # Health check endpoint (no rate limit)
     @app.route("/api/health")

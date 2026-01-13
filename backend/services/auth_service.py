@@ -40,7 +40,7 @@ class AuthService:
             raise ValueError("User with this email already exists")
 
         # Create new user
-        user = User(email=email, full_name=full_name, credits_remaining=50, credits_max=50)
+        user = User(email=email, full_name=full_name)
         user.set_password(password)
 
         db.session.add(user)

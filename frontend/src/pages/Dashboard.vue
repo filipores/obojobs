@@ -49,10 +49,10 @@
     <section class="stats-section">
       <div class="container">
         <div v-if="stats" class="stats-grid">
-          <!-- Credits Card - Featured -->
+          <!-- Subscription Card - Featured -->
           <div class="stat-card stat-featured stagger-item">
             <div class="stat-header">
-              <span class="stat-label">Verfügbar</span>
+              <span class="stat-label">Diesen Monat</span>
               <div class="stat-icon">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <circle cx="12" cy="12" r="10"/>
@@ -60,10 +60,10 @@
                 </svg>
               </div>
             </div>
-            <div class="stat-value">{{ stats.credits_remaining }}</div>
-            <div class="stat-name">Credits</div>
-            <router-link to="/buy-credits" class="stat-link">
-              Credits kaufen
+            <div class="stat-value">{{ usage?.unlimited ? '∞' : usage?.remaining || 0 }}</div>
+            <div class="stat-name">{{ usage?.unlimited ? 'Unbegrenzt' : 'Verbleibend' }}</div>
+            <router-link to="/subscription" class="stat-link">
+              {{ getPlanLabel() }} Plan
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -212,6 +212,7 @@ import api from '../api/client'
 import { authStore } from '../store/auth'
 
 const stats = ref(null)
+const usage = ref(null)
 const bannerDismissed = ref(false)
 
 const showVerificationBanner = computed(() => {
@@ -226,6 +227,11 @@ const dismissBanner = () => {
   sessionStorage.setItem('verificationBannerDismissed', 'true')
 }
 
+const getPlanLabel = () => {
+  const plan = usage.value?.plan || 'free'
+  return plan.charAt(0).toUpperCase() + plan.slice(1)
+}
+
 onMounted(async () => {
   // Check if banner was dismissed this session
   if (sessionStorage.getItem('verificationBannerDismissed')) {
@@ -237,6 +243,7 @@ onMounted(async () => {
     await authStore.fetchUser()
     const { data } = await api.get('/stats')
     stats.value = data.stats
+    usage.value = data.usage
   } catch (error) {
     console.error('Failed to load stats:', error)
   }

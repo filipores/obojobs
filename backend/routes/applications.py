@@ -5,6 +5,11 @@ from flask import Blueprint, jsonify, request, send_file
 
 from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
+from middleware.subscription_limit import (
+    check_subscription_limit,
+    get_subscription_usage,
+    increment_application_count,
+)
 from models import Application, Template, db
 from services.generator import BewerbungsGenerator
 from services.web_scraper import WebScraper
@@ -39,14 +44,9 @@ def list_applications(current_user):
 
 @applications_bp.route("/generate", methods=["POST"])
 @api_key_required  # Extension uses API key
+@check_subscription_limit
 def generate_application(current_user):
     """Generate a new application (FROM EXTENSION ONLY)"""
-    # Check credits
-    if current_user.credits_remaining <= 0:
-        return jsonify(
-            {"success": False, "error": "Credits exhausted. You have reached your limit of 50 applications."}
-        ), 402
-
     data = request.json
     company = data.get("company")
     text = data.get("text")
@@ -83,9 +83,11 @@ def generate_application(current_user):
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
 
-        # Decrement credits
-        current_user.credits_remaining -= 1
-        db.session.commit()
+        # Increment subscription usage counter
+        increment_application_count(current_user)
+
+        # Get updated usage info
+        usage = get_subscription_usage(current_user)
 
         return jsonify(
             {
@@ -95,7 +97,7 @@ def generate_application(current_user):
                 "position": latest.position if latest else "",
                 "email": latest.email if latest else "",
                 "betreff": latest.betreff if latest else "",
-                "credits_remaining": current_user.credits_remaining,
+                "usage": usage,
                 "message": f"Bewerbung für {company} erstellt",
             }
         ), 200
@@ -106,12 +108,9 @@ def generate_application(current_user):
 
 @applications_bp.route("/generate-from-url", methods=["POST"])
 @jwt_required_custom
+@check_subscription_limit
 def generate_from_url(current_user):
     """Generate a new application from URL (Web App)"""
-    # Check credits
-    if current_user.credits_remaining <= 0:
-        return jsonify({"success": False, "error": "Keine Credits mehr vorhanden. Bitte kaufe weitere Credits."}), 402
-
     data = request.json
     url = data.get("url", "").strip()
     template_id = data.get("template_id")
@@ -148,16 +147,18 @@ def generate_from_url(current_user):
         # Get the newly created application
         latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
 
-        # Decrement credits
-        current_user.credits_remaining -= 1
-        db.session.commit()
+        # Increment subscription usage counter
+        increment_application_count(current_user)
+
+        # Get updated usage info
+        usage = get_subscription_usage(current_user)
 
         return jsonify(
             {
                 "success": True,
                 "application": latest.to_dict() if latest else None,
                 "pdf_path": pdf_path,
-                "credits_remaining": current_user.credits_remaining,
+                "usage": usage,
                 "message": f"Bewerbung für {company} erstellt",
             }
         ), 200

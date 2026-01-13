@@ -50,8 +50,6 @@ def test_user(app):
         user = User(
             email="test@example.com",
             full_name="Test User",
-            credits_remaining=5,
-            credits_max=50,
         )
         user.set_password("TestPass123")  # Meets new password requirements
         db.session.add(user)

@@ -17,7 +17,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
-      "passes": true,
+      "passes": false,
       "notes": "stripe>=7.0.0 für aktuelle API"
     },
     {
@@ -34,7 +34,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
-      "passes": true,
+      "passes": false,
       "notes": "One-to-One Relationship User ↔ Subscription"
     },
     {
@@ -50,7 +50,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 3,
-      "passes": true,
+      "passes": false,
       "notes": "Products manuell in Stripe Dashboard anlegen, IDs in .env"
     },
     {
@@ -68,7 +68,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
-      "passes": true,
+      "passes": false,
       "notes": "Stripe Checkout hosted page für PCI Compliance"
     },
     {
@@ -85,7 +85,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": true,
+      "passes": false,
       "notes": "Webhook Endpoint muss public sein (kein JWT)"
     },
     {
@@ -103,7 +103,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 6,
-      "passes": true,
+      "passes": false,
       "notes": "Reset via Webhook oder bei nächstem Request prüfen"
     },
     {
@@ -120,7 +120,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 7,
-      "passes": true,
+      "passes": false,
       "notes": "Stripe Portal für Self-Service (Kündigung, Zahlungsmethode)"
     },
     {
@@ -139,7 +139,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 8,
-      "passes": true,
+      "passes": false,
       "notes": "Erst nach vollständiger Stripe-Integration entfernen"
     }
   ]

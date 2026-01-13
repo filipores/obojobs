@@ -1,12 +1,12 @@
 <template>
-  <div class="payment-success-page">
+  <div class="subscription-success-page">
     <div class="container">
       <div class="success-container">
         <!-- Loading State -->
         <div v-if="loading" class="state-card zen-card animate-fade-up">
           <div class="loading-enso"></div>
-          <h2>Zahlung wird verarbeitet</h2>
-          <p>Bitte warten Sie, während wir Ihre Zahlung bestätigen.</p>
+          <h2>Abo wird eingerichtet</h2>
+          <p>Bitte warten Sie, wahrend wir Ihr Abonnement aktivieren.</p>
         </div>
 
         <!-- Error State -->
@@ -18,11 +18,11 @@
               <line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
           </div>
-          <h2>Zahlung fehlgeschlagen</h2>
+          <h2>Aktivierung fehlgeschlagen</h2>
           <p class="error-message">{{ errorMessage }}</p>
           <div class="state-actions">
-            <router-link to="/buy-credits" class="zen-btn zen-btn-ai">
-              Erneut versuchen
+            <router-link to="/settings" class="zen-btn zen-btn-ai">
+              Zu den Einstellungen
             </router-link>
             <router-link to="/dashboard" class="zen-btn">
               Zum Dashboard
@@ -37,28 +37,25 @@
               <polyline points="20 6 9 17 4 12"/>
             </svg>
           </div>
-          <h2>Zahlung erfolgreich</h2>
-          <p class="success-message">{{ successMessage }}</p>
+          <h2>Abo erfolgreich aktiviert</h2>
+          <p class="success-message">Ihr Abonnement wurde erfolgreich eingerichtet.</p>
 
-          <!-- Purchase Details -->
-          <div class="purchase-details">
-            <h3>Kaufdetails</h3>
+          <!-- Subscription Details -->
+          <div v-if="subscription" class="subscription-details">
+            <h3>Abo-Details</h3>
             <div class="detail-row">
-              <span class="detail-label">Paket</span>
-              <span class="detail-value">{{ purchase.package_name }}</span>
+              <span class="detail-label">Plan</span>
+              <span class="detail-value">{{ getPlanName(subscription.plan) }}</span>
             </div>
             <div class="detail-row">
-              <span class="detail-label">Credits</span>
-              <span class="detail-value">{{ purchase.credits_purchased }}</span>
+              <span class="detail-label">Status</span>
+              <span class="detail-value">
+                <span class="badge badge-success">Aktiv</span>
+              </span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">Preis</span>
-              <span class="detail-value">{{ purchase.price_eur }}€</span>
-            </div>
-            <div class="detail-divider"></div>
-            <div class="detail-row detail-row-highlight">
-              <span class="detail-label">Neue Credits</span>
-              <span class="detail-value">{{ newCredits }}</span>
+            <div v-if="subscription.current_period_end" class="detail-row">
+              <span class="detail-label">Nachste Abrechnung</span>
+              <span class="detail-value">{{ formatDate(subscription.current_period_end) }}</span>
             </div>
           </div>
 
@@ -66,8 +63,8 @@
             <router-link to="/dashboard" class="zen-btn zen-btn-filled">
               Zum Dashboard
             </router-link>
-            <router-link to="/buy-credits" class="zen-btn">
-              Weitere Credits kaufen
+            <router-link to="/new-application" class="zen-btn">
+              Bewerbung erstellen
             </router-link>
           </div>
         </div>
@@ -78,50 +75,76 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
-import api from '../api/client'
+import { useRoute } from 'vue-router'
 import { authStore } from '../store/auth'
 
-const _router = useRouter()
 const route = useRoute()
 
 const loading = ref(true)
 const success = ref(false)
 const error = ref(false)
 const errorMessage = ref('')
-const successMessage = ref('')
-const purchase = ref(null)
-const newCredits = ref(0)
+const subscription = ref(null)
 
-const executePayment = async () => {
-  const paymentId = route.query.paymentId || route.query.token
-  const payerId = route.query.PayerID
+const getPlanName = (plan) => {
+  const names = {
+    'free': 'Free',
+    'basic': 'Basic',
+    'pro': 'Pro'
+  }
+  return names[plan] || plan
+}
 
-  if (!paymentId || !payerId) {
-    error.value = true
-    errorMessage.value = 'Ungültige Zahlungsinformationen. Bitte versuchen Sie es erneut.'
-    loading.value = false
+const formatDate = (dateStr) => {
+  if (!dateStr) return '-'
+  return new Date(dateStr).toLocaleDateString('de-DE', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+const verifySubscription = async () => {
+  const sessionId = route.query.session_id
+
+  if (!sessionId) {
+    // No session_id means direct navigation - just refresh user data
+    try {
+      await authStore.fetchUser()
+      const user = authStore.user
+      if (user?.subscription && user.subscription.status === 'active') {
+        success.value = true
+        subscription.value = user.subscription
+      } else {
+        error.value = true
+        errorMessage.value = 'Kein aktives Abonnement gefunden. Falls Sie gerade bezahlt haben, warten Sie bitte einen Moment und aktualisieren Sie die Seite.'
+      }
+    } catch (err) {
+      console.error('Failed to verify subscription:', err)
+      error.value = true
+      errorMessage.value = 'Fehler beim Laden der Abonnement-Daten.'
+    } finally {
+      loading.value = false
+    }
     return
   }
 
+  // With session_id, refresh user data to get updated subscription
   try {
-    const { data } = await api.post('/payments/execute-payment', {
-      payment_id: paymentId,
-      payer_id: payerId
-    })
+    await authStore.fetchUser()
+    const user = authStore.user
 
-    if (data.success) {
+    if (user?.subscription) {
       success.value = true
-      successMessage.value = data.message
-      purchase.value = data.purchase
-      newCredits.value = data.new_credits
-
-      await authStore.fetchUser()
+      subscription.value = user.subscription
     } else {
-      throw new Error(data.error || 'Zahlung konnte nicht abgeschlossen werden')
+      // Subscription might not be created yet (webhook delay)
+      // Show success anyway as payment was completed
+      success.value = true
+      subscription.value = null
     }
   } catch (err) {
-    console.error('Payment execution error:', err)
+    console.error('Subscription verification error:', err)
     error.value = true
     errorMessage.value = err.response?.data?.error || err.message || 'Ein unerwarteter Fehler ist aufgetreten'
   } finally {
@@ -130,12 +153,12 @@ const executePayment = async () => {
 }
 
 onMounted(() => {
-  executePayment()
+  verifySubscription()
 })
 </script>
 
 <style scoped>
-.payment-success-page {
+.subscription-success-page {
   min-height: calc(100vh - 73px);
   background: var(--color-washi);
   display: flex;
@@ -218,9 +241,9 @@ onMounted(() => {
 }
 
 /* ========================================
-   PURCHASE DETAILS
+   SUBSCRIPTION DETAILS
    ======================================== */
-.purchase-details {
+.subscription-details {
   background: var(--color-washi);
   border-radius: var(--radius-md);
   padding: var(--space-lg);
@@ -228,7 +251,7 @@ onMounted(() => {
   text-align: left;
 }
 
-.purchase-details h3 {
+.subscription-details h3 {
   font-size: 0.75rem;
   font-weight: 500;
   letter-spacing: var(--tracking-wider);
@@ -254,28 +277,17 @@ onMounted(() => {
   color: var(--color-sumi);
 }
 
-.detail-divider {
-  height: 1px;
-  background: var(--color-border-light);
-  margin: var(--space-md) 0;
+.badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.75rem;
+  font-weight: 500;
 }
 
-.detail-row-highlight {
-  background: var(--color-ai);
-  color: var(--color-text-inverse);
-  margin: var(--space-md) calc(var(--space-lg) * -1) calc(var(--space-lg) * -1);
-  padding: var(--space-md) var(--space-lg);
-  border-radius: 0 0 var(--radius-md) var(--radius-md);
-}
-
-.detail-row-highlight .detail-label {
-  color: rgba(255, 255, 255, 0.8);
-}
-
-.detail-row-highlight .detail-value {
-  color: var(--color-text-inverse);
-  font-family: var(--font-display);
-  font-size: 1.25rem;
+.badge-success {
+  background: var(--color-koke);
+  color: var(--color-washi);
 }
 
 /* ========================================
