@@ -33,7 +33,7 @@ class TestEmailVerificationService:
             user = User(
                 email="verify@example.com",
                 full_name="Verify User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -54,7 +54,7 @@ class TestEmailVerificationService:
             user = User(
                 email="fresh@example.com",
                 full_name="Fresh User",
-                
+
             )
             user.set_password("TestPass123")
             user.email_verification_sent_at = datetime.utcnow()
@@ -69,7 +69,7 @@ class TestEmailVerificationService:
             user = User(
                 email="expired@example.com",
                 full_name="Expired User",
-                
+
             )
             user.set_password("TestPass123")
             # Set sent_at to 25 hours ago
@@ -85,7 +85,7 @@ class TestEmailVerificationService:
             user = User(
                 email="nosent@example.com",
                 full_name="No Sent User",
-                
+
             )
             user.set_password("TestPass123")
             user.email_verification_sent_at = None
@@ -100,7 +100,7 @@ class TestEmailVerificationService:
             user = User(
                 email="valid@example.com",
                 full_name="Valid User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -148,7 +148,7 @@ class TestEmailVerificationService:
             user = User(
                 email="alreadyverified@example.com",
                 full_name="Already Verified",
-                
+
                 email_verified=True,
             )
             user.set_password("TestPass123")
@@ -168,7 +168,7 @@ class TestEmailVerificationService:
             user = User(
                 email="expiredtoken@example.com",
                 full_name="Expired Token User",
-                
+
             )
             user.set_password("TestPass123")
             user.email_verification_token = "expired-token-123"
@@ -187,7 +187,7 @@ class TestEmailVerificationService:
             user = User(
                 email="expirytime@example.com",
                 full_name="Expiry Time User",
-                
+
             )
             user.set_password("TestPass123")
             sent_at = datetime.utcnow()
@@ -207,7 +207,7 @@ class TestEmailVerificationService:
             user = User(
                 email="noexpiry@example.com",
                 full_name="No Expiry User",
-                
+
             )
             user.set_password("TestPass123")
             user.email_verification_sent_at = None
@@ -228,7 +228,7 @@ class TestUserModelEmailVerification:
             user = User(
                 email="newuser@example.com",
                 full_name="New User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -242,7 +242,7 @@ class TestUserModelEmailVerification:
             user = User(
                 email="dicttest@example.com",
                 full_name="Dict Test",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -259,7 +259,7 @@ class TestUserModelEmailVerification:
             user = User(
                 email="verifieddict@example.com",
                 full_name="Verified Dict",
-                
+
             )
             user.set_password("TestPass123")
             user.email_verified = True

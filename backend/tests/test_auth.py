@@ -339,7 +339,7 @@ class TestVerifyEmail:
             user = User(
                 email="toverify@example.com",
                 full_name="To Verify",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -385,7 +385,7 @@ class TestVerifyEmail:
             user = User(
                 email="expired@example.com",
                 full_name="Expired Token",
-                
+
             )
             user.set_password("TestPass123")
             user.email_verification_token = "expired-token"
@@ -408,7 +408,7 @@ class TestVerifyEmail:
             user = User(
                 email="alreadyverified@example.com",
                 full_name="Already Verified",
-                
+
                 email_verified=True,
             )
             user.set_password("TestPass123")

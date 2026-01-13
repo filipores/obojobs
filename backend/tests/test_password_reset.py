@@ -39,7 +39,7 @@ class TestPasswordResetService:
             user = User(
                 email="reset@example.com",
                 full_name="Reset User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -60,7 +60,7 @@ class TestPasswordResetService:
             user = User(
                 email="fresh@example.com",
                 full_name="Fresh User",
-                
+
             )
             user.set_password("TestPass123")
             user.password_reset_sent_at = datetime.utcnow()
@@ -75,7 +75,7 @@ class TestPasswordResetService:
             user = User(
                 email="expired@example.com",
                 full_name="Expired User",
-                
+
             )
             user.set_password("TestPass123")
             # Set sent_at to 2 hours ago
@@ -91,7 +91,7 @@ class TestPasswordResetService:
             user = User(
                 email="nosent@example.com",
                 full_name="No Sent User",
-                
+
             )
             user.set_password("TestPass123")
             user.password_reset_sent_at = None
@@ -106,7 +106,7 @@ class TestPasswordResetService:
             user = User(
                 email="valid@example.com",
                 full_name="Valid User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -148,7 +148,7 @@ class TestPasswordResetService:
             user = User(
                 email="expiredtoken@example.com",
                 full_name="Expired Token User",
-                
+
             )
             user.set_password("TestPass123")
             user.password_reset_token = "expired-token-123"
@@ -167,7 +167,7 @@ class TestPasswordResetService:
             user = User(
                 email="resetpw@example.com",
                 full_name="Reset PW User",
-                
+
             )
             user.set_password("OldPass123")
             db.session.add(user)
@@ -199,7 +199,7 @@ class TestPasswordResetService:
             user = User(
                 email="expiredreset@example.com",
                 full_name="Expired Reset User",
-                
+
             )
             user.set_password("OldPass123")
             user.password_reset_token = "expired-reset-token"
@@ -220,7 +220,7 @@ class TestPasswordResetService:
             user = User(
                 email="expirytime@example.com",
                 full_name="Expiry Time User",
-                
+
             )
             user.set_password("TestPass123")
             sent_at = datetime.utcnow()
@@ -240,7 +240,7 @@ class TestPasswordResetService:
             user = User(
                 email="noexpiry@example.com",
                 full_name="No Expiry User",
-                
+
             )
             user.set_password("TestPass123")
             user.password_reset_sent_at = None
@@ -257,7 +257,7 @@ class TestPasswordResetService:
             user = User(
                 email="cleartoken@example.com",
                 full_name="Clear Token User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -282,7 +282,7 @@ class TestUserModelPasswordReset:
             user = User(
                 email="newuser@example.com",
                 full_name="New User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -305,7 +305,7 @@ class TestForgotPassword:
             user = User(
                 email="exists@example.com",
                 full_name="Existing User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -347,7 +347,7 @@ class TestForgotPassword:
             user = User(
                 email="createtoken@example.com",
                 full_name="Create Token User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -387,7 +387,7 @@ class TestForgotPassword:
             user = User(
                 email="inactive@example.com",
                 full_name="Inactive User",
-                
+
                 is_active=False,
             )
             user.set_password("TestPass123")
@@ -415,7 +415,7 @@ class TestResetPassword:
             user = User(
                 email="toreset@example.com",
                 full_name="To Reset",
-                
+
             )
             user.set_password("OldPass123")
             db.session.add(user)
@@ -477,7 +477,7 @@ class TestResetPassword:
             user = User(
                 email="expiredreset@example.com",
                 full_name="Expired Reset",
-                
+
             )
             user.set_password("OldPass123")
             user.password_reset_token = "expired-token"
@@ -500,7 +500,7 @@ class TestResetPassword:
             user = User(
                 email="weakpw@example.com",
                 full_name="Weak PW User",
-                
+
             )
             user.set_password("OldPass123")
             db.session.add(user)
@@ -524,7 +524,7 @@ class TestResetPassword:
             user = User(
                 email="pwreqs@example.com",
                 full_name="PW Reqs User",
-                
+
             )
             user.set_password("OldPass123")
             db.session.add(user)
@@ -604,7 +604,7 @@ class TestPasswordResetRateLimiting:
             user = User(
                 email="ratelimit@example.com",
                 full_name="Rate Limit User",
-                
+
             )
             user.set_password("TestPass123")
             db.session.add(user)
