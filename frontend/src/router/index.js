@@ -18,6 +18,7 @@ const routes = [
   { path: '/templates', component: () => import('../pages/Templates.vue'), meta: { requiresAuth: true } },
   { path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true } },
   { path: '/timeline', component: () => import('../pages/Timeline.vue'), meta: { requiresAuth: true } },
+  { path: '/company-insights', component: () => import('../pages/CompanyInsights.vue'), meta: { requiresAuth: true } },
   { path: '/new-application', component: () => import('../pages/NewApplication.vue'), meta: { requiresAuth: true } },
   { path: '/ats', component: () => import('../pages/ATSView.vue'), meta: { requiresAuth: true } },
   { path: '/settings', component: () => import('../pages/Settings.vue'), meta: { requiresAuth: true } },

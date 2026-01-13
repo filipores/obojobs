@@ -54,7 +54,7 @@
           </div>
         </div>
 
-        <div v-if="searchQuery || filterStatus" class="active-filters">
+        <div v-if="searchQuery || filterStatus || filterFirma" class="active-filters">
           <span v-if="searchQuery" class="filter-tag">
             "{{ searchQuery }}"
             <button @click="searchQuery = ''" class="filter-tag-close">&times;</button>
@@ -62,6 +62,10 @@
           <span v-if="filterStatus" class="filter-tag">
             {{ getStatusLabel(filterStatus) }}
             <button @click="filterStatus = ''" class="filter-tag-close">&times;</button>
+          </span>
+          <span v-if="filterFirma" class="filter-tag filter-tag-firma">
+            Firma: {{ filterFirma }}
+            <button @click="clearFilters" class="filter-tag-close">&times;</button>
           </span>
         </div>
       </section>
@@ -132,14 +136,14 @@
       <!-- Empty State -->
       <section v-else class="empty-state">
         <div class="empty-enso"></div>
-        <h3>{{ searchQuery || filterStatus ? 'Keine Ergebnisse' : 'Noch keine Bewerbungen' }}</h3>
-        <p v-if="searchQuery || filterStatus">
+        <h3>{{ searchQuery || filterStatus || filterFirma ? 'Keine Ergebnisse' : 'Noch keine Bewerbungen' }}</h3>
+        <p v-if="searchQuery || filterStatus || filterFirma">
           Keine Bewerbungen gefunden. Versuchen Sie andere Suchbegriffe.
         </p>
         <p v-else>
           Generieren Sie Ihre erste Bewerbung über die Chrome Extension.
         </p>
-        <button v-if="searchQuery || filterStatus" @click="clearFilters" class="zen-btn">
+        <button v-if="searchQuery || filterStatus || filterFirma" @click="clearFilters" class="zen-btn">
           Filter zurücksetzen
         </button>
       </section>
@@ -419,14 +423,19 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
+
+const route = useRoute()
+const router = useRouter()
 
 const applications = ref([])
 const selectedApp = ref(null)
 const loading = ref(false)
 const searchQuery = ref('')
 const filterStatus = ref('')
+const filterFirma = ref('')
 
 // Email Composer State
 const showEmailComposer = ref(false)
@@ -461,6 +470,10 @@ const filteredApplications = computed(() => {
 
   if (filterStatus.value) {
     filtered = filtered.filter(app => app.status === filterStatus.value)
+  }
+
+  if (filterFirma.value) {
+    filtered = filtered.filter(app => app.firma === filterFirma.value)
   }
 
   return filtered.sort((a, b) => new Date(b.datum) - new Date(a.datum))
@@ -539,6 +552,11 @@ const deleteApp = async (id) => {
 const clearFilters = () => {
   searchQuery.value = ''
   filterStatus.value = ''
+  filterFirma.value = ''
+  // Remove query params from URL
+  if (route.query.firma) {
+    router.replace({ path: '/applications' })
+  }
 }
 
 const formatDate = (date) => {
@@ -665,8 +683,17 @@ const sendEmail = async () => {
 }
 
 onMounted(() => {
+  // Check for firma query parameter from Company Insights
+  if (route.query.firma) {
+    filterFirma.value = route.query.firma
+  }
   loadApplications()
   loadEmailAccounts()
+})
+
+// Watch for route query changes
+watch(() => route.query.firma, (newFirma) => {
+  filterFirma.value = newFirma || ''
 })
 </script>
 
@@ -803,6 +830,11 @@ onMounted(() => {
 
 .filter-tag-close:hover {
   opacity: 1;
+}
+
+.filter-tag-firma {
+  background: rgba(122, 139, 110, 0.15);
+  color: var(--color-koke);
 }
 
 /* ========================================

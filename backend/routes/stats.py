@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 
 from middleware.jwt_required import jwt_required_custom
@@ -188,6 +188,109 @@ def get_extended_stats(current_user):
                 "bewerbungen_pro_monat": bewerbungen_pro_monat,
                 "top_firmen": top_firmen_list,
                 "status_verteilung": status_counts,
+            },
+        }
+    ), 200
+
+
+@stats_bp.route("/stats/companies", methods=["GET"])
+@jwt_required_custom
+def get_company_stats(current_user):
+    """Get statistics grouped by company"""
+    user_id = current_user.id
+
+    # Get sort parameter (default: bewerbungen)
+    sort_by = request.args.get("sort_by", "bewerbungen")
+    valid_sorts = ["bewerbungen", "antwortrate", "name"]
+    if sort_by not in valid_sorts:
+        sort_by = "bewerbungen"
+
+    # Get all applications for the user grouped by company
+    applications = Application.query.filter_by(user_id=user_id).all()
+
+    # Group applications by company
+    company_data = {}
+    for app in applications:
+        firma = app.firma or "Unbekannt"
+        if firma not in company_data:
+            company_data[firma] = {
+                "firma": firma,
+                "bewerbungen": 0,
+                "antworten": 0,
+                "antwortzeiten": [],
+            }
+
+        company_data[firma]["bewerbungen"] += 1
+
+        # Count responses (antwort_erhalten, interview, absage, zusage)
+        if app.status in ["antwort_erhalten", "interview", "absage", "zusage"]:
+            company_data[firma]["antworten"] += 1
+
+            # Calculate response time from status_history if available
+            history = app.get_status_history()
+            sent_timestamp = None
+            response_timestamp = None
+
+            for entry in history:
+                if entry.get("status") == "versendet" and not sent_timestamp:
+                    sent_timestamp = entry.get("timestamp")
+                elif entry.get("status") in [
+                    "antwort_erhalten",
+                    "interview",
+                    "absage",
+                    "zusage",
+                ]:
+                    if not response_timestamp:
+                        response_timestamp = entry.get("timestamp")
+
+            if sent_timestamp and response_timestamp:
+                try:
+                    sent_dt = datetime.fromisoformat(sent_timestamp)
+                    response_dt = datetime.fromisoformat(response_timestamp)
+                    days_diff = (response_dt - sent_dt).total_seconds() / 86400
+                    if days_diff >= 0:
+                        company_data[firma]["antwortzeiten"].append(days_diff)
+                except (ValueError, TypeError):
+                    pass
+
+    # Calculate metrics for each company
+    company_list = []
+    for firma, data in company_data.items():
+        antwortrate = 0
+        if data["bewerbungen"] > 0:
+            antwortrate = round((data["antworten"] / data["bewerbungen"]) * 100, 1)
+
+        avg_antwortzeit = None
+        if data["antwortzeiten"]:
+            avg_antwortzeit = round(
+                sum(data["antwortzeiten"]) / len(data["antwortzeiten"]), 1
+            )
+
+        company_list.append(
+            {
+                "firma": firma,
+                "bewerbungen": data["bewerbungen"],
+                "antworten": data["antworten"],
+                "antwortrate": antwortrate,
+                "durchschnittliche_antwortzeit": avg_antwortzeit,
+            }
+        )
+
+    # Sort the list
+    if sort_by == "bewerbungen":
+        company_list.sort(key=lambda x: x["bewerbungen"], reverse=True)
+    elif sort_by == "antwortrate":
+        company_list.sort(key=lambda x: x["antwortrate"], reverse=True)
+    elif sort_by == "name":
+        company_list.sort(key=lambda x: x["firma"].lower())
+
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "companies": company_list,
+                "total_companies": len(company_list),
+                "sort_by": sort_by,
             },
         }
     ), 200
