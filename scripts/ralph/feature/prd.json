@@ -69,7 +69,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "Preview in NewApplicationView.vue integrieren"
     },
     {
@@ -85,7 +85,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Arbeitsagentur hat oft vollständige Kontaktdaten"
     }
   ]

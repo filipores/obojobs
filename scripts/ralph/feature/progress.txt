@@ -8,8 +8,53 @@ Branch: ralph/job-boards
 - [x] JOBS-001: StepStone Scraper
 - [x] JOBS-002: Indeed DE Scraper
 - [x] JOBS-003: XING Jobs Scraper
-- [ ] JOBS-004: Job Import UI Enhancement
-- [ ] JOBS-005: Arbeitsagentur Scraper
+- [x] JOBS-004: Job Import UI Enhancement
+- [x] JOBS-005: Arbeitsagentur Scraper
+
+---
+
+## 2026-01-13 - JOBS-005: Arbeitsagentur Scraper
+- **Was implementiert wurde:**
+  - `ArbeitsagenturParser` Klasse in `backend/services/web_scraper.py`
+  - URL-Matching für Arbeitsagentur (arbeitsagentur.de/jobsuche/*, con.arbeitsagentur.de/*, etc.)
+  - JSON-LD Parsing mit HTML-Fallback
+  - Extraktion: Titel, Firma, Standort, Beschreibung
+  - Extraktion: Referenznummer (10000-1234567890-S Format)
+  - Extraktion: Ansprechpartner, Telefon, Email
+  - Extraktion: Arbeitszeit (Vollzeit/Teilzeit), Befristung
+  - Deutsche Datumsformat-Konvertierung (DD.MM.YYYY → YYYY-MM-DD)
+  - Anti-Bot Headers (User-Agent, Sec-Fetch-*, Accept-Language, etc.)
+  - Email-Filterung für Arbeitsagentur System-Emails
+
+- **Geänderte Dateien:**
+  - `backend/services/web_scraper.py` - Erweitert mit ArbeitsagenturParser
+  - `backend/tests/test_arbeitsagentur_scraper.py` - 22 neue Tests
+
+- **Learnings:**
+  - Arbeitsagentur nutzt spezifische Label-Patterns (Arbeitgeber:, Arbeitsort:, etc.)
+  - Referenznummern haben typisches Format: 10000-xxxxxxxxxx-S
+  - Deutsche Telefonnummern-Patterns: +49, 0xxx, (0xxx) xxx xxx
+
+---
+
+## 2026-01-13 - JOBS-004: Job Import UI Enhancement
+- **Was implementiert wurde:**
+  - Neuer `/applications/preview-job` API Endpoint
+  - Echtzeit Portal-Erkennung bei URL-Eingabe (StepStone, Indeed, XING, Arbeitsagentur)
+  - Zweistufiger Workflow: Laden → Prüfen → Generieren
+  - Preview aller extrahierten Daten mit editierbaren Feldern
+  - Warnung bei fehlenden wichtigen Feldern (Titel, Firma, Beschreibung)
+  - Template-Variablen-Anzeige mit Auto-Fill Status ({{FIRMA}}, {{POSITION}}, etc.)
+  - Responsive Design mit Portal-farbigen Badges
+
+- **Geänderte Dateien:**
+  - `backend/routes/applications.py` - Neuer preview-job Endpoint
+  - `frontend/src/pages/NewApplication.vue` - Komplett überarbeitete UI
+
+- **Learnings:**
+  - Vue Template-Syntax mit doppelten Klammern braucht Helper-Funktion für Anzeige
+  - Preview-Daten in separatem editableData State für User-Modifikation
+  - Portal-Detection kann client-seitig für Echtzeit-Feedback erfolgen
 
 ---
 
