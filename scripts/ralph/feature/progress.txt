@@ -6,10 +6,54 @@ Branch: ralph/job-boards
 
 ### Pending Stories:
 - [x] JOBS-001: StepStone Scraper
-- [ ] JOBS-002: Indeed DE Scraper
-- [ ] JOBS-003: XING Jobs Scraper
+- [x] JOBS-002: Indeed DE Scraper
+- [x] JOBS-003: XING Jobs Scraper
 - [ ] JOBS-004: Job Import UI Enhancement
 - [ ] JOBS-005: Arbeitsagentur Scraper
+
+---
+
+## 2026-01-13 - JOBS-003: XING Jobs Scraper
+- **Was implementiert wurde:**
+  - `XingParser` Klasse in `backend/services/web_scraper.py`
+  - URL-Matching für XING (xing.com/jobs/*)
+  - JSON-LD Parsing mit HTML-Fallback
+  - Extraktion: Titel, Firma, Standort, Beschreibung
+  - Extraktion: Firmen-Profil URL (company_profile_url)
+  - Extraktion: Ansprechpartner/Kontaktperson (contact_person)
+  - Anti-Bot Headers (User-Agent, Sec-Fetch-*, Accept-Language, etc.)
+  - Email-Filterung für XING System-Emails (support@xing, info@xing, etc.)
+
+- **Geänderte Dateien:**
+  - `backend/services/web_scraper.py` - Erweitert mit XingParser
+  - `backend/tests/test_xing_scraper.py` - 18 neue Tests
+
+- **Learnings:**
+  - XING nutzt ähnliche Patterns wie andere Job-Boards (JSON-LD)
+  - Firmen-Profile sind unter /companies/ erreichbar
+  - Ansprechpartner/Recruiter oft unter /profile/ verlinkt
+
+---
+
+## 2026-01-13 - JOBS-002: Indeed DE Scraper
+- **Was implementiert wurde:**
+  - `IndeedParser` Klasse in `backend/services/web_scraper.py`
+  - URL-Matching für Indeed (de.indeed.com, indeed.com, indeed.de)
+  - Patterns: /viewjob, /job/, /jobs/, jk= Query-Parameter
+  - JSON-LD Parsing mit HTML-Fallback
+  - Extraktion: Titel, Firma, Standort, Beschreibung, Gehalt, Job-Typ
+  - Anti-Bot Headers (User-Agent, Sec-Fetch-*, Accept-Language, etc.)
+  - Job-Typ Erkennung: Vollzeit, Teilzeit, Festanstellung, Befristet, Minijob, etc.
+  - Email-Filterung für Indeed System-Emails (support@indeed, etc.)
+
+- **Geänderte Dateien:**
+  - `backend/services/web_scraper.py` - Erweitert mit IndeedParser
+  - `backend/tests/test_indeed_scraper.py` - 17 neue Tests
+
+- **Learnings:**
+  - Indeed verwendet data-testid Attribute für wichtige Elemente
+  - Anti-Bot Headers müssen Browser-ähnlich sein (Sec-Fetch-*, DNT, etc.)
+  - WebScraper nutzt jetzt Parser-spezifische Headers wenn verfügbar
 
 ---
 

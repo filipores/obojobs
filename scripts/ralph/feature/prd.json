@@ -35,7 +35,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "notes": "Indeed blockiert aggressive Scraper - vorsichtig sein"
     },
     {
@@ -52,7 +52,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "XING hat oft Ansprechpartner-Infos"
     },
     {
