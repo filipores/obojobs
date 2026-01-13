@@ -1,0 +1,8 @@
+# RALF Feature Mode - Progress Log
+Started: 2026-01-13
+
+## Codebase Patterns
+(Hier werden wiederverwendbare Patterns dokumentiert, die während der Entwicklung entdeckt werden)
+
+---
+
