@@ -44,10 +44,19 @@ class Config:
     # Credits
     DEFAULT_CREDITS = 5  # Changed from 50 to 5 (free credits)
 
-    # PayPal
+    # PayPal (Legacy - to be removed)
     PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID")
     PAYPAL_CLIENT_SECRET = os.getenv("PAYPAL_CLIENT_SECRET")
     PAYPAL_MODE = os.getenv("PAYPAL_MODE", "sandbox")  # sandbox or live
+
+    # Stripe
+    STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
+    STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
+    STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
+
+    # Stripe Subscription Plans (Price IDs from Stripe Dashboard)
+    STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC")  # €9.99/month
+    STRIPE_PRICE_PRO = os.getenv("STRIPE_PRICE_PRO")  # €19.99/month
 
     # Credit Packages
     CREDIT_PACKAGES = {
