@@ -11,6 +11,16 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
 
+# MacOS timeout compatibility
+if command -v gtimeout &>/dev/null; then
+    TIMEOUT_CMD="gtimeout"
+elif command -v timeout &>/dev/null; then
+    TIMEOUT_CMD="timeout"
+else
+    # Fallback: run without timeout on MacOS
+    TIMEOUT_CMD=""
+fi
+
 # Source configuration and libraries
 source "$SCRIPT_DIR/config.sh"
 source "$SCRIPT_DIR/lib/date_utils.sh"
@@ -184,8 +194,14 @@ execute_claude() {
     # Build context
     local context="Loop #${loop_count}. Current Story: ${current_story}. Stories remaining: $((TOTAL_STORIES - PASSED_STORIES))."
 
-    # Execute with timeout
-    if timeout ${timeout_seconds}s claude \
+    # Build timeout command prefix
+    local timeout_prefix=""
+    if [[ -n "$TIMEOUT_CMD" ]]; then
+        timeout_prefix="$TIMEOUT_CMD ${timeout_seconds}s"
+    fi
+
+    # Execute with optional timeout
+    if $timeout_prefix claude \
         --output-format json \
         --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
         --append-system-prompt "$context" \

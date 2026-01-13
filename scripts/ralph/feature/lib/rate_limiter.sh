@@ -6,11 +6,15 @@
 RATE_LIMITER_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "$RATE_LIMITER_DIR/date_utils.sh"
 
-# State file
-RATE_LIMIT_FILE="${LOG_DIR:-.}/rate_limit.json"
+# Get rate limit file path (must be called after LOG_DIR is set)
+get_rate_limit_file() {
+    echo "${LOG_DIR:-$(dirname "${BASH_SOURCE[0]}")/..}/logs/rate_limit.json"
+}
 
 # Initialize rate limit tracking
 init_rate_limiter() {
+    local RATE_LIMIT_FILE=$(get_rate_limit_file)
+    mkdir -p "$(dirname "$RATE_LIMIT_FILE")"
     if [[ ! -f "$RATE_LIMIT_FILE" ]]; then
         cat > "$RATE_LIMIT_FILE" << EOF
 {
@@ -23,6 +27,7 @@ EOF
 
 # Reset if hour passed
 reset_if_hour_passed() {
+    local RATE_LIMIT_FILE=$(get_rate_limit_file)
     if [[ ! -f "$RATE_LIMIT_FILE" ]]; then
         init_rate_limiter
         return
@@ -55,6 +60,7 @@ EOF
 
 # Check if rate limit is reached
 check_rate_limit() {
+    local RATE_LIMIT_FILE=$(get_rate_limit_file)
     reset_if_hour_passed
 
     local calls=$(jq -r '.calls' "$RATE_LIMIT_FILE" 2>/dev/null)
@@ -71,6 +77,7 @@ check_rate_limit() {
 
 # Increment call count
 increment_call_count() {
+    local RATE_LIMIT_FILE=$(get_rate_limit_file)
     reset_if_hour_passed
 
     local calls=$(jq -r '.calls' "$RATE_LIMIT_FILE" 2>/dev/null)
@@ -91,6 +98,7 @@ EOF
 
 # Get remaining calls
 get_remaining_calls() {
+    local RATE_LIMIT_FILE=$(get_rate_limit_file)
     reset_if_hour_passed
 
     local calls=$(jq -r '.calls' "$RATE_LIMIT_FILE" 2>/dev/null)
@@ -102,6 +110,7 @@ get_remaining_calls() {
 
 # Wait for rate limit reset with countdown
 wait_for_reset() {
+    local RATE_LIMIT_FILE=$(get_rate_limit_file)
     local calls=$(jq -r '.calls' "$RATE_LIMIT_FILE" 2>/dev/null)
     echo -e "${YELLOW}Rate limit reached ($calls/${MAX_CALLS_PER_HOUR:-50}). Waiting for reset...${NC}"
 
@@ -128,6 +137,7 @@ wait_for_reset() {
 }
 
 # Export functions
+export -f get_rate_limit_file
 export -f init_rate_limiter
 export -f reset_if_hour_passed
 export -f check_rate_limit
