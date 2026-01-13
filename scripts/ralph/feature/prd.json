@@ -1,77 +1,92 @@
 {
   "project": "obojobs",
-  "branchName": "ralph/analytics-dashboard",
-  "description": "Analytics Dashboard - Erfolgsquoten, Timeline, Company Insights und Export",
+  "branchName": "ralph/job-boards",
+  "description": "Job-Board Integration - Optimiertes Scraping für StepStone, Indeed, XING",
   "userStories": [
     {
-      "id": "ANALYTICS-001",
-      "title": "Extended Stats API",
-      "description": "Erweiterte Statistik-Endpoints",
+      "id": "JOBS-001",
+      "title": "StepStone Scraper",
+      "description": "Optimiertes Scraping für StepStone.de",
       "acceptanceCriteria": [
-        "GET /api/stats/extended - Detaillierte Statistiken",
-        "Erfolgsquote: Bewerbungen → Antworten → Interviews → Zusagen (Prozent)",
-        "Durchschnittliche Antwortzeit pro Status-Übergang",
-        "Bewerbungen pro Woche/Monat (letzte 12 Wochen/Monate)",
-        "Top 5 Firmen nach Bewerbungsanzahl",
-        "Response enthält alle Metriken in strukturiertem Format",
+        "Erkennt StepStone URLs (stepstone.de/stellenangebote--*)",
+        "Extrahiert: Titel, Firma, Standort, Beschreibung, Anforderungen",
+        "Extrahiert: Kontakt-Email falls vorhanden",
+        "Extrahiert: Einstellungsdatum, Bewerbungsfrist",
+        "Structured Data (JSON-LD) parsing wenn vorhanden",
+        "Fallback auf HTML-Parsing",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "SQLAlchemy Aggregationen für Performance"
+      "notes": "StepStone hat oft strukturierte Daten im HTML"
     },
     {
-      "id": "ANALYTICS-002",
-      "title": "Timeline View",
-      "description": "Chronologische Bewerbungs-Timeline",
+      "id": "JOBS-002",
+      "title": "Indeed DE Scraper",
+      "description": "Optimiertes Scraping für Indeed.de",
       "acceptanceCriteria": [
-        "GET /api/applications/timeline - Alle Bewerbungen mit Status-History",
-        "Application Model: Neues Feld status_history (JSON Array)",
-        "Format: [{ status: 'erstellt', timestamp: '...' }, { status: 'versendet', timestamp: '...' }]",
-        "Frontend: Timeline-Komponente zeigt Verlauf visuell",
-        "Filterbar nach Zeitraum (letzte 7/30/90 Tage, alle)",
+        "Erkennt Indeed URLs (de.indeed.com/viewjob*, indeed.com/viewjob*)",
+        "Extrahiert: Titel, Firma, Standort, Beschreibung",
+        "Extrahiert: Gehaltsspanne falls angegeben",
+        "Extrahiert: Job-Typ (Vollzeit, Teilzeit, etc.)",
+        "Handling von Indeed's Anti-Bot Maßnahmen (Headers, Delays)",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Status-History bei jedem Status-Update ergänzen"
+      "passes": false,
+      "notes": "Indeed blockiert aggressive Scraper - vorsichtig sein"
     },
     {
-      "id": "ANALYTICS-003",
-      "title": "Company Insights",
-      "description": "Statistiken pro Firma",
+      "id": "JOBS-003",
+      "title": "XING Jobs Scraper",
+      "description": "Scraping für XING Stellenanzeigen",
       "acceptanceCriteria": [
-        "GET /api/stats/companies - Statistiken gruppiert nach Firma",
-        "Pro Firma: Anzahl Bewerbungen, Antwortrate, durchschnittliche Antwortzeit",
-        "Sortierbar nach: Bewerbungen, Antwortrate, Name",
-        "Frontend: Tabelle mit Company Insights",
-        "Klick auf Firma filtert Bewerbungsliste",
+        "Erkennt XING URLs (xing.com/jobs/*)",
+        "Extrahiert: Titel, Firma, Standort, Beschreibung",
+        "Extrahiert: Firmen-Profil Link",
+        "Extrahiert: Ansprechpartner falls sichtbar",
+        "Login nicht erforderlich für öffentliche Stellen",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "GROUP BY firma in SQL Query"
+      "passes": false,
+      "notes": "XING hat oft Ansprechpartner-Infos"
     },
     {
-      "id": "ANALYTICS-004",
-      "title": "Export Funktionalität",
-      "description": "Bewerbungsdaten als CSV/PDF exportieren",
+      "id": "JOBS-004",
+      "title": "Job Import UI Enhancement",
+      "description": "Verbesserte UI für Job-Import mit Preview",
       "acceptanceCriteria": [
-        "GET /api/applications/export?format=csv - CSV Export",
-        "GET /api/applications/export?format=pdf - PDF Export",
-        "CSV enthält: Firma, Position, Status, Datum, Ansprechpartner, Email",
-        "PDF: Formatierte Tabelle mit obojobs Branding",
-        "Frontend: Export-Buttons in ApplicationsView",
-        "Dateiname: bewerbungen_YYYY-MM-DD.csv/pdf",
+        "URL-Eingabe zeigt erkanntes Portal (StepStone, Indeed, XING, Sonstige)",
+        "Nach Scraping: Preview aller extrahierten Daten",
+        "Editierbare Felder vor dem Speichern",
+        "Auto-Fill für Template-Variablen (FIRMA, POSITION, etc.)",
+        "Warnung wenn wichtige Daten fehlen",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "ReportLab für PDF oder bestehende PDF-Logik nutzen"
+      "passes": false,
+      "notes": "Preview in NewApplicationView.vue integrieren"
+    },
+    {
+      "id": "JOBS-005",
+      "title": "Arbeitsagentur Scraper",
+      "description": "Scraping für Bundesagentur für Arbeit",
+      "acceptanceCriteria": [
+        "Erkennt arbeitsagentur.de URLs",
+        "Extrahiert: Titel, Firma, Standort, Beschreibung, Referenznummer",
+        "Extrahiert: Ansprechpartner und Kontaktdaten",
+        "Öffentliche API nutzen falls verfügbar",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 5,
+      "passes": false,
+      "notes": "Arbeitsagentur hat oft vollständige Kontaktdaten"
     }
   ]
 }
