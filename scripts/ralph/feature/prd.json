@@ -1,170 +1,77 @@
 {
   "project": "obojobs",
-  "branchName": "ralph/ralph-improvements",
-  "description": "RALF Feature Mode Verbesserungen - Rate Limiting, Circuit Breaker, Timeout, Status Reporting, Logging",
+  "branchName": "ralph/analytics-dashboard",
+  "description": "Analytics Dashboard - Erfolgsquoten, Timeline, Company Insights und Export",
   "userStories": [
     {
-      "id": "RALF-001",
-      "title": "Config File & Grundstruktur",
-      "description": "Konfigurationsdatei und lib-Ordner für RALF erstellen",
+      "id": "ANALYTICS-001",
+      "title": "Extended Stats API",
+      "description": "Erweiterte Statistik-Endpoints",
       "acceptanceCriteria": [
-        "Neue Datei: scripts/ralph/feature/config.sh mit Variablen",
-        "Variablen: MAX_CALLS_PER_HOUR=50, TIMEOUT_MINUTES=15, MAX_STUCK_ITERATIONS=3",
-        "Neuer Ordner: scripts/ralph/feature/lib/",
-        "Neuer Ordner: scripts/ralph/feature/logs/",
-        "ralph.sh sourced config.sh am Anfang",
-        "Alle Scripts ausführbar (chmod +x)"
+        "GET /api/stats/extended - Detaillierte Statistiken",
+        "Erfolgsquote: Bewerbungen → Antworten → Interviews → Zusagen (Prozent)",
+        "Durchschnittliche Antwortzeit pro Status-Übergang",
+        "Bewerbungen pro Woche/Monat (letzte 12 Wochen/Monate)",
+        "Top 5 Firmen nach Bewerbungsanzahl",
+        "Response enthält alle Metriken in strukturiertem Format",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
-      "passes": true,
-      "notes": "Grundlage für alle weiteren Features"
+      "passes": false,
+      "notes": "SQLAlchemy Aggregationen für Performance"
     },
     {
-      "id": "RALF-002",
-      "title": "Rate Limiting",
-      "description": "Begrenze API-Calls pro Stunde um Kosten zu kontrollieren",
+      "id": "ANALYTICS-002",
+      "title": "Timeline View",
+      "description": "Chronologische Bewerbungs-Timeline",
       "acceptanceCriteria": [
-        "Neue Datei: scripts/ralph/feature/lib/rate_limiter.sh",
-        "Funktion: check_rate_limit() - prüft ob Limit erreicht",
-        "Funktion: increment_call_count() - erhöht Zähler",
-        "Funktion: reset_if_hour_passed() - Reset nach 60 Min",
-        "State-Datei: logs/rate_limit.json mit {calls, hour_started}",
-        "Bei Limit erreicht: Wartet bis neue Stunde oder bricht ab mit Meldung",
-        "ralph.sh ruft check_rate_limit() vor jedem Claude-Call auf"
+        "GET /api/applications/timeline - Alle Bewerbungen mit Status-History",
+        "Application Model: Neues Feld status_history (JSON Array)",
+        "Format: [{ status: 'erstellt', timestamp: '...' }, { status: 'versendet', timestamp: '...' }]",
+        "Frontend: Timeline-Komponente zeigt Verlauf visuell",
+        "Filterbar nach Zeitraum (letzte 7/30/90 Tage, alle)",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "JSON Format: {\"calls\": 5, \"hour_started\": \"2024-01-13T14:00:00\"}"
+      "passes": false,
+      "notes": "Status-History bei jedem Status-Update ergänzen"
     },
     {
-      "id": "RALF-003",
-      "title": "Timeout Protection",
-      "description": "Verhindere hängende Claude-Sessions mit Timeout",
+      "id": "ANALYTICS-003",
+      "title": "Company Insights",
+      "description": "Statistiken pro Firma",
       "acceptanceCriteria": [
-        "ralph.sh nutzt 'timeout' Command für Claude-Ausführung",
-        "Timeout aus config.sh (TIMEOUT_MINUTES, default 15)",
-        "Bei Timeout: Klare Fehlermeldung ausgeben",
-        "Bei Timeout: Iteration als fehlgeschlagen markieren",
-        "Timeout-Events in logs/ralph.log protokollieren"
+        "GET /api/stats/companies - Statistiken gruppiert nach Firma",
+        "Pro Firma: Anzahl Bewerbungen, Antwortrate, durchschnittliche Antwortzeit",
+        "Sortierbar nach: Bewerbungen, Antwortrate, Name",
+        "Frontend: Tabelle mit Company Insights",
+        "Klick auf Firma filtert Bewerbungsliste",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "timeout ${TIMEOUT_MINUTES}m claude ..."
+      "passes": false,
+      "notes": "GROUP BY firma in SQL Query"
     },
     {
-      "id": "RALF-004",
-      "title": "Circuit Breaker - Stuck Detection",
-      "description": "Erkenne und stoppe Infinite Loops",
+      "id": "ANALYTICS-004",
+      "title": "Export Funktionalität",
+      "description": "Bewerbungsdaten als CSV/PDF exportieren",
       "acceptanceCriteria": [
-        "Neue Datei: scripts/ralph/feature/lib/circuit_breaker.sh",
-        "Funktion: check_stuck_pattern() - analysiert letzte N Iterationen",
-        "Erkennt: Gleicher Error 3x hintereinander",
-        "Erkennt: Keine Datei-Änderungen über 5 Iterationen",
-        "Erkennt: Gleiche Story 5x ohne passes:true",
-        "State-Datei: logs/iteration_history.json",
-        "Bei Stuck: Abbruch mit detaillierter Meldung was stuck ist",
-        "ralph.sh ruft check_stuck_pattern() nach jeder Iteration auf"
+        "GET /api/applications/export?format=csv - CSV Export",
+        "GET /api/applications/export?format=pdf - PDF Export",
+        "CSV enthält: Firma, Position, Status, Datum, Ansprechpartner, Email",
+        "PDF: Formatierte Tabelle mit obojobs Branding",
+        "Frontend: Export-Buttons in ApplicationsView",
+        "Dateiname: bewerbungen_YYYY-MM-DD.csv/pdf",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "History speichert: story_id, error_message, files_changed pro Iteration"
-    },
-    {
-      "id": "RALF-005",
-      "title": "Strukturiertes Logging",
-      "description": "Umfassendes Logging für Debugging und History",
-      "acceptanceCriteria": [
-        "Neue Datei: scripts/ralph/feature/lib/logger.sh",
-        "Funktion: log_info(), log_error(), log_iteration()",
-        "Log-Datei: logs/ralph.log mit Timestamps",
-        "Status-Datei: logs/status.json (aktueller Zustand)",
-        "History-Datei: logs/history.json (letzte 50 Iterationen)",
-        "Status enthält: current_story, iteration_count, last_error, started_at",
-        "ralph.sh nutzt Logger-Funktionen statt echo"
-      ],
-      "priority": 5,
-      "passes": true,
-      "notes": "Log Format: [2024-01-13 14:30:00] [INFO] Message"
-    },
-    {
-      "id": "RALF-006",
-      "title": "Status Block im Prompt",
-      "description": "Claude soll strukturierten Status am Ende jeder Antwort ausgeben",
-      "acceptanceCriteria": [
-        "prompt.md erweitert mit Status Block Anforderung",
-        "Claude gibt am Ende aus: STATUS, STORY_ID, FILES_MODIFIED, TESTS_STATUS, EXIT_SIGNAL",
-        "Neue Datei: scripts/ralph/feature/lib/response_analyzer.sh",
-        "Funktion: parse_status_block() - extrahiert Status aus Claude-Output",
-        "Funktion: check_exit_signal() - prüft ob EXIT_SIGNAL: true",
-        "ralph.sh nutzt parse_status_block() nach Claude-Ausführung"
-      ],
-      "priority": 6,
-      "passes": true,
-      "notes": "Status Block Format dokumentieren in prompt.md"
-    },
-    {
-      "id": "RALF-007",
-      "title": "Dual-Gate Exit Mechanism",
-      "description": "Beide Bedingungen müssen erfüllt sein: PRD passes:true UND EXIT_SIGNAL:true",
-      "acceptanceCriteria": [
-        "ralph.sh prüft BEIDE Bedingungen vor Iteration-Ende",
-        "Bedingung 1: Story in prd.json hat passes: true",
-        "Bedingung 2: Claude-Response enthält EXIT_SIGNAL: true",
-        "Nur wenn beide erfüllt: Zur nächsten Story wechseln",
-        "Logging: Welche Bedingung erfüllt/nicht erfüllt",
-        "prompt.md erklärt wann EXIT_SIGNAL: true gesetzt werden soll"
-      ],
-      "priority": 7,
-      "passes": true,
-      "notes": "Verhindert frühzeitiges Ende wenn Claude denkt fertig zu sein aber Tests fehlen"
-    },
-    {
-      "id": "RALF-008",
-      "title": "API Limit Detection",
-      "description": "Erkenne Claude API 5-Stunden-Limit und pausiere",
-      "acceptanceCriteria": [
-        "response_analyzer.sh erkennt 'rate limit' oder 'limit reached' in Output",
-        "Bei API Limit: Pausiere mit User-Prompt",
-        "Zeige geschätzte Wartezeit an",
-        "Option: Warten und automatisch fortsetzen",
-        "Option: Abbrechen und später manuell starten",
-        "Logging des API-Limit-Events"
-      ],
-      "priority": 8,
-      "passes": true,
-      "notes": "Claude API hat 5h rolling window limit"
-    },
-    {
-      "id": "RALF-009",
-      "title": "Monitor Dashboard (Optional)",
-      "description": "Live-Monitoring der RALF-Ausführung",
-      "acceptanceCriteria": [
-        "Neue Datei: scripts/ralph/feature/monitor.sh",
-        "Zeigt live: Aktuelle Story, Iteration #, Laufzeit",
-        "Zeigt: Letzte Fehler, Rate Limit Status",
-        "Liest aus: logs/status.json",
-        "Auto-Refresh alle 5 Sekunden",
-        "Kann in separatem Terminal laufen"
-      ],
-      "priority": 9,
-      "passes": true,
-      "notes": "Nice-to-have - watch -n 5 cat logs/status.json als einfache Alternative"
-    },
-    {
-      "id": "RALF-010",
-      "title": "Dokumentation & Cleanup",
-      "description": "Dokumentation aktualisieren und alte Dateien aufräumen",
-      "acceptanceCriteria": [
-        "README.md in scripts/ralph/feature/ erstellen",
-        "Dokumentiert: Alle Konfigurationsoptionen",
-        "Dokumentiert: Wie man RALF startet und monitort",
-        "Dokumentiert: Troubleshooting für häufige Probleme",
-        "AGENTS.md aktualisieren mit RALF-Infos",
-        "Alte/ungenutzte Dateien entfernen falls vorhanden"
-      ],
-      "priority": 10,
-      "passes": true,
-      "notes": "Gute Doku hilft bei zukünftiger Wartung"
+      "passes": false,
+      "notes": "ReportLab für PDF oder bestehende PDF-Logik nutzen"
     }
   ]
 }
