@@ -7,8 +7,43 @@ Branch: ralph/analytics-dashboard
 ### Pending Stories:
 - [x] ANALYTICS-001: Extended Stats API ✅
 - [x] ANALYTICS-002: Timeline View ✅
-- [ ] ANALYTICS-003: Company Insights
-- [ ] ANALYTICS-004: Export Funktionalität
+- [x] ANALYTICS-003: Company Insights ✅
+- [x] ANALYTICS-004: Export Funktionalität ✅
+
+---
+
+## [2026-01-13] - ANALYTICS-004: Export Funktionalität
+- **Was implementiert wurde:**
+  - GET /api/applications/export Endpoint mit format Query-Parameter (csv/pdf)
+  - CSV Export: Semikolon-getrennt mit allen Feldern (Firma, Position, Status, Datum, Ansprechpartner, Email)
+  - PDF Export: Formatierte Tabelle mit obojobs Branding (Indigo Header, alternierenden Zeilen)
+  - Frontend: Export-Buttons (CSV/PDF) im Header der Applications-Seite
+  - Dateiname automatisch: bewerbungen_YYYY-MM-DD.csv/pdf
+- **Geänderte Dateien:**
+  - backend/routes/applications.py (Export Endpoint + Helper-Funktionen)
+  - frontend/src/pages/Applications.vue (Export-Buttons + exportApplications Funktion)
+- **Learnings:**
+  - ReportLab Table mit TableStyle für professionelle PDF-Tabellen
+  - Blob Download mit window.URL.createObjectURL in Vue
+
+---
+
+## [2026-01-13] - ANALYTICS-003: Company Insights
+- **Was implementiert wurde:**
+  - GET /api/stats/companies Endpoint mit Statistiken gruppiert nach Firma
+  - Pro Firma: Anzahl Bewerbungen, Antworten, Antwortrate, durchschnittliche Antwortzeit
+  - Sortierung: bewerbungen (default), antwortrate, name via Query-Parameter
+  - Frontend: CompanyInsights.vue Seite mit Tabellen-Darstellung
+  - Klick auf Firma navigiert zu /applications?firma=XYZ
+  - Applications.vue: Filter via Query-Parameter, zeigt Firma-Filter-Tag
+- **Geänderte Dateien:**
+  - backend/routes/stats.py (neuer Endpoint get_company_stats)
+  - frontend/src/pages/CompanyInsights.vue (neu)
+  - frontend/src/pages/Applications.vue (Firma-Filter via Query)
+  - frontend/src/router/index.js (Route für /company-insights)
+- **Learnings:**
+  - Vue Router Query-Parameter mit watch() für reaktive Filter
+  - Status-History für Antwortzeit-Berechnung nutzen
 
 ---
 

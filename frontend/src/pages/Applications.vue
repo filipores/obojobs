@@ -3,8 +3,30 @@
     <div class="container">
       <!-- Header Section -->
       <section class="page-header animate-fade-up">
-        <h1>Bewerbungen</h1>
-        <p class="page-subtitle">Verwalten und verfolgen Sie alle Ihre Bewerbungen</p>
+        <div class="page-header-content">
+          <div>
+            <h1>Bewerbungen</h1>
+            <p class="page-subtitle">Verwalten und verfolgen Sie alle Ihre Bewerbungen</p>
+          </div>
+          <div class="export-buttons">
+            <button @click="exportApplications('csv')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              CSV
+            </button>
+            <button @click="exportApplications('pdf')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7 10 12 15 17 10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+              PDF
+            </button>
+          </div>
+        </div>
       </section>
 
       <!-- Stats Section -->
@@ -605,6 +627,29 @@ const getSentViaLabel = (provider) => {
   return labels[provider] || provider
 }
 
+const exportApplications = async (format) => {
+  try {
+    const response = await api.get(`/applications/export?format=${format}`, {
+      responseType: 'blob'
+    })
+    // Create download link
+    const blob = new Blob([response.data], {
+      type: format === 'pdf' ? 'application/pdf' : 'text/csv'
+    })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const today = new Date().toISOString().split('T')[0]
+    link.download = `bewerbungen_${today}.${format}`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (_e) {
+    alert('Fehler beim Export')
+  }
+}
+
 // Email Composer Functions
 const loadEmailAccounts = async () => {
   try {
@@ -711,6 +756,13 @@ watch(() => route.query.firma, (newFirma) => {
   padding: var(--space-ma-lg) 0 var(--space-ma);
 }
 
+.page-header-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-lg);
+}
+
 .page-header h1 {
   font-size: clamp(2.5rem, 5vw, 3.5rem);
   font-weight: 400;
@@ -722,6 +774,23 @@ watch(() => route.query.firma, (newFirma) => {
   font-size: 1.125rem;
   color: var(--color-text-secondary);
   margin-bottom: 0;
+}
+
+.export-buttons {
+  display: flex;
+  gap: var(--space-sm);
+  flex-shrink: 0;
+}
+
+.export-buttons .zen-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.export-buttons .zen-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 /* ========================================
@@ -1166,6 +1235,15 @@ watch(() => route.query.firma, (newFirma) => {
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
+  .page-header-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .export-buttons {
+    justify-content: flex-start;
+  }
+
   .filter-row {
     flex-direction: column;
   }

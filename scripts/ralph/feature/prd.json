@@ -52,7 +52,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "notes": "GROUP BY firma in SQL Query"
     },
     {
@@ -70,7 +70,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "notes": "ReportLab für PDF oder bestehende PDF-Logik nutzen"
     }
   ]

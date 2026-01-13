@@ -1,8 +1,15 @@
+import csv
+import io
 import os
 import tempfile
 from datetime import datetime, timedelta
 
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, jsonify, make_response, request, send_file
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
+from reportlab.lib.units import cm
+from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
@@ -286,3 +293,173 @@ def download_pdf(app_id, current_user):
         return jsonify({"error": "PDF not found"}), 404
 
     return send_file(app.pdf_path, as_attachment=True, download_name=f"Anschreiben_{app.firma}.pdf")
+
+
+@applications_bp.route("/export", methods=["GET"])
+@jwt_required_custom
+def export_applications(current_user):
+    """Export all applications as CSV or PDF.
+    Query params:
+    - format: 'csv' (default) or 'pdf'
+    """
+    export_format = request.args.get("format", "csv").lower()
+    today = datetime.utcnow().strftime("%Y-%m-%d")
+
+    # Get all applications for user
+    applications = (
+        Application.query.filter_by(user_id=current_user.id)
+        .order_by(Application.datum.desc())
+        .all()
+    )
+
+    if export_format == "pdf":
+        return _export_as_pdf(applications, today)
+    else:
+        return _export_as_csv(applications, today)
+
+
+def _export_as_csv(applications, date_str):
+    """Generate CSV export of applications."""
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";", quoting=csv.QUOTE_ALL)
+
+    # Header row
+    writer.writerow(["Firma", "Position", "Status", "Datum", "Ansprechpartner", "Email"])
+
+    # Data rows
+    for app in applications:
+        datum_str = app.datum.strftime("%d.%m.%Y") if app.datum else ""
+        writer.writerow([
+            app.firma or "",
+            app.position or "",
+            _get_status_label(app.status),
+            datum_str,
+            app.ansprechpartner or "",
+            app.email or "",
+        ])
+
+    # Create response with CSV
+    output.seek(0)
+    response = make_response(output.getvalue())
+    response.headers["Content-Type"] = "text/csv; charset=utf-8"
+    response.headers["Content-Disposition"] = f"attachment; filename=bewerbungen_{date_str}.csv"
+    return response
+
+
+def _export_as_pdf(applications, date_str):
+    """Generate PDF export of applications with obojobs branding."""
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=1.5 * cm,
+        leftMargin=1.5 * cm,
+        topMargin=2 * cm,
+        bottomMargin=2 * cm,
+    )
+
+    # Styles
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        "CustomTitle",
+        parent=styles["Heading1"],
+        fontSize=20,
+        spaceAfter=6,
+        textColor=colors.HexColor("#3D5A6C"),  # AI color from design system
+    )
+    subtitle_style = ParagraphStyle(
+        "Subtitle",
+        parent=styles["Normal"],
+        fontSize=10,
+        textColor=colors.HexColor("#6B6B6B"),
+        spaceAfter=20,
+    )
+    cell_style = ParagraphStyle(
+        "Cell",
+        parent=styles["Normal"],
+        fontSize=8,
+        leading=10,
+    )
+
+    story = []
+
+    # Header with obojobs branding
+    story.append(Paragraph("obojobs", title_style))
+    story.append(Paragraph(f"Bewerbungsübersicht • Exportiert am {date_str}", subtitle_style))
+    story.append(Spacer(1, 0.5 * cm))
+
+    # Table data
+    table_data = [["Firma", "Position", "Status", "Datum", "Kontakt", "Email"]]
+
+    for app in applications:
+        datum_str = app.datum.strftime("%d.%m.%Y") if app.datum else ""
+        table_data.append([
+            Paragraph(app.firma or "", cell_style),
+            Paragraph(app.position or "", cell_style),
+            _get_status_label(app.status),
+            datum_str,
+            Paragraph(app.ansprechpartner or "", cell_style),
+            Paragraph(app.email or "", cell_style),
+        ])
+
+    # Create table with styling
+    col_widths = [3 * cm, 4 * cm, 2.5 * cm, 2.2 * cm, 3 * cm, 3.5 * cm]
+    table = Table(table_data, colWidths=col_widths, repeatRows=1)
+
+    table.setStyle(TableStyle([
+        # Header styling
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#3D5A6C")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, 0), 9),
+        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+        ("TOPPADDING", (0, 0), (-1, 0), 8),
+
+        # Data rows
+        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 1), (-1, -1), 8),
+        ("TOPPADDING", (0, 1), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 1), (-1, -1), 6),
+
+        # Alternating row colors
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#F7F5F0"), colors.white]),
+
+        # Grid
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D4C9BA")),
+
+        # Alignment
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+
+    story.append(table)
+
+    # Footer info
+    story.append(Spacer(1, 1 * cm))
+    footer_style = ParagraphStyle(
+        "Footer",
+        parent=styles["Normal"],
+        fontSize=8,
+        textColor=colors.HexColor("#9B958F"),
+    )
+    story.append(Paragraph(f"Gesamt: {len(applications)} Bewerbungen", footer_style))
+
+    doc.build(story)
+    buffer.seek(0)
+
+    response = make_response(buffer.getvalue())
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f"attachment; filename=bewerbungen_{date_str}.pdf"
+    return response
+
+
+def _get_status_label(status):
+    """Convert status code to readable label."""
+    labels = {
+        "erstellt": "Erstellt",
+        "versendet": "Versendet",
+        "antwort_erhalten": "Antwort",
+        "absage": "Absage",
+        "zusage": "Zusage",
+    }
+    return labels.get(status, status or "")
