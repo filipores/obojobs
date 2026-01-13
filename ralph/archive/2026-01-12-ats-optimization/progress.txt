@@ -1,0 +1,120 @@
+# Ralph Progress Log - obojobs
+Started: Mon Jan 12 23:26:09 CET 2026
+
+## Codebase Patterns
+- Services nutzen `ClaudeAPIClient` Pattern aus api_client.py (Anthropic SDK, retry logic)
+- Tests mocken Anthropic mit `@patch("services.<service>.Anthropic")`
+- JSON-Response von Claude: regex mit `re.search(r"\{[\s\S]*\}", response)` extrahieren
+- Config-Variablen: `CLAUDE_MODEL`, `ANTHROPIC_API_KEY` aus config.py
+
+---
+
+## 2026-01-12 - ATS-001
+- **Implementiert**: ATS Service Grundstruktur
+- **Neue Dateien:**
+  - `backend/services/ats_service.py` - ATSService Klasse
+  - `backend/tests/test_ats_service.py` - 17 Unit Tests
+- **Funktionen:**
+  - `analyze_cv_against_job(cv_text, job_description)` → dict
+  - Response: `{ score, matched_keywords, missing_keywords, suggestions }`
+- **Learnings:**
+  - Claude Response als JSON in Prompt anfordern, dann mit regex extrahieren
+  - Score auf 0-100 clampen für robuste Verarbeitung
+  - Leere Strings aus Keyword-Listen filtern
+
+---
+
+## 2026-01-12 - ATS-002
+- **Implementiert**: ATS API Endpoint
+- **Neue Dateien:**
+  - `backend/routes/ats.py` - ATS Blueprint mit /api/ats/analyze
+  - `backend/tests/test_ats_routes.py` - 13 Integration Tests
+- **Geänderte Dateien:**
+  - `backend/app.py` - Blueprint registriert
+- **Features:**
+  - POST /api/ats/analyze mit job_url ODER job_text
+  - Nutzt User's Lebenslauf (Document mit type=lebenslauf)
+  - Web Scraping für Job-URLs via WebScraper
+  - Rate Limiting: 20 Analysen pro Stunde
+- **Learnings:**
+  - Flask-Limiter: `limiter.limit("20 per hour")` als Decorator-Wrapper
+  - Tests: MagicMock für ATSService und WebScraper
+  - Ruff: `"r"` mode in open() ist unnötig (UP015)
+
+---
+
+## 2026-01-12 - ATS-003
+- **Implementiert**: Keyword-Kategorisierung
+- **Geänderte Dateien:**
+  - `backend/services/ats_service.py` - Kategorisierung & gewichtete Scores
+  - `backend/routes/ats.py` - categories in Response hinzugefügt
+  - `backend/tests/test_ats_service.py` - 24 Tests (erweitert von 17)
+  - `backend/tests/test_ats_routes.py` - Mock-Daten aktualisiert
+- **Features:**
+  - Keywords kategorisiert: hard_skills, soft_skills, qualifications, experience
+  - Gewichtete Score-Berechnung via CATEGORY_WEIGHTS dict
+  - Suggestions mit priority: high/medium/low
+  - Backward-kompatibel: flache matched_keywords/missing_keywords Listen bleiben
+- **Learnings:**
+  - Gewichtungen in separatem dict für einfache Anpassung
+  - Empty categories bekommen 100% Score (keine Penalty für fehlende Daten)
+  - Suggestions backward-kompatibel: plain strings → {"content": str, "priority": "medium"}
+
+---
+
+## 2026-01-12 - ATS-004
+- **Implementiert**: ATS Dashboard View
+- **Neue Dateien:**
+  - `frontend/src/pages/ATSView.vue` - ATS Analyse Seite
+- **Geänderte Dateien:**
+  - `frontend/src/router/index.js` - Route /ats hinzugefügt
+  - `frontend/src/App.vue` - ATS Link in Navigation hinzugefügt
+- **Features:**
+  - Toggle zwischen URL und Text Input
+  - Loading State mit Spinner während Analyse
+  - Fehlerbehandlung: kein CV, Rate Limit, API Error
+  - Score-Anzeige mit Farbkodierung (<50 rot, 50-75 gelb, >75 grün)
+  - Kategorisierte Keywords (hard_skills, soft_skills, qualifications, experience)
+  - Suggestions mit Priority-Labels
+- **Learnings:**
+  - Vue Pattern: Alle Daten in page-level component, keine child components nötig für einfache Views
+  - Zen-Design: CSS-Variablen (--color-koke für Grün, #c9a227 für Gelb) für Farbkodierung
+  - computed properties für scoreClass und scoreDescription basierend auf Score-Wert
+
+---
+
+## 2026-01-12 - ATS-005
+- **Implementiert**: Score Visualisierung (bereits in ATS-004 enthalten)
+- **Keine neuen Dateien** - alle Features waren bereits in ATSView.vue implementiert
+- **Erfüllte Kriterien:**
+  - Score-Circle mit Farbkodierung (score-high, score-medium, score-low)
+  - Keyword-Tags mit matched/missing Styling
+  - Categories-Grid für kategorisierte Keywords
+  - Suggestions-List mit Priority-Labels
+  - Responsive @media queries für Mobile
+- **Learnings:**
+  - Bei User Stories mit UI-Features lohnt es sich, mehrere verwandte Stories in einer View zu kombinieren
+
+---
+
+## 2026-01-12 - ATS-006
+- **Implementiert**: ATS History & Caching
+- **Neue Dateien:**
+  - `backend/models/ats_analysis.py` - ATSAnalysis Model für History-Speicherung
+- **Geänderte Dateien:**
+  - `backend/models/__init__.py` - ATSAnalysis importiert
+  - `backend/routes/ats.py` - Caching-Logik und History-Endpoints
+  - `backend/tests/test_ats_routes.py` - 15 neue Tests für Caching & History
+  - `frontend/src/pages/ATSView.vue` - History-Liste mit click-to-load
+- **Features:**
+  - ATSAnalysis Model mit user_id, job_url, job_text_hash, score, result_json
+  - 24h Caching für gleiche job_url (spart API-Kosten)
+  - GET /api/ats/history - Letzte 20 Analysen
+  - GET /api/ats/history/<id> - Vollständiges Ergebnis laden
+  - History-Liste im Frontend unter dem Analyse-Formular
+  - Klick auf History-Item lädt gecachtes Ergebnis
+- **Learnings:**
+  - SQLAlchemy: `db.create_all()` erstellt automatisch neue Tabellen (kein separates Migration-Script nötig)
+  - Cache-Check vor CV-Validierung für bessere Performance
+  - Catch-Block ohne Parameter `catch { ... }` wenn Error nicht verwendet wird (ESLint no-unused-vars)
+  - History in Frontend mit `onMounted()` laden für bessere UX
