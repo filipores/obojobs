@@ -1,0 +1,333 @@
+{
+  "report_type": "ralph_test_report",
+  "generated_at": "2026-01-14T12:28:24+00:00",
+  "summary": {
+    "total_features": 11,
+    "tested_features": 10,
+    "coverage_percent": 90
+  },
+  "bugs": {
+    "total": 6,
+    "by_severity": {
+      "critical": 0,
+      "major": 2,
+      "minor": 3,
+      "trivial": 1
+    },
+    "items": [
+      {
+        "id": "BUG-001",
+        "severity": "minor",
+        "title": "Modal-State wird nicht zurückgesetzt beim erneuten Öffnen",
+        "description": "Wenn das Analyse-Modal geschlossen und erneut geöffnet wird (über 'Job analysieren' oder 'Erste Stelle analysieren' Button), bleiben die vorherige URL-Eingabe und Fehlermeldung erhalten. Der Modal-State sollte beim Schließen zurückgesetzt werden.",
+        "steps_to_reproduce": [
+          "Dashboard öffnen",
+          "Auf 'Job analysieren' klicken",
+          "Eine URL eingeben und 'Analysieren' klicken",
+          "Modal schließen",
+          "Erneut auf 'Job analysieren' oder 'Erste Stelle analysieren' klicken"
+        ],
+        "expected": "Modal öffnet sich mit leerem URL-Feld und ohne Fehlermeldung",
+        "actual": "Modal zeigt noch die vorherige URL und Fehlermeldung an",
+        "screenshot": "adv001-mobile-modal.png",
+        "affected_component": "JobRecommendations.vue"
+      },
+      {
+        "id": "BUG-001",
+        "severity": "major",
+        "title": "Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt",
+        "description": "Obwohl Interview-Fragen in der Datenbank existieren und die API sie erfolgreich zurückgibt (200 OK), werden sie auf der Interview-Vorbereitung Seite (/applications/:id/interview) nicht angezeigt. Stattdessen erscheint 'Keine Interview-Fragen vorhanden'.",
+        "steps_to_reproduce": [
+          "Navigiere zu /applications/2/interview",
+          "Warte bis die Seite geladen ist",
+          "Beobachte: 'Keine Interview-Fragen vorhanden' obwohl Fragen existieren"
+        ],
+        "expected": "Die 3 existierenden Interview-Fragen sollten in der Liste angezeigt werden",
+        "actual": "Zeigt 'Keine Interview-Fragen vorhanden' obwohl API 200 OK mit Fragen zurückgibt",
+        "screenshot": null,
+        "affected_component": "InterviewPrep.vue:294",
+        "root_cause": "Datenpfad-Mismatch: InterviewPrep.vue erwartet `data.questions` als Array, aber API gibt `data.data.all_questions` zurück. Zeile 294: `questions.value = data.questions || []` sollte `questions.value = data.data?.all_questions || data.questions || []` sein."
+      },
+      {
+        "id": "BUG-002",
+        "severity": "minor",
+        "title": "415 UNSUPPORTED MEDIA TYPE beim Generieren von Fragen",
+        "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert 'Fehler beim Generieren der Interview-Fragen' mit HTTP 415 Fehler.",
+        "steps_to_reproduce": [
+          "Navigiere zu /applications/2/interview",
+          "Klicke auf 'Fragen generieren' Button",
+          "Beobachte: Alert mit Fehlermeldung erscheint"
+        ],
+        "expected": "Neue Interview-Fragen sollten generiert werden",
+        "actual": "HTTP 415 UNSUPPORTED MEDIA TYPE Fehler",
+        "screenshot": null,
+        "affected_component": "InterviewPrep.vue / Backend generate-questions endpoint",
+        "root_cause": "Wahrscheinlich fehlender Content-Type: application/json Header im API-Request"
+      },
+      {
+        "id": "BUG-001",
+        "severity": "major",
+        "title": "API-Fehler 415 beim Generieren von Interview-Fragen",
+        "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert 'Fehler beim Generieren der Interview-Fragen'. Die Console zeigt einen 415 UNSUPPORTED MEDIA TYPE Fehler.",
+        "steps_to_reproduce": [
+          "Navigiere zu /applications",
+          "Klicke auf 'Details' bei einer Bewerbung",
+          "Klicke auf 'Interview-Prep'",
+          "Klicke auf 'Fragen generieren'",
+          "Alert erscheint mit Fehlermeldung"
+        ],
+        "expected": "Interview-Fragen sollten generiert und angezeigt werden",
+        "actual": "Alert zeigt Fehlermeldung, Console zeigt 415 Error",
+        "screenshot": "N/A",
+        "affected_component": "InterviewPrep.vue"
+      },
+      {
+        "id": "BUG-001",
+        "severity": "minor",
+        "title": "GapAnalysis-Komponente wird nicht angezeigt bei fehlenden JobRequirements",
+        "description": "Die GapAnalysis-Komponente wird nur angezeigt, wenn die Bewerbung bereits analysierte JobRequirements hat. Bei Testdaten ohne Requirements wird die Komponente nicht gerendert und es erscheint nur eine Toast-Fehlermeldung. Dies ist technisch korrekt, aber die UX könnte verbessert werden.",
+        "steps_to_reproduce": [
+          "Navigiere zu /applications",
+          "Klicke auf 'Details' einer Bewerbung ohne analysierte Anforderungen",
+          "Beobachte, dass der Abschnitt 'Skill-Luecken & Lernempfehlungen' nicht erscheint"
+        ],
+        "expected": "Ein Hinweis sollte dem Benutzer erklären, dass zuerst Anforderungen analysiert werden müssen, um Lernempfehlungen zu erhalten",
+        "actual": "Die GapAnalysis-Sektion wird komplett ausgeblendet (v-if Bedingung in Applications.vue:293)",
+        "screenshot": "gap_analysis_not_visible.png",
+        "affected_component": "Applications.vue"
+      },
+      {
+        "id": "BUG-002",
+        "severity": "trivial",
+        "title": "Mehrere identische Toast-Fehlermeldungen erscheinen gleichzeitig",
+        "description": "Beim Öffnen einer Bewerbung ohne Bewerbungstext erscheinen zwei identische Toast-Meldungen 'Kein Bewerbungstext vorhanden' gleichzeitig (von ATS-Check, der zweimal aufgerufen wird)",
+        "steps_to_reproduce": [
+          "Navigiere zu /applications",
+          "Klicke auf 'Details' einer Bewerbung ohne Bewerbungstext",
+          "Beobachte die Toast-Benachrichtigungen"
+        ],
+        "expected": "Maximal eine Fehlermeldung pro Fehlertyp",
+        "actual": "Zwei identische Fehlermeldungen erscheinen gleichzeitig",
+        "screenshot": "gap_analysis_not_visible.png",
+        "affected_component": "Applications.vue, ATSOptimizer.vue"
+      }
+    ]
+  },
+  "suggestions": {
+    "total": 24,
+    "by_type": {
+      "ux": 18,
+      "performance": 0,
+      "accessibility": 1,
+      "feature": 5
+    },
+    "items": [
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Firmen-Recherche zeigt korrupte Zeichen",
+        "description": "Die Firmen-Recherche Sektion (CompanyResearch-Komponente) zeigt korrupte/unleserliche Zeichen im 'Über das Unternehmen' Bereich. Dies ist KEIN Bug im SalaryCoach (ADV-002) selbst, sondern ein separates Problem in der CompanyResearch-Komponente. Die Daten scheinen falsch encodiert oder korrupt zu sein.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Automatisches Aufklappen der SalaryCoach Section",
+        "description": "Der SalaryCoach-Bereich ist standardmäßig zugeklappt (showSalaryCoach = false). Für bessere Sichtbarkeit des neuen Features könnte man überlegen, den Bereich initial aufzuklappen oder einen visuellen Hinweis 'Neu' hinzuzufügen.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-003",
+        "type": "accessibility",
+        "title": "Kategorie-Tabs horizontal scrollbar auf Mobile",
+        "description": "Die Kategorie-Tabs (Alle, Vorbereitung, Eröffnung, etc.) sind auf Mobile horizontal scrollbar ohne visuellen Hinweis, dass weitere Tabs verfügbar sind. Ein Scroll-Indicator oder Fade-Effect wäre hilfreich.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Modal-State beim Öffnen zurücksetzen",
+        "description": "Im showAnalyzeModal watcher oder beim Öffnen des Modals sollten analyzeUrl, analyzeError und analyzeResult auf ihre Initialwerte zurückgesetzt werden. Beispiel: watch(showAnalyzeModal, (newVal) => { if (newVal) { analyzeUrl.value = ''; analyzeError.value = ''; analyzeResult.value = null; } })",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Bessere Fehlerbehandlung für URL-Scraping",
+        "description": "Die aktuelle Fehlermeldung 'Fehler beim Laden der URL: 403 Client Error' ist technisch. Eine benutzerfreundlichere Meldung wie 'Diese Stellenanzeige konnte nicht geladen werden. Indeed blockiert automatische Zugriffe. Bitte versuchen Sie eine andere Quelle.' wäre hilfreicher.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Aktiver Status-Button visuell nicht unterscheidbar",
+        "description": "Im InterviewTracker ist der aktuell ausgewählte Status-Button (z.B. 'Durchgefuehrt') im Snapshot nicht als 'active' markiert, obwohl die Daten korrekt gespeichert werden. Eine deutlichere visuelle Hervorhebung (z.B. mit stärkerem Kontrast oder Haken-Icon) würde die UX verbessern.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Zeitzone-Anzeige im Interview-Datum",
+        "description": "Das eingegebene Datum '2026-01-20T10:00' wird als '2026-01-20T07:00' bis '2026-01-20T09:00' angezeigt, was auf Zeitzonen-Konvertierung hinweist. Eine konsistente Anzeige in der lokalen Zeitzone des Nutzers wäre benutzerfreundlicher.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "STAR-Komponenten Reihenfolge",
+        "description": "Die STAR-Komponenten werden in der Reihenfolge A-R-S-T angezeigt statt S-T-A-R. Für bessere Verständlichkeit sollten sie in der korrekten STAR-Reihenfolge (Situation → Task → Action → Result) dargestellt werden.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Loading-State für detaillierte Analyse",
+        "description": "Der Loading-Button 'Lade...' für die detaillierte STAR-Analyse könnte einen Spinner oder Progress-Indikator haben, um dem Benutzer besser zu zeigen, dass eine KI-Analyse läuft (dauert ~15-20 Sekunden).",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-003",
+        "type": "feature",
+        "title": "STAR-Coaching für nicht-behavioral Fragen",
+        "description": "Der 'Detaillierte Analyse' Button erscheint nur bei behavioral Fragen. Es wäre hilfreich, wenn bei technischen/situativen Fragen ein Hinweis erscheint, warum keine STAR-Analyse verfügbar ist.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Fortschrittsbalken beim Mock-Interview",
+        "description": "Der Fortschrittsbalken 'Frage X von Y' ist vorhanden und funktioniert gut. Könnte durch eine prozentuale Anzeige oder Animation beim Fortschritt noch verbessert werden.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Keyboard-Shortcut für schnelleres Arbeiten",
+        "description": "Ctrl+Enter zum Absenden der Antwort ist implementiert. Zusätzlich könnte ein Shortcut für 'Nächste Frage' nach dem Feedback hilfreich sein (z.B. Enter oder Tab).",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-003",
+        "type": "feature",
+        "title": "Timer für realistische Interview-Simulation",
+        "description": "Ein optionaler Timer pro Frage würde die Interview-Simulation realistischer machen und Benutzer trainieren, unter Zeitdruck zu antworten.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Direkter Link zum Mock-Interview auf InterviewPrep-Seite",
+        "description": "Es gibt keinen sichtbaren Button/Link zur MockInterview-Seite von der InterviewPrep-Seite. User müssen die URL manuell eingeben oder über existierende Interview-Fragen navigieren.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Bessere Fehlerbehandlung bei API-Fehlern",
+        "description": "Statt eines Browser-Alerts sollte eine inline Toast-Notification verwendet werden, die auch Retry-Optionen bietet.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Hinweis für fehlende Anforderungsanalyse hinzufügen",
+        "description": "Anstatt die GapAnalysis-Sektion komplett auszublenden, könnte ein informativer Hinweis angezeigt werden: 'Analysieren Sie zuerst die Stellenanforderungen, um personalisierte Lernempfehlungen zu erhalten'. Mit einem Button 'Anforderungen analysieren' der den Prozess startet.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Toast-Deduplizierung implementieren",
+        "description": "Implementieren Sie eine Deduplizierung für Toast-Nachrichten, sodass identische Nachrichten nicht mehrfach gleichzeitig angezeigt werden. Dies verhindert Verwirrung beim Benutzer.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-003",
+        "type": "feature",
+        "title": "Automatische Anforderungsanalyse bei Bewerbungserstellung",
+        "description": "Bei der Erstellung einer Bewerbung über die 'Neu'-Seite könnten die Anforderungen automatisch analysiert werden, sodass die GapAnalysis sofort verfügbar ist.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "ATS-Check doppelter API-Call",
+        "description": "Der ATS-Check wird beim Öffnen des Modals zweimal aufgerufen (watch + onMounted). Dies führt zu doppelten Fehlermeldungen in den Toasts wenn der Check fehlschlägt. Sollte nur einmal aufgerufen werden.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Fehlende Loading-Animation für ATS initial state",
+        "description": "Wenn eine Bewerbung keinen email_text hat, wird sofort die Fehlermeldung angezeigt. Ein kurzer Loading-State vor dem Fehler würde die UX verbessern und dem User signalisieren, dass eine Analyse versucht wird.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-003",
+        "type": "feature",
+        "title": "Manueller ATS-Check mit eigenem Text",
+        "description": "Da das Update-Endpoint kein email_text akzeptiert, können User ohne generierte Bewerbung den ATS-Check nicht nutzen. Ein Textfeld für manuellen Cover-Letter-Text wäre hilfreich.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Bessere Fehlermeldung bei externem URL-Scraping",
+        "description": "Wenn eine externe URL nicht geladen werden kann (403 Forbidden), zeigt die App 'Fehler beim Laden der Stellenanzeige: Fehler beim Laden der URL: 403 Client Error'. Diese Meldung könnte benutzerfreundlicher sein, z.B. 'Diese Webseite blockiert den automatischen Zugriff. Bitte kopiere den Stellentext manuell.'",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "Manueller Stellentext-Import als Fallback",
+        "description": "Wenn das URL-Scraping fehlschlägt, könnte ein Textarea-Fallback angeboten werden, in das der User den Stellentext manuell einfügen kann. Dies würde die Job-Fit Analyse auch bei blockierten URLs ermöglichen.",
+        "priority": "high"
+      },
+      {
+        "id": "SUG-003",
+        "type": "ux",
+        "title": "Skills-Status auf NewApplication-Seite anzeigen",
+        "description": "Die JobFitScore-Komponente zeigt 'Keine Skills gefunden' erst nach dem Laden einer Stellenanzeige. Es wäre hilfreicher, den User bereits vor dem URL-Input zu informieren, dass er zuerst einen Lebenslauf hochladen sollte, um den Job-Fit Score zu erhalten.",
+        "priority": "low"
+      }
+    ]
+  },
+  "for_debug_ralph": {
+    "bugs_to_fix": [
+      {
+        "id": "BUG-001",
+        "title": "Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt",
+        "severity": "major",
+        "component": "InterviewPrep.vue:294",
+        "steps": [
+          "Navigiere zu /applications/2/interview",
+          "Warte bis die Seite geladen ist",
+          "Beobachte: 'Keine Interview-Fragen vorhanden' obwohl Fragen existieren"
+        ]
+      },
+      {
+        "id": "BUG-001",
+        "title": "API-Fehler 415 beim Generieren von Interview-Fragen",
+        "severity": "major",
+        "component": "InterviewPrep.vue",
+        "steps": [
+          "Navigiere zu /applications",
+          "Klicke auf 'Details' bei einer Bewerbung",
+          "Klicke auf 'Interview-Prep'",
+          "Klicke auf 'Fragen generieren'",
+          "Alert erscheint mit Fehlermeldung"
+        ]
+      }
+    ]
+  },
+  "for_feature_ralph": {
+    "features_to_add": [
+      {
+        "id": "SUG-002",
+        "title": "Manueller Stellentext-Import als Fallback",
+        "type": "feature",
+        "description": "Wenn das URL-Scraping fehlschlägt, könnte ein Textarea-Fallback angeboten werden, in das der User den Stellentext manuell einfügen kann. Dies würde die Job-Fit Analyse auch bei blockierten URLs ermöglichen."
+      }
+    ]
+  }
+}

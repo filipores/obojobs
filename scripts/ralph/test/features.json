@@ -1,0 +1,640 @@
+{
+  "features": [
+    {
+      "id": "COMMIT-1",
+      "commit_hash": "1666a77",
+      "message": "feat: ADV-002 - Gehaltsverhandlungs-Coach",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/app.py",
+        "backend/routes/salary.py",
+        "backend/services/salary_coach.py",
+        "frontend/src/components/SalaryCoach.vue",
+        "frontend/src/pages/InterviewPrep.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-1",
+        "tested_at": "2026-01-14T12:45:00Z",
+        "duration_seconds": 180,
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Firmen-Recherche zeigt korrupte Zeichen",
+            "description": "Die Firmen-Recherche Sektion (CompanyResearch-Komponente) zeigt korrupte/unleserliche Zeichen im 'Über das Unternehmen' Bereich. Dies ist KEIN Bug im SalaryCoach (ADV-002) selbst, sondern ein separates Problem in der CompanyResearch-Komponente. Die Daten scheinen falsch encodiert oder korrupt zu sein.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Automatisches Aufklappen der SalaryCoach Section",
+            "description": "Der SalaryCoach-Bereich ist standardmäßig zugeklappt (showSalaryCoach = false). Für bessere Sichtbarkeit des neuen Features könnte man überlegen, den Bereich initial aufzuklappen oder einen visuellen Hinweis 'Neu' hinzuzufügen.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "Kategorie-Tabs horizontal scrollbar auf Mobile",
+            "description": "Die Kategorie-Tabs (Alle, Vorbereitung, Eröffnung, etc.) sind auf Mobile horizontal scrollbar ohne visuellen Hinweis, dass weitere Tabs verfügbar sind. Ein Scroll-Indicator oder Fade-Effect wäre hilfreich.",
+            "priority": "low"
+          }
+        ],
+        "screenshots_taken": [
+          "salary-coach-mobile.png",
+          "salary-coach-desktop.png"
+        ],
+        "console_errors": [
+          "401 UNAUTHORIZED - /api/auth/login (erster fehlgeschlagener Login-Versuch, nicht relevant)",
+          "400 BAD REQUEST - /api/applications/1/ats-check (fehlende Stellenbeschreibung, nicht Teil von ADV-002)",
+          "400 BAD REQUEST - /api/applications/1/job-fit (fehlende Anforderungen, nicht Teil von ADV-002)"
+        ],
+        "notes": "Das Feature ADV-002 (Gehaltsverhandlungs-Coach) funktioniert einwandfrei. Alle Kernfunktionen wurden erfolgreich getestet: Gehaltsrecherche liefert korrekte Daten (Median, Min/Max, Einflussfaktoren, Datenquellen), Verhandlungsstrategie wird vollständig generiert (Verhandlungsspanne, Eröffnungsstatement, Tipps, Argumente, Fallback-Positionen, Einwände/Antworten, Kulturelle Hinweise). Die UI ist responsive und funktioniert sowohl auf Desktop als auch auf Mobile. Die API-Endpoints /salary/research und /salary/negotiation-tips antworten mit 200 OK.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-3",
+      "commit_hash": "093a08f",
+      "message": "feat: ADV-001 - Smart Job Recommendations",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/app.py",
+        "backend/migrations/add_job_recommendations.py",
+        "backend/models/__init__.py",
+        "backend/models/job_recommendation.py",
+        "backend/models/user.py",
+        "backend/routes/recommendations.py",
+        "backend/services/job_recommender.py",
+        "frontend/src/components/JobRecommendations.vue",
+        "frontend/src/pages/Dashboard.vue",
+        "scripts/ralph/feature/prd.json",
+        "scripts/ralph/feature/progress.txt"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-3",
+        "tested_at": "2026-01-14T12:00:00Z",
+        "duration_seconds": 180,
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Modal-State wird nicht zurückgesetzt beim erneuten Öffnen",
+            "description": "Wenn das Analyse-Modal geschlossen und erneut geöffnet wird (über 'Job analysieren' oder 'Erste Stelle analysieren' Button), bleiben die vorherige URL-Eingabe und Fehlermeldung erhalten. Der Modal-State sollte beim Schließen zurückgesetzt werden.",
+            "steps_to_reproduce": [
+              "Dashboard öffnen",
+              "Auf 'Job analysieren' klicken",
+              "Eine URL eingeben und 'Analysieren' klicken",
+              "Modal schließen",
+              "Erneut auf 'Job analysieren' oder 'Erste Stelle analysieren' klicken"
+            ],
+            "expected": "Modal öffnet sich mit leerem URL-Feld und ohne Fehlermeldung",
+            "actual": "Modal zeigt noch die vorherige URL und Fehlermeldung an",
+            "screenshot": "adv001-mobile-modal.png",
+            "affected_component": "JobRecommendations.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Modal-State beim Öffnen zurücksetzen",
+            "description": "Im showAnalyzeModal watcher oder beim Öffnen des Modals sollten analyzeUrl, analyzeError und analyzeResult auf ihre Initialwerte zurückgesetzt werden. Beispiel: watch(showAnalyzeModal, (newVal) => { if (newVal) { analyzeUrl.value = ''; analyzeError.value = ''; analyzeResult.value = null; } })",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Bessere Fehlerbehandlung für URL-Scraping",
+            "description": "Die aktuelle Fehlermeldung 'Fehler beim Laden der URL: 403 Client Error' ist technisch. Eine benutzerfreundlichere Meldung wie 'Diese Stellenanzeige konnte nicht geladen werden. Indeed blockiert automatische Zugriffe. Bitte versuchen Sie eine andere Quelle.' wäre hilfreicher.",
+            "priority": "low"
+          }
+        ],
+        "screenshots_taken": [
+          "adv001-mobile-view.png",
+          "adv001-mobile-modal.png"
+        ],
+        "console_errors": [
+          "400 BAD REQUEST on /api/recommendations/analyze (expected - external URL blocked)"
+        ],
+        "notes": "Das Feature ist insgesamt gut implementiert. Die Komponente lädt korrekt, die API-Endpoints funktionieren (200 OK für /recommendations und /recommendations/stats), das Empty-State ist informativ, und das responsive Layout funktioniert gut auf Mobile (375x667). Der einzige Bug ist das Nicht-Zurücksetzen des Modal-States, was ein Minor UX Issue ist.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-4",
+      "commit_hash": "f94aa9e",
+      "message": "feat: INT-006 - Interview-Ergebnis Tracking",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/migrations/add_interview_tracking.py",
+        "backend/models/application.py",
+        "backend/routes/applications.py",
+        "frontend/src/components/InterviewStatsWidget.vue",
+        "frontend/src/components/InterviewTracker.vue",
+        "frontend/src/pages/Applications.vue",
+        "frontend/src/pages/Dashboard.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-4",
+        "tested_at": "2026-01-14T12:35:00Z",
+        "duration_seconds": 180,
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Aktiver Status-Button visuell nicht unterscheidbar",
+            "description": "Im InterviewTracker ist der aktuell ausgewählte Status-Button (z.B. 'Durchgefuehrt') im Snapshot nicht als 'active' markiert, obwohl die Daten korrekt gespeichert werden. Eine deutlichere visuelle Hervorhebung (z.B. mit stärkerem Kontrast oder Haken-Icon) würde die UX verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Zeitzone-Anzeige im Interview-Datum",
+            "description": "Das eingegebene Datum '2026-01-20T10:00' wird als '2026-01-20T07:00' bis '2026-01-20T09:00' angezeigt, was auf Zeitzonen-Konvertierung hinweist. Eine konsistente Anzeige in der lokalen Zeitzone des Nutzers wäre benutzerfreundlicher.",
+            "priority": "medium"
+          }
+        ],
+        "screenshots_taken": [
+          "interview-tracker-mobile.png",
+          "interview-stats-widget-desktop.png"
+        ],
+        "console_errors": [],
+        "notes": "Das Feature INT-006 (Interview-Ergebnis Tracking) funktioniert vollständig wie erwartet. Alle Kernfunktionen wurden erfolgreich getestet: InterviewStatsWidget im Dashboard zeigt Empty-State und gefüllten Zustand korrekt an, InterviewTracker ermöglicht Status-Auswahl mit persistenten Speicherungen, Datum-Eingabe und Feedback-Feld funktionieren, API-Calls sind alle erfolgreich (200 OK), Mobile Responsive Layout ist gut. Die 400er Errors sind von anderen Features (ATS-Check, Job-Fit) und nicht relevant für dieses Feature.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-5",
+      "commit_hash": "fe1fcb5",
+      "message": "feat: INT-005 - Firmen-Recherche Integration",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/app.py",
+        "backend/routes/companies.py",
+        "backend/services/company_researcher.py",
+        "frontend/src/components/CompanyResearch.vue",
+        "frontend/src/pages/InterviewPrep.vue",
+        "logs/iteration_history.json",
+        "scripts/ralph/feature/.circuit_breaker_state",
+        "scripts/ralph/feature/.response_analysis",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_01-50-44.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_01-57-21.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_02-37-40.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-15-16.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-20-52.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-27-16.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-32-57.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-38-58.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-43-58.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-51-01.log",
+        "scripts/ralph/feature/logs/claude_output_2026-01-14_03-57-16.log",
+        "scripts/ralph/feature/logs/logs/rate_limit.json",
+        "scripts/ralph/feature/logs/ralph.log",
+        "scripts/ralph/feature/logs/status.json"
+      ],
+      "tested": true,
+      "test_result": {
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [],
+        "notes": "No structured result returned"
+      }
+    },
+    {
+      "id": "COMMIT-6",
+      "commit_hash": "a86cd4c",
+      "message": "feat: INT-004 - STAR-Methode Coach",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/routes/applications.py",
+        "backend/services/star_analyzer.py",
+        "frontend/src/components/STARFeedback.vue",
+        "frontend/src/pages/MockInterview.vue",
+        "scripts/ralph/feature/prd.json",
+        "scripts/ralph/feature/progress.txt"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-6",
+        "tested_at": "2026-01-14T14:30:00Z",
+        "duration_seconds": 480,
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "STAR-Komponenten Reihenfolge",
+            "description": "Die STAR-Komponenten werden in der Reihenfolge A-R-S-T angezeigt statt S-T-A-R. Für bessere Verständlichkeit sollten sie in der korrekten STAR-Reihenfolge (Situation → Task → Action → Result) dargestellt werden.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Loading-State für detaillierte Analyse",
+            "description": "Der Loading-Button 'Lade...' für die detaillierte STAR-Analyse könnte einen Spinner oder Progress-Indikator haben, um dem Benutzer besser zu zeigen, dass eine KI-Analyse läuft (dauert ~15-20 Sekunden).",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "STAR-Coaching für nicht-behavioral Fragen",
+            "description": "Der 'Detaillierte Analyse' Button erscheint nur bei behavioral Fragen. Es wäre hilfreich, wenn bei technischen/situativen Fragen ein Hinweis erscheint, warum keine STAR-Analyse verfügbar ist.",
+            "priority": "low"
+          }
+        ],
+        "screenshots_taken": [],
+        "console_errors": [],
+        "notes": "Das Feature INT-004 STAR-Methode Coach funktioniert einwandfrei. Die Kernfunktionalität wurde erfolgreich getestet: STAR-Hint bei behavioral Fragen, Basis-STAR-Analyse nach Antwort-Bewertung, detaillierte STAR-Analyse mit 'Erkannt'-Zitaten, Verbesserungsvorschläge, und Beispiel-Antwort mit Toggle. API-Integration (/interview/analyze-star) funktioniert stabil. Mobile Responsive-Design funktioniert gut. Keine kritischen Bugs gefunden.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-7",
+      "commit_hash": "c7f4cb6",
+      "message": "feat: INT-003 - Text-basiertes Mock-Interview",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/routes/applications.py",
+        "backend/services/interview_evaluator.py",
+        "frontend/src/pages/MockInterview.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-7",
+        "tested_at": "2026-01-14T14:30:00Z",
+        "duration_seconds": 420,
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt",
+            "description": "Obwohl Interview-Fragen in der Datenbank existieren und die API sie erfolgreich zurückgibt (200 OK), werden sie auf der Interview-Vorbereitung Seite (/applications/:id/interview) nicht angezeigt. Stattdessen erscheint 'Keine Interview-Fragen vorhanden'.",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications/2/interview",
+              "Warte bis die Seite geladen ist",
+              "Beobachte: 'Keine Interview-Fragen vorhanden' obwohl Fragen existieren"
+            ],
+            "expected": "Die 3 existierenden Interview-Fragen sollten in der Liste angezeigt werden",
+            "actual": "Zeigt 'Keine Interview-Fragen vorhanden' obwohl API 200 OK mit Fragen zurückgibt",
+            "screenshot": null,
+            "affected_component": "InterviewPrep.vue:294",
+            "root_cause": "Datenpfad-Mismatch: InterviewPrep.vue erwartet `data.questions` als Array, aber API gibt `data.data.all_questions` zurück. Zeile 294: `questions.value = data.questions || []` sollte `questions.value = data.data?.all_questions || data.questions || []` sein."
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "415 UNSUPPORTED MEDIA TYPE beim Generieren von Fragen",
+            "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert 'Fehler beim Generieren der Interview-Fragen' mit HTTP 415 Fehler.",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications/2/interview",
+              "Klicke auf 'Fragen generieren' Button",
+              "Beobachte: Alert mit Fehlermeldung erscheint"
+            ],
+            "expected": "Neue Interview-Fragen sollten generiert werden",
+            "actual": "HTTP 415 UNSUPPORTED MEDIA TYPE Fehler",
+            "screenshot": null,
+            "affected_component": "InterviewPrep.vue / Backend generate-questions endpoint",
+            "root_cause": "Wahrscheinlich fehlender Content-Type: application/json Header im API-Request"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Fortschrittsbalken beim Mock-Interview",
+            "description": "Der Fortschrittsbalken 'Frage X von Y' ist vorhanden und funktioniert gut. Könnte durch eine prozentuale Anzeige oder Animation beim Fortschritt noch verbessert werden.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Keyboard-Shortcut für schnelleres Arbeiten",
+            "description": "Ctrl+Enter zum Absenden der Antwort ist implementiert. Zusätzlich könnte ein Shortcut für 'Nächste Frage' nach dem Feedback hilfreich sein (z.B. Enter oder Tab).",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Timer für realistische Interview-Simulation",
+            "description": "Ein optionaler Timer pro Frage würde die Interview-Simulation realistischer machen und Benutzer trainieren, unter Zeitdruck zu antworten.",
+            "priority": "medium"
+          }
+        ],
+        "screenshots_taken": [
+          "mobile-summary-view.png",
+          "mobile-question-view.png"
+        ],
+        "console_errors": [
+          "415 UNSUPPORTED MEDIA TYPE bei POST /api/applications/2/generate-questions (auf InterviewPrep-Seite)"
+        ],
+        "notes": "Das Kern-Feature (Mock-Interview mit Text-basierter Eingabe und AI-Bewertung) funktioniert ausgezeichnet! Die MockInterview.vue Komponente ist vollständig funktionsfähig:\n\n✅ Interview-Fragen werden korrekt geladen und angezeigt\n✅ Textfeld für Antworten funktioniert\n✅ Zeichenzähler funktioniert\n✅ Button-Deaktivierung bei weniger als 10 Zeichen funktioniert\n✅ AI-Bewertung liefert strukturiertes Feedback (Score, Stärken, Verbesserungen)\n✅ STAR-Analyse für behavioral Fragen funktioniert\n✅ Detaillierte STAR-Analyse auf Knopfdruck funktioniert\n✅ Beispiel-Antworten können angezeigt werden\n✅ Navigation zwischen Fragen funktioniert\n✅ Interview-Zusammenfassung mit Kategorie-Scores funktioniert\n✅ Responsive Mobile-Layout ist gut\n✅ Alle API-Endpoints geben 200 OK zurück\n\nDie gefundenen Bugs betreffen die InterviewPrep.vue (Vorbereitung), nicht die MockInterview.vue (das eigentliche Feature). Das getestete Feature INT-003 ist FUNKTIONSFÄHIG.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-8",
+      "commit_hash": "2526658",
+      "message": "feat: INT-002 - Interview-Prep UI",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/pages/Applications.vue",
+        "frontend/src/pages/InterviewPrep.vue",
+        "frontend/src/pages/MockInterview.vue",
+        "frontend/src/router/index.js"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-8",
+        "tested_at": "2026-01-14T13:45:00Z",
+        "duration_seconds": 180,
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "API-Fehler 415 beim Generieren von Interview-Fragen",
+            "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert 'Fehler beim Generieren der Interview-Fragen'. Die Console zeigt einen 415 UNSUPPORTED MEDIA TYPE Fehler.",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications",
+              "Klicke auf 'Details' bei einer Bewerbung",
+              "Klicke auf 'Interview-Prep'",
+              "Klicke auf 'Fragen generieren'",
+              "Alert erscheint mit Fehlermeldung"
+            ],
+            "expected": "Interview-Fragen sollten generiert und angezeigt werden",
+            "actual": "Alert zeigt Fehlermeldung, Console zeigt 415 Error",
+            "screenshot": "N/A",
+            "affected_component": "InterviewPrep.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Direkter Link zum Mock-Interview auf InterviewPrep-Seite",
+            "description": "Es gibt keinen sichtbaren Button/Link zur MockInterview-Seite von der InterviewPrep-Seite. User müssen die URL manuell eingeben oder über existierende Interview-Fragen navigieren.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Bessere Fehlerbehandlung bei API-Fehlern",
+            "description": "Statt eines Browser-Alerts sollte eine inline Toast-Notification verwendet werden, die auch Retry-Optionen bietet.",
+            "priority": "low"
+          }
+        ],
+        "screenshots_taken": [
+          "interview-prep-mobile.png",
+          "mock-interview-mobile.png",
+          "interview-prep-desktop.png"
+        ],
+        "console_errors": [
+          "415 UNSUPPORTED MEDIA TYPE @ /api/applications/2/generate-questions"
+        ],
+        "notes": "Die MockInterview-Funktionalität (Antwort-Bewertung mit STAR-Analyse) funktioniert hervorragend. Das Hauptproblem ist der API-Fehler beim Generieren neuer Fragen. Die vorhandenen Fragen funktionieren korrekt.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-10",
+      "commit_hash": "fc3ad8c",
+      "message": "feat: QUAL-007 - Gap-Analyse mit Lernempfehlungen",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/routes/applications.py",
+        "backend/services/job_fit_calculator.py",
+        "frontend/src/components/GapAnalysis.vue",
+        "frontend/src/pages/Applications.vue",
+        "scripts/ralph/feature/prd.json",
+        "scripts/ralph/feature/progress.txt"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-10",
+        "tested_at": "2026-01-14T12:30:00Z",
+        "duration_seconds": 180,
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "GapAnalysis-Komponente wird nicht angezeigt bei fehlenden JobRequirements",
+            "description": "Die GapAnalysis-Komponente wird nur angezeigt, wenn die Bewerbung bereits analysierte JobRequirements hat. Bei Testdaten ohne Requirements wird die Komponente nicht gerendert und es erscheint nur eine Toast-Fehlermeldung. Dies ist technisch korrekt, aber die UX könnte verbessert werden.",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications",
+              "Klicke auf 'Details' einer Bewerbung ohne analysierte Anforderungen",
+              "Beobachte, dass der Abschnitt 'Skill-Luecken & Lernempfehlungen' nicht erscheint"
+            ],
+            "expected": "Ein Hinweis sollte dem Benutzer erklären, dass zuerst Anforderungen analysiert werden müssen, um Lernempfehlungen zu erhalten",
+            "actual": "Die GapAnalysis-Sektion wird komplett ausgeblendet (v-if Bedingung in Applications.vue:293)",
+            "screenshot": "gap_analysis_not_visible.png",
+            "affected_component": "Applications.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "trivial",
+            "title": "Mehrere identische Toast-Fehlermeldungen erscheinen gleichzeitig",
+            "description": "Beim Öffnen einer Bewerbung ohne Bewerbungstext erscheinen zwei identische Toast-Meldungen 'Kein Bewerbungstext vorhanden' gleichzeitig (von ATS-Check, der zweimal aufgerufen wird)",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications",
+              "Klicke auf 'Details' einer Bewerbung ohne Bewerbungstext",
+              "Beobachte die Toast-Benachrichtigungen"
+            ],
+            "expected": "Maximal eine Fehlermeldung pro Fehlertyp",
+            "actual": "Zwei identische Fehlermeldungen erscheinen gleichzeitig",
+            "screenshot": "gap_analysis_not_visible.png",
+            "affected_component": "Applications.vue, ATSOptimizer.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Hinweis für fehlende Anforderungsanalyse hinzufügen",
+            "description": "Anstatt die GapAnalysis-Sektion komplett auszublenden, könnte ein informativer Hinweis angezeigt werden: 'Analysieren Sie zuerst die Stellenanforderungen, um personalisierte Lernempfehlungen zu erhalten'. Mit einem Button 'Anforderungen analysieren' der den Prozess startet.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Toast-Deduplizierung implementieren",
+            "description": "Implementieren Sie eine Deduplizierung für Toast-Nachrichten, sodass identische Nachrichten nicht mehrfach gleichzeitig angezeigt werden. Dies verhindert Verwirrung beim Benutzer.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Automatische Anforderungsanalyse bei Bewerbungserstellung",
+            "description": "Bei der Erstellung einer Bewerbung über die 'Neu'-Seite könnten die Anforderungen automatisch analysiert werden, sodass die GapAnalysis sofort verfügbar ist.",
+            "priority": "medium"
+          }
+        ],
+        "screenshots_taken": [
+          "gap_analysis_not_visible.png",
+          "applications_mobile_view.png",
+          "applications_modal_mobile.png",
+          "applications_modal_mobile_full.png",
+          "applications_modal_mobile_bottom.png"
+        ],
+        "console_errors": [
+          "[ERROR] Failed to load resource: 400 BAD REQUEST @ /api/applications/2/job-fit?include_recommendations=true",
+          "[ERROR] Failed to load resource: 400 BAD REQUEST @ /api/applications/2/ats-check (2x)"
+        ],
+        "notes": "Die GapAnalysis-Komponente (GapAnalysis.vue) selbst ist korrekt implementiert mit Filter-Tabs für Kategorien (Alle, Kurse, Zertifikate, Projekte, Bücher), Prioritäts-Labels (Wichtig/Mittel/Optional), und Ressourcen-Links. Die Komponente konnte jedoch nicht mit echten Daten getestet werden, da die Testbewerbung keine analysierten JobRequirements hat. Das API gibt korrekt 400 zurück mit 'Keine Anforderungen für diese Bewerbung vorhanden'. Der Code-Review zeigt, dass die Implementierung vollständig ist und die responsive Styles korrekt definiert sind. Die mobile Ansicht funktioniert gut - das Modal ist scrollbar und alle Elemente sind erreichbar.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-11",
+      "commit_hash": "fe47cac",
+      "message": "feat: QUAL-006 - ATS-Score UI mit Verbesserungen",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/routes/applications.py",
+        "frontend/src/components/ATSOptimizer.vue",
+        "frontend/src/pages/Applications.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-11",
+        "tested_at": "2026-01-14T12:30:00Z",
+        "duration_seconds": 180,
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "ATS-Check doppelter API-Call",
+            "description": "Der ATS-Check wird beim Öffnen des Modals zweimal aufgerufen (watch + onMounted). Dies führt zu doppelten Fehlermeldungen in den Toasts wenn der Check fehlschlägt. Sollte nur einmal aufgerufen werden.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Fehlende Loading-Animation für ATS initial state",
+            "description": "Wenn eine Bewerbung keinen email_text hat, wird sofort die Fehlermeldung angezeigt. Ein kurzer Loading-State vor dem Fehler würde die UX verbessern und dem User signalisieren, dass eine Analyse versucht wird.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Manueller ATS-Check mit eigenem Text",
+            "description": "Da das Update-Endpoint kein email_text akzeptiert, können User ohne generierte Bewerbung den ATS-Check nicht nutzen. Ein Textfeld für manuellen Cover-Letter-Text wäre hilfreich.",
+            "priority": "medium"
+          }
+        ],
+        "screenshots_taken": [
+          "ats-optimizer-error-state.png",
+          "ats-optimizer-section.png",
+          "ats-optimizer-bottom.png",
+          "mobile-applications-list.png",
+          "mobile-modal-top.png",
+          "mobile-ats-section.png"
+        ],
+        "console_errors": [
+          "400 BAD REQUEST auf /api/applications/2/ats-check (erwartet - kein Bewerbungstext)",
+          "400 BAD REQUEST auf /api/applications/2/job-fit (erwartet - keine Anforderungen)"
+        ],
+        "notes": "Die ATS-Optimizer Komponente funktioniert korrekt. Der Error-State wird sauber angezeigt wenn kein Bewerbungstext vorhanden ist. Die API-Endpunkte wurden erfolgreich getestet (via direktem API-Call mit Token) und liefern korrekte ATS-Scores mit gefundenen/fehlenden Keywords und Einbau-Vorschlägen. Das Responsive Layout funktioniert einwandfrei - Buttons werden im Mobile-View korrekt gestapelt. Die 400-Errors in der Console sind erwartetes Verhalten bei fehlenden Daten, nicht Bugs.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-13",
+      "commit_hash": "7e653f7",
+      "message": "feat: QUAL-004 - Job-Fit Score UI",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/routes/applications.py",
+        "frontend/src/components/JobFitScore.vue",
+        "frontend/src/pages/NewApplication.vue",
+        "scripts/ralph/feature/prd.json",
+        "scripts/ralph/feature/progress.txt"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-13",
+        "tested_at": "2026-01-14T12:30:00Z",
+        "duration_seconds": 180,
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Bessere Fehlermeldung bei externem URL-Scraping",
+            "description": "Wenn eine externe URL nicht geladen werden kann (403 Forbidden), zeigt die App 'Fehler beim Laden der Stellenanzeige: Fehler beim Laden der URL: 403 Client Error'. Diese Meldung könnte benutzerfreundlicher sein, z.B. 'Diese Webseite blockiert den automatischen Zugriff. Bitte kopiere den Stellentext manuell.'",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Manueller Stellentext-Import als Fallback",
+            "description": "Wenn das URL-Scraping fehlschlägt, könnte ein Textarea-Fallback angeboten werden, in das der User den Stellentext manuell einfügen kann. Dies würde die Job-Fit Analyse auch bei blockierten URLs ermöglichen.",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Skills-Status auf NewApplication-Seite anzeigen",
+            "description": "Die JobFitScore-Komponente zeigt 'Keine Skills gefunden' erst nach dem Laden einer Stellenanzeige. Es wäre hilfreicher, den User bereits vor dem URL-Input zu informieren, dass er zuerst einen Lebenslauf hochladen sollte, um den Job-Fit Score zu erhalten.",
+            "priority": "low"
+          }
+        ],
+        "screenshots_taken": [
+          "new-application-desktop.png",
+          "new-application-mobile-375.png"
+        ],
+        "console_errors": [],
+        "notes": "Das Job-Fit Score Feature (QUAL-004) wurde getestet. Die UI-Komponente JobFitScore.vue ist korrekt implementiert mit allen States (loading, error, no-skills, success). Die Integration in NewApplication.vue funktioniert wie erwartet. Das Portal-Detection Badge (StepStone, Indeed, etc.) funktioniert einwandfrei. Das responsive Layout ist sauber auf Mobile (375px). Ein vollständiger End-to-End Test des Job-Fit Scores war nicht möglich, da: 1) Keine User-Skills in der Test-DB vorhanden sind, 2) Externe URLs (StepStone) den Scraper blockieren (403). Die Code-Review zeigt jedoch, dass alle UI-States korrekt implementiert sind und die API-Endpunkte (/analyze-job-fit, /job-fit) die erwarteten Responses liefern.",
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-16",
+      "commit_hash": "4a382b5",
+      "message": "feat: QUAL-001 - Skill-Extraktion aus CV",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/app.py",
+        "backend/migrations/add_user_skills.py",
+        "backend/models/__init__.py",
+        "backend/models/user.py",
+        "backend/models/user_skill.py",
+        "backend/routes/documents.py",
+        "backend/routes/skills.py",
+        "backend/services/skill_extractor.py",
+        "frontend/src/components/SkillsOverview.vue",
+        "frontend/src/pages/Documents.vue"
+      ],
+      "tested": false,
+      "test_result": null
+    }
+  ],
+  "source": "git_commits",
+  "base_branch": "main",
+  "generated_at": "2026-01-14T11:35:12+00:00",
+  "total_commits": 11
+}

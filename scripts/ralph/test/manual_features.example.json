@@ -1,0 +1,47 @@
+{
+  "description": "Beispiel für manuelle Feature-Definition. Kopiere zu manual_features.json um zu nutzen.",
+  "features": [
+    {
+      "id": "MANUAL-001",
+      "commit_hash": "abc1234",
+      "message": "feat: Dashboard Redesign",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/pages/Dashboard.vue",
+        "frontend/src/components/StatsWidget.vue"
+      ],
+      "tested": false,
+      "test_result": null,
+      "test_instructions": "Teste das neue Dashboard Layout, prüfe ob alle Widgets korrekt laden",
+      "pages_to_test": ["/dashboard"],
+      "user_flows": [
+        "Dashboard laden",
+        "Statistiken prüfen",
+        "Quick-Actions testen"
+      ]
+    },
+    {
+      "id": "MANUAL-002",
+      "commit_hash": "def5678",
+      "message": "feat: Neue Bewerbung erstellen",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/pages/NewApplication.vue",
+        "backend/routes/applications.py"
+      ],
+      "tested": false,
+      "test_result": null,
+      "test_instructions": "Teste den kompletten Flow zum Erstellen einer neuen Bewerbung",
+      "pages_to_test": ["/applications/new", "/applications"],
+      "user_flows": [
+        "Formular öffnen",
+        "Alle Felder ausfüllen",
+        "Template auswählen",
+        "Bewerbung generieren",
+        "Ergebnis prüfen"
+      ]
+    }
+  ]
+}
