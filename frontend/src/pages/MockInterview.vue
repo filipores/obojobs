@@ -48,6 +48,47 @@
 
       <!-- Interview Flow -->
       <template v-else>
+        <!-- Timer Settings -->
+        <section v-if="!interviewComplete" class="timer-settings-section animate-fade-up" style="animation-delay: 50ms;">
+          <div class="timer-toggle-row">
+            <button
+              @click="toggleTimer"
+              :class="['timer-toggle-btn', { active: timerEnabled }]"
+            >
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <polyline points="12 6 12 12 16 14"/>
+              </svg>
+              {{ timerEnabled ? 'Timer aktiv' : 'Timer aktivieren' }}
+            </button>
+
+            <button
+              v-if="timerEnabled"
+              @click="showTimerSettings = !showTimerSettings"
+              class="timer-settings-btn"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+              </svg>
+              Einstellungen
+            </button>
+          </div>
+
+          <!-- Timer Settings Panel -->
+          <div v-if="timerEnabled && showTimerSettings" class="timer-settings-panel">
+            <label class="timer-minutes-label">
+              Zeit pro Frage:
+              <select v-model.number="timerMinutes" class="timer-minutes-select">
+                <option :value="1">1 Minute</option>
+                <option :value="2">2 Minuten</option>
+                <option :value="3">3 Minuten</option>
+                <option :value="5">5 Minuten</option>
+              </select>
+            </label>
+          </div>
+        </section>
+
         <!-- Progress Section -->
         <section v-if="!interviewComplete" class="progress-section animate-fade-up" style="animation-delay: 100ms;">
           <div class="progress-bar-container">
@@ -55,6 +96,35 @@
               <div class="progress-fill" :style="{ width: progressPercent + '%' }"></div>
             </div>
             <span class="progress-text">Frage {{ currentQuestionIndex + 1 }} von {{ questions.length }}</span>
+          </div>
+
+          <!-- Timer Display -->
+          <div v-if="timerEnabled && !currentFeedback" class="timer-display-container">
+            <div
+              :class="['timer-display', {
+                'timer-low': timerIsLow,
+                'timer-critical': timerIsCritical,
+                'timer-expired': timerExpired
+              }]"
+            >
+              <div class="timer-progress-ring">
+                <svg viewBox="0 0 36 36">
+                  <path
+                    class="timer-ring-bg"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                  <path
+                    class="timer-ring-fill"
+                    :stroke-dasharray="`${100 - timerProgressPercent}, 100`"
+                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  />
+                </svg>
+                <div class="timer-value">
+                  <span class="timer-time">{{ timerDisplay }}</span>
+                </div>
+              </div>
+              <span v-if="timerExpired" class="timer-expired-text">Zeit abgelaufen!</span>
+            </div>
           </div>
         </section>
 
@@ -339,6 +409,31 @@
               </ol>
             </div>
 
+            <!-- Timer Statistics -->
+            <div v-if="timerStats.answersCount > 0" class="timer-stats-block">
+              <h3>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <polyline points="12 6 12 12 16 14"/>
+                </svg>
+                Zeit-Statistik
+              </h3>
+              <div class="timer-stats-grid">
+                <div class="timer-stat-item">
+                  <span class="timer-stat-value">{{ averageAnswerTimeDisplay }}</span>
+                  <span class="timer-stat-label">Durchschnittliche Antwortzeit</span>
+                </div>
+                <div class="timer-stat-item">
+                  <span class="timer-stat-value">{{ timerStats.answersCount }}</span>
+                  <span class="timer-stat-label">Beantwortete Fragen</span>
+                </div>
+                <div class="timer-stat-item" :class="{ 'stat-warning': timerStats.timeExceeded > 0 }">
+                  <span class="timer-stat-value">{{ timerStats.timeExceeded }}</span>
+                  <span class="timer-stat-label">Zeitueberschreitungen</span>
+                </div>
+              </div>
+            </div>
+
             <!-- Actions -->
             <div class="summary-actions">
               <button @click="restartInterview" class="zen-btn">
@@ -364,7 +459,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
 import STARFeedback from '../components/STARFeedback.vue'
@@ -388,8 +483,51 @@ const answerHistory = ref([])
 const isLoadingStarAnalysis = ref(false)
 const detailedStarAnalysis = ref(null)
 
+// Timer state
+const timerEnabled = ref(false)
+const timerMinutes = ref(2) // Default: 2 Minuten pro Frage
+const timerSeconds = ref(0) // Verbleibende Sekunden
+const timerInterval = ref(null)
+const timerExpired = ref(false)
+const showTimerSettings = ref(false)
+
+// Timer statistics
+const timerStats = ref({
+  totalAnswerTime: 0, // in Sekunden
+  answersCount: 0,
+  timeExceeded: 0 // Anzahl Zeitueberschreitungen
+})
+
 const currentQuestion = computed(() => questions.value[currentQuestionIndex.value] || {})
 const progressPercent = computed(() => ((currentQuestionIndex.value + 1) / questions.value.length) * 100)
+
+// Timer computed
+const timerDisplay = computed(() => {
+  const mins = Math.floor(timerSeconds.value / 60)
+  const secs = timerSeconds.value % 60
+  return `${mins}:${secs.toString().padStart(2, '0')}`
+})
+
+const timerProgressPercent = computed(() => {
+  const totalSeconds = timerMinutes.value * 60
+  return ((totalSeconds - timerSeconds.value) / totalSeconds) * 100
+})
+
+const timerIsLow = computed(() => timerSeconds.value <= 30 && timerSeconds.value > 0)
+const timerIsCritical = computed(() => timerSeconds.value <= 10 && timerSeconds.value > 0)
+
+const averageAnswerTime = computed(() => {
+  if (timerStats.value.answersCount === 0) return 0
+  return Math.round(timerStats.value.totalAnswerTime / timerStats.value.answersCount)
+})
+
+const averageAnswerTimeDisplay = computed(() => {
+  const secs = averageAnswerTime.value
+  const mins = Math.floor(secs / 60)
+  const remainingSecs = secs % 60
+  if (mins === 0) return `${remainingSecs}s`
+  return `${mins}m ${remainingSecs}s`
+})
 
 const loadApplication = async () => {
   try {
@@ -424,8 +562,128 @@ const loadQuestions = async () => {
   }
 }
 
+// Timer functions
+const startTimer = () => {
+  if (!timerEnabled.value) return
+
+  stopTimer()
+  timerSeconds.value = timerMinutes.value * 60
+  timerExpired.value = false
+
+  timerInterval.value = setInterval(() => {
+    if (timerSeconds.value > 0) {
+      timerSeconds.value--
+
+      // Akustischer Hinweis bei 10 Sekunden
+      if (timerSeconds.value === 10) {
+        playTimerWarning()
+      }
+    } else {
+      // Zeit abgelaufen
+      timerExpired.value = true
+      stopTimer()
+      playTimerExpired()
+    }
+  }, 1000)
+}
+
+const stopTimer = () => {
+  if (timerInterval.value) {
+    clearInterval(timerInterval.value)
+    timerInterval.value = null
+  }
+}
+
+const resetTimer = () => {
+  stopTimer()
+  timerSeconds.value = timerMinutes.value * 60
+  timerExpired.value = false
+}
+
+const playTimerWarning = () => {
+  // Einfacher Beep-Sound (Web Audio API)
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.frequency.value = 880 // A5
+    oscillator.type = 'sine'
+    gainNode.gain.value = 0.1
+
+    oscillator.start()
+    oscillator.stop(audioContext.currentTime + 0.15)
+  } catch {
+    // Audio nicht verfuegbar, ignorieren
+  }
+}
+
+const playTimerExpired = () => {
+  // Doppelter Beep bei Zeitablauf
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)()
+    const oscillator = audioContext.createOscillator()
+    const gainNode = audioContext.createGain()
+
+    oscillator.connect(gainNode)
+    gainNode.connect(audioContext.destination)
+
+    oscillator.frequency.value = 660 // E5
+    oscillator.type = 'sine'
+    gainNode.gain.value = 0.15
+
+    oscillator.start()
+    oscillator.stop(audioContext.currentTime + 0.3)
+
+    // Zweiter Beep nach kurzer Pause
+    setTimeout(() => {
+      const osc2 = audioContext.createOscillator()
+      const gain2 = audioContext.createGain()
+      osc2.connect(gain2)
+      gain2.connect(audioContext.destination)
+      osc2.frequency.value = 660
+      osc2.type = 'sine'
+      gain2.gain.value = 0.15
+      osc2.start()
+      osc2.stop(audioContext.currentTime + 0.3)
+    }, 200)
+  } catch {
+    // Audio nicht verfuegbar, ignorieren
+  }
+}
+
+const toggleTimer = () => {
+  timerEnabled.value = !timerEnabled.value
+  if (timerEnabled.value && !currentFeedback.value) {
+    startTimer()
+  } else {
+    stopTimer()
+  }
+}
+
+const recordAnswerTime = () => {
+  if (!timerEnabled.value) return
+
+  const totalSeconds = timerMinutes.value * 60
+  const timeTaken = totalSeconds - timerSeconds.value
+
+  timerStats.value.totalAnswerTime += timeTaken
+  timerStats.value.answersCount++
+
+  if (timerExpired.value) {
+    timerStats.value.timeExceeded++
+  }
+}
+
 const submitAnswer = async () => {
   if (isEvaluating.value || currentAnswer.value.length < 10) return
+
+  // Timer stoppen und Zeit erfassen
+  recordAnswerTime()
+  stopTimer()
 
   isEvaluating.value = true
   currentFeedback.value = null
@@ -464,6 +722,12 @@ const nextQuestion = () => {
   currentAnswer.value = ''
   currentFeedback.value = null
   detailedStarAnalysis.value = null
+  timerExpired.value = false
+
+  // Timer fuer naechste Frage starten
+  if (timerEnabled.value) {
+    startTimer()
+  }
 }
 
 const loadDetailedStarAnalysis = async () => {
@@ -520,6 +784,17 @@ const restartInterview = () => {
   summary.value = null
   answerHistory.value = []
   detailedStarAnalysis.value = null
+  timerExpired.value = false
+  timerStats.value = {
+    totalAnswerTime: 0,
+    answersCount: 0,
+    timeExceeded: 0
+  }
+
+  // Timer starten wenn aktiviert
+  if (timerEnabled.value) {
+    startTimer()
+  }
 }
 
 // Helper functions
@@ -603,6 +878,18 @@ const getStarName = (key) => {
 onMounted(async () => {
   await loadApplication()
   await loadQuestions()
+})
+
+onUnmounted(() => {
+  stopTimer()
+})
+
+// Watch fuer Timer-Minuten-Aenderungen
+watch(timerMinutes, () => {
+  if (timerEnabled.value && !currentFeedback.value) {
+    resetTimer()
+    startTimer()
+  }
 })
 </script>
 
@@ -1297,6 +1584,228 @@ onMounted(async () => {
 }
 
 /* ========================================
+   TIMER STYLES
+   ======================================== */
+.timer-settings-section {
+  margin-bottom: var(--space-md);
+}
+
+.timer-toggle-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.timer-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  background: var(--color-washi);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: all 0.2s var(--ease-zen);
+}
+
+.timer-toggle-btn:hover {
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.timer-toggle-btn.active {
+  background: rgba(61, 90, 108, 0.1);
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.timer-settings-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.75rem;
+  color: var(--color-text-ghost);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s var(--ease-zen);
+}
+
+.timer-settings-btn:hover {
+  color: var(--color-ai);
+}
+
+.timer-settings-panel {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-washi-warm);
+  border-radius: var(--radius-md);
+}
+
+.timer-minutes-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.timer-minutes-select {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--color-sumi);
+  background: var(--color-washi);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.timer-display-container {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-lg);
+}
+
+.timer-display {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.timer-progress-ring {
+  position: relative;
+  width: 80px;
+  height: 80px;
+}
+
+.timer-progress-ring svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.timer-ring-bg {
+  fill: none;
+  stroke: var(--color-washi-aged);
+  stroke-width: 3;
+}
+
+.timer-ring-fill {
+  fill: none;
+  stroke: var(--color-ai);
+  stroke-width: 3;
+  stroke-linecap: round;
+  transition: stroke-dasharray 0.5s var(--ease-zen);
+}
+
+.timer-low .timer-ring-fill {
+  stroke: #c4a35a;
+}
+
+.timer-critical .timer-ring-fill {
+  stroke: #b45050;
+  animation: timer-pulse 0.5s ease-in-out infinite;
+}
+
+.timer-expired .timer-ring-fill {
+  stroke: #b45050;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.timer-value {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+.timer-time {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--color-sumi);
+  font-variant-numeric: tabular-nums;
+}
+
+.timer-low .timer-time {
+  color: #8a7a2a;
+}
+
+.timer-critical .timer-time {
+  color: #b45050;
+}
+
+.timer-expired .timer-time {
+  color: #b45050;
+}
+
+.timer-expired-text {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #b45050;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  animation: timer-pulse 1s ease-in-out infinite;
+}
+
+/* Timer Statistics in Summary */
+.timer-stats-block {
+  margin-bottom: var(--space-lg);
+  padding: var(--space-lg);
+  background: rgba(61, 90, 108, 0.05);
+  border-radius: var(--radius-md);
+}
+
+.timer-stats-block h3 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  margin-bottom: var(--space-lg);
+  color: var(--color-ai);
+}
+
+.timer-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+}
+
+.timer-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.timer-stat-value {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--color-sumi);
+  line-height: 1;
+  margin-bottom: var(--space-xs);
+}
+
+.timer-stat-label {
+  font-size: 0.75rem;
+  color: var(--color-text-ghost);
+}
+
+.timer-stat-item.stat-warning .timer-stat-value {
+  color: #b45050;
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
@@ -1326,6 +1835,16 @@ onMounted(async () => {
   .summary-actions .zen-btn {
     width: 100%;
     justify-content: center;
+  }
+
+  .timer-stats-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+  }
+
+  .timer-toggle-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>
