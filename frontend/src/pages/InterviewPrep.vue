@@ -291,7 +291,8 @@ const loadQuestions = async () => {
   try {
     const { data } = await api.get(`/applications/${applicationId.value}/interview-questions`)
     if (data.success) {
-      questions.value = data.questions || []
+      // API returns data.data.all_questions as array (data.data.questions is grouped object)
+      questions.value = data.data?.all_questions || []
     }
   } catch (err) {
     console.error('Fehler beim Laden der Fragen:', err)
@@ -306,7 +307,8 @@ const regenerateQuestions = async () => {
   try {
     const { data } = await api.post(`/applications/${applicationId.value}/generate-questions`)
     if (data.success) {
-      questions.value = data.questions || []
+      // API returns data.data.questions as array for POST generate-questions
+      questions.value = data.data?.questions || []
       expandedQuestions.value = new Set()
     }
   } catch (err) {
