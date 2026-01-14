@@ -20,8 +20,8 @@ Started: 2026-01-14
 - [x] INT-002: Interview-Prep UI
 - [x] INT-003: Text-basiertes Mock-Interview
 - [x] INT-004: STAR-Methode Coach
-- [ ] INT-005: Firmen-Recherche Integration
-- [ ] INT-006: Interview-Ergebnis Tracking
+- [x] INT-005: Firmen-Recherche Integration
+- [x] INT-006: Interview-Ergebnis Tracking
 
 #### Advanced Features (ADV)
 - [ ] ADV-001: Smart Job Recommendations
@@ -242,6 +242,51 @@ Started: 2026-01-14
   - Detaillierte STAR-Analyse als separater Service fuer wiederverwendbare Logik
   - found_content Feld zeigt User was als jeweilige Komponente erkannt wurde
   - Beispiel-Antwort toggle fuer bessere UX (erst auf Klick anzeigen)
+
+## [2026-01-14] - INT-005
+- **Was implementiert wurde:**
+  - company_researcher.py Service fuer automatische Firmen-Recherche
+  - Web-Scraping von Firmen-Websites (About/Ueber uns Seiten)
+  - Extraktion von: Branche, Groesse, Standorte, Produkte/Services, Mission/Werte, Gruendungsjahr
+  - Automatische Website-Erkennung aus Firmennamen
+  - Interview-Tipps basierend auf Firmen-Informationen generiert
+  - File-basiertes Caching (24h) in backend/cache/companies/
+  - GET /api/companies/{name}/research Endpoint
+  - GET /api/companies/{name}/cache-status Endpoint
+  - CompanyResearch.vue Komponente mit expandierbarer UI
+  - Integration in InterviewPrep.vue als aufklappbare Sektion
+- **Geaenderte Dateien:**
+  - backend/services/company_researcher.py (neu)
+  - backend/routes/companies.py (neu)
+  - backend/app.py (Blueprint Registration)
+  - frontend/src/components/CompanyResearch.vue (neu)
+  - frontend/src/pages/InterviewPrep.vue (CompanyResearch Integration)
+- **Learnings:**
+  - BeautifulSoup fuer robustes Web-Scraping von About-Seiten
+  - File-basiertes JSON-Caching einfach und effektiv fuer Firmen-Daten
+  - Interview-Tipps kontextbezogen generieren verbessert User-Nutzen
+
+## [2026-01-14] - INT-006
+- **Was implementiert wurde:**
+  - Erweitere Application Model um interview_date, interview_feedback, interview_result Felder
+  - DB Migration add_interview_tracking.py fuer neue Spalten
+  - PUT /api/applications/{id}/interview-result Endpoint fuer Ergebnis-Updates
+  - GET /api/applications/interview-stats Endpoint fuer Statistiken (Erfolgsrate, Breakdown)
+  - InterviewTracker.vue Komponente fuer Status-Eingabe im Application-Detail Modal
+  - InterviewStatsWidget.vue Dashboard-Widget mit Erfolgsrate-Ring und Ergebnis-Uebersicht
+  - Ergebnis-Optionen: scheduled, completed, passed, rejected, offer_received
+- **Geaenderte Dateien:**
+  - backend/models/application.py (neue Felder)
+  - backend/routes/applications.py (2 neue Endpoints)
+  - backend/migrations/add_interview_tracking.py (neu)
+  - frontend/src/components/InterviewTracker.vue (neu)
+  - frontend/src/components/InterviewStatsWidget.vue (neu)
+  - frontend/src/pages/Applications.vue (InterviewTracker Integration)
+  - frontend/src/pages/Dashboard.vue (InterviewStatsWidget Integration)
+- **Learnings:**
+  - dict.fromkeys() fuer initialisierte Dictionaries mit Ruff Linting
+  - SQLAlchemy func.count() mit GROUP BY fuer Interview-Statistiken
+  - SVG Kreis-Diagramm fuer Erfolgsrate-Visualisierung
 
 ---
 

@@ -186,6 +186,13 @@
       </div>
     </section>
 
+    <!-- Job Recommendations -->
+    <section class="recommendations-section">
+      <div class="container">
+        <JobRecommendations />
+      </div>
+    </section>
+
     <!-- Info Banner -->
     <section class="info-section">
       <div class="container">
@@ -218,6 +225,7 @@ import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
 import { authStore } from '../store/auth'
 import InterviewStatsWidget from '../components/InterviewStatsWidget.vue'
+import JobRecommendations from '../components/JobRecommendations.vue'
 
 const stats = ref(null)
 const usage = ref(null)
@@ -615,6 +623,14 @@ onMounted(async () => {
    ======================================== */
 .interview-stats-section {
   padding: var(--space-ma) 0;
+}
+
+/* ========================================
+   RECOMMENDATIONS SECTION
+   ======================================== */
+.recommendations-section {
+  padding: var(--space-ma) 0;
+  background: var(--color-bg-subtle);
 }
 
 /* ========================================

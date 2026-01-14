@@ -219,7 +219,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "notes": "Hilft bei Fragen wie 'Warum wollen Sie bei uns arbeiten?' und 'Was wissen Sie über unser Unternehmen?'"
     },
     {
@@ -237,7 +237,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "notes": "Hilft Usern ihre Interview-Performance über Zeit zu tracken und zu verbessern"
     },
     {
