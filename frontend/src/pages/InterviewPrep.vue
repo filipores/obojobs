@@ -63,6 +63,32 @@
         </transition>
       </section>
 
+      <!-- Salary Coach Section -->
+      <section v-if="application" class="salary-coach-section animate-fade-up" style="animation-delay: 75ms;">
+        <div class="section-toggle" @click="showSalaryCoach = !showSalaryCoach">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1v22"/>
+              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+            </svg>
+            Gehaltsverhandlungs-Coach
+          </h2>
+          <button class="toggle-btn" :class="{ expanded: showSalaryCoach }">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+        <transition name="expand">
+          <div v-if="showSalaryCoach" class="salary-wrapper">
+            <SalaryCoach
+              :initial-position="application.position || ''"
+              :initial-company="application.firma || ''"
+            />
+          </div>
+        </transition>
+      </section>
+
       <!-- Stats Section -->
       <section v-if="!loading && questions.length > 0" class="stats-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="stats-grid">
@@ -212,6 +238,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
 import CompanyResearch from '../components/CompanyResearch.vue'
+import SalaryCoach from '../components/SalaryCoach.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -224,6 +251,7 @@ const isGenerating = ref(false)
 const activeFilter = ref('all')
 const expandedQuestions = ref(new Set())
 const showCompanyResearch = ref(true)
+const showSalaryCoach = ref(false)
 
 const categories = [
   { key: 'behavioral', label: 'Verhaltens', icon: '🎭' },
@@ -880,5 +908,29 @@ onMounted(async () => {
 .research-wrapper .company-research {
   background: var(--color-washi);
   border: none;
+}
+
+/* ========================================
+   SALARY COACH SECTION
+   ======================================== */
+.salary-coach-section {
+  margin-bottom: var(--space-lg);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+}
+
+.salary-wrapper {
+  padding: 0 var(--space-lg) var(--space-lg);
+}
+
+.salary-wrapper .salary-coach {
+  background: transparent;
+}
+
+.salary-wrapper .zen-card {
+  background: var(--color-washi);
+  border: 1px solid var(--color-border-light);
 }
 </style>
