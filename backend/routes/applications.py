@@ -20,6 +20,7 @@ from middleware.subscription_limit import (
 )
 from models import Application, JobRequirement, Template, db
 from services.generator import BewerbungsGenerator
+from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
 from services.web_scraper import WebScraper
 
@@ -648,4 +649,45 @@ def analyze_requirements(app_id, current_user):
         return jsonify({
             "success": False,
             "error": f"Fehler bei der Anforderungs-Analyse: {str(e)}"
+        }), 500
+
+
+@applications_bp.route("/<int:app_id>/job-fit", methods=["GET"])
+@jwt_required_custom
+def get_job_fit(app_id, current_user):
+    """Calculate and return the job-fit score for an application.
+
+    Compares user skills against job requirements and returns:
+    - overall_score: 0-100 weighted score (70% must-have, 30% nice-to-have)
+    - score_category: sehr_gut (80%+), gut (60-79%), mittel (40-59%), niedrig (<40%)
+    - matched_skills: Requirements the user fully meets
+    - partial_matches: Requirements partially met (e.g., less experience than required)
+    - missing_skills: Requirements the user doesn't meet
+    """
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Application not found"}), 404
+
+    # Check if requirements exist
+    requirements = JobRequirement.query.filter_by(application_id=app_id).all()
+    if not requirements:
+        return jsonify({
+            "success": False,
+            "error": "Keine Anforderungen für diese Bewerbung vorhanden. Bitte zuerst Anforderungen analysieren."
+        }), 400
+
+    try:
+        calculator = JobFitCalculator()
+        result = calculator.calculate_job_fit(current_user.id, app_id)
+
+        return jsonify({
+            "success": True,
+            "data": result.to_dict()
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der Job-Fit Berechnung: {str(e)}"
         }), 500
