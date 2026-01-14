@@ -11,9 +11,9 @@ Started: 2026-01-14
 - [x] QUAL-002: Job-Anforderungs-Analyse
 - [x] QUAL-003: Job-Fit Score Berechnung
 - [x] QUAL-004: Job-Fit Score UI
-- [ ] QUAL-005: ATS-Score vor Bewerbungsabsendung
-- [ ] QUAL-006: ATS-Score UI mit Verbesserungen
-- [ ] QUAL-007: Gap-Analyse mit Lernempfehlungen
+- [x] QUAL-005: ATS-Score vor Bewerbungsabsendung
+- [x] QUAL-006: ATS-Score UI mit Verbesserungen
+- [x] QUAL-007: Gap-Analyse mit Lernempfehlungen
 
 #### Interview-Preparation (INT)
 - [ ] INT-001: Interview-Fragen Generator
@@ -102,6 +102,63 @@ Started: 2026-01-14
 - **Learnings:**
   - Temporaere Application-Erstellung für Vorschau-Analyse ermöglicht Job-Fit Score vor Generierung
   - Event-Emission @score-loaded ermöglicht Warnung im Parent-Component
+
+## [2026-01-14] - QUAL-005
+- **Was implementiert wurde:**
+  - ats_optimizer.py Service für Analyse generierter Bewerbungen gegen Stellenanzeige
+  - Unterschied zu ats_service.py: Analysiert GENERIERTE Bewerbung, nicht CV
+  - Keyword-Density-Analyse: Zählt wie oft Keywords im Text vorkommen
+  - POST /api/applications/{id}/ats-check Endpoint
+  - Response: ats_score (0-100), missing_keywords[], keyword_suggestions[], format_issues[]
+  - Empfehlungen wie fehlende Keywords natürlich eingebaut werden können
+  - Score-Berechnung: 70% Keyword-Match, 30% Format (Penalty für Issues)
+  - 18 Unit Tests für ATSOptimizer Service
+- **Geänderte Dateien:**
+  - backend/services/ats_optimizer.py (neu)
+  - backend/tests/test_ats_optimizer.py (neu)
+  - backend/routes/applications.py (neuer Endpoint)
+- **Learnings:**
+  - Keyword-Density mit regex word-boundary matching für präzise Zählung
+  - Format-Issues als Penalty statt Multiplikator für fairere Score-Berechnung
+
+## [2026-01-14] - QUAL-006
+- **Was implementiert wurde:**
+  - ATSOptimizer.vue Komponente mit ATS-Score Anzeige und Keyword-Analyse
+  - POST /api/applications/{id}/ats-optimize Endpoint für KI-gestützte Optimierung
+  - Ein-Klick-Optimierung: Fehlende Keywords werden natürlich in den Text eingebaut
+  - Vorher/Nachher Vergleich der Bewerbung mit Liste der vorgenommenen Änderungen
+  - Integration in Application-Detail-View Modal (Applications.vue)
+  - Score-Fortschrittsbalken mit Farbcodierung (grün/gelb/orange/rot)
+  - Gefundene und fehlende Keywords mit Häufigkeits-Anzeige
+  - Einbau-Vorschläge für fehlende Keywords
+- **Geänderte Dateien:**
+  - frontend/src/components/ATSOptimizer.vue (neu)
+  - backend/routes/applications.py (neuer ats-optimize Endpoint)
+  - frontend/src/pages/Applications.vue (ATSOptimizer Integration im Modal)
+- **Learnings:**
+  - Claude API kann Keywords natürlich einbauen ohne den Ton zu verändern
+  - Vergleichs-Ansicht mit original/optimiert Side-by-Side für User-Vertrauen
+
+## [2026-01-14] - QUAL-007
+- **Was implementiert wurde:**
+  - Erweiterung job_fit_calculator.py um LearningRecommendation Dataclass
+  - Methode generate_learning_recommendations() mit Claude API Integration
+  - Fallback-Recommendations ohne API fuer robuste Funktion
+  - GET /api/applications/{id}/job-fit Endpoint erweitert um learning_recommendations
+  - Query-Parameter include_recommendations fuer optionale Generierung
+  - GapAnalysis.vue Komponente mit Filter-Tabs (Kurse, Zertifikate, Projekte, Buecher)
+  - Farbcodierung nach Prioritaet (high/medium/low)
+  - Links zu Lernressourcen (Coursera, Udemy, LinkedIn Learning, etc.)
+  - Integration in Application-Detail-Modal (Applications.vue)
+- **Geaenderte Dateien:**
+  - backend/services/job_fit_calculator.py (LearningRecommendation, generate_learning_recommendations)
+  - backend/routes/applications.py (erweiterter job-fit Endpoint)
+  - frontend/src/components/GapAnalysis.vue (neu)
+  - frontend/src/pages/Applications.vue (GapAnalysis Integration)
+- **Learnings:**
+  - Claude API liefert strukturierte Lernempfehlungen gut
+  - Fallback-Logik wichtig fuer robuste UX ohne API-Abhaengigkeit
+  - Filter-Tabs verbessern UX bei vielen Empfehlungen
 
 ---
 

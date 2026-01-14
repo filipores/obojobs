@@ -91,7 +91,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "notes": "Unterschied zu bestehendem ATS-Modul: Dieses analysiert die GENERIERTE Bewerbung, nicht die Stellenanzeige"
     },
     {
@@ -108,7 +108,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "notes": "Ein-Klick-Optimierung ruft Claude API auf um Keywords natürlich einzubauen ohne den Ton zu verändern"
     },
     {
@@ -125,7 +125,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "notes": "Hilft Usern ihre Qualifikationen für zukünftige Bewerbungen zu verbessern"
     },
     {

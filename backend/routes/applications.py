@@ -664,6 +664,10 @@ def get_job_fit(app_id, current_user):
     - matched_skills: Requirements the user fully meets
     - partial_matches: Requirements partially met (e.g., less experience than required)
     - missing_skills: Requirements the user doesn't meet
+    - learning_recommendations: Suggestions for how to learn missing skills
+
+    Query params:
+    - include_recommendations: 'true' to include learning recommendations (default: true)
     """
     app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
 
@@ -678,9 +682,19 @@ def get_job_fit(app_id, current_user):
             "error": "Keine Anforderungen für diese Bewerbung vorhanden. Bitte zuerst Anforderungen analysieren."
         }), 400
 
+    include_recommendations = request.args.get("include_recommendations", "true").lower() == "true"
+
     try:
         calculator = JobFitCalculator()
         result = calculator.calculate_job_fit(current_user.id, app_id)
+
+        # Generate learning recommendations if there are missing/partial skills
+        if include_recommendations and (result.missing_skills or result.partial_matches):
+            recommendations = calculator.generate_learning_recommendations(
+                result.missing_skills,
+                result.partial_matches
+            )
+            result.learning_recommendations = recommendations
 
         return jsonify({
             "success": True,

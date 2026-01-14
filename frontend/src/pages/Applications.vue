@@ -276,6 +276,17 @@
                   @optimized="onATSOptimized"
                 />
               </div>
+
+              <!-- Gap Analysis / Learning Recommendations Section -->
+              <div v-if="jobFitData && (jobFitData.missing_skills?.length > 0 || jobFitData.partial_matches?.length > 0)" class="detail-group">
+                <label class="detail-label">Skill-Luecken & Lernempfehlungen</label>
+                <GapAnalysis
+                  :recommendations="jobFitData.learning_recommendations || []"
+                  :missing-skills="jobFitData.missing_skills || []"
+                  :partial-matches="jobFitData.partial_matches || []"
+                  :loading="jobFitLoading"
+                />
+              </div>
             </div>
 
             <div class="modal-footer">
@@ -459,6 +470,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
 import ATSOptimizer from '../components/ATSOptimizer.vue'
+import GapAnalysis from '../components/GapAnalysis.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -482,6 +494,10 @@ const emailForm = ref({
 })
 const isPreviewMode = ref(false)
 const isSendingEmail = ref(false)
+
+// Job-Fit / Gap Analysis State
+const jobFitData = ref(null)
+const jobFitLoading = ref(false)
 
 const stats = computed(() => {
   return {
@@ -534,6 +550,23 @@ const downloadPDF = async (id) => {
 
 const openDetails = (app) => {
   selectedApp.value = { ...app }
+  loadJobFitData(app.id)
+}
+
+const loadJobFitData = async (appId) => {
+  jobFitData.value = null
+  jobFitLoading.value = true
+  try {
+    const { data } = await api.get(`/applications/${appId}/job-fit?include_recommendations=true`)
+    if (data.success) {
+      jobFitData.value = data.job_fit
+    }
+  } catch (err) {
+    // Silently fail - job fit data is optional
+    console.log('Job-Fit Daten nicht verfuegbar:', err.response?.data?.error || err.message)
+  } finally {
+    jobFitLoading.value = false
+  }
 }
 
 const closeDetails = () => {
