@@ -2,10 +2,11 @@ import json
 import os
 
 from config import config
-from models import Application, Document, Template, db
+from models import Application, Document, JobRequirement, Template, db
 
 from .api_client import ClaudeAPIClient
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
+from .requirement_analyzer import RequirementAnalyzer
 
 
 class BewerbungsGenerator:
@@ -174,6 +175,9 @@ class BewerbungsGenerator:
         db.session.add(application)
         db.session.commit()
 
+        # Extract and save job requirements in background
+        self._extract_requirements(application.id, stellenanzeige_text)
+
         # Zeige Email-Informationen an
         print(f"\n{'=' * 60}")
         print("📧 EMAIL-INFORMATIONEN")
@@ -209,3 +213,37 @@ class BewerbungsGenerator:
         except Exception as e:
             print(f"✗ Fehler bei {firma_config.get('name', 'unbekannt')}: {str(e)}")
             return None
+
+    def _extract_requirements(self, application_id: int, job_text: str) -> None:
+        """Extract job requirements from job posting text and save to database.
+
+        This runs silently and doesn't block the main application generation.
+        Errors are logged but don't cause the main flow to fail.
+        """
+        try:
+            print("→ Extrahiere Anforderungen aus Stellenanzeige...")
+            analyzer = RequirementAnalyzer()
+            requirements = analyzer.analyze_requirements(job_text)
+
+            if not requirements:
+                print("  → Keine Anforderungen gefunden")
+                return
+
+            # Save requirements to database
+            for req_data in requirements:
+                requirement = JobRequirement(
+                    application_id=application_id,
+                    requirement_text=req_data["requirement_text"],
+                    requirement_type=req_data["requirement_type"],
+                    skill_category=req_data.get("skill_category"),
+                )
+                db.session.add(requirement)
+
+            db.session.commit()
+
+            must_have_count = sum(1 for r in requirements if r["requirement_type"] == "must_have")
+            nice_to_have_count = len(requirements) - must_have_count
+            print(f"✓ {len(requirements)} Anforderungen extrahiert ({must_have_count} Pflicht, {nice_to_have_count} Optional)")
+
+        except Exception as e:
+            print(f"⚠ Anforderungs-Extraktion fehlgeschlagen: {str(e)}")

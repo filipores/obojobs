@@ -29,6 +29,7 @@ class Application(db.Model):
     # Relationships
     user = db.relationship("User", back_populates="applications")
     template = db.relationship("Template", back_populates="applications")
+    requirements = db.relationship("JobRequirement", back_populates="application", cascade="all, delete-orphan")
 
     def to_dict(self):
         return {

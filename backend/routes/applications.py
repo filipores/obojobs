@@ -18,8 +18,9 @@ from middleware.subscription_limit import (
     get_subscription_usage,
     increment_application_count,
 )
-from models import Application, Template, db
+from models import Application, JobRequirement, Template, db
 from services.generator import BewerbungsGenerator
+from services.requirement_analyzer import RequirementAnalyzer
 from services.web_scraper import WebScraper
 
 applications_bp = Blueprint("applications", __name__)
@@ -536,3 +537,115 @@ def _get_status_label(status):
         "zusage": "Zusage",
     }
     return labels.get(status, status or "")
+
+
+@applications_bp.route("/<int:app_id>/requirements", methods=["GET"])
+@jwt_required_custom
+def get_requirements(app_id, current_user):
+    """Get job requirements for an application."""
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Application not found"}), 404
+
+    # Get requirements from database
+    requirements = JobRequirement.query.filter_by(application_id=app_id).all()
+
+    # Group requirements by type
+    must_have = [r.to_dict() for r in requirements if r.requirement_type == "must_have"]
+    nice_to_have = [r.to_dict() for r in requirements if r.requirement_type == "nice_to_have"]
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "application_id": app_id,
+            "must_have": must_have,
+            "nice_to_have": nice_to_have,
+            "total": len(requirements),
+        }
+    }), 200
+
+
+@applications_bp.route("/<int:app_id>/analyze-requirements", methods=["POST"])
+@jwt_required_custom
+def analyze_requirements(app_id, current_user):
+    """Analyze and extract requirements from job posting for an application.
+
+    This endpoint uses Claude API to extract requirements from the job posting text
+    stored in the application's notizen field or from a provided URL.
+    """
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Application not found"}), 404
+
+    data = request.json or {}
+    job_text = data.get("job_text")
+
+    # If no job_text provided, try to get it from the application's source
+    if not job_text:
+        # Try to use notizen as fallback (might contain job description)
+        if app.notizen:
+            job_text = app.notizen
+        # Or try to scrape from quelle URL if it's a valid URL
+        elif app.quelle and app.quelle.startswith(("http://", "https://")):
+            try:
+                scraper = WebScraper()
+                job_data = scraper.fetch_job_posting(app.quelle)
+                job_text = job_data.get("text", "")
+            except Exception:
+                pass
+
+    if not job_text:
+        return jsonify({
+            "success": False,
+            "error": "Kein Stellentext vorhanden. Bitte gib den Stellentext an."
+        }), 400
+
+    try:
+        # Analyze requirements using Claude
+        analyzer = RequirementAnalyzer()
+        extracted_requirements = analyzer.analyze_requirements(job_text)
+
+        if not extracted_requirements:
+            return jsonify({
+                "success": False,
+                "error": "Keine Anforderungen gefunden. Bitte überprüfe den Stellentext."
+            }), 400
+
+        # Delete existing requirements for this application
+        JobRequirement.query.filter_by(application_id=app_id).delete()
+
+        # Save new requirements
+        for req_data in extracted_requirements:
+            requirement = JobRequirement(
+                application_id=app_id,
+                requirement_text=req_data["requirement_text"],
+                requirement_type=req_data["requirement_type"],
+                skill_category=req_data.get("skill_category"),
+            )
+            db.session.add(requirement)
+
+        db.session.commit()
+
+        # Get the saved requirements
+        requirements = JobRequirement.query.filter_by(application_id=app_id).all()
+        must_have = [r.to_dict() for r in requirements if r.requirement_type == "must_have"]
+        nice_to_have = [r.to_dict() for r in requirements if r.requirement_type == "nice_to_have"]
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "application_id": app_id,
+                "must_have": must_have,
+                "nice_to_have": nice_to_have,
+                "total": len(requirements),
+            },
+            "message": f"{len(requirements)} Anforderungen extrahiert"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der Anforderungs-Analyse: {str(e)}"
+        }), 500
