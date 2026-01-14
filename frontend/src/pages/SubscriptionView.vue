@@ -149,10 +149,12 @@
             </p>
             <div class="upgrade-buttons">
               <button @click="handleUpgrade('basic')" class="zen-btn zen-btn-filled" :disabled="isUpgrading">
-                Basic - 9,99 EUR/Monat
+                <span v-if="upgradingPlan === 'basic'" class="btn-spinner"></span>
+                {{ upgradingPlan === 'basic' ? 'Wird geladen...' : 'Basic - 9,99 EUR/Monat' }}
               </button>
               <button @click="handleUpgrade('pro')" class="zen-btn zen-btn-ai" :disabled="isUpgrading">
-                Pro - 19,99 EUR/Monat
+                <span v-if="upgradingPlan === 'pro'" class="btn-spinner"></span>
+                {{ upgradingPlan === 'pro' ? 'Wird geladen...' : 'Pro - 19,99 EUR/Monat' }}
               </button>
             </div>
           </div>
@@ -202,7 +204,8 @@
               :class="plan.plan_id === 'pro' ? 'zen-btn-ai' : 'zen-btn-filled'"
               :disabled="isUpgrading"
             >
-              {{ getUpgradeButtonText(plan.plan_id) }}
+              <span v-if="upgradingPlan === plan.plan_id" class="btn-spinner"></span>
+              {{ upgradingPlan === plan.plan_id ? 'Wird geladen...' : getUpgradeButtonText(plan.plan_id) }}
             </button>
           </div>
         </div>
@@ -226,6 +229,7 @@ const subscription = ref(null)
 const availablePlans = ref([])
 const isPortalLoading = ref(false)
 const isUpgrading = ref(false)
+const upgradingPlan = ref(null) // Track which plan is being upgraded to
 const errorMessage = ref('')
 
 const usagePercentage = computed(() => {
@@ -279,6 +283,7 @@ const handleOpenPortal = async () => {
 
 const handleUpgrade = async (planId) => {
   isUpgrading.value = true
+  upgradingPlan.value = planId
   errorMessage.value = ''
 
   try {
@@ -287,6 +292,7 @@ const handleUpgrade = async (planId) => {
     errorMessage.value = err.message || 'Fehler beim Starten des Checkouts'
   } finally {
     isUpgrading.value = false
+    upgradingPlan.value = null
   }
 }
 
@@ -619,6 +625,29 @@ onMounted(() => {
   gap: var(--space-md);
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* Button Spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: var(--space-sm);
+  vertical-align: middle;
+}
+
+.zen-btn-ai .btn-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+}
+
+.zen-btn-filled .btn-spinner {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: white;
 }
 
 /* ========================================

@@ -44,7 +44,7 @@
         "Coverage Report wird generiert"
       ],
       "priority": 3,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -60,7 +60,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -76,7 +76,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -91,7 +91,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 6,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -106,7 +106,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 7,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
