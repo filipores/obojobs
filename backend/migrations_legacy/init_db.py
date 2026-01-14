@@ -9,7 +9,23 @@ import os
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from models import db, User, Document, Template, Application, APIKey
+# Import all models to ensure all tables are created
+from models import (
+    db,
+    User,
+    Document,
+    Template,
+    Application,
+    APIKey,
+    Subscription,
+    TokenBlacklist,
+    ATSAnalysis,
+    EmailAccount,
+    UserSkill,
+    JobRequirement,
+    InterviewQuestion,
+    JobRecommendation,
+)
 
 
 def init_database(app):

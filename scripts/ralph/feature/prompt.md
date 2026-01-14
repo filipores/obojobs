@@ -10,7 +10,13 @@ Implementiere User Stories aus `scripts/ralph/feature/prd.json` eine nach der an
 
 1. **Story finden**: Lies PRD, nimm Story mit `passes: false` und niedrigster `priority`
 2. **Implementieren**: Erfülle ALLE Acceptance Criteria, befolge AGENTS.md
-3. **DB-Migration**: Falls neue Tabellen/Spalten → Migration ausführen
+3. **DB-Migration**: Falls neue/geänderte Models:
+   ```bash
+   cd backend && source venv/bin/activate
+   FLASK_APP=app.py flask db migrate -m "Add/Update: Beschreibung"
+   FLASK_APP=app.py flask db upgrade
+   ```
+   **WICHTIG**: Model-Import in `app.py` hinzufügen falls neues Model!
 4. **Quality Checks**:
    ```bash
    cd backend && source venv/bin/activate && pytest && ruff check .

@@ -3,9 +3,19 @@ from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
+from flask_migrate import Migrate
 
 from config import config
 from models import db
+# Import all models for Flask-Migrate to detect them
+from models import (  # noqa: F401
+    User, Document, Template, Application, APIKey,
+    Subscription, TokenBlacklist, ATSAnalysis, EmailAccount,
+    UserSkill, JobRequirement, InterviewQuestion, JobRecommendation,
+)
+
+# Initialize Flask-Migrate globally for CLI access
+migrate = Migrate()
 
 
 def create_app():
@@ -17,6 +27,7 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
+    migrate.init_app(app, db)
     CORS(app, origins=config.CORS_ORIGINS)
     jwt = JWTManager(app)
 
