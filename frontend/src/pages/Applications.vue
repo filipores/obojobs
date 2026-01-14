@@ -290,14 +290,30 @@
               </div>
 
               <!-- Gap Analysis / Learning Recommendations Section -->
-              <div v-if="jobFitData && (jobFitData.missing_skills?.length > 0 || jobFitData.partial_matches?.length > 0)" class="detail-group">
+              <div class="detail-group">
                 <label class="detail-label">Skill-Luecken & Lernempfehlungen</label>
+                <div v-if="jobFitLoading" class="gap-loading-state">
+                  <div class="loading-spinner"></div>
+                  <span>Lade Skill-Analyse...</span>
+                </div>
                 <GapAnalysis
+                  v-else-if="jobFitData"
                   :recommendations="jobFitData.learning_recommendations || []"
                   :missing-skills="jobFitData.missing_skills || []"
                   :partial-matches="jobFitData.partial_matches || []"
-                  :loading="jobFitLoading"
+                  :loading="false"
                 />
+                <div v-else class="gap-empty-state">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <div>
+                    <strong>Keine Skill-Analyse verfuegbar</strong>
+                    <p>Analysieren Sie zuerst die Stellenanforderungen, um Skill-Luecken und Lernempfehlungen zu erhalten.</p>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -1599,5 +1615,59 @@ watch(() => route.query.firma, (newFirma) => {
   .footer-actions .zen-btn {
     flex: 1;
   }
+}
+
+/* Gap Analysis States */
+.gap-loading-state {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+  color: var(--color-text-secondary);
+}
+
+.gap-loading-state .loading-spinner {
+  width: 20px;
+  height: 20px;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-ai);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.gap-empty-state {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-washi-aged);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.gap-empty-state svg {
+  flex-shrink: 0;
+  color: var(--color-ai);
+  opacity: 0.7;
+}
+
+.gap-empty-state strong {
+  display: block;
+  color: var(--color-sumi);
+  margin-bottom: var(--space-xs);
+  font-size: 0.9375rem;
+}
+
+.gap-empty-state p {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }
 </style>
