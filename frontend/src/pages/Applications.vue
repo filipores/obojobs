@@ -402,7 +402,11 @@
                     type="email"
                     placeholder="email@beispiel.de"
                     class="form-input"
+                    :class="{ 'input-warning': !emailComposerApp?.email && !emailForm.to }"
                   />
+                  <p v-if="!emailComposerApp?.email && !emailForm.to" class="field-hint warning">
+                    Keine Kontakt-Email in Bewerbungsdaten gefunden. Bitte manuell eingeben.
+                  </p>
                 </div>
 
                 <!-- Subject Field -->
@@ -1464,6 +1468,22 @@ watch(() => route.query.firma, (newFirma) => {
   line-height: var(--leading-relaxed);
   font-family: inherit;
   resize: vertical;
+}
+
+/* Input Warning State */
+.input-warning {
+  border-color: var(--color-terra);
+}
+
+/* Field Hint */
+.field-hint {
+  font-size: 0.8125rem;
+  margin-top: var(--space-xs);
+  color: var(--color-text-secondary);
+}
+
+.field-hint.warning {
+  color: var(--color-terra);
 }
 
 /* Attachment Info */
