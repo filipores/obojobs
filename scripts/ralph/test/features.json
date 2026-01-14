@@ -1,295 +1,6 @@
 {
   "features": [
     {
-      "id": "ANALYTICS-002",
-      "commit_hash": "cdcb397",
-      "message": "feat: ANALYTICS-002 - Timeline View",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/migrations/add_status_history.py",
-        "backend/models/application.py",
-        "backend/routes/applications.py",
-        "backend/services/generator.py",
-        "frontend/src/App.vue",
-        "frontend/src/pages/Timeline.vue",
-        "frontend/src/router/index.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "ANALYTICS-003",
-      "commit_hash": "0d6c756",
-      "message": "feat: ANALYTICS-003 - Company Insights",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/stats.py",
-        "frontend/src/pages/Applications.vue",
-        "frontend/src/pages/CompanyInsights.vue",
-        "frontend/src/router/index.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "ANALYTICS-004",
-      "commit_hash": "08fb838",
-      "message": "feat: ANALYTICS-004 - Export Funktionalität",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/applications.py",
-        "frontend/src/pages/Applications.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "ATS-004",
-      "commit_hash": "9b55d89",
-      "message": "feat: [ATS-004] - ATS Dashboard View",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/src/App.vue",
-        "frontend/src/pages/ATSView.vue",
-        "frontend/src/router/index.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "ATS-006",
-      "commit_hash": "461b9b2",
-      "message": "feat: [ATS-006] - ATS History & Caching",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/models/__init__.py",
-        "backend/models/ats_analysis.py",
-        "backend/routes/ats.py",
-        "backend/tests/test_ats_routes.py",
-        "frontend/src/pages/ATSView.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "AUTH-001",
-      "commit_hash": "72ed60e",
-      "message": "feat: [AUTH-001] - Passwort-Stärke Validierung",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/auth.py",
-        "backend/services/auth_service.py",
-        "backend/services/password_validator.py",
-        "backend/tests/conftest.py",
-        "backend/tests/test_auth.py",
-        "frontend/src/__tests__/PasswordValidation.test.js",
-        "frontend/src/pages/Register.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "AUTH-004",
-      "commit_hash": "6821365",
-      "message": "feat: [AUTH-004] - Email-Verifizierung Frontend Flow",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/src/__tests__/EmailVerification.test.js",
-        "frontend/src/pages/Dashboard.vue",
-        "frontend/src/pages/EmailVerification.vue",
-        "frontend/src/pages/Register.vue",
-        "frontend/src/pages/VerifyEmail.vue",
-        "frontend/src/router/index.js",
-        "frontend/src/store/auth.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "AUTH-006",
-      "commit_hash": "610a5e2",
-      "message": "feat: [AUTH-006] - Passwort-Reset Frontend Flow",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/src/__tests__/PasswordReset.test.js",
-        "frontend/src/pages/ForgotPassword.vue",
-        "frontend/src/pages/Login.vue",
-        "frontend/src/pages/ResetPassword.vue",
-        "frontend/src/router/index.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "AUTH-008",
-      "commit_hash": "bb95b1f",
-      "message": "feat: [AUTH-008] - Passwort ändern (eingeloggt)",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/auth.py",
-        "backend/services/auth_service.py",
-        "backend/tests/test_auth.py",
-        "frontend/src/pages/Settings.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "AUTH-009",
-      "commit_hash": "dde32a7",
-      "message": "feat: [AUTH-009] - Logout Endpoint",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/app.py",
-        "backend/migrations/add_token_blacklist.py",
-        "backend/models/__init__.py",
-        "backend/models/token_blacklist.py",
-        "backend/routes/auth.py",
-        "backend/tests/test_auth.py",
-        "frontend/src/App.vue",
-        "frontend/src/store/auth.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "EMAIL-004",
-      "commit_hash": "4b26838",
-      "message": "feat: [EMAIL-004] - Email Provider Management UI",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/email.py",
-        "frontend/src/pages/Settings.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "EMAIL-005",
-      "commit_hash": "974e6e8",
-      "message": "feat: [EMAIL-005] - Email Composer",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/src/pages/Applications.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "EMAIL-006",
-      "commit_hash": "7602598",
-      "message": "feat: [EMAIL-006] - Email Versand mit Attachments",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/email.py",
-        "backend/services/gmail_service.py",
-        "backend/services/outlook_service.py",
-        "frontend/src/pages/Applications.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "EMAIL-007",
-      "commit_hash": "bb9b3a6",
-      "message": "feat: [EMAIL-007] - Sent Tracking & Status Update",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/migrations/add_application_sent_tracking.py",
-        "backend/models/application.py",
-        "backend/routes/email.py",
-        "frontend/src/pages/Applications.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "INFRA-005",
-      "commit_hash": "22be7c2",
-      "message": "feat: [INFRA-005] - Frontend: Vitest Setup",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/package-lock.json",
-        "frontend/package.json",
-        "frontend/src/__tests__/setup.test.js",
-        "frontend/vitest.config.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "INFRA-006",
-      "commit_hash": "d0eee14",
-      "message": "feat: [INFRA-006] - Frontend: Erste Component Tests",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/src/__tests__/Toast.test.js"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "INFRA-007",
-      "commit_hash": "077f6b8",
-      "message": "feat: [INFRA-007] - Frontend: ESLint Setup",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/eslint.config.js",
-        "frontend/package-lock.json",
-        "frontend/package.json"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "INFRA-008",
-      "commit_hash": "ce315dc",
-      "message": "feat: [INFRA-008] - Frontend: Bestehenden Code lint-konform machen",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/eslint.config.js",
-        "frontend/src/components/TemplateEditor/TemplateEditor.vue",
-        "frontend/src/pages/Applications.vue",
-        "frontend/src/pages/BuyCredits.vue",
-        "frontend/src/pages/PaymentSuccess.vue",
-        "frontend/src/pages/Settings.vue",
-        "frontend/src/pages/Templates.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "JOBS-004",
-      "commit_hash": "8440a29",
-      "message": "feat: JOBS-004 - Job Import UI Enhancement",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/applications.py",
-        "frontend/src/pages/NewApplication.vue"
-      ],
-      "tested": false,
-      "test_result": null
-    },
-    {
       "id": "NEW-001",
       "commit_hash": "af49079",
       "message": "feat: NEW-001 - Manueller Stellentext-Import als Fallback",
@@ -302,8 +13,66 @@
         "frontend/src/components/JobRecommendations.vue",
         "frontend/src/pages/NewApplication.vue"
       ],
-      "tested": false,
-      "test_result": null
+      "tested": true,
+      "test_result": {
+        "feature_id": "NEW-001",
+        "tested_at": "2026-01-14T12:45:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Automatische Extraktion von Kontaktdaten aus manuellem Text verbessern",
+            "description": "Bei der manuellen Texteingabe wurden Standort (Berlin), Ansprechpartner (Max Mustermann) und Kontakt-Email (hr@ralf-test.de) nicht automatisch aus dem Text extrahiert, obwohl diese Informationen vorhanden waren. Die AI-Analyse könnte diese Felder automatisch befüllen.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Fehlermeldung im Error-Banner kürzen",
+            "description": "Die technische Fehlermeldung (HTTPSConnectionPool, NameResolutionError etc.) ist für Endbenutzer zu technisch. Eine benutzerfreundlichere Meldung wie 'Die Stellenanzeige konnte nicht geladen werden' wäre besser.",
+            "priority": "low"
+          }
+        ],
+        "test_coverage": {
+          "new_application_page": {
+            "url_input": "PASS",
+            "portal_detection": "PASS",
+            "error_with_fallback_button": "PASS",
+            "manual_fallback_form": "PASS",
+            "manual_text_analysis": "PASS",
+            "preview_generation": "PASS"
+          },
+          "job_recommendations": {
+            "analyze_modal": "PASS",
+            "url_input": "PASS",
+            "error_with_fallback_link": "PASS",
+            "manual_input_form": "PASS"
+          },
+          "responsive": {
+            "mobile_375x667": "PASS",
+            "desktop_1280x720": "PASS"
+          },
+          "dark_mode": "PASS"
+        },
+        "screenshots": [
+          "new-001-error-with-fallback.png",
+          "new-001-manual-fallback-form.png",
+          "new-001-manual-form-filled.png",
+          "new-001-preview-after-analysis.png",
+          "new-001-preview-top.png",
+          "new-001-mobile-initial.png",
+          "new-001-mobile-error-fallback.png",
+          "new-001-mobile-manual-form.png",
+          "new-001-dark-mode-form.png",
+          "new-001-dark-mode-full.png",
+          "new-001-job-recommendations-modal.png",
+          "new-001-recommendations-error-fallback.png",
+          "new-001-recommendations-manual-form.png"
+        ],
+        "found": true
+      }
     },
     {
       "id": "NEW-002",
@@ -314,8 +83,28 @@
       "changed_files": [
         "frontend/src/pages/MockInterview.vue"
       ],
-      "tested": false,
-      "test_result": null
+      "tested": true,
+      "test_result": {
+        "feature_id": "NEW-002",
+        "tested_at": "2026-01-14T22:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Timer-Sound-Feedback könnte optional sein",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "Visuelles Feedback bei Timer-Warnung (10 Sek) könnte stärker sein",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "NEW-003",
@@ -326,8 +115,75 @@
       "changed_files": [
         "frontend/src/pages/NewApplication.vue"
       ],
-      "tested": false,
-      "test_result": null
+      "tested": true,
+      "test_result": {
+        "feature_id": "NEW-003",
+        "tested_at": "2026-01-14T12:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Alte Fehlermeldung bleibt nach manuellem Fallback sichtbar",
+            "steps_to_reproduce": [
+              "Auf /new-application navigieren",
+              "Eine StepStone-URL eingeben und auf 'Stellenanzeige laden' klicken",
+              "Fehler 403 erscheint mit manuellem Fallback-Option",
+              "Auf 'Stellentext manuell einfügen' klicken",
+              "Formular ausfüllen und 'Stellentext analysieren' klicken"
+            ],
+            "expected": "Die alte Fehlermeldung (403 Forbidden) sollte verschwinden, wenn der manuelle Flow erfolgreich abgeschlossen wird",
+            "actual": "Die alte Fehlermeldung bleibt unten im Preview sichtbar, obwohl 'Stellentext analysiert!' Toast erscheint",
+            "affected_component": "frontend/src/pages/NewApplication.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Inkonsistente Umlaute in Fehlermeldung (Anforderungsanalyse)",
+            "steps_to_reproduce": [
+              "Stellentext manuell analysieren lassen",
+              "Anforderungsanalyse-Box betrachten"
+            ],
+            "expected": "Einheitliche deutsche Umlaute (ö, ü, etc.)",
+            "actual": "Gemischte Schreibweisen: 'Anforderungsanalyse nicht moeglich' (Überschrift) vs 'Anforderungsanalyse nicht möglich' (Text) und 'koennen' vs 'können', 'verfuegbar' vs 'verfügbar'",
+            "affected_component": "frontend/src/pages/NewApplication.vue"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "trivial",
+            "title": "Keine Client-seitige URL-Validierung vor Submit",
+            "steps_to_reproduce": [
+              "Auf /new-application navigieren",
+              "Ungültige URL eingeben (z.B. 'ungültige-url-test')",
+              "Button 'Stellenanzeige laden' ist aktiv und klickbar"
+            ],
+            "expected": "Button sollte disabled bleiben oder visuelle Warnung bei offensichtlich ungültiger URL (ohne http/https)",
+            "actual": "Button ist aktiv, Fehler wird erst nach Server-Request angezeigt (400 Bad Request)",
+            "affected_component": "frontend/src/pages/NewApplication.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Job-Portal-Badge sollte auch bei manuellem Eingabe-Flow angezeigt werden",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Echtzeit-URL-Validierung mit visueller Feedback (grün/rot) vor Submit",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Standort und Anstellungsart sollten aus manuellem Stellentext extrahiert werden",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "NEW-004",
@@ -338,8 +194,30 @@
       "changed_files": [
         "frontend/src/components/ATSOptimizer.vue"
       ],
-      "tested": false,
-      "test_result": null
+      "tested": true,
+      "test_result": {
+        "feature_id": "NEW-004",
+        "tested_at": "2026-01-14T22:15:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Hinweis bei fehlendem Stellentext ergaenzen",
+            "description": "Im manuellen Modus koennte ein zusaetzlicher Hinweis erscheinen, dass fuer den ATS-Check auch eine Stellenbeschreibung benoetigt wird, bevor der User den Check startet.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Textarea Mindesthoehe auf Mobile anpassen",
+            "description": "Die Textarea koennte auf mobilen Geraeten etwas mehr Hoehe haben fuer bessere Lesbarkeit bei laengeren Texten.",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "NEW-005",
@@ -350,8 +228,22 @@
       "changed_files": [
         "frontend/src/pages/MockInterview.vue"
       ],
-      "tested": false,
-      "test_result": null
+      "tested": true,
+      "test_result": {
+        "feature_id": "NEW-005",
+        "tested_at": "2026-01-14T22:45:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Sticky navigation overlaps hint box on some scroll positions",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "QUAL-001",
@@ -371,8 +263,43 @@
         "frontend/src/components/SkillsOverview.vue",
         "frontend/src/pages/Documents.vue"
       ],
-      "tested": false,
-      "test_result": null
+      "tested": true,
+      "test_result": {
+        "feature_id": "QUAL-001",
+        "tested_at": "2026-01-14T12:45:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Keine Fehlermeldung bei Duplikat-Skill",
+            "steps_to_reproduce": [
+              "1. Zur Dokumente-Seite navigieren",
+              "2. 'Skill hinzufügen' klicken",
+              "3. Einen bereits existierenden Skill-Namen eingeben (z.B. 'JavaScript')",
+              "4. Kategorie auswählen und 'Hinzufügen' klicken"
+            ],
+            "expected": "Eine Fehlermeldung wie 'Skill existiert bereits' sollte angezeigt werden",
+            "actual": "Modal bleibt offen ohne Feedback, 409 CONFLICT Error nur in Console sichtbar",
+            "affected_component": "frontend/src/components/SkillsOverview.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Umlaute in Button-Texten verwenden ('hinzufügen' statt 'hinzufugen', 'Löschen' statt 'Loschen')",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Loading-State während 'Neu extrahieren' anzeigen",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "STRIPE-001",
@@ -390,165 +317,30 @@
         "frontend/package.json",
         "frontend/src/composables/useStripe.js"
       ],
-      "tested": false,
-      "test_result": null
-    },
-    {
-      "id": "ADV-001",
-      "commit_hash": "093a08f",
-      "message": "feat: ADV-001 - Smart Job Recommendations",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/app.py",
-        "backend/migrations/add_job_recommendations.py",
-        "backend/models/__init__.py",
-        "backend/models/job_recommendation.py",
-        "backend/models/user.py",
-        "backend/routes/recommendations.py",
-        "backend/services/job_recommender.py",
-        "frontend/src/components/JobRecommendations.vue",
-        "frontend/src/pages/Dashboard.vue"
-      ],
       "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "ADV-002",
-      "commit_hash": "1666a77",
-      "message": "feat: ADV-002 - Gehaltsverhandlungs-Coach",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/app.py",
-        "backend/routes/salary.py",
-        "backend/services/salary_coach.py",
-        "frontend/src/components/SalaryCoach.vue",
-        "frontend/src/pages/InterviewPrep.vue"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "INT-002",
-      "commit_hash": "2526658",
-      "message": "feat: INT-002 - Interview-Prep UI",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/src/pages/Applications.vue",
-        "frontend/src/pages/InterviewPrep.vue",
-        "frontend/src/pages/MockInterview.vue",
-        "frontend/src/router/index.js"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "INT-003",
-      "commit_hash": "c7f4cb6",
-      "message": "feat: INT-003 - Text-basiertes Mock-Interview",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/applications.py",
-        "backend/services/interview_evaluator.py",
-        "frontend/src/pages/MockInterview.vue"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "INT-004",
-      "commit_hash": "a86cd4c",
-      "message": "feat: INT-004 - STAR-Methode Coach",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/applications.py",
-        "backend/services/star_analyzer.py",
-        "frontend/src/components/STARFeedback.vue",
-        "frontend/src/pages/MockInterview.vue"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "INT-005",
-      "commit_hash": "fe1fcb5",
-      "message": "feat: INT-005 - Firmen-Recherche Integration",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/app.py",
-        "backend/routes/companies.py",
-        "backend/services/company_researcher.py",
-        "frontend/src/components/CompanyResearch.vue",
-        "frontend/src/pages/InterviewPrep.vue"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "INT-006",
-      "commit_hash": "f94aa9e",
-      "message": "feat: INT-006 - Interview-Ergebnis Tracking",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/migrations/add_interview_tracking.py",
-        "backend/models/application.py",
-        "backend/routes/applications.py",
-        "frontend/src/components/InterviewStatsWidget.vue",
-        "frontend/src/components/InterviewTracker.vue",
-        "frontend/src/pages/Applications.vue",
-        "frontend/src/pages/Dashboard.vue"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "QUAL-004",
-      "commit_hash": "7e653f7",
-      "message": "feat: QUAL-004 - Job-Fit Score UI",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/applications.py",
-        "frontend/src/components/JobFitScore.vue",
-        "frontend/src/pages/NewApplication.vue"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "QUAL-006",
-      "commit_hash": "fe47cac",
-      "message": "feat: QUAL-006 - ATS-Score UI mit Verbesserungen",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/applications.py",
-        "frontend/src/components/ATSOptimizer.vue",
-        "frontend/src/pages/Applications.vue"
-      ],
-      "tested": true,
-      "test_result": null
-    },
-    {
-      "id": "QUAL-007",
-      "commit_hash": "fc3ad8c",
-      "message": "feat: QUAL-007 - Gap-Analyse mit Lernempfehlungen",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/routes/applications.py",
-        "backend/services/job_fit_calculator.py",
-        "frontend/src/components/GapAnalysis.vue",
-        "frontend/src/pages/Applications.vue"
-      ],
-      "tested": true,
-      "test_result": null
+      "test_result": {
+        "feature_id": "STRIPE-001",
+        "tested_at": "2026-01-14T12:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Improve error message for unconfigured Stripe plans",
+            "description": "When Stripe price IDs are not configured, the error message 'Plan not configured' is technical. Consider a more user-friendly message like 'This plan is currently unavailable. Please contact support.'",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Add loading state to upgrade buttons",
+            "description": "The upgrade buttons could show a spinner/loading indicator while the checkout session is being created to provide better feedback",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
     }
   ]
 }

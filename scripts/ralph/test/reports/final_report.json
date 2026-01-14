@@ -1,293 +1,441 @@
 {
   "report_type": "ralph_test_report",
-  "generated_at": "2026-01-14T12:28:24+00:00",
+  "generated_at": "2026-01-14T16:31:11Z",
   "summary": {
-    "total_features": 11,
-    "tested_features": 10,
-    "coverage_percent": 90
+    "total_features": 36,
+    "tested_features": 30,
+    "coverage_percent": 83
   },
   "bugs": {
     "total": 6,
     "by_severity": {
       "critical": 0,
-      "major": 2,
-      "minor": 3,
-      "trivial": 1
+      "major": 1,
+      "minor": 5,
+      "trivial": 0
     },
     "items": [
       {
         "id": "BUG-001",
-        "severity": "minor",
-        "title": "Modal-State wird nicht zurückgesetzt beim erneuten Öffnen",
-        "description": "Wenn das Analyse-Modal geschlossen und erneut geöffnet wird (über 'Job analysieren' oder 'Erste Stelle analysieren' Button), bleiben die vorherige URL-Eingabe und Fehlermeldung erhalten. Der Modal-State sollte beim Schließen zurückgesetzt werden.",
-        "steps_to_reproduce": [
-          "Dashboard öffnen",
-          "Auf 'Job analysieren' klicken",
-          "Eine URL eingeben und 'Analysieren' klicken",
-          "Modal schließen",
-          "Erneut auf 'Job analysieren' oder 'Erste Stelle analysieren' klicken"
-        ],
-        "expected": "Modal öffnet sich mit leerem URL-Feld und ohne Fehlermeldung",
-        "actual": "Modal zeigt noch die vorherige URL und Fehlermeldung an",
-        "screenshot": "adv001-mobile-modal.png",
-        "affected_component": "JobRecommendations.vue"
-      },
-      {
-        "id": "BUG-001",
         "severity": "major",
-        "title": "Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt",
-        "description": "Obwohl Interview-Fragen in der Datenbank existieren und die API sie erfolgreich zurückgibt (200 OK), werden sie auf der Interview-Vorbereitung Seite (/applications/:id/interview) nicht angezeigt. Stattdessen erscheint 'Keine Interview-Fragen vorhanden'.",
+        "title": "Details-Link führt nicht zur spezifischen Bewerbung",
         "steps_to_reproduce": [
-          "Navigiere zu /applications/2/interview",
-          "Warte bis die Seite geladen ist",
-          "Beobachte: 'Keine Interview-Fragen vorhanden' obwohl Fragen existieren"
+          "Timeline-Seite öffnen (/timeline)",
+          "Auf 'Details' Button bei einer Bewerbung klicken"
         ],
-        "expected": "Die 3 existierenden Interview-Fragen sollten in der Liste angezeigt werden",
-        "actual": "Zeigt 'Keine Interview-Fragen vorhanden' obwohl API 200 OK mit Fragen zurückgibt",
-        "screenshot": null,
-        "affected_component": "InterviewPrep.vue:294",
-        "root_cause": "Datenpfad-Mismatch: InterviewPrep.vue erwartet `data.questions` als Array, aber API gibt `data.data.all_questions` zurück. Zeile 294: `questions.value = data.questions || []` sollte `questions.value = data.data?.all_questions || data.questions || []` sein."
-      },
-      {
-        "id": "BUG-002",
-        "severity": "minor",
-        "title": "415 UNSUPPORTED MEDIA TYPE beim Generieren von Fragen",
-        "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert 'Fehler beim Generieren der Interview-Fragen' mit HTTP 415 Fehler.",
-        "steps_to_reproduce": [
-          "Navigiere zu /applications/2/interview",
-          "Klicke auf 'Fragen generieren' Button",
-          "Beobachte: Alert mit Fehlermeldung erscheint"
-        ],
-        "expected": "Neue Interview-Fragen sollten generiert werden",
-        "actual": "HTTP 415 UNSUPPORTED MEDIA TYPE Fehler",
-        "screenshot": null,
-        "affected_component": "InterviewPrep.vue / Backend generate-questions endpoint",
-        "root_cause": "Wahrscheinlich fehlender Content-Type: application/json Header im API-Request"
-      },
-      {
-        "id": "BUG-001",
-        "severity": "major",
-        "title": "API-Fehler 415 beim Generieren von Interview-Fragen",
-        "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert 'Fehler beim Generieren der Interview-Fragen'. Die Console zeigt einen 415 UNSUPPORTED MEDIA TYPE Fehler.",
-        "steps_to_reproduce": [
-          "Navigiere zu /applications",
-          "Klicke auf 'Details' bei einer Bewerbung",
-          "Klicke auf 'Interview-Prep'",
-          "Klicke auf 'Fragen generieren'",
-          "Alert erscheint mit Fehlermeldung"
-        ],
-        "expected": "Interview-Fragen sollten generiert und angezeigt werden",
-        "actual": "Alert zeigt Fehlermeldung, Console zeigt 415 Error",
-        "screenshot": "N/A",
-        "affected_component": "InterviewPrep.vue"
+        "expected": "Link führt zur spezifischen Bewerbungsdetail-Seite (/applications/{id})",
+        "actual": "Link führt zur allgemeinen Bewerbungsübersicht (/applications)",
+        "affected_component": "frontend/src/pages/Timeline.vue:100"
       },
       {
         "id": "BUG-001",
         "severity": "minor",
-        "title": "GapAnalysis-Komponente wird nicht angezeigt bei fehlenden JobRequirements",
-        "description": "Die GapAnalysis-Komponente wird nur angezeigt, wenn die Bewerbung bereits analysierte JobRequirements hat. Bei Testdaten ohne Requirements wird die Komponente nicht gerendert und es erscheint nur eine Toast-Fehlermeldung. Dies ist technisch korrekt, aber die UX könnte verbessert werden.",
+        "title": "Backend-Fehlermeldungen teilweise auf Englisch",
         "steps_to_reproduce": [
-          "Navigiere zu /applications",
-          "Klicke auf 'Details' einer Bewerbung ohne analysierte Anforderungen",
-          "Beobachte, dass der Abschnitt 'Skill-Luecken & Lernempfehlungen' nicht erscheint"
+          "Zur Registrierungsseite navigieren",
+          "Formular mit bereits existierender E-Mail ausfüllen",
+          "Gültiges Passwort eingeben",
+          "Auf 'Kostenlos registrieren' klicken"
         ],
-        "expected": "Ein Hinweis sollte dem Benutzer erklären, dass zuerst Anforderungen analysiert werden müssen, um Lernempfehlungen zu erhalten",
-        "actual": "Die GapAnalysis-Sektion wird komplett ausgeblendet (v-if Bedingung in Applications.vue:293)",
-        "screenshot": "gap_analysis_not_visible.png",
-        "affected_component": "Applications.vue"
+        "expected": "Fehlermeldung auf Deutsch: 'Benutzer mit dieser E-Mail existiert bereits'",
+        "actual": "Fehlermeldung auf Englisch: 'User with this email already exists'",
+        "affected_component": "backend/services/auth_service.py:40"
       },
       {
-        "id": "BUG-002",
-        "severity": "trivial",
-        "title": "Mehrere identische Toast-Fehlermeldungen erscheinen gleichzeitig",
-        "description": "Beim Öffnen einer Bewerbung ohne Bewerbungstext erscheinen zwei identische Toast-Meldungen 'Kein Bewerbungstext vorhanden' gleichzeitig (von ATS-Check, der zweimal aufgerufen wird)",
+        "id": "BUG-001",
+        "severity": "minor",
+        "title": "Fehlermeldungen werden nicht lokalisiert (Englisch statt Deutsch)",
         "steps_to_reproduce": [
-          "Navigiere zu /applications",
-          "Klicke auf 'Details' einer Bewerbung ohne Bewerbungstext",
-          "Beobachte die Toast-Benachrichtigungen"
+          "Navigiere zu /verify-email?token=invalid-test-token",
+          "Warte auf API-Antwort",
+          "Beobachte die Fehlermeldung"
         ],
-        "expected": "Maximal eine Fehlermeldung pro Fehlertyp",
-        "actual": "Zwei identische Fehlermeldungen erscheinen gleichzeitig",
-        "screenshot": "gap_analysis_not_visible.png",
-        "affected_component": "Applications.vue, ATSOptimizer.vue"
+        "expected": "Deutsche Fehlermeldung wie 'Der Verifizierungs-Link ist ungültig. Bitte fordern Sie einen neuen Link an.'",
+        "actual": "Englische Fehlermeldung 'Invalid verification token' wird angezeigt",
+        "affected_component": "frontend/src/pages/VerifyEmail.vue:175-184"
+      },
+      {
+        "id": "BUG-001",
+        "severity": "minor",
+        "title": "Englischer Toast bei ungültigem Reset-Token zusätzlich zur deutschen Fehlerkarte",
+        "steps_to_reproduce": [
+          "Navigiere zu /reset-password?token=invalid-token",
+          "Gib ein gültiges Passwort ein (z.B. Test1234)",
+          "Gib das gleiche Passwort zur Bestätigung ein",
+          "Klicke auf 'Passwort ändern'"
+        ],
+        "expected": "Nur die deutsche Fehlerkarte 'Ungültiger Link' mit der Meldung 'Der Reset-Link ist abgelaufen/ungültig' wird angezeigt",
+        "actual": "Zusätzlich zur deutschen Fehlerkarte erscheint ein Toast mit englischem Text 'Invalid or expired reset token'",
+        "affected_component": "ResetPassword.vue"
+      },
+      {
+        "id": "BUG-001",
+        "severity": "minor",
+        "title": "Englische technische Fehlermeldungen werden Endnutzern angezeigt",
+        "steps_to_reproduce": [
+          "Zur Einstellungsseite navigieren (/settings)",
+          "Auf 'Mit Gmail verbinden' oder 'Mit Outlook verbinden' klicken",
+          "Beobachte die Toast-Benachrichtigung"
+        ],
+        "expected": "Deutsche, benutzerfreundliche Fehlermeldung wie 'E-Mail-Verbindung ist derzeit nicht konfiguriert. Bitte kontaktieren Sie den Administrator.'",
+        "actual": "Zwei Toasts erscheinen: 1) Technische englische Meldung 'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set' 2) Deutsche Meldung 'Fehler beim Verbinden mit Gmail'",
+        "affected_component": "backend/services/gmail_service.py:32-34, backend/services/outlook_service.py, backend/routes/email.py:98-102, frontend/src/api/client.js:34-39"
+      },
+      {
+        "id": "BUG-001",
+        "severity": "minor",
+        "title": "Coverage dependency not installed",
+        "steps_to_reproduce": [
+          "Navigate to frontend directory",
+          "Run: npx vitest run --coverage"
+        ],
+        "expected": "Coverage report should be generated as configured in vitest.config.js",
+        "actual": "Error: MISSING DEPENDENCY - Cannot find dependency '@vitest/coverage-v8'",
+        "affected_component": "frontend/package.json"
       }
     ]
   },
   "suggestions": {
-    "total": 24,
+    "total": 49,
     "by_type": {
-      "ux": 18,
+      "ux": 26,
       "performance": 0,
-      "accessibility": 1,
-      "feature": 5
+      "accessibility": 10,
+      "feature": 11
     },
     "items": [
       {
         "id": "SUG-001",
         "type": "ux",
-        "title": "Firmen-Recherche zeigt korrupte Zeichen",
-        "description": "Die Firmen-Recherche Sektion (CompanyResearch-Komponente) zeigt korrupte/unleserliche Zeichen im 'Über das Unternehmen' Bereich. Dies ist KEIN Bug im SalaryCoach (ADV-002) selbst, sondern ein separates Problem in der CompanyResearch-Komponente. Die Daten scheinen falsch encodiert oder korrupt zu sein.",
+        "title": "Details-Link auf spezifische Bewerbung verlinken",
+        "priority": "high"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "Klickbare Timeline-Karten für schnelleren Zugriff",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-003",
+        "type": "ux",
+        "title": "Visuelle Unterscheidung der verschiedenen Status in der Timeline (Farbkodierung der Timeline-Linie)",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Kein Navigationslink zu Company Insights",
+        "description": "Die Company Insights Seite ist nur über direkte URL erreichbar (/company-insights). Es fehlt ein Link in der Hauptnavigation oder auf der Bewerbungen-Seite.",
+        "priority": "high"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Mobile Tabellen-Darstellung verbessern",
+        "description": "Auf Mobile (375px) wird die Tabelle abgeschnitten. Der 'Bewerbungen'-Button ist nicht sichtbar. Ein horizontaler Scroll-Indikator oder eine Card-basierte Mobile-Ansicht wäre benutzerfreundlicher.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-003",
+        "type": "accessibility",
+        "title": "Leerer Spaltenheader in Tabelle",
+        "description": "Die letzte Spalte (mit dem Bewerbungen-Button) hat keinen sichtbaren Header-Text. Ein aria-label oder visueller Header wie 'Aktionen' würde die Barrierefreiheit verbessern.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "feature",
+        "title": "Export gefilterte Daten - Der Export exportiert immer ALLE Bewerbungen, nicht die aktuell gefilterten. Könnte für Nutzer mit vielen Bewerbungen nützlich sein, nur die gefilterte Auswahl zu exportieren.",
         "priority": "medium"
       },
       {
         "id": "SUG-002",
         "type": "ux",
-        "title": "Automatisches Aufklappen der SalaryCoach Section",
-        "description": "Der SalaryCoach-Bereich ist standardmäßig zugeklappt (showSalaryCoach = false). Für bessere Sichtbarkeit des neuen Features könnte man überlegen, den Bereich initial aufzuklappen oder einen visuellen Hinweis 'Neu' hinzuzufügen.",
+        "title": "Export-Feedback - Nach erfolgreichem Export könnte ein Toast/Snackbar angezeigt werden statt nur dem Browser-Download-Dialog.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-003",
+        "type": "feature",
+        "title": "Export-Format Auswahl - Excel (XLSX) Format als dritte Option könnte für Business-Nutzer nützlich sein.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Aktiver Tab-Status visuell deutlicher machen",
+        "description": "Der aktive Tab (URL/Text) könnte visuell stärker hervorgehoben werden für bessere Orientierung",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "accessibility",
+        "title": "Navigation Links auf Mobile haben keinen sichtbaren Text",
+        "description": "Auf Mobile sind die Navigations-Links (Dashboard, Dokumente, etc.) im Accessibility-Tree ohne Text. Das ist kein Bug da sie ausgeblendet sind, aber ein Screen-Reader könnte sie finden.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Visuelles Feedback beim Klick auf History-Eintrag",
+        "description": "Ein kurzer Hover-Effekt oder aktiver Zustand für den geklickten History-Eintrag würde die Interaktion klarer machen",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "Möglichkeit zum Löschen einzelner History-Einträge",
+        "description": "Benutzer könnten die Möglichkeit wünschen, alte oder irrelevante Analysen aus der History zu entfernen",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Passwort-Sichtbarkeits-Toggle hinzufügen",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Visuelle Stärke-Indikator (Fortschrittsbalken) für Passwort hinzufügen",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Backend-Fehlermeldungen sollten auf Deutsch zurückgegeben werden, oder Frontend sollte alle Backend-Codes abfangen",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "accessibility",
+        "title": "Loading-Spinner sollte aria-label haben für Screenreader",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Toast-Benachrichtigung bei Token-Fehler unterdrücken",
+        "priority": "medium",
+        "description": "Da bereits eine Fehlerkarte angezeigt wird, sollte der zusätzliche Toast entfernt werden um doppelte Fehlermeldungen zu vermeiden"
+      },
+      {
+        "id": "SUG-002",
+        "type": "accessibility",
+        "title": "Username-Feld für Accessibility hinzufügen",
+        "priority": "low",
+        "description": "Browser-Warnung: 'Password forms should have (optionally hidden) username fields for accessibility'. Ein verstecktes Username-Feld würde die Accessibility verbessern"
+      },
+      {
+        "id": "SUG-001",
+        "type": "accessibility",
+        "title": "Fehlende autocomplete-Attribute auf Passwort-Feldern",
+        "description": "Die Passwort-Eingabefelder haben keine autocomplete-Attribute. Empfohlen: autocomplete='current-password' für aktuelles Passwort und autocomplete='new-password' für neue Passwort-Felder.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Fehlermeldung bleibt nach neuer Eingabe bestehen",
+        "description": "Wenn ein Fehler auftritt (z.B. 'Aktuelles Passwort ist falsch'), bleibt die Fehlermeldung auch nach neuer Eingabe in die Felder sichtbar. Die Meldung sollte verschwinden, sobald der User neue Eingaben macht.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Logout-Bestätigung hinzufügen",
+        "description": "Optional: Toast/Snackbar-Nachricht nach erfolgreichem Logout anzeigen ('Sie wurden erfolgreich abgemeldet')",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "Logout-all-devices Funktion",
+        "description": "Möglichkeit alle Sessions auf allen Geräten zu beenden (alle Tokens des Users blacklisten)",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Backend-Fehlermeldungen sollten lokalisiert werden",
+        "description": "Die ValueError-Meldungen in gmail_service.py und outlook_service.py sollten auf Deutsch sein oder das Frontend sollte bekannte Backend-Fehler abfangen und übersetzen. Aktuell zeigt der API-Client alle 400er-Fehlermeldungen direkt an.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Doppelte Toast-Benachrichtigungen vermeiden",
+        "description": "Bei OAuth-Fehlern werden zwei Toasts angezeigt: einer vom API-Client interceptor (mit Backend-Fehlermeldung) und einer vom catch-Block in connectGmail/connectOutlook. Nur eine Meldung sollte angezeigt werden.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-003",
+        "type": "ux",
+        "title": "Provider-Buttons deaktivieren wenn nicht konfiguriert",
+        "description": "Wenn OAuth nicht konfiguriert ist, könnten die Buttons deaktiviert und ein Hinweis angezeigt werden (z.B. 'E-Mail-Verbindung wird in Kürze verfügbar sein').",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-004",
+        "type": "accessibility",
+        "title": "Fehlende autocomplete-Attribute für Passwort-Felder im E-Mail-Bereich",
+        "description": "Browser-Konsolenwarnung zeigt fehlende autocomplete-Attribute auf Passwort-Feldern an.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Pre-fill To field when application has email address stored",
+        "priority": "medium",
+        "description": "The 'An' (To) field was empty even though the application might have an email address. Consider pre-filling from app.email if available."
+      },
+      {
+        "id": "SUG-002",
+        "type": "accessibility",
+        "title": "Add aria-label to close buttons for better screen reader support",
+        "priority": "low",
+        "description": "The modal close buttons (X icons) could benefit from explicit aria-labels like 'Schließen' for accessibility."
+      },
+      {
+        "id": "SUG-003",
+        "type": "ux",
+        "title": "Show character count for email body",
+        "priority": "low",
+        "description": "Consider adding a character counter for the message textarea to help users gauge email length."
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Attachment-Dateinamen in der Vorschau werden auf Mobile abgeschnitten",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "Option zum Hinzufügen/Entfernen einzelner Attachments im Email-Composer",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Consider showing sent status indicator on application card",
+        "description": "Application cards only show status badge (Erstellt/Versendet), but don't visually indicate if email was actually sent via the system (sent_at set). Consider adding a small 'sent' icon on cards where sent_at is not null to differentiate manual status changes from actual email sends.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Pre-fill recipient email from application.email field",
+        "description": "The email composer 'An' (To) field starts empty even when the application has an email stored. The code at line 779 does set 'to: app.email || \"\"' but the test application had no email. Consider making this field required during application creation or showing a clearer prompt.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "feature",
+        "title": "Add test:coverage npm script",
+        "priority": "medium",
+        "description": "Add 'test:coverage': 'vitest run --coverage' script to package.json for easy coverage generation"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "Install @vitest/coverage-v8 dependency",
+        "priority": "high",
+        "description": "Add '@vitest/coverage-v8' to devDependencies to enable the v8 coverage provider configured in vitest.config.js"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Toast max-width auf Mobile anpassen",
+        "description": "Die Toast-Komponente hat max-width: 400px, aber Mobile-Viewports sind nur 375px breit. Ein responsive max-width (z.B. calc(100vw - 2rem)) wäre besser.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "Test für Deduplizierung hinzufügen",
+        "description": "Die Toast-Komponente hat eine Deduplizierungs-Logik (DEDUPE_WINDOW_MS), aber dafür gibt es keinen Unit-Test.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-003",
+        "type": "accessibility",
+        "title": "ARIA-Attribute für Toasts",
+        "description": "Toasts sollten role='alert' oder aria-live='polite' haben, damit Screenreader sie ankündigen.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "feature",
+        "title": "Console.log Statements sollten vor Production entfernt werden",
+        "description": "ESLint findet 40 console.log Warnings im Code. Für Production-Build sollten diese entfernt oder durch einen Logger ersetzt werden.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "feature",
+        "title": "ESLint in CI/CD Pipeline integrieren",
+        "description": "npm run lint sollte in die CI/CD Pipeline integriert werden um Code-Qualität automatisch zu prüfen.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-001",
+        "type": "code-quality",
+        "title": "Vue Warnings für undefinierte Template-Platzhalter beheben",
+        "description": "Beim Öffnen des Template-Editors erscheinen Vue Warnings: 'Property FIRMA/POSITION/ANSPRECHPARTNER was accessed during render but is not defined'. Die Platzhalter-Variablen sollten mit Default-Werten initialisiert werden.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-002",
+        "type": "code-quality",
+        "title": "Console.log Statements entfernen",
+        "description": "ESLint zeigt 40 Warnings für 'no-console'. Diese sollten entweder entfernt oder durch einen Logger ersetzt werden.",
+        "priority": "low"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Inkonsistente Encoding in Requirements-Error Box",
+        "description": "Der Text 'Anforderungsanalyse nicht moeglich' verwendet ASCII-Encoding (oe statt ö), während die Zeile darunter 'nicht möglich' korrekt mit Umlaut geschrieben ist. Sollte konsistent sein.",
+        "priority": "low",
+        "affected_component": "NewApplication.vue:338-339"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Error-Box bleibt nach erfolgreicher manueller Analyse sichtbar",
+        "description": "Nach dem erfolgreichen Analysieren des manuellen Textes bleibt die ursprüngliche Fehlermeldung (URL konnte nicht geladen werden) im Preview sichtbar. Diese sollte ausgeblendet werden, wenn die manuelle Analyse erfolgreich war.",
+        "priority": "medium",
+        "affected_component": "NewApplication.vue"
+      },
+      {
+        "id": "SUG-003",
+        "type": "accessibility",
+        "title": "Portal-Badge im Mobile View nicht mehr inline",
+        "description": "Im mobilen View springt das Portal-Badge unter das Input-Feld, was gewolltes responsive Verhalten ist. Der visuelle Kontext zur URL geht aber etwas verloren - könnte durch einen kleinen Pfeil oder Label 'Erkannt:' klarer gemacht werden.",
+        "priority": "low",
+        "affected_component": "NewApplication.vue:1752-1756"
+      },
+      {
+        "id": "SUG-001",
+        "type": "ux",
+        "title": "Automatische Extraktion von Kontaktdaten aus manuellem Text",
+        "description": "Der manuell eingegebene Text enthielt Ansprechpartner (Frau Maria Schmidt) und Email (jobs@techstart.de), diese wurden aber nicht automatisch in die entsprechenden Felder extrahiert. Der User musste sie manuell eintragen.",
+        "priority": "medium"
+      },
+      {
+        "id": "SUG-002",
+        "type": "ux",
+        "title": "Standort-Extraktion aus Text",
+        "description": "Der Standort 'München' war im Text enthalten, wurde aber nicht automatisch erkannt. Eine NLP-basierte Extraktion würde die UX verbessern.",
         "priority": "low"
       },
       {
         "id": "SUG-003",
         "type": "accessibility",
-        "title": "Kategorie-Tabs horizontal scrollbar auf Mobile",
-        "description": "Die Kategorie-Tabs (Alle, Vorbereitung, Eröffnung, etc.) sind auf Mobile horizontal scrollbar ohne visuellen Hinweis, dass weitere Tabs verfügbar sind. Ein Scroll-Indicator oder Fade-Effect wäre hilfreich.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "Modal-State beim Öffnen zurücksetzen",
-        "description": "Im showAnalyzeModal watcher oder beim Öffnen des Modals sollten analyzeUrl, analyzeError und analyzeResult auf ihre Initialwerte zurückgesetzt werden. Beispiel: watch(showAnalyzeModal, (newVal) => { if (newVal) { analyzeUrl.value = ''; analyzeError.value = ''; analyzeResult.value = null; } })",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-002",
-        "type": "ux",
-        "title": "Bessere Fehlerbehandlung für URL-Scraping",
-        "description": "Die aktuelle Fehlermeldung 'Fehler beim Laden der URL: 403 Client Error' ist technisch. Eine benutzerfreundlichere Meldung wie 'Diese Stellenanzeige konnte nicht geladen werden. Indeed blockiert automatische Zugriffe. Bitte versuchen Sie eine andere Quelle.' wäre hilfreicher.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "Aktiver Status-Button visuell nicht unterscheidbar",
-        "description": "Im InterviewTracker ist der aktuell ausgewählte Status-Button (z.B. 'Durchgefuehrt') im Snapshot nicht als 'active' markiert, obwohl die Daten korrekt gespeichert werden. Eine deutlichere visuelle Hervorhebung (z.B. mit stärkerem Kontrast oder Haken-Icon) würde die UX verbessern.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-002",
-        "type": "ux",
-        "title": "Zeitzone-Anzeige im Interview-Datum",
-        "description": "Das eingegebene Datum '2026-01-20T10:00' wird als '2026-01-20T07:00' bis '2026-01-20T09:00' angezeigt, was auf Zeitzonen-Konvertierung hinweist. Eine konsistente Anzeige in der lokalen Zeitzone des Nutzers wäre benutzerfreundlicher.",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "STAR-Komponenten Reihenfolge",
-        "description": "Die STAR-Komponenten werden in der Reihenfolge A-R-S-T angezeigt statt S-T-A-R. Für bessere Verständlichkeit sollten sie in der korrekten STAR-Reihenfolge (Situation → Task → Action → Result) dargestellt werden.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-002",
-        "type": "ux",
-        "title": "Loading-State für detaillierte Analyse",
-        "description": "Der Loading-Button 'Lade...' für die detaillierte STAR-Analyse könnte einen Spinner oder Progress-Indikator haben, um dem Benutzer besser zu zeigen, dass eine KI-Analyse läuft (dauert ~15-20 Sekunden).",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-003",
-        "type": "feature",
-        "title": "STAR-Coaching für nicht-behavioral Fragen",
-        "description": "Der 'Detaillierte Analyse' Button erscheint nur bei behavioral Fragen. Es wäre hilfreich, wenn bei technischen/situativen Fragen ein Hinweis erscheint, warum keine STAR-Analyse verfügbar ist.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "Fortschrittsbalken beim Mock-Interview",
-        "description": "Der Fortschrittsbalken 'Frage X von Y' ist vorhanden und funktioniert gut. Könnte durch eine prozentuale Anzeige oder Animation beim Fortschritt noch verbessert werden.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-002",
-        "type": "ux",
-        "title": "Keyboard-Shortcut für schnelleres Arbeiten",
-        "description": "Ctrl+Enter zum Absenden der Antwort ist implementiert. Zusätzlich könnte ein Shortcut für 'Nächste Frage' nach dem Feedback hilfreich sein (z.B. Enter oder Tab).",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-003",
-        "type": "feature",
-        "title": "Timer für realistische Interview-Simulation",
-        "description": "Ein optionaler Timer pro Frage würde die Interview-Simulation realistischer machen und Benutzer trainieren, unter Zeitdruck zu antworten.",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "Direkter Link zum Mock-Interview auf InterviewPrep-Seite",
-        "description": "Es gibt keinen sichtbaren Button/Link zur MockInterview-Seite von der InterviewPrep-Seite. User müssen die URL manuell eingeben oder über existierende Interview-Fragen navigieren.",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-002",
-        "type": "ux",
-        "title": "Bessere Fehlerbehandlung bei API-Fehlern",
-        "description": "Statt eines Browser-Alerts sollte eine inline Toast-Notification verwendet werden, die auch Retry-Optionen bietet.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "Hinweis für fehlende Anforderungsanalyse hinzufügen",
-        "description": "Anstatt die GapAnalysis-Sektion komplett auszublenden, könnte ein informativer Hinweis angezeigt werden: 'Analysieren Sie zuerst die Stellenanforderungen, um personalisierte Lernempfehlungen zu erhalten'. Mit einem Button 'Anforderungen analysieren' der den Prozess startet.",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-002",
-        "type": "ux",
-        "title": "Toast-Deduplizierung implementieren",
-        "description": "Implementieren Sie eine Deduplizierung für Toast-Nachrichten, sodass identische Nachrichten nicht mehrfach gleichzeitig angezeigt werden. Dies verhindert Verwirrung beim Benutzer.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-003",
-        "type": "feature",
-        "title": "Automatische Anforderungsanalyse bei Bewerbungserstellung",
-        "description": "Bei der Erstellung einer Bewerbung über die 'Neu'-Seite könnten die Anforderungen automatisch analysiert werden, sodass die GapAnalysis sofort verfügbar ist.",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "ATS-Check doppelter API-Call",
-        "description": "Der ATS-Check wird beim Öffnen des Modals zweimal aufgerufen (watch + onMounted). Dies führt zu doppelten Fehlermeldungen in den Toasts wenn der Check fehlschlägt. Sollte nur einmal aufgerufen werden.",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-002",
-        "type": "ux",
-        "title": "Fehlende Loading-Animation für ATS initial state",
-        "description": "Wenn eine Bewerbung keinen email_text hat, wird sofort die Fehlermeldung angezeigt. Ein kurzer Loading-State vor dem Fehler würde die UX verbessern und dem User signalisieren, dass eine Analyse versucht wird.",
-        "priority": "low"
-      },
-      {
-        "id": "SUG-003",
-        "type": "feature",
-        "title": "Manueller ATS-Check mit eigenem Text",
-        "description": "Da das Update-Endpoint kein email_text akzeptiert, können User ohne generierte Bewerbung den ATS-Check nicht nutzen. Ein Textfeld für manuellen Cover-Letter-Text wäre hilfreich.",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-001",
-        "type": "ux",
-        "title": "Bessere Fehlermeldung bei externem URL-Scraping",
-        "description": "Wenn eine externe URL nicht geladen werden kann (403 Forbidden), zeigt die App 'Fehler beim Laden der Stellenanzeige: Fehler beim Laden der URL: 403 Client Error'. Diese Meldung könnte benutzerfreundlicher sein, z.B. 'Diese Webseite blockiert den automatischen Zugriff. Bitte kopiere den Stellentext manuell.'",
-        "priority": "medium"
-      },
-      {
-        "id": "SUG-002",
-        "type": "feature",
-        "title": "Manueller Stellentext-Import als Fallback",
-        "description": "Wenn das URL-Scraping fehlschlägt, könnte ein Textarea-Fallback angeboten werden, in das der User den Stellentext manuell einfügen kann. Dies würde die Job-Fit Analyse auch bei blockierten URLs ermöglichen.",
-        "priority": "high"
-      },
-      {
-        "id": "SUG-003",
-        "type": "ux",
-        "title": "Skills-Status auf NewApplication-Seite anzeigen",
-        "description": "Die JobFitScore-Komponente zeigt 'Keine Skills gefunden' erst nach dem Laden einer Stellenanzeige. Es wäre hilfreicher, den User bereits vor dem URL-Input zu informieren, dass er zuerst einen Lebenslauf hochladen sollte, um den Job-Fit Score zu erhalten.",
+        "title": "Portal-Badge auf Mobile nicht optimal positioniert",
+        "description": "Auf Mobile wird das Portal-Badge unterhalb des URL-Inputs angezeigt statt inline - das ist korrekt responsive, könnte aber visuell noch besser integriert werden.",
         "priority": "low"
       }
     ]
@@ -296,26 +444,12 @@
     "bugs_to_fix": [
       {
         "id": "BUG-001",
-        "title": "Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt",
+        "title": "Details-Link führt nicht zur spezifischen Bewerbung",
         "severity": "major",
-        "component": "InterviewPrep.vue:294",
+        "component": "frontend/src/pages/Timeline.vue:100",
         "steps": [
-          "Navigiere zu /applications/2/interview",
-          "Warte bis die Seite geladen ist",
-          "Beobachte: 'Keine Interview-Fragen vorhanden' obwohl Fragen existieren"
-        ]
-      },
-      {
-        "id": "BUG-001",
-        "title": "API-Fehler 415 beim Generieren von Interview-Fragen",
-        "severity": "major",
-        "component": "InterviewPrep.vue",
-        "steps": [
-          "Navigiere zu /applications",
-          "Klicke auf 'Details' bei einer Bewerbung",
-          "Klicke auf 'Interview-Prep'",
-          "Klicke auf 'Fragen generieren'",
-          "Alert erscheint mit Fehlermeldung"
+          "Timeline-Seite öffnen (/timeline)",
+          "Auf 'Details' Button bei einer Bewerbung klicken"
         ]
       }
     ]
@@ -323,10 +457,22 @@
   "for_feature_ralph": {
     "features_to_add": [
       {
+        "id": "SUG-001",
+        "title": "Details-Link auf spezifische Bewerbung verlinken",
+        "type": "ux",
+        "description": null
+      },
+      {
+        "id": "SUG-001",
+        "title": "Kein Navigationslink zu Company Insights",
+        "type": "ux",
+        "description": "Die Company Insights Seite ist nur über direkte URL erreichbar (/company-insights). Es fehlt ein Link in der Hauptnavigation oder auf der Bewerbungen-Seite."
+      },
+      {
         "id": "SUG-002",
-        "title": "Manueller Stellentext-Import als Fallback",
+        "title": "Install @vitest/coverage-v8 dependency",
         "type": "feature",
-        "description": "Wenn das URL-Scraping fehlschlägt, könnte ein Textarea-Fallback angeboten werden, in das der User den Stellentext manuell einfügen kann. Dies würde die Job-Fit Analyse auch bei blockierten URLs ermöglichen."
+        "description": "Add '@vitest/coverage-v8' to devDependencies to enable the v8 coverage provider configured in vitest.config.js"
       }
     ]
   }

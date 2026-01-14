@@ -50,6 +50,12 @@ CLAUDE_MODEL_QA=${CLAUDE_MODEL_QA:-"claude-haiku-4-5-20251001"}
 ENABLE_QA_PHASE=${ENABLE_QA_PHASE:-true}
 
 # ============================================
+# Split Mode - tmux split screen
+# ============================================
+SPLIT_MODE=${SPLIT_MODE:-false}
+LIVE_LOG_FILE="logs/claude_live.log"
+
+# ============================================
 # Pfade (relativ zu SCRIPT_DIR)
 # ============================================
 LOG_DIR="logs"
@@ -92,6 +98,8 @@ export CLAUDE_ALLOWED_TOOLS
 export CLAUDE_MODEL_IMPL
 export CLAUDE_MODEL_QA
 export ENABLE_QA_PHASE
+export SPLIT_MODE
+export LIVE_LOG_FILE
 export LOG_DIR
 export PRD_FILE
 export PROMPT_FILE

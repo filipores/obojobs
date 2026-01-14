@@ -58,6 +58,7 @@ Optionen:
     --url URL               Frontend URL (default: $FRONTEND_URL)
     --headless              Browser im Headless-Modus (default)
     --headed                Browser mit UI anzeigen
+    --split                 Split-Screen: links Ralph, rechts Claude (benötigt tmux)
     --status                Zeige aktuellen Test-Status
     --report                Generiere finalen Report
     --reset                 Reset Test-State und starte neu
@@ -66,6 +67,7 @@ Beispiele:
     ./ralph.sh                          # Standard-Ausführung
     ./ralph.sh --base develop           # Commits seit develop
     ./ralph.sh --headed                 # Browser sichtbar
+    ./ralph.sh --split                  # Split-Screen mit tmux
     ./ralph.sh --report                 # Nur Report generieren
 
 EOF
@@ -104,6 +106,10 @@ while [[ $# -gt 0 ]]; do
             HEADLESS=false
             shift
             ;;
+        --split)
+            SPLIT_MODE=true
+            shift
+            ;;
         --status)
             if [[ -f "$SCRIPT_DIR/features.json" ]]; then
                 echo -e "${BLUE}=== Test Progress ===${NC}"
@@ -140,6 +146,67 @@ done
 # Pre-flight Checks
 # ============================================
 cd "$PROJECT_ROOT"
+
+# ============================================
+# Split Mode (tmux)
+# ============================================
+launch_split_mode() {
+    # Check if tmux is installed
+    if ! command -v tmux &>/dev/null; then
+        echo -e "${RED}Error: tmux ist nicht installiert${NC}"
+        echo ""
+        echo "Installation:"
+        echo "  macOS:  brew install tmux"
+        echo "  Ubuntu: sudo apt install tmux"
+        exit 1
+    fi
+
+    # Create live log file
+    mkdir -p "$LOG_DIR"
+    LIVE_LOG_FILE="$SCRIPT_DIR/logs/claude_live.log"
+    > "$LIVE_LOG_FILE"  # Clear/create file
+
+    local session_name="ralph-test-$$"
+
+    # Build command without --split to avoid recursion
+    local ralph_cmd="$SCRIPT_DIR/ralph.sh"
+    [[ "$HEADLESS" == "false" ]] && ralph_cmd+=" --headed"
+    [[ -n "$COMMIT_RANGE_BASE" && "$COMMIT_RANGE_BASE" != "main" ]] && ralph_cmd+=" --base $COMMIT_RANGE_BASE"
+    [[ "$TIMEOUT_MINUTES" != "10" ]] && ralph_cmd+=" --timeout $TIMEOUT_MINUTES"
+
+    # Export the live log path for the child process
+    export RALPH_LIVE_LOG="$LIVE_LOG_FILE"
+    export RALPH_IN_SPLIT_MODE=true
+
+    echo -e "${CYAN}Starte Split-Screen Mode...${NC}"
+    echo ""
+
+    # Create tmux session with split panes
+    tmux new-session -d -s "$session_name" -x 200 -y 50
+
+    # Left pane: Ralph logs
+    tmux send-keys -t "$session_name" "cd '$PROJECT_ROOT' && RALPH_LIVE_LOG='$LIVE_LOG_FILE' RALPH_IN_SPLIT_MODE=true $ralph_cmd" C-m
+
+    # Split vertically (right pane)
+    tmux split-window -h -t "$session_name"
+
+    # Right pane: Claude live logs with header
+    tmux send-keys -t "$session_name" "echo -e '${CYAN}═══════════════════════════════════════${NC}' && echo -e '${CYAN}       Claude Live Output${NC}' && echo -e '${CYAN}═══════════════════════════════════════${NC}' && echo '' && tail -f '$LIVE_LOG_FILE'" C-m
+
+    # Set pane titles (optional, for clarity)
+    tmux select-pane -t "$session_name:0.0" -T "Ralph Logs"
+    tmux select-pane -t "$session_name:0.1" -T "Claude Output"
+
+    # Attach to the session
+    tmux attach-session -t "$session_name"
+
+    exit 0
+}
+
+# If --split mode requested and not already in split mode, launch tmux
+if [[ "$SPLIT_MODE" == "true" && "$RALPH_IN_SPLIT_MODE" != "true" ]]; then
+    launch_split_mode
+fi
 
 # Check if MCP Playwright is configured
 check_mcp_playwright() {
@@ -282,12 +349,48 @@ execute_test() {
 
 $(cat "$SCRIPT_DIR/prompt.md")"
 
-    if $timeout_prefix claude \
-        --output-format json \
-        --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
-        --append-system-prompt "$context" \
-        -p "$full_prompt" \
-        > "$output_file" 2>&1; then
+    # Execute Claude based on mode
+    local exec_result=0
+
+    if [[ "$RALPH_IN_SPLIT_MODE" == "true" && -n "$RALPH_LIVE_LOG" ]]; then
+        # Split mode: write to live log for right pane AND to output file
+        echo "" >> "$RALPH_LIVE_LOG"
+        echo "═══════════════════════════════════════" >> "$RALPH_LIVE_LOG"
+        echo " Testing: $feature_id" >> "$RALPH_LIVE_LOG"
+        echo " $(date '+%H:%M:%S')" >> "$RALPH_LIVE_LOG"
+        echo "═══════════════════════════════════════" >> "$RALPH_LIVE_LOG"
+        echo "" >> "$RALPH_LIVE_LOG"
+
+        if $timeout_prefix claude \
+            --output-format stream-json \
+            --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
+            --append-system-prompt "$context" \
+            -p "$full_prompt" \
+            2>&1 | tee -a "$RALPH_LIVE_LOG" > "$output_file"; then
+            exec_result=0
+        else
+            exec_result=$?
+        fi
+
+        echo "" >> "$RALPH_LIVE_LOG"
+        echo "─────────────────────────────────────────" >> "$RALPH_LIVE_LOG"
+        echo "" >> "$RALPH_LIVE_LOG"
+
+    else
+        # Normal mode: silent, only to file
+        if $timeout_prefix claude \
+            --output-format json \
+            --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
+            --append-system-prompt "$context" \
+            -p "$full_prompt" \
+            > "$output_file" 2>&1; then
+            exec_result=0
+        else
+            exec_result=$?
+        fi
+    fi
+
+    if [[ $exec_result -eq 0 ]]; then
 
         log_success "Test-Ausführung abgeschlossen"
 
@@ -316,9 +419,7 @@ $(cat "$SCRIPT_DIR/prompt.md")"
             return 0
         fi
     else
-        local exit_code=$?
-
-        if [[ $exit_code -eq 124 ]]; then
+        if [[ $exec_result -eq 124 ]]; then
             log_error "Timeout nach $TIMEOUT_MINUTES Minuten"
             return 2
         fi
@@ -377,6 +478,9 @@ echo -e "Features:      ${BLUE}$(echo "$progress" | jq -r '.remaining')/$(echo "
 echo -e "Frontend:      ${BLUE}$FRONTEND_URL${NC}"
 echo -e "Base Branch:   ${BLUE}$COMMIT_RANGE_BASE${NC}"
 echo -e "Max Loops:     ${BLUE}$MAX_TEST_ITERATIONS${NC}"
+if [[ "$RALPH_IN_SPLIT_MODE" == "true" ]]; then
+    echo -e "Split-Mode:    ${PURPLE}AKTIV - Claude Output im rechten Pane${NC}"
+fi
 echo ""
 echo -e "${CYAN}==========================================${NC}"
 echo ""

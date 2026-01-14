@@ -56,7 +56,7 @@ Optionen:
     -h, --help              Zeige diese Hilfe
     -c, --calls NUM         Max API-Calls pro Stunde (default: $MAX_CALLS_PER_HOUR)
     -t, --timeout MIN       Claude Timeout in Minuten (default: $TIMEOUT_MINUTES)
-    -v, --verbose           Detaillierte Ausgabe
+    --split                 Split-Screen: links Ralph, rechts Claude (benötigt tmux)
     --status                Zeige aktuellen Status
     --reset-circuit         Reset Circuit Breaker
     --circuit-status        Zeige Circuit Breaker Status
@@ -64,7 +64,7 @@ Optionen:
 Beispiele:
     ./ralph.sh                      # Standard-Ausführung
     ./ralph.sh --calls 30           # Max 30 Calls pro Stunde
-    ./ralph.sh --timeout 20         # 20 Minuten Timeout
+    ./ralph.sh --split              # Split-Screen mit tmux
     ./ralph.sh --reset-circuit      # Circuit Breaker zurücksetzen
 
 EOF
@@ -73,8 +73,6 @@ EOF
 # ============================================
 # Command Line Arguments
 # ============================================
-VERBOSE=false
-
 while [[ $# -gt 0 ]]; do
     case $1 in
         -h|--help)
@@ -89,8 +87,8 @@ while [[ $# -gt 0 ]]; do
             TIMEOUT_MINUTES="$2"
             shift 2
             ;;
-        -v|--verbose)
-            VERBOSE=true
+        --split)
+            SPLIT_MODE=true
             shift
             ;;
         --status)
@@ -116,6 +114,42 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
+
+# ============================================
+# Split Mode (tmux)
+# ============================================
+launch_split_mode() {
+    if ! command -v tmux &>/dev/null; then
+        echo -e "${RED}Error: tmux ist nicht installiert${NC}"
+        echo "Installation: brew install tmux (macOS) oder sudo apt install tmux (Ubuntu)"
+        exit 1
+    fi
+
+    mkdir -p "$SCRIPT_DIR/logs"
+    LIVE_LOG_FILE="$SCRIPT_DIR/logs/claude_live.log"
+    > "$LIVE_LOG_FILE"
+
+    local session_name="ralph-feature-$$"
+    local ralph_cmd="$SCRIPT_DIR/ralph.sh"
+    [[ -n "$MAX_CALLS_PER_HOUR" && "$MAX_CALLS_PER_HOUR" != "50" ]] && ralph_cmd+=" --calls $MAX_CALLS_PER_HOUR"
+    [[ "$TIMEOUT_MINUTES" != "15" ]] && ralph_cmd+=" --timeout $TIMEOUT_MINUTES"
+
+    export RALPH_LIVE_LOG="$LIVE_LOG_FILE"
+    export RALPH_IN_SPLIT_MODE=true
+
+    echo -e "${CYAN}Starte Split-Screen Mode...${NC}"
+
+    tmux new-session -d -s "$session_name" -x 200 -y 50
+    tmux send-keys -t "$session_name" "cd '$PROJECT_ROOT' && RALPH_LIVE_LOG='$LIVE_LOG_FILE' RALPH_IN_SPLIT_MODE=true $ralph_cmd" C-m
+    tmux split-window -h -t "$session_name"
+    tmux send-keys -t "$session_name" "echo -e '${GREEN}═══════════════════════════════════════${NC}' && echo -e '${GREEN}       Claude Live Output${NC}' && echo -e '${GREEN}═══════════════════════════════════════${NC}' && echo '' && tail -f '$LIVE_LOG_FILE'" C-m
+    tmux attach-session -t "$session_name"
+    exit 0
+}
+
+if [[ "$SPLIT_MODE" == "true" && "$RALPH_IN_SPLIT_MODE" != "true" ]]; then
+    launch_split_mode
+fi
 
 # ============================================
 # Validation
@@ -156,6 +190,9 @@ echo -e "Branch:        ${BLUE}$PRD_BRANCH${NC}"
 echo -e "Stories:       ${BLUE}$PASSED_STORIES/$TOTAL_STORIES passed${NC}"
 echo -e "Rate Limit:    ${BLUE}$MAX_CALLS_PER_HOUR calls/hour${NC}"
 echo -e "Timeout:       ${BLUE}$TIMEOUT_MINUTES minutes${NC}"
+if [[ "$RALPH_IN_SPLIT_MODE" == "true" ]]; then
+    echo -e "Split-Mode:    ${PURPLE}AKTIV - Claude Output im rechten Pane${NC}"
+fi
 echo ""
 echo -e "${GREEN}==========================================${NC}"
 echo ""
@@ -250,15 +287,48 @@ ${file_context}"
         timeout_prefix="$TIMEOUT_CMD ${timeout_seconds}s"
     fi
 
-    # Execute with optional timeout and model selection
-    if $timeout_prefix claude \
-        --model "$CLAUDE_MODEL_IMPL" \
-        --output-format json \
-        --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
-        --append-system-prompt "$context" \
-        -p "$(cat "$SCRIPT_DIR/prompt.md")" \
-        > "$output_file" 2>&1; then
+    # Execute based on mode
+    local exec_result=0
 
+    if [[ "$RALPH_IN_SPLIT_MODE" == "true" && -n "$RALPH_LIVE_LOG" ]]; then
+        # Split mode: write to live log for right pane
+        echo "" >> "$RALPH_LIVE_LOG"
+        echo "═══════════════════════════════════════" >> "$RALPH_LIVE_LOG"
+        echo " Story: $current_story | Loop #$loop_count" >> "$RALPH_LIVE_LOG"
+        echo " $(date '+%H:%M:%S')" >> "$RALPH_LIVE_LOG"
+        echo "═══════════════════════════════════════" >> "$RALPH_LIVE_LOG"
+        echo "" >> "$RALPH_LIVE_LOG"
+
+        if $timeout_prefix claude \
+            --model "$CLAUDE_MODEL_IMPL" \
+            --output-format stream-json \
+            --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
+            --append-system-prompt "$context" \
+            -p "$(cat "$SCRIPT_DIR/prompt.md")" \
+            2>&1 | tee -a "$RALPH_LIVE_LOG" > "$output_file"; then
+            exec_result=0
+        else
+            exec_result=$?
+        fi
+
+        echo "" >> "$RALPH_LIVE_LOG"
+        echo "─────────────────────────────────────────" >> "$RALPH_LIVE_LOG"
+    else
+        # Normal mode
+        if $timeout_prefix claude \
+            --model "$CLAUDE_MODEL_IMPL" \
+            --output-format json \
+            --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
+            --append-system-prompt "$context" \
+            -p "$(cat "$SCRIPT_DIR/prompt.md")" \
+            > "$output_file" 2>&1; then
+            exec_result=0
+        else
+            exec_result=$?
+        fi
+    fi
+
+    if [[ $exec_result -eq 0 ]]; then
         log_success "Claude Code Ausführung abgeschlossen"
 
         # Analyze response
@@ -285,9 +355,7 @@ ${file_context}"
 
         return 0
     else
-        local exit_code=$?
-
-        if [[ $exit_code -eq 124 ]]; then
+        if [[ $exec_result -eq 124 ]]; then
             log_error "Timeout nach $TIMEOUT_MINUTES Minuten!"
             return 2  # Timeout
         fi

@@ -33,7 +33,7 @@ TIMEOUT_NAVIGATION=${TIMEOUT_NAVIGATION:-60000}
 # ============================================
 # Test Configuration
 # ============================================
-MAX_TEST_ITERATIONS=${MAX_TEST_ITERATIONS:-20}
+MAX_TEST_ITERATIONS=${MAX_TEST_ITERATIONS:-40}
 TIMEOUT_MINUTES=${TIMEOUT_MINUTES:-10}
 SCREENSHOT_ON_FAILURE=${SCREENSHOT_ON_FAILURE:-true}
 
@@ -56,6 +56,10 @@ CB_SAME_ERROR_THRESHOLD=5
 REPORT_FORMAT="json"
 REPORTS_DIR="reports"
 LOG_DIR="logs"
+
+# Split mode - tmux split screen (links Ralph, rechts Claude logs)
+SPLIT_MODE=${SPLIT_MODE:-false}
+LIVE_LOG_FILE="$LOG_DIR/claude_live.log"
 
 # ============================================
 # Claude CLI Configuration
@@ -105,3 +109,5 @@ export REPORTS_DIR
 export LOG_DIR
 export CLAUDE_OUTPUT_FORMAT
 export CLAUDE_ALLOWED_TOOLS
+export SPLIT_MODE
+export LIVE_LOG_FILE

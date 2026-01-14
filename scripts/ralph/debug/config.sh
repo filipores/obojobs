@@ -15,6 +15,12 @@ CB_NO_PROGRESS_THRESHOLD=3
 CB_SAME_ERROR_THRESHOLD=5
 
 # ============================================
+# Split Mode - tmux split screen
+# ============================================
+SPLIT_MODE=${SPLIT_MODE:-false}
+LIVE_LOG_FILE="logs/claude_live.log"
+
+# ============================================
 # Output Configuration
 # ============================================
 LOG_DIR="logs"
@@ -67,3 +73,5 @@ export CLAUDE_ALLOWED_TOOLS
 export CLAUDE_MODEL_IMPL
 export CLAUDE_MODEL_QA
 export ENABLE_QA_PHASE
+export SPLIT_MODE
+export LIVE_LOG_FILE
