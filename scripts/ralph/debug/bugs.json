@@ -66,8 +66,8 @@
         "frontend/src/components/JobRecommendations.vue"
       ],
       "suggestedFix": "Im showAnalyzeModal watcher: wenn Modal öffnet, State zurücksetzen",
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
       "source": "test-ralph"
     },
     {
@@ -87,8 +87,8 @@
         "frontend/src/pages/Applications.vue:293"
       ],
       "suggestedFix": "Statt v-if einen v-else Block mit Hinweis 'Analysieren Sie zuerst die Stellenanforderungen'",
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
       "source": "test-ralph"
     },
     {
@@ -103,14 +103,13 @@
       ],
       "expected": "Maximal eine Fehlermeldung pro Fehlertyp",
       "actual": "Zwei identische Fehlermeldungen 'Kein Bewerbungstext vorhanden' erscheinen gleichzeitig",
-      "rootCause": "ATS-Check wird beim Öffnen des Modals zweimal aufgerufen (watch + onMounted)",
+      "rootCause": "Toast-Komponente hat keine Deduplizierungs-Logik - bei schnell aufeinanderfolgenden Aufrufen werden identische Meldungen mehrfach angezeigt",
       "affectedFiles": [
-        "frontend/src/pages/Applications.vue",
-        "frontend/src/components/ATSOptimizer.vue"
+        "frontend/src/components/Toast.vue"
       ],
-      "suggestedFix": "ATS-Check nur einmal aufrufen (entweder watch ODER onMounted)",
-      "fixed": false,
-      "fixAttempts": 0,
+      "suggestedFix": "Deduplizierung im Toast-Service implementieren",
+      "fixed": true,
+      "fixAttempts": 1,
       "source": "test-ralph"
     }
   ]

@@ -16,9 +16,34 @@
 import { ref } from 'vue'
 
 const toasts = ref([])
+const recentMessages = ref(new Map()) // Track recent messages for deduplication
+const DEDUPE_WINDOW_MS = 500 // Don't show same message within 500ms
 
 const add = (message, type = 'info', duration = 3000) => {
-  const id = Date.now()
+  // Deduplicate: Check if same message was shown recently
+  const dedupeKey = `${type}:${message}`
+  const lastShown = recentMessages.value.get(dedupeKey)
+  const now = Date.now()
+
+  if (lastShown && (now - lastShown) < DEDUPE_WINDOW_MS) {
+    // Skip duplicate message
+    return
+  }
+
+  // Track this message
+  recentMessages.value.set(dedupeKey, now)
+
+  // Clean up old entries (prevent memory leak)
+  if (recentMessages.value.size > 50) {
+    const cutoff = now - DEDUPE_WINDOW_MS * 2
+    for (const [key, timestamp] of recentMessages.value.entries()) {
+      if (timestamp < cutoff) {
+        recentMessages.value.delete(key)
+      }
+    }
+  }
+
+  const id = now
   toasts.value.push({ id, message, type })
 
   if (duration > 0) {
