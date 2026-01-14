@@ -34,7 +34,8 @@ parse_status_block() {
         # Try to parse from JSON
         if jq -e '.result' "$output_file" > /dev/null 2>&1; then
             local result_text=$(jq -r '.result // ""' "$output_file" 2>/dev/null)
-            status_block=$(echo "$result_text" | sed -n '/---RALPH_STATUS---/,/---END_RALPH_STATUS---/p')
+            # Use printf to properly handle newlines from jq output
+            status_block=$(printf '%s\n' "$result_text" | sed -n '/---RALPH_STATUS---/,/---END_RALPH_STATUS---/p')
         fi
     fi
 
@@ -43,14 +44,15 @@ parse_status_block() {
         return 1
     fi
 
-    # Parse individual fields
-    local status=$(echo "$status_block" | grep -E '^STATUS:' | cut -d':' -f2 | tr -d ' ')
-    local tasks_completed=$(echo "$status_block" | grep -E '^TASKS_COMPLETED_THIS_LOOP:' | cut -d':' -f2 | tr -d ' ')
-    local files_modified=$(echo "$status_block" | grep -E '^FILES_MODIFIED:' | cut -d':' -f2 | tr -d ' ')
-    local tests_status=$(echo "$status_block" | grep -E '^TESTS_STATUS:' | cut -d':' -f2 | tr -d ' ')
-    local work_type=$(echo "$status_block" | grep -E '^WORK_TYPE:' | cut -d':' -f2 | tr -d ' ')
-    local exit_signal=$(echo "$status_block" | grep -E '^EXIT_SIGNAL:' | cut -d':' -f2 | tr -d ' ')
-    local recommendation=$(echo "$status_block" | grep -E '^RECOMMENDATION:' | cut -d':' -f2-)
+    # Parse individual fields using printf for proper newline handling
+    # Also handle potential whitespace/carriage returns
+    local status=$(printf '%s\n' "$status_block" | grep -E '^STATUS:' | sed 's/^STATUS:[[:space:]]*//' | tr -d '\r' | tr -d ' ')
+    local tasks_completed=$(printf '%s\n' "$status_block" | grep -E '^TASKS_COMPLETED' | sed 's/^TASKS_COMPLETED[^:]*:[[:space:]]*//' | tr -d '\r' | tr -d ' ')
+    local files_modified=$(printf '%s\n' "$status_block" | grep -E '^FILES_MODIFIED:' | sed 's/^FILES_MODIFIED:[[:space:]]*//' | tr -d '\r' | tr -d ' ')
+    local tests_status=$(printf '%s\n' "$status_block" | grep -E '^TESTS_STATUS:' | sed 's/^TESTS_STATUS:[[:space:]]*//' | tr -d '\r' | tr -d ' ')
+    local work_type=$(printf '%s\n' "$status_block" | grep -E '^WORK_TYPE:' | sed 's/^WORK_TYPE:[[:space:]]*//' | tr -d '\r' | tr -d ' ')
+    local exit_signal=$(printf '%s\n' "$status_block" | grep -E '^EXIT_SIGNAL:' | sed 's/^EXIT_SIGNAL:[[:space:]]*//' | tr -d '\r' | tr -d ' ')
+    local recommendation=$(printf '%s\n' "$status_block" | grep -E '^RECOMMENDATION:' | sed 's/^RECOMMENDATION:[[:space:]]*//' | tr -d '\r')
 
     # Convert exit_signal to boolean
     if [[ "$exit_signal" == "true" ]]; then
