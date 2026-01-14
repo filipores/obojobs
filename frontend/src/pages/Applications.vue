@@ -266,6 +266,16 @@
                   class="form-textarea"
                 ></textarea>
               </div>
+
+              <!-- ATS Optimizer Section -->
+              <div class="detail-group">
+                <label class="detail-label">ATS-Optimierung</label>
+                <ATSOptimizer
+                  v-if="selectedApp.id"
+                  :application-id="selectedApp.id"
+                  @optimized="onATSOptimized"
+                />
+              </div>
             </div>
 
             <div class="modal-footer">
@@ -448,6 +458,7 @@
 import { ref, onMounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
+import ATSOptimizer from '../components/ATSOptimizer.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -578,6 +589,13 @@ const clearFilters = () => {
   // Remove query params from URL
   if (route.query.firma) {
     router.replace({ path: '/applications' })
+  }
+}
+
+const onATSOptimized = (data) => {
+  // Reload application data after optimization
+  if (selectedApp.value && data.optimized_text) {
+    selectedApp.value.email_text = data.optimized_text
   }
 }
 
