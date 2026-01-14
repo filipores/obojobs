@@ -23,22 +23,42 @@
                 type="url"
                 placeholder="https://example.com/jobs/stellenanzeige"
                 class="form-input url-input"
+                :class="{
+                  'url-valid': showUrlValidation && urlValidation.isValid === true,
+                  'url-invalid': showUrlValidation && urlValidation.isValid === false
+                }"
                 :disabled="loading || generating"
                 @input="onUrlInput"
               />
+              <!-- Validation Icon -->
+              <span v-if="showUrlValidation && urlValidation.isValid === true" class="url-validation-icon url-validation-valid">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+              </span>
+              <span v-else-if="showUrlValidation && urlValidation.isValid === false" class="url-validation-icon url-validation-invalid" :title="urlValidation.message">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </span>
               <!-- Portal Badge -->
-              <span v-if="detectedPortal" :class="['portal-badge', `portal-${detectedPortal.id}`]">
+              <span v-if="detectedPortal && urlValidation.isValid !== false" :class="['portal-badge', `portal-${detectedPortal.id}`]">
                 {{ detectedPortal.name }}
               </span>
             </div>
-            <p class="form-hint">Kopiere die URL der Stellenanzeige und füge sie hier ein</p>
+            <!-- Validation Error Message -->
+            <p v-if="showUrlValidation && urlValidation.isValid === false" class="url-validation-message">
+              {{ urlValidation.message }}
+            </p>
+            <p v-else class="form-hint">Kopiere die URL der Stellenanzeige und füge sie hier ein</p>
           </div>
 
           <!-- Preview Button (only show if no preview yet) -->
           <div v-if="!previewData" class="form-actions preview-actions">
             <button
               @click="loadPreview"
-              :disabled="!url || loading"
+              :disabled="!url || loading || urlValidation.isValid === false"
               class="zen-btn zen-btn-lg"
             >
               <span v-if="loading" class="btn-loading">
@@ -512,6 +532,7 @@ const router = useRouter()
 
 // State
 const url = ref('')
+const urlTouched = ref(false)
 const selectedTemplateId = ref(null)
 const templates = ref([])
 const loadingTemplates = ref(false)
@@ -558,6 +579,45 @@ const showLowScoreWarning = ref(false)
 const analyzingRequirements = ref(false)
 const requirementsError = ref('')
 const requirementsCount = ref(0)
+
+// URL validation
+const urlValidation = computed(() => {
+  const urlValue = url.value.trim()
+
+  // Empty - no validation state
+  if (!urlValue) {
+    return { isValid: null, message: '' }
+  }
+
+  // Must start with http:// or https://
+  if (!urlValue.match(/^https?:\/\//i)) {
+    return { isValid: false, message: 'URL muss mit http:// oder https:// beginnen' }
+  }
+
+  // Basic URL pattern check
+  try {
+    const parsedUrl = new URL(urlValue)
+
+    // Check for valid hostname (must have at least one dot)
+    if (!parsedUrl.hostname.includes('.')) {
+      return { isValid: false, message: 'Ungültige Domain (z.B. example.com)' }
+    }
+
+    // Check for common typos
+    if (parsedUrl.hostname.endsWith('.')) {
+      return { isValid: false, message: 'Domain darf nicht mit einem Punkt enden' }
+    }
+
+    return { isValid: true, message: '' }
+  } catch {
+    return { isValid: false, message: 'Ungültiges URL-Format' }
+  }
+})
+
+// Show validation feedback only after user has interacted
+const showUrlValidation = computed(() => {
+  return urlTouched.value && url.value.trim().length > 0
+})
 
 // Portal detection (real-time based on URL)
 const detectedPortal = computed(() => {
@@ -608,6 +668,9 @@ const getVariableDisplay = (key) => {
 // Debounce URL input
 let urlInputTimeout = null
 const onUrlInput = () => {
+  // Mark as touched for validation display
+  urlTouched.value = true
+
   // Clear any existing timeout
   if (urlInputTimeout) clearTimeout(urlInputTimeout)
 
@@ -747,6 +810,7 @@ const resetPreview = () => {
   manualJobText.value = ''
   manualCompany.value = ''
   manualTitle.value = ''
+  urlTouched.value = false
 }
 
 // Analyze manually pasted job text
@@ -870,6 +934,7 @@ const generateApplication = async () => {
       await loadUsage()
       // Reset form
       url.value = ''
+      urlTouched.value = false
       previewData.value = null
       editableData.value = {
         company: '',
@@ -1002,7 +1067,52 @@ onMounted(() => {
 
 .url-input {
   padding-left: calc(var(--space-md) + 28px);
-  padding-right: 100px;
+  padding-right: 130px;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+/* URL Validation Styles */
+.url-input.url-valid {
+  border-color: var(--color-koke);
+  box-shadow: 0 0 0 3px rgba(122, 139, 110, 0.15);
+}
+
+.url-input.url-invalid {
+  border-color: #b45050;
+  box-shadow: 0 0 0 3px rgba(180, 80, 80, 0.15);
+}
+
+.url-validation-icon {
+  position: absolute;
+  right: 100px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+}
+
+.url-validation-valid {
+  color: var(--color-koke);
+  background: rgba(122, 139, 110, 0.15);
+}
+
+.url-validation-invalid {
+  color: #b45050;
+  background: rgba(180, 80, 80, 0.15);
+  cursor: help;
+}
+
+.url-validation-message {
+  font-size: 0.8125rem;
+  color: #b45050;
+  margin-top: var(--space-xs);
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 .form-hint {
@@ -1746,6 +1856,15 @@ onMounted(() => {
 
   .url-input {
     padding-right: var(--space-md);
+  }
+
+  .url-input.url-valid,
+  .url-input.url-invalid {
+    padding-right: 50px;
+  }
+
+  .url-validation-icon {
+    right: var(--space-md);
   }
 
   .portal-badge {
