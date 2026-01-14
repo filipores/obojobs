@@ -5,111 +5,198 @@
   "bugs": [
     {
       "id": "BUG-001",
-      "title": "Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt",
+      "title": "Details-Link führt nicht zur spezifischen Bewerbung",
       "severity": "major",
-      "description": "Obwohl Interview-Fragen in der Datenbank existieren und die API sie erfolgreich zurückgibt (200 OK), werden sie auf der Interview-Vorbereitung Seite nicht angezeigt.",
+      "description": "Link führt zur allgemeinen Bewerbungsübersicht statt zur spezifischen Bewerbungsdetail-Seite",
       "stepsToReproduce": [
-        "Navigiere zu /applications/2/interview",
-        "Warte bis die Seite geladen ist",
-        "Beobachte: 'Keine Interview-Fragen vorhanden' obwohl Fragen existieren"
+        "Timeline-Seite öffnen (/timeline)",
+        "Auf 'Details' Button bei einer Bewerbung klicken"
       ],
-      "expected": "Die existierenden Interview-Fragen sollten in der Liste angezeigt werden",
-      "actual": "Zeigt 'Keine Interview-Fragen vorhanden' obwohl API 200 OK mit Fragen zurückgibt",
-      "rootCause": "Datenpfad-Mismatch: InterviewPrep.vue erwartet `data.questions` als Array, aber API gibt `data.data.all_questions` zurück",
+      "expected": "Link führt zur spezifischen Bewerbungsdetail-Seite (/applications/{id})",
+      "actual": "Link führt zur allgemeinen Bewerbungsübersicht (/applications)",
       "affectedFiles": [
-        "frontend/src/pages/InterviewPrep.vue:294"
+        "frontend/src/pages/Timeline.vue:100"
       ],
-      "suggestedFix": "Zeile 294: `questions.value = data.questions || []` ändern zu `questions.value = data.data?.all_questions || data.questions || []`",
-      "fixed": true,
-      "fixAttempts": 1,
+      "fixed": false,
+      "fixAttempts": 0,
       "source": "test-ralph"
     },
     {
       "id": "BUG-002",
-      "title": "API-Fehler 415 beim Generieren von Interview-Fragen",
-      "severity": "major",
-      "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert mit HTTP 415 UNSUPPORTED MEDIA TYPE Fehler.",
+      "title": "Backend-Fehlermeldungen teilweise auf Englisch",
+      "severity": "minor",
+      "description": "Fehlermeldung bei existierender E-Mail wird auf Englisch angezeigt statt auf Deutsch",
       "stepsToReproduce": [
-        "Navigiere zu /applications",
-        "Klicke auf 'Details' bei einer Bewerbung",
-        "Klicke auf 'Interview-Prep'",
-        "Klicke auf 'Fragen generieren'",
-        "Alert erscheint mit Fehlermeldung"
+        "Zur Registrierungsseite navigieren",
+        "Formular mit bereits existierender E-Mail ausfüllen",
+        "Gültiges Passwort eingeben",
+        "Auf 'Kostenlos registrieren' klicken"
       ],
-      "expected": "Interview-Fragen sollten generiert und angezeigt werden",
-      "actual": "Alert zeigt Fehlermeldung, Console zeigt 415 Error",
-      "rootCause": "Wahrscheinlich fehlender Content-Type: application/json Header im API-Request",
+      "expected": "Fehlermeldung auf Deutsch: 'Benutzer mit dieser E-Mail existiert bereits'",
+      "actual": "Fehlermeldung auf Englisch: 'User with this email already exists'",
       "affectedFiles": [
-        "frontend/src/pages/InterviewPrep.vue"
+        "backend/services/auth_service.py:40"
       ],
-      "suggestedFix": "Prüfe den API-Call und stelle sicher dass Content-Type Header gesetzt ist",
-      "fixed": true,
-      "fixAttempts": 1,
+      "fixed": false,
+      "fixAttempts": 0,
       "source": "test-ralph"
     },
     {
       "id": "BUG-003",
-      "title": "Modal-State wird nicht zurückgesetzt beim erneuten Öffnen",
+      "title": "Fehlermeldungen werden nicht lokalisiert (Englisch statt Deutsch)",
       "severity": "minor",
-      "description": "Wenn das Analyse-Modal geschlossen und erneut geöffnet wird, bleiben die vorherige URL-Eingabe und Fehlermeldung erhalten.",
+      "description": "Bei E-Mail-Verifizierung wird englische Fehlermeldung angezeigt",
       "stepsToReproduce": [
-        "Dashboard öffnen",
-        "Auf 'Job analysieren' klicken",
-        "Eine URL eingeben und 'Analysieren' klicken",
-        "Modal schließen",
-        "Erneut auf 'Job analysieren' oder 'Erste Stelle analysieren' klicken"
+        "Navigiere zu /verify-email?token=invalid-test-token",
+        "Warte auf API-Antwort",
+        "Beobachte die Fehlermeldung"
       ],
-      "expected": "Modal öffnet sich mit leerem URL-Feld und ohne Fehlermeldung",
-      "actual": "Modal zeigt noch die vorherige URL und Fehlermeldung an",
-      "rootCause": "Modal-State (analyzeUrl, analyzeError, analyzeResult) wird beim Schließen nicht zurückgesetzt",
+      "expected": "Deutsche Fehlermeldung wie 'Der Verifizierungs-Link ist ungültig. Bitte fordern Sie einen neuen Link an.'",
+      "actual": "Englische Fehlermeldung 'Invalid verification token' wird angezeigt",
       "affectedFiles": [
-        "frontend/src/components/JobRecommendations.vue"
+        "frontend/src/pages/VerifyEmail.vue:175-184"
       ],
-      "suggestedFix": "Im showAnalyzeModal watcher: wenn Modal öffnet, State zurücksetzen",
-      "fixed": true,
-      "fixAttempts": 1,
+      "fixed": false,
+      "fixAttempts": 0,
       "source": "test-ralph"
     },
     {
       "id": "BUG-004",
-      "title": "GapAnalysis-Komponente wird nicht angezeigt bei fehlenden JobRequirements",
+      "title": "Englischer Toast bei ungültigem Reset-Token zusätzlich zur deutschen Fehlerkarte",
       "severity": "minor",
-      "description": "Die GapAnalysis-Sektion wird komplett ausgeblendet wenn keine JobRequirements vorhanden sind, statt einen hilfreichen Hinweis anzuzeigen.",
+      "description": "Doppelte Fehlermeldung - englischer Toast und deutsche Fehlerkarte gleichzeitig",
       "stepsToReproduce": [
-        "Navigiere zu /applications",
-        "Klicke auf 'Details' einer Bewerbung ohne analysierte Anforderungen",
-        "Beobachte, dass der Abschnitt 'Skill-Lücken & Lernempfehlungen' nicht erscheint"
+        "Navigiere zu /reset-password?token=invalid-token",
+        "Gib ein gültiges Passwort ein (z.B. Test1234)",
+        "Gib das gleiche Passwort zur Bestätigung ein",
+        "Klicke auf 'Passwort ändern'"
       ],
-      "expected": "Ein Hinweis sollte erklären, dass zuerst Anforderungen analysiert werden müssen",
-      "actual": "Die GapAnalysis-Sektion wird komplett ausgeblendet (v-if Bedingung)",
-      "rootCause": "v-if in Applications.vue:293 blendet Sektion komplett aus statt informativen Hinweis zu zeigen",
+      "expected": "Nur die deutsche Fehlerkarte 'Ungültiger Link' mit der Meldung 'Der Reset-Link ist abgelaufen/ungültig' wird angezeigt",
+      "actual": "Zusätzlich zur deutschen Fehlerkarte erscheint ein Toast mit englischem Text 'Invalid or expired reset token'",
       "affectedFiles": [
-        "frontend/src/pages/Applications.vue:293"
+        "frontend/src/pages/ResetPassword.vue"
       ],
-      "suggestedFix": "Statt v-if einen v-else Block mit Hinweis 'Analysieren Sie zuerst die Stellenanforderungen'",
-      "fixed": true,
-      "fixAttempts": 1,
+      "fixed": false,
+      "fixAttempts": 0,
       "source": "test-ralph"
     },
     {
       "id": "BUG-005",
-      "title": "Mehrere identische Toast-Fehlermeldungen erscheinen gleichzeitig",
-      "severity": "trivial",
-      "description": "Beim Öffnen einer Bewerbung ohne Bewerbungstext erscheinen zwei identische Toast-Meldungen gleichzeitig.",
+      "title": "Englische technische Fehlermeldungen werden Endnutzern angezeigt",
+      "severity": "minor",
+      "description": "Bei OAuth-Fehlern werden technische englische Meldungen angezeigt",
       "stepsToReproduce": [
-        "Navigiere zu /applications",
-        "Klicke auf 'Details' einer Bewerbung ohne Bewerbungstext",
-        "Beobachte die Toast-Benachrichtigungen"
+        "Zur Einstellungsseite navigieren (/settings)",
+        "Auf 'Mit Gmail verbinden' oder 'Mit Outlook verbinden' klicken",
+        "Beobachte die Toast-Benachrichtigung"
       ],
-      "expected": "Maximal eine Fehlermeldung pro Fehlertyp",
-      "actual": "Zwei identische Fehlermeldungen 'Kein Bewerbungstext vorhanden' erscheinen gleichzeitig",
-      "rootCause": "Toast-Komponente hat keine Deduplizierungs-Logik - bei schnell aufeinanderfolgenden Aufrufen werden identische Meldungen mehrfach angezeigt",
+      "expected": "Deutsche, benutzerfreundliche Fehlermeldung wie 'E-Mail-Verbindung ist derzeit nicht konfiguriert.'",
+      "actual": "Zwei Toasts erscheinen: 1) Technische englische Meldung 'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set' 2) Deutsche Meldung 'Fehler beim Verbinden mit Gmail'",
       "affectedFiles": [
-        "frontend/src/components/Toast.vue"
+        "backend/services/gmail_service.py:32-34",
+        "backend/services/outlook_service.py",
+        "backend/routes/email.py:98-102",
+        "frontend/src/api/client.js:34-39"
       ],
-      "suggestedFix": "Deduplizierung im Toast-Service implementieren",
-      "fixed": true,
-      "fixAttempts": 1,
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-006",
+      "title": "Coverage dependency not installed",
+      "severity": "minor",
+      "description": "Vitest Coverage kann nicht ausgeführt werden wegen fehlender Dependency",
+      "stepsToReproduce": [
+        "Navigate to frontend directory",
+        "Run: npx vitest run --coverage"
+      ],
+      "expected": "Coverage report should be generated as configured in vitest.config.js",
+      "actual": "Error: MISSING DEPENDENCY - Cannot find dependency '@vitest/coverage-v8'",
+      "affectedFiles": [
+        "frontend/package.json"
+      ],
+      "suggestedFix": "npm install -D @vitest/coverage-v8",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-007",
+      "title": "Alte Fehlermeldung bleibt nach manuellem Fallback sichtbar",
+      "severity": "minor",
+      "description": "Wenn URL-Scraping fehlschlägt und der User den manuellen Fallback nutzt, bleibt die ursprüngliche Fehlermeldung sichtbar",
+      "stepsToReproduce": [
+        "Auf /new-application navigieren",
+        "Eine StepStone-URL eingeben und auf 'Stellenanzeige laden' klicken",
+        "Fehler 403 erscheint mit manuellem Fallback-Option",
+        "Auf 'Stellentext manuell einfügen' klicken",
+        "Formular ausfüllen und 'Stellentext analysieren' klicken"
+      ],
+      "expected": "Die alte Fehlermeldung (403 Forbidden) sollte verschwinden, wenn der manuelle Flow erfolgreich abgeschlossen wird",
+      "actual": "Die alte Fehlermeldung bleibt unten im Preview sichtbar, obwohl 'Stellentext analysiert!' Toast erscheint",
+      "affectedFiles": [
+        "frontend/src/pages/NewApplication.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-008",
+      "title": "Inkonsistente Umlaute in Fehlermeldung (Anforderungsanalyse)",
+      "severity": "minor",
+      "description": "Gemischte Schreibweisen von Umlauten in der gleichen Fehlermeldung",
+      "stepsToReproduce": [
+        "Stellentext manuell analysieren lassen",
+        "Anforderungsanalyse-Box betrachten"
+      ],
+      "expected": "Einheitliche deutsche Umlaute (ö, ü, etc.)",
+      "actual": "Gemischte Schreibweisen: 'Anforderungsanalyse nicht moeglich' (Überschrift) vs 'Anforderungsanalyse nicht möglich' (Text)",
+      "affectedFiles": [
+        "frontend/src/pages/NewApplication.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-009",
+      "title": "Keine Client-seitige URL-Validierung vor Submit",
+      "severity": "trivial",
+      "description": "Ungültige URLs können abgeschickt werden, Fehler wird erst nach Server-Request angezeigt",
+      "stepsToReproduce": [
+        "Auf /new-application navigieren",
+        "Ungültige URL eingeben (z.B. 'ungültige-url-test')",
+        "Button 'Stellenanzeige laden' ist aktiv und klickbar"
+      ],
+      "expected": "Button sollte disabled bleiben oder visuelle Warnung bei offensichtlich ungültiger URL (ohne http/https)",
+      "actual": "Button ist aktiv, Fehler wird erst nach Server-Request angezeigt (400 Bad Request)",
+      "affectedFiles": [
+        "frontend/src/pages/NewApplication.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-010",
+      "title": "Keine Fehlermeldung bei Duplikat-Skill",
+      "severity": "minor",
+      "description": "Beim Hinzufügen eines bereits existierenden Skills wird keine Fehlermeldung angezeigt",
+      "stepsToReproduce": [
+        "Zur Dokumente-Seite navigieren",
+        "'Skill hinzufügen' klicken",
+        "Einen bereits existierenden Skill-Namen eingeben (z.B. 'JavaScript')",
+        "Kategorie auswählen und 'Hinzufügen' klicken"
+      ],
+      "expected": "Eine Fehlermeldung wie 'Skill existiert bereits' sollte angezeigt werden",
+      "actual": "Modal bleibt offen ohne Feedback, 409 CONFLICT Error nur in Console sichtbar",
+      "affectedFiles": [
+        "frontend/src/components/SkillsOverview.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
       "source": "test-ralph"
     }
   ]

@@ -1,371 +1,234 @@
 {
   "project": "obojobs",
-  "branchName": "ralph/quality-interview",
-  "description": "Quality-First Bewerbungen & Interview-Preparation - KI-gestützte Job-Fit Analyse und deutscher Interview-Coach",
+  "branchName": "ralph/ux-improvements",
+  "description": "UX & Feature Improvements - Vorschläge aus Test-Ralph explorativen UI Tests",
   "userStories": [
     {
-      "id": "QUAL-001",
-      "title": "Skill-Extraktion aus CV",
-      "description": "Automatische Extraktion von Skills aus hochgeladenen Lebensläufen mittels KI",
+      "id": "UX-001",
+      "title": "Details-Link auf spezifische Bewerbung verlinken",
+      "description": "Timeline Details-Link soll zur spezifischen Bewerbung führen statt zur Übersicht",
       "acceptanceCriteria": [
-        "Neues Model 'UserSkill' mit Feldern: user_id, skill_name, skill_category, experience_years, source_document_id",
-        "Backend Service 'skill_extractor.py' der Claude API nutzt um Skills aus CV-Text zu extrahieren",
-        "Endpoint POST /api/documents/{id}/extract-skills der Skills aus einem Dokument extrahiert",
-        "Endpoint GET /api/users/me/skills der alle extrahierten Skills eines Users zurückgibt",
-        "Skills werden in Kategorien eingeteilt: technical, soft_skills, languages, tools, certifications",
-        "Automatische Extraktion beim Upload eines Lebenslaufs (Dokument-Typ 'lebenslauf')",
-        "Frontend-Komponente 'SkillsOverview.vue' die extrahierte Skills anzeigt",
-        "Skills können manuell bearbeitet/gelöscht werden",
+        "Details-Button in Timeline.vue verlinkt auf /applications/{id}",
+        "Bewerbungs-ID wird korrekt aus dem Timeline-Eintrag extrahiert",
+        "Navigation funktioniert für alle Bewerbungen in der Timeline",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
-      "passes": true,
-      "notes": "Basis für Job-Fit Score. Claude Prompt sollte strukturierte JSON-Ausgabe liefern mit skill_name, category, years_experience"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "QUAL-002",
-      "title": "Job-Anforderungs-Analyse",
-      "description": "KI-gestützte Analyse von Stellenanzeigen um Anforderungen zu extrahieren",
+      "id": "UX-002",
+      "title": "Navigationslink zu Company Insights hinzufügen",
+      "description": "Die Company Insights Seite ist nur über direkte URL erreichbar. Es fehlt ein Link in der Hauptnavigation.",
       "acceptanceCriteria": [
-        "Neues Model 'JobRequirement' mit Feldern: application_id, requirement_text, requirement_type (must_have/nice_to_have), skill_category",
-        "Backend Service 'requirement_analyzer.py' der Claude API nutzt",
-        "Anforderungen werden beim Scrapen einer Stellenanzeige automatisch extrahiert",
-        "Unterscheidung zwischen Must-Have und Nice-to-Have Anforderungen",
-        "Endpoint GET /api/applications/{id}/requirements der Anforderungen zurückgibt",
-        "Integration in bestehenden WebScraper - strukturierte Anforderungen zusätzlich zum Volltext",
+        "Link 'Company Insights' in Hauptnavigation hinzufügen",
+        "Alternativ: Link auf der Bewerbungen-Seite bei jeder Firma",
+        "Responsive Design für Mobile berücksichtigen",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
-      "passes": true,
-      "notes": "Claude sollte aus Stellentext Must-Have vs Nice-to-Have unterscheiden können basierend auf Formulierungen wie 'erforderlich', 'wünschenswert', 'idealerweise'"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "QUAL-003",
-      "title": "Job-Fit Score Berechnung",
-      "description": "Berechnung eines Match-Scores zwischen User-Skills und Job-Anforderungen",
+      "id": "UX-003",
+      "title": "Install @vitest/coverage-v8 dependency",
+      "description": "Coverage Provider für Vitest fehlt in devDependencies",
       "acceptanceCriteria": [
-        "Backend Service 'job_fit_calculator.py' der Match-Score berechnet",
-        "Score basiert auf: Anzahl erfüllter Must-Haves, Anzahl erfüllter Nice-to-Haves, Erfahrungsjahre-Match",
-        "Gewichtung: Must-Have = 70%, Nice-to-Have = 30%",
-        "Score von 0-100% mit Kategorien: Sehr gut (80%+), Gut (60-79%), Mittel (40-59%), Niedrig (<40%)",
-        "Endpoint GET /api/applications/{id}/job-fit der Score und Details zurückgibt",
-        "Response enthält: overall_score, matched_skills[], missing_skills[], partial_matches[]",
-        "Alle Tests grün (pytest, npm test)",
-        "Linting OK (ruff, eslint)"
+        "npm install -D @vitest/coverage-v8 ausführen",
+        "npm script 'test:coverage' zu package.json hinzufügen",
+        "npx vitest run --coverage funktioniert ohne Fehler",
+        "Coverage Report wird generiert"
       ],
       "priority": 3,
-      "passes": true,
-      "notes": "Partial Match wenn Skill vorhanden aber weniger Erfahrung als gefordert. Beispiel: Job fordert '5 Jahre Python', User hat '3 Jahre' = partial match"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "QUAL-004",
-      "title": "Job-Fit Score UI",
-      "description": "Frontend-Anzeige des Job-Fit Scores mit visueller Darstellung",
+      "id": "UX-004",
+      "title": "Automatische Extraktion von Kontaktdaten aus manuellem Text",
+      "description": "Bei der manuellen Texteingabe werden Standort, Ansprechpartner und Kontakt-Email nicht automatisch extrahiert",
       "acceptanceCriteria": [
-        "Komponente 'JobFitScore.vue' mit Fortschrittsbalken und Score-Anzeige",
-        "Farbcodierung: Grün (80%+), Gelb (60-79%), Orange (40-59%), Rot (<40%)",
-        "Auflistung von: Erfüllte Anforderungen (grün), Teilweise erfüllt (gelb), Fehlend (rot)",
-        "Integration in NewApplication.vue - Score wird nach URL-Eingabe angezeigt",
-        "Button 'Bewerbung generieren' zeigt Warnung wenn Score < 40%",
-        "Empfehlungen für fehlende Skills werden angezeigt",
+        "NLP-basierte Extraktion von Ansprechpartner-Namen",
+        "Email-Adressen aus Stellentext extrahieren",
+        "Standort/Stadt aus Text erkennen",
+        "Extrahierte Daten in entsprechende Felder eintragen",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
-      "passes": true,
-      "notes": "UI sollte dem User helfen zu entscheiden ob sich eine Bewerbung lohnt. Bei niedrigem Score: 'Diese Stelle passt möglicherweise nicht zu Ihrem Profil'"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "QUAL-005",
-      "title": "ATS-Score vor Bewerbungsabsendung",
-      "description": "Analyse der generierten Bewerbung auf ATS-Kompatibilität vor dem Absenden",
+      "id": "UX-005",
+      "title": "Echtzeit-URL-Validierung mit visuellem Feedback",
+      "description": "URL-Eingabe sollte vor Submit validiert werden mit grün/rot Indikator",
       "acceptanceCriteria": [
-        "Backend Service 'ats_optimizer.py' der generierte Bewerbung mit Stellenanzeige vergleicht",
-        "Keyword-Density-Analyse: Wie oft kommen wichtige Keywords vor",
-        "Endpoint POST /api/applications/{id}/ats-check der Bewerbungstext analysiert",
-        "Response enthält: ats_score (0-100), missing_keywords[], keyword_suggestions[], format_issues[]",
-        "Empfehlungen wie Keywords natürlich eingebaut werden können",
+        "Client-seitige URL-Validierung während der Eingabe",
+        "Visuelles Feedback: grüner Rahmen bei gültiger URL, roter bei ungültiger",
+        "Submit-Button disabled bei offensichtlich ungültiger URL",
+        "Tooltip/Hinweis bei Validierungsfehler",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Unterschied zu bestehendem ATS-Modul: Dieses analysiert die GENERIERTE Bewerbung, nicht die Stellenanzeige"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "QUAL-006",
-      "title": "ATS-Score UI mit Verbesserungen",
-      "description": "Frontend für ATS-Score mit Ein-Klick-Verbesserung",
+      "id": "UX-006",
+      "title": "Standort und Anstellungsart aus manuellem Stellentext extrahieren",
+      "description": "Zusätzliche Felder automatisch aus manuellem Text befüllen",
       "acceptanceCriteria": [
-        "Komponente 'ATSOptimizer.vue' zeigt ATS-Score nach Bewerbungsgenerierung",
-        "Liste fehlender Keywords mit Kontext wo sie eingebaut werden könnten",
-        "Button 'Mit KI verbessern' der Bewerbung automatisch optimiert",
-        "Vorher/Nachher Vergleich der Bewerbung",
-        "Integration in Application-Detail-View",
+        "Standort-Erkennung (Stadt, Region)",
+        "Anstellungsart erkennen (Vollzeit, Teilzeit, Remote, etc.)",
+        "Felder automatisch befüllen nach Analyse",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 6,
-      "passes": true,
-      "notes": "Ein-Klick-Optimierung ruft Claude API auf um Keywords natürlich einzubauen ohne den Ton zu verändern"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "QUAL-007",
-      "title": "Gap-Analyse mit Lernempfehlungen",
-      "description": "Analyse fehlender Skills mit Empfehlungen zum Skill-Aufbau",
+      "id": "UX-007",
+      "title": "Loading-State für Upgrade-Buttons hinzufügen",
+      "description": "Upgrade-Buttons sollten einen Spinner zeigen während Checkout-Session erstellt wird",
       "acceptanceCriteria": [
-        "Erweiterung des Job-Fit Endpoints um 'learning_recommendations' Feld",
-        "Für jeden fehlenden Skill: Empfehlung wie dieser erlernt werden kann",
-        "Kategorien: Online-Kurs, Zertifizierung, Projekt-Idee, Buch-Empfehlung",
-        "Frontend-Komponente 'GapAnalysis.vue' die Empfehlungen anzeigt",
-        "Verlinkung zu relevanten Lernressourcen (Coursera, Udemy, etc.) - generische Links",
+        "Loading-Spinner auf Button während API-Call",
+        "Button disabled während Loading",
+        "Error-Handling bei fehlgeschlagenem Checkout",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 7,
-      "passes": true,
-      "notes": "Hilft Usern ihre Qualifikationen für zukünftige Bewerbungen zu verbessern"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "INT-001",
-      "title": "Interview-Fragen Generator",
-      "description": "KI-generierte Interview-Fragen basierend auf Stellenanzeige und User-Profil",
+      "id": "UX-008",
+      "title": "Backend-Fehlermeldungen lokalisieren",
+      "description": "Alle Backend-Fehlermeldungen sollten auf Deutsch zurückgegeben werden oder vom Frontend übersetzt werden",
       "acceptanceCriteria": [
-        "Neues Model 'InterviewQuestion' mit Feldern: application_id, question_text, question_type, difficulty, sample_answer",
-        "Backend Service 'interview_generator.py' der Claude API nutzt",
-        "Fragen-Kategorien: behavioral, technical, situational, company_specific, salary_negotiation",
-        "Endpoint POST /api/applications/{id}/generate-questions generiert 10-15 Fragen",
-        "Endpoint GET /api/applications/{id}/interview-questions gibt gespeicherte Fragen zurück",
-        "Fragen berücksichtigen deutsche Interview-Kultur",
-        "Beispiel-Antworten werden mitgeneriert",
+        "Auth-Service Fehler auf Deutsch",
+        "Email-Service Fehler auf Deutsch",
+        "Frontend übersetzt bekannte Backend-Fehlercodes",
+        "Keine technischen Meldungen an Endnutzer",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 8,
-      "passes": true,
-      "notes": "Deutsche Klassiker einbauen: 'Wo sehen Sie sich in 5 Jahren?', 'Was sind Ihre Stärken/Schwächen?', 'Warum wollen Sie bei uns arbeiten?'"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "INT-002",
-      "title": "Interview-Prep UI",
-      "description": "Frontend für Interview-Vorbereitung mit Fragen-Übersicht",
+      "id": "UX-009",
+      "title": "Doppelte Toast-Benachrichtigungen vermeiden",
+      "description": "Bei OAuth-Fehlern werden zwei Toasts angezeigt - nur eine Meldung sollte erscheinen",
       "acceptanceCriteria": [
-        "Neue Seite 'InterviewPrep.vue' erreichbar über /applications/{id}/interview",
-        "Auflistung aller generierten Fragen gruppiert nach Kategorie",
-        "Expandierbare Fragen-Karten mit Beispiel-Antworten (zunächst versteckt)",
-        "Button 'Antwort üben' pro Frage der zu Mock-Interview führt",
-        "Button 'Alle Fragen neu generieren' für frische Fragen",
-        "Navigation von Application-Detail-View zur Interview-Prep",
+        "Toast-Deduplizierung im API-Client",
+        "Nur eine Fehlermeldung pro Fehler",
+        "Priorität: Benutzerfreundliche deutsche Meldung",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 9,
-      "passes": true,
-      "notes": "Beispiel-Antworten erst auf Klick zeigen damit User zuerst selbst nachdenken können"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "INT-003",
-      "title": "Text-basiertes Mock-Interview",
-      "description": "Interaktives Mock-Interview wo User Antworten eintippen und Feedback erhalten",
+      "id": "UX-010",
+      "title": "ARIA-Attribute für Toasts hinzufügen",
+      "description": "Toasts sollten role='alert' oder aria-live='polite' haben für Screenreader",
       "acceptanceCriteria": [
-        "Neue Seite 'MockInterview.vue' erreichbar über /applications/{id}/mock-interview",
-        "Fragen werden nacheinander gestellt",
-        "User tippt Antwort in Textfeld",
-        "Nach Absenden: KI-Feedback zu Struktur, Inhalt, Länge der Antwort",
-        "STAR-Methode Analyse für Behavioral-Fragen",
-        "Fortschrittsanzeige (Frage X von Y)",
-        "Am Ende: Zusammenfassung mit Gesamtbewertung",
-        "Endpoint POST /api/interview/evaluate-answer für Feedback",
+        "role='alert' auf Toast-Komponente",
+        "aria-live='polite' für nicht-kritische Toasts",
+        "Screenreader kündigt Toasts an",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 10,
-      "passes": true,
-      "notes": "Feedback sollte konstruktiv sein: Was war gut, was kann verbessert werden, konkreter Verbesserungsvorschlag"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "INT-004",
-      "title": "STAR-Methode Coach",
-      "description": "Spezielles Feedback für Behavioral-Fragen nach STAR-Methode",
+      "id": "UX-011",
+      "title": "ESLint in CI/CD Pipeline integrieren",
+      "description": "npm run lint sollte automatisch in der Pipeline laufen",
       "acceptanceCriteria": [
-        "Backend Service 'star_analyzer.py' der Antworten auf STAR-Struktur prüft",
-        "Analyse ob alle STAR-Komponenten vorhanden: Situation, Task, Action, Result",
-        "Feedback pro Komponente: Vorhanden/Fehlt/Verbesserungswürdig",
-        "Verbesserungsvorschläge für fehlende Komponenten",
-        "Komponente 'STARFeedback.vue' die Analyse visualisiert",
-        "Integration in Mock-Interview für behavioral Fragen",
-        "Alle Tests grün (pytest, npm test)",
-        "Linting OK (ruff, eslint)"
+        "ESLint-Schritt in CI/CD Pipeline",
+        "Build schlägt fehl bei ESLint-Fehlern",
+        "Warnings werden geloggt aber blocken nicht",
+        "Console.log Warnings addressieren (40 Stück)"
       ],
       "priority": 11,
-      "passes": true,
-      "notes": "STAR = Situation (Kontext), Task (Aufgabe), Action (Handlung), Result (Ergebnis). Besonders wichtig für 'Erzählen Sie von einer Situation wo...' Fragen"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "INT-005",
-      "title": "Firmen-Recherche Integration",
-      "description": "Automatische Recherche zur Firma für bessere Interview-Vorbereitung",
+      "id": "UX-012",
+      "title": "Pre-fill Empfänger-Email aus Bewerbungsdaten",
+      "description": "Email-Composer 'An' Feld sollte automatisch befüllt werden wenn application.email vorhanden",
       "acceptanceCriteria": [
-        "Backend Service 'company_researcher.py' der öffentliche Infos zur Firma sammelt",
-        "Daten: Branche, Größe, Standorte, Produkte/Dienstleistungen, aktuelle News (falls verfügbar)",
-        "Web-Scraping der Firmen-Website (About/Über uns Seite)",
-        "Endpoint GET /api/companies/{name}/research der Firmen-Infos zurückgibt",
-        "Caching der Recherche-Ergebnisse (24h)",
-        "Komponente 'CompanyResearch.vue' die Infos in Interview-Prep anzeigt",
-        "Hinweise wie Firmen-Wissen im Interview genutzt werden kann",
+        "Empfänger-Feld wird aus app.email befüllt",
+        "Falls leer: Hinweis dass Email manuell eingegeben werden muss",
+        "Optional: Email bei Bewerbungserstellung erforderlich machen",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 12,
-      "passes": true,
-      "notes": "Hilft bei Fragen wie 'Warum wollen Sie bei uns arbeiten?' und 'Was wissen Sie über unser Unternehmen?'"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "INT-006",
-      "title": "Interview-Ergebnis Tracking",
-      "description": "Tracking von Interview-Ergebnissen und Feedback für Verbesserung",
+      "id": "UX-013",
+      "title": "Möglichkeit zum Löschen einzelner History-Einträge",
+      "description": "User sollten alte oder irrelevante Analysen aus der History entfernen können",
       "acceptanceCriteria": [
-        "Erweiterung Application Model um interview_date, interview_feedback, interview_result Felder",
-        "Endpoint PUT /api/applications/{id}/interview-result zum Speichern des Ergebnisses",
-        "Ergebnis-Optionen: scheduled, completed, passed, rejected, offer_received",
-        "Freitext-Feld für eigenes Feedback nach dem Interview",
-        "UI in Application-Detail zum Eintragen des Interview-Ergebnisses",
-        "Dashboard-Widget zeigt Interview-Statistiken (Erfolgsrate, häufige Absage-Gründe)",
+        "Delete-Button/Icon bei jedem History-Eintrag",
+        "Bestätigungsdialog vor Löschen",
+        "API-Endpoint DELETE /api/analysis-history/{id}",
+        "UI aktualisiert sich nach Löschen",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 13,
-      "passes": true,
-      "notes": "Hilft Usern ihre Interview-Performance über Zeit zu tracken und zu verbessern"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "ADV-001",
-      "title": "Smart Job Recommendations",
-      "description": "Tägliche Job-Empfehlungen basierend auf User-Profil und Job-Fit Score",
+      "id": "UX-014",
+      "title": "Passwort-Sichtbarkeits-Toggle hinzufügen",
+      "description": "Eye-Icon zum Ein/Ausblenden des Passworts in Formularen",
       "acceptanceCriteria": [
-        "Backend Service 'job_recommender.py' der täglich neue Jobs findet",
-        "Scraping der konfigurierten Job-Boards nach relevanten Keywords aus User-Skills",
-        "Berechnung des Job-Fit Scores für jeden gefundenen Job",
-        "Nur Jobs mit Score >= 60% werden empfohlen",
-        "Neues Model 'JobRecommendation' mit job_data, fit_score, recommended_at, user_id",
-        "Endpoint GET /api/recommendations der aktuelle Empfehlungen zurückgibt",
-        "Komponente 'JobRecommendations.vue' auf Dashboard",
-        "Button 'Bewerbung starten' der direkt zur NewApplication führt",
+        "Toggle-Button neben Passwort-Feldern",
+        "Icon wechselt zwischen 'eye' und 'eye-off'",
+        "Input-Type wechselt zwischen 'password' und 'text'",
+        "Funktioniert in Login, Register, Reset-Password",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 14,
-      "passes": true,
-      "notes": "Celery/APScheduler für täglichen Job oder manueller Trigger via Button"
+      "passes": false,
+      "source": "test-ralph"
     },
     {
-      "id": "ADV-002",
-      "title": "Gehaltsverhandlungs-Coach",
-      "description": "KI-Coaching für Gehaltsverhandlungen mit Marktdaten und Skripten",
+      "id": "UX-015",
+      "title": "Export gefilterte Daten",
+      "description": "Export exportiert immer ALLE Bewerbungen - Option für gefilterte Auswahl",
       "acceptanceCriteria": [
-        "Backend Service 'salary_coach.py' der Gehaltsverhandlung unterstützt",
-        "Endpoint POST /api/salary/research der Gehaltsspanne für Position/Region recherchiert",
-        "Endpoint POST /api/salary/negotiation-tips der personalisierte Tipps generiert",
-        "Datenquellen: Stellenanzeigen-Gehälter, allgemeine Gehaltsranges nach Branche",
-        "Verhandlungsskripte für typische Situationen",
-        "Komponente 'SalaryCoach.vue' in Interview-Prep Bereich",
-        "Eingabe: Gewünschtes Gehalt, aktuelles Gehalt, Position, Erfahrung",
-        "Ausgabe: Empfohlene Verhandlungsstrategie, Argumente, Fallback-Positionen",
+        "Checkbox 'Nur gefilterte exportieren' im Export-Dialog",
+        "Filter-State wird an Export-Funktion übergeben",
+        "Backend filtert entsprechend",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 15,
-      "passes": true,
-      "notes": "Wichtig für deutsche Kultur: Gehalt wird oft erst im 2. Gespräch besprochen, Verhandlung ist üblich"
-    },
-    {
-      "id": "NEW-001",
-      "title": "Manueller Stellentext-Import als Fallback",
-      "description": "Textarea-Fallback wenn URL-Scraping fehlschlägt, damit Job-Fit Analyse auch bei blockierten URLs möglich ist",
-      "acceptanceCriteria": [
-        "Wenn URL-Scraping fehlschlägt (403, Timeout, etc.), wird automatisch ein Textarea angezeigt",
-        "User kann Stellentext manuell per Copy-Paste einfügen",
-        "Button 'Stellentext analysieren' startet Job-Fit Analyse mit manuellem Text",
-        "Bestehende Analyse-Logik funktioniert mit manuell eingegebenem Text",
-        "UX: Klare Fehlermeldung erklärt warum Fallback nötig ist",
-        "Integration in NewApplication.vue und JobRecommendations.vue",
-        "Alle Tests grün (pytest, npm test)",
-        "Linting OK (ruff, eslint)"
-      ],
-      "priority": 16,
-      "passes": true,
-      "notes": "Gefunden durch Test-Ralph: Viele Job-Portale (Indeed, StepStone) blockieren Scraper. Manueller Import als Fallback ist essentiell.",
-      "source": "test-ralph"
-    },
-    {
-      "id": "NEW-002",
-      "title": "Timer für realistische Interview-Simulation",
-      "description": "Optionaler Timer pro Frage für realistischeres Mock-Interview Training",
-      "acceptanceCriteria": [
-        "Optionaler Timer in MockInterview.vue aktivierbar",
-        "Konfigurierbare Zeit pro Frage (Standard: 2 Minuten)",
-        "Visueller Countdown mit Fortschrittsanzeige",
-        "Optischer/akustischer Hinweis bei Zeitablauf",
-        "Timer stoppt automatisch bei Antwort-Absenden",
-        "Statistik am Ende: Durchschnittliche Antwortzeit, Zeitüberschreitungen",
-        "Alle Tests grün (pytest, npm test)",
-        "Linting OK (ruff, eslint)"
-      ],
-      "priority": 17,
-      "passes": true,
-      "notes": "Gefunden durch Test-Ralph: Trainiert User unter Zeitdruck zu antworten wie im echten Interview.",
-      "source": "test-ralph"
-    },
-    {
-      "id": "NEW-003",
-      "title": "Automatische Anforderungsanalyse bei Bewerbungserstellung",
-      "description": "Anforderungen automatisch analysieren beim Erstellen einer Bewerbung",
-      "acceptanceCriteria": [
-        "Nach erfolgreichem URL-Scraping werden automatisch JobRequirements extrahiert",
-        "GapAnalysis ist sofort verfügbar ohne manuellen Zwischenschritt",
-        "Loading-State während Anforderungs-Analyse",
-        "Fehlerbehandlung wenn Analyse fehlschlägt",
-        "Alle Tests grün (pytest, npm test)",
-        "Linting OK (ruff, eslint)"
-      ],
-      "priority": 18,
-      "passes": true,
-      "notes": "Gefunden durch Test-Ralph: GapAnalysis wird nicht angezeigt weil JobRequirements fehlen. Automatische Analyse löst das Problem.",
-      "source": "test-ralph"
-    },
-    {
-      "id": "NEW-004",
-      "title": "Manueller ATS-Check mit eigenem Text",
-      "description": "ATS-Check auch ohne generierte Bewerbung nutzbar machen",
-      "acceptanceCriteria": [
-        "Textarea in ATSOptimizer.vue für manuellen Bewerbungstext",
-        "User kann eigenen Cover-Letter Text einfügen",
-        "ATS-Check analysiert manuell eingegebenen Text",
-        "Ergebnis zeigt fehlende Keywords und Verbesserungsvorschläge",
-        "Alle Tests grün (pytest, npm test)",
-        "Linting OK (ruff, eslint)"
-      ],
-      "priority": 19,
-      "passes": true,
-      "notes": "Gefunden durch Test-Ralph: User ohne generierte Bewerbung können ATS-Check aktuell nicht nutzen.",
-      "source": "test-ralph"
-    },
-    {
-      "id": "NEW-005",
-      "title": "STAR-Hinweis für nicht-behavioral Fragen",
-      "description": "Erklärender Hinweis warum STAR-Analyse bei technischen Fragen nicht verfügbar ist",
-      "acceptanceCriteria": [
-        "Bei nicht-behavioral Fragen wird Info-Hinweis statt 'Detaillierte Analyse' Button angezeigt",
-        "Hinweis erklärt: 'STAR-Methode ist für Verhaltens-Fragen. Diese Frage ist technisch/situativ.'",
-        "Eventuell: Alternative Tipps für technische Fragen anzeigen",
-        "Alle Tests grün (pytest, npm test)",
-        "Linting OK (ruff, eslint)"
-      ],
-      "priority": 20,
-      "passes": true,
-      "notes": "Gefunden durch Test-Ralph: User könnten verwirrt sein warum STAR-Button nicht erscheint.",
+      "passes": false,
       "source": "test-ralph"
     }
   ]
