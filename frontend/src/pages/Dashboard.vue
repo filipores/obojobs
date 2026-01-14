@@ -179,6 +179,13 @@
       </div>
     </section>
 
+    <!-- Interview Stats Widget -->
+    <section class="interview-stats-section">
+      <div class="container">
+        <InterviewStatsWidget />
+      </div>
+    </section>
+
     <!-- Info Banner -->
     <section class="info-section">
       <div class="container">
@@ -210,6 +217,7 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
 import { authStore } from '../store/auth'
+import InterviewStatsWidget from '../components/InterviewStatsWidget.vue'
 
 const stats = ref(null)
 const usage = ref(null)
@@ -600,6 +608,13 @@ onMounted(async () => {
   color: var(--color-text-secondary);
   margin-bottom: 0;
   max-width: 600px;
+}
+
+/* ========================================
+   INTERVIEW STATS SECTION
+   ======================================== */
+.interview-stats-section {
+  padding: var(--space-ma) 0;
 }
 
 /* ========================================

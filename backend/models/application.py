@@ -26,6 +26,11 @@ class Application(db.Model):
     sent_via = db.Column(db.String(50), nullable=True)  # 'gmail' or 'outlook'
     status_history = db.Column(db.Text, nullable=True)  # JSON array of status changes
 
+    # Interview Tracking
+    interview_date = db.Column(db.DateTime, nullable=True)  # Geplantes Interview-Datum
+    interview_feedback = db.Column(db.Text, nullable=True)  # Eigenes Feedback nach Interview
+    interview_result = db.Column(db.String(50), nullable=True)  # scheduled, completed, passed, rejected, offer_received
+
     # Relationships
     user = db.relationship("User", back_populates="applications")
     template = db.relationship("Template", back_populates="applications")
@@ -52,6 +57,9 @@ class Application(db.Model):
             "sent_at": self.sent_at.isoformat() if self.sent_at else None,
             "sent_via": self.sent_via,
             "status_history": self.get_status_history(),
+            "interview_date": self.interview_date.isoformat() if self.interview_date else None,
+            "interview_feedback": self.interview_feedback,
+            "interview_result": self.interview_result,
         }
 
     def get_status_history(self):

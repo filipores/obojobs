@@ -1446,3 +1446,168 @@ def get_star_components(current_user):
             "components": analyzer.get_component_descriptions(),
         }
     }), 200
+
+
+# ==================== Interview Result Tracking ====================
+
+
+VALID_INTERVIEW_RESULTS = ["scheduled", "completed", "passed", "rejected", "offer_received"]
+
+
+@applications_bp.route("/<int:app_id>/interview-result", methods=["PUT"])
+@jwt_required_custom
+def update_interview_result(app_id, current_user):
+    """Update interview result and feedback for an application.
+
+    Request body:
+        - interview_date: (optional) ISO date string for scheduled interview
+        - interview_result: (optional) One of: scheduled, completed, passed, rejected, offer_received
+        - interview_feedback: (optional) Free text for personal notes after interview
+
+    Returns:
+        - application: Updated application with interview fields
+    """
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Application not found"}), 404
+
+    data = request.json or {}
+
+    # Update interview_date
+    if "interview_date" in data:
+        date_value = data["interview_date"]
+        if date_value:
+            try:
+                # Parse ISO format date
+                if isinstance(date_value, str):
+                    # Handle both datetime and date-only formats
+                    if "T" in date_value:
+                        app.interview_date = datetime.fromisoformat(date_value.replace("Z", "+00:00"))
+                    else:
+                        app.interview_date = datetime.fromisoformat(date_value)
+                else:
+                    app.interview_date = None
+            except ValueError:
+                return jsonify({
+                    "success": False,
+                    "error": "Ungültiges Datumsformat. Bitte ISO-Format verwenden (YYYY-MM-DD oder YYYY-MM-DDTHH:MM:SS)"
+                }), 400
+        else:
+            app.interview_date = None
+
+    # Update interview_result
+    if "interview_result" in data:
+        result_value = data["interview_result"]
+        if result_value:
+            if result_value not in VALID_INTERVIEW_RESULTS:
+                return jsonify({
+                    "success": False,
+                    "error": f"Ungültiges Ergebnis. Erlaubt: {', '.join(VALID_INTERVIEW_RESULTS)}"
+                }), 400
+            app.interview_result = result_value
+        else:
+            app.interview_result = None
+
+    # Update interview_feedback
+    if "interview_feedback" in data:
+        app.interview_feedback = data["interview_feedback"]
+
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "application": app.to_dict(),
+        "message": "Interview-Ergebnis aktualisiert"
+    }), 200
+
+
+@applications_bp.route("/interview-stats", methods=["GET"])
+@jwt_required_custom
+def get_interview_statistics(current_user):
+    """Get interview statistics for the current user.
+
+    Returns aggregated interview data:
+        - total_interviews: Total applications with interview scheduled/completed
+        - success_rate: Percentage of passed interviews out of completed
+        - result_breakdown: Count per interview_result status
+        - upcoming_interviews: List of scheduled interviews
+        - recent_results: List of recent interview outcomes
+    """
+    from sqlalchemy import func
+
+    # Base query for user's applications
+    base_query = Application.query.filter_by(user_id=current_user.id)
+
+    # Total applications with any interview result
+    total_with_results = base_query.filter(Application.interview_result.isnot(None)).count()
+
+    # Count per result status
+    result_counts = (
+        db.session.query(Application.interview_result, func.count(Application.id))
+        .filter_by(user_id=current_user.id)
+        .filter(Application.interview_result.isnot(None))
+        .group_by(Application.interview_result)
+        .all()
+    )
+
+    result_breakdown = dict.fromkeys(VALID_INTERVIEW_RESULTS, 0)
+    for result, count in result_counts:
+        if result in result_breakdown:
+            result_breakdown[result] = count
+
+    # Calculate success rate (passed + offer_received out of all completed outcomes)
+    completed_outcomes = result_breakdown.get("passed", 0) + result_breakdown.get("rejected", 0) + result_breakdown.get("offer_received", 0)
+    successful_outcomes = result_breakdown.get("passed", 0) + result_breakdown.get("offer_received", 0)
+    success_rate = round((successful_outcomes / completed_outcomes * 100) if completed_outcomes > 0 else 0, 1)
+
+    # Upcoming interviews (scheduled with future date)
+    upcoming = (
+        base_query.filter(
+            Application.interview_result == "scheduled",
+            Application.interview_date.isnot(None),
+            Application.interview_date >= datetime.utcnow(),
+        )
+        .order_by(Application.interview_date.asc())
+        .limit(5)
+        .all()
+    )
+
+    # Recent results (last 10 completed interviews)
+    recent_results = (
+        base_query.filter(
+            Application.interview_result.in_(["completed", "passed", "rejected", "offer_received"])
+        )
+        .order_by(Application.interview_date.desc().nulls_last())
+        .limit(10)
+        .all()
+    )
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "total_interviews": total_with_results,
+            "success_rate": success_rate,
+            "result_breakdown": result_breakdown,
+            "upcoming_interviews": [
+                {
+                    "id": app.id,
+                    "firma": app.firma,
+                    "position": app.position,
+                    "interview_date": app.interview_date.isoformat() if app.interview_date else None,
+                }
+                for app in upcoming
+            ],
+            "recent_results": [
+                {
+                    "id": app.id,
+                    "firma": app.firma,
+                    "position": app.position,
+                    "interview_date": app.interview_date.isoformat() if app.interview_date else None,
+                    "interview_result": app.interview_result,
+                    "interview_feedback": app.interview_feedback,
+                }
+                for app in recent_results
+            ],
+        }
+    }), 200

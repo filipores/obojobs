@@ -267,6 +267,18 @@
                 ></textarea>
               </div>
 
+              <!-- Interview Tracking Section -->
+              <div class="detail-group">
+                <label class="detail-label">Interview-Tracking</label>
+                <InterviewTracker
+                  :application-id="selectedApp.id"
+                  :initial-date="selectedApp.interview_date"
+                  :initial-result="selectedApp.interview_result"
+                  :initial-feedback="selectedApp.interview_feedback"
+                  @updated="onInterviewUpdated"
+                />
+              </div>
+
               <!-- ATS Optimizer Section -->
               <div class="detail-group">
                 <label class="detail-label">ATS-Optimierung</label>
@@ -480,6 +492,7 @@ import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
 import ATSOptimizer from '../components/ATSOptimizer.vue'
 import GapAnalysis from '../components/GapAnalysis.vue'
+import InterviewTracker from '../components/InterviewTracker.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -638,6 +651,19 @@ const onATSOptimized = (data) => {
   // Reload application data after optimization
   if (selectedApp.value && data.optimized_text) {
     selectedApp.value.email_text = data.optimized_text
+  }
+}
+
+const onInterviewUpdated = (updatedApp) => {
+  // Update both selectedApp and applications list
+  if (selectedApp.value) {
+    selectedApp.value.interview_date = updatedApp.interview_date
+    selectedApp.value.interview_result = updatedApp.interview_result
+    selectedApp.value.interview_feedback = updatedApp.interview_feedback
+  }
+  const index = applications.value.findIndex(a => a.id === updatedApp.id)
+  if (index !== -1) {
+    applications.value[index] = { ...applications.value[index], ...updatedApp }
   }
 }
 
