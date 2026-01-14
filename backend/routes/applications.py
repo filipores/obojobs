@@ -21,6 +21,7 @@ from middleware.subscription_limit import (
 from models import Application, InterviewQuestion, JobRequirement, Template, UserSkill, db
 from services.ats_optimizer import ATSOptimizer
 from services.generator import BewerbungsGenerator
+from services.interview_evaluator import InterviewEvaluator
 from services.interview_generator import InterviewGenerator
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
@@ -1205,3 +1206,132 @@ def get_interview_questions(app_id, current_user):
             "total": len(questions),
         }
     }), 200
+
+
+@applications_bp.route("/interview/evaluate-answer", methods=["POST"])
+@jwt_required_custom
+def evaluate_interview_answer(current_user):
+    """Evaluate an interview answer and provide AI feedback.
+
+    Request body:
+        - question_id: ID of the interview question being answered
+        - answer_text: The user's answer to evaluate
+        - application_id: Optional, for context (position, company)
+
+    Returns:
+        - evaluation: Structured feedback with score, strengths, improvements
+        - star_analysis: STAR method analysis (for behavioral questions only)
+    """
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "Request body required"}), 400
+
+    question_id = data.get("question_id")
+    answer_text = data.get("answer_text", "").strip()
+
+    if not question_id:
+        return jsonify({"success": False, "error": "question_id ist erforderlich"}), 400
+
+    if not answer_text:
+        return jsonify({"success": False, "error": "answer_text ist erforderlich"}), 400
+
+    if len(answer_text) < 10:
+        return jsonify({
+            "success": False,
+            "error": "Die Antwort ist zu kurz. Bitte geben Sie eine ausführlichere Antwort."
+        }), 400
+
+    # Get the question
+    question = InterviewQuestion.query.get(question_id)
+    if not question:
+        return jsonify({"success": False, "error": "Frage nicht gefunden"}), 404
+
+    # Verify user has access to this question's application
+    app = Application.query.filter_by(
+        id=question.application_id,
+        user_id=current_user.id
+    ).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Keine Berechtigung"}), 403
+
+    try:
+        evaluator = InterviewEvaluator()
+        evaluation = evaluator.evaluate_answer(
+            question_text=question.question_text,
+            question_type=question.question_type,
+            answer_text=answer_text,
+            position=app.position,
+            firma=app.firma,
+        )
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "question_id": question_id,
+                "question_type": question.question_type,
+                "evaluation": evaluation,
+            },
+            "message": "Antwort erfolgreich bewertet"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der Bewertung: {str(e)}"
+        }), 500
+
+
+@applications_bp.route("/interview/summary", methods=["POST"])
+@jwt_required_custom
+def get_interview_summary(current_user):
+    """Generate a summary of all interview answers for a mock interview session.
+
+    Request body:
+        - application_id: The application ID
+        - answers: List of answer evaluations with scores and feedback
+
+    Returns:
+        - summary: Overall assessment with category scores and recommendations
+    """
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "Request body required"}), 400
+
+    application_id = data.get("application_id")
+    answers = data.get("answers", [])
+
+    if not application_id:
+        return jsonify({"success": False, "error": "application_id ist erforderlich"}), 400
+
+    # Verify user has access to this application
+    app = Application.query.filter_by(
+        id=application_id,
+        user_id=current_user.id
+    ).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Bewerbung nicht gefunden"}), 404
+
+    try:
+        evaluator = InterviewEvaluator()
+        summary = evaluator.generate_interview_summary(
+            answers=answers,
+            position=app.position,
+            firma=app.firma,
+        )
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "application_id": application_id,
+                "summary": summary,
+            },
+            "message": "Zusammenfassung erstellt"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der Zusammenfassung: {str(e)}"
+        }), 500
