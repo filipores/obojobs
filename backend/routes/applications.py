@@ -19,6 +19,7 @@ from middleware.subscription_limit import (
     increment_application_count,
 )
 from models import Application, JobRequirement, Template, db
+from services.ats_optimizer import ATSOptimizer
 from services.generator import BewerbungsGenerator
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
@@ -757,4 +758,105 @@ def analyze_job_fit_preview(current_user):
         return jsonify({
             "success": False,
             "error": f"Fehler bei der Job-Fit Analyse: {str(e)}"
+        }), 500
+
+
+@applications_bp.route("/<int:app_id>/ats-check", methods=["POST"])
+@jwt_required_custom
+def check_ats_compatibility(app_id, current_user):
+    """Check ATS compatibility of a generated cover letter against the job posting.
+
+    This endpoint analyzes the GENERATED application text against the original
+    job posting to ensure important keywords are included for ATS systems.
+
+    Request body:
+        - cover_letter_text: (optional) The cover letter text to analyze.
+          If not provided, will try to extract from the stored PDF or email_text.
+        - job_description: (optional) The job posting text.
+          If not provided, will try to fetch from the application's quelle URL.
+
+    Returns:
+        - ats_score: 0-100 compatibility score
+        - missing_keywords: Important keywords not found in cover letter
+        - keyword_suggestions: How to naturally incorporate missing keywords
+        - format_issues: Formatting problems that may affect ATS parsing
+        - keyword_density: Count of each keyword in the cover letter
+    """
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Application not found"}), 404
+
+    data = request.json or {}
+    cover_letter_text = data.get("cover_letter_text", "")
+    job_description = data.get("job_description", "")
+
+    # Try to get cover letter text if not provided
+    if not cover_letter_text:
+        # First try email_text
+        if app.email_text:
+            cover_letter_text = app.email_text
+        # Then try to extract from PDF
+        elif app.pdf_path and os.path.exists(app.pdf_path):
+            try:
+                import fitz  # PyMuPDF
+
+                with fitz.open(app.pdf_path) as doc:
+                    cover_letter_text = ""
+                    for page in doc:
+                        cover_letter_text += page.get_text()
+            except Exception:
+                pass
+
+    if not cover_letter_text:
+        return jsonify({
+            "success": False,
+            "error": "Kein Bewerbungstext vorhanden. Bitte gib den Text an oder stelle sicher, dass eine Bewerbung generiert wurde."
+        }), 400
+
+    # Try to get job description if not provided
+    if not job_description:
+        # Try from notizen (might contain job description)
+        if app.notizen and "[Draft - Job-Fit Analyse]" in app.notizen:
+            job_description = app.notizen.replace("[Draft - Job-Fit Analyse]", "").strip()
+        # Try to scrape from quelle URL
+        elif app.quelle and app.quelle.startswith(("http://", "https://")):
+            try:
+                scraper = WebScraper()
+                job_data = scraper.fetch_job_posting(app.quelle)
+                job_description = job_data.get("text", "")
+            except Exception:
+                pass
+
+    if not job_description:
+        return jsonify({
+            "success": False,
+            "error": "Keine Stellenbeschreibung vorhanden. Bitte gib den Stellentext an."
+        }), 400
+
+    try:
+        optimizer = ATSOptimizer()
+        result = optimizer.analyze_cover_letter(cover_letter_text, job_description)
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "ats_score": result["ats_score"],
+                "missing_keywords": result["missing_keywords"],
+                "keyword_suggestions": result["keyword_suggestions"],
+                "format_issues": result["format_issues"],
+                "keyword_density": result["keyword_density"],
+                "found_keywords": result.get("found_keywords", []),
+            }
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            "success": False,
+            "error": str(e)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der ATS-Analyse: {str(e)}"
         }), 500
