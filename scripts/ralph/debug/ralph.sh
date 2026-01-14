@@ -1,65 +1,420 @@
 #!/bin/bash
-# RALF Debug Mode - Interaktives Debugging mit Lerneffekt
-# Usage: ./ralph.sh
+# RALF Debug Mode - Bug-basiertes Debugging
+# Analog zu Feature-Ralph, aber für Bug-Fixing
 
 set -e
 
+# ============================================
+# Initialisierung
+# ============================================
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/../../.." && pwd)"
-MAX_ATTEMPTS=3
 
+# MacOS timeout compatibility
+if command -v gtimeout &>/dev/null; then
+    TIMEOUT_CMD="gtimeout"
+elif command -v timeout &>/dev/null; then
+    TIMEOUT_CMD="timeout"
+else
+    TIMEOUT_CMD=""
+fi
+
+# Source configuration
+source "$SCRIPT_DIR/config.sh"
+
+# Source shared libraries from feature mode
+if [[ -f "$SCRIPT_DIR/../feature/lib/date_utils.sh" ]]; then
+    source "$SCRIPT_DIR/../feature/lib/date_utils.sh"
+else
+    get_iso_timestamp() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+    get_basic_timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
+fi
+
+if [[ -f "$SCRIPT_DIR/../feature/lib/logger.sh" ]]; then
+    LOG_DIR="$SCRIPT_DIR/logs"
+    source "$SCRIPT_DIR/../feature/lib/logger.sh"
+else
+    log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
+    log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
+    log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
+    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
+    log_loop() { echo -e "${PURPLE}[LOOP]${NC} $1"; }
+fi
+
+if [[ -f "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh" ]]; then
+    source "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh"
+fi
+
+# Override paths
+LOG_DIR="$SCRIPT_DIR/logs"
+mkdir -p "$LOG_DIR"
+
+# Session tracking
+RALPH_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+export RALPH_STARTED_AT
+
+# ============================================
+# Help Function
+# ============================================
+show_help() {
+    cat << EOF
+RALF Debug Mode - Bug-basiertes Debugging
+
+Usage: ./ralph.sh [OPTIONS]
+
+Optionen:
+    -h, --help              Zeige diese Hilfe
+    -t, --timeout MIN       Claude Timeout in Minuten (default: $TIMEOUT_MINUTES)
+    -m, --max-attempts N    Max Fix-Versuche pro Bug (default: $MAX_FIX_ATTEMPTS)
+    --status                Zeige aktuellen Bug-Status
+    --reset                 Reset Debug-State und starte neu
+    --add-bug               Interaktiv neuen Bug hinzufügen
+
+Beispiele:
+    ./ralph.sh                      # Standard-Ausführung
+    ./ralph.sh --timeout 20         # 20 Minuten Timeout
+    ./ralph.sh --status             # Status anzeigen
+
+EOF
+}
+
+# ============================================
+# Command Line Arguments
+# ============================================
+while [[ $# -gt 0 ]]; do
+    case $1 in
+        -h|--help)
+            show_help
+            exit 0
+            ;;
+        -t|--timeout)
+            TIMEOUT_MINUTES="$2"
+            shift 2
+            ;;
+        -m|--max-attempts)
+            MAX_FIX_ATTEMPTS="$2"
+            shift 2
+            ;;
+        --status)
+            if [[ -f "$SCRIPT_DIR/bugs.json" ]]; then
+                echo -e "${BLUE}=== Bug Status ===${NC}"
+                total=$(jq '.bugs | length' "$SCRIPT_DIR/bugs.json")
+                fixed=$(jq '[.bugs[] | select(.fixed == true)] | length' "$SCRIPT_DIR/bugs.json")
+                remaining=$(jq '[.bugs[] | select(.fixed == false)] | length' "$SCRIPT_DIR/bugs.json")
+                echo -e "Total:     $total"
+                echo -e "Fixed:     ${GREEN}$fixed${NC}"
+                echo -e "Remaining: ${YELLOW}$remaining${NC}"
+                echo ""
+                echo -e "${BLUE}=== Offene Bugs ===${NC}"
+                jq -r '.bugs[] | select(.fixed == false) | "[\(.severity)] \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+            else
+                echo "Keine bugs.json gefunden."
+            fi
+            exit 0
+            ;;
+        --reset)
+            log_info "Reset Debug-State..."
+            jq '.bugs = [.bugs[] | .fixed = false | .fixAttempts = 0]' "$SCRIPT_DIR/bugs.json" > "$SCRIPT_DIR/bugs.json.tmp"
+            mv "$SCRIPT_DIR/bugs.json.tmp" "$SCRIPT_DIR/bugs.json"
+            rm -f "$SCRIPT_DIR/.circuit_breaker_state"
+            rm -f "$LOG_DIR"/*.log
+            log_success "Reset abgeschlossen"
+            exit 0
+            ;;
+        --add-bug)
+            echo "Bug hinzufügen (interaktiv):"
+            echo ""
+            read -p "Bug ID (z.B. BUG-006): " bug_id
+            read -p "Title: " title
+            read -p "Severity (critical/major/minor/trivial): " severity
+            read -p "Description: " description
+            read -p "Affected Files (comma-separated): " files
+
+            # Add bug to bugs.json
+            new_bug=$(jq -n \
+                --arg id "$bug_id" \
+                --arg title "$title" \
+                --arg severity "$severity" \
+                --arg desc "$description" \
+                --arg files "$files" \
+                '{
+                    id: $id,
+                    title: $title,
+                    severity: $severity,
+                    description: $desc,
+                    stepsToReproduce: [],
+                    expected: "",
+                    actual: "",
+                    rootCause: "",
+                    affectedFiles: ($files | split(",")),
+                    suggestedFix: "",
+                    fixed: false,
+                    fixAttempts: 0,
+                    source: "manual"
+                }')
+
+            jq --argjson bug "$new_bug" '.bugs += [$bug]' "$SCRIPT_DIR/bugs.json" > "$SCRIPT_DIR/bugs.json.tmp"
+            mv "$SCRIPT_DIR/bugs.json.tmp" "$SCRIPT_DIR/bugs.json"
+            log_success "Bug $bug_id hinzugefügt"
+            exit 0
+            ;;
+        *)
+            echo "Unbekannte Option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+done
+
+# ============================================
+# Validation
+# ============================================
 cd "$PROJECT_ROOT"
 
-echo "=========================================="
-echo "  RALF Debug Mode"
-echo "  Interaktives Debugging mit Lerneffekt"
-echo "=========================================="
+if [[ ! -f "$SCRIPT_DIR/bugs.json" ]]; then
+    log_error "Keine bugs.json gefunden in $SCRIPT_DIR"
+    echo "Erstelle zuerst eine bugs.json oder nutze --add-bug"
+    exit 1
+fi
+
+if [[ ! -f "$SCRIPT_DIR/prompt.md" ]]; then
+    log_error "Keine prompt.md gefunden in $SCRIPT_DIR"
+    exit 1
+fi
+
+# ============================================
+# Bug Info
+# ============================================
+TOTAL_BUGS=$(jq '.bugs | length' "$SCRIPT_DIR/bugs.json")
+FIXED_BUGS=$(jq '[.bugs[] | select(.fixed == true)] | length' "$SCRIPT_DIR/bugs.json")
+
+# ============================================
+# Header
+# ============================================
+echo ""
+echo -e "${RED}==========================================${NC}"
+echo -e "${RED}       RALF Debug Mode${NC}"
+echo -e "${RED}==========================================${NC}"
+echo ""
+echo -e "Bugs:          ${BLUE}$FIXED_BUGS/$TOTAL_BUGS fixed${NC}"
+echo -e "Max Attempts:  ${BLUE}$MAX_FIX_ATTEMPTS${NC}"
+echo -e "Timeout:       ${BLUE}$TIMEOUT_MINUTES minutes${NC}"
+echo ""
+echo -e "${RED}==========================================${NC}"
 echo ""
 
-# Collect problem description
-echo "Beschreibe das Problem (Enter, dann Ctrl+D zum Beenden):"
-echo "------------------------------------------"
-PROBLEM=$(cat)
-echo ""
+# ============================================
+# Get Current Bug
+# ============================================
+get_current_bug() {
+    # Find first bug with fixed: false, ordered by severity (critical > major > minor > trivial)
+    jq -r '
+        .bugs
+        | map(select(.fixed == false))
+        | sort_by(
+            if .severity == "critical" then 0
+            elif .severity == "major" then 1
+            elif .severity == "minor" then 2
+            else 3 end
+        )
+        | .[0].id // "NONE"
+    ' "$SCRIPT_DIR/bugs.json"
+}
 
-# Collect error/stacktrace
-echo "Füge den Error/Stacktrace ein (Enter, dann Ctrl+D zum Beenden):"
-echo "------------------------------------------"
-ERROR=$(cat)
-echo ""
+# ============================================
+# Execute Claude
+# ============================================
+execute_claude() {
+    local loop_count=$1
+    local current_bug=$2
 
-# Create temp file with context
-TEMP_FILE=$(mktemp)
-cat > "$TEMP_FILE" << EOF
-# Debug Session Input
+    local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
+    local output_file="$LOG_DIR/debug_output_${current_bug}_${timestamp}.log"
 
-## Problem-Beschreibung
-$PROBLEM
+    log_loop "Starte Claude Code für Bug: $current_bug"
 
-## Error/Stacktrace
-\`\`\`
-$ERROR
-\`\`\`
+    local timeout_seconds=$((TIMEOUT_MINUTES * 60))
+
+    # Get bug details
+    local bug_details=$(jq -r --arg id "$current_bug" '.bugs[] | select(.id == $id)' "$SCRIPT_DIR/bugs.json")
+    local bug_title=$(echo "$bug_details" | jq -r '.title')
+    local bug_severity=$(echo "$bug_details" | jq -r '.severity')
+
+    # Build context
+    local context="RALF Debug Mode - Loop #${loop_count}. Fixing Bug: ${current_bug} (${bug_severity}): ${bug_title}"
+
+    # Build timeout prefix
+    local timeout_prefix=""
+    if [[ -n "$TIMEOUT_CMD" ]]; then
+        timeout_prefix="$TIMEOUT_CMD ${timeout_seconds}s"
+    fi
+
+    # Execute Claude
+    if $timeout_prefix claude \
+        --output-format json \
+        --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
+        --append-system-prompt "$context" \
+        -p "$(cat "$SCRIPT_DIR/prompt.md")" \
+        > "$output_file" 2>&1; then
+
+        log_success "Claude Code Ausführung abgeschlossen"
+
+        # Check if bug was fixed (parse RALPH_STATUS)
+        if grep -q "FIX_SUCCESSFUL: true" "$output_file" 2>/dev/null; then
+            log_success "Bug $current_bug erfolgreich gefixt!"
+            return 0
+        elif grep -q "STATUS: BLOCKED" "$output_file" 2>/dev/null; then
+            log_warn "Bug $current_bug blockiert"
+            return 3
+        else
+            log_warn "Bug $current_bug noch nicht gefixt"
+            # Increment fix attempts
+            jq --arg id "$current_bug" '
+                .bugs = [.bugs[] |
+                    if .id == $id then .fixAttempts += 1 else . end
+                ]' "$SCRIPT_DIR/bugs.json" > "$SCRIPT_DIR/bugs.json.tmp"
+            mv "$SCRIPT_DIR/bugs.json.tmp" "$SCRIPT_DIR/bugs.json"
+            return 1
+        fi
+    else
+        local exit_code=$?
+
+        if [[ $exit_code -eq 124 ]]; then
+            log_error "Timeout nach $TIMEOUT_MINUTES Minuten!"
+            return 2
+        fi
+
+        log_error "Claude Code Ausführung fehlgeschlagen"
+        return 1
+    fi
+}
+
+# ============================================
+# Update Status
+# ============================================
+update_status() {
+    local loop_count=$1
+    local current_bug=$2
+    local status=$3
+
+    FIXED_BUGS=$(jq '[.bugs[] | select(.fixed == true)] | length' "$SCRIPT_DIR/bugs.json")
+
+    cat > "$LOG_DIR/status.json" << EOF
+{
+    "mode": "debug",
+    "status": "$status",
+    "loop": $loop_count,
+    "current_bug": "$current_bug",
+    "bugs_fixed": $FIXED_BUGS,
+    "bugs_total": $TOTAL_BUGS,
+    "started_at": "$RALPH_STARTED_AT",
+    "updated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+}
 EOF
+}
 
-echo "=========================================="
-echo "  Starte Debug-Analyse..."
-echo "=========================================="
+# ============================================
+# Main Loop
+# ============================================
+loop_count=0
+
+# Cleanup on interrupt
+cleanup() {
+    log_info "RALF Debug unterbrochen. Cleanup..."
+    update_status "$loop_count" "" "interrupted"
+    exit 0
+}
+trap cleanup SIGINT SIGTERM
+
+log_success "Starte RALF Debug Mode Loop..."
+
+while true; do
+    loop_count=$((loop_count + 1))
+
+    # Get current bug
+    current_bug=$(get_current_bug)
+
+    if [[ "$current_bug" == "NONE" ]]; then
+        log_success "Alle Bugs gefixt!"
+        update_status "$loop_count" "" "complete"
+        break
+    fi
+
+    # Check fix attempts
+    attempts=$(jq -r --arg id "$current_bug" '.bugs[] | select(.id == $id) | .fixAttempts' "$SCRIPT_DIR/bugs.json")
+    if [[ $attempts -ge $MAX_FIX_ATTEMPTS ]]; then
+        log_error "Bug $current_bug: Max Versuche ($MAX_FIX_ATTEMPTS) erreicht - überspringe"
+        # Mark as blocked
+        jq --arg id "$current_bug" '
+            .bugs = [.bugs[] |
+                if .id == $id then .blocked = true else . end
+            ]' "$SCRIPT_DIR/bugs.json" > "$SCRIPT_DIR/bugs.json.tmp"
+        mv "$SCRIPT_DIR/bugs.json.tmp" "$SCRIPT_DIR/bugs.json"
+        continue
+    fi
+
+    log_loop "=== Loop #$loop_count - Bug: $current_bug (Versuch $((attempts + 1))/$MAX_FIX_ATTEMPTS) ==="
+
+    # Update status
+    update_status "$loop_count" "$current_bug" "running"
+
+    # Execute Claude
+    execute_claude "$loop_count" "$current_bug"
+    exec_result=$?
+
+    case $exec_result in
+        0)
+            log_success "Bug $current_bug gefixt"
+            update_status "$loop_count" "$current_bug" "success"
+            FIXED_BUGS=$((FIXED_BUGS + 1))
+            log_info "Bugs fixed: $FIXED_BUGS/$TOTAL_BUGS"
+            sleep 3
+            ;;
+        2)
+            log_error "Timeout - versuche erneut"
+            update_status "$loop_count" "$current_bug" "timeout"
+            sleep 10
+            ;;
+        3)
+            log_warn "Bug blockiert - überspringe"
+            update_status "$loop_count" "$current_bug" "blocked"
+            sleep 5
+            ;;
+        *)
+            log_warn "Fix nicht erfolgreich - versuche erneut"
+            update_status "$loop_count" "$current_bug" "retry"
+            sleep 5
+            ;;
+    esac
+
+    log_loop "=== Loop #$loop_count abgeschlossen ==="
+    echo ""
+done
+
+# ============================================
+# Final Summary
+# ============================================
+echo ""
+echo -e "${RED}==========================================${NC}"
+echo -e "${RED}       RALF Debug Mode beendet${NC}"
+echo -e "${RED}==========================================${NC}"
+echo ""
+echo -e "Total Loops:   ${BLUE}$loop_count${NC}"
+echo -e "Bugs Fixed:    ${GREEN}$FIXED_BUGS/$TOTAL_BUGS${NC}"
+echo -e "Logs:          ${BLUE}$LOG_DIR/${NC}"
 echo ""
 
-# Run Claude with debug prompt and input
-claude --print "$SCRIPT_DIR/prompt.md" \
-    --allowedTools "Bash,Read,Write,Edit,Glob,Grep" \
-    --max-turns "$MAX_ATTEMPTS" \
-    --input-file "$TEMP_FILE"
+# Show remaining bugs if any
+remaining=$(jq '[.bugs[] | select(.fixed == false and .blocked != true)] | length' "$SCRIPT_DIR/bugs.json")
+if [[ $remaining -gt 0 ]]; then
+    echo -e "${YELLOW}Offene Bugs:${NC}"
+    jq -r '.bugs[] | select(.fixed == false and .blocked != true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+    echo ""
+fi
 
-# Cleanup
-rm -f "$TEMP_FILE"
-
-echo ""
-echo "=========================================="
-echo "  RALF Debug Mode beendet"
-echo "=========================================="
-echo ""
-echo "Hinweis: Änderungen wurden NICHT committed."
-echo "Überprüfe die Änderungen und committe manuell wenn OK."
+blocked=$(jq '[.bugs[] | select(.blocked == true)] | length' "$SCRIPT_DIR/bugs.json")
+if [[ $blocked -gt 0 ]]; then
+    echo -e "${RED}Blockierte Bugs (brauchen manuelle Hilfe):${NC}"
+    jq -r '.bugs[] | select(.blocked == true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+    echo ""
+fi
