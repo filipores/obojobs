@@ -59,7 +59,7 @@ def delete_email_account(account_id):
     if not account:
         return jsonify({
             "success": False,
-            "error": "Email account not found",
+            "error": "E-Mail-Konto nicht gefunden",
         }), 404
 
     db.session.delete(account)
@@ -67,7 +67,7 @@ def delete_email_account(account_id):
 
     return jsonify({
         "success": True,
-        "message": "Email account disconnected successfully",
+        "message": "E-Mail-Konto erfolgreich getrennt",
     }), 200
 
 
@@ -103,7 +103,7 @@ def gmail_auth_url():
     except Exception as e:
         return jsonify({
             "success": False,
-            "error": f"Failed to generate authorization URL: {str(e)}",
+            "error": f"Fehler beim Erstellen der Autorisierungs-URL: {str(e)}",
         }), 500
 
 
@@ -124,10 +124,10 @@ def gmail_callback():
     # Check for errors from Google
     error = request.args.get("error")
     if error:
-        error_description = request.args.get("error_description", "Unknown error")
+        error_description = request.args.get("error_description", "Unbekannter Fehler")
         return jsonify({
             "success": False,
-            "error": f"OAuth error: {error} - {error_description}",
+            "error": f"OAuth-Fehler: {error} - {error_description}",
         }), 400
 
     code = request.args.get("code")
@@ -136,7 +136,7 @@ def gmail_callback():
     if not code:
         return jsonify({
             "success": False,
-            "error": "Authorization code is required",
+            "error": "Autorisierungscode ist erforderlich",
         }), 400
 
     user_id = get_jwt_identity()
@@ -146,7 +146,7 @@ def gmail_callback():
     if stored_state and state != stored_state:
         return jsonify({
             "success": False,
-            "error": "Invalid state parameter",
+            "error": "Ungültiger State-Parameter",
         }), 400
 
     # Clear the stored state
@@ -168,7 +168,7 @@ def gmail_callback():
 
         return jsonify({
             "success": True,
-            "message": "Gmail account connected successfully",
+            "message": "Gmail-Konto erfolgreich verbunden",
             "data": email_account.to_dict(),
         }), 200
 
@@ -180,7 +180,7 @@ def gmail_callback():
     except Exception as e:
         return jsonify({
             "success": False,
-            "error": f"Failed to complete OAuth flow: {str(e)}",
+            "error": f"Fehler beim Abschluss des OAuth-Prozesses: {str(e)}",
         }), 500
 
 
@@ -216,7 +216,7 @@ def outlook_auth_url():
     except Exception as e:
         return jsonify({
             "success": False,
-            "error": f"Failed to generate authorization URL: {str(e)}",
+            "error": f"Fehler beim Erstellen der Autorisierungs-URL: {str(e)}",
         }), 500
 
 
@@ -237,10 +237,10 @@ def outlook_callback():
     # Check for errors from Microsoft
     error = request.args.get("error")
     if error:
-        error_description = request.args.get("error_description", "Unknown error")
+        error_description = request.args.get("error_description", "Unbekannter Fehler")
         return jsonify({
             "success": False,
-            "error": f"OAuth error: {error} - {error_description}",
+            "error": f"OAuth-Fehler: {error} - {error_description}",
         }), 400
 
     code = request.args.get("code")
@@ -249,7 +249,7 @@ def outlook_callback():
     if not code:
         return jsonify({
             "success": False,
-            "error": "Authorization code is required",
+            "error": "Autorisierungscode ist erforderlich",
         }), 400
 
     user_id = get_jwt_identity()
@@ -259,7 +259,7 @@ def outlook_callback():
     if stored_state and state != stored_state:
         return jsonify({
             "success": False,
-            "error": "Invalid state parameter",
+            "error": "Ungültiger State-Parameter",
         }), 400
 
     # Clear the stored state
@@ -281,7 +281,7 @@ def outlook_callback():
 
         return jsonify({
             "success": True,
-            "message": "Outlook account connected successfully",
+            "message": "Outlook-Konto erfolgreich verbunden",
             "data": email_account.to_dict(),
         }), 200
 
@@ -293,7 +293,7 @@ def outlook_callback():
     except Exception as e:
         return jsonify({
             "success": False,
-            "error": f"Failed to complete OAuth flow: {str(e)}",
+            "error": f"Fehler beim Abschluss des OAuth-Prozesses: {str(e)}",
         }), 500
 
 
@@ -327,31 +327,31 @@ def send_email():
     if not application_id:
         return jsonify({
             "success": False,
-            "error": "application_id is required",
+            "error": "Bewerbungs-ID ist erforderlich",
         }), 400
 
     if not email_account_id:
         return jsonify({
             "success": False,
-            "error": "email_account_id is required",
+            "error": "E-Mail-Konto-ID ist erforderlich",
         }), 400
 
     if not subject:
         return jsonify({
             "success": False,
-            "error": "subject is required",
+            "error": "Betreff ist erforderlich",
         }), 400
 
     if not body:
         return jsonify({
             "success": False,
-            "error": "body is required",
+            "error": "Nachrichtentext ist erforderlich",
         }), 400
 
     if not to_email:
         return jsonify({
             "success": False,
-            "error": "to_email is required",
+            "error": "Empfänger-E-Mail ist erforderlich",
         }), 400
 
     # Get the application
@@ -363,7 +363,7 @@ def send_email():
     if not application:
         return jsonify({
             "success": False,
-            "error": "Application not found",
+            "error": "Bewerbung nicht gefunden",
         }), 404
 
     # Get the email account
@@ -375,7 +375,7 @@ def send_email():
     if not email_account:
         return jsonify({
             "success": False,
-            "error": "Email account not found",
+            "error": "E-Mail-Konto nicht gefunden",
         }), 404
 
     # Build attachments list
@@ -414,7 +414,7 @@ def send_email():
     if total_size > MAX_ATTACHMENT_SIZE:
         return jsonify({
             "success": False,
-            "error": f"Total attachment size exceeds 10MB limit ({total_size / 1024 / 1024:.1f}MB)",
+            "error": f"Gesamtgröße der Anhänge überschreitet 10MB Limit ({total_size / 1024 / 1024:.1f}MB)",
         }), 400
 
     try:
@@ -438,7 +438,7 @@ def send_email():
         else:
             return jsonify({
                 "success": False,
-                "error": f"Unknown provider: {email_account.provider}",
+                "error": f"Unbekannter Anbieter: {email_account.provider}",
             }), 400
 
         # Update application: set sent_at, sent_via, and status
@@ -449,7 +449,7 @@ def send_email():
 
         return jsonify({
             "success": True,
-            "message": "Email sent successfully",
+            "message": "E-Mail erfolgreich gesendet",
             "data": {
                 "result": result,
                 "attachments_count": len(attachments),
@@ -467,5 +467,5 @@ def send_email():
     except Exception as e:
         return jsonify({
             "success": False,
-            "error": f"Failed to send email: {str(e)}",
+            "error": f"Fehler beim Senden der E-Mail: {str(e)}",
         }), 500

@@ -124,7 +124,7 @@ class TestPasswordResetService:
             result = PasswordResetService.verify_token("invalid-token-123")
 
             assert result["success"] is False
-            assert "Invalid or expired" in result["message"]
+            assert "Ungültiger oder abgelaufener" in result["message"]
 
     def test_verify_token_fails_with_empty_token(self, app):
         """Test that verify_token fails with empty token."""
@@ -132,7 +132,7 @@ class TestPasswordResetService:
             result = PasswordResetService.verify_token("")
 
             assert result["success"] is False
-            assert "Token is required" in result["message"]
+            assert "Token ist erforderlich" in result["message"]
 
     def test_verify_token_fails_with_none_token(self, app):
         """Test that verify_token fails with None token."""
@@ -140,7 +140,7 @@ class TestPasswordResetService:
             result = PasswordResetService.verify_token(None)
 
             assert result["success"] is False
-            assert "Token is required" in result["message"]
+            assert "Token ist erforderlich" in result["message"]
 
     def test_verify_token_fails_when_token_expired(self, app):
         """Test that verify_token fails when token is expired."""
@@ -159,7 +159,7 @@ class TestPasswordResetService:
             result = PasswordResetService.verify_token("expired-token-123")
 
             assert result["success"] is False
-            assert "expired" in result["message"]
+            assert "abgelaufen" in result["message"]
 
     def test_reset_password_succeeds_with_valid_token(self, app):
         """Test that reset_password succeeds with valid token."""
@@ -191,7 +191,7 @@ class TestPasswordResetService:
             result = PasswordResetService.reset_password("invalid-token", "NewPass456")
 
             assert result["success"] is False
-            assert "Invalid or expired" in result["message"]
+            assert "Ungültiger oder abgelaufener" in result["message"]
 
     def test_reset_password_fails_with_expired_token(self, app):
         """Test that reset_password fails with expired token."""
@@ -212,7 +212,7 @@ class TestPasswordResetService:
             )
 
             assert result["success"] is False
-            assert "expired" in result["message"]
+            assert "abgelaufen" in result["message"]
 
     def test_get_token_expiry_time_returns_correct_time(self, app):
         """Test that get_token_expiry_time returns correct expiry (1 hour)."""
@@ -318,7 +318,7 @@ class TestForgotPassword:
 
         assert response.status_code == 200
         data = response.get_json()
-        assert "If an account with this email exists" in data["message"]
+        assert "Falls ein Konto mit dieser E-Mail existiert" in data["message"]
 
     def test_forgot_password_returns_200_for_nonexistent_email(self, client):
         """Test that forgot-password returns 200 for non-existent email (prevent enumeration)."""
@@ -330,7 +330,7 @@ class TestForgotPassword:
         # Should still return 200 to prevent email enumeration
         assert response.status_code == 200
         data = response.get_json()
-        assert "If an account with this email exists" in data["message"]
+        assert "Falls ein Konto mit dieser E-Mail existiert" in data["message"]
 
     def test_forgot_password_returns_200_for_empty_email(self, client):
         """Test that forgot-password returns 200 for empty email."""
@@ -430,7 +430,7 @@ class TestResetPassword:
 
         assert response.status_code == 200
         data = response.get_json()
-        assert data["message"] == "Password reset successfully"
+        assert data["message"] == "Passwort erfolgreich zurückgesetzt"
 
         # Verify password was changed
         with app.app_context():
@@ -447,7 +447,7 @@ class TestResetPassword:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "Invalid or expired" in data["error"]
+        assert "Ungültiger oder abgelaufener" in data["error"]
 
     def test_reset_password_without_token_returns_400(self, client):
         """Test reset fails without token."""
@@ -458,7 +458,7 @@ class TestResetPassword:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "Token is required" in data["error"]
+        assert "Token ist erforderlich" in data["error"]
 
     def test_reset_password_without_password_returns_400(self, client):
         """Test reset fails without new password."""
@@ -469,7 +469,7 @@ class TestResetPassword:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "New password is required" in data["error"]
+        assert "Neues Passwort ist erforderlich" in data["error"]
 
     def test_reset_password_with_expired_token_returns_400(self, app, client):
         """Test reset fails with expired token."""
@@ -492,7 +492,7 @@ class TestResetPassword:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "expired" in data["error"]
+        assert "abgelaufen" in data["error"]
 
     def test_reset_password_with_weak_password_returns_400(self, app, client):
         """Test reset fails with weak password."""
@@ -515,7 +515,7 @@ class TestResetPassword:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "Password does not meet requirements" in data["error"]
+        assert "Passwort erfüllt nicht die Anforderungen" in data["error"]
         assert "failed_rules" in data
 
     def test_reset_password_validates_password_requirements(self, app, client):

@@ -72,15 +72,15 @@ class PasswordResetService:
             dict with 'success' boolean and 'message' or 'user' data
         """
         if not token:
-            return {"success": False, "message": "Token is required"}
+            return {"success": False, "message": "Token ist erforderlich"}
 
         user = User.query.filter_by(password_reset_token=token).first()
 
         if not user:
-            return {"success": False, "message": "Invalid or expired reset token"}
+            return {"success": False, "message": "Ungültiger oder abgelaufener Reset-Token"}
 
         if PasswordResetService.is_token_expired(user):
-            return {"success": False, "message": "Reset token has expired"}
+            return {"success": False, "message": "Reset-Token ist abgelaufen"}
 
         return {"success": True, "user": user}
 
@@ -110,7 +110,7 @@ class PasswordResetService:
         user.password_reset_sent_at = None
         db.session.commit()
 
-        return {"success": True, "message": "Password reset successfully"}
+        return {"success": True, "message": "Passwort erfolgreich zurückgesetzt"}
 
     @staticmethod
     def get_token_expiry_time(user: User) -> datetime | None:

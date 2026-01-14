@@ -38,7 +38,7 @@ def create_api_key(current_user):
             "api_key": new_key,  # Only time this is returned in plaintext
             "key_id": api_key_obj.id,
             "key_prefix": api_key_obj.key_prefix,
-            "message": "Save this key now, it will not be shown again",
+            "message": "Speichere diesen Schlüssel jetzt, er wird nicht erneut angezeigt",
         }
     ), 201
 
@@ -50,9 +50,9 @@ def delete_api_key(key_id, current_user):
     api_key = APIKey.query.filter_by(id=key_id, user_id=current_user.id).first()
 
     if not api_key:
-        return jsonify({"error": "API key not found"}), 404
+        return jsonify({"error": "API-Schlüssel nicht gefunden"}), 404
 
     db.session.delete(api_key)
     db.session.commit()
 
-    return jsonify({"success": True, "message": "API key revoked"}), 200
+    return jsonify({"success": True, "message": "API-Schlüssel widerrufen"}), 200

@@ -72,18 +72,18 @@ class EmailVerificationService:
             dict with 'success' boolean and 'message' or 'user' data
         """
         if not token:
-            return {"success": False, "message": "Token is required"}
+            return {"success": False, "message": "Token ist erforderlich"}
 
         user = User.query.filter_by(email_verification_token=token).first()
 
         if not user:
-            return {"success": False, "message": "Invalid verification token"}
+            return {"success": False, "message": "Ungültiger Bestätigungstoken"}
 
         if user.email_verified:
-            return {"success": False, "message": "Email is already verified"}
+            return {"success": False, "message": "E-Mail ist bereits bestätigt"}
 
         if EmailVerificationService.is_token_expired(user):
-            return {"success": False, "message": "Verification token has expired"}
+            return {"success": False, "message": "Bestätigungstoken ist abgelaufen"}
 
         # Mark email as verified and clear token
         user.email_verified = True

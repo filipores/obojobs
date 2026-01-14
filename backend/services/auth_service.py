@@ -37,7 +37,7 @@ class AuthService:
         # Check if user exists
         existing_user = User.query.filter_by(email=email).first()
         if existing_user:
-            raise ValueError("User with this email already exists")
+            raise ValueError("Ein Benutzer mit dieser E-Mail existiert bereits")
 
         # Create new user
         user = User(email=email, full_name=full_name)
@@ -71,7 +71,7 @@ class AuthService:
                 remaining = user.locked_until - datetime.utcnow()
                 remaining_minutes = max(1, int(remaining.total_seconds() / 60))
                 raise ValueError(
-                    f"Account is temporarily locked. Try again in {remaining_minutes} minutes."
+                    f"Konto vorübergehend gesperrt. Versuche es in {remaining_minutes} Minuten erneut."
                 )
             else:
                 # Lock expired, reset lockout
@@ -90,15 +90,15 @@ class AuthService:
                     )
                     db.session.commit()
                     raise ValueError(
-                        f"Account locked due to too many failed login attempts. "
-                        f"Try again in {LOCKOUT_DURATION_MINUTES} minutes."
+                        f"Konto wegen zu vieler fehlgeschlagener Anmeldeversuche gesperrt. "
+                        f"Versuche es in {LOCKOUT_DURATION_MINUTES} Minuten erneut."
                     )
                 db.session.commit()
 
-            raise ValueError("Invalid email or password")
+            raise ValueError("Ungültige E-Mail oder Passwort")
 
         if not user.is_active:
-            raise ValueError("Account is disabled")
+            raise ValueError("Konto ist deaktiviert")
 
         # Successful login - reset failed attempts
         if user.failed_login_attempts and user.failed_login_attempts > 0:
@@ -140,7 +140,7 @@ class AuthService:
         """
         user = User.query.get(user_id)
         if not user:
-            raise ValueError("User not found")
+            raise ValueError("Benutzer nicht gefunden")
 
         # Verify current password
         if not user.check_password(current_password):

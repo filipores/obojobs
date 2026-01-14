@@ -40,7 +40,7 @@ def create_app():
 
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):
-        return jsonify({"error": "Token has been revoked"}), 401
+        return jsonify({"error": "Token wurde widerrufen"}), 401
 
     # Initialize rate limiter
     limiter = Limiter(

@@ -118,13 +118,13 @@ def create_template(current_user):
     content = sanitize_text(data.get("content", ""), MAX_CONTENT_LENGTH)
 
     if not name or not content:
-        return jsonify({"error": "Name and content are required"}), 400
+        return jsonify({"error": "Name und Inhalt sind erforderlich"}), 400
 
     if len(name) > MAX_NAME_LENGTH:
-        return jsonify({"error": f"Name too long (max {MAX_NAME_LENGTH} chars)"}), 400
+        return jsonify({"error": f"Name zu lang (max. {MAX_NAME_LENGTH} Zeichen)"}), 400
 
     if len(content) > MAX_CONTENT_LENGTH:
-        return jsonify({"error": f"Content too long (max {MAX_CONTENT_LENGTH} chars)"}), 400
+        return jsonify({"error": f"Inhalt zu lang (max. {MAX_CONTENT_LENGTH} Zeichen)"}), 400
 
     is_default = bool(data.get("is_default", False))
 
@@ -140,7 +140,7 @@ def create_template(current_user):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        return jsonify({"error": "Failed to create template"}), 500
+        return jsonify({"error": "Fehler beim Erstellen des Templates"}), 500
 
     return jsonify({"success": True, "template": template.to_dict()}), 201
 
@@ -152,7 +152,7 @@ def get_template(template_id, current_user):
     template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
 
     if not template:
-        return jsonify({"error": "Template not found"}), 404
+        return jsonify({"error": "Template nicht gefunden"}), 404
 
     return jsonify({"success": True, "template": template.to_dict()}), 200
 
@@ -164,7 +164,7 @@ def update_template(template_id, current_user):
     template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
 
     if not template:
-        return jsonify({"error": "Template not found"}), 404
+        return jsonify({"error": "Template nicht gefunden"}), 404
 
     data = request.json
 
@@ -172,13 +172,13 @@ def update_template(template_id, current_user):
         if "name" in data:
             name = sanitize_text(data["name"], MAX_NAME_LENGTH)
             if not name:
-                return jsonify({"error": "Name cannot be empty"}), 400
+                return jsonify({"error": "Name darf nicht leer sein"}), 400
             template.name = name
 
         if "content" in data:
             content = sanitize_text(data["content"], MAX_CONTENT_LENGTH)
             if not content:
-                return jsonify({"error": "Content cannot be empty"}), 400
+                return jsonify({"error": "Inhalt darf nicht leer sein"}), 400
             template.content = content
 
         # Handle is_default with proper transaction
@@ -192,7 +192,7 @@ def update_template(template_id, current_user):
         db.session.commit()
     except Exception:
         db.session.rollback()
-        return jsonify({"error": "Failed to update template"}), 500
+        return jsonify({"error": "Fehler beim Aktualisieren des Templates"}), 500
 
     return jsonify({"success": True, "template": template.to_dict()}), 200
 
@@ -204,7 +204,7 @@ def set_default_template(template_id, current_user):
     template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
 
     if not template:
-        return jsonify({"error": "Template not found"}), 404
+        return jsonify({"error": "Template nicht gefunden"}), 404
 
     # Unset all defaults
     Template.query.filter_by(user_id=current_user.id, is_default=True).update({"is_default": False})
@@ -223,12 +223,12 @@ def delete_template(template_id, current_user):
     template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
 
     if not template:
-        return jsonify({"error": "Template not found"}), 404
+        return jsonify({"error": "Template nicht gefunden"}), 404
 
     db.session.delete(template)
     db.session.commit()
 
-    return jsonify({"success": True, "message": "Template deleted"}), 200
+    return jsonify({"success": True, "message": "Template gelöscht"}), 200
 
 
 @templates_bp.route("/generate", methods=["POST"])

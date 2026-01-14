@@ -1,4 +1,5 @@
 import axios from 'axios'
+import { translateError } from '@/utils/errorTranslations'
 
 const api = axios.create({
   baseURL: '/api'
@@ -32,8 +33,9 @@ api.interceptors.response.use(
         window.$toast('Serverfehler. Bitte später erneut versuchen.', 'error')
       }
     } else if (error.response?.status === 400 || error.response?.status === 422) {
-      // Validation errors - show specific message
-      const message = error.response?.data?.error || 'Ungültige Eingabe'
+      // Validation errors - show specific message (translated if needed)
+      const rawMessage = error.response?.data?.error || 'Ungültige Eingabe'
+      const message = translateError(rawMessage)
       if (window.$toast) {
         window.$toast(message, 'error')
       }

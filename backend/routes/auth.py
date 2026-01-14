@@ -22,11 +22,11 @@ def register():
     full_name = data.get("full_name")
 
     if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
+        return jsonify({"error": "E-Mail und Passwort sind erforderlich"}), 400
 
     try:
         user = AuthService.register_user(email, password, full_name)
-        return jsonify({"message": "User registered successfully", "user": user.to_dict()}), 201
+        return jsonify({"message": "Registrierung erfolgreich", "user": user.to_dict()}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -40,7 +40,7 @@ def login():
     password = data.get("password")
 
     if not email or not password:
-        return jsonify({"error": "Email and password are required"}), 400
+        return jsonify({"error": "E-Mail und Passwort sind erforderlich"}), 400
 
     try:
         result = AuthService.login_user(email, password)
@@ -66,7 +66,7 @@ def me():
     user = AuthService.get_user_by_id(int(current_user_id))
 
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
     return jsonify(user.to_dict()), 200
 
@@ -144,16 +144,16 @@ def send_verification():
     user = AuthService.get_user_by_id(int(current_user_id))
 
     if not user:
-        return jsonify({"error": "User not found"}), 404
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
     # Check if already verified
     if user.email_verified:
-        return jsonify({"error": "Email is already verified"}), 400
+        return jsonify({"error": "E-Mail ist bereits bestätigt"}), 400
 
     # Check rate limit
     if not _check_verification_rate_limit(user.id):
         return jsonify({
-            "error": "Too many verification requests. Please try again later.",
+            "error": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.",
             "retry_after_minutes": 60
         }), 429
 
@@ -168,7 +168,7 @@ def send_verification():
     print(f"[DEV] Verification token for {user.email}: {token}")
 
     return jsonify({
-        "message": "Verification email sent",
+        "message": "Bestätigungs-E-Mail gesendet",
         "email": user.email
     }), 200
 
@@ -184,7 +184,7 @@ def verify_email():
     token = data.get("token")
 
     if not token:
-        return jsonify({"error": "Token is required"}), 400
+        return jsonify({"error": "Token ist erforderlich"}), 400
 
     result = EmailVerificationService.verify_token(token)
 
@@ -193,7 +193,7 @@ def verify_email():
 
     user = result["user"]
     return jsonify({
-        "message": "Email verified successfully",
+        "message": "E-Mail erfolgreich bestätigt",
         "user": user.to_dict()
     }), 200
 
@@ -247,14 +247,14 @@ def forgot_password():
     if not email:
         # Still return 200 to prevent enumeration
         return jsonify({
-            "message": "If an account with this email exists, a reset link has been sent."
+            "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
         }), 200
 
     # Check rate limit (even for non-existent emails to prevent timing attacks)
     if not _check_password_reset_rate_limit(email):
         # Still return 200 to prevent enumeration, but don't process
         return jsonify({
-            "message": "If an account with this email exists, a reset link has been sent."
+            "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
         }), 200
 
     # Record the request for rate limiting
@@ -273,7 +273,7 @@ def forgot_password():
 
     # Always return same response to prevent email enumeration
     return jsonify({
-        "message": "If an account with this email exists, a reset link has been sent."
+        "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
     }), 200
 
 
@@ -289,16 +289,16 @@ def reset_password():
     new_password = data.get("new_password")
 
     if not token:
-        return jsonify({"error": "Token is required"}), 400
+        return jsonify({"error": "Token ist erforderlich"}), 400
 
     if not new_password:
-        return jsonify({"error": "New password is required"}), 400
+        return jsonify({"error": "Neues Passwort ist erforderlich"}), 400
 
     # Validate password strength
     validation = PasswordValidator.validate(new_password)
     if not validation["valid"]:
         return jsonify({
-            "error": "Password does not meet requirements",
+            "error": "Passwort erfüllt nicht die Anforderungen",
             "failed_rules": validation["errors"]
         }), 400
 
@@ -308,7 +308,7 @@ def reset_password():
     if not result["success"]:
         return jsonify({"error": result["message"]}), 400
 
-    return jsonify({"message": "Password reset successfully"}), 200
+    return jsonify({"message": "Passwort erfolgreich zurückgesetzt"}), 200
 
 
 @auth_bp.route("/change-password", methods=["PUT"])
@@ -366,4 +366,4 @@ def logout():
         expires_at=expires_at
     )
 
-    return jsonify({"message": "Successfully logged out"}), 200
+    return jsonify({"message": "Erfolgreich abgemeldet"}), 200

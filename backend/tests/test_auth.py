@@ -289,7 +289,7 @@ class TestSendVerification:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "already verified" in data["error"]
+        assert "bereits bestätigt" in data["error"]
 
     def test_send_verification_rate_limited_after_max_requests(
         self, client, test_user, auth_headers
@@ -311,7 +311,7 @@ class TestSendVerification:
 
         assert response.status_code == 429
         data = response.get_json()
-        assert "Too many verification requests" in data["error"]
+        assert "Zu viele Bestätigungsanfragen" in data["error"]
         assert "retry_after_minutes" in data
 
     def test_send_verification_creates_token(self, app, client, test_user, auth_headers):
@@ -354,7 +354,7 @@ class TestVerifyEmail:
 
         assert response.status_code == 200
         data = response.get_json()
-        assert data["message"] == "Email verified successfully"
+        assert data["message"] == "E-Mail erfolgreich bestätigt"
         assert data["user"]["email_verified"] is True
 
     def test_verify_email_with_invalid_token_returns_400(self, client):
@@ -366,7 +366,7 @@ class TestVerifyEmail:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "Invalid verification token" in data["error"]
+        assert "Ungültiger Bestätigungstoken" in data["error"]
 
     def test_verify_email_without_token_returns_400(self, client):
         """Test verification fails without token."""
@@ -377,7 +377,7 @@ class TestVerifyEmail:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "Token is required" in data["error"]
+        assert "Token ist erforderlich" in data["error"]
 
     def test_verify_email_with_expired_token_returns_400(self, app, client):
         """Test verification fails with expired token."""
@@ -400,7 +400,7 @@ class TestVerifyEmail:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "expired" in data["error"]
+        assert "abgelaufen" in data["error"]
 
     def test_verify_email_for_already_verified_returns_400(self, app, client):
         """Test verification fails when email already verified."""
@@ -424,7 +424,7 @@ class TestVerifyEmail:
 
         assert response.status_code == 400
         data = response.get_json()
-        assert "already verified" in data["error"]
+        assert "bereits bestätigt" in data["error"]
 
 
 class TestMeEndpointEmailVerified:
@@ -559,7 +559,7 @@ class TestAccountLockout:
         # Check that the last response indicates account is locked
         assert response.status_code == 401
         data = response.get_json()
-        assert "Account locked" in data["error"]
+        assert "gesperrt" in data["error"]
         assert str(LOCKOUT_DURATION_MINUTES) in data["error"]
 
         # Verify the account is locked in the database
@@ -592,7 +592,7 @@ class TestAccountLockout:
 
         assert response.status_code == 401
         data = response.get_json()
-        assert "temporarily locked" in data["error"]
+        assert "vorübergehend gesperrt" in data["error"]
 
     def test_successful_login_resets_failed_attempts(self, app, client, test_user):
         """Test that successful login resets the failed attempts counter."""
@@ -666,7 +666,7 @@ class TestAccountLockout:
 
         assert response.status_code == 401
         data = response.get_json()
-        assert "Invalid email or password" in data["error"]
+        assert "Ungültige E-Mail oder Passwort" in data["error"]
 
     def test_lockout_message_shows_remaining_time(self, app, client, test_user):
         """Test that lockout message shows approximate remaining time."""
@@ -689,8 +689,8 @@ class TestAccountLockout:
         assert response.status_code == 401
         data = response.get_json()
         # Should show remaining time in message
-        assert "temporarily locked" in data["error"]
-        assert "minutes" in data["error"]
+        assert "vorübergehend gesperrt" in data["error"]
+        assert "Minuten" in data["error"]
 
     def test_lock_resets_after_expiry_on_failed_login(self, app, client, test_user):
         """Test that expired lock is reset even on failed login attempt."""
@@ -712,7 +712,7 @@ class TestAccountLockout:
 
         assert response.status_code == 401
         data = response.get_json()
-        assert "Invalid email or password" in data["error"]
+        assert "Ungültige E-Mail oder Passwort" in data["error"]
 
         # Verify lockout was reset but now has 1 failed attempt
         with app.app_context():
@@ -903,7 +903,7 @@ class TestLogout:
         assert response.status_code == 200
         data = response.get_json()
         assert "message" in data
-        assert "logged out" in data["message"].lower()
+        assert "abgemeldet" in data["message"].lower()
 
     def test_logout_invalidates_token(self, client, auth_headers):
         """Test that token is invalid after logout."""
@@ -922,7 +922,7 @@ class TestLogout:
 
         assert response.status_code == 401
         data = response.get_json()
-        assert "revoked" in data["error"]
+        assert "widerrufen" in data["error"]
 
     def test_logout_token_cannot_be_used_for_other_endpoints(
         self, client, auth_headers

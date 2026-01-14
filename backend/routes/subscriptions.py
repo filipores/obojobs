@@ -129,16 +129,16 @@ def create_checkout():
 
     # Validate plan
     if plan not in ["basic", "pro"]:
-        return jsonify({"success": False, "error": "Invalid plan. Must be 'basic' or 'pro'"}), 400
+        return jsonify({"success": False, "error": "Ungültiger Plan. Muss 'basic' oder 'pro' sein."}), 400
 
     # Validate URLs
     if not success_url or not cancel_url:
-        return jsonify({"success": False, "error": "success_url and cancel_url are required"}), 400
+        return jsonify({"success": False, "error": "success_url und cancel_url sind erforderlich"}), 400
 
     # Get the Stripe price ID for this plan
     plan_data = SUBSCRIPTION_PLANS.get(plan)
     if not plan_data or not plan_data.get("stripe_price_id"):
-        return jsonify({"success": False, "error": "Plan not configured"}), 400
+        return jsonify({"success": False, "error": "Plan nicht konfiguriert"}), 400
 
     price_id = plan_data["stripe_price_id"]
 
@@ -146,7 +146,7 @@ def create_checkout():
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
     if not user:
-        return jsonify({"success": False, "error": "User not found"}), 404
+        return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 
     try:
         stripe_service = StripeService()
@@ -183,7 +183,7 @@ def create_checkout():
 
     except Exception as e:
         logger.error(f"Failed to create checkout session: {e}")
-        return jsonify({"success": False, "error": "Failed to create checkout session"}), 500
+        return jsonify({"success": False, "error": "Fehler beim Erstellen der Checkout-Sitzung"}), 500
 
 
 @subscriptions_bp.route("/portal", methods=["POST"])
@@ -202,19 +202,19 @@ def create_portal_session():
     return_url = data.get("return_url")
 
     if not return_url:
-        return jsonify({"success": False, "error": "return_url is required"}), 400
+        return jsonify({"success": False, "error": "return_url ist erforderlich"}), 400
 
     # Get current user
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
     if not user:
-        return jsonify({"success": False, "error": "User not found"}), 404
+        return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 
     # User must have a Stripe customer ID to access portal
     if not user.stripe_customer_id:
         return jsonify({
             "success": False,
-            "error": "No active subscription. Please subscribe first."
+            "error": "Kein aktives Abonnement. Bitte abonniere zuerst einen Plan."
         }), 400
 
     try:
@@ -236,7 +236,7 @@ def create_portal_session():
 
     except Exception as e:
         logger.error(f"Failed to create portal session: {e}")
-        return jsonify({"success": False, "error": "Failed to create portal session"}), 500
+        return jsonify({"success": False, "error": "Fehler beim Erstellen der Portal-Sitzung"}), 500
 
 
 @subscriptions_bp.route("/current", methods=["GET"])
@@ -256,7 +256,7 @@ def get_current_subscription():
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
     if not user:
-        return jsonify({"success": False, "error": "User not found"}), 404
+        return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 
     # Get usage info
     usage = get_subscription_usage(user)

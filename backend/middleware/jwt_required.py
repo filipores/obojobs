@@ -21,7 +21,7 @@ def jwt_required_custom(fn):
         # Convert string identity back to int
         user = User.query.get(int(user_id))
         if not user or not user.is_active:
-            return jsonify({"error": "Invalid or inactive user"}), 401
+            return jsonify({"error": "Ungültiger oder inaktiver Benutzer"}), 401
 
         # Inject current_user into kwargs
         kwargs["current_user"] = user

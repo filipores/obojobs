@@ -124,7 +124,7 @@ class TestEmailVerificationService:
             result = EmailVerificationService.verify_token("invalid-token-123")
 
             assert result["success"] is False
-            assert "Invalid verification token" in result["message"]
+            assert "Ungültiger Bestätigungstoken" in result["message"]
 
     def test_verify_token_fails_with_empty_token(self, app):
         """Test that verify_token fails with empty token."""
@@ -132,7 +132,7 @@ class TestEmailVerificationService:
             result = EmailVerificationService.verify_token("")
 
             assert result["success"] is False
-            assert "Token is required" in result["message"]
+            assert "Token ist erforderlich" in result["message"]
 
     def test_verify_token_fails_with_none_token(self, app):
         """Test that verify_token fails with None token."""
@@ -140,7 +140,7 @@ class TestEmailVerificationService:
             result = EmailVerificationService.verify_token(None)
 
             assert result["success"] is False
-            assert "Token is required" in result["message"]
+            assert "Token ist erforderlich" in result["message"]
 
     def test_verify_token_fails_when_already_verified(self, app):
         """Test that verify_token fails when email is already verified."""
@@ -160,7 +160,7 @@ class TestEmailVerificationService:
             result = EmailVerificationService.verify_token("some-token")
 
             assert result["success"] is False
-            assert "already verified" in result["message"]
+            assert "bereits bestätigt" in result["message"]
 
     def test_verify_token_fails_when_token_expired(self, app):
         """Test that verify_token fails when token is expired."""
@@ -179,7 +179,7 @@ class TestEmailVerificationService:
             result = EmailVerificationService.verify_token("expired-token-123")
 
             assert result["success"] is False
-            assert "expired" in result["message"]
+            assert "abgelaufen" in result["message"]
 
     def test_get_token_expiry_time_returns_correct_time(self, app):
         """Test that get_token_expiry_time returns correct expiry."""

@@ -84,7 +84,7 @@ def check_subscription_limit(fn):
             current_user = User.query.get(int(user_id))
 
             if not current_user or not current_user.is_active:
-                return jsonify({"success": False, "error": "User not found"}), 401
+                return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 401
 
         # Check and reset monthly counter if needed
         _check_and_reset_monthly_counter(current_user)
