@@ -36,6 +36,33 @@
         </div>
       </section>
 
+      <!-- Company Research Section -->
+      <section v-if="application && application.firma" class="company-research-section animate-fade-up" style="animation-delay: 50ms;">
+        <div class="section-toggle" @click="showCompanyResearch = !showCompanyResearch">
+          <h2>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            Firmen-Recherche
+          </h2>
+          <button class="toggle-btn" :class="{ expanded: showCompanyResearch }">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"/>
+            </svg>
+          </button>
+        </div>
+        <transition name="expand">
+          <div v-if="showCompanyResearch" class="research-wrapper">
+            <CompanyResearch
+              :company-name="application.firma"
+              :job-url="application.quelle || ''"
+              :auto-load="true"
+            />
+          </div>
+        </transition>
+      </section>
+
       <!-- Stats Section -->
       <section v-if="!loading && questions.length > 0" class="stats-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="stats-grid">
@@ -184,6 +211,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
+import CompanyResearch from '../components/CompanyResearch.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -195,6 +223,7 @@ const loading = ref(true)
 const isGenerating = ref(false)
 const activeFilter = ref('all')
 const expandedQuestions = ref(new Set())
+const showCompanyResearch = ref(true)
 
 const categories = [
   { key: 'behavioral', label: 'Verhaltens', icon: '🎭' },
@@ -787,5 +816,69 @@ onMounted(async () => {
   .question-badges {
     flex-wrap: wrap;
   }
+}
+
+/* ========================================
+   COMPANY RESEARCH SECTION
+   ======================================== */
+.company-research-section {
+  margin-bottom: var(--space-lg);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+}
+
+.section-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-md) var(--space-lg);
+  cursor: pointer;
+  transition: background 0.2s var(--ease-zen);
+}
+
+.section-toggle:hover {
+  background: var(--color-washi);
+}
+
+.section-toggle h2 {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 0;
+  color: var(--color-sumi);
+}
+
+.section-toggle h2 svg {
+  color: var(--color-ai);
+}
+
+.toggle-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: transform 0.3s var(--ease-zen);
+}
+
+.toggle-btn.expanded svg {
+  transform: rotate(180deg);
+}
+
+.research-wrapper {
+  padding: 0 var(--space-lg) var(--space-lg);
+}
+
+.research-wrapper .company-research {
+  background: var(--color-washi);
+  border: none;
 }
 </style>
