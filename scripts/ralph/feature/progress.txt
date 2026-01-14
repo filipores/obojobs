@@ -16,10 +16,10 @@ Started: 2026-01-14
 - [x] QUAL-007: Gap-Analyse mit Lernempfehlungen
 
 #### Interview-Preparation (INT)
-- [ ] INT-001: Interview-Fragen Generator
-- [ ] INT-002: Interview-Prep UI
-- [ ] INT-003: Text-basiertes Mock-Interview
-- [ ] INT-004: STAR-Methode Coach
+- [x] INT-001: Interview-Fragen Generator
+- [x] INT-002: Interview-Prep UI
+- [x] INT-003: Text-basiertes Mock-Interview
+- [x] INT-004: STAR-Methode Coach
 - [ ] INT-005: Firmen-Recherche Integration
 - [ ] INT-006: Interview-Ergebnis Tracking
 
@@ -159,6 +159,89 @@ Started: 2026-01-14
   - Claude API liefert strukturierte Lernempfehlungen gut
   - Fallback-Logik wichtig fuer robuste UX ohne API-Abhaengigkeit
   - Filter-Tabs verbessern UX bei vielen Empfehlungen
+
+## [2026-01-14] - INT-001
+- **Was implementiert wurde:**
+  - InterviewQuestion Model mit Feldern: application_id, question_text, question_type, difficulty, sample_answer
+  - interview_generator.py Service mit Claude API Integration
+  - Fragen-Kategorien: behavioral, technical, situational, company_specific, salary_negotiation
+  - POST /api/applications/{id}/generate-questions Endpoint (generiert 10-15 Fragen)
+  - GET /api/applications/{id}/interview-questions Endpoint mit Typ-Filterung
+  - Fallback-Fragen fuer robuste UX ohne API
+  - Deutsche Interview-Klassiker integriert (z.B. "Wo sehen Sie sich in 5 Jahren?")
+  - DB Migration add_interview_questions.py
+- **Geaenderte Dateien:**
+  - backend/models/interview_question.py (neu)
+  - backend/services/interview_generator.py (neu)
+  - backend/migrations/add_interview_questions.py (neu)
+  - backend/models/__init__.py
+  - backend/models/application.py (interview_questions Relationship)
+  - backend/routes/applications.py (2 neue Endpoints)
+- **Learnings:**
+  - Temperature 0.7 fuer kreative Variation bei Fragen-Generierung
+  - Fallback-Fragen wichtig fuer robuste UX
+  - Gruppierung nach question_type verbessert Frontend-UX
+
+## [2026-01-14] - INT-002
+- **Was implementiert wurde:**
+  - InterviewPrep.vue Seite unter /applications/{id}/interview
+  - Auflistung aller Fragen gruppiert nach Kategorie (behavioral, technical, situational, company_specific, salary_negotiation)
+  - Expandierbare Fragen-Karten mit versteckten Beispiel-Antworten
+  - Button 'Antwort ueben' pro Frage fuer Mock-Interview Navigation
+  - Button 'Alle Fragen neu generieren' fuer neue Fragen
+  - Filter-Tabs fuer Kategorien mit Zaehler
+  - Navigation von Application-Detail-View via Interview-Prep Button
+  - MockInterview.vue Placeholder fuer naechste Story INT-003
+- **Geaenderte Dateien:**
+  - frontend/src/pages/InterviewPrep.vue (neu)
+  - frontend/src/pages/MockInterview.vue (neu - Placeholder)
+  - frontend/src/pages/Applications.vue (Interview-Prep Button im Modal)
+  - frontend/src/router/index.js (neue Routen)
+- **Learnings:**
+  - Vue Set fuer reaktive Sets braucht re-assignment fuer Reaktivitaet
+  - Expand-Transition mit max-height fuer smooth Expand/Collapse
+
+## [2026-01-14] - INT-003
+- **Was implementiert wurde:**
+  - Vollstaendige MockInterview.vue Seite unter /applications/{id}/mock-interview
+  - Interaktives Frage-Antwort Training mit Frage-fuer-Frage Flow
+  - interview_evaluator.py Service mit Claude API fuer Antwort-Bewertung
+  - KI-Feedback zu Struktur, Inhalt, Laenge der Antwort (0-100 Punkte)
+  - STAR-Methode Analyse fuer Behavioral-Fragen (S/T/A/R Komponenten einzeln bewertet)
+  - Fortschrittsanzeige (Frage X von Y) mit Progress-Bar
+  - POST /api/applications/interview/evaluate-answer Endpoint
+  - POST /api/applications/interview/summary Endpoint fuer Gesamtbewertung
+  - Am Ende: Zusammenfassung mit Kategorie-Scores, Top-Staerken, Verbesserungspotenzial, naechste Schritte
+  - "Nochmal ueben" Button fuer wiederholtes Training
+- **Geaenderte Dateien:**
+  - backend/services/interview_evaluator.py (neu)
+  - backend/routes/applications.py (2 neue Endpoints)
+  - frontend/src/pages/MockInterview.vue (komplett neu implementiert)
+- **Learnings:**
+  - STAR-Analyse als separates Objekt mit present/quality/feedback pro Komponente
+  - Category-Scores aus Answer-History aggregiert fuer aussagekraeftige Zusammenfassung
+
+## [2026-01-14] - INT-004
+- **Was implementiert wurde:**
+  - star_analyzer.py Service fuer spezialisierte STAR-Methode Analyse
+  - Detaillierte Analyse jeder STAR-Komponente (Situation, Task, Action, Result)
+  - Qualitaetsbewertung pro Komponente: strong, adequate, weak, missing
+  - Erkennung des gefundenen Inhalts in der Antwort
+  - Spezifische Verbesserungsvorschlaege fuer fehlende/schwache Komponenten
+  - Beispiel einer verbesserten Antwort generiert
+  - POST /api/applications/interview/analyze-star Endpoint
+  - GET /api/applications/interview/star-components Endpoint fuer Hilfe-Texte
+  - STARFeedback.vue Komponente mit vollstaendiger Visualisierung
+  - Integration in MockInterview.vue mit "Detaillierte Analyse" Button
+- **Geaenderte Dateien:**
+  - backend/services/star_analyzer.py (neu)
+  - backend/routes/applications.py (2 neue Endpoints)
+  - frontend/src/components/STARFeedback.vue (neu)
+  - frontend/src/pages/MockInterview.vue (STARFeedback Integration)
+- **Learnings:**
+  - Detaillierte STAR-Analyse als separater Service fuer wiederverwendbare Logik
+  - found_content Feld zeigt User was als jeweilige Komponente erkannt wurde
+  - Beispiel-Antwort toggle fuer bessere UX (erst auf Klick anzeigen)
 
 ---
 

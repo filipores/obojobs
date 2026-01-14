@@ -144,7 +144,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "notes": "Deutsche Klassiker einbauen: 'Wo sehen Sie sich in 5 Jahren?', 'Was sind Ihre Stärken/Schwächen?', 'Warum wollen Sie bei uns arbeiten?'"
     },
     {
@@ -162,7 +162,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "notes": "Beispiel-Antworten erst auf Klick zeigen damit User zuerst selbst nachdenken können"
     },
     {
@@ -182,7 +182,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "notes": "Feedback sollte konstruktiv sein: Was war gut, was kann verbessert werden, konkreter Verbesserungsvorschlag"
     },
     {
@@ -200,7 +200,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "notes": "STAR = Situation (Kontext), Task (Aufgabe), Action (Handlung), Result (Ergebnis). Besonders wichtig für 'Erzählen Sie von einer Situation wo...' Fragen"
     },
     {

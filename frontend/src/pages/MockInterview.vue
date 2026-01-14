@@ -175,12 +175,27 @@
 
             <!-- STAR Analysis for behavioral questions -->
             <div v-if="currentFeedback.star_analysis" class="star-analysis">
-              <h4>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-                </svg>
-                STAR-Methode Analyse
-              </h4>
+              <div class="star-analysis-header">
+                <h4>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+                  </svg>
+                  STAR-Methode Analyse
+                </h4>
+                <button
+                  v-if="currentQuestion.question_type === 'behavioral'"
+                  @click="loadDetailedStarAnalysis"
+                  :disabled="isLoadingStarAnalysis"
+                  class="zen-btn zen-btn-sm"
+                >
+                  <span v-if="isLoadingStarAnalysis" class="loading-spinner-sm"></span>
+                  <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8"/>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                  </svg>
+                  {{ isLoadingStarAnalysis ? 'Lade...' : 'Detaillierte Analyse' }}
+                </button>
+              </div>
               <div class="star-grid">
                 <div
                   v-for="(component, key) in currentFeedback.star_analysis"
@@ -199,6 +214,14 @@
                 </div>
               </div>
             </div>
+
+            <!-- Detailed STAR Feedback Component -->
+            <STARFeedback
+              v-if="detailedStarAnalysis"
+              :analysis="detailedStarAnalysis"
+              :loading="isLoadingStarAnalysis"
+              class="detailed-star-section"
+            />
 
             <!-- Length & Structure Assessment -->
             <div class="assessment-row">
@@ -344,6 +367,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
+import STARFeedback from '../components/STARFeedback.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -361,6 +385,8 @@ const currentFeedback = ref(null)
 const interviewComplete = ref(false)
 const summary = ref(null)
 const answerHistory = ref([])
+const isLoadingStarAnalysis = ref(false)
+const detailedStarAnalysis = ref(null)
 
 const currentQuestion = computed(() => questions.value[currentQuestionIndex.value] || {})
 const progressPercent = computed(() => ((currentQuestionIndex.value + 1) / questions.value.length) * 100)
@@ -437,6 +463,30 @@ const nextQuestion = () => {
   currentQuestionIndex.value++
   currentAnswer.value = ''
   currentFeedback.value = null
+  detailedStarAnalysis.value = null
+}
+
+const loadDetailedStarAnalysis = async () => {
+  if (isLoadingStarAnalysis.value) return
+
+  isLoadingStarAnalysis.value = true
+  try {
+    const { data } = await api.post('/applications/interview/analyze-star', {
+      question_id: currentQuestion.value.id,
+      question_text: currentQuestion.value.question_text,
+      answer_text: currentAnswer.value,
+      application_id: applicationId.value
+    })
+
+    if (data.success) {
+      detailedStarAnalysis.value = data.data.star_analysis
+    }
+  } catch (err) {
+    console.error('Fehler bei der STAR-Analyse:', err)
+    alert(err.response?.data?.error || 'Fehler bei der detaillierten STAR-Analyse')
+  } finally {
+    isLoadingStarAnalysis.value = false
+  }
 }
 
 const finishInterview = async () => {
@@ -469,6 +519,7 @@ const restartInterview = () => {
   interviewComplete.value = false
   summary.value = null
   answerHistory.value = []
+  detailedStarAnalysis.value = null
 }
 
 // Helper functions
@@ -961,6 +1012,13 @@ onMounted(async () => {
   margin-bottom: var(--space-lg);
 }
 
+.star-analysis-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
 .star-analysis h4 {
   display: flex;
   align-items: center;
@@ -968,7 +1026,13 @@ onMounted(async () => {
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--color-ai);
-  margin-bottom: var(--space-md);
+  margin: 0;
+}
+
+.detailed-star-section {
+  margin-top: var(--space-lg);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
 }
 
 .star-grid {

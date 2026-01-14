@@ -25,6 +25,7 @@ from services.interview_evaluator import InterviewEvaluator
 from services.interview_generator import InterviewGenerator
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
+from services.star_analyzer import STARAnalyzer
 from services.web_scraper import WebScraper
 
 applications_bp = Blueprint("applications", __name__)
@@ -1335,3 +1336,113 @@ def get_interview_summary(current_user):
             "success": False,
             "error": f"Fehler bei der Zusammenfassung: {str(e)}"
         }), 500
+
+
+@applications_bp.route("/interview/analyze-star", methods=["POST"])
+@jwt_required_custom
+def analyze_star_method(current_user):
+    """Perform detailed STAR method analysis on a behavioral interview answer.
+
+    Provides specialized feedback for behavioral questions with detailed analysis
+    of each STAR component (Situation, Task, Action, Result) and improvement suggestions.
+
+    Request body:
+        - question_id: (optional) ID of the interview question
+        - question_text: (required if no question_id) The question text
+        - answer_text: The user's answer to analyze
+        - application_id: Optional, for context (position, company)
+
+    Returns:
+        - star_analysis: Detailed analysis with:
+          - overall_star_score: 0-100 compliance score
+          - components: Analysis for each STAR component
+          - improvement_suggestions: Specific improvement tips
+          - improved_answer_example: Example of improved answer
+    """
+    data = request.json
+    if not data:
+        return jsonify({"success": False, "error": "Request body required"}), 400
+
+    question_id = data.get("question_id")
+    question_text = data.get("question_text", "").strip()
+    answer_text = data.get("answer_text", "").strip()
+    application_id = data.get("application_id")
+
+    # Get question text from question_id if not provided
+    if not question_text and question_id:
+        question = InterviewQuestion.query.get(question_id)
+        if question:
+            question_text = question.question_text
+            if not application_id:
+                application_id = question.application_id
+
+    if not question_text:
+        return jsonify({
+            "success": False,
+            "error": "question_text oder question_id ist erforderlich"
+        }), 400
+
+    if not answer_text:
+        return jsonify({
+            "success": False,
+            "error": "answer_text ist erforderlich"
+        }), 400
+
+    if len(answer_text) < 20:
+        return jsonify({
+            "success": False,
+            "error": "Die Antwort ist zu kurz für eine STAR-Analyse. Bitte geben Sie eine ausführlichere Antwort."
+        }), 400
+
+    # Get context from application if available
+    position = None
+    firma = None
+    if application_id:
+        app = Application.query.filter_by(
+            id=application_id,
+            user_id=current_user.id
+        ).first()
+        if app:
+            position = app.position
+            firma = app.firma
+
+    try:
+        analyzer = STARAnalyzer()
+        analysis = analyzer.analyze_star(
+            question_text=question_text,
+            answer_text=answer_text,
+            position=position,
+            firma=firma,
+        )
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "question_id": question_id,
+                "question_text": question_text,
+                "star_analysis": analysis,
+            },
+            "message": "STAR-Analyse erfolgreich"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der STAR-Analyse: {str(e)}"
+        }), 500
+
+
+@applications_bp.route("/interview/star-components", methods=["GET"])
+@jwt_required_custom
+def get_star_components(current_user):
+    """Get descriptions of STAR method components.
+
+    Returns detailed information about each STAR component for help/reference.
+    """
+    analyzer = STARAnalyzer()
+    return jsonify({
+        "success": True,
+        "data": {
+            "components": analyzer.get_component_descriptions(),
+        }
+    }), 200
