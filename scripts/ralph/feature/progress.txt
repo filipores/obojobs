@@ -29,6 +29,8 @@ Started: 2026-01-14
 
 #### Test-RALPH Findings (NEW)
 - [x] NEW-001: Manueller Stellentext-Import als Fallback
+- [x] NEW-002: Timer fuer realistische Interview-Simulation
+- [x] NEW-003: Automatische Anforderungsanalyse bei Bewerbungserstellung
 
 ---
 
@@ -360,6 +362,41 @@ Started: 2026-01-14
   - Tempfile mit cleanup fuer sicheres Handling manueller Texte
   - Strukturierte Error-Messages mit Action-Button verbessern UX
   - Manueller Import unverzichtbar da viele Portale Scraping blockieren
+
+## [2026-01-14] - NEW-002
+- **Was implementiert wurde:**
+  - Timer-Funktionalitaet in MockInterview.vue
+  - Optionaler Timer aktivierbar ueber Toggle-Button
+  - Konfigurierbare Zeit pro Frage (1, 2, 3 oder 5 Minuten)
+  - Visueller Countdown mit SVG Fortschritts-Ring
+  - Farbcodierung: Normal (blau), Warnung bei 30s (gelb), Kritisch bei 10s (rot)
+  - Akustischer Hinweis bei 10 Sekunden (Beep) und bei Zeitablauf (Doppel-Beep)
+  - Timer stoppt automatisch bei Antwort-Absenden
+  - Zeit-Statistik im Summary: Durchschnittliche Antwortzeit, Anzahl Fragen, Zeitueberschreitungen
+  - Web Audio API fuer Browser-native Sounds
+- **Geaenderte Dateien:**
+  - frontend/src/pages/MockInterview.vue (Timer-Logik, UI, Styles)
+- **Learnings:**
+  - Web Audio API mit Oscillator fuer einfache Beep-Sounds
+  - SVG stroke-dasharray fuer Kreis-Fortschrittsanzeige
+  - onUnmounted fuer Cleanup von Intervallen wichtig
+
+## [2026-01-14] - NEW-003
+- **Was implementiert wurde:**
+  - Automatische Anforderungsanalyse nach URL-Scraping in NewApplication.vue
+  - Separater Loading-State (analyzingRequirements) waehrend KI-Analyse
+  - Dedizierte analyzeRequirementsForJobFit() Funktion fuer klare State-Verwaltung
+  - Visueller "Analysiere Anforderungen..." Status mit Spinner und Erklaerungstext
+  - Fehlerbehandlung mit requirementsError State und Info-Box
+  - Hinweis dass Bewerbung trotzdem moeglich ist wenn Analyse fehlschlaegt
+  - GapAnalysis/JobFitScore sofort verfuegbar nach erfolgreicher Analyse
+  - Konsistente Behandlung fuer URL-Scraping und manuellen Text-Import
+- **Geaenderte Dateien:**
+  - frontend/src/pages/NewApplication.vue (State-Management, Loading-UI, Error-Handling)
+- **Learnings:**
+  - Separater Loading-State fuer verschiedene Phasen verbessert UX
+  - Fehlerbehandlung wichtig da KI-Analyse fehlschlagen kann (API-Limits, Netzwerk)
+  - Async-Funktion nach main loading.value = false gestartet fuer parallele UX
 
 ---
 

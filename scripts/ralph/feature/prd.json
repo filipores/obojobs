@@ -314,7 +314,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "notes": "Gefunden durch Test-Ralph: Trainiert User unter Zeitdruck zu antworten wie im echten Interview.",
       "source": "test-ralph"
     },
@@ -331,7 +331,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "notes": "Gefunden durch Test-Ralph: GapAnalysis wird nicht angezeigt weil JobRequirements fehlen. Automatische Analyse löst das Problem.",
       "source": "test-ralph"
     },

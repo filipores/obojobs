@@ -316,6 +316,31 @@
             </div>
           </div>
 
+          <!-- Requirements Analysis Status (NEW-003) -->
+          <div v-if="analyzingRequirements" class="requirements-analyzing">
+            <div class="analyzing-content">
+              <div class="loading-spinner"></div>
+              <div class="analyzing-text">
+                <strong>Analysiere Anforderungen...</strong>
+                <p>KI extrahiert Must-Have und Nice-to-Have Anforderungen aus der Stellenanzeige.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Requirements Error -->
+          <div v-else-if="requirementsError && !tempApplicationId" class="requirements-error">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <div>
+              <strong>Anforderungsanalyse nicht moeglich</strong>
+              <p>{{ requirementsError }}</p>
+              <p class="hint">Sie koennen trotzdem eine Bewerbung generieren, aber der Job-Fit Score ist nicht verfuegbar.</p>
+            </div>
+          </div>
+
           <!-- Job-Fit Score -->
           <JobFitScore
             v-if="tempApplicationId"
@@ -529,6 +554,11 @@ const tempApplicationId = ref(null)
 const jobFitScore = ref(null)
 const showLowScoreWarning = ref(false)
 
+// Requirements analysis state
+const analyzingRequirements = ref(false)
+const requirementsError = ref('')
+const requirementsCount = ref(0)
+
 // Portal detection (real-time based on URL)
 const detectedPortal = computed(() => {
   if (!url.value) return null
@@ -606,6 +636,9 @@ const loadPreview = async () => {
   tempApplicationId.value = null
   jobFitScore.value = null
   showLowScoreWarning.value = false
+  analyzingRequirements.value = false
+  requirementsError.value = ''
+  requirementsCount.value = 0
 
   try {
     const { data } = await api.post('/applications/preview-job', {
@@ -627,28 +660,25 @@ const loadPreview = async () => {
         description: data.data.description || ''
       }
 
-      // Create temporary application for job-fit analysis
-      if (data.data.description) {
-        try {
-          const analyzeResponse = await api.post('/applications/analyze-job-fit', {
-            url: url.value,
-            description: data.data.description,
-            company: data.data.company,
-            title: data.data.title
-          })
-          if (analyzeResponse.data.success) {
-            tempApplicationId.value = analyzeResponse.data.application_id
-          }
-        } catch (analyzeError) {
-          console.log('Job-Fit Analyse nicht verfuegbar:', analyzeError.message)
-        }
-      }
+      // Stop main loading, start requirements analysis
+      loading.value = false
 
       if (window.$toast) {
         window.$toast('Stellenanzeige geladen!', 'success')
       }
+
+      // Auto-analyze requirements for job-fit score (NEW-003)
+      if (data.data.description) {
+        await analyzeRequirementsForJobFit(
+          data.data.description,
+          data.data.company,
+          data.data.title,
+          url.value
+        )
+      }
     } else {
       error.value = data.error || 'Unbekannter Fehler'
+      loading.value = false
     }
   } catch (e) {
     if (e.response?.data?.error) {
@@ -656,8 +686,39 @@ const loadPreview = async () => {
     } else {
       error.value = 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.'
     }
-  } finally {
     loading.value = false
+  }
+}
+
+// Analyze requirements for job-fit score (separate function for clear state management)
+const analyzeRequirementsForJobFit = async (description, company, title, jobUrl = null) => {
+  analyzingRequirements.value = true
+  requirementsError.value = ''
+  requirementsCount.value = 0
+
+  try {
+    const analyzeResponse = await api.post('/applications/analyze-job-fit', {
+      url: jobUrl,
+      description: description,
+      company: company,
+      title: title
+    })
+
+    if (analyzeResponse.data.success) {
+      tempApplicationId.value = analyzeResponse.data.application_id
+      requirementsCount.value = analyzeResponse.data.requirements_count || 0
+
+      if (requirementsCount.value > 0 && window.$toast) {
+        window.$toast(`${requirementsCount.value} Anforderungen analysiert`, 'success')
+      }
+    } else {
+      requirementsError.value = analyzeResponse.data.error || 'Anforderungsanalyse fehlgeschlagen'
+    }
+  } catch (analyzeError) {
+    console.log('Job-Fit Analyse nicht verfügbar:', analyzeError.message)
+    requirementsError.value = analyzeError.response?.data?.error || 'Anforderungsanalyse nicht möglich'
+  } finally {
+    analyzingRequirements.value = false
   }
 }
 
@@ -694,6 +755,9 @@ const analyzeManualText = async () => {
 
   analyzingManualText.value = true
   manualTextError.value = ''
+  analyzingRequirements.value = false
+  requirementsError.value = ''
+  requirementsCount.value = 0
 
   try {
     const { data } = await api.post('/applications/analyze-manual-text', {
@@ -718,33 +782,28 @@ const analyzeManualText = async () => {
         description: data.data.description || manualJobText.value
       }
 
-      // Create temporary application for job-fit analysis
-      if (editableData.value.description) {
-        try {
-          const analyzeResponse = await api.post('/applications/analyze-job-fit', {
-            description: editableData.value.description,
-            company: editableData.value.company,
-            title: editableData.value.title
-          })
-          if (analyzeResponse.data.success) {
-            tempApplicationId.value = analyzeResponse.data.application_id
-          }
-        } catch (analyzeError) {
-          console.log('Job-Fit Analyse nicht verfügbar:', analyzeError.message)
-        }
-      }
-
       showManualFallback.value = false
+      analyzingManualText.value = false
 
       if (window.$toast) {
         window.$toast('Stellentext analysiert!', 'success')
       }
+
+      // Auto-analyze requirements for job-fit score (NEW-003)
+      if (editableData.value.description) {
+        await analyzeRequirementsForJobFit(
+          editableData.value.description,
+          editableData.value.company,
+          editableData.value.title,
+          null
+        )
+      }
     } else {
       manualTextError.value = data.error || 'Analyse fehlgeschlagen'
+      analyzingManualText.value = false
     }
   } catch (e) {
     manualTextError.value = e.response?.data?.error || 'Fehler bei der Analyse'
-  } finally {
     analyzingManualText.value = false
   }
 }
@@ -1325,6 +1384,78 @@ onMounted(() => {
 .usage-info {
   margin-top: var(--space-md);
   font-size: 0.875rem;
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   REQUIREMENTS ANALYSIS (NEW-003)
+   ======================================== */
+.requirements-analyzing {
+  background: var(--color-ai-subtle);
+  border: 1px solid var(--color-ai-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-lg);
+  margin-top: var(--space-lg);
+}
+
+.analyzing-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.requirements-analyzing .loading-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-ai-light);
+  border-top-color: var(--color-ai);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  flex-shrink: 0;
+}
+
+.analyzing-text strong {
+  display: block;
+  color: var(--color-ai);
+  margin-bottom: var(--space-xs);
+}
+
+.analyzing-text p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.requirements-error {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-warning-light);
+  border: 1px solid var(--color-warning);
+  border-radius: var(--radius-lg);
+  margin-top: var(--space-lg);
+}
+
+.requirements-error svg {
+  flex-shrink: 0;
+  color: var(--color-warning);
+}
+
+.requirements-error strong {
+  display: block;
+  color: var(--color-sumi);
+  margin-bottom: var(--space-xs);
+}
+
+.requirements-error p {
+  margin: 0 0 var(--space-xs) 0;
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.requirements-error .hint {
+  font-size: 0.8125rem;
+  font-style: italic;
   color: var(--color-text-tertiary);
 }
 
