@@ -15,7 +15,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -30,7 +30,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {

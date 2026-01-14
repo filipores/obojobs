@@ -31,6 +31,14 @@
           <router-link to="/ats" class="nav-link" active-class="active">
             <span class="nav-text">ATS</span>
           </router-link>
+          <router-link to="/company-insights" class="nav-link nav-link-with-icon" active-class="active" title="Company Insights">
+            <svg class="nav-icon-mobile" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M18 20V10"/>
+              <path d="M12 20V4"/>
+              <path d="M6 20v-6"/>
+            </svg>
+            <span class="nav-text">Insights</span>
+          </router-link>
           <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
@@ -309,6 +317,18 @@ onMounted(() => {
   flex-shrink: 0;
 }
 
+/* Mobile icon for nav links */
+.nav-link-with-icon {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.nav-icon-mobile {
+  display: none;
+  flex-shrink: 0;
+}
+
 .nav-link::after {
   content: '';
   position: absolute;
@@ -476,6 +496,10 @@ onMounted(() => {
 
   .nav-text {
     display: none;
+  }
+
+  .nav-icon-mobile {
+    display: block;
   }
 
   .nav-link-cta .nav-text {
