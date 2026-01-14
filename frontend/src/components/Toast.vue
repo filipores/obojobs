@@ -17,26 +17,64 @@ import { ref } from 'vue'
 
 const toasts = ref([])
 const recentMessages = ref(new Map()) // Track recent messages for deduplication
-const DEDUPE_WINDOW_MS = 500 // Don't show same message within 500ms
+const DEDUPE_WINDOW_MS = 2000 // Don't show same/similar message within 2 seconds
+
+// Normalize message for deduplication comparison
+const normalizeMessage = (msg) => {
+  return msg
+    .toLowerCase()
+    .replace(/[^\wäöüß\s]/g, '') // Remove punctuation
+    .replace(/\s+/g, ' ')        // Normalize whitespace
+    .trim()
+}
+
+// Check if two messages are similar (for deduplication)
+const isSimilarMessage = (msg1, msg2) => {
+  const norm1 = normalizeMessage(msg1)
+  const norm2 = normalizeMessage(msg2)
+
+  // Exact match after normalization
+  if (norm1 === norm2) return true
+
+  // Check if one contains the other (for partial matches like "Fehler" vs "Fehler beim...")
+  if (norm1.includes(norm2) || norm2.includes(norm1)) return true
+
+  // Check common error keywords in both
+  const errorKeywords = ['fehler', 'error', 'ungültig', 'invalid', 'nicht gefunden', 'verbinden']
+  const hasCommonKeyword = errorKeywords.some(
+    keyword => norm1.includes(keyword) && norm2.includes(keyword)
+  )
+  if (hasCommonKeyword && norm1.length < 50 && norm2.length < 50) {
+    // Both are short error messages with common keywords - likely duplicates
+    return true
+  }
+
+  return false
+}
 
 const add = (message, type = 'info', duration = 3000) => {
-  // Deduplicate: Check if same message was shown recently
-  const dedupeKey = `${type}:${message}`
-  const lastShown = recentMessages.value.get(dedupeKey)
   const now = Date.now()
 
-  if (lastShown && (now - lastShown) < DEDUPE_WINDOW_MS) {
-    // Skip duplicate message
-    return
+  // Deduplicate: Check if same or similar message was shown recently
+  for (const [key, { timestamp, originalMessage }] of recentMessages.value.entries()) {
+    if ((now - timestamp) < DEDUPE_WINDOW_MS) {
+      const [storedType] = key.split(':')
+      // Check if same type and similar message
+      if (storedType === type && isSimilarMessage(message, originalMessage)) {
+        // Skip duplicate message
+        return
+      }
+    }
   }
 
   // Track this message
-  recentMessages.value.set(dedupeKey, now)
+  const dedupeKey = `${type}:${now}`
+  recentMessages.value.set(dedupeKey, { timestamp: now, originalMessage: message })
 
   // Clean up old entries (prevent memory leak)
   if (recentMessages.value.size > 50) {
     const cutoff = now - DEDUPE_WINDOW_MS * 2
-    for (const [key, timestamp] of recentMessages.value.entries()) {
+    for (const [key, { timestamp }] of recentMessages.value.entries()) {
       if (timestamp < cutoff) {
         recentMessages.value.delete(key)
       }
