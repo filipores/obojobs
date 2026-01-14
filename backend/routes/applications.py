@@ -20,6 +20,7 @@ from middleware.subscription_limit import (
 )
 from models import Application, InterviewQuestion, JobRequirement, Template, UserSkill, db
 from services.ats_optimizer import ATSOptimizer
+from services.contact_extractor import ContactExtractor
 from services.generator import BewerbungsGenerator
 from services.interview_evaluator import InterviewEvaluator
 from services.interview_generator import InterviewGenerator
@@ -246,6 +247,8 @@ def analyze_manual_text(current_user):
 
     This endpoint allows users to paste job posting text directly when
     URL scraping fails (403, timeout, blocked by job portal, etc.)
+
+    UX-004: Enhanced with NLP-based extraction of contact data, email, and location.
     """
     data = request.json or {}
     job_text = data.get("job_text", "").strip()
@@ -265,6 +268,10 @@ def analyze_manual_text(current_user):
         }), 400
 
     try:
+        # Use ContactExtractor for NLP-based extraction (UX-004)
+        extractor = ContactExtractor()
+        contact_data = extractor.extract_contact_data(job_text)
+
         # Try to extract company and title from text if not provided
         extracted_company = company
         extracted_title = title
@@ -299,14 +306,14 @@ def analyze_manual_text(current_user):
                 "url": None,
                 "title": extracted_title,
                 "company": extracted_company,
-                "location": None,
+                "location": contact_data.get("location"),
                 "description": job_text,
                 "requirements": None,
-                "contact_email": None,
-                "contact_person": None,
+                "contact_email": contact_data.get("contact_email"),
+                "contact_person": contact_data.get("contact_person"),
                 "posted_date": None,
                 "application_deadline": None,
-                "employment_type": None,
+                "employment_type": contact_data.get("employment_type"),
                 "salary": None,
                 "company_profile_url": None,
                 "missing_fields": missing_fields,
