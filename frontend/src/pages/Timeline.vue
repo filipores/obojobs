@@ -97,7 +97,7 @@
 
             <!-- Actions -->
             <div class="timeline-actions">
-              <router-link :to="`/applications`" class="zen-btn zen-btn-sm">
+              <router-link :to="`/applications/${app.id}`" class="zen-btn zen-btn-sm">
                 Details
               </router-link>
             </div>
