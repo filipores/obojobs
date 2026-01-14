@@ -45,6 +45,10 @@ if [[ -f "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh" ]]; then
     source "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh"
 fi
 
+if [[ -f "$SCRIPT_DIR/lib/context_builder.sh" ]]; then
+    source "$SCRIPT_DIR/lib/context_builder.sh"
+fi
+
 # Override paths
 LOG_DIR="$SCRIPT_DIR/logs"
 mkdir -p "$LOG_DIR"
@@ -222,6 +226,38 @@ get_current_bug() {
 }
 
 # ============================================
+# Execute QA Phase (Haiku - Token-optimiert)
+# ============================================
+execute_qa_phase() {
+    if [[ "$ENABLE_QA_PHASE" != "true" ]]; then
+        return 0
+    fi
+
+    log_info "QA-Phase mit Haiku..."
+
+    local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
+    local qa_output="$LOG_DIR/qa_output_${timestamp}.log"
+
+    if ${TIMEOUT_CMD:+$TIMEOUT_CMD 120s} claude \
+        --model "$CLAUDE_MODEL_QA" \
+        --output-format json \
+        --allowedTools "Bash,Read" \
+        -p "$(cat "$SCRIPT_DIR/qa_prompt.md")" \
+        > "$qa_output" 2>&1; then
+
+        local qa_result=$(jq -r '.result // ""' "$qa_output" 2>/dev/null)
+        if echo "$qa_result" | grep -q "SUMMARY: ALL_PASS"; then
+            log_success "QA-Phase: Alle Checks bestanden"
+            return 0
+        elif echo "$qa_result" | grep -q "SUMMARY: HAS_FAILURES"; then
+            log_warn "QA-Phase: Hat Fehler"
+            return 1
+        fi
+    fi
+    return 0
+}
+
+# ============================================
 # Execute Claude
 # ============================================
 execute_claude() {
@@ -231,7 +267,7 @@ execute_claude() {
     local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
     local output_file="$LOG_DIR/debug_output_${current_bug}_${timestamp}.log"
 
-    log_loop "Starte Claude Code für Bug: $current_bug"
+    log_loop "Starte Claude Code für Bug: $current_bug (${CLAUDE_MODEL_IMPL##*-})"
 
     local timeout_seconds=$((TIMEOUT_MINUTES * 60))
 
@@ -240,8 +276,13 @@ execute_claude() {
     local bug_title=$(echo "$bug_details" | jq -r '.title')
     local bug_severity=$(echo "$bug_details" | jq -r '.severity')
 
+    # Pre-compute relevant files (Token-Optimierung)
+    local relevant_files=$(get_bug_context "$current_bug")
+    local file_context=$(build_context_string "$relevant_files")
+
     # Build context
-    local context="RALF Debug Mode - Loop #${loop_count}. Fixing Bug: ${current_bug} (${bug_severity}): ${bug_title}"
+    local context="RALF Debug Mode - Loop #${loop_count}. Fixing Bug: ${current_bug} (${bug_severity}): ${bug_title}
+${file_context}"
 
     # Build timeout prefix
     local timeout_prefix=""
@@ -249,8 +290,9 @@ execute_claude() {
         timeout_prefix="$TIMEOUT_CMD ${timeout_seconds}s"
     fi
 
-    # Execute Claude
+    # Execute Claude with model selection
     if $timeout_prefix claude \
+        --model "$CLAUDE_MODEL_IMPL" \
         --output-format json \
         --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
         --append-system-prompt "$context" \
@@ -364,6 +406,9 @@ while true; do
 
     case $exec_result in
         0)
+            # Run QA phase with Haiku
+            execute_qa_phase
+
             log_success "Bug $current_bug gefixt"
             update_status "$loop_count" "$current_bug" "success"
             FIXED_BUGS=$((FIXED_BUGS + 1))

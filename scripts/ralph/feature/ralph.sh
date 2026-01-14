@@ -28,6 +28,7 @@ source "$SCRIPT_DIR/lib/logger.sh"
 source "$SCRIPT_DIR/lib/rate_limiter.sh"
 source "$SCRIPT_DIR/lib/circuit_breaker.sh"
 source "$SCRIPT_DIR/lib/response_analyzer.sh"
+source "$SCRIPT_DIR/lib/context_builder.sh"
 
 # Override LOG_DIR to be absolute path
 LOG_DIR="$SCRIPT_DIR/logs"
@@ -178,7 +179,46 @@ get_current_story() {
 }
 
 # ============================================
-# Execute Claude
+# Execute QA Phase (Haiku - Token-optimiert)
+# ============================================
+execute_qa_phase() {
+    local loop_count=$1
+
+    if [[ "$ENABLE_QA_PHASE" != "true" ]]; then
+        return 0
+    fi
+
+    log_info "QA-Phase mit Haiku..."
+
+    local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
+    local qa_output="$LOG_DIR/qa_output_${timestamp}.log"
+
+    # Kurzer QA-Check mit Haiku (2 Min Timeout)
+    if ${TIMEOUT_CMD:+$TIMEOUT_CMD 120s} claude \
+        --model "$CLAUDE_MODEL_QA" \
+        --output-format json \
+        --allowedTools "Bash,Read" \
+        -p "$(cat "$SCRIPT_DIR/qa_prompt.md")" \
+        > "$qa_output" 2>&1; then
+
+        # Parse QA result
+        local qa_result=$(jq -r '.result // ""' "$qa_output" 2>/dev/null)
+        if echo "$qa_result" | grep -q "SUMMARY: ALL_PASS"; then
+            log_success "QA-Phase: Alle Checks bestanden"
+            return 0
+        elif echo "$qa_result" | grep -q "SUMMARY: HAS_FAILURES"; then
+            local failures=$(echo "$qa_result" | grep "FAILURES:" | sed 's/FAILURES:[[:space:]]*//')
+            log_warn "QA-Phase: Fehler in: $failures"
+            return 1
+        fi
+    fi
+
+    log_warn "QA-Phase: Konnte nicht ausgeführt werden"
+    return 0  # Non-blocking
+}
+
+# ============================================
+# Execute Claude (Implementation)
 # ============================================
 execute_claude() {
     local loop_count=$1
@@ -187,12 +227,17 @@ execute_claude() {
     local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
     local output_file="$LOG_DIR/claude_output_${timestamp}.log"
 
-    log_loop "Starte Claude Code Ausführung..."
+    log_loop "Starte Claude Code Ausführung (${CLAUDE_MODEL_IMPL##*-})..."
 
     local timeout_seconds=$((TIMEOUT_MINUTES * 60))
 
+    # Pre-compute relevant files (Token-Optimierung)
+    local relevant_files=$(get_story_context "$current_story")
+    local file_context=$(build_context_string "$relevant_files")
+
     # Build context
-    local context="Loop #${loop_count}. Current Story: ${current_story}. Stories remaining: $((TOTAL_STORIES - PASSED_STORIES))."
+    local context="Loop #${loop_count}. Current Story: ${current_story}. Stories remaining: $((TOTAL_STORIES - PASSED_STORIES)).
+${file_context}"
 
     # Build timeout command prefix
     local timeout_prefix=""
@@ -200,8 +245,9 @@ execute_claude() {
         timeout_prefix="$TIMEOUT_CMD ${timeout_seconds}s"
     fi
 
-    # Execute with optional timeout
+    # Execute with optional timeout and model selection
     if $timeout_prefix claude \
+        --model "$CLAUDE_MODEL_IMPL" \
         --output-format json \
         --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
         --append-system-prompt "$context" \
@@ -312,7 +358,10 @@ while true; do
 
     case $exec_result in
         0)
-            # Success - update passed count
+            # Success - run QA phase with Haiku
+            execute_qa_phase "$loop_count"
+
+            # Update passed count
             PASSED_STORIES=$(jq '[.userStories[] | select(.passes == true)] | length' "$SCRIPT_DIR/prd.json")
             log_info "Stories passed: $PASSED_STORIES/$TOTAL_STORIES"
             update_status "$loop_count" "$(get_remaining_calls)" "$current_story" "success"
