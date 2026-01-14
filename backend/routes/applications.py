@@ -18,9 +18,10 @@ from middleware.subscription_limit import (
     get_subscription_usage,
     increment_application_count,
 )
-from models import Application, JobRequirement, Template, db
+from models import Application, InterviewQuestion, JobRequirement, Template, UserSkill, db
 from services.ats_optimizer import ATSOptimizer
 from services.generator import BewerbungsGenerator
+from services.interview_generator import InterviewGenerator
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
 from services.web_scraper import WebScraper
@@ -1054,3 +1055,153 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
             "success": False,
             "error": f"Fehler bei der KI-Optimierung: {str(e)}"
         }), 500
+
+
+@applications_bp.route("/<int:app_id>/generate-questions", methods=["POST"])
+@jwt_required_custom
+def generate_interview_questions(app_id, current_user):
+    """Generate interview questions for an application based on the job posting.
+
+    Uses Claude API to generate personalized interview questions considering:
+    - The job posting and requirements
+    - The user's skills and experience
+    - German interview culture
+
+    Request body (optional):
+        - question_count: Number of questions to generate (10-15, default 12)
+
+    Returns:
+        - questions: List of generated interview questions with sample answers
+    """
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Application not found"}), 404
+
+    data = request.json or {}
+    question_count = data.get("question_count", 12)
+
+    # Get job text from various sources
+    job_text = ""
+
+    # First try notizen
+    if app.notizen:
+        job_text = app.notizen.replace("[Draft - Job-Fit Analyse]", "").strip()
+
+    # Then try to scrape from quelle URL
+    if not job_text and app.quelle and app.quelle.startswith(("http://", "https://")):
+        try:
+            scraper = WebScraper()
+            job_data = scraper.fetch_job_posting(app.quelle)
+            job_text = job_data.get("text", "")
+        except Exception:
+            pass
+
+    if not job_text:
+        return jsonify({
+            "success": False,
+            "error": "Keine Stellenbeschreibung vorhanden. Bitte stelle sicher, dass die Bewerbung eine Stellenanzeige-URL oder Beschreibung hat."
+        }), 400
+
+    # Get user skills for personalized questions
+    user_skills = UserSkill.query.filter_by(user_id=current_user.id).all()
+    skills_list = [{"skill_name": s.skill_name, "category": s.skill_category} for s in user_skills]
+
+    try:
+        generator = InterviewGenerator()
+        questions = generator.generate_questions(
+            job_text=job_text,
+            firma=app.firma or "Unbekannt",
+            position=app.position or "Unbekannt",
+            user_skills=skills_list,
+            question_count=question_count,
+        )
+
+        if not questions:
+            return jsonify({
+                "success": False,
+                "error": "Keine Interview-Fragen generiert. Bitte versuche es erneut."
+            }), 500
+
+        # Delete existing questions for this application
+        InterviewQuestion.query.filter_by(application_id=app_id).delete()
+
+        # Save generated questions
+        for q_data in questions:
+            question = InterviewQuestion(
+                application_id=app_id,
+                question_text=q_data["question_text"],
+                question_type=q_data["question_type"],
+                difficulty=q_data.get("difficulty", "medium"),
+                sample_answer=q_data.get("sample_answer"),
+            )
+            db.session.add(question)
+
+        db.session.commit()
+
+        # Get saved questions
+        saved_questions = InterviewQuestion.query.filter_by(application_id=app_id).all()
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "application_id": app_id,
+                "questions": [q.to_dict() for q in saved_questions],
+                "total": len(saved_questions),
+            },
+            "message": f"{len(saved_questions)} Interview-Fragen generiert"
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der Fragen-Generierung: {str(e)}"
+        }), 500
+
+
+@applications_bp.route("/<int:app_id>/interview-questions", methods=["GET"])
+@jwt_required_custom
+def get_interview_questions(app_id, current_user):
+    """Get all interview questions for an application.
+
+    Returns questions grouped by type (behavioral, technical, situational,
+    company_specific, salary_negotiation).
+
+    Query params:
+        - type: Filter by question type (optional)
+    """
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"success": False, "error": "Application not found"}), 404
+
+    question_type = request.args.get("type")
+
+    query = InterviewQuestion.query.filter_by(application_id=app_id)
+    if question_type and question_type in InterviewQuestion.VALID_TYPES:
+        query = query.filter_by(question_type=question_type)
+
+    questions = query.all()
+
+    # Group by type
+    grouped = {
+        "behavioral": [],
+        "technical": [],
+        "situational": [],
+        "company_specific": [],
+        "salary_negotiation": [],
+    }
+
+    for q in questions:
+        if q.question_type in grouped:
+            grouped[q.question_type].append(q.to_dict())
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "application_id": app_id,
+            "questions": grouped,
+            "all_questions": [q.to_dict() for q in questions],
+            "total": len(questions),
+        }
+    }), 200
