@@ -1,13 +1,25 @@
 <template>
-  <transition-group name="toast-fade" tag="div" class="toast-container">
+  <transition-group
+    name="toast-fade"
+    tag="div"
+    class="toast-container"
+    aria-live="polite"
+    aria-label="Benachrichtigungen"
+  >
     <div
       v-for="toast in toasts"
       :key="toast.id"
       :class="['toast', toast.type]"
+      :role="getRole(toast.type)"
+      :aria-live="getAriaLive(toast.type)"
     >
-      <span class="toast-icon">{{ getIcon(toast.type) }}</span>
+      <span class="toast-icon" aria-hidden="true">{{ getIcon(toast.type) }}</span>
       <span class="toast-message">{{ toast.message }}</span>
-      <button @click="remove(toast.id)" class="toast-close">✕</button>
+      <button
+        @click="remove(toast.id)"
+        class="toast-close"
+        aria-label="Benachrichtigung schließen"
+      >✕</button>
     </div>
   </transition-group>
 </template>
@@ -101,6 +113,16 @@ const getIcon = (type) => {
     info: 'ⓘ'
   }
   return icons[type] || icons.info
+}
+
+// ARIA role: 'alert' for critical messages (error, warning), 'status' for non-critical
+const getRole = (type) => {
+  return (type === 'error' || type === 'warning') ? 'alert' : 'status'
+}
+
+// ARIA live: 'assertive' for critical messages, 'polite' for non-critical
+const getAriaLive = (type) => {
+  return (type === 'error' || type === 'warning') ? 'assertive' : 'polite'
 }
 
 defineExpose({ add, remove })
