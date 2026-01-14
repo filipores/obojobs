@@ -227,6 +227,13 @@
             </div>
           </div>
 
+          <!-- Job-Fit Score -->
+          <JobFitScore
+            v-if="tempApplicationId"
+            :application-id="tempApplicationId"
+            @score-loaded="onJobFitScoreLoaded"
+          />
+
           <!-- Template Selection -->
           <div class="form-group template-selection">
             <label class="form-label">Anschreiben-Template</label>
@@ -236,6 +243,16 @@
                 {{ template.name }}{{ template.is_default ? ' (Standard)' : '' }}
               </option>
             </select>
+          </div>
+
+          <!-- Low Score Warning on Generate Button -->
+          <div v-if="showLowScoreWarning" class="low-score-generate-warning">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <span>Der Job-Fit Score ist niedrig ({{ jobFitScore?.overall_score }}%). Moeglicherweise passt diese Stelle nicht optimal zu Ihrem Profil.</span>
           </div>
 
           <!-- Generate Button -->
@@ -375,6 +392,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
+import JobFitScore from '../components/JobFitScore.vue'
 
 const router = useRouter()
 
@@ -402,6 +420,11 @@ const editableData = ref({
   description: ''
 })
 const showDescription = ref(false)
+
+// Job-Fit Score state
+const tempApplicationId = ref(null)
+const jobFitScore = ref(null)
+const showLowScoreWarning = ref(false)
 
 // Portal detection (real-time based on URL)
 const detectedPortal = computed(() => {
@@ -477,6 +500,9 @@ const loadPreview = async () => {
 
   error.value = ''
   loading.value = true
+  tempApplicationId.value = null
+  jobFitScore.value = null
+  showLowScoreWarning.value = false
 
   try {
     const { data } = await api.post('/applications/preview-job', {
@@ -498,6 +524,23 @@ const loadPreview = async () => {
         description: data.data.description || ''
       }
 
+      // Create temporary application for job-fit analysis
+      if (data.data.description) {
+        try {
+          const analyzeResponse = await api.post('/applications/analyze-job-fit', {
+            url: url.value,
+            description: data.data.description,
+            company: data.data.company,
+            title: data.data.title
+          })
+          if (analyzeResponse.data.success) {
+            tempApplicationId.value = analyzeResponse.data.application_id
+          }
+        } catch (analyzeError) {
+          console.log('Job-Fit Analyse nicht verfuegbar:', analyzeError.message)
+        }
+      }
+
       if (window.$toast) {
         window.$toast('Stellenanzeige geladen!', 'success')
       }
@@ -513,6 +556,12 @@ const loadPreview = async () => {
   } finally {
     loading.value = false
   }
+}
+
+// Handle job-fit score loaded event
+const onJobFitScoreLoaded = (score) => {
+  jobFitScore.value = score
+  showLowScoreWarning.value = score.overall_score < 40
 }
 
 // Reset preview and start fresh
@@ -1088,6 +1137,28 @@ onMounted(() => {
   margin-top: var(--space-md);
   font-size: 0.875rem;
   color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   LOW SCORE WARNING
+   ======================================== */
+.low-score-generate-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: rgba(201, 162, 39, 0.1);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.low-score-generate-warning svg {
+  flex-shrink: 0;
+  color: #c9a227;
+  margin-top: 2px;
 }
 
 /* ========================================

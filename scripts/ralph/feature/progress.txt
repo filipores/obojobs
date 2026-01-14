@@ -1,138 +1,129 @@
 # RALF Feature Mode - Progress Log
-Started: 2026-01-13
 
-## Current Feature: Job-Boards Integration
-Branch: ralph/job-boards
+## Current Feature: Quality-First & Interview-Preparation
+Branch: ralph/quality-interview
+Started: 2026-01-14
 
 ### Pending Stories:
-- [x] JOBS-001: StepStone Scraper
-- [x] JOBS-002: Indeed DE Scraper
-- [x] JOBS-003: XING Jobs Scraper
-- [x] JOBS-004: Job Import UI Enhancement
-- [x] JOBS-005: Arbeitsagentur Scraper
+
+#### Quality-First (QUAL)
+- [x] QUAL-001: Skill-Extraktion aus CV
+- [x] QUAL-002: Job-Anforderungs-Analyse
+- [x] QUAL-003: Job-Fit Score Berechnung
+- [x] QUAL-004: Job-Fit Score UI
+- [ ] QUAL-005: ATS-Score vor Bewerbungsabsendung
+- [ ] QUAL-006: ATS-Score UI mit Verbesserungen
+- [ ] QUAL-007: Gap-Analyse mit Lernempfehlungen
+
+#### Interview-Preparation (INT)
+- [ ] INT-001: Interview-Fragen Generator
+- [ ] INT-002: Interview-Prep UI
+- [ ] INT-003: Text-basiertes Mock-Interview
+- [ ] INT-004: STAR-Methode Coach
+- [ ] INT-005: Firmen-Recherche Integration
+- [ ] INT-006: Interview-Ergebnis Tracking
+
+#### Advanced Features (ADV)
+- [ ] ADV-001: Smart Job Recommendations
+- [ ] ADV-002: Gehaltsverhandlungs-Coach
 
 ---
 
-## 2026-01-13 - JOBS-005: Arbeitsagentur Scraper
+## Progress Log
+
+## [2026-01-14] - QUAL-001
 - **Was implementiert wurde:**
-  - `ArbeitsagenturParser` Klasse in `backend/services/web_scraper.py`
-  - URL-Matching für Arbeitsagentur (arbeitsagentur.de/jobsuche/*, con.arbeitsagentur.de/*, etc.)
-  - JSON-LD Parsing mit HTML-Fallback
-  - Extraktion: Titel, Firma, Standort, Beschreibung
-  - Extraktion: Referenznummer (10000-1234567890-S Format)
-  - Extraktion: Ansprechpartner, Telefon, Email
-  - Extraktion: Arbeitszeit (Vollzeit/Teilzeit), Befristung
-  - Deutsche Datumsformat-Konvertierung (DD.MM.YYYY → YYYY-MM-DD)
-  - Anti-Bot Headers (User-Agent, Sec-Fetch-*, Accept-Language, etc.)
-  - Email-Filterung für Arbeitsagentur System-Emails
-
-- **Geänderte Dateien:**
-  - `backend/services/web_scraper.py` - Erweitert mit ArbeitsagenturParser
-  - `backend/tests/test_arbeitsagentur_scraper.py` - 22 neue Tests
-
+  - UserSkill Model mit Kategorien (technical, soft_skills, languages, tools, certifications)
+  - skill_extractor.py Service für Claude API basierte Extraktion
+  - API Endpoints: POST /documents/{id}/extract-skills, GET/POST/PUT/DELETE /users/me/skills
+  - Automatische Skill-Extraktion beim Lebenslauf-Upload
+  - SkillsOverview.vue Komponente mit CRUD-Funktionalität
+  - DB Migration add_user_skills.py
+- **Geaenderte Dateien:**
+  - backend/models/user_skill.py (neu)
+  - backend/services/skill_extractor.py (neu)
+  - backend/routes/skills.py (neu)
+  - backend/migrations/add_user_skills.py (neu)
+  - frontend/src/components/SkillsOverview.vue (neu)
+  - backend/app.py, backend/models/__init__.py, backend/models/user.py, backend/routes/documents.py, frontend/src/pages/Documents.vue
 - **Learnings:**
-  - Arbeitsagentur nutzt spezifische Label-Patterns (Arbeitgeber:, Arbeitsort:, etc.)
-  - Referenznummern haben typisches Format: 10000-xxxxxxxxxx-S
-  - Deutsche Telefonnummern-Patterns: +49, 0xxx, (0xxx) xxx xxx
+  - Claude API liefert strukturiertes JSON gut wenn Prompt klar formatiert ist
+  - Skills-Kategorisierung funktioniert mit category_mapping Fallback
 
----
-
-## 2026-01-13 - JOBS-004: Job Import UI Enhancement
+## [2026-01-14] - QUAL-002
 - **Was implementiert wurde:**
-  - Neuer `/applications/preview-job` API Endpoint
-  - Echtzeit Portal-Erkennung bei URL-Eingabe (StepStone, Indeed, XING, Arbeitsagentur)
-  - Zweistufiger Workflow: Laden → Prüfen → Generieren
-  - Preview aller extrahierten Daten mit editierbaren Feldern
-  - Warnung bei fehlenden wichtigen Feldern (Titel, Firma, Beschreibung)
-  - Template-Variablen-Anzeige mit Auto-Fill Status ({{FIRMA}}, {{POSITION}}, etc.)
-  - Responsive Design mit Portal-farbigen Badges
-
-- **Geänderte Dateien:**
-  - `backend/routes/applications.py` - Neuer preview-job Endpoint
-  - `frontend/src/pages/NewApplication.vue` - Komplett überarbeitete UI
-
+  - JobRequirement Model mit Feldern: application_id, requirement_text, requirement_type (must_have/nice_to_have), skill_category
+  - requirement_analyzer.py Service für Claude API basierte Anforderungsextraktion
+  - Automatische Unterscheidung Must-Have vs Nice-to-Have basierend auf Formulierungen
+  - GET /api/applications/{id}/requirements Endpoint
+  - POST /api/applications/{id}/analyze-requirements Endpoint
+  - Automatische Extraktion beim Generieren einer Bewerbung (generator.py Integration)
+  - DB Migration add_job_requirements.py
+- **Geaenderte Dateien:**
+  - backend/models/job_requirement.py (neu)
+  - backend/services/requirement_analyzer.py (neu)
+  - backend/migrations/add_job_requirements.py (neu)
+  - backend/models/__init__.py
+  - backend/models/application.py (requirements Relationship)
+  - backend/routes/applications.py (2 neue Endpoints)
+  - backend/services/generator.py (_extract_requirements Integration)
 - **Learnings:**
-  - Vue Template-Syntax mit doppelten Klammern braucht Helper-Funktion für Anzeige
-  - Preview-Daten in separatem editableData State für User-Modifikation
-  - Portal-Detection kann client-seitig für Echtzeit-Feedback erfolgen
+  - Must-Have/Nice-to-Have Unterscheidung funktioniert gut mit Keyword-Erkennung im Prompt
+  - Anforderungsextraktion als separater Schritt nach Application-Commit verhindert Blockierung
 
----
-
-## 2026-01-13 - JOBS-003: XING Jobs Scraper
+## [2026-01-14] - QUAL-003
 - **Was implementiert wurde:**
-  - `XingParser` Klasse in `backend/services/web_scraper.py`
-  - URL-Matching für XING (xing.com/jobs/*)
-  - JSON-LD Parsing mit HTML-Fallback
-  - Extraktion: Titel, Firma, Standort, Beschreibung
-  - Extraktion: Firmen-Profil URL (company_profile_url)
-  - Extraktion: Ansprechpartner/Kontaktperson (contact_person)
-  - Anti-Bot Headers (User-Agent, Sec-Fetch-*, Accept-Language, etc.)
-  - Email-Filterung für XING System-Emails (support@xing, info@xing, etc.)
-
-- **Geänderte Dateien:**
-  - `backend/services/web_scraper.py` - Erweitert mit XingParser
-  - `backend/tests/test_xing_scraper.py` - 18 neue Tests
-
+  - job_fit_calculator.py Service für Match-Score Berechnung
+  - Gewichtung: 70% Must-Have, 30% Nice-to-Have
+  - Score-Kategorien: sehr_gut (80%+), gut (60-79%), mittel (40-59%), niedrig (<40%)
+  - Partial Match Erkennung für Skills mit weniger Erfahrung als gefordert
+  - GET /api/applications/{id}/job-fit Endpoint
+  - Response mit overall_score, matched_skills, partial_matches, missing_skills
+- **Geaenderte Dateien:**
+  - backend/services/job_fit_calculator.py (neu)
+  - backend/routes/applications.py (neuer Endpoint)
 - **Learnings:**
-  - XING nutzt ähnliche Patterns wie andere Job-Boards (JSON-LD)
-  - Firmen-Profile sind unter /companies/ erreichbar
-  - Ansprechpartner/Recruiter oft unter /profile/ verlinkt
+  - Dataclasses sind ideal für strukturierte Results mit to_dict() Methode
+  - Skill-Matching basiert auf Text-Overlap und Kategorie-Match
 
----
-
-## 2026-01-13 - JOBS-002: Indeed DE Scraper
+## [2026-01-14] - QUAL-004
 - **Was implementiert wurde:**
-  - `IndeedParser` Klasse in `backend/services/web_scraper.py`
-  - URL-Matching für Indeed (de.indeed.com, indeed.com, indeed.de)
-  - Patterns: /viewjob, /job/, /jobs/, jk= Query-Parameter
-  - JSON-LD Parsing mit HTML-Fallback
-  - Extraktion: Titel, Firma, Standort, Beschreibung, Gehalt, Job-Typ
-  - Anti-Bot Headers (User-Agent, Sec-Fetch-*, Accept-Language, etc.)
-  - Job-Typ Erkennung: Vollzeit, Teilzeit, Festanstellung, Befristet, Minijob, etc.
-  - Email-Filterung für Indeed System-Emails (support@indeed, etc.)
-
-- **Geänderte Dateien:**
-  - `backend/services/web_scraper.py` - Erweitert mit IndeedParser
-  - `backend/tests/test_indeed_scraper.py` - 17 neue Tests
-
+  - JobFitScore.vue Komponente mit Fortschrittsbalken und Score-Anzeige
+  - Farbcodierung: Gruen (80%+), Gelb (60-79%), Orange (40-59%), Rot (<40%)
+  - Auflistung erfuellter/teilweiser/fehlender Anforderungen
+  - Integration in NewApplication.vue - Score wird nach URL-Eingabe angezeigt
+  - Warnung bei niedrigem Score (<40%) vor Bewerbungsgenerierung
+  - Empfehlungen für fehlende Skills
+  - Neuer Backend-Endpoint POST /api/applications/analyze-job-fit fuer Vorschau-Analyse
+- **Geaenderte Dateien:**
+  - frontend/src/components/JobFitScore.vue (neu)
+  - frontend/src/pages/NewApplication.vue (JobFitScore Integration)
+  - backend/routes/applications.py (neuer analyze-job-fit Endpoint)
 - **Learnings:**
-  - Indeed verwendet data-testid Attribute für wichtige Elemente
-  - Anti-Bot Headers müssen Browser-ähnlich sein (Sec-Fetch-*, DNT, etc.)
-  - WebScraper nutzt jetzt Parser-spezifische Headers wenn verfügbar
+  - Temporaere Application-Erstellung für Vorschau-Analyse ermöglicht Job-Fit Score vor Generierung
+  - Event-Emission @score-loaded ermöglicht Warnung im Parent-Component
 
 ---
 
-## 2026-01-13 - JOBS-001: StepStone Scraper
-- **Was implementiert wurde:**
-  - `StepStoneParser` Klasse in `backend/services/web_scraper.py`
-  - URL-Matching für StepStone (stepstone.de/stellenangebote--*)
-  - JSON-LD Parsing für strukturierte JobPosting-Daten
-  - HTML-Fallback für fehlende Daten (Titel aus h1, Company aus data-attributes)
-  - Email-Extraktion mit Filter für noreply/newsletter Adressen
-  - Neue Methoden: `detect_job_board()`, `fetch_structured_job_posting()`
-  - Basis-Architektur mit `JobBoardParser` ABC für zukünftige Parser
+## Previous Completed Features
 
-- **Geänderte Dateien:**
-  - `backend/services/web_scraper.py` - Erweitert mit StepStoneParser
-  - `backend/tests/test_stepstone_scraper.py` - 14 neue Tests
+### Completed: Job-Boards Integration (2026-01-13)
+Branch: ralph/job-boards
+- JOBS-001: StepStone Scraper ✅
+- JOBS-002: Indeed DE Scraper ✅
+- JOBS-003: XING Jobs Scraper ✅
+- JOBS-004: Job Import UI Enhancement ✅
+- JOBS-005: Arbeitsagentur Scraper ✅
 
-- **Learnings:**
-  - JobBoardParser ABC Pattern ermöglicht einfaches Hinzufügen neuer Parser
-  - JSON-LD ist bevorzugte Datenquelle (schema.org/JobPosting Standard)
-  - StepStone nutzt data-at Attribute für semantische Elemente
-
----
-
-## Completed: Analytics Dashboard (2026-01-13)
+### Completed: Analytics Dashboard (2026-01-13)
 Branch: ralph/analytics-dashboard
-- ANALYTICS-001: Extended Stats API
-- ANALYTICS-002: Timeline View
-- ANALYTICS-003: Company Insights
-- ANALYTICS-004: Export Funktionalität
+- ANALYTICS-001 bis ANALYTICS-004 ✅
 
-## Completed: RALF Improvements (2026-01-13)
+### Completed: RALF Improvements (2026-01-13)
 Branch: ralph/ralph-improvements
-- RALF-001 bis RALF-010 alle implementiert
+- RALF-001 bis RALF-010 ✅
+
+---
 
 ## Codebase Patterns
 - SQLAlchemy func.count() mit GROUP BY für aggregierte Statistiken
@@ -140,4 +131,6 @@ Branch: ralph/ralph-improvements
 - Vue Router Query-Parameter mit watch() für reaktive Filter
 - ReportLab Table mit TableStyle für PDF-Tabellen
 - Blob Download mit window.URL.createObjectURL
+- JobBoardParser ABC Pattern für modulare Scraper
+- JSON-LD Parsing für strukturierte Job-Daten (schema.org/JobPosting)
 

@@ -1,92 +1,284 @@
 {
   "project": "obojobs",
-  "branchName": "ralph/job-boards",
-  "description": "Job-Board Integration - Optimiertes Scraping für StepStone, Indeed, XING",
+  "branchName": "ralph/quality-interview",
+  "description": "Quality-First Bewerbungen & Interview-Preparation - KI-gestützte Job-Fit Analyse und deutscher Interview-Coach",
   "userStories": [
     {
-      "id": "JOBS-001",
-      "title": "StepStone Scraper",
-      "description": "Optimiertes Scraping für StepStone.de",
+      "id": "QUAL-001",
+      "title": "Skill-Extraktion aus CV",
+      "description": "Automatische Extraktion von Skills aus hochgeladenen Lebensläufen mittels KI",
       "acceptanceCriteria": [
-        "Erkennt StepStone URLs (stepstone.de/stellenangebote--*)",
-        "Extrahiert: Titel, Firma, Standort, Beschreibung, Anforderungen",
-        "Extrahiert: Kontakt-Email falls vorhanden",
-        "Extrahiert: Einstellungsdatum, Bewerbungsfrist",
-        "Structured Data (JSON-LD) parsing wenn vorhanden",
-        "Fallback auf HTML-Parsing",
+        "Neues Model 'UserSkill' mit Feldern: user_id, skill_name, skill_category, experience_years, source_document_id",
+        "Backend Service 'skill_extractor.py' der Claude API nutzt um Skills aus CV-Text zu extrahieren",
+        "Endpoint POST /api/documents/{id}/extract-skills der Skills aus einem Dokument extrahiert",
+        "Endpoint GET /api/users/me/skills der alle extrahierten Skills eines Users zurückgibt",
+        "Skills werden in Kategorien eingeteilt: technical, soft_skills, languages, tools, certifications",
+        "Automatische Extraktion beim Upload eines Lebenslaufs (Dokument-Typ 'lebenslauf')",
+        "Frontend-Komponente 'SkillsOverview.vue' die extrahierte Skills anzeigt",
+        "Skills können manuell bearbeitet/gelöscht werden",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
       "passes": true,
-      "notes": "StepStone hat oft strukturierte Daten im HTML"
+      "notes": "Basis für Job-Fit Score. Claude Prompt sollte strukturierte JSON-Ausgabe liefern mit skill_name, category, years_experience"
     },
     {
-      "id": "JOBS-002",
-      "title": "Indeed DE Scraper",
-      "description": "Optimiertes Scraping für Indeed.de",
+      "id": "QUAL-002",
+      "title": "Job-Anforderungs-Analyse",
+      "description": "KI-gestützte Analyse von Stellenanzeigen um Anforderungen zu extrahieren",
       "acceptanceCriteria": [
-        "Erkennt Indeed URLs (de.indeed.com/viewjob*, indeed.com/viewjob*)",
-        "Extrahiert: Titel, Firma, Standort, Beschreibung",
-        "Extrahiert: Gehaltsspanne falls angegeben",
-        "Extrahiert: Job-Typ (Vollzeit, Teilzeit, etc.)",
-        "Handling von Indeed's Anti-Bot Maßnahmen (Headers, Delays)",
+        "Neues Model 'JobRequirement' mit Feldern: application_id, requirement_text, requirement_type (must_have/nice_to_have), skill_category",
+        "Backend Service 'requirement_analyzer.py' der Claude API nutzt",
+        "Anforderungen werden beim Scrapen einer Stellenanzeige automatisch extrahiert",
+        "Unterscheidung zwischen Must-Have und Nice-to-Have Anforderungen",
+        "Endpoint GET /api/applications/{id}/requirements der Anforderungen zurückgibt",
+        "Integration in bestehenden WebScraper - strukturierte Anforderungen zusätzlich zum Volltext",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
       "passes": true,
-      "notes": "Indeed blockiert aggressive Scraper - vorsichtig sein"
+      "notes": "Claude sollte aus Stellentext Must-Have vs Nice-to-Have unterscheiden können basierend auf Formulierungen wie 'erforderlich', 'wünschenswert', 'idealerweise'"
     },
     {
-      "id": "JOBS-003",
-      "title": "XING Jobs Scraper",
-      "description": "Scraping für XING Stellenanzeigen",
+      "id": "QUAL-003",
+      "title": "Job-Fit Score Berechnung",
+      "description": "Berechnung eines Match-Scores zwischen User-Skills und Job-Anforderungen",
       "acceptanceCriteria": [
-        "Erkennt XING URLs (xing.com/jobs/*)",
-        "Extrahiert: Titel, Firma, Standort, Beschreibung",
-        "Extrahiert: Firmen-Profil Link",
-        "Extrahiert: Ansprechpartner falls sichtbar",
-        "Login nicht erforderlich für öffentliche Stellen",
+        "Backend Service 'job_fit_calculator.py' der Match-Score berechnet",
+        "Score basiert auf: Anzahl erfüllter Must-Haves, Anzahl erfüllter Nice-to-Haves, Erfahrungsjahre-Match",
+        "Gewichtung: Must-Have = 70%, Nice-to-Have = 30%",
+        "Score von 0-100% mit Kategorien: Sehr gut (80%+), Gut (60-79%), Mittel (40-59%), Niedrig (<40%)",
+        "Endpoint GET /api/applications/{id}/job-fit der Score und Details zurückgibt",
+        "Response enthält: overall_score, matched_skills[], missing_skills[], partial_matches[]",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 3,
       "passes": true,
-      "notes": "XING hat oft Ansprechpartner-Infos"
+      "notes": "Partial Match wenn Skill vorhanden aber weniger Erfahrung als gefordert. Beispiel: Job fordert '5 Jahre Python', User hat '3 Jahre' = partial match"
     },
     {
-      "id": "JOBS-004",
-      "title": "Job Import UI Enhancement",
-      "description": "Verbesserte UI für Job-Import mit Preview",
+      "id": "QUAL-004",
+      "title": "Job-Fit Score UI",
+      "description": "Frontend-Anzeige des Job-Fit Scores mit visueller Darstellung",
       "acceptanceCriteria": [
-        "URL-Eingabe zeigt erkanntes Portal (StepStone, Indeed, XING, Sonstige)",
-        "Nach Scraping: Preview aller extrahierten Daten",
-        "Editierbare Felder vor dem Speichern",
-        "Auto-Fill für Template-Variablen (FIRMA, POSITION, etc.)",
-        "Warnung wenn wichtige Daten fehlen",
+        "Komponente 'JobFitScore.vue' mit Fortschrittsbalken und Score-Anzeige",
+        "Farbcodierung: Grün (80%+), Gelb (60-79%), Orange (40-59%), Rot (<40%)",
+        "Auflistung von: Erfüllte Anforderungen (grün), Teilweise erfüllt (gelb), Fehlend (rot)",
+        "Integration in NewApplication.vue - Score wird nach URL-Eingabe angezeigt",
+        "Button 'Bewerbung generieren' zeigt Warnung wenn Score < 40%",
+        "Empfehlungen für fehlende Skills werden angezeigt",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
       "passes": true,
-      "notes": "Preview in NewApplicationView.vue integrieren"
+      "notes": "UI sollte dem User helfen zu entscheiden ob sich eine Bewerbung lohnt. Bei niedrigem Score: 'Diese Stelle passt möglicherweise nicht zu Ihrem Profil'"
     },
     {
-      "id": "JOBS-005",
-      "title": "Arbeitsagentur Scraper",
-      "description": "Scraping für Bundesagentur für Arbeit",
+      "id": "QUAL-005",
+      "title": "ATS-Score vor Bewerbungsabsendung",
+      "description": "Analyse der generierten Bewerbung auf ATS-Kompatibilität vor dem Absenden",
       "acceptanceCriteria": [
-        "Erkennt arbeitsagentur.de URLs",
-        "Extrahiert: Titel, Firma, Standort, Beschreibung, Referenznummer",
-        "Extrahiert: Ansprechpartner und Kontaktdaten",
-        "Öffentliche API nutzen falls verfügbar",
+        "Backend Service 'ats_optimizer.py' der generierte Bewerbung mit Stellenanzeige vergleicht",
+        "Keyword-Density-Analyse: Wie oft kommen wichtige Keywords vor",
+        "Endpoint POST /api/applications/{id}/ats-check der Bewerbungstext analysiert",
+        "Response enthält: ats_score (0-100), missing_keywords[], keyword_suggestions[], format_issues[]",
+        "Empfehlungen wie Keywords natürlich eingebaut werden können",
         "Alle Tests grün (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
-      "passes": true,
-      "notes": "Arbeitsagentur hat oft vollständige Kontaktdaten"
+      "passes": false,
+      "notes": "Unterschied zu bestehendem ATS-Modul: Dieses analysiert die GENERIERTE Bewerbung, nicht die Stellenanzeige"
+    },
+    {
+      "id": "QUAL-006",
+      "title": "ATS-Score UI mit Verbesserungen",
+      "description": "Frontend für ATS-Score mit Ein-Klick-Verbesserung",
+      "acceptanceCriteria": [
+        "Komponente 'ATSOptimizer.vue' zeigt ATS-Score nach Bewerbungsgenerierung",
+        "Liste fehlender Keywords mit Kontext wo sie eingebaut werden könnten",
+        "Button 'Mit KI verbessern' der Bewerbung automatisch optimiert",
+        "Vorher/Nachher Vergleich der Bewerbung",
+        "Integration in Application-Detail-View",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 6,
+      "passes": false,
+      "notes": "Ein-Klick-Optimierung ruft Claude API auf um Keywords natürlich einzubauen ohne den Ton zu verändern"
+    },
+    {
+      "id": "QUAL-007",
+      "title": "Gap-Analyse mit Lernempfehlungen",
+      "description": "Analyse fehlender Skills mit Empfehlungen zum Skill-Aufbau",
+      "acceptanceCriteria": [
+        "Erweiterung des Job-Fit Endpoints um 'learning_recommendations' Feld",
+        "Für jeden fehlenden Skill: Empfehlung wie dieser erlernt werden kann",
+        "Kategorien: Online-Kurs, Zertifizierung, Projekt-Idee, Buch-Empfehlung",
+        "Frontend-Komponente 'GapAnalysis.vue' die Empfehlungen anzeigt",
+        "Verlinkung zu relevanten Lernressourcen (Coursera, Udemy, etc.) - generische Links",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 7,
+      "passes": false,
+      "notes": "Hilft Usern ihre Qualifikationen für zukünftige Bewerbungen zu verbessern"
+    },
+    {
+      "id": "INT-001",
+      "title": "Interview-Fragen Generator",
+      "description": "KI-generierte Interview-Fragen basierend auf Stellenanzeige und User-Profil",
+      "acceptanceCriteria": [
+        "Neues Model 'InterviewQuestion' mit Feldern: application_id, question_text, question_type, difficulty, sample_answer",
+        "Backend Service 'interview_generator.py' der Claude API nutzt",
+        "Fragen-Kategorien: behavioral, technical, situational, company_specific, salary_negotiation",
+        "Endpoint POST /api/applications/{id}/generate-questions generiert 10-15 Fragen",
+        "Endpoint GET /api/applications/{id}/interview-questions gibt gespeicherte Fragen zurück",
+        "Fragen berücksichtigen deutsche Interview-Kultur",
+        "Beispiel-Antworten werden mitgeneriert",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 8,
+      "passes": false,
+      "notes": "Deutsche Klassiker einbauen: 'Wo sehen Sie sich in 5 Jahren?', 'Was sind Ihre Stärken/Schwächen?', 'Warum wollen Sie bei uns arbeiten?'"
+    },
+    {
+      "id": "INT-002",
+      "title": "Interview-Prep UI",
+      "description": "Frontend für Interview-Vorbereitung mit Fragen-Übersicht",
+      "acceptanceCriteria": [
+        "Neue Seite 'InterviewPrep.vue' erreichbar über /applications/{id}/interview",
+        "Auflistung aller generierten Fragen gruppiert nach Kategorie",
+        "Expandierbare Fragen-Karten mit Beispiel-Antworten (zunächst versteckt)",
+        "Button 'Antwort üben' pro Frage der zu Mock-Interview führt",
+        "Button 'Alle Fragen neu generieren' für frische Fragen",
+        "Navigation von Application-Detail-View zur Interview-Prep",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 9,
+      "passes": false,
+      "notes": "Beispiel-Antworten erst auf Klick zeigen damit User zuerst selbst nachdenken können"
+    },
+    {
+      "id": "INT-003",
+      "title": "Text-basiertes Mock-Interview",
+      "description": "Interaktives Mock-Interview wo User Antworten eintippen und Feedback erhalten",
+      "acceptanceCriteria": [
+        "Neue Seite 'MockInterview.vue' erreichbar über /applications/{id}/mock-interview",
+        "Fragen werden nacheinander gestellt",
+        "User tippt Antwort in Textfeld",
+        "Nach Absenden: KI-Feedback zu Struktur, Inhalt, Länge der Antwort",
+        "STAR-Methode Analyse für Behavioral-Fragen",
+        "Fortschrittsanzeige (Frage X von Y)",
+        "Am Ende: Zusammenfassung mit Gesamtbewertung",
+        "Endpoint POST /api/interview/evaluate-answer für Feedback",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 10,
+      "passes": false,
+      "notes": "Feedback sollte konstruktiv sein: Was war gut, was kann verbessert werden, konkreter Verbesserungsvorschlag"
+    },
+    {
+      "id": "INT-004",
+      "title": "STAR-Methode Coach",
+      "description": "Spezielles Feedback für Behavioral-Fragen nach STAR-Methode",
+      "acceptanceCriteria": [
+        "Backend Service 'star_analyzer.py' der Antworten auf STAR-Struktur prüft",
+        "Analyse ob alle STAR-Komponenten vorhanden: Situation, Task, Action, Result",
+        "Feedback pro Komponente: Vorhanden/Fehlt/Verbesserungswürdig",
+        "Verbesserungsvorschläge für fehlende Komponenten",
+        "Komponente 'STARFeedback.vue' die Analyse visualisiert",
+        "Integration in Mock-Interview für behavioral Fragen",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 11,
+      "passes": false,
+      "notes": "STAR = Situation (Kontext), Task (Aufgabe), Action (Handlung), Result (Ergebnis). Besonders wichtig für 'Erzählen Sie von einer Situation wo...' Fragen"
+    },
+    {
+      "id": "INT-005",
+      "title": "Firmen-Recherche Integration",
+      "description": "Automatische Recherche zur Firma für bessere Interview-Vorbereitung",
+      "acceptanceCriteria": [
+        "Backend Service 'company_researcher.py' der öffentliche Infos zur Firma sammelt",
+        "Daten: Branche, Größe, Standorte, Produkte/Dienstleistungen, aktuelle News (falls verfügbar)",
+        "Web-Scraping der Firmen-Website (About/Über uns Seite)",
+        "Endpoint GET /api/companies/{name}/research der Firmen-Infos zurückgibt",
+        "Caching der Recherche-Ergebnisse (24h)",
+        "Komponente 'CompanyResearch.vue' die Infos in Interview-Prep anzeigt",
+        "Hinweise wie Firmen-Wissen im Interview genutzt werden kann",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 12,
+      "passes": false,
+      "notes": "Hilft bei Fragen wie 'Warum wollen Sie bei uns arbeiten?' und 'Was wissen Sie über unser Unternehmen?'"
+    },
+    {
+      "id": "INT-006",
+      "title": "Interview-Ergebnis Tracking",
+      "description": "Tracking von Interview-Ergebnissen und Feedback für Verbesserung",
+      "acceptanceCriteria": [
+        "Erweiterung Application Model um interview_date, interview_feedback, interview_result Felder",
+        "Endpoint PUT /api/applications/{id}/interview-result zum Speichern des Ergebnisses",
+        "Ergebnis-Optionen: scheduled, completed, passed, rejected, offer_received",
+        "Freitext-Feld für eigenes Feedback nach dem Interview",
+        "UI in Application-Detail zum Eintragen des Interview-Ergebnisses",
+        "Dashboard-Widget zeigt Interview-Statistiken (Erfolgsrate, häufige Absage-Gründe)",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 13,
+      "passes": false,
+      "notes": "Hilft Usern ihre Interview-Performance über Zeit zu tracken und zu verbessern"
+    },
+    {
+      "id": "ADV-001",
+      "title": "Smart Job Recommendations",
+      "description": "Tägliche Job-Empfehlungen basierend auf User-Profil und Job-Fit Score",
+      "acceptanceCriteria": [
+        "Backend Service 'job_recommender.py' der täglich neue Jobs findet",
+        "Scraping der konfigurierten Job-Boards nach relevanten Keywords aus User-Skills",
+        "Berechnung des Job-Fit Scores für jeden gefundenen Job",
+        "Nur Jobs mit Score >= 60% werden empfohlen",
+        "Neues Model 'JobRecommendation' mit job_data, fit_score, recommended_at, user_id",
+        "Endpoint GET /api/recommendations der aktuelle Empfehlungen zurückgibt",
+        "Komponente 'JobRecommendations.vue' auf Dashboard",
+        "Button 'Bewerbung starten' der direkt zur NewApplication führt",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 14,
+      "passes": false,
+      "notes": "Celery/APScheduler für täglichen Job oder manueller Trigger via Button"
+    },
+    {
+      "id": "ADV-002",
+      "title": "Gehaltsverhandlungs-Coach",
+      "description": "KI-Coaching für Gehaltsverhandlungen mit Marktdaten und Skripten",
+      "acceptanceCriteria": [
+        "Backend Service 'salary_coach.py' der Gehaltsverhandlung unterstützt",
+        "Endpoint POST /api/salary/research der Gehaltsspanne für Position/Region recherchiert",
+        "Endpoint POST /api/salary/negotiation-tips der personalisierte Tipps generiert",
+        "Datenquellen: Stellenanzeigen-Gehälter, allgemeine Gehaltsranges nach Branche",
+        "Verhandlungsskripte für typische Situationen",
+        "Komponente 'SalaryCoach.vue' in Interview-Prep Bereich",
+        "Eingabe: Gewünschtes Gehalt, aktuelles Gehalt, Position, Erfahrung",
+        "Ausgabe: Empfohlene Verhandlungsstrategie, Argumente, Fallback-Positionen",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 15,
+      "passes": false,
+      "notes": "Wichtig für deutsche Kultur: Gehalt wird oft erst im 2. Gespräch besprochen, Verhandlung ist üblich"
     }
   ]
 }

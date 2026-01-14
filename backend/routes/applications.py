@@ -683,11 +683,78 @@ def get_job_fit(app_id, current_user):
 
         return jsonify({
             "success": True,
-            "data": result.to_dict()
+            "job_fit": result.to_dict()
         }), 200
 
     except Exception as e:
         return jsonify({
             "success": False,
             "error": f"Fehler bei der Job-Fit Berechnung: {str(e)}"
+        }), 500
+
+
+@applications_bp.route("/analyze-job-fit", methods=["POST"])
+@jwt_required_custom
+def analyze_job_fit_preview(current_user):
+    """Create a temporary application for job-fit analysis before generating.
+
+    This endpoint:
+    1. Creates a temporary (draft) application
+    2. Analyzes and extracts job requirements
+    3. Returns the application ID for job-fit score calculation
+
+    The temporary application can be used for the full generation later
+    or deleted if the user decides not to proceed.
+    """
+    data = request.json or {}
+    url = data.get("url", "").strip()
+    description = data.get("description", "")
+    company = data.get("company", "")
+    title = data.get("title", "")
+
+    if not description:
+        return jsonify({
+            "success": False,
+            "error": "Stellenbeschreibung ist erforderlich"
+        }), 400
+
+    try:
+        # Create a temporary application for analysis
+        app = Application(
+            user_id=current_user.id,
+            firma=company or "Unbekannt",
+            position=title or "Unbekannt",
+            quelle=url,
+            status="erstellt",
+            notizen=f"[Draft - Job-Fit Analyse]\n\n{description[:2000]}",  # Store description for reference
+        )
+        db.session.add(app)
+        db.session.commit()
+
+        # Analyze requirements using Claude
+        analyzer = RequirementAnalyzer()
+        extracted_requirements = analyzer.analyze_requirements(description)
+
+        if extracted_requirements:
+            # Save requirements
+            for req_data in extracted_requirements:
+                requirement = JobRequirement(
+                    application_id=app.id,
+                    requirement_text=req_data["requirement_text"],
+                    requirement_type=req_data["requirement_type"],
+                    skill_category=req_data.get("skill_category"),
+                )
+                db.session.add(requirement)
+            db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "application_id": app.id,
+            "requirements_count": len(extracted_requirements) if extracted_requirements else 0,
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der Job-Fit Analyse: {str(e)}"
         }), 500
