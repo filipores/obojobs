@@ -24,7 +24,7 @@ Started: 2026-01-14
 - [x] INT-006: Interview-Ergebnis Tracking
 
 #### Advanced Features (ADV)
-- [ ] ADV-001: Smart Job Recommendations
+- [x] ADV-001: Smart Job Recommendations
 - [ ] ADV-002: Gehaltsverhandlungs-Coach
 
 ---
@@ -287,6 +287,29 @@ Started: 2026-01-14
   - dict.fromkeys() fuer initialisierte Dictionaries mit Ruff Linting
   - SQLAlchemy func.count() mit GROUP BY fuer Interview-Statistiken
   - SVG Kreis-Diagramm fuer Erfolgsrate-Visualisierung
+
+## [2026-01-14] - ADV-001
+- **Was implementiert wurde:**
+  - JobRecommendation Model mit Feldern: job_data_json, fit_score, fit_category, source, job_url, job_title, company_name, location
+  - job_recommender.py Service fuer Job-Analyse basierend auf User-Skills und Stellenanzeige
+  - Berechnung Job-Fit Score aus User-Skills vs extrahierte Anforderungen
+  - Nur Jobs mit Score >= 60% werden als Empfehlung gespeichert
+  - GET /api/recommendations, POST /api/recommendations/analyze, dismiss, apply Endpoints
+  - JobRecommendations.vue Komponente mit Score-Badge, Analyse-Modal, Stats-Row
+  - Integration in Dashboard mit eigenem Sektion-Bereich
+  - DB Migration add_job_recommendations.py
+- **Geaenderte Dateien:**
+  - backend/models/job_recommendation.py (neu)
+  - backend/services/job_recommender.py (neu)
+  - backend/routes/recommendations.py (neu)
+  - backend/migrations/add_job_recommendations.py (neu)
+  - backend/models/__init__.py, backend/models/user.py, backend/app.py
+  - frontend/src/components/JobRecommendations.vue (neu)
+  - frontend/src/pages/Dashboard.vue (JobRecommendations Integration)
+- **Learnings:**
+  - jwt_required_custom statt token_required fuer Auth-Decorator
+  - Job-Analyse erfolgt manuell per URL-Eingabe (automatische Suche als zukuenftige Erweiterung)
+  - RequirementAnalyzer wiederverwendet fuer Anforderungsextraktion
 
 ---
 

@@ -257,7 +257,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "notes": "Celery/APScheduler für täglichen Job oder manueller Trigger via Button"
     },
     {
