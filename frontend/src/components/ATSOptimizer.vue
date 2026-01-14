@@ -1,5 +1,68 @@
 <template>
   <div class="ats-optimizer">
+    <!-- Manual Text Input Section -->
+    <div v-if="!atsData && !loading" class="manual-input-section">
+      <div class="input-toggle">
+        <button
+          :class="['toggle-btn', { active: inputMode === 'auto' }]"
+          @click="inputMode = 'auto'"
+        >
+          Automatisch
+        </button>
+        <button
+          :class="['toggle-btn', { active: inputMode === 'manual' }]"
+          @click="inputMode = 'manual'"
+        >
+          Eigener Text
+        </button>
+      </div>
+
+      <div v-if="inputMode === 'manual'" class="manual-text-form">
+        <label class="form-label">Bewerbungstext zum Pruefen</label>
+        <textarea
+          v-model="manualCoverLetter"
+          class="form-input form-textarea"
+          placeholder="Fuege hier deinen Bewerbungstext ein, um ihn auf ATS-Kompatibilitaet zu pruefen..."
+          rows="8"
+        ></textarea>
+        <p class="form-hint">
+          Der Text wird mit den Anforderungen der Stellenanzeige abgeglichen.
+        </p>
+        <button
+          @click="analyzeManualText"
+          :disabled="!manualCoverLetter.trim()"
+          class="zen-btn zen-btn-ai analyze-btn"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          ATS-Check starten
+        </button>
+      </div>
+
+      <div v-else class="auto-mode-info">
+        <p class="info-text">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="16" x2="12" y2="12"/>
+            <line x1="12" y1="8" x2="12.01" y2="8"/>
+          </svg>
+          Der generierte Bewerbungstext wird automatisch analysiert.
+        </p>
+        <button
+          @click="loadATSScore"
+          class="zen-btn zen-btn-ai analyze-btn"
+        >
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"/>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+          </svg>
+          Bewerbung analysieren
+        </button>
+      </div>
+    </div>
+
     <!-- Loading State -->
     <div v-if="loading" class="ats-loading">
       <div class="loading-spinner"></div>
@@ -7,20 +70,30 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="ats-error">
+    <div v-else-if="error && !atsData" class="ats-error">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <span>{{ error }}</span>
+      <button v-if="inputMode === 'auto'" @click="inputMode = 'manual'" class="zen-btn zen-btn-sm switch-mode-btn">
+        Manuell eingeben
+      </button>
     </div>
 
     <!-- ATS Score Display -->
     <div v-else-if="atsData" class="ats-content">
       <!-- Score Header -->
       <div class="score-header">
-        <h3>ATS-Kompatibilitaet</h3>
+        <div class="score-header-left">
+          <button @click="resetAnalysis" class="back-btn" title="Neue Analyse">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+          </button>
+          <h3>ATS-Kompatibilitaet</h3>
+        </div>
         <div :class="['score-badge', scoreCategory]">
           {{ scoreLabel }}
         </div>
@@ -210,6 +283,10 @@ const optimizing = ref(false)
 const showComparison = ref(false)
 const comparisonData = ref(null)
 
+// Manual text input mode
+const inputMode = ref('auto')
+const manualCoverLetter = ref('')
+
 const scoreCategory = computed(() => {
   if (!atsData.value) return ''
   const score = atsData.value.ats_score
@@ -228,7 +305,7 @@ const scoreLabel = computed(() => {
   return 'Niedrig'
 })
 
-const loadATSScore = async () => {
+const loadATSScore = async (customText = null) => {
   if (!props.applicationId) return
 
   loading.value = true
@@ -236,7 +313,8 @@ const loadATSScore = async () => {
   error.value = ''
 
   try {
-    const { data } = await api.post(`/applications/${props.applicationId}/ats-check`, {})
+    const payload = customText ? { cover_letter_text: customText } : {}
+    const { data } = await api.post(`/applications/${props.applicationId}/ats-check`, payload)
 
     if (data.success) {
       atsData.value = data.data
@@ -249,6 +327,16 @@ const loadATSScore = async () => {
   } finally {
     loading.value = false
   }
+}
+
+const analyzeManualText = async () => {
+  if (!manualCoverLetter.value.trim()) return
+  await loadATSScore(manualCoverLetter.value)
+}
+
+const resetAnalysis = () => {
+  atsData.value = null
+  error.value = ''
 }
 
 const optimizeCoverLetter = async () => {
@@ -306,16 +394,16 @@ const acceptOptimization = async () => {
   await loadATSScore()
 }
 
-watch(() => props.applicationId, (newId) => {
-  if (newId) {
-    loadATSScore()
-  }
-}, { immediate: true })
+// Watch for applicationId changes and reset state
+watch(() => props.applicationId, () => {
+  resetAnalysis()
+  manualCoverLetter.value = ''
+  inputMode.value = 'auto'
+})
 
+// Don't auto-load - let user choose mode first
 onMounted(() => {
-  if (props.applicationId) {
-    loadATSScore()
-  }
+  // Component is ready, user can choose auto or manual mode
 })
 
 defineExpose({
@@ -769,5 +857,152 @@ defineExpose({
     align-items: flex-start;
     gap: var(--space-sm);
   }
+
+  .manual-input-section {
+    padding: var(--space-md);
+  }
+}
+
+/* Manual Input Section */
+.manual-input-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.input-toggle {
+  display: flex;
+  gap: var(--space-xs);
+  background: var(--color-washi-aged);
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  width: fit-content;
+}
+
+.toggle-btn {
+  padding: var(--space-sm) var(--space-md);
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: var(--radius-xs);
+  transition: all var(--transition-base);
+}
+
+.toggle-btn:hover {
+  color: var(--color-text-primary);
+}
+
+.toggle-btn.active {
+  background: var(--color-washi);
+  color: var(--color-text-primary);
+  box-shadow: var(--shadow-sm);
+}
+
+.manual-text-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.form-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.form-textarea {
+  width: 100%;
+  padding: var(--space-md);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  line-height: var(--leading-relaxed);
+  resize: vertical;
+  min-height: 160px;
+  background: var(--color-washi);
+  transition: border-color var(--transition-base);
+}
+
+.form-textarea:focus {
+  outline: none;
+  border-color: var(--color-ai);
+}
+
+.form-textarea::placeholder {
+  color: var(--color-text-tertiary);
+}
+
+.form-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.analyze-btn {
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.auto-mode-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.info-text {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.info-text svg {
+  flex-shrink: 0;
+  color: var(--color-ai);
+}
+
+/* Score Header Left */
+.score-header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  background: var(--color-washi);
+  color: var(--color-stone);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.back-btn:hover {
+  background: var(--color-washi-aged);
+  color: var(--color-sumi);
+  border-color: var(--color-border);
+}
+
+/* Switch Mode Button in Error */
+.switch-mode-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.ats-error {
+  flex-wrap: wrap;
 }
 </style>
