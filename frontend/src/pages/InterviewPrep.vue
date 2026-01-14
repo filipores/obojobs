@@ -305,7 +305,8 @@ const loadQuestions = async () => {
 const regenerateQuestions = async () => {
   isGenerating.value = true
   try {
-    const { data } = await api.post(`/applications/${applicationId.value}/generate-questions`)
+    // Send empty object to ensure Content-Type: application/json is set
+    const { data } = await api.post(`/applications/${applicationId.value}/generate-questions`, {})
     if (data.success) {
       // API returns data.data.questions as array for POST generate-questions
       questions.value = data.data?.questions || []

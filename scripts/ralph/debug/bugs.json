@@ -1,0 +1,117 @@
+{
+  "project": "obojobs",
+  "branchName": "ralph/bugfixes",
+  "description": "Bugs gefunden durch Test-Ralph - explorative UI Tests",
+  "bugs": [
+    {
+      "id": "BUG-001",
+      "title": "Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt",
+      "severity": "major",
+      "description": "Obwohl Interview-Fragen in der Datenbank existieren und die API sie erfolgreich zurückgibt (200 OK), werden sie auf der Interview-Vorbereitung Seite nicht angezeigt.",
+      "stepsToReproduce": [
+        "Navigiere zu /applications/2/interview",
+        "Warte bis die Seite geladen ist",
+        "Beobachte: 'Keine Interview-Fragen vorhanden' obwohl Fragen existieren"
+      ],
+      "expected": "Die existierenden Interview-Fragen sollten in der Liste angezeigt werden",
+      "actual": "Zeigt 'Keine Interview-Fragen vorhanden' obwohl API 200 OK mit Fragen zurückgibt",
+      "rootCause": "Datenpfad-Mismatch: InterviewPrep.vue erwartet `data.questions` als Array, aber API gibt `data.data.all_questions` zurück",
+      "affectedFiles": [
+        "frontend/src/pages/InterviewPrep.vue:294"
+      ],
+      "suggestedFix": "Zeile 294: `questions.value = data.questions || []` ändern zu `questions.value = data.data?.all_questions || data.questions || []`",
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-002",
+      "title": "API-Fehler 415 beim Generieren von Interview-Fragen",
+      "severity": "major",
+      "description": "Beim Klicken auf 'Fragen generieren' auf der InterviewPrep-Seite erscheint ein Alert mit HTTP 415 UNSUPPORTED MEDIA TYPE Fehler.",
+      "stepsToReproduce": [
+        "Navigiere zu /applications",
+        "Klicke auf 'Details' bei einer Bewerbung",
+        "Klicke auf 'Interview-Prep'",
+        "Klicke auf 'Fragen generieren'",
+        "Alert erscheint mit Fehlermeldung"
+      ],
+      "expected": "Interview-Fragen sollten generiert und angezeigt werden",
+      "actual": "Alert zeigt Fehlermeldung, Console zeigt 415 Error",
+      "rootCause": "Wahrscheinlich fehlender Content-Type: application/json Header im API-Request",
+      "affectedFiles": [
+        "frontend/src/pages/InterviewPrep.vue"
+      ],
+      "suggestedFix": "Prüfe den API-Call und stelle sicher dass Content-Type Header gesetzt ist",
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-003",
+      "title": "Modal-State wird nicht zurückgesetzt beim erneuten Öffnen",
+      "severity": "minor",
+      "description": "Wenn das Analyse-Modal geschlossen und erneut geöffnet wird, bleiben die vorherige URL-Eingabe und Fehlermeldung erhalten.",
+      "stepsToReproduce": [
+        "Dashboard öffnen",
+        "Auf 'Job analysieren' klicken",
+        "Eine URL eingeben und 'Analysieren' klicken",
+        "Modal schließen",
+        "Erneut auf 'Job analysieren' oder 'Erste Stelle analysieren' klicken"
+      ],
+      "expected": "Modal öffnet sich mit leerem URL-Feld und ohne Fehlermeldung",
+      "actual": "Modal zeigt noch die vorherige URL und Fehlermeldung an",
+      "rootCause": "Modal-State (analyzeUrl, analyzeError, analyzeResult) wird beim Schließen nicht zurückgesetzt",
+      "affectedFiles": [
+        "frontend/src/components/JobRecommendations.vue"
+      ],
+      "suggestedFix": "Im showAnalyzeModal watcher: wenn Modal öffnet, State zurücksetzen",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-004",
+      "title": "GapAnalysis-Komponente wird nicht angezeigt bei fehlenden JobRequirements",
+      "severity": "minor",
+      "description": "Die GapAnalysis-Sektion wird komplett ausgeblendet wenn keine JobRequirements vorhanden sind, statt einen hilfreichen Hinweis anzuzeigen.",
+      "stepsToReproduce": [
+        "Navigiere zu /applications",
+        "Klicke auf 'Details' einer Bewerbung ohne analysierte Anforderungen",
+        "Beobachte, dass der Abschnitt 'Skill-Lücken & Lernempfehlungen' nicht erscheint"
+      ],
+      "expected": "Ein Hinweis sollte erklären, dass zuerst Anforderungen analysiert werden müssen",
+      "actual": "Die GapAnalysis-Sektion wird komplett ausgeblendet (v-if Bedingung)",
+      "rootCause": "v-if in Applications.vue:293 blendet Sektion komplett aus statt informativen Hinweis zu zeigen",
+      "affectedFiles": [
+        "frontend/src/pages/Applications.vue:293"
+      ],
+      "suggestedFix": "Statt v-if einen v-else Block mit Hinweis 'Analysieren Sie zuerst die Stellenanforderungen'",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-005",
+      "title": "Mehrere identische Toast-Fehlermeldungen erscheinen gleichzeitig",
+      "severity": "trivial",
+      "description": "Beim Öffnen einer Bewerbung ohne Bewerbungstext erscheinen zwei identische Toast-Meldungen gleichzeitig.",
+      "stepsToReproduce": [
+        "Navigiere zu /applications",
+        "Klicke auf 'Details' einer Bewerbung ohne Bewerbungstext",
+        "Beobachte die Toast-Benachrichtigungen"
+      ],
+      "expected": "Maximal eine Fehlermeldung pro Fehlertyp",
+      "actual": "Zwei identische Fehlermeldungen 'Kein Bewerbungstext vorhanden' erscheinen gleichzeitig",
+      "rootCause": "ATS-Check wird beim Öffnen des Modals zweimal aufgerufen (watch + onMounted)",
+      "affectedFiles": [
+        "frontend/src/pages/Applications.vue",
+        "frontend/src/components/ATSOptimizer.vue"
+      ],
+      "suggestedFix": "ATS-Check nur einmal aufrufen (entweder watch ODER onMounted)",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    }
+  ]
+}
