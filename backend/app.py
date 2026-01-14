@@ -55,6 +55,7 @@ def create_app():
     from routes.auth import auth_bp
     from routes.documents import documents_bp
     from routes.email import email_bp
+    from routes.skills import skills_bp
     from routes.stats import stats_bp
     from routes.subscriptions import subscriptions_bp
     from routes.templates import templates_bp
@@ -70,6 +71,7 @@ def create_app():
     app.register_blueprint(ats_bp, url_prefix="/api/ats")
     app.register_blueprint(email_bp, url_prefix="/api/email")
     app.register_blueprint(webhooks_bp, url_prefix="/api/webhooks")
+    app.register_blueprint(skills_bp, url_prefix="/api")
 
     # Health check endpoint (no rate limit)
     @app.route("/api/health")

@@ -5,8 +5,9 @@ from werkzeug.utils import secure_filename
 
 from config import config
 from middleware.jwt_required import jwt_required_custom
-from models import Document, db
+from models import Document, UserSkill, db
 from services.pdf_handler import extract_text_from_pdf
+from services.skill_extractor import SkillExtractor
 
 documents_bp = Blueprint("documents", __name__)
 
@@ -91,14 +92,58 @@ def upload_document(current_user):
             db.session.add(document)
             db.session.commit()
 
-        return jsonify(
-            {
-                "success": True,
-                "message": f"{doc_type.capitalize()} erfolgreich hochgeladen und Text extrahiert",
-                "document": document.to_dict(),
-                "text_length": len(extracted_text),
-            }
-        ), 201
+        # Automatische Skill-Extraktion für Lebensläufe
+        skills_extracted = 0
+        if doc_type == "lebenslauf":
+            try:
+                extractor = SkillExtractor()
+                extracted_skills = extractor.extract_skills_from_cv(extracted_text)
+
+                # Remove old skills from this document
+                UserSkill.query.filter_by(user_id=current_user.id, source_document_id=document.id).delete()
+
+                for skill_data in extracted_skills:
+                    # Check if skill already exists
+                    existing = UserSkill.query.filter_by(
+                        user_id=current_user.id, skill_name=skill_data["skill_name"]
+                    ).first()
+
+                    if existing:
+                        # Update if new experience is higher
+                        if skill_data["experience_years"] and (
+                            existing.experience_years is None
+                            or skill_data["experience_years"] > existing.experience_years
+                        ):
+                            existing.experience_years = skill_data["experience_years"]
+                            existing.source_document_id = document.id
+                        continue
+
+                    skill = UserSkill(
+                        user_id=current_user.id,
+                        skill_name=skill_data["skill_name"],
+                        skill_category=skill_data["skill_category"],
+                        experience_years=skill_data["experience_years"],
+                        source_document_id=document.id,
+                    )
+                    db.session.add(skill)
+                    skills_extracted += 1
+
+                db.session.commit()
+            except Exception as skill_error:
+                print(f"⚠ Skill-Extraktion fehlgeschlagen: {str(skill_error)}")
+                # Continue anyway, document upload was successful
+
+        response_data = {
+            "success": True,
+            "message": f"{doc_type.capitalize()} erfolgreich hochgeladen und Text extrahiert",
+            "document": document.to_dict(),
+            "text_length": len(extracted_text),
+        }
+
+        if doc_type == "lebenslauf":
+            response_data["skills_extracted"] = skills_extracted
+
+        return jsonify(response_data), 201
 
     except Exception as e:
         # Aufräumen bei Fehler

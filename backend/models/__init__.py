@@ -12,6 +12,7 @@ from .subscription import Subscription, SubscriptionPlan, SubscriptionStatus  # 
 from .template import Template  # noqa: E402
 from .token_blacklist import TokenBlacklist  # noqa: E402
 from .user import User  # noqa: E402
+from .user_skill import UserSkill  # noqa: E402
 
 __all__ = [
     "db",
@@ -28,4 +29,5 @@ __all__ = [
     "EmailAccount",
     "encrypt_token",
     "decrypt_token",
+    "UserSkill",
 ]

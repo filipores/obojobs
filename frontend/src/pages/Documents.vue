@@ -286,6 +286,13 @@
           </router-link>
         </div>
       </section>
+
+      <!-- Skills Section -->
+      <section class="skills-section animate-fade-up" style="animation-delay: 200ms;">
+        <div class="ink-stroke"></div>
+        <h2 class="section-title">Extrahierte Skills</h2>
+        <SkillsOverview />
+      </section>
     </div>
   </div>
 </template>
@@ -293,6 +300,7 @@
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import api from '../api/client'
+import SkillsOverview from '../components/SkillsOverview.vue'
 
 const documents = ref({
   lebenslauf: null,
@@ -772,5 +780,22 @@ onMounted(() => {
     gap: var(--space-sm);
     align-items: flex-start;
   }
+}
+
+/* ========================================
+   SKILLS SECTION
+   ======================================== */
+.skills-section {
+  margin-top: var(--space-ma);
+}
+
+.skills-section .ink-stroke {
+  margin-bottom: var(--space-ma);
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: var(--space-lg);
 }
 </style>

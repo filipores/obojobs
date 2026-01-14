@@ -42,6 +42,7 @@ class User(db.Model):
     api_keys = db.relationship("APIKey", back_populates="user", cascade="all, delete-orphan")
     email_accounts = db.relationship("EmailAccount", back_populates="user", cascade="all, delete-orphan")
     subscription = db.relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    skills = db.relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
