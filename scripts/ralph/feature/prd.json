@@ -348,7 +348,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 19,
-      "passes": false,
+      "passes": true,
       "notes": "Gefunden durch Test-Ralph: User ohne generierte Bewerbung können ATS-Check aktuell nicht nutzen.",
       "source": "test-ralph"
     },
@@ -364,7 +364,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 20,
-      "passes": false,
+      "passes": true,
       "notes": "Gefunden durch Test-Ralph: User könnten verwirrt sein warum STAR-Button nicht erscheint.",
       "source": "test-ralph"
     }

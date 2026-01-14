@@ -150,6 +150,19 @@
               <span>Tipp: Nutzen Sie die STAR-Methode (Situation, Task, Action, Result)</span>
             </div>
 
+            <!-- Alternative tips for non-behavioral questions -->
+            <div v-else class="question-type-hint">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <div class="hint-content">
+                <span class="hint-title">{{ getQuestionTypeHintTitle(currentQuestion.question_type) }}</span>
+                <span class="hint-text">{{ getQuestionTypeHint(currentQuestion.question_type) }}</span>
+              </div>
+            </div>
+
             <!-- Answer Input -->
             <div class="answer-section">
               <label for="answer-input" class="answer-label">Ihre Antwort:</label>
@@ -282,6 +295,22 @@
                   </div>
                   <p class="star-feedback">{{ component.feedback }}</p>
                 </div>
+              </div>
+            </div>
+
+            <!-- Info hint for non-behavioral questions explaining why STAR analysis is not available -->
+            <div v-else-if="currentQuestion.question_type !== 'behavioral'" class="star-not-applicable-hint">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="12" y1="16" x2="12" y2="12"/>
+                <line x1="12" y1="8" x2="12.01" y2="8"/>
+              </svg>
+              <div class="hint-content">
+                <span class="hint-title">Keine STAR-Analyse fuer diese Frage</span>
+                <span class="hint-text">
+                  Die STAR-Methode (Situation, Task, Action, Result) ist speziell fuer Verhaltens-Fragen konzipiert.
+                  Diese {{ getQuestionTypeLabel(currentQuestion.question_type) }} Frage erfordert einen anderen Antwort-Ansatz.
+                </span>
               </div>
             </div>
 
@@ -873,6 +902,37 @@ const getStarName = (key) => {
     result: 'Ergebnis'
   }
   return names[key] || key
+}
+
+const getQuestionTypeLabel = (type) => {
+  const labels = {
+    behavioral: 'Verhaltens-',
+    technical: 'technische',
+    situational: 'situative',
+    company_specific: 'firmenspezifische',
+    salary_negotiation: 'Gehaltsverhandlungs-'
+  }
+  return labels[type] || type
+}
+
+const getQuestionTypeHintTitle = (type) => {
+  const titles = {
+    technical: 'Technische Frage',
+    situational: 'Situative Frage',
+    company_specific: 'Firmenspezifische Frage',
+    salary_negotiation: 'Gehaltsverhandlungs-Frage'
+  }
+  return titles[type] || 'Tipp'
+}
+
+const getQuestionTypeHint = (type) => {
+  const hints = {
+    technical: 'Strukturieren Sie Ihre Antwort: Erklaeren Sie Konzepte klar, geben Sie Beispiele und zeigen Sie praktische Erfahrung.',
+    situational: 'Beschreiben Sie Ihren Loesungsansatz Schritt fuer Schritt und begruenden Sie Ihre Entscheidungen.',
+    company_specific: 'Zeigen Sie Ihre Recherche zur Firma und verbinden Sie Ihre Antwort mit Ihren Karrierezielen.',
+    salary_negotiation: 'Bleiben Sie sachlich, nennen Sie Ihre Gehaltsvorstellung mit Begruendung und zeigen Sie Verhandlungsbereitschaft.'
+  }
+  return hints[type] || 'Geben Sie eine strukturierte und begruendete Antwort.'
 }
 
 onMounted(async () => {
@@ -1846,5 +1906,80 @@ watch(timerMinutes, () => {
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+/* ========================================
+   QUESTION TYPE HINTS (Non-behavioral)
+   ======================================== */
+.question-type-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: rgba(61, 90, 108, 0.08);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.question-type-hint svg {
+  flex-shrink: 0;
+  color: var(--color-ai);
+  margin-top: 2px;
+}
+
+.question-type-hint .hint-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.question-type-hint .hint-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-ai);
+}
+
+.question-type-hint .hint-text {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* ========================================
+   STAR NOT APPLICABLE HINT
+   ======================================== */
+.star-not-applicable-hint {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  background: rgba(155, 149, 143, 0.1);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  border-left: 3px solid var(--color-stone);
+}
+
+.star-not-applicable-hint svg {
+  flex-shrink: 0;
+  color: var(--color-stone);
+  margin-top: 2px;
+}
+
+.star-not-applicable-hint .hint-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.star-not-applicable-hint .hint-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-sumi-light);
+}
+
+.star-not-applicable-hint .hint-text {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
 }
 </style>

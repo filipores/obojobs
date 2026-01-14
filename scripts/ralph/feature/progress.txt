@@ -31,10 +31,23 @@ Started: 2026-01-14
 - [x] NEW-001: Manueller Stellentext-Import als Fallback
 - [x] NEW-002: Timer fuer realistische Interview-Simulation
 - [x] NEW-003: Automatische Anforderungsanalyse bei Bewerbungserstellung
+- [x] NEW-004: Manueller ATS-Check mit eigenem Text
+- [x] NEW-005: STAR-Hinweis fuer nicht-behavioral Fragen
 
 ---
 
 ## Progress Log
+
+## [2026-01-14] - NEW-005
+- **Was implementiert wurde:**
+  - Info-Hinweis bei nicht-behavioral Fragen der erklaert warum STAR nicht anwendbar ist
+  - Alternative Tipps fuer technische, situative, firmenspezifische und Gehaltsverhandlungs-Fragen
+  - Hinweis nach Feedback-Anzeige wenn keine STAR-Analyse verfuegbar ist
+  - Drei neue Helper-Funktionen: getQuestionTypeLabel, getQuestionTypeHintTitle, getQuestionTypeHint
+- **Geaenderte Dateien:**
+  - frontend/src/pages/MockInterview.vue (Template + Script + Styles)
+- **Learnings:**
+  - Bessere UX durch proaktive Erklaerung statt fehlende Features
 
 ## [2026-01-14] - QUAL-001
 - **Was implementiert wurde:**
@@ -397,6 +410,21 @@ Started: 2026-01-14
   - Separater Loading-State fuer verschiedene Phasen verbessert UX
   - Fehlerbehandlung wichtig da KI-Analyse fehlschlagen kann (API-Limits, Netzwerk)
   - Async-Funktion nach main loading.value = false gestartet fuer parallele UX
+
+## [2026-01-14] - NEW-004
+- **Was implementiert wurde:**
+  - Textarea in ATSOptimizer.vue fuer manuellen Bewerbungstext
+  - Toggle zwischen "Automatisch" und "Eigener Text" Modus
+  - User kann eigenen Cover-Letter Text fuer ATS-Check einfuegen
+  - Zurueck-Button um nach Analyse erneut zu starten
+  - Bei Fehler im Auto-Modus: Button zum manuellen Modus wechseln
+  - Backend akzeptiert bereits cover_letter_text Parameter (nur Frontend-Aenderung noetig)
+- **Geaenderte Dateien:**
+  - frontend/src/components/ATSOptimizer.vue (Manual Input Mode, Reset-Funktion, neue Styles)
+- **Learnings:**
+  - Backend-Endpoint war bereits flexibel mit optionalem cover_letter_text Parameter
+  - Mode-Toggle UX Pattern wiederverwendbar fuer andere Features
+  - Reset-Funktion wichtig fuer wiederholte Analysen
 
 ---
 
