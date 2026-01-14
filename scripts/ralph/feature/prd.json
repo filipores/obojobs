@@ -277,7 +277,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "notes": "Wichtig für deutsche Kultur: Gehalt wird oft erst im 2. Gespräch besprochen, Verhandlung ist üblich"
     }
   ]

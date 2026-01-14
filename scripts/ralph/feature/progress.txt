@@ -25,7 +25,7 @@ Started: 2026-01-14
 
 #### Advanced Features (ADV)
 - [x] ADV-001: Smart Job Recommendations
-- [ ] ADV-002: Gehaltsverhandlungs-Coach
+- [x] ADV-002: Gehaltsverhandlungs-Coach
 
 ---
 
@@ -310,6 +310,31 @@ Started: 2026-01-14
   - jwt_required_custom statt token_required fuer Auth-Decorator
   - Job-Analyse erfolgt manuell per URL-Eingabe (automatische Suche als zukuenftige Erweiterung)
   - RequirementAnalyzer wiederverwendet fuer Anforderungsextraktion
+
+## [2026-01-14] - ADV-002
+- **Was implementiert wurde:**
+  - salary_coach.py Service mit Claude API Integration fuer Gehaltsrecherche und Verhandlungstipps
+  - SalaryResearch, NegotiationTip, NegotiationStrategy Dataclasses fuer strukturierte Ergebnisse
+  - POST /api/salary/research Endpoint fuer Gehaltsspannen nach Position/Region/Erfahrung
+  - POST /api/salary/negotiation-tips Endpoint fuer personalisierte Verhandlungsstrategie
+  - Deutsche Gehaltsranges nach Branche (Software, Marketing, Finance, Sales, HR)
+  - Regionale Anpassungen (Muenchen +15%, Frankfurt +12%, etc.)
+  - SalaryCoach.vue Komponente mit Marktrecherche und Strategie-Generierung
+  - Verhandlungstipps nach Kategorien (Vorbereitung, Eroeffnung, Gegenargumente, Abschluss, Timing)
+  - Typische Einwaende mit empfohlenen Antworten
+  - Fallback-Positionen wenn Grundgehalt nicht verhandelbar
+  - Deutsche Geschaeftskultur-Hinweise
+  - Integration in InterviewPrep.vue als aufklappbare Sektion
+- **Geaenderte Dateien:**
+  - backend/services/salary_coach.py (neu)
+  - backend/routes/salary.py (neu)
+  - backend/app.py (Blueprint Registration)
+  - frontend/src/components/SalaryCoach.vue (neu)
+  - frontend/src/pages/InterviewPrep.vue (SalaryCoach Integration)
+- **Learnings:**
+  - Dataclasses ideal fuer strukturierte API Responses mit to_dict() Methode
+  - Fallback-Strategie wichtig fuer robuste UX ohne API-Abhaengigkeit
+  - Deutsche Gehaltskultur: Erst im 2./3. Gespraech, sachliche Argumente wichtiger als emotionale
 
 ---
 
