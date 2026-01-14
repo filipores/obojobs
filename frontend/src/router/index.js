@@ -23,7 +23,9 @@ const routes = [
   { path: '/ats', component: () => import('../pages/ATSView.vue'), meta: { requiresAuth: true } },
   { path: '/settings', component: () => import('../pages/Settings.vue'), meta: { requiresAuth: true } },
   { path: '/subscription', component: () => import('../pages/SubscriptionView.vue'), meta: { requiresAuth: true } },
-  { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true } }
+  { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true } },
+  { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true } },
+  { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true } }
 ]
 
 const router = createRouter({

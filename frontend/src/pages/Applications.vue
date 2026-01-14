@@ -290,6 +290,15 @@
             </div>
 
             <div class="modal-footer">
+              <router-link
+                :to="`/applications/${selectedApp.id}/interview`"
+                class="zen-btn zen-btn-interview"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Interview-Prep
+              </router-link>
               <button @click="openEmailComposer(selectedApp)" class="zen-btn zen-btn-ai">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
@@ -1528,6 +1537,22 @@ watch(() => route.query.firma, (newFirma) => {
 .modal-footer .zen-btn svg {
   margin-right: var(--space-xs);
   vertical-align: middle;
+}
+
+/* Interview Prep Button */
+.zen-btn-interview {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: rgba(138, 79, 125, 0.1);
+  border-color: rgba(138, 79, 125, 0.3);
+  color: #8a4f7d;
+  text-decoration: none;
+}
+
+.zen-btn-interview:hover {
+  background: rgba(138, 79, 125, 0.2);
+  border-color: #8a4f7d;
 }
 
 @media (max-width: 768px) {
