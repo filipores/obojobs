@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # circuit_breaker.sh - Stuck Detection für RALF
+# Gemeinsame Library für alle Ralph-Modi
 # Erkennt und stoppt Infinite Loops
 
-# Source date utilities
-CB_DIR="$(dirname "${BASH_SOURCE[0]}")"
-source "$CB_DIR/date_utils.sh"
+# Source date utilities from same directory
+_CB_DIR="$(dirname "${BASH_SOURCE[0]}")"
+source "$_CB_DIR/date_utils.sh"
 
 # Circuit Breaker States
 CB_STATE_CLOSED="CLOSED"        # Normal operation

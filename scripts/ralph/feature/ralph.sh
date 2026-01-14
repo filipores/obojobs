@@ -21,14 +21,19 @@ else
     TIMEOUT_CMD=""
 fi
 
-# Source configuration and libraries
+# Source configuration
 source "$SCRIPT_DIR/config.sh"
-source "$SCRIPT_DIR/lib/date_utils.sh"
-source "$SCRIPT_DIR/lib/logger.sh"
+
+# Source shared libraries (from parent lib/)
+SHARED_LIB="$SCRIPT_DIR/../lib"
+source "$SHARED_LIB/date_utils.sh"
+source "$SHARED_LIB/logger.sh"
+source "$SHARED_LIB/circuit_breaker.sh"
+source "$SHARED_LIB/context_builder.sh"
+
+# Source mode-specific libraries
 source "$SCRIPT_DIR/lib/rate_limiter.sh"
-source "$SCRIPT_DIR/lib/circuit_breaker.sh"
 source "$SCRIPT_DIR/lib/response_analyzer.sh"
-source "$SCRIPT_DIR/lib/context_builder.sh"
 
 # Override LOG_DIR to be absolute path
 LOG_DIR="$SCRIPT_DIR/logs"

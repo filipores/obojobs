@@ -22,32 +22,12 @@ fi
 # Source configuration
 source "$SCRIPT_DIR/config.sh"
 
-# Source shared libraries from feature mode
-if [[ -f "$SCRIPT_DIR/../feature/lib/date_utils.sh" ]]; then
-    source "$SCRIPT_DIR/../feature/lib/date_utils.sh"
-else
-    get_iso_timestamp() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
-    get_basic_timestamp() { date '+%Y-%m-%d %H:%M:%S'; }
-fi
-
-if [[ -f "$SCRIPT_DIR/../feature/lib/logger.sh" ]]; then
-    LOG_DIR="$SCRIPT_DIR/logs"
-    source "$SCRIPT_DIR/../feature/lib/logger.sh"
-else
-    log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-    log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-    log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-    log_loop() { echo -e "${PURPLE}[LOOP]${NC} $1"; }
-fi
-
-if [[ -f "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh" ]]; then
-    source "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh"
-fi
-
-if [[ -f "$SCRIPT_DIR/lib/context_builder.sh" ]]; then
-    source "$SCRIPT_DIR/lib/context_builder.sh"
-fi
+# Source shared libraries (from parent lib/)
+SHARED_LIB="$SCRIPT_DIR/../lib"
+source "$SHARED_LIB/date_utils.sh"
+source "$SHARED_LIB/logger.sh"
+source "$SHARED_LIB/circuit_breaker.sh"
+source "$SHARED_LIB/context_builder.sh"
 
 # Override paths
 LOG_DIR="$SCRIPT_DIR/logs"

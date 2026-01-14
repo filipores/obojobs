@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
 # logger.sh - Strukturiertes Logging für RALF
-# Schreibt in logs/ralph.log und logs/status.json
+# Gemeinsame Library für alle Ralph-Modi
+# Schreibt in $LOG_DIR/ralph.log und $LOG_DIR/status.json
 
-# Source date utilities
-LOGGER_DIR="$(dirname "${BASH_SOURCE[0]}")"
-source "$LOGGER_DIR/date_utils.sh"
+# Source date utilities from same directory
+_LOGGER_DIR="$(dirname "${BASH_SOURCE[0]}")"
+source "$_LOGGER_DIR/date_utils.sh"
 
 # Farben
 RED='\033[0;31m'

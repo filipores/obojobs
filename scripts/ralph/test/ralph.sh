@@ -19,26 +19,18 @@ else
     TIMEOUT_CMD=""
 fi
 
-# Source configuration and libraries
+# Source configuration
 source "$SCRIPT_DIR/config.sh"
+
+# Source shared libraries (from parent lib/)
+SHARED_LIB="$SCRIPT_DIR/../lib"
+source "$SHARED_LIB/date_utils.sh"
+source "$SHARED_LIB/logger.sh"
+source "$SHARED_LIB/circuit_breaker.sh"
+
+# Source mode-specific libraries
 source "$SCRIPT_DIR/lib/commit_analyzer.sh"
 source "$SCRIPT_DIR/lib/test_reporter.sh"
-
-# Source shared libraries from feature mode
-if [[ -f "$SCRIPT_DIR/../feature/lib/logger.sh" ]]; then
-    source "$SCRIPT_DIR/../feature/lib/logger.sh"
-else
-    # Fallback logging functions
-    log_info() { echo -e "${BLUE}[INFO]${NC} $1"; }
-    log_success() { echo -e "${GREEN}[SUCCESS]${NC} $1"; }
-    log_error() { echo -e "${RED}[ERROR]${NC} $1"; }
-    log_warn() { echo -e "${YELLOW}[WARN]${NC} $1"; }
-    log_loop() { echo -e "${PURPLE}[LOOP]${NC} $1"; }
-fi
-
-if [[ -f "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh" ]]; then
-    source "$SCRIPT_DIR/../feature/lib/circuit_breaker.sh"
-fi
 
 # Override paths to be absolute
 LOG_DIR="$SCRIPT_DIR/logs"
