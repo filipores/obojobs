@@ -235,3 +235,33 @@ def get_analysis(current_user, analysis_id):
         "success": True,
         "data": analysis.to_dict()
     }), 200
+
+
+@ats_bp.route("/history/<int:analysis_id>", methods=["DELETE"])
+@jwt_required_custom
+def delete_analysis(current_user, analysis_id):
+    """
+    Delete a specific ATS analysis by ID.
+
+    Returns:
+        200: { success: true, message: "..." }
+        404: Analysis not found
+    """
+    analysis = ATSAnalysis.query.filter_by(
+        id=analysis_id,
+        user_id=current_user.id
+    ).first()
+
+    if not analysis:
+        return jsonify({
+            "success": False,
+            "error": "Analyse nicht gefunden"
+        }), 404
+
+    db.session.delete(analysis)
+    db.session.commit()
+
+    return jsonify({
+        "success": True,
+        "message": "Analyse gelöscht"
+    }), 200

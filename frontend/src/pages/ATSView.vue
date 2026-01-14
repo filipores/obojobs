@@ -116,22 +116,33 @@
               v-for="item in history"
               :key="item.id"
               class="history-item"
-              @click="loadHistoryItem(item)"
             >
-              <div class="history-info">
-                <span class="history-url" :title="item.job_url || 'Manuelle Eingabe'">
-                  {{ formatHistoryUrl(item.job_url) }}
-                </span>
-                <span class="history-date">{{ formatDate(item.created_at) }}</span>
+              <div class="history-content" @click="loadHistoryItem(item)">
+                <div class="history-info">
+                  <span class="history-url" :title="item.job_url || 'Manuelle Eingabe'">
+                    {{ formatHistoryUrl(item.job_url) }}
+                  </span>
+                  <span class="history-date">{{ formatDate(item.created_at) }}</span>
+                </div>
+                <div class="history-stats">
+                  <span :class="['history-score', getScoreClass(item.score)]">{{ item.score }}</span>
+                  <span class="history-keywords">
+                    <span class="matched">{{ item.matched_count }}</span>
+                    /
+                    <span class="missing">{{ item.missing_count }}</span>
+                  </span>
+                </div>
               </div>
-              <div class="history-stats">
-                <span :class="['history-score', getScoreClass(item.score)]">{{ item.score }}</span>
-                <span class="history-keywords">
-                  <span class="matched">{{ item.matched_count }}</span>
-                  /
-                  <span class="missing">{{ item.missing_count }}</span>
-                </span>
-              </div>
+              <button
+                class="history-delete-btn"
+                @click.stop="confirmDeleteAnalysis(item)"
+                title="Analyse löschen"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="3 6 5 6 21 6"/>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                </svg>
+              </button>
             </li>
           </ul>
         </div>
@@ -404,6 +415,29 @@ const loadHistoryItem = async (item) => {
     error.value = 'Fehler beim Laden der Analyse'
   } finally {
     analyzing.value = false
+  }
+}
+
+const confirmDeleteAnalysis = (item) => {
+  if (confirm('Möchtest du diese Analyse wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+    deleteAnalysis(item)
+  }
+}
+
+const deleteAnalysis = async (item) => {
+  try {
+    const { data } = await api.delete(`/ats/history/${item.id}`)
+    if (data.success) {
+      // Remove from local history array
+      history.value = history.value.filter(h => h.id !== item.id)
+      if (window.$toast) {
+        window.$toast('Analyse gelöscht', 'success')
+      }
+    }
+  } catch {
+    if (window.$toast) {
+      window.$toast('Fehler beim Löschen der Analyse', 'error')
+    }
   }
 }
 
@@ -903,13 +937,45 @@ onMounted(() => {
   padding: var(--space-sm) var(--space-md);
   background: var(--color-washi-warm);
   border-radius: var(--radius-sm);
-  cursor: pointer;
   transition: all var(--transition-base);
+  gap: var(--space-sm);
 }
 
 .history-item:hover {
   background: var(--color-washi-aged);
+}
+
+.history-content {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+  cursor: pointer;
+}
+
+.history-content:hover {
   transform: translateX(4px);
+}
+
+.history-delete-btn {
+  background: none;
+  border: none;
+  padding: var(--space-xs);
+  cursor: pointer;
+  color: var(--color-text-tertiary);
+  opacity: 0.5;
+  transition: all var(--transition-base);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.history-delete-btn:hover {
+  opacity: 1;
+  color: var(--color-error);
+  background: rgba(220, 53, 69, 0.1);
 }
 
 .history-info {
