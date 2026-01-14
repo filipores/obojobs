@@ -91,6 +91,71 @@ def analyze_job(current_user):
     return jsonify(result)
 
 
+@bp.route("/recommendations/analyze-manual", methods=["POST"])
+@jwt_required_custom
+def analyze_manual_job(current_user):
+    """
+    Analyze manually pasted job text and calculate fit score.
+    Fallback when URL scraping fails.
+
+    Request body:
+        {
+            "job_text": "Full job posting text...",
+            "company": "Example GmbH",  # Optional
+            "title": "Software Developer"  # Optional
+        }
+    """
+    data = request.get_json()
+    if not data or not data.get("job_text"):
+        return jsonify({"error": "Stellentext ist erforderlich"}), 400
+
+    job_text = data["job_text"].strip()
+    company = data.get("company", "").strip()
+    title = data.get("title", "").strip()
+
+    if len(job_text) < 100:
+        return jsonify({
+            "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."
+        }), 400
+
+    recommender = JobRecommender()
+
+    # Analyze the manually entered job text
+    result = recommender.analyze_manual_job_for_user(
+        current_user.id,
+        job_text,
+        company=company,
+        title=title
+    )
+
+    if not result:
+        return jsonify({
+            "error": "Job konnte nicht analysiert werden"
+        }), 400
+
+    if result.get("error"):
+        return jsonify(result), 400
+
+    # Only create recommendation if fit score meets minimum threshold
+    if result.get("fit_score", 0) >= JobRecommender.MIN_FIT_SCORE:
+        recommendation = recommender.create_recommendation(
+            user_id=current_user.id,
+            job_data=result["job_data"],
+            fit_score=result["fit_score"],
+            fit_category=result["fit_category"],
+        )
+        result["recommendation_id"] = recommendation.id
+        result["saved"] = True
+    else:
+        result["saved"] = False
+        result["message"] = (
+            f"Job-Fit Score ({result.get('fit_score')}%) liegt unter der "
+            f"Empfehlungsgrenze von {JobRecommender.MIN_FIT_SCORE}%"
+        )
+
+    return jsonify(result)
+
+
 @bp.route("/recommendations/<int:recommendation_id>", methods=["GET"])
 @jwt_required_custom
 def get_recommendation(current_user, recommendation_id):

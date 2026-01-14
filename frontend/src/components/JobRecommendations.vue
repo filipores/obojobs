@@ -143,24 +143,81 @@
         </div>
 
         <div class="modal-body">
-          <p class="modal-description">
-            Geben Sie die URL einer Stellenanzeige ein, um Ihren Job-Fit Score zu berechnen.
-          </p>
+          <!-- URL Input Mode -->
+          <div v-if="!showManualInput">
+            <p class="modal-description">
+              Geben Sie die URL einer Stellenanzeige ein, um Ihren Job-Fit Score zu berechnen.
+            </p>
 
-          <div class="form-group">
-            <label for="job-url">Stellenanzeige URL</label>
-            <input
-              id="job-url"
-              v-model="analyzeUrl"
-              type="url"
-              placeholder="https://www.indeed.de/viewjob?..."
-              class="form-input"
-              :disabled="analyzing"
-            />
+            <div class="form-group">
+              <label for="job-url">Stellenanzeige URL</label>
+              <input
+                id="job-url"
+                v-model="analyzeUrl"
+                type="url"
+                placeholder="https://www.indeed.de/viewjob?..."
+                class="form-input"
+                :disabled="analyzing"
+              />
+            </div>
+
+            <div v-if="analyzeError && !showManualInput" class="error-message error-with-action">
+              <span>{{ analyzeError }}</span>
+              <p class="error-hint">
+                Einige Portale blockieren automatisches Laden.
+              </p>
+              <button @click="showManualInput = true" class="fallback-link">
+                Stellentext manuell einfügen
+              </button>
+            </div>
           </div>
 
-          <div v-if="analyzeError" class="error-message">
-            {{ analyzeError }}
+          <!-- Manual Input Mode -->
+          <div v-else class="manual-input-section">
+            <div class="manual-input-header">
+              <h4>Stellentext manuell einfügen</h4>
+              <button @click="showManualInput = false" class="back-link">
+                ← Zurück zur URL-Eingabe
+              </button>
+            </div>
+
+            <div class="form-group">
+              <label>Firmenname</label>
+              <input
+                v-model="manualCompany"
+                type="text"
+                class="form-input"
+                placeholder="z.B. Beispiel GmbH"
+                :disabled="analyzing"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Position (optional)</label>
+              <input
+                v-model="manualTitle"
+                type="text"
+                class="form-input"
+                placeholder="z.B. Software Entwickler (m/w/d)"
+                :disabled="analyzing"
+              />
+            </div>
+
+            <div class="form-group">
+              <label>Stellentext</label>
+              <textarea
+                v-model="manualJobText"
+                class="form-input form-textarea"
+                rows="8"
+                placeholder="Fügen Sie hier den vollständigen Text der Stellenanzeige ein..."
+                :disabled="analyzing"
+              ></textarea>
+              <p class="form-hint">Mindestens 100 Zeichen</p>
+            </div>
+
+            <div v-if="analyzeError" class="error-message">
+              {{ analyzeError }}
+            </div>
           </div>
 
           <div v-if="analyzeResult" class="analyze-result">
@@ -202,16 +259,26 @@
         </div>
 
         <div class="modal-footer">
-          <button @click="showAnalyzeModal = false" class="zen-btn zen-btn-ghost">
+          <button @click="closeAnalyzeModal" class="zen-btn zen-btn-ghost">
             Schließen
           </button>
           <button
+            v-if="!showManualInput"
             @click="analyzeJob"
             class="zen-btn zen-btn-ai"
             :disabled="!analyzeUrl || analyzing"
           >
             <span v-if="analyzing">Analysiere...</span>
             <span v-else>Analysieren</span>
+          </button>
+          <button
+            v-else
+            @click="analyzeManualJob"
+            class="zen-btn zen-btn-ai"
+            :disabled="manualJobText.length < 100 || analyzing"
+          >
+            <span v-if="analyzing">Analysiere...</span>
+            <span v-else>Stellentext analysieren</span>
           </button>
         </div>
       </div>
@@ -231,6 +298,12 @@ const analyzeUrl = ref('')
 const analyzing = ref(false)
 const analyzeResult = ref(null)
 const analyzeError = ref('')
+
+// Manual input state
+const showManualInput = ref(false)
+const manualJobText = ref('')
+const manualCompany = ref('')
+const manualTitle = ref('')
 
 const loadRecommendations = async () => {
   try {
@@ -276,6 +349,44 @@ const analyzeJob = async () => {
   } finally {
     analyzing.value = false
   }
+}
+
+const analyzeManualJob = async () => {
+  if (manualJobText.value.length < 100) return
+
+  analyzing.value = true
+  analyzeError.value = ''
+  analyzeResult.value = null
+
+  try {
+    const { data } = await api.post('/recommendations/analyze-manual', {
+      job_text: manualJobText.value,
+      company: manualCompany.value,
+      title: manualTitle.value
+    })
+    analyzeResult.value = data
+
+    // Reload recommendations if job was saved
+    if (data.saved) {
+      await loadRecommendations()
+      await loadStats()
+    }
+  } catch (error) {
+    analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
+  } finally {
+    analyzing.value = false
+  }
+}
+
+const closeAnalyzeModal = () => {
+  showAnalyzeModal.value = false
+  showManualInput.value = false
+  analyzeUrl.value = ''
+  analyzeResult.value = null
+  analyzeError.value = ''
+  manualJobText.value = ''
+  manualCompany.value = ''
+  manualTitle.value = ''
 }
 
 const dismissRecommendation = async (id) => {
@@ -764,6 +875,73 @@ onMounted(() => {
   gap: var(--space-sm);
   padding: var(--space-lg);
   border-top: 1px solid var(--color-border-light);
+}
+
+/* Error with action */
+.error-with-action {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.error-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: var(--space-xs) 0;
+}
+
+.fallback-link {
+  background: transparent;
+  border: none;
+  color: var(--color-ai);
+  text-decoration: underline;
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.875rem;
+}
+
+.fallback-link:hover {
+  color: var(--color-ai-light);
+}
+
+/* Manual input section */
+.manual-input-section {
+  padding-top: var(--space-md);
+}
+
+.manual-input-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.manual-input-header h4 {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.back-link {
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-size: 0.875rem;
+}
+
+.back-link:hover {
+  color: var(--color-ai);
+}
+
+.form-textarea {
+  resize: vertical;
+  min-height: 150px;
+}
+
+.form-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-xs);
 }
 
 /* Responsive */

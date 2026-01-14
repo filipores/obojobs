@@ -239,6 +239,88 @@ def preview_job(current_user):
         return jsonify({"success": False, "error": f"Fehler beim Laden der Stellenanzeige: {str(e)}"}), 500
 
 
+@applications_bp.route("/analyze-manual-text", methods=["POST"])
+@jwt_required_custom
+def analyze_manual_text(current_user):
+    """Analyze manually pasted job posting text as fallback when scraping fails.
+
+    This endpoint allows users to paste job posting text directly when
+    URL scraping fails (403, timeout, blocked by job portal, etc.)
+    """
+    data = request.json or {}
+    job_text = data.get("job_text", "").strip()
+    company = data.get("company", "").strip()
+    title = data.get("title", "").strip()
+
+    if not job_text:
+        return jsonify({
+            "success": False,
+            "error": "Stellentext ist erforderlich"
+        }), 400
+
+    if len(job_text) < 100:
+        return jsonify({
+            "success": False,
+            "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text der Stellenanzeige ein."
+        }), 400
+
+    try:
+        # Try to extract company and title from text if not provided
+        extracted_company = company
+        extracted_title = title
+
+        if not extracted_company or not extracted_title:
+            # Simple extraction from beginning of text
+            lines = job_text.split('\n')[:10]
+            for line in lines:
+                line = line.strip()
+                if not extracted_title and len(line) > 5 and len(line) < 100:
+                    # First short line might be the title
+                    if any(keyword in line.lower() for keyword in
+                           ['entwickler', 'engineer', 'manager', 'consultant', 'analyst',
+                            'designer', 'spezialist', 'berater', 'leiter', 'm/w/d', '(m/w/d)']):
+                        extracted_title = line
+                if not extracted_company and ('gmbh' in line.lower() or 'ag' in line.lower()
+                                               or 'se' in line.lower()):
+                    extracted_company = line
+
+        # Check for missing important fields
+        missing_fields = []
+        if not extracted_title:
+            missing_fields.append("Titel")
+        if not extracted_company:
+            missing_fields.append("Firma")
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "portal": "Manuell eingegeben",
+                "portal_id": "manual",
+                "url": None,
+                "title": extracted_title,
+                "company": extracted_company,
+                "location": None,
+                "description": job_text,
+                "requirements": None,
+                "contact_email": None,
+                "contact_person": None,
+                "posted_date": None,
+                "application_deadline": None,
+                "employment_type": None,
+                "salary": None,
+                "company_profile_url": None,
+                "missing_fields": missing_fields,
+                "is_manual": True
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Fehler bei der Textanalyse: {str(e)}"
+        }), 500
+
+
 @applications_bp.route("/generate-from-url", methods=["POST"])
 @jwt_required_custom
 @check_subscription_limit
@@ -298,6 +380,94 @@ def generate_from_url(current_user):
 
     except ValueError as e:
         # Missing documents error from generator
+        return jsonify({"success": False, "error": str(e)}), 400
+    except Exception as e:
+        return jsonify({"success": False, "error": f"Fehler bei der Generierung: {str(e)}"}), 500
+
+
+@applications_bp.route("/generate-from-text", methods=["POST"])
+@jwt_required_custom
+@check_subscription_limit
+def generate_from_text(current_user):
+    """Generate a new application from manually pasted job posting text.
+
+    This is a fallback when URL scraping fails. The user pastes the job
+    posting text directly, and we generate the application from that.
+    """
+    data = request.json or {}
+    job_text = data.get("job_text", "").strip()
+    company = data.get("company", "").strip()
+    title = data.get("title", "").strip()
+    template_id = data.get("template_id")
+
+    if not job_text:
+        return jsonify({
+            "success": False,
+            "error": "Stellentext ist erforderlich"
+        }), 400
+
+    if len(job_text) < 100:
+        return jsonify({
+            "success": False,
+            "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."
+        }), 400
+
+    if not company:
+        return jsonify({
+            "success": False,
+            "error": "Firmenname ist erforderlich"
+        }), 400
+
+    try:
+        # Validate template if provided
+        if template_id:
+            template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
+            if not template:
+                return jsonify({"success": False, "error": "Template nicht gefunden"}), 404
+
+        # Save job text to temporary file for generator
+        temp_dir = tempfile.mkdtemp()
+        temp_file = os.path.join(temp_dir, "job_posting.txt")
+        with open(temp_file, "w", encoding="utf-8") as f:
+            f.write(job_text)
+
+        try:
+            # Generate application using existing generator with temp file
+            generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+            pdf_path = generator.generate_bewerbung(temp_file, company)
+
+            # Get the newly created application
+            latest = Application.query.filter_by(
+                user_id=current_user.id
+            ).order_by(Application.datum.desc()).first()
+
+            # Update application with title if provided
+            if latest and title:
+                latest.position = title
+                db.session.commit()
+
+            # Increment subscription usage counter
+            increment_application_count(current_user)
+
+            # Get updated usage info
+            usage = get_subscription_usage(current_user)
+
+            return jsonify({
+                "success": True,
+                "application": latest.to_dict() if latest else None,
+                "pdf_path": pdf_path,
+                "usage": usage,
+                "message": f"Bewerbung für {company} erstellt",
+            }), 200
+
+        finally:
+            # Cleanup temp file
+            if os.path.exists(temp_file):
+                os.remove(temp_file)
+            if os.path.exists(temp_dir):
+                os.rmdir(temp_dir)
+
+    except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         return jsonify({"success": False, "error": f"Fehler bei der Generierung: {str(e)}"}), 500

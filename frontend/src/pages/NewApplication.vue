@@ -51,14 +51,103 @@
             </button>
           </div>
 
-          <!-- Error Message -->
-          <div v-if="error && !previewData" class="error-box">
+          <!-- Error Message with Fallback Option -->
+          <div v-if="error && !previewData && !showManualFallback" class="error-box error-with-fallback">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="15" y1="9" x2="9" y2="15"/>
               <line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
-            <span>{{ error }}</span>
+            <div class="error-content">
+              <span>{{ error }}</span>
+              <p class="fallback-hint">
+                Einige Job-Portale blockieren automatisches Laden.
+                Sie können den Stellentext auch manuell einfügen.
+              </p>
+              <button @click="showManualFallback = true" class="zen-btn zen-btn-sm fallback-btn">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Stellentext manuell einfügen
+              </button>
+            </div>
+          </div>
+
+          <!-- Manual Text Fallback Section -->
+          <div v-if="showManualFallback && !previewData" class="manual-fallback-section">
+            <div class="fallback-header">
+              <h3>Stellentext manuell einfügen</h3>
+              <button @click="showManualFallback = false" class="close-fallback-btn">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <p class="fallback-description">
+              Kopieren Sie den vollständigen Text der Stellenanzeige und fügen Sie ihn hier ein.
+              Die Daten werden automatisch analysiert.
+            </p>
+
+            <div class="form-group">
+              <label class="form-label">Firmenname</label>
+              <input
+                v-model="manualCompany"
+                type="text"
+                class="form-input"
+                placeholder="z.B. Beispiel GmbH"
+                :disabled="analyzingManualText"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Position (optional)</label>
+              <input
+                v-model="manualTitle"
+                type="text"
+                class="form-input"
+                placeholder="z.B. Software Entwickler (m/w/d)"
+                :disabled="analyzingManualText"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-label required">Stellentext</label>
+              <textarea
+                v-model="manualJobText"
+                class="form-textarea manual-text-area"
+                rows="12"
+                placeholder="Fügen Sie hier den vollständigen Text der Stellenanzeige ein..."
+                :disabled="analyzingManualText"
+              ></textarea>
+              <p class="form-hint">Mindestens 100 Zeichen erforderlich</p>
+            </div>
+
+            <div v-if="manualTextError" class="error-box">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"/>
+                <line x1="15" y1="9" x2="9" y2="15"/>
+                <line x1="9" y1="9" x2="15" y2="15"/>
+              </svg>
+              <span>{{ manualTextError }}</span>
+            </div>
+
+            <div class="form-actions">
+              <button
+                @click="analyzeManualText"
+                :disabled="!canAnalyzeManualText || analyzingManualText"
+                class="zen-btn zen-btn-ai"
+              >
+                <span v-if="analyzingManualText" class="btn-loading">
+                  <span class="loading-spinner"></span>
+                  Analysiere...
+                </span>
+                <span v-else>
+                  Stellentext analysieren
+                </span>
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -421,6 +510,20 @@ const editableData = ref({
 })
 const showDescription = ref(false)
 
+// Manual text fallback state
+const showManualFallback = ref(false)
+const manualJobText = ref('')
+const manualCompany = ref('')
+const manualTitle = ref('')
+const manualTextError = ref('')
+const analyzingManualText = ref(false)
+const isManualEntry = ref(false)
+
+// Can analyze manual text check
+const canAnalyzeManualText = computed(() => {
+  return manualJobText.value.trim().length >= 100
+})
+
 // Job-Fit Score state
 const tempApplicationId = ref(null)
 const jobFitScore = ref(null)
@@ -578,6 +681,72 @@ const resetPreview = () => {
     description: ''
   }
   error.value = ''
+  isManualEntry.value = false
+  showManualFallback.value = false
+  manualJobText.value = ''
+  manualCompany.value = ''
+  manualTitle.value = ''
+}
+
+// Analyze manually pasted job text
+const analyzeManualText = async () => {
+  if (!canAnalyzeManualText.value) return
+
+  analyzingManualText.value = true
+  manualTextError.value = ''
+
+  try {
+    const { data } = await api.post('/applications/analyze-manual-text', {
+      job_text: manualJobText.value,
+      company: manualCompany.value,
+      title: manualTitle.value
+    })
+
+    if (data.success) {
+      previewData.value = data.data
+      isManualEntry.value = true
+
+      // Populate editable data from analysis
+      editableData.value = {
+        company: data.data.company || manualCompany.value || '',
+        title: data.data.title || manualTitle.value || '',
+        location: data.data.location || '',
+        employment_type: data.data.employment_type || '',
+        contact_person: data.data.contact_person || '',
+        contact_email: data.data.contact_email || '',
+        salary: data.data.salary || '',
+        description: data.data.description || manualJobText.value
+      }
+
+      // Create temporary application for job-fit analysis
+      if (editableData.value.description) {
+        try {
+          const analyzeResponse = await api.post('/applications/analyze-job-fit', {
+            description: editableData.value.description,
+            company: editableData.value.company,
+            title: editableData.value.title
+          })
+          if (analyzeResponse.data.success) {
+            tempApplicationId.value = analyzeResponse.data.application_id
+          }
+        } catch (analyzeError) {
+          console.log('Job-Fit Analyse nicht verfügbar:', analyzeError.message)
+        }
+      }
+
+      showManualFallback.value = false
+
+      if (window.$toast) {
+        window.$toast('Stellentext analysiert!', 'success')
+      }
+    } else {
+      manualTextError.value = data.error || 'Analyse fehlgeschlagen'
+    }
+  } catch (e) {
+    manualTextError.value = e.response?.data?.error || 'Fehler bei der Analyse'
+  } finally {
+    analyzingManualText.value = false
+  }
 }
 
 // Load templates
@@ -616,10 +785,25 @@ const generateApplication = async () => {
   generating.value = true
 
   try {
-    const { data } = await api.post('/applications/generate-from-url', {
-      url: url.value,
-      template_id: selectedTemplateId.value
-    })
+    let response
+
+    if (isManualEntry.value) {
+      // Generate from manually entered text
+      response = await api.post('/applications/generate-from-text', {
+        job_text: editableData.value.description,
+        company: editableData.value.company,
+        title: editableData.value.title,
+        template_id: selectedTemplateId.value
+      })
+    } else {
+      // Generate from URL
+      response = await api.post('/applications/generate-from-url', {
+        url: url.value,
+        template_id: selectedTemplateId.value
+      })
+    }
+
+    const { data } = response
 
     if (data.success) {
       generatedApp.value = data.application
@@ -638,6 +822,11 @@ const generateApplication = async () => {
         salary: '',
         description: ''
       }
+      isManualEntry.value = false
+      showManualFallback.value = false
+      manualJobText.value = ''
+      manualCompany.value = ''
+      manualTitle.value = ''
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
@@ -1179,6 +1368,91 @@ onMounted(() => {
 
 .error-box svg {
   flex-shrink: 0;
+}
+
+/* Error with Fallback */
+.error-with-fallback {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.error-with-fallback > svg {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+}
+
+.error-with-fallback {
+  position: relative;
+  padding-left: calc(var(--space-md) + 28px);
+}
+
+.error-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.fallback-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.fallback-btn {
+  margin-top: var(--space-sm);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+/* ========================================
+   MANUAL FALLBACK SECTION
+   ======================================== */
+.manual-fallback-section {
+  margin-top: var(--space-lg);
+  padding: var(--space-lg);
+  background: var(--color-washi-warm);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+}
+
+.fallback-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.fallback-header h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.close-fallback-btn {
+  background: transparent;
+  border: none;
+  padding: var(--space-xs);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.close-fallback-btn:hover {
+  background: var(--color-washi);
+  color: var(--color-sumi);
+}
+
+.fallback-description {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+  margin-bottom: var(--space-lg);
+}
+
+.manual-text-area {
+  min-height: 200px;
+  resize: vertical;
 }
 
 /* ========================================

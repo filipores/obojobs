@@ -174,6 +174,81 @@ class JobRecommender:
                 "fit_category": "niedrig",
             }
 
+    def analyze_manual_job_for_user(
+        self,
+        user_id: int,
+        job_text: str,
+        company: str = "",
+        title: str = ""
+    ) -> dict | None:
+        """
+        Analyze manually pasted job text and calculate fit score.
+        Fallback when URL scraping fails.
+
+        Args:
+            user_id: The user's ID
+            job_text: Full text of the job posting
+            company: Company name (optional)
+            title: Job title (optional)
+
+        Returns:
+            Dict with job data and fit score, or None if analysis fails
+        """
+        try:
+            # Create job data structure from manual input
+            job_data = {
+                "title": title or "Unbekannte Position",
+                "company": company or "Unbekanntes Unternehmen",
+                "description": job_text,
+                "location": None,
+                "url": None,
+                "source": "manual",
+            }
+
+            # Get user skills
+            user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+
+            if not user_skills:
+                return {
+                    "job_data": job_data,
+                    "fit_score": 0,
+                    "fit_category": "niedrig",
+                    "error": "Keine Skills im Profil gefunden. Bitte laden Sie Ihren Lebenslauf hoch.",
+                }
+
+            # Analyze requirements from job posting
+            requirements = self.requirement_analyzer.analyze_requirements(
+                job_text=job_text,
+                job_title=title,
+            )
+
+            if not requirements:
+                # If no requirements could be extracted, provide basic analysis
+                return {
+                    "job_data": job_data,
+                    "fit_score": 50,
+                    "fit_category": "mittel",
+                    "warning": "Anforderungen konnten nicht vollständig analysiert werden.",
+                }
+
+            # Calculate fit score
+            fit_result = self._calculate_fit_from_requirements(user_skills, requirements)
+
+            return {
+                "job_data": job_data,
+                "fit_score": fit_result["score"],
+                "fit_category": fit_result["category"],
+                "matched_skills": fit_result["matched"],
+                "missing_skills": fit_result["missing"],
+            }
+
+        except Exception as e:
+            return {
+                "error": f"Fehler bei der Analyse: {str(e)}",
+                "fit_score": 0,
+                "fit_category": "niedrig",
+            }
+
     def _calculate_fit_from_requirements(
         self,
         user_skills: list[UserSkill],

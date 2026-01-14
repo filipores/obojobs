@@ -27,6 +27,9 @@ Started: 2026-01-14
 - [x] ADV-001: Smart Job Recommendations
 - [x] ADV-002: Gehaltsverhandlungs-Coach
 
+#### Test-RALPH Findings (NEW)
+- [x] NEW-001: Manueller Stellentext-Import als Fallback
+
 ---
 
 ## Progress Log
@@ -335,6 +338,28 @@ Started: 2026-01-14
   - Dataclasses ideal fuer strukturierte API Responses mit to_dict() Methode
   - Fallback-Strategie wichtig fuer robuste UX ohne API-Abhaengigkeit
   - Deutsche Gehaltskultur: Erst im 2./3. Gespraech, sachliche Argumente wichtiger als emotionale
+
+## [2026-01-14] - NEW-001
+- **Was implementiert wurde:**
+  - Manueller Stellentext-Import als Fallback wenn URL-Scraping fehlschlaegt
+  - POST /api/applications/analyze-manual-text Endpoint fuer Text-Analyse
+  - POST /api/applications/generate-from-text Endpoint fuer Bewerbungsgenerierung aus manuellem Text
+  - POST /api/recommendations/analyze-manual Endpoint fuer Job-Fit Analyse mit manuellem Text
+  - JobRecommender.analyze_manual_job_for_user() Methode fuer manuelle Text-Analyse
+  - NewApplication.vue erweitert mit Fallback-UI bei Scraping-Fehler
+  - JobRecommendations.vue Modal erweitert mit manuellem Text-Input Modus
+  - Klare Fehlermeldung erklaert warum Fallback noetig ist
+  - Automatische Extraktion von Firma/Position aus Text wenn nicht angegeben
+- **Geaenderte Dateien:**
+  - backend/routes/applications.py (2 neue Endpoints)
+  - backend/routes/recommendations.py (neuer Endpoint)
+  - backend/services/job_recommender.py (neue Methode)
+  - frontend/src/pages/NewApplication.vue (Fallback-UI)
+  - frontend/src/components/JobRecommendations.vue (Manual Input Modus)
+- **Learnings:**
+  - Tempfile mit cleanup fuer sicheres Handling manueller Texte
+  - Strukturierte Error-Messages mit Action-Button verbessern UX
+  - Manueller Import unverzichtbar da viele Portale Scraping blockieren
 
 ---
 
