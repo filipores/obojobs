@@ -58,7 +58,7 @@
           <div v-if="!previewData" class="form-actions preview-actions">
             <button
               @click="loadPreview"
-              :disabled="!url || loading || urlValidation.isValid === false"
+              :disabled="!url || loading || urlValidation.isValid !== true"
               class="zen-btn zen-btn-lg"
             >
               <span v-if="loading" class="btn-loading">
