@@ -203,7 +203,7 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1737033526.891,
+      "fixedAt": 1768482001.157908,
       "fixedWithModel": "claude-sonnet-4-20250514",
       "usedFallback": false,
       "source": "test-ralph"

@@ -259,8 +259,8 @@ execute_claude() {
     local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
     local output_file="$LOG_DIR/debug_output_${current_bug}_${timestamp}.log"
 
-    # Check fix attempts for this bug and decide on model
-    local fix_attempts=$(jq -r --arg id "$current_bug" '.bugs[] | select(.id == $id) | .fixAttempts // 0' "$SCRIPT_DIR/bugs.json")
+    # Check fix attempts for this bug and decide on model (use first match to avoid duplicates)
+    local fix_attempts=$(jq -r --arg id "$current_bug" '[.bugs[] | select(.id == $id) | .fixAttempts // 0] | first // 0' "$SCRIPT_DIR/bugs.json")
     local current_model="$CLAUDE_MODEL_IMPL"
     local using_fallback=false
 
@@ -426,8 +426,8 @@ while true; do
         break
     fi
 
-    # Check fix attempts
-    attempts=$(jq -r --arg id "$current_bug" '.bugs[] | select(.id == $id) | .fixAttempts' "$SCRIPT_DIR/bugs.json")
+    # Check fix attempts (use first match to avoid duplicates)
+    attempts=$(jq -r --arg id "$current_bug" '[.bugs[] | select(.id == $id) | .fixAttempts] | first // 0' "$SCRIPT_DIR/bugs.json")
     if [[ $attempts -ge $MAX_FIX_ATTEMPTS ]]; then
         log_error "Bug $current_bug: Max Versuche ($MAX_FIX_ATTEMPTS) erreicht - überspringe"
         # Mark as blocked
