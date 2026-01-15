@@ -90,6 +90,15 @@
               <option value="zusage">Zusage</option>
             </select>
           </div>
+          <div class="filter-group sort-group">
+            <select v-model="sortBy" class="form-select">
+              <option value="datum_desc">Datum (neueste zuerst)</option>
+              <option value="datum_asc">Datum (älteste zuerst)</option>
+              <option value="firma_asc">Firma (A-Z)</option>
+              <option value="firma_desc">Firma (Z-A)</option>
+              <option value="status">Status</option>
+            </select>
+          </div>
         </div>
 
         <div v-if="searchQuery || filterStatus || filterFirma" class="active-filters">
@@ -540,6 +549,7 @@ const loading = ref(false)
 const searchQuery = ref('')
 const filterStatus = ref('')
 const filterFirma = ref('')
+const sortBy = ref('datum_desc')
 const exportFilteredOnly = ref(false)
 
 // Email Composer State
@@ -585,7 +595,25 @@ const filteredApplications = computed(() => {
     filtered = filtered.filter(app => app.firma === filterFirma.value)
   }
 
-  return filtered.sort((a, b) => new Date(b.datum) - new Date(a.datum))
+  // Sortierung anwenden
+  return [...filtered].sort((a, b) => {
+    switch (sortBy.value) {
+      case 'datum_desc':
+        return new Date(b.datum) - new Date(a.datum)
+      case 'datum_asc':
+        return new Date(a.datum) - new Date(b.datum)
+      case 'firma_asc':
+        return a.firma.localeCompare(b.firma, 'de')
+      case 'firma_desc':
+        return b.firma.localeCompare(a.firma, 'de')
+      case 'status': {
+        const statusOrder = ['zusage', 'antwort_erhalten', 'versendet', 'erstellt', 'absage']
+        return statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status)
+      }
+      default:
+        return new Date(b.datum) - new Date(a.datum)
+    }
+  })
 })
 
 const hasActiveFilters = computed(() => {
@@ -1037,6 +1065,10 @@ watch(hasActiveFilters, (isActive) => {
 
 .filter-group {
   min-width: 200px;
+}
+
+.sort-group {
+  min-width: 220px;
 }
 
 .active-filters {
