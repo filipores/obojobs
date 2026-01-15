@@ -367,3 +367,40 @@ def logout():
     )
 
     return jsonify({"message": "Erfolgreich abgemeldet"}), 200
+
+
+@auth_bp.route("/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+    """
+    Update user profile information.
+
+    Requires authentication. Allows updating full_name and display_name.
+    """
+    current_user_id = get_jwt_identity()
+    data = request.json or {}
+
+    user = AuthService.get_user_by_id(int(current_user_id))
+    if not user:
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+
+    # Update allowed fields
+    if "full_name" in data:
+        full_name = data["full_name"]
+        if full_name and len(full_name) > 255:
+            return jsonify({"error": "Name darf maximal 255 Zeichen haben"}), 400
+        user.full_name = full_name.strip() if full_name else None
+
+    if "display_name" in data:
+        display_name = data["display_name"]
+        if display_name and len(display_name) > 100:
+            return jsonify({"error": "Anzeigename darf maximal 100 Zeichen haben"}), 400
+        user.display_name = display_name.strip() if display_name else None
+
+    from models import db
+    db.session.commit()
+
+    return jsonify({
+        "message": "Profil erfolgreich aktualisiert",
+        "user": user.to_dict()
+    }), 200

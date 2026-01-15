@@ -12,6 +12,7 @@ class User(db.Model):
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(255), nullable=False)
     full_name = db.Column(db.String(255))
+    display_name = db.Column(db.String(100))  # Optional display name for UI
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     is_active = db.Column(db.Boolean, default=True)
 
@@ -56,6 +57,7 @@ class User(db.Model):
             "id": self.id,
             "email": self.email,
             "full_name": self.full_name,
+            "display_name": self.display_name,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "is_active": self.is_active,
             "email_verified": self.email_verified,

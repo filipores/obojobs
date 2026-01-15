@@ -7,13 +7,75 @@
         <p class="page-subtitle">Verwalten Sie Ihr Konto und API-Zugang</p>
       </section>
 
-      <!-- Account Section -->
+      <!-- Profile Section -->
       <section class="settings-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="section-header">
           <div class="section-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
               <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <h2>Profil</h2>
+        </div>
+
+        <div class="settings-card zen-card">
+          <form @submit.prevent="updateProfile" class="profile-form">
+            <div class="form-group">
+              <label for="full-name">Vollständiger Name</label>
+              <input
+                id="full-name"
+                v-model="profileForm.fullName"
+                type="text"
+                class="zen-input"
+                placeholder="Max Mustermann"
+                maxlength="255"
+              />
+              <p class="form-hint">Wird in Bewerbungen und offiziellen Dokumenten verwendet</p>
+            </div>
+
+            <div class="form-group">
+              <label for="display-name">Anzeigename (optional)</label>
+              <input
+                id="display-name"
+                v-model="profileForm.displayName"
+                type="text"
+                class="zen-input"
+                placeholder="Max"
+                maxlength="100"
+              />
+              <p class="form-hint">Wird in der App-Oberfläche angezeigt</p>
+            </div>
+
+            <div v-if="profileError" class="profile-error-message">
+              {{ profileError }}
+            </div>
+
+            <div v-if="profileSuccess" class="profile-success-message">
+              {{ profileSuccess }}
+            </div>
+
+            <button
+              type="submit"
+              class="zen-btn zen-btn-filled"
+              :disabled="isUpdatingProfile || !hasProfileChanges"
+            >
+              {{ isUpdatingProfile ? 'Wird gespeichert...' : 'Profil speichern' }}
+            </button>
+          </form>
+        </div>
+      </section>
+
+      <!-- Ink Stroke -->
+      <div class="ink-stroke"></div>
+
+      <!-- Account Section -->
+      <section class="settings-section animate-fade-up" style="animation-delay: 125ms;">
+        <div class="section-header">
+          <div class="section-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 9h6v6H9z"/>
             </svg>
           </div>
           <h2>Konto</h2>
@@ -327,6 +389,67 @@ const isGeneratingKey = ref(false)
 const emailAccounts = ref([])
 const isConnecting = ref(false)
 
+// Profile form state
+const profileForm = reactive({
+  fullName: '',
+  displayName: ''
+})
+const originalProfile = reactive({
+  fullName: '',
+  displayName: ''
+})
+const isUpdatingProfile = ref(false)
+const profileError = ref('')
+const profileSuccess = ref('')
+
+const hasProfileChanges = computed(() => {
+  return (
+    profileForm.fullName !== originalProfile.fullName ||
+    profileForm.displayName !== originalProfile.displayName
+  )
+})
+
+const initProfileForm = () => {
+  const user = authStore.user
+  profileForm.fullName = user?.full_name || ''
+  profileForm.displayName = user?.display_name || ''
+  originalProfile.fullName = user?.full_name || ''
+  originalProfile.displayName = user?.display_name || ''
+}
+
+const updateProfile = async () => {
+  if (!hasProfileChanges.value) return
+
+  isUpdatingProfile.value = true
+  profileError.value = ''
+  profileSuccess.value = ''
+
+  try {
+    const { data } = await api.put('/auth/profile', {
+      full_name: profileForm.fullName,
+      display_name: profileForm.displayName
+    })
+
+    // Update auth store with new user data
+    authStore.user = data.user
+
+    // Update original values to match current
+    originalProfile.fullName = profileForm.fullName
+    originalProfile.displayName = profileForm.displayName
+
+    profileSuccess.value = 'Profil erfolgreich aktualisiert'
+
+    // Clear success message after 3 seconds
+    setTimeout(() => {
+      profileSuccess.value = ''
+    }, 3000)
+  } catch (err) {
+    profileError.value = err.response?.data?.error || 'Fehler beim Aktualisieren des Profils'
+  } finally {
+    isUpdatingProfile.value = false
+  }
+}
+
 // Password change form state
 const passwordForm = reactive({
   currentPassword: '',
@@ -543,6 +666,7 @@ const disconnectAccount = async (accountId) => {
 onMounted(() => {
   loadKeys()
   loadEmailAccounts()
+  initProfileForm()
 })
 </script>
 
@@ -1006,6 +1130,50 @@ onMounted(() => {
 }
 
 .password-change-form .zen-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ========================================
+   PROFILE FORM
+   ======================================== */
+.profile-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  max-width: 400px;
+}
+
+.profile-form .form-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  margin: var(--space-xs) 0 0 0;
+}
+
+.profile-error-message {
+  padding: var(--space-md);
+  background: rgba(184, 122, 94, 0.1);
+  border: 1px solid var(--color-terra);
+  border-radius: var(--radius-sm);
+  color: var(--color-terra);
+  font-size: 0.9375rem;
+}
+
+.profile-success-message {
+  padding: var(--space-md);
+  background: rgba(122, 139, 110, 0.1);
+  border: 1px solid var(--color-koke);
+  border-radius: var(--radius-sm);
+  color: var(--color-koke);
+  font-size: 0.9375rem;
+}
+
+.profile-form .zen-btn {
+  align-self: flex-start;
+  margin-top: var(--space-sm);
+}
+
+.profile-form .zen-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
