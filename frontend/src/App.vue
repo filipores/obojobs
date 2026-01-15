@@ -4,7 +4,7 @@
     <nav v-if="authStore.isAuthenticated()" class="zen-nav">
       <div class="nav-container">
         <!-- Brand - Minimal mark -->
-        <router-link to="/" class="nav-brand">
+        <router-link to="/" class="nav-brand" title="Zur Startseite">
           <div class="brand-mark">
             <div class="enso-mark"></div>
           </div>
@@ -13,25 +13,25 @@
 
         <!-- Center Navigation - Horizontal links -->
         <div class="nav-center">
-          <router-link to="/" class="nav-link" exact-active-class="active">
+          <router-link to="/" class="nav-link" exact-active-class="active" title="Dashboard">
             <span class="nav-text">Dashboard</span>
           </router-link>
-          <router-link to="/documents" class="nav-link" active-class="active">
+          <router-link to="/documents" class="nav-link" active-class="active" title="Dokumente verwalten">
             <span class="nav-text">Dokumente</span>
           </router-link>
-          <router-link to="/templates" class="nav-link" active-class="active">
+          <router-link to="/templates" class="nav-link" active-class="active" title="Bewerbungsvorlagen">
             <span class="nav-text">Templates</span>
           </router-link>
-          <router-link to="/applications" class="nav-link" active-class="active">
+          <router-link to="/applications" class="nav-link" active-class="active" title="Meine Bewerbungen">
             <span class="nav-text">Bewerbungen</span>
           </router-link>
-          <router-link to="/timeline" class="nav-link" active-class="active">
+          <router-link to="/timeline" class="nav-link" active-class="active" title="Aktivitäten-Timeline">
             <span class="nav-text">Timeline</span>
           </router-link>
-          <router-link to="/ats" class="nav-link" active-class="active">
+          <router-link to="/ats" class="nav-link" active-class="active" title="ATS-Optimierung">
             <span class="nav-text">ATS</span>
           </router-link>
-          <router-link to="/company-insights" class="nav-link nav-link-with-icon" active-class="active" title="Company Insights">
+          <router-link to="/company-insights" class="nav-link nav-link-with-icon" active-class="active" title="Firmen-Insights">
             <svg class="nav-icon-mobile" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M18 20V10"/>
               <path d="M12 20V4"/>
@@ -39,7 +39,7 @@
             </svg>
             <span class="nav-text">Insights</span>
           </router-link>
-          <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active">
+          <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active" title="Neue Bewerbung erstellen">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
               <line x1="5" y1="12" x2="19" y2="12"/>
@@ -51,12 +51,12 @@
         <!-- Actions - Subscription & Settings -->
         <div class="nav-actions">
           <!-- Subscription Display -->
-          <router-link to="/subscription" class="subscription-display">
+          <router-link to="/subscription" class="subscription-display" title="Abo-Einstellungen">
             <span class="subscription-plan">{{ getPlanLabel() }}</span>
           </router-link>
 
           <!-- Theme Toggle -->
-          <button @click="toggleTheme" class="nav-icon theme-toggle" :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
+          <button @click="toggleTheme" class="nav-icon theme-toggle" :title="isDarkMode ? 'Heller Modus' : 'Dunkler Modus'">
             <!-- Sun icon (show when dark mode is active) -->
             <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="12" cy="12" r="5"/>
