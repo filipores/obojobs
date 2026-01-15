@@ -1,18 +1,19 @@
 #!/usr/bin/env bash
 # date_utils.sh - Cross-platform date utility functions
 # Provides consistent date formatting across GNU (Linux) and BSD (macOS) systems
+# Uses German timezone (Europe/Berlin) for better readability
 
-# Get current timestamp in ISO 8601 format
+# Get current timestamp in ISO 8601 format (German timezone)
 get_iso_timestamp() {
     local os_type
     os_type=$(uname)
 
     if [[ "$os_type" == "Darwin" ]]; then
-        # macOS (BSD date)
-        date -u +"%Y-%m-%dT%H:%M:%S%z" | sed 's/\(..\)$/:\1/'
+        # macOS (BSD date) - German timezone
+        TZ="Europe/Berlin" date +"%Y-%m-%dT%H:%M:%S%z" | sed 's/\(..\)$/:\1/'
     else
-        # Linux (GNU date)
-        date -u -Iseconds
+        # Linux (GNU date) - German timezone
+        TZ="Europe/Berlin" date -Iseconds
     fi
 }
 
