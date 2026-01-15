@@ -14,7 +14,12 @@
               <span>Nur gefilterte ({{ filteredApplications.length }})</span>
             </label>
             <div class="export-buttons">
-              <button @click="exportApplications('csv')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
+              <button
+                @click="exportApplications('csv')"
+                class="zen-btn zen-btn-sm"
+                :disabled="isExportDisabled"
+                :title="exportDisabledReason"
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
@@ -22,7 +27,12 @@
                 </svg>
                 CSV
               </button>
-              <button @click="exportApplications('pdf')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
+              <button
+                @click="exportApplications('pdf')"
+                class="zen-btn zen-btn-sm"
+                :disabled="isExportDisabled"
+                :title="exportDisabledReason"
+              >
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="7 10 12 15 17 10"/>
@@ -579,6 +589,24 @@ const filteredApplications = computed(() => {
 
 const hasActiveFilters = computed(() => {
   return !!(searchQuery.value || filterStatus.value || filterFirma.value)
+})
+
+const isExportDisabled = computed(() => {
+  // Disabled wenn keine Bewerbungen vorhanden
+  if (applications.value.length === 0) return true
+  // Disabled wenn "Nur gefilterte" aktiv und 0 Ergebnisse
+  if (exportFilteredOnly.value && filteredApplications.value.length === 0) return true
+  return false
+})
+
+const exportDisabledReason = computed(() => {
+  if (applications.value.length === 0) {
+    return 'Keine Bewerbungen zum Exportieren vorhanden'
+  }
+  if (exportFilteredOnly.value && filteredApplications.value.length === 0) {
+    return 'Keine gefilterten Ergebnisse zum Exportieren'
+  }
+  return ''
 })
 
 const loadApplications = async () => {
