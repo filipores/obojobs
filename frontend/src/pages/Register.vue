@@ -65,11 +65,19 @@
               v-model="full_name"
               type="text"
               class="form-input"
+              :class="{ 'input-error': nameError, 'input-valid': nameTouched && !nameError && full_name }"
               placeholder="Max Mustermann"
               required
               aria-required="true"
+              aria-invalid="nameError ? 'true' : 'false'"
+              :aria-describedby="nameError ? 'name-error' : undefined"
               autocomplete="name"
+              @blur="nameTouched = true"
+              @input="nameTouched = true"
             />
+            <p v-if="nameError" id="name-error" class="field-error" role="alert">
+              {{ nameError }}
+            </p>
           </div>
 
           <div class="form-group">
@@ -79,11 +87,19 @@
               v-model="email"
               type="email"
               class="form-input"
+              :class="{ 'input-error': emailError, 'input-valid': emailTouched && !emailError && email }"
               placeholder="ihre@email.de"
               required
               aria-required="true"
+              aria-invalid="emailError ? 'true' : 'false'"
+              :aria-describedby="emailError ? 'email-error' : undefined"
               autocomplete="email"
+              @blur="emailTouched = true"
+              @input="emailTouched = true"
             />
+            <p v-if="emailError" id="email-error" class="field-error" role="alert">
+              {{ emailError }}
+            </p>
           </div>
 
           <div class="form-group">
@@ -202,7 +218,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../store/auth'
 
@@ -216,6 +232,30 @@ const error = ref('')
 const success = ref(false)
 const loading = ref(false)
 const isDarkMode = ref(false)
+
+// Validation states
+const nameTouched = ref(false)
+const emailTouched = ref(false)
+
+// Email validation
+const isValidEmail = (emailStr) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(emailStr)
+}
+
+const nameError = computed(() => {
+  if (!nameTouched.value) return ''
+  if (!full_name.value.trim()) return 'Name ist erforderlich'
+  if (full_name.value.trim().length < 2) return 'Name muss mindestens 2 Zeichen lang sein'
+  return ''
+})
+
+const emailError = computed(() => {
+  if (!emailTouched.value) return ''
+  if (!email.value) return 'E-Mail ist erforderlich'
+  if (!isValidEmail(email.value)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein'
+  return ''
+})
 
 const passwordChecks = reactive({
   min_length: false,
@@ -704,5 +744,53 @@ onMounted(() => {
 
 .requirements-list li.requirement-met .check-icon {
   color: var(--color-success, #4CAF50);
+}
+
+/* ========================================
+   INLINE VALIDATION
+   ======================================== */
+.form-input.input-error {
+  border-color: #b45050;
+  background-color: rgba(180, 80, 80, 0.05);
+}
+
+.form-input.input-error:focus {
+  border-color: #b45050;
+  box-shadow: 0 0 0 3px rgba(180, 80, 80, 0.1);
+}
+
+.form-input.input-valid {
+  border-color: #4a7c59;
+  background-color: rgba(74, 124, 89, 0.03);
+}
+
+.form-input.input-valid:focus {
+  border-color: #4a7c59;
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.field-error {
+  color: #b45050;
+  font-size: 0.8125rem;
+  margin-top: var(--space-xs);
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.field-error::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: #b45050;
+  color: white;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 </style>

@@ -50,11 +50,19 @@
               v-model="email"
               type="email"
               class="form-input"
+              :class="{ 'input-error': emailError, 'input-valid': emailTouched && !emailError && email }"
               placeholder="ihre@email.de"
               required
               aria-required="true"
+              aria-invalid="emailError ? 'true' : 'false'"
+              :aria-describedby="emailError ? 'email-error' : undefined"
               autocomplete="email"
+              @blur="emailTouched = true"
+              @input="emailTouched = true"
             />
+            <p v-if="emailError" id="email-error" class="field-error" role="alert">
+              {{ emailError }}
+            </p>
           </div>
 
           <div class="form-group">
@@ -65,10 +73,14 @@
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 class="form-input"
+                :class="{ 'input-error': passwordError, 'input-valid': passwordTouched && !passwordError && password }"
                 placeholder="••••••••"
                 required
                 aria-required="true"
+                aria-invalid="passwordError ? 'true' : 'false'"
+                :aria-describedby="passwordError ? 'password-error' : undefined"
                 autocomplete="current-password"
+                @blur="passwordTouched = true"
               />
               <button
                 type="button"
@@ -86,6 +98,9 @@
                 </svg>
               </button>
             </div>
+            <p v-if="passwordError" id="password-error" class="field-error" role="alert">
+              {{ passwordError }}
+            </p>
             <div class="forgot-password-link">
               <router-link to="/forgot-password">Passwort vergessen?</router-link>
             </div>
@@ -145,7 +160,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { authStore } from '../store/auth'
 
@@ -156,6 +171,34 @@ const showPassword = ref(false)
 const error = ref('')
 const loading = ref(false)
 const isDarkMode = ref(false)
+
+// Validation states
+const emailTouched = ref(false)
+const passwordTouched = ref(false)
+
+// Email validation
+const isValidEmail = (emailStr) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(emailStr)
+}
+
+const emailError = computed(() => {
+  if (!emailTouched.value) return ''
+  if (!email.value) return 'E-Mail ist erforderlich'
+  if (!isValidEmail(email.value)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein'
+  return ''
+})
+
+const passwordError = computed(() => {
+  if (!passwordTouched.value) return ''
+  if (!password.value) return 'Passwort ist erforderlich'
+  return ''
+})
+
+// Form is valid when email format is correct and password is provided
+const _isFormValid = computed(() => {
+  return email.value && isValidEmail(email.value) && password.value
+})
 
 const THEME_KEY = 'obojobs-theme'
 
@@ -539,5 +582,53 @@ onMounted(() => {
     width: 24px;
     height: 24px;
   }
+}
+
+/* ========================================
+   INLINE VALIDATION
+   ======================================== */
+.form-input.input-error {
+  border-color: #b45050;
+  background-color: rgba(180, 80, 80, 0.05);
+}
+
+.form-input.input-error:focus {
+  border-color: #b45050;
+  box-shadow: 0 0 0 3px rgba(180, 80, 80, 0.1);
+}
+
+.form-input.input-valid {
+  border-color: #4a7c59;
+  background-color: rgba(74, 124, 89, 0.03);
+}
+
+.form-input.input-valid:focus {
+  border-color: #4a7c59;
+  box-shadow: 0 0 0 3px rgba(74, 124, 89, 0.1);
+}
+
+.field-error {
+  color: #b45050;
+  font-size: 0.8125rem;
+  margin-top: var(--space-xs);
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.field-error::before {
+  content: '!';
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: #b45050;
+  color: white;
+  border-radius: 50%;
+  flex-shrink: 0;
 }
 </style>
