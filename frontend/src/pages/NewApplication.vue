@@ -137,13 +137,16 @@
             </div>
 
             <div class="form-group">
-              <label class="form-label required">Stellentext</label>
+              <label class="form-label required" for="manual-job-text">Stellentext</label>
               <textarea
+                id="manual-job-text"
                 v-model="manualJobText"
                 class="form-textarea manual-text-area"
                 rows="12"
                 placeholder="Fügen Sie hier den vollständigen Text der Stellenanzeige ein..."
                 :disabled="analyzingManualText"
+                required
+                aria-required="true"
               ></textarea>
               <p class="form-hint">Mindestens 100 Zeichen erforderlich</p>
             </div>
@@ -215,23 +218,29 @@
             <!-- Core Fields Row -->
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label required">Firma</label>
+                <label class="form-label required" for="preview-company">Firma</label>
                 <input
+                  id="preview-company"
                   v-model="editableData.company"
                   type="text"
                   class="form-input"
                   :class="{ 'field-warning': !editableData.company }"
                   placeholder="Firmenname eingeben"
+                  required
+                  aria-required="true"
                 />
               </div>
               <div class="form-group">
-                <label class="form-label required">Position</label>
+                <label class="form-label required" for="preview-title">Position</label>
                 <input
+                  id="preview-title"
                   v-model="editableData.title"
                   type="text"
                   class="form-input"
                   :class="{ 'field-warning': !editableData.title }"
                   placeholder="Stellentitel eingeben"
+                  required
+                  aria-required="true"
                 />
               </div>
             </div>

@@ -44,7 +44,7 @@
         <!-- Form -->
         <form @submit.prevent="handleLogin" class="auth-form">
           <div class="form-group">
-            <label class="form-label" for="email">E-Mail</label>
+            <label class="form-label required" for="email">E-Mail</label>
             <input
               id="email"
               v-model="email"
@@ -52,12 +52,13 @@
               class="form-input"
               placeholder="ihre@email.de"
               required
+              aria-required="true"
               autocomplete="email"
             />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="password">Passwort</label>
+            <label class="form-label required" for="password">Passwort</label>
             <div class="password-input-wrapper">
               <input
                 id="password"
@@ -66,6 +67,7 @@
                 class="form-input"
                 placeholder="••••••••"
                 required
+                aria-required="true"
                 autocomplete="current-password"
               />
               <button
@@ -358,6 +360,11 @@ onMounted(() => {
 
 .auth-form .form-group {
   margin-bottom: var(--space-lg);
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #b45050;
 }
 
 .auth-form .zen-btn {

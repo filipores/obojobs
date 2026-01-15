@@ -195,18 +195,19 @@
         <div class="settings-card zen-card">
           <form @submit.prevent="changePassword" class="password-change-form">
             <div class="form-group">
-              <label for="current-password">Aktuelles Passwort</label>
+              <label for="current-password" class="required">Aktuelles Passwort</label>
               <input
                 id="current-password"
                 v-model="passwordForm.currentPassword"
                 type="password"
                 class="zen-input"
                 required
+                aria-required="true"
               />
             </div>
 
             <div class="form-group">
-              <label for="new-password">Neues Passwort</label>
+              <label for="new-password" class="required">Neues Passwort</label>
               <input
                 id="new-password"
                 v-model="passwordForm.newPassword"
@@ -214,6 +215,7 @@
                 class="zen-input"
                 @input="validatePassword"
                 required
+                aria-required="true"
               />
               <!-- Password Requirements -->
               <div v-if="passwordForm.newPassword" class="password-requirements">
@@ -235,13 +237,14 @@
             </div>
 
             <div class="form-group">
-              <label for="confirm-password">Neues Passwort bestätigen</label>
+              <label for="confirm-password" class="required">Neues Passwort bestätigen</label>
               <input
                 id="confirm-password"
                 v-model="passwordForm.confirmPassword"
                 type="password"
                 class="zen-input"
                 required
+                aria-required="true"
               />
               <p v-if="passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword" class="form-error">
                 Passwörter stimmen nicht überein
@@ -1066,6 +1069,11 @@ onMounted(() => {
   font-size: 0.9375rem;
   font-weight: 500;
   color: var(--color-sumi);
+}
+
+.form-group label.required::after {
+  content: ' *';
+  color: #b45050;
 }
 
 .zen-input {

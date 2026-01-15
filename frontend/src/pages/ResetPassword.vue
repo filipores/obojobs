@@ -90,7 +90,7 @@
           />
 
           <div class="form-group">
-            <label class="form-label" for="password">Neues Passwort</label>
+            <label class="form-label required" for="password">Neues Passwort</label>
             <div class="password-input-wrapper">
               <input
                 id="password"
@@ -99,6 +99,7 @@
                 class="form-input"
                 placeholder="Sicheres Passwort"
                 required
+                aria-required="true"
                 autocomplete="new-password"
                 @input="validatePassword"
               />
@@ -142,7 +143,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="confirmPassword">Passwort bestätigen</label>
+            <label class="form-label required" for="confirmPassword">Passwort bestätigen</label>
             <div class="password-input-wrapper">
               <input
                 id="confirmPassword"
@@ -151,6 +152,7 @@
                 class="form-input"
                 placeholder="Passwort wiederholen"
                 required
+                aria-required="true"
                 autocomplete="new-password"
               />
               <button
@@ -520,6 +522,11 @@ onMounted(() => {
 
 .auth-form .form-group {
   margin-bottom: var(--space-lg);
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #b45050;
 }
 
 .auth-form .zen-btn {

@@ -349,7 +349,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 23,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph UX-CLARITY-001"
     },
     {
@@ -364,7 +364,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 24,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph UX-CLARITY-005"
     },
     {

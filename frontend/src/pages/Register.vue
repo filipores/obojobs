@@ -59,7 +59,7 @@
         <!-- Form -->
         <form v-else @submit.prevent="handleRegister" class="auth-form">
           <div class="form-group">
-            <label class="form-label" for="full_name">Vollständiger Name</label>
+            <label class="form-label required" for="full_name">Vollständiger Name</label>
             <input
               id="full_name"
               v-model="full_name"
@@ -67,12 +67,13 @@
               class="form-input"
               placeholder="Max Mustermann"
               required
+              aria-required="true"
               autocomplete="name"
             />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="email">E-Mail</label>
+            <label class="form-label required" for="email">E-Mail</label>
             <input
               id="email"
               v-model="email"
@@ -80,12 +81,13 @@
               class="form-input"
               placeholder="ihre@email.de"
               required
+              aria-required="true"
               autocomplete="email"
             />
           </div>
 
           <div class="form-group">
-            <label class="form-label" for="password">Passwort</label>
+            <label class="form-label required" for="password">Passwort</label>
             <div class="password-input-wrapper">
               <input
                 id="password"
@@ -94,6 +96,7 @@
                 class="form-input"
                 placeholder="Sicheres Passwort"
                 required
+                aria-required="true"
                 autocomplete="new-password"
                 @input="validatePassword"
               />
@@ -455,6 +458,11 @@ onMounted(() => {
 
 .auth-form .form-group {
   margin-bottom: var(--space-lg);
+}
+
+.form-label.required::after {
+  content: ' *';
+  color: #b45050;
 }
 
 .auth-form .zen-btn {
