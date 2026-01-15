@@ -148,11 +148,21 @@
               Sie haben aktuell den kostenlosen Plan. Upgraden Sie fuer mehr Bewerbungen pro Monat!
             </p>
             <div class="upgrade-buttons">
-              <button @click="handleUpgrade('basic')" class="zen-btn zen-btn-filled" :disabled="isUpgrading">
+              <button
+                @click="handleUpgrade('basic')"
+                class="zen-btn zen-btn-filled"
+                :class="{ 'is-loading-other': isUpgrading && upgradingPlan !== 'basic' }"
+                :disabled="isUpgrading"
+              >
                 <span v-if="upgradingPlan === 'basic'" class="btn-spinner"></span>
                 {{ upgradingPlan === 'basic' ? 'Wird geladen...' : 'Basic - 9,99 EUR/Monat' }}
               </button>
-              <button @click="handleUpgrade('pro')" class="zen-btn zen-btn-ai" :disabled="isUpgrading">
+              <button
+                @click="handleUpgrade('pro')"
+                class="zen-btn zen-btn-ai"
+                :class="{ 'is-loading-other': isUpgrading && upgradingPlan !== 'pro' }"
+                :disabled="isUpgrading"
+              >
                 <span v-if="upgradingPlan === 'pro'" class="btn-spinner"></span>
                 {{ upgradingPlan === 'pro' ? 'Wird geladen...' : 'Pro - 19,99 EUR/Monat' }}
               </button>
@@ -201,7 +211,10 @@
               v-if="plan.plan_id !== subscription.plan && plan.plan_id !== 'free'"
               @click="handleUpgrade(plan.plan_id)"
               class="zen-btn"
-              :class="plan.plan_id === 'pro' ? 'zen-btn-ai' : 'zen-btn-filled'"
+              :class="[
+                plan.plan_id === 'pro' ? 'zen-btn-ai' : 'zen-btn-filled',
+                { 'is-loading-other': isUpgrading && upgradingPlan !== plan.plan_id }
+              ]"
               :disabled="isUpgrading"
             >
               <span v-if="upgradingPlan === plan.plan_id" class="btn-spinner"></span>
@@ -648,6 +661,13 @@ onMounted(() => {
 .zen-btn-filled .btn-spinner {
   border-color: rgba(255, 255, 255, 0.3);
   border-top-color: white;
+}
+
+/* Disabled visual state for buttons when another upgrade is in progress */
+.zen-btn.is-loading-other {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 /* ========================================
