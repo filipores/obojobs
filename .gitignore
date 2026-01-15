@@ -45,8 +45,8 @@ Thumbs.db
 # Ralph (AI agent loop)
 scripts/ralph/.last-branch
 scripts/ralph/archive/
-scripts/ralph/test/logs
-scripts/ralph/test/reports
+scripts/ralph/*/logs
+scripts/ralph/*/reports
 
 # Playwright-mcp
 .playwright-mcp/
