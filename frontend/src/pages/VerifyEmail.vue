@@ -173,11 +173,11 @@ const verifyEmail = async () => {
     startRedirectCountdown()
   } catch (e) {
     const errorCode = e.response?.data?.error
-    if (errorCode === 'Token abgelaufen') {
+    if (errorCode === 'Bestätigungstoken ist abgelaufen') {
       error.value = 'Der Verifizierungs-Link ist abgelaufen. Bitte fordern Sie einen neuen Link an.'
-    } else if (errorCode === 'Ungültiger Token') {
+    } else if (errorCode === 'Ungültiger Bestätigungstoken') {
       error.value = 'Der Verifizierungs-Link ist ungültig. Bitte fordern Sie einen neuen Link an.'
-    } else if (errorCode === 'E-Mail bereits verifiziert') {
+    } else if (errorCode === 'E-Mail ist bereits bestätigt') {
       error.value = 'Ihre E-Mail-Adresse wurde bereits verifiziert. Sie können sich anmelden.'
     } else {
       error.value = errorCode || 'Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
