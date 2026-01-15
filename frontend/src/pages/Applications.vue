@@ -49,7 +49,7 @@
       <section class="stats-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="stats-grid">
           <div class="stat-item">
-            <span class="stat-value">{{ applications.length }}</span>
+            <span class="stat-value">{{ totalApplications }}</span>
             <span class="stat-label">Gesamt</span>
           </div>
           <div class="stat-divider"></div>
@@ -178,6 +178,66 @@
             </div>
           </div>
         </div>
+
+        <!-- Pagination -->
+        <nav v-if="totalPages > 1" class="pagination" aria-label="Bewerbungs-Seitennavigation">
+          <button
+            class="pagination-btn"
+            :disabled="currentPage === 1"
+            @click="goToPage(currentPage - 1)"
+            aria-label="Vorherige Seite"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+
+          <div class="pagination-pages">
+            <button
+              v-if="currentPage > 2"
+              class="pagination-btn pagination-page"
+              @click="goToPage(1)"
+            >
+              1
+            </button>
+            <span v-if="currentPage > 3" class="pagination-ellipsis">...</span>
+
+            <button
+              v-for="page in visiblePages"
+              :key="page"
+              class="pagination-btn pagination-page"
+              :class="{ 'pagination-page-active': page === currentPage }"
+              @click="goToPage(page)"
+              :aria-current="page === currentPage ? 'page' : undefined"
+            >
+              {{ page }}
+            </button>
+
+            <span v-if="currentPage < totalPages - 2" class="pagination-ellipsis">...</span>
+            <button
+              v-if="currentPage < totalPages - 1"
+              class="pagination-btn pagination-page"
+              @click="goToPage(totalPages)"
+            >
+              {{ totalPages }}
+            </button>
+          </div>
+
+          <button
+            class="pagination-btn"
+            :disabled="currentPage === totalPages"
+            @click="goToPage(currentPage + 1)"
+            aria-label="Nächste Seite"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"/>
+            </svg>
+          </button>
+        </nav>
+
+        <p v-if="totalPages > 1" class="pagination-info">
+          Seite {{ currentPage }} von {{ totalPages }} ({{ totalApplications }} Bewerbungen)
+        </p>
       </section>
 
       <!-- Empty State -->
@@ -552,6 +612,12 @@ const filterFirma = ref('')
 const sortBy = ref('datum_desc')
 const exportFilteredOnly = ref(false)
 
+// Pagination State
+const currentPage = ref(1)
+const totalPages = ref(1)
+const totalApplications = ref(0)
+const perPage = ref(15)
+
 // Email Composer State
 const showEmailComposer = ref(false)
 const emailComposerApp = ref(null)
@@ -638,15 +704,41 @@ const exportDisabledReason = computed(() => {
   return ''
 })
 
-const loadApplications = async () => {
+// Pagination: visible page numbers
+const visiblePages = computed(() => {
+  const pages = []
+  const start = Math.max(1, currentPage.value - 1)
+  const end = Math.min(totalPages.value, currentPage.value + 1)
+
+  for (let i = start; i <= end; i++) {
+    pages.push(i)
+  }
+  return pages
+})
+
+const loadApplications = async (page = 1) => {
   loading.value = true
   try {
-    const { data } = await api.get('/applications')
+    const { data } = await api.get('/applications', {
+      params: {
+        page,
+        per_page: perPage.value
+      }
+    })
     applications.value = data.applications || []
+    currentPage.value = data.page || 1
+    totalPages.value = data.pages || 1
+    totalApplications.value = data.total || 0
   } catch (err) {
     console.error('Fehler beim Laden:', err)
   } finally {
     loading.value = false
+  }
+}
+
+const goToPage = (page) => {
+  if (page >= 1 && page <= totalPages.value) {
+    loadApplications(page)
   }
 }
 
@@ -723,10 +815,14 @@ const deleteApp = async (id) => {
 
   try {
     await api.delete(`/applications/${id}`)
-    applications.value = applications.value.filter(a => a.id !== id)
     if (selectedApp.value && selectedApp.value.id === id) {
       selectedApp.value = null
     }
+    // Reload current page (or go back one page if empty)
+    const pageToLoad = applications.value.length === 1 && currentPage.value > 1
+      ? currentPage.value - 1
+      : currentPage.value
+    loadApplications(pageToLoad)
   } catch (_e) {
     alert('Fehler beim Löschen')
   }
@@ -1786,5 +1882,93 @@ watch(hasActiveFilters, (isActive) => {
   font-size: 0.8125rem;
   color: var(--color-text-secondary);
   line-height: 1.5;
+}
+
+/* ========================================
+   PAGINATION
+   ======================================== */
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: var(--space-sm);
+  margin-top: var(--space-ma);
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.pagination-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  padding: var(--space-sm);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.pagination-btn:hover:not(:disabled) {
+  background: var(--color-ai-subtle);
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.pagination-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.pagination-page {
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.pagination-page-active {
+  background: var(--color-ai);
+  border-color: var(--color-ai);
+  color: var(--color-washi);
+}
+
+.pagination-page-active:hover:not(:disabled) {
+  background: var(--color-ai);
+  color: var(--color-washi);
+}
+
+.pagination-ellipsis {
+  padding: 0 var(--space-xs);
+  color: var(--color-text-tertiary);
+}
+
+.pagination-info {
+  text-align: center;
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-md);
+}
+
+@media (max-width: 480px) {
+  .pagination {
+    gap: var(--space-xs);
+  }
+
+  .pagination-btn {
+    min-width: 36px;
+    height: 36px;
+  }
+
+  .pagination-page {
+    font-size: 0.8125rem;
+  }
 }
 </style>
