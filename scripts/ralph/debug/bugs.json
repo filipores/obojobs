@@ -12,14 +12,17 @@
         "Timeline-Seite öffnen (/timeline)",
         "Auf 'Details' Button bei einer Bewerbung klicken"
       ],
-     "expected": "Detailansicht der spezifischen Bewerbung wird angezeigt (entweder als Modal oder als separate Seite)",
+      "expected": "Detailansicht der spezifischen Bewerbung wird angezeigt (entweder als Modal oder als separate Seite)",
       "actual": "Leere Seite wird angezeigt, Vue Router Warnung: 'No match found for location with path /applications/:id'",
       "affectedFiles": [
         "frontend/src/pages/Timeline.vue:100"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph",
+      "fixedAt": 1768480299.315455,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false
     },
     {
       "id": "BUG-002",
@@ -37,9 +40,13 @@
       "affectedFiles": [
         "backend/services/auth_service.py:40"
       ],
-      "fixed": false,
+      "fixed": true,
       "fixAttempts": 0,
-      "source": "test-ralph"
+      "source": "test-ralph",
+      "fixedAt": 1768480689.027358,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "fixNote": "Bug bereits in vorherigem Commit behoben - deutsche Übersetzung bereits implementiert"
     },
     {
       "id": "BUG-003",
@@ -56,9 +63,12 @@
       "affectedFiles": [
         "frontend/src/pages/VerifyEmail.vue:175-184"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph",
+      "fixedAt": 1768480836.518802,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false
     },
     {
       "id": "BUG-004",
@@ -76,9 +86,12 @@
       "affectedFiles": [
         "frontend/src/pages/ResetPassword.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph",
+      "fixedAt": 1768480980.907099,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false
     },
     {
       "id": "BUG-005",
@@ -98,9 +111,12 @@
         "backend/routes/email.py:98-102",
         "frontend/src/api/client.js:34-39"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph",
+      "fixedAt": 1768481200.195308,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false
     },
     {
       "id": "BUG-006",
@@ -117,8 +133,12 @@
         "frontend/package.json"
       ],
       "suggestedFix": "npm install -D @vitest/coverage-v8",
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768481357.800801,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "fixNote": "Bug war bereits behoben - Dependencies waren installiert und Coverage-Tests funktionieren problemlos",
       "source": "test-ralph"
     },
     {
@@ -138,8 +158,11 @@
       "affectedFiles": [
         "frontend/src/pages/NewApplication.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768481504.835565,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
       "source": "test-ralph"
     },
     {
@@ -156,8 +179,11 @@
       "affectedFiles": [
         "frontend/src/pages/NewApplication.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768481633.398003,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
       "source": "test-ralph"
     },
     {
@@ -175,8 +201,11 @@
       "affectedFiles": [
         "frontend/src/pages/NewApplication.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1737033526.891,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
       "source": "test-ralph"
     },
     {
@@ -195,12 +224,15 @@
       "affectedFiles": [
         "frontend/src/components/SkillsOverview.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768481839.493375,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
       "source": "test-ralph"
     },
     {
-      "id": "BUG-001",
+      "id": "BUG-011",
       "severity": "major",
       "title": "Login-Fehlermeldung wird nicht angezeigt bei falschen Credentials",
       "steps_to_reproduce": [
@@ -215,8 +247,11 @@
         "frontend/src/api/client.js, frontend/src/pages/Login.vue"
       ],
       "root_cause": "Der API-Client-Interceptor behandelt alle 401-Fehler als 'Sitzung abgelaufen' und leitet zur Login-Seite weiter, BEVOR die Login-Komponente den Fehler verarbeiten kann. Die Login-Seite sollte 401-Fehler selbst behandeln und nicht vom globalen Interceptor abgefangen werden.",
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768480503.076615,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
       "source": "test-ralph"
     }
   ]
