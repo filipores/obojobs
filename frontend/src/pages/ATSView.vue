@@ -7,8 +7,37 @@
         <p class="page-subtitle">Prüfe wie gut dein Lebenslauf zur Stellenanzeige passt</p>
       </section>
 
+      <!-- Resume Missing Warning -->
+      <section v-if="!checkingResume && !hasResume" class="resume-warning-section animate-fade-up" style="animation-delay: 100ms;">
+        <div class="resume-warning zen-card">
+          <div class="warning-icon">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="12" y1="9" x2="12.01" y2="9"/>
+            </svg>
+          </div>
+          <div class="warning-content">
+            <h3>Lebenslauf erforderlich</h3>
+            <p>
+              Um die ATS-Analyse durchzuführen, benötigen wir deinen Lebenslauf.
+              Die Analyse vergleicht dein Profil mit den Anforderungen der Stellenanzeige.
+            </p>
+            <button @click="goToDocuments" class="zen-btn zen-btn-ai">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17 8 12 3 7 8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              Lebenslauf hochladen
+            </button>
+          </div>
+        </div>
+      </section>
+
       <!-- Form Section -->
-      <section class="form-section animate-fade-up" style="animation-delay: 100ms;">
+      <section v-if="!checkingResume && hasResume" class="form-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="form-card zen-card">
           <!-- Input Mode Toggle -->
           <div class="input-toggle">
@@ -60,21 +89,57 @@
             <p class="form-hint">Kopiere den Text der Stellenanzeige hierher</p>
           </div>
 
-          <!-- Info Box -->
-          <div class="info-box">
+          <!-- ATS Explanation Box -->
+          <div class="info-box ats-explanation">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="16" x2="12" y2="12"/>
               <line x1="12" y1="8" x2="12.01" y2="8"/>
             </svg>
             <div class="info-content">
-              <strong>So funktioniert's:</strong>
+              <strong>
+                Was ist ein ATS-Score?
+                <span class="ats-tooltip-trigger" tabindex="0" role="button" aria-describedby="ats-tooltip">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                    <line x1="12" y1="17" x2="12.01" y2="17"/>
+                  </svg>
+                  <span id="ats-tooltip" class="ats-tooltip" role="tooltip">
+                    <strong>ATS = Applicant Tracking System</strong><br/>
+                    Ein Software-System, das Unternehmen nutzen, um Bewerbungen automatisch zu filtern.
+                    Der Score zeigt, wie gut dein Lebenslauf zu den Anforderungen passt.
+                  </span>
+                </span>
+              </strong>
               <ul>
                 <li>Die Stellenanzeige wird mit deinem Lebenslauf verglichen</li>
-                <li>Du erhältst einen ATS-Score von 0-100</li>
+                <li>Du erhältst einen Score von 0-100</li>
                 <li>Fehlende Keywords werden identifiziert</li>
                 <li>Verbesserungsvorschläge helfen dir weiter</li>
               </ul>
+            </div>
+          </div>
+
+          <!-- Score Legend -->
+          <div class="score-legend">
+            <h4 class="legend-title">Score-Bewertung</h4>
+            <div class="legend-items">
+              <div class="legend-item">
+                <span class="legend-color score-high"></span>
+                <span class="legend-range">75-100</span>
+                <span class="legend-label">Sehr gut</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color score-medium"></span>
+                <span class="legend-range">50-74</span>
+                <span class="legend-label">Gut</span>
+              </div>
+              <div class="legend-item">
+                <span class="legend-color score-low"></span>
+                <span class="legend-range">0-49</span>
+                <span class="legend-label">Optimierbar</span>
+              </div>
             </div>
           </div>
 
@@ -108,7 +173,7 @@
       </section>
 
       <!-- History Section -->
-      <section v-if="history.length > 0" class="history-section animate-fade-up" style="animation-delay: 150ms;">
+      <section v-if="hasResume && history.length > 0" class="history-section animate-fade-up" style="animation-delay: 150ms;">
         <div class="history-card zen-card">
           <h3 class="history-title">Letzte Analysen</h3>
           <ul class="history-list">
@@ -150,7 +215,7 @@
       </section>
 
       <!-- Results Section -->
-      <section v-if="result" class="results-section animate-fade-up" style="animation-delay: 200ms;">
+      <section v-if="hasResume && result" class="results-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="results-card zen-card">
           <h2 class="results-title">Analyse-Ergebnis</h2>
 
@@ -280,8 +345,11 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { confirm } from '../composables/useConfirm'
+
+const router = useRouter()
 
 const inputMode = ref('url')
 const jobUrl = ref('')
@@ -291,6 +359,8 @@ const error = ref('')
 const result = ref(null)
 const history = ref([])
 const loadingHistory = ref(false)
+const hasResume = ref(true) // Assume true until checked
+const checkingResume = ref(true)
 
 const canAnalyze = computed(() => {
   if (inputMode.value === 'url') {
@@ -484,7 +554,26 @@ const getScoreClass = (score) => {
   return 'score-low'
 }
 
+const checkResumeStatus = async () => {
+  checkingResume.value = true
+  try {
+    const { data } = await api.get('/documents')
+    const docs = data.documents || []
+    hasResume.value = docs.some(doc => doc.doc_type === 'lebenslauf')
+  } catch {
+    // Assume resume exists if check fails, let backend handle it
+    hasResume.value = true
+  } finally {
+    checkingResume.value = false
+  }
+}
+
+const goToDocuments = () => {
+  router.push('/documents')
+}
+
 onMounted(() => {
+  checkResumeStatus()
   fetchHistory()
 })
 </script>
@@ -1060,6 +1149,170 @@ onMounted(() => {
 }
 
 /* ========================================
+   RESUME WARNING
+   ======================================== */
+.resume-warning-section {
+  max-width: 640px;
+}
+
+.resume-warning {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border: 2px dashed var(--color-terra);
+  background: rgba(184, 122, 94, 0.08);
+}
+
+.warning-icon {
+  flex-shrink: 0;
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-terra);
+  border-radius: var(--radius-md);
+  color: var(--color-washi);
+}
+
+.warning-content h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+  color: var(--color-sumi);
+}
+
+.warning-content p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-lg);
+}
+
+.warning-content .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+/* ========================================
+   ATS TOOLTIP
+   ======================================== */
+.ats-tooltip-trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  margin-left: var(--space-xs);
+  cursor: help;
+  color: var(--color-ai);
+  vertical-align: middle;
+}
+
+.ats-tooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  width: 280px;
+  padding: var(--space-md);
+  background: var(--color-sumi);
+  color: var(--color-washi);
+  border-radius: var(--radius-md);
+  font-size: 0.8125rem;
+  font-weight: 400;
+  line-height: var(--leading-relaxed);
+  box-shadow: var(--shadow-lg);
+  opacity: 0;
+  visibility: hidden;
+  transition: all var(--transition-base);
+  z-index: 100;
+  pointer-events: none;
+}
+
+.ats-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 6px solid transparent;
+  border-top-color: var(--color-sumi);
+}
+
+.ats-tooltip strong {
+  display: block;
+  margin-bottom: var(--space-xs);
+  color: var(--color-washi);
+}
+
+.ats-tooltip-trigger:hover .ats-tooltip,
+.ats-tooltip-trigger:focus .ats-tooltip {
+  opacity: 1;
+  visibility: visible;
+}
+
+/* ========================================
+   SCORE LEGEND
+   ======================================== */
+.score-legend {
+  margin-top: var(--space-lg);
+  padding: var(--space-md);
+  background: var(--color-washi-warm);
+  border-radius: var(--radius-md);
+}
+
+.legend-title {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-sm);
+}
+
+.legend-items {
+  display: flex;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.legend-color {
+  width: 12px;
+  height: 12px;
+  border-radius: var(--radius-xs);
+}
+
+.legend-color.score-high {
+  background: var(--color-koke);
+}
+
+.legend-color.score-medium {
+  background: #c9a227;
+}
+
+.legend-color.score-low {
+  background: #b45050;
+}
+
+.legend-range {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--color-sumi);
+  min-width: 45px;
+}
+
+.legend-label {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
@@ -1096,6 +1349,31 @@ onMounted(() => {
   .history-stats {
     width: 100%;
     justify-content: space-between;
+  }
+
+  .resume-warning {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .warning-content {
+    text-align: center;
+  }
+
+  .legend-items {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .ats-tooltip {
+    left: 0;
+    transform: translateX(-10%);
+    width: 240px;
+  }
+
+  .ats-tooltip::after {
+    left: 20%;
   }
 }
 </style>
