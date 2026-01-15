@@ -355,9 +355,9 @@
               <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
             <div>
-              <strong>Anforderungsanalyse nicht moeglich</strong>
+              <strong>Anforderungsanalyse nicht möglich</strong>
               <p>{{ requirementsError }}</p>
-              <p class="hint">Sie koennen trotzdem eine Bewerbung generieren, aber der Job-Fit Score ist nicht verfuegbar.</p>
+              <p class="hint">Sie können trotzdem eine Bewerbung generieren, aber der Job-Fit Score ist nicht verfügbar.</p>
             </div>
           </div>
 
