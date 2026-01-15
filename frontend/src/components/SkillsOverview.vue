@@ -279,6 +279,18 @@ const saveSkill = async () => {
     closeModal()
   } catch (error) {
     console.error('Failed to save skill:', error)
+
+    // Handle duplicate skill error (409 CONFLICT)
+    if (error.response?.status === 409) {
+      if (window.$toast) {
+        window.$toast('Skill existiert bereits', 'error')
+      }
+    } else {
+      // Generic error for other cases
+      if (window.$toast) {
+        window.$toast('Fehler beim Speichern des Skills', 'error')
+      }
+    }
   } finally {
     saving.value = false
   }
