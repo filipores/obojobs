@@ -301,6 +301,7 @@
 import { ref, onMounted, computed } from 'vue'
 import api from '../api/client'
 import SkillsOverview from '../components/SkillsOverview.vue'
+import { confirm } from '../composables/useConfirm'
 
 const documents = ref({
   lebenslauf: null,
@@ -403,7 +404,14 @@ const upload = async (docType) => {
 }
 
 const deleteDoc = async (id) => {
-  if (!confirm('Möchten Sie dieses Dokument wirklich löschen?')) return
+  const confirmed = await confirm({
+    title: 'Dokument löschen',
+    message: 'Möchten Sie dieses Dokument wirklich löschen?',
+    confirmText: 'Löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (!confirmed) return
 
   try {
     await api.delete(`/documents/${id}`)

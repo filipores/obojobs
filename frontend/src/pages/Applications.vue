@@ -529,6 +529,7 @@ import api from '../api/client'
 import ATSOptimizer from '../components/ATSOptimizer.vue'
 import GapAnalysis from '../components/GapAnalysis.vue'
 import InterviewTracker from '../components/InterviewTracker.vue'
+import { confirm } from '../composables/useConfirm'
 
 const route = useRoute()
 const router = useRouter()
@@ -683,7 +684,14 @@ const updateNotes = async (app) => {
 }
 
 const deleteApp = async (id) => {
-  if (!confirm('Bewerbung wirklich löschen?')) return
+  const confirmed = await confirm({
+    title: 'Bewerbung löschen',
+    message: 'Möchten Sie diese Bewerbung wirklich löschen?',
+    confirmText: 'Löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (!confirmed) return
 
   try {
     await api.delete(`/applications/${id}`)

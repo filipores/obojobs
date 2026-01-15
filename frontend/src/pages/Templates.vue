@@ -318,6 +318,7 @@ mit großem Interesse habe ich Ihre Stellenausschreibung gelesen..."
 import { ref, onMounted, computed } from 'vue'
 import api from '../api/client'
 import { TemplateEditor } from '../components/TemplateEditor'
+import { confirm } from '../composables/useConfirm'
 
 const templates = ref([])
 const hasLebenslauf = ref(false)
@@ -465,7 +466,15 @@ const onSuggestionRejected = (suggestionId) => {
 }
 
 const deleteTemplate = async (id) => {
-  if (!confirm('Template wirklich löschen?')) return
+  const confirmed = await confirm({
+    title: 'Template löschen',
+    message: 'Möchten Sie dieses Template wirklich löschen?',
+    confirmText: 'Löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (!confirmed) return
+
   try {
     await api.delete(`/templates/${id}`)
     await loadTemplates()

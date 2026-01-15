@@ -143,6 +143,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
+import { confirm } from '../composables/useConfirm'
 
 const skills = ref([])
 const loading = ref(true)
@@ -244,7 +245,14 @@ const editSkill = (skill) => {
 }
 
 const deleteSkill = async (skill) => {
-  if (!confirm(`Skill "${skill.skill_name}" wirklich loschen?`)) return
+  const confirmed = await confirm({
+    title: 'Skill löschen',
+    message: `Möchten Sie den Skill "${skill.skill_name}" wirklich löschen?`,
+    confirmText: 'Löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (!confirmed) return
 
   try {
     await api.delete(`/users/me/skills/${skill.id}`)

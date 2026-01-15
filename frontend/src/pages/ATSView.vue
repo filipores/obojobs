@@ -280,6 +280,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
+import { confirm } from '../composables/useConfirm'
 
 const inputMode = ref('url')
 const jobUrl = ref('')
@@ -418,8 +419,15 @@ const loadHistoryItem = async (item) => {
   }
 }
 
-const confirmDeleteAnalysis = (item) => {
-  if (confirm('Möchtest du diese Analyse wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+const confirmDeleteAnalysis = async (item) => {
+  const confirmed = await confirm({
+    title: 'Analyse löschen',
+    message: 'Möchten Sie diese Analyse wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
+    confirmText: 'Löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (confirmed) {
     deleteAnalysis(item)
   }
 }

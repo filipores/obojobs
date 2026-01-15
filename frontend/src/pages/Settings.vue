@@ -307,6 +307,7 @@ import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../store/auth'
+import { confirm } from '../composables/useConfirm'
 
 const _router = useRouter()
 
@@ -420,13 +421,20 @@ const copyKey = () => {
 }
 
 const deleteKey = async (id) => {
-  if (confirm('API Key wirklich löschen? Die Chrome Extension funktioniert dann nicht mehr.')) {
-    try {
-      await api.delete(`/keys/${id}`)
-      loadKeys()
-    } catch (_e) {
-      alert('Fehler beim Löschen')
-    }
+  const confirmed = await confirm({
+    title: 'API Key löschen',
+    message: 'Möchten Sie den API Key wirklich löschen? Die Chrome Extension funktioniert dann nicht mehr.',
+    confirmText: 'Löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (!confirmed) return
+
+  try {
+    await api.delete(`/keys/${id}`)
+    loadKeys()
+  } catch (_e) {
+    alert('Fehler beim Löschen')
   }
 }
 
@@ -510,17 +518,24 @@ const connectOutlook = async () => {
 }
 
 const disconnectAccount = async (accountId) => {
-  if (confirm('E-Mail-Konto wirklich trennen? Sie können dann keine Bewerbungen mehr über dieses Konto versenden.')) {
-    try {
-      await api.delete(`/email/accounts/${accountId}`)
-      loadEmailAccounts()
-      if (window.$toast) {
-        window.$toast('E-Mail-Konto getrennt', 'success')
-      }
-    } catch (_err) {
-      if (window.$toast) {
-        window.$toast('Fehler beim Trennen des Kontos', 'error')
-      }
+  const confirmed = await confirm({
+    title: 'E-Mail-Konto trennen',
+    message: 'Möchten Sie das E-Mail-Konto wirklich trennen? Sie können dann keine Bewerbungen mehr über dieses Konto versenden.',
+    confirmText: 'Trennen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (!confirmed) return
+
+  try {
+    await api.delete(`/email/accounts/${accountId}`)
+    loadEmailAccounts()
+    if (window.$toast) {
+      window.$toast('E-Mail-Konto getrennt', 'success')
+    }
+  } catch (_err) {
+    if (window.$toast) {
+      window.$toast('Fehler beim Trennen des Kontos', 'error')
     }
   }
 }
