@@ -38,13 +38,40 @@
       </div>
 
       <!-- Timeline View -->
-      <section v-else-if="applications.length > 0" class="timeline-section">
-        <div class="timeline-container">
+      <section v-else-if="groupedApplications.length > 0" class="timeline-section">
+        <!-- Timeline Axis -->
+        <div class="timeline-axis">
           <div
-            v-for="app in applications"
-            :key="app.id"
-            class="timeline-item zen-card stagger-item"
+            v-for="(group, groupIndex) in groupedApplications"
+            :key="group.label"
+            class="timeline-group"
           >
+            <!-- Date Group Header -->
+            <div class="timeline-group-header">
+              <div class="timeline-axis-marker">
+                <div class="axis-dot"></div>
+              </div>
+              <div class="timeline-group-label">{{ group.label }}</div>
+            </div>
+
+            <!-- Applications in Group -->
+            <div class="timeline-group-items">
+              <div
+                v-for="(app, appIndex) in group.items"
+                :key="app.id"
+                class="timeline-item-wrapper"
+                :class="{
+                  'timeline-item-latest': groupIndex === 0 && appIndex === 0,
+                  'timeline-item-last-in-group': appIndex === group.items.length - 1 && groupIndex < groupedApplications.length - 1
+                }"
+              >
+                <!-- Vertical Line Connector -->
+                <div class="timeline-axis-line">
+                  <div class="axis-line"></div>
+                </div>
+
+                <!-- Timeline Card -->
+                <div class="timeline-item zen-card stagger-item">
             <!-- Timeline Item Header -->
             <div class="timeline-item-header">
               <div class="timeline-company">
@@ -100,6 +127,9 @@
               <button @click="openDetails(app)" class="zen-btn zen-btn-sm">
                 Details
               </button>
+            </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -243,13 +273,55 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
 
 const applications = ref([])
 const loading = ref(false)
 const daysFilter = ref('30')
 const selectedApp = ref(null)
+
+// Group applications by date/week
+const groupedApplications = computed(() => {
+  if (!applications.value.length) return []
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const lastWeekStart = new Date(today)
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7)
+
+  const groupMap = new Map()
+
+  applications.value.forEach(app => {
+    const appDate = new Date(app.datum)
+    const appDateOnly = new Date(appDate.getFullYear(), appDate.getMonth(), appDate.getDate())
+
+    let label
+    if (appDateOnly.getTime() === today.getTime()) {
+      label = 'Heute'
+    } else if (appDateOnly.getTime() === yesterday.getTime()) {
+      label = 'Gestern'
+    } else if (appDateOnly >= lastWeekStart) {
+      label = 'Diese Woche'
+    } else {
+      // Group by month
+      label = appDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+    }
+
+    if (!groupMap.has(label)) {
+      groupMap.set(label, { label, items: [], sortDate: appDate })
+    }
+    groupMap.get(label).items.push(app)
+  })
+
+  // Sort groups by date (newest first)
+  const sortedGroups = Array.from(groupMap.values())
+    .sort((a, b) => b.sortDate - a.sortDate)
+
+  return sortedGroups
+})
 
 const loadTimeline = async () => {
   loading.value = true
@@ -460,22 +532,131 @@ onMounted(() => {
 }
 
 /* ========================================
-   TIMELINE CONTAINER
+   TIMELINE AXIS - Global Timeline Line
    ======================================== */
 .timeline-section {
   margin-top: var(--space-ma);
 }
 
-.timeline-container {
+.timeline-axis {
+  position: relative;
+  padding-left: var(--space-xl);
+}
+
+.timeline-group {
+  position: relative;
+}
+
+.timeline-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.timeline-axis-marker {
+  position: absolute;
+  left: calc(-1 * var(--space-xl));
+  width: var(--space-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.axis-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-ai);
+  border: 3px solid var(--color-washi);
+  box-shadow: 0 0 0 2px var(--color-ai);
+  z-index: 2;
+  position: relative;
+}
+
+.timeline-group-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-ai);
+  background: var(--color-washi);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.timeline-group-items {
   display: flex;
   flex-direction: column;
-  gap: var(--space-lg);
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
+.timeline-item-wrapper {
+  position: relative;
+  display: flex;
+  gap: 0;
+}
+
+.timeline-axis-line {
+  position: absolute;
+  left: calc(-1 * var(--space-xl));
+  top: 0;
+  bottom: 0;
+  width: var(--space-xl);
+  display: flex;
+  justify-content: center;
+}
+
+.axis-line {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    var(--color-sand) 0%,
+    var(--color-stone) 50%,
+    var(--color-sand) 100%
+  );
+}
+
+/* Extend line below last item to connect to next group */
+.timeline-item-last-in-group .axis-line {
+  height: calc(100% + var(--space-lg));
+}
+
+/* Latest item highlighting */
+.timeline-item-latest .timeline-item {
+  border-left: 3px solid var(--color-ai);
+  box-shadow: var(--shadow-lifted), 0 0 0 1px var(--color-ai-subtle);
+}
+
+.timeline-item-latest .axis-line {
+  background: linear-gradient(
+    to bottom,
+    var(--color-ai) 0%,
+    var(--color-ai-light) 30%,
+    var(--color-sand) 100%
+  );
+  width: 3px;
+}
+
+/* ========================================
+   TIMELINE CARDS
+   ======================================== */
 .timeline-item {
+  flex: 1;
   padding: var(--space-lg);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
 }
 
+.timeline-item:hover {
+  transform: translateX(4px);
+}
+
+/* ========================================
+   TIMELINE ITEM CONTENT
+   ======================================== */
 .timeline-item-header {
   display: flex;
   justify-content: space-between;
@@ -686,6 +867,27 @@ onMounted(() => {
     align-items: flex-start;
     gap: var(--space-xs);
   }
+
+  /* Timeline axis responsive */
+  .timeline-axis {
+    padding-left: var(--space-lg);
+  }
+
+  .timeline-axis-marker {
+    left: calc(-1 * var(--space-lg));
+    width: var(--space-lg);
+  }
+
+  .timeline-axis-line {
+    left: calc(-1 * var(--space-lg));
+    width: var(--space-lg);
+  }
+
+  .axis-dot {
+    width: 10px;
+    height: 10px;
+    border-width: 2px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -695,6 +897,30 @@ onMounted(() => {
 
   .timeline-item-header {
     flex-direction: column;
+  }
+
+  .timeline-axis {
+    padding-left: var(--space-md);
+  }
+
+  .timeline-axis-marker {
+    left: calc(-1 * var(--space-md));
+    width: var(--space-md);
+  }
+
+  .timeline-axis-line {
+    left: calc(-1 * var(--space-md));
+    width: var(--space-md);
+  }
+
+  .axis-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .timeline-group-label {
+    font-size: 0.75rem;
+    padding: var(--space-xs);
   }
 }
 
