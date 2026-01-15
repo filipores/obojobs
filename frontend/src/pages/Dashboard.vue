@@ -99,10 +99,24 @@
         </div>
 
         <!-- Loading State -->
-        <div v-else class="stats-grid">
+        <div v-else-if="!loadError" class="stats-grid" role="status" aria-label="Statistiken werden geladen">
           <div v-for="i in 4" :key="i" class="stat-card">
-            <div class="skeleton" style="height: 140px;"></div>
+            <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
+          <span class="sr-only">Statistiken werden geladen...</span>
+        </div>
+
+        <!-- Error State -->
+        <div v-else class="loading-error" role="alert">
+          <svg class="loading-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+          <p class="loading-error-message">Statistiken konnten nicht geladen werden</p>
+          <button @click="retryLoadStats" class="loading-error-retry">
+            Erneut versuchen
+          </button>
         </div>
       </div>
     </section>
@@ -230,6 +244,7 @@ import JobRecommendations from '../components/JobRecommendations.vue'
 const stats = ref(null)
 const usage = ref(null)
 const bannerDismissed = ref(false)
+const loadError = ref(false)
 
 const showVerificationBanner = computed(() => {
   if (bannerDismissed.value) return false
@@ -248,12 +263,8 @@ const getPlanLabel = () => {
   return plan.charAt(0).toUpperCase() + plan.slice(1)
 }
 
-onMounted(async () => {
-  // Check if banner was dismissed this session
-  if (sessionStorage.getItem('verificationBannerDismissed')) {
-    bannerDismissed.value = true
-  }
-
+const loadStats = async () => {
+  loadError.value = false
   try {
     // Fetch fresh user data to get current email_verified status
     await authStore.fetchUser()
@@ -262,7 +273,22 @@ onMounted(async () => {
     usage.value = data.usage
   } catch (error) {
     console.error('Failed to load stats:', error)
+    loadError.value = true
   }
+}
+
+const retryLoadStats = () => {
+  stats.value = null
+  loadStats()
+}
+
+onMounted(async () => {
+  // Check if banner was dismissed this session
+  if (sessionStorage.getItem('verificationBannerDismissed')) {
+    bannerDismissed.value = true
+  }
+
+  await loadStats()
 })
 </script>
 

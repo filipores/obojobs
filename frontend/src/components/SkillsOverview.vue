@@ -23,8 +23,22 @@
     </div>
 
     <!-- Loading State -->
-    <div v-if="loading" class="skills-loading">
-      <div class="skeleton" style="height: 200px;"></div>
+    <div v-if="loading && !loadError" class="skills-loading" role="status" aria-label="Skills werden geladen">
+      <div class="skeleton" style="height: 200px;" aria-hidden="true"></div>
+      <span class="sr-only">Skills werden geladen...</span>
+    </div>
+
+    <!-- Error State -->
+    <div v-else-if="loadError" class="loading-error" role="alert">
+      <svg class="loading-error-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <circle cx="12" cy="12" r="10"/>
+        <line x1="12" y1="8" x2="12" y2="12"/>
+        <line x1="12" y1="16" x2="12.01" y2="16"/>
+      </svg>
+      <p class="loading-error-message">Skills konnten nicht geladen werden</p>
+      <button @click="retryLoad" class="loading-error-retry">
+        Erneut versuchen
+      </button>
     </div>
 
     <!-- Empty State -->
@@ -147,6 +161,7 @@ import { confirm } from '../composables/useConfirm'
 
 const skills = ref([])
 const loading = ref(true)
+const loadError = ref(false)
 const extracting = ref(false)
 const saving = ref(false)
 const showAddModal = ref(false)
@@ -198,14 +213,22 @@ const getCategoryIcon = (category) => {
 }
 
 const loadSkills = async () => {
+  loadError.value = false
   try {
     const { data } = await api.get('/users/me/skills')
     skills.value = data.skills || []
   } catch (error) {
     console.error('Failed to load skills:', error)
+    loadError.value = true
   } finally {
     loading.value = false
   }
+}
+
+const retryLoad = () => {
+  loading.value = true
+  loadSkills()
+  loadDocuments()
 }
 
 const loadDocuments = async () => {
