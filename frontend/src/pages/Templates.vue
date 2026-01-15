@@ -254,7 +254,7 @@
           <div class="form-header">
             <h2>{{ editingTemplate ? 'Template bearbeiten' : 'Neues Template erstellen' }}</h2>
             <p class="form-subtitle">
-              Verwenden Sie Platzhalter wie {{FIRMA}}, {{POSITION}}, {{ANSPRECHPARTNER}}
+              Verwenden Sie Platzhalter wie <span v-pre>{{FIRMA}}, {{POSITION}}, {{ANSPRECHPARTNER}}</span>
             </p>
           </div>
 
