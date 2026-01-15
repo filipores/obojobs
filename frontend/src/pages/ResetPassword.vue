@@ -300,7 +300,7 @@ const handleSubmit = async () => {
     loading.value = true
     error.value = ''
 
-    await api.post('/auth/reset-password', {
+    await api.silent.post('/auth/reset-password', {
       token: token.value,
       new_password: password.value
     })
