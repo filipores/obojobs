@@ -1,5 +1,8 @@
 <template>
   <div class="template-editor-wrapper">
+    <!-- Variable insert panel -->
+    <VariablePanel @insert="handleInsertVariable" />
+
     <!-- Suggestions banner -->
     <Transition name="banner">
       <div v-if="hasSuggestions" class="suggestions-banner">
@@ -59,6 +62,7 @@ import { ref, computed, watch, onMounted, nextTick } from 'vue'
 import _VariableChip from './VariableChip.vue'
 import _SuggestionChip from './SuggestionChip.vue'
 import VariableDropdown from './VariableDropdown.vue'
+import VariablePanel from './VariablePanel.vue'
 import {
   useTemplateParser,
   parseTemplate as _parseTemplate,
@@ -440,6 +444,79 @@ function handleVariableSelect(variableType) {
   setContent(newPlainText)
 
   closeDropdown()
+
+  // Re-render to ensure proper structure
+  renderEditor()
+}
+
+// Handle inserting variable from panel at cursor position
+function handleInsertVariable(variableType) {
+  if (!editorRef.value) return
+
+  // Focus the editor first
+  editorRef.value.focus()
+
+  const selection = window.getSelection()
+
+  // If no selection or selection is outside editor, append at end
+  if (!selection || selection.rangeCount === 0 ||
+      !editorRef.value.contains(selection.anchorNode)) {
+    // Append variable at end
+    const variableText = `{{${variableType}}}`
+    const currentContent = getPlainTextFromEditor()
+    setContent(currentContent + variableText)
+    renderEditor()
+
+    // Place cursor after the inserted variable
+    nextTick(() => {
+      const sel = window.getSelection()
+      const range = document.createRange()
+      range.selectNodeContents(editorRef.value)
+      range.collapse(false) // collapse to end
+      sel.removeAllRanges()
+      sel.addRange(range)
+    })
+    return
+  }
+
+  const range = selection.getRangeAt(0)
+
+  // Create variable chip element
+  const chip = document.createElement('span')
+  chip.className = 'variable-chip'
+  chip.setAttribute('data-type', variableType)
+  chip.setAttribute('data-segment-id', `seg_new_${Date.now()}`)
+  chip.setAttribute('contenteditable', 'false')
+  chip.setAttribute('title', VARIABLE_TYPES[variableType]?.description || '')
+
+  const label = document.createElement('span')
+  label.className = 'chip-label'
+  label.textContent = VARIABLE_TYPES[variableType]?.label || variableType
+  chip.appendChild(label)
+
+  const removeBtn = document.createElement('button')
+  removeBtn.className = 'chip-remove'
+  removeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
+  removeBtn.title = 'Variable entfernen'
+  chip.appendChild(removeBtn)
+
+  // If there's selected text, replace it
+  if (!range.collapsed) {
+    range.deleteContents()
+  }
+
+  // Insert chip at cursor position
+  range.insertNode(chip)
+
+  // Move cursor after the chip
+  range.setStartAfter(chip)
+  range.setEndAfter(chip)
+  selection.removeAllRanges()
+  selection.addRange(range)
+
+  // Update segments from editor
+  const newPlainText = getPlainTextFromEditor()
+  setContent(newPlainText)
 
   // Re-render to ensure proper structure
   renderEditor()
