@@ -1,17 +1,17 @@
 {
   "project": "obojobs",
   "branchName": "ralph/ux-improvements",
-  "description": "UX & Feature Improvements - Vorschläge aus Test-Ralph explorativen UI Tests",
+  "description": "UX & Feature Improvements - Vorschlaege aus Test-Ralph explorativen UI Tests",
   "userStories": [
     {
       "id": "UX-001",
       "title": "Details-Link auf spezifische Bewerbung verlinken",
-      "description": "Timeline Details-Link soll zur spezifischen Bewerbung führen statt zur Übersicht",
+      "description": "Timeline Details-Link soll zur spezifischen Bewerbung fuehren statt zur Uebersicht",
       "acceptanceCriteria": [
         "Details-Button in Timeline.vue verlinkt auf /applications/{id}",
         "Bewerbungs-ID wird korrekt aus dem Timeline-Eintrag extrahiert",
-        "Navigation funktioniert für alle Bewerbungen in der Timeline",
-        "Alle Tests grün (pytest, npm test)",
+        "Navigation funktioniert fuer alle Bewerbungen in der Timeline",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 1,
@@ -20,13 +20,13 @@
     },
     {
       "id": "UX-002",
-      "title": "Navigationslink zu Company Insights hinzufügen",
-      "description": "Die Company Insights Seite ist nur über direkte URL erreichbar. Es fehlt ein Link in der Hauptnavigation.",
+      "title": "Navigationslink zu Company Insights hinzufuegen",
+      "description": "Die Company Insights Seite ist nur ueber direkte URL erreichbar. Es fehlt ein Link in der Hauptnavigation.",
       "acceptanceCriteria": [
-        "Link 'Company Insights' in Hauptnavigation hinzufügen",
+        "Link 'Company Insights' in Hauptnavigation hinzufuegen",
         "Alternativ: Link auf der Bewerbungen-Seite bei jeder Firma",
-        "Responsive Design für Mobile berücksichtigen",
-        "Alle Tests grün (pytest, npm test)",
+        "Responsive Design fuer Mobile beruecksichtigen",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 2,
@@ -36,10 +36,10 @@
     {
       "id": "UX-003",
       "title": "Install @vitest/coverage-v8 dependency",
-      "description": "Coverage Provider für Vitest fehlt in devDependencies",
+      "description": "Coverage Provider fuer Vitest fehlt in devDependencies",
       "acceptanceCriteria": [
-        "npm install -D @vitest/coverage-v8 ausführen",
-        "npm script 'test:coverage' zu package.json hinzufügen",
+        "npm install -D @vitest/coverage-v8 ausfuehren",
+        "npm script 'test:coverage' zu package.json hinzufuegen",
         "npx vitest run --coverage funktioniert ohne Fehler",
         "Coverage Report wird generiert"
       ],
@@ -56,7 +56,7 @@
         "Email-Adressen aus Stellentext extrahieren",
         "Standort/Stadt aus Text erkennen",
         "Extrahierte Daten in entsprechende Felder eintragen",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 4,
@@ -66,13 +66,13 @@
     {
       "id": "UX-005",
       "title": "Echtzeit-URL-Validierung mit visuellem Feedback",
-      "description": "URL-Eingabe sollte vor Submit validiert werden mit grün/rot Indikator",
+      "description": "URL-Eingabe sollte vor Submit validiert werden mit gruen/rot Indikator",
       "acceptanceCriteria": [
-        "Client-seitige URL-Validierung während der Eingabe",
-        "Visuelles Feedback: grüner Rahmen bei gültiger URL, roter bei ungültiger",
-        "Submit-Button disabled bei offensichtlich ungültiger URL",
+        "Client-seitige URL-Validierung waehrend der Eingabe",
+        "Visuelles Feedback: gruener Rahmen bei gueltiger URL, roter bei ungueltiger",
+        "Submit-Button disabled bei offensichtlich ungueltiger URL",
         "Tooltip/Hinweis bei Validierungsfehler",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 5,
@@ -82,12 +82,12 @@
     {
       "id": "UX-006",
       "title": "Standort und Anstellungsart aus manuellem Stellentext extrahieren",
-      "description": "Zusätzliche Felder automatisch aus manuellem Text befüllen",
+      "description": "Zusaetzliche Felder automatisch aus manuellem Text befuellen",
       "acceptanceCriteria": [
         "Standort-Erkennung (Stadt, Region)",
         "Anstellungsart erkennen (Vollzeit, Teilzeit, Remote, etc.)",
-        "Felder automatisch befüllen nach Analyse",
-        "Alle Tests grün (pytest, npm test)",
+        "Felder automatisch befuellen nach Analyse",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 6,
@@ -96,13 +96,13 @@
     },
     {
       "id": "UX-007",
-      "title": "Loading-State für Upgrade-Buttons hinzufügen",
-      "description": "Upgrade-Buttons sollten einen Spinner zeigen während Checkout-Session erstellt wird",
+      "title": "Loading-State fuer Upgrade-Buttons hinzufuegen",
+      "description": "Upgrade-Buttons sollten einen Spinner zeigen waehrend Checkout-Session erstellt wird",
       "acceptanceCriteria": [
-        "Loading-Spinner auf Button während API-Call",
-        "Button disabled während Loading",
+        "Loading-Spinner auf Button waehrend API-Call",
+        "Button disabled waehrend Loading",
         "Error-Handling bei fehlgeschlagenem Checkout",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 7,
@@ -112,13 +112,13 @@
     {
       "id": "UX-008",
       "title": "Backend-Fehlermeldungen lokalisieren",
-      "description": "Alle Backend-Fehlermeldungen sollten auf Deutsch zurückgegeben werden oder vom Frontend übersetzt werden",
+      "description": "Alle Backend-Fehlermeldungen sollten auf Deutsch zurueckgegeben werden oder vom Frontend uebersetzt werden",
       "acceptanceCriteria": [
         "Auth-Service Fehler auf Deutsch",
         "Email-Service Fehler auf Deutsch",
-        "Frontend übersetzt bekannte Backend-Fehlercodes",
+        "Frontend uebersetzt bekannte Backend-Fehlercodes",
         "Keine technischen Meldungen an Endnutzer",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 8,
@@ -132,8 +132,8 @@
       "acceptanceCriteria": [
         "Toast-Deduplizierung im API-Client",
         "Nur eine Fehlermeldung pro Fehler",
-        "Priorität: Benutzerfreundliche deutsche Meldung",
-        "Alle Tests grün (pytest, npm test)",
+        "Prioritaet: Benutzerfreundliche deutsche Meldung",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 9,
@@ -142,13 +142,13 @@
     },
     {
       "id": "UX-010",
-      "title": "ARIA-Attribute für Toasts hinzufügen",
-      "description": "Toasts sollten role='alert' oder aria-live='polite' haben für Screenreader",
+      "title": "ARIA-Attribute fuer Toasts hinzufuegen",
+      "description": "Toasts sollten role='alert' oder aria-live='polite' haben fuer Screenreader",
       "acceptanceCriteria": [
         "role='alert' auf Toast-Komponente",
-        "aria-live='polite' für nicht-kritische Toasts",
-        "Screenreader kündigt Toasts an",
-        "Alle Tests grün (pytest, npm test)",
+        "aria-live='polite' fuer nicht-kritische Toasts",
+        "Screenreader kuendigt Toasts an",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 10,
@@ -161,9 +161,9 @@
       "description": "npm run lint sollte automatisch in der Pipeline laufen",
       "acceptanceCriteria": [
         "ESLint-Schritt in CI/CD Pipeline",
-        "Build schlägt fehl bei ESLint-Fehlern",
+        "Build schlaegt fehl bei ESLint-Fehlern",
         "Warnings werden geloggt aber blocken nicht",
-        "Console.log Warnings addressieren (40 Stück)"
+        "Console.log Warnings addressieren (40 Stueck)"
       ],
       "priority": 11,
       "passes": true,
@@ -171,13 +171,13 @@
     },
     {
       "id": "UX-012",
-      "title": "Pre-fill Empfänger-Email aus Bewerbungsdaten",
-      "description": "Email-Composer 'An' Feld sollte automatisch befüllt werden wenn application.email vorhanden",
+      "title": "Pre-fill Empfaenger-Email aus Bewerbungsdaten",
+      "description": "Email-Composer 'An' Feld sollte automatisch befuellt werden wenn application.email vorhanden",
       "acceptanceCriteria": [
-        "Empfänger-Feld wird aus app.email befüllt",
+        "Empfaenger-Feld wird aus app.email befuellt",
         "Falls leer: Hinweis dass Email manuell eingegeben werden muss",
         "Optional: Email bei Bewerbungserstellung erforderlich machen",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 12,
@@ -186,14 +186,14 @@
     },
     {
       "id": "UX-013",
-      "title": "Möglichkeit zum Löschen einzelner History-Einträge",
-      "description": "User sollten alte oder irrelevante Analysen aus der History entfernen können",
+      "title": "Moeglichkeit zum Loeschen einzelner History-Eintraege",
+      "description": "User sollten alte oder irrelevante Analysen aus der History entfernen koennen",
       "acceptanceCriteria": [
         "Delete-Button/Icon bei jedem History-Eintrag",
-        "Bestätigungsdialog vor Löschen",
+        "Bestaetigungsdialog vor Loeschen",
         "API-Endpoint DELETE /api/analysis-history/{id}",
-        "UI aktualisiert sich nach Löschen",
-        "Alle Tests grün (pytest, npm test)",
+        "UI aktualisiert sich nach Loeschen",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 13,
@@ -202,14 +202,14 @@
     },
     {
       "id": "UX-014",
-      "title": "Passwort-Sichtbarkeits-Toggle hinzufügen",
+      "title": "Passwort-Sichtbarkeits-Toggle hinzufuegen",
       "description": "Eye-Icon zum Ein/Ausblenden des Passworts in Formularen",
       "acceptanceCriteria": [
         "Toggle-Button neben Passwort-Feldern",
         "Icon wechselt zwischen 'eye' und 'eye-off'",
         "Input-Type wechselt zwischen 'password' und 'text'",
         "Funktioniert in Login, Register, Reset-Password",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 14,
@@ -219,12 +219,12 @@
     {
       "id": "UX-015",
       "title": "Export gefilterte Daten",
-      "description": "Export exportiert immer ALLE Bewerbungen - Option für gefilterte Auswahl",
+      "description": "Export exportiert immer ALLE Bewerbungen - Option fuer gefilterte Auswahl",
       "acceptanceCriteria": [
         "Checkbox 'Nur gefilterte exportieren' im Export-Dialog",
-        "Filter-State wird an Export-Funktion übergeben",
+        "Filter-State wird an Export-Funktion uebergeben",
         "Backend filtert entsprechend",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 15,
@@ -233,196 +233,456 @@
     },
     {
       "id": "UX-016",
-      "title": "Login-401-Fehler korrekt behandeln",
-      "description": "API-Client sollte Login-Route von globaler 401-Behandlung ausschließen, damit Fehlermeldungen bei falschem Passwort angezeigt werden",
+      "title": "Custom Confirm-Modal statt native Browser-Dialoge",
+      "description": "Native Browser-Confirm durch Custom-Modal ersetzen fuer konsistentes Design",
       "acceptanceCriteria": [
-        "Interceptor in client.js prüft ob Anfrage an /auth/login geht",
-        "Bei Login-Route: Fehler durchreichen statt globale Behandlung",
-        "Login-Komponente zeigt deutsche Fehlermeldung bei falschen Credentials",
-        "Alle Tests grün (pytest, npm test)",
+        "ConfirmModal-Komponente erstellen",
+        "Deutsche Buttons 'Loeschen'/'Abbrechen'",
+        "Alle window.confirm Aufrufe ersetzen",
+        "Konsistentes Design-System",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 16,
       "passes": true,
-      "source": "test-ralph COMMIT-9"
+      "source": "test-ralph"
     },
     {
       "id": "UX-017",
-      "title": "Timeline Details-Modal statt separate Route",
-      "description": "Timeline sollte gleiches Modal-Pattern wie Applications-Seite verwenden für Details-Anzeige",
+      "title": "Sortierungs-Dropdown fuer Applications hinzufuegen",
+      "description": "Keine manuelle Sortierung moeglich - nur automatisch nach Datum",
       "acceptanceCriteria": [
-        "Details-Button öffnet Modal statt Navigation",
-        "Modal zeigt Bewerbungs-Details an",
-        "Konsistentes UX-Pattern mit Applications-Seite",
-        "Alle Tests grün (pytest, npm test)",
+        "Sortierungs-Dropdown neben Status-Filter",
+        "Optionen: Datum (neu/alt), Firma A-Z, Status",
+        "Sortierung persistiert bei Filter-Aenderungen",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 17,
-      "passes": true,
-      "source": "test-ralph COMMIT-15"
+      "passes": false,
+      "source": "test-ralph FLOW-007"
     },
     {
       "id": "UX-018",
-      "title": "Tooltips für Mobile-Navigation hinzufügen",
-      "description": "Alle Nav-Links sollten title-Attribute im Mobile-Modus haben, nicht nur Insights",
+      "title": "Pagination fuer Applications implementieren",
+      "description": "Bei vielen Bewerbungen (50+) Performance-Probleme moeglich",
       "acceptanceCriteria": [
-        "Alle Nav-Links haben title-Attribut",
-        "Tooltips sind auf Deutsch",
-        "Accessibility für Mobile verbessert",
-        "Alle Tests grün (pytest, npm test)",
+        "Pagination mit 10-20 Eintraegen pro Seite",
+        "Seitennummern oder 'Mehr laden' Button",
+        "Backend-seitige Pagination (LIMIT/OFFSET)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 18,
-      "passes": true,
-      "source": "test-ralph COMMIT-14"
+      "passes": false,
+      "source": "test-ralph FLOW-007"
     },
     {
       "id": "UX-019",
-      "title": "Button-Debounce für API Key Generierung",
-      "description": "Der 'Neuen Key generieren' Button ermöglicht doppelte Klicks, Button sollte während API-Anfrage deaktiviert werden",
+      "title": "Interview-Termin als Datepicker",
+      "description": "Interview-Termin-Feld ist nur Textfeld - Datepicker waere besser",
       "acceptanceCriteria": [
-        "Button wird während API-Call disabled",
-        "Loading-State während Generierung",
-        "Keine doppelten API Keys durch Mehrfachklicks",
-        "Alle Tests grün (pytest, npm test)",
+        "Datepicker mit Zeit-Auswahl",
+        "Konsistentes Datumsformat wird erzwungen",
+        "Kalender-Widget im Design-System Stil",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 19,
-      "passes": true,
-      "source": "test-ralph COMMIT-8"
+      "passes": false,
+      "source": "test-ralph FLOW-008"
     },
     {
       "id": "UX-020",
-      "title": "Export-Button deaktivieren bei 0 Ergebnissen",
-      "description": "Wenn 'Nur gefilterte' aktiv ist und 0 Ergebnisse vorhanden, Export-Buttons deaktivieren",
+      "title": "Template-Variablen-Einfuege-Mechanismus verbessern",
+      "description": "Variablen muessen manuell eingetippt werden - kein sichtbares Variablen-Panel",
       "acceptanceCriteria": [
-        "Export-Buttons disabled wenn filteredCount === 0 und onlyFiltered aktiv",
-        "Visuelles Feedback dass Export nicht möglich",
-        "Tooltip erklärt warum Button deaktiviert",
-        "Alle Tests grün (pytest, npm test)",
+        "Dropdown oder Button-Panel mit verfuegbaren Variablen",
+        "Klick fuegt Variable an Cursor-Position ein",
+        "Tooltip erklaert jede Variable",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 20,
-      "passes": true,
-      "source": "test-ralph COMMIT-2"
+      "passes": false,
+      "source": "test-ralph FLOW-005"
     },
     {
       "id": "UX-021",
-      "title": "Coverage-Threshold in Vitest konfigurieren",
-      "description": "vitest.config.js sollte Coverage-Thresholds definieren um Mindestabdeckung zu erzwingen",
+      "title": "Text-Analyse in ATS-History speichern",
+      "description": "Text-Modus Analysen werden nicht in History angezeigt",
       "acceptanceCriteria": [
-        "Coverage-Threshold in vitest.config.js konfiguriert",
-        "Mindest-Coverage definiert (z.B. 70%)",
-        "Tests schlagen fehl bei zu niedriger Coverage",
-        "Alle Tests grün (pytest, npm test)",
+        "Text-Analysen werden mit Titel in History gespeichert",
+        "Titel = erste Zeile der Stellenbeschreibung oder 'Manuelle Analyse'",
+        "Laden und Loeschen funktioniert wie URL-Analysen",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 21,
-      "passes": true,
-      "source": "test-ralph COMMIT-13"
+      "passes": false,
+      "source": "test-ralph FLOW-011"
     },
     {
       "id": "UX-022",
-      "title": "Custom Confirm-Modal statt native Browser-Dialoge",
-      "description": "Native Browser-Confirm durch Custom-Modal ersetzen für konsistentes Design",
+      "title": "Profil-Bearbeitungsmoeglichkeit in Settings",
+      "description": "Keine Moeglichkeit persoenliche Profildaten zu bearbeiten",
       "acceptanceCriteria": [
-        "ConfirmModal-Komponente erstellen",
-        "Deutsche Buttons 'Löschen'/'Abbrechen'",
-        "Alle window.confirm Aufrufe ersetzen",
-        "Konsistentes Design-System",
-        "Alle Tests grün (pytest, npm test)",
+        "Profil-Sektion in Settings mit Name, Anzeigename",
+        "Optional: Profilbild-Upload",
+        "Speichern aktualisiert User-Daten",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 22,
-      "passes": true,
-      "source": "test-ralph COMMIT-4"
+      "passes": false,
+      "source": "test-ralph FLOW-014"
     },
     {
       "id": "UX-023",
-      "title": "Hidden username field für Password-Manager",
-      "description": "Verstecktes Username-Feld in ResetPassword für bessere Password-Manager Kompatibilität",
+      "title": "Skeleton-Loading mit Animation versehen",
+      "description": "Skeleton-Platzhalter sind statisch - User weiss nicht ob etwas laedt",
       "acceptanceCriteria": [
-        "Hidden input type='text' autocomplete='username' hinzufügen",
-        "Browser-Warnung verschwindet",
-        "Password-Manager können Credentials besser speichern",
-        "Alle Tests grün (pytest, npm test)",
+        "Shimmer/Pulse Animation fuer alle Skeletons",
+        "aria-label fuer Screen-Reader",
+        "Error-State wenn Loading fehlschlaegt",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 23,
-      "passes": true,
-      "source": "test-ralph COMMIT-3"
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-001"
     },
     {
       "id": "UX-024",
-      "title": "Upgrade-Buttons visuell disabled während Loading",
-      "description": "Alle anderen Upgrade-Buttons sollten während des Ladens auch visuell disabled werden",
+      "title": "Timeline visuelle Zeitachsen-Linie hinzufuegen",
+      "description": "Timeline hat keine visuelle Zeitachse zwischen Cards",
       "acceptanceCriteria": [
-        "Alle Upgrade-Buttons grau/disabled wenn einer lädt",
-        "Visuelles Feedback durch Opacity/Cursor-Change",
-        "Alle Tests grün (pytest, npm test)",
+        "Vertikale Linie verbindet Timeline-Events",
+        "Gruppierung nach Datum/Woche moeglich",
+        "Neueste Events hervorgehoben",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 24,
-      "passes": true,
-      "source": "test-ralph COMMIT-10"
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-005"
     },
     {
       "id": "UX-025",
-      "title": "ARIA-Live-Region für URL-Validierungsstatus",
-      "description": "Für Screen-Reader-Nutzer aria-live Region hinzufügen die Validierungsänderungen ankündigt",
+      "title": "Pflichtfeld-Markierung (*) bei Formularen",
+      "description": "Pflichtfelder sind nicht visuell gekennzeichnet",
       "acceptanceCriteria": [
-        "aria-live='polite' Region für Validierungsstatus",
-        "Screenreader kündigt gültig/ungültig an",
-        "Funktioniert bei Eingabe und Paste",
-        "Alle Tests grün (pytest, npm test)",
+        "Pflichtfelder mit * oder 'Erforderlich' markieren",
+        "Konsistent auf /register, /settings, /new-application",
+        "Screenreader erhaelt required-Info",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 25,
-      "passes": true,
-      "source": "test-ralph COMMIT-11"
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-004"
     },
     {
       "id": "UX-026",
-      "title": "aria-label für Delete-Buttons hinzufügen",
-      "description": "Delete-Buttons brauchen aria-label zusätzlich zu title für bessere Accessibility",
+      "title": "ATS-Voraussetzungs-Check mit CTA",
+      "description": "Ohne Lebenslauf kommt unklarer Fehler statt hilfreicher Hinweis",
       "acceptanceCriteria": [
-        "aria-label='Eintrag löschen' auf allen Delete-Buttons",
-        "Screenreader liest Aktion vor",
-        "Alle Tests grün (pytest, npm test)",
+        "Wenn kein Lebenslauf: Hinweis-Box mit 'Lebenslauf hochladen' Button",
+        "ATS-Begriff erklaeren (Tooltip oder kurzer Text)",
+        "Score-Skala visuell erklaeren (Legende)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 26,
-      "passes": true,
-      "source": "test-ralph COMMIT-4"
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-009"
     },
     {
       "id": "UX-027",
-      "title": "Vue Warnings auf Templates-Seite beheben",
-      "description": "Properties FIRMA, POSITION, ANSPRECHPARTNER werden aufgerufen aber nicht definiert",
+      "title": "Plan-Vergleichstabelle auf Subscription-Seite",
+      "description": "Keine Uebersicht aller verfuegbaren Plaene mit Preisen",
       "acceptanceCriteria": [
-        "Alle undefined Properties in Templates.vue beheben",
-        "Keine Vue Warnings mehr in Konsole",
-        "Alle Tests grün (pytest, npm test)",
+        "Alle Plaene nebeneinander mit Features und Preisen",
+        "Aktueller Plan visuell hervorgehoben",
+        "Deutlicher Upgrade-Button",
+        "Nutzungsstatistiken anzeigen",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 27,
-      "passes": true,
-      "source": "test-ralph COMMIT-9"
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-007"
     },
     {
       "id": "UX-028",
-      "title": "Checkbox-Zustand zurücksetzen bei fehlendem Filter",
-      "description": "Die Checkbox 'Nur gefilterte' sollte auf false zurückgesetzt werden wenn kein Filter aktiv ist",
+      "title": "Inline-Validierung fuer Login/Register Formulare",
+      "description": "Keine sichtbare Fehlermeldung bei leeren oder ungueltigen Feldern",
       "acceptanceCriteria": [
-        "onlyFiltered wird auf false gesetzt wenn kein Filter aktiv",
-        "Watcher oder computed property für Filter-State",
-        "Konsistentes Verhalten beim Wechseln zwischen Views",
-        "Alle Tests grün (pytest, npm test)",
+        "Inline-Fehlermeldungen unter jedem Feld",
+        "E-Mail-Format live validieren",
+        "Konsistent mit Passwort-Validierung (die funktioniert)",
+        "Alle Tests gruen (pytest, npm test)",
         "Linting OK (ruff, eslint)"
       ],
       "priority": 28,
-      "passes": true,
-      "source": "test-ralph COMMIT-2"
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-008, EDGE-003"
+    },
+    {
+      "id": "UX-029",
+      "title": "autocomplete-Attribute fuer Passwort-Felder",
+      "description": "Browser-Warnung wegen fehlender autocomplete-Attribute",
+      "acceptanceCriteria": [
+        "autocomplete='current-password' bei Login",
+        "autocomplete='new-password' bei Register/Reset",
+        "Verbesserte Passwort-Manager-Kompatibilitaet",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 29,
+      "passes": false,
+      "source": "test-ralph EDGE-003, FLOW-014"
+    },
+    {
+      "id": "UX-030",
+      "title": "Page Title dynamisch setzen",
+      "description": "Browser-Tab zeigt immer 'obo - Bewerbungsautomation' statt aktuelle Seite",
+      "acceptanceCriteria": [
+        "Jede Seite setzt eigenen Title",
+        "Format: 'Seitenname | obo'",
+        "Beispiel: 'Bewerbungen | obo', 'Dashboard | obo'",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 30,
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-003"
+    },
+    {
+      "id": "UX-031",
+      "title": "aria-live fuer Passwort-Validierung",
+      "description": "Screen-Reader bekommen keine Benachrichtigung bei erfuellten Passwort-Anforderungen",
+      "acceptanceCriteria": [
+        "aria-live='polite' auf Validierungsbereich",
+        "Screenreader kuendigt erfuellte Anforderungen an",
+        "Funktioniert bei Register und Reset-Password",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 31,
+      "passes": false,
+      "source": "test-ralph FLOW-001, FLOW-002"
+    },
+    {
+      "id": "UX-032",
+      "title": "Loading-State fuer 'Link anfordern' Button",
+      "description": "Forgot-Password Button zeigt keinen Loading-State",
+      "acceptanceCriteria": [
+        "Spinner oder disabled-State waehrend API-Call",
+        "Verhindert Doppelklicks",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 32,
+      "passes": false,
+      "source": "test-ralph FLOW-002"
+    },
+    {
+      "id": "UX-033",
+      "title": "ATS Score farbig visualisieren",
+      "description": "Score wird nur als Zahl angezeigt - Farbe wuerde Interpretation erleichtern",
+      "acceptanceCriteria": [
+        "Farbliche Visualisierung: rot/gelb/gruen je nach Score",
+        "Optional: Progress-Ring statt nur Zahl",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 33,
+      "passes": false,
+      "source": "test-ralph FLOW-011"
+    },
+    {
+      "id": "UX-034",
+      "title": "Toast-Bestaetigung bei Status-Aenderung",
+      "description": "Status-Aenderung speichert still - keine Toast-Bestaetigung",
+      "acceptanceCriteria": [
+        "Toast 'Status erfolgreich geaendert' nach Speichern",
+        "Konsistent mit anderen Aktionen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 34,
+      "passes": false,
+      "source": "test-ralph FLOW-008"
+    },
+    {
+      "id": "UX-035",
+      "title": "E-Mail-Verifizierungs-Banner persistent",
+      "description": "Banner verschwindet nach Schliessen und erscheint nicht mehr beim Neuladen",
+      "acceptanceCriteria": [
+        "Banner erscheint bei jedem Besuch bis Email verifiziert",
+        "Optional: Weniger aufdringliche Variante nach erstem Schliessen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 35,
+      "passes": false,
+      "source": "test-ralph FLOW-003"
+    },
+    {
+      "id": "UX-036",
+      "title": "Tabellen-Ansicht als Alternative zum Card-Grid",
+      "description": "Fuer bessere Scanability bei vielen Bewerbungen",
+      "acceptanceCriteria": [
+        "Toggle zwischen Card-Grid und Tabellen-Ansicht",
+        "Tabelle mit Sortierung und kompakter Darstellung",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 36,
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-002"
+    },
+    {
+      "id": "UX-037",
+      "title": "Status-Filter als Tabs statt Dropdown",
+      "description": "Fuer schnelleren Zugriff auf Status-Filter",
+      "acceptanceCriteria": [
+        "Status als klickbare Tabs/Chips ueber den Karten",
+        "Aehnlich wie bei der Stats-Section",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 37,
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-002"
+    },
+    {
+      "id": "UX-038",
+      "title": "Settings-Navigation bei wachsender Komplexitaet",
+      "description": "Bei wachsender Anzahl von Settings waere eine Navigation sinnvoll",
+      "acceptanceCriteria": [
+        "Sidebar oder Tab-Navigation fuer Settings",
+        "Kategorien: Profil, Sicherheit, Integrationen, Gefahrenzone",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 38,
+      "passes": false,
+      "source": "test-ralph UX-CLARITY-006"
+    },
+    {
+      "id": "UX-039",
+      "title": "Gehaltsverhandlungs-Coach Daten persistieren",
+      "description": "Generierte Daten gehen beim Verlassen der Seite verloren",
+      "acceptanceCriteria": [
+        "Marktrecherche und Strategie in Datenbank speichern",
+        "Bei erneutem Besuch wieder laden",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 39,
+      "passes": false,
+      "source": "test-ralph FLOW-012"
+    },
+    {
+      "id": "UX-040",
+      "title": "Skills bleiben nach Dokument-Loeschung erhalten - Hinweis hinzufuegen",
+      "description": "User koennte verwirrt sein dass Skills nach Lebenslauf-Loeschung bleiben",
+      "acceptanceCriteria": [
+        "Hinweis-Dialog beim Loeschen: 'Moechten Sie auch die extrahierten Skills loeschen?'",
+        "Option: Skills ebenfalls loeschen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 40,
+      "passes": false,
+      "source": "test-ralph FLOW-004"
+    },
+    {
+      "id": "UX-041",
+      "title": "Horizontaler Scroll-Indikator fuer Tabellen",
+      "description": "User sieht nicht dass mehr Inhalt horizontal verfuegbar ist",
+      "acceptanceCriteria": [
+        "Fade-Effekt am Rand oder Scroll-Pfeil",
+        "Zeigt an dass mehr Inhalt verfuegbar ist",
+        "Funktioniert auf Company Insights und anderen Tabellen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 41,
+      "passes": false,
+      "source": "test-ralph FLOW-010"
+    },
+    {
+      "id": "UX-042",
+      "title": "Keyword-Badges klickbar fuer Details",
+      "description": "ATS Keywords koennten mehr Kontext bieten",
+      "acceptanceCriteria": [
+        "Klick auf fehlendes Keyword zeigt Tooltip",
+        "Tipps wie man Keyword in Lebenslauf integriert",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 42,
+      "passes": false,
+      "source": "test-ralph FLOW-011"
+    },
+    {
+      "id": "UX-043",
+      "title": "Interview-Status aktiven Zustand visuell deutlicher zeigen",
+      "description": "Aktuell aktiver Status nicht dauerhaft hervorgehoben",
+      "acceptanceCriteria": [
+        "Aktiver Status mit gefuellter Hintergrundfarbe statt nur Outline",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 43,
+      "passes": false,
+      "source": "test-ralph FLOW-008"
+    },
+    {
+      "id": "UX-044",
+      "title": "aria-label fuer Stats-Karten hinzufuegen",
+      "description": "Stats-Karten haben keine aria-labels fuer Screen-Reader",
+      "acceptanceCriteria": [
+        "aria-label wie 'Verbleibend: 3 Bewerbungen diesen Monat'",
+        "Alle Stats-Karten auf Dashboard",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 44,
+      "passes": false,
+      "source": "test-ralph FLOW-003"
+    },
+    {
+      "id": "UX-045",
+      "title": "Focus-Indicator fuer Dropdown verbessern",
+      "description": "Status-Filter Dropdown hat weniger prominenten Focus-Indicator",
+      "acceptanceCriteria": [
+        "Custom Focus-Style mit deutlicherem Outline",
+        "Einheitliche Focus-Farbe im Design-System",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 45,
+      "passes": false,
+      "source": "test-ralph A11Y-002"
+    },
+    {
+      "id": "UX-046",
+      "title": "Bottom Navigation Bar fuer Mobile als Alternative",
+      "description": "Alternative zum Hamburger-Menue fuer haeufig genutzte Funktionen",
+      "acceptanceCriteria": [
+        "Bottom Nav mit 4-5 wichtigsten Links",
+        "Icons mit Labels",
+        "Sticky am unteren Rand",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 46,
+      "passes": false,
+      "source": "test-ralph MOBILE-001"
     }
   ]
 }

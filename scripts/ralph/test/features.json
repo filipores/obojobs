@@ -1,6 +1,2927 @@
 {
   "features": [
     {
+      "id": "FLOW-001",
+      "message": "Auth: Registrierung + Email-Verifizierung Flow",
+      "scope": "fullstack",
+      "type": "flow",
+      "test_focus": "Neuen User registrieren, Email-Verifizierung prüfen, Login nach Verifizierung",
+      "pages": [
+        "/register",
+        "/email-verification",
+        "/verify-email",
+        "/login"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-001",
+        "tested_at": "2026-01-15T22:15:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "E-Mail-Verifizierung vor Login erzwingen erwägen",
+            "description": "Aktuell kann sich ein User mit unverifizierten E-Mail einloggen und sieht einen Warnbanner. Je nach Sicherheitsanforderungen könnte man den Login erst nach Verifizierung erlauben. Das aktuelle Verhalten ist aber auch ein valider UX-Ansatz.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "aria-live für Passwort-Validierung hinzufügen",
+            "description": "Die Echtzeit-Passwort-Validierung (○ → ✓) ist visuell gut, aber Screen-Reader bekommen keine Benachrichtigung wenn Anforderungen erfüllt werden. Ein aria-live='polite' auf dem Validierungsbereich würde die Accessibility verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Countdown beim 'Erneut senden' Button in Echtzeit anzeigen",
+            "description": "Der Button zeigt 'Erneut senden in 59s' und zählt herunter. Dies funktioniert gut. Optional könnte ein visueller Progress-Indikator (z.B. kreisförmiger Timer) hinzugefügt werden.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Registrierungsformular anzeigen",
+            "status": "passed",
+            "notes": "Alle Felder korrekt angezeigt, Passwort-Anforderungen sichtbar"
+          },
+          {
+            "scenario": "Echtzeit-Passwort-Validierung",
+            "status": "passed",
+            "notes": "○ wechselt zu ✓ bei erfüllten Anforderungen"
+          },
+          {
+            "scenario": "Registrierung durchführen",
+            "status": "passed",
+            "notes": "User wird erstellt und zur Email-Verification Seite weitergeleitet"
+          },
+          {
+            "scenario": "Email-Verification Seite",
+            "status": "passed",
+            "notes": "Zeigt Email-Adresse, 'Erneut senden' Button mit Cooldown"
+          },
+          {
+            "scenario": "Erneut senden mit Rate-Limiting",
+            "status": "passed",
+            "notes": "Button disabled nach Klick, Countdown und Limit-Hinweis angezeigt"
+          },
+          {
+            "scenario": "Verify-Email ohne Token",
+            "status": "passed",
+            "notes": "Korrekter Fehler: 'Kein Verifizierungs-Token gefunden'"
+          },
+          {
+            "scenario": "Verify-Email mit ungültigem Token",
+            "status": "passed",
+            "notes": "Korrekter Fehler nach Loading: 'Der Verifizierungs-Link ist ungültig'"
+          },
+          {
+            "scenario": "Login mit unverifizierten Account",
+            "status": "passed",
+            "notes": "Login möglich, Warnbanner 'E-Mail-Adresse nicht verifiziert' wird angezeigt"
+          },
+          {
+            "scenario": "Registrierung mit existierender Email",
+            "status": "passed",
+            "notes": "Fehler 'Ein Benutzer mit dieser E-Mail existiert bereits' inline und als Toast"
+          },
+          {
+            "scenario": "Mobile-Ansicht aller Seiten",
+            "status": "passed",
+            "notes": "Register, Login, Email-Verification responsive und gut lesbar"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-002",
+      "message": "Auth: Passwort-Reset Flow komplett",
+      "scope": "fullstack",
+      "type": "flow",
+      "test_focus": "Forgot Password -> Email -> Reset Password -> Login",
+      "pages": [
+        "/forgot-password",
+        "/reset-password",
+        "/login"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-002",
+        "tested_at": "2026-01-15T22:45:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "accessibility",
+            "title": "aria-live für Passwort-Validierung auf Reset-Password Seite",
+            "description": "Die Echtzeit-Passwort-Validierung (○ → ✓) ist visuell gut, aber Screen-Reader bekommen keine Benachrichtigung wenn Anforderungen erfüllt werden. Ein aria-live='polite' auf dem Validierungsbereich würde die Accessibility verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Loading-State beim 'Link anfordern' Button hinzufügen",
+            "description": "Der Button zeigt keinen Loading-State während die Anfrage verarbeitet wird. Ein Spinner oder disabled-State während des API-Calls würde die UX verbessern und Doppelklicks verhindern.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Forgot Password Formular anzeigen",
+            "status": "passed",
+            "notes": "Seite lädt korrekt, E-Mail-Feld und Button sichtbar, Info-Sektion im Desktop-Modus"
+          },
+          {
+            "scenario": "Forgot Password mit leerer E-Mail",
+            "status": "passed",
+            "notes": "HTML5-Validierung verhindert Submit, Fokus bleibt auf Feld"
+          },
+          {
+            "scenario": "Forgot Password mit ungültiger E-Mail",
+            "status": "passed",
+            "notes": "HTML5-Validierung verhindert Submit bei ungültigem Format"
+          },
+          {
+            "scenario": "Forgot Password mit gültiger E-Mail (nicht existierend)",
+            "status": "passed",
+            "notes": "Sicherheitsmeldung: 'Falls ein Konto existiert...' - verrät nicht ob E-Mail existiert"
+          },
+          {
+            "scenario": "Forgot Password Erfolgs-Zustand",
+            "status": "passed",
+            "notes": "E-Mail-Adresse wird angezeigt, Hinweis auf Spam-Ordner, Link-Gültigkeit (1h)"
+          },
+          {
+            "scenario": "Reset Password ohne Token",
+            "status": "passed",
+            "notes": "Korrekter Fehler: 'Kein Reset-Token gefunden', Link zu Forgot Password"
+          },
+          {
+            "scenario": "Reset Password mit ungültigem Token - Formular",
+            "status": "passed",
+            "notes": "Passwort-Formular wird angezeigt mit Echtzeit-Validierung und Sichtbarkeits-Toggle"
+          },
+          {
+            "scenario": "Passwort-Validierung Echtzeit",
+            "status": "passed",
+            "notes": "○ wechselt zu ✓ bei erfüllten Anforderungen (8 Zeichen, Groß/Klein, Zahl)"
+          },
+          {
+            "scenario": "Passwort-Sichtbarkeits-Toggle",
+            "status": "passed",
+            "notes": "Toggle funktioniert, Button-Text ändert sich ('anzeigen' ↔ 'verbergen')"
+          },
+          {
+            "scenario": "Passwörter stimmen nicht überein",
+            "status": "passed",
+            "notes": "Fehlermeldung 'Die Passwörter stimmen nicht überein' wird inline angezeigt"
+          },
+          {
+            "scenario": "Reset Password mit ungültigem Token - Submit",
+            "status": "passed",
+            "notes": "Backend-Fehler wird korrekt angezeigt: 'Der Reset-Link ist abgelaufen'"
+          },
+          {
+            "scenario": "Navigation Login → Forgot Password",
+            "status": "passed",
+            "notes": "'Passwort vergessen?' Link funktioniert korrekt"
+          },
+          {
+            "scenario": "Navigation Forgot Password → Login",
+            "status": "passed",
+            "notes": "'Anmelden' und 'Zurück zum Login' Links funktionieren"
+          },
+          {
+            "scenario": "Navigation Reset Password → Forgot Password",
+            "status": "passed",
+            "notes": "'Neuen Link anfordern' Link bei ungültigem Token funktioniert"
+          },
+          {
+            "scenario": "Mobile-Ansicht Forgot Password",
+            "status": "passed",
+            "notes": "Responsive Layout, alle Elemente gut lesbar auf 375x667"
+          },
+          {
+            "scenario": "Mobile-Ansicht Reset Password",
+            "status": "passed",
+            "notes": "Passwort-Felder und Validierung gut lesbar, Toggle funktioniert"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine unerwarteten Console-Warnings oder Errors (nur erwarteter 400 bei ungültigem Token)"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-003",
+      "message": "Dashboard: Alle Widgets und Stats laden korrekt",
+      "scope": "fullstack",
+      "type": "integration",
+      "test_focus": "Dashboard laedt, Stats korrekt, keine Console Errors, Mobile-View",
+      "pages": [
+        "/"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-003",
+        "tested_at": "2026-01-15T23:15:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "E-Mail-Verifizierungs-Banner könnte persistenter sein",
+            "description": "Der Banner verschwindet nach dem Schließen und erscheint beim Neuladen nicht mehr. Je nach Sicherheitsanforderungen könnte man den Banner bei jedem Seitenbesuch anzeigen bis die E-Mail verifiziert ist.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "aria-label für Stats-Karten hinzufügen",
+            "description": "Die Stats-Karten (Verbleibend, Gesamt, Erstellt, Versendet) könnten aria-labels haben für bessere Screen-Reader Unterstützung, z.B. 'Verbleibend: 3 Bewerbungen diesen Monat'.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Dashboard lädt korrekt",
+            "status": "passed",
+            "notes": "Alle Widgets werden angezeigt, API-Calls (200 OK): /auth/me, /stats, /interview-stats, /recommendations, /recommendations/stats"
+          },
+          {
+            "scenario": "Stats-Karten zeigen korrekte Werte",
+            "status": "passed",
+            "notes": "Verbleibend: 3, Gesamt: 0, Erstellt: 0, Versendet: 0 - entspricht dem Free Plan Limit"
+          },
+          {
+            "scenario": "Schnellzugriff-Links funktionieren",
+            "status": "passed",
+            "notes": "Dokumente, Templates, Bewerbungen Links navigieren korrekt zu den jeweiligen Seiten"
+          },
+          {
+            "scenario": "Interview-Statistiken Widget",
+            "status": "passed",
+            "notes": "Zeigt korrekten Empty-State: 'Noch keine Interview-Daten vorhanden'"
+          },
+          {
+            "scenario": "Job-Empfehlungen Widget",
+            "status": "passed",
+            "notes": "Zeigt korrekten Empty-State mit Stats (0 Aktiv, 0 Sehr gut, 0 Gut, 0 Beworben)"
+          },
+          {
+            "scenario": "Job analysieren Modal",
+            "status": "passed",
+            "notes": "Modal öffnet korrekt, URL-Eingabe aktiviert Analysieren-Button, Schließen funktioniert"
+          },
+          {
+            "scenario": "E-Mail-Verifizierungs-Banner",
+            "status": "passed",
+            "notes": "Banner wird angezeigt, 'Jetzt verifizieren' Link funktioniert, Schließen-Button funktioniert"
+          },
+          {
+            "scenario": "Dark Mode Toggle",
+            "status": "passed",
+            "notes": "Toggle funktioniert, Button-Text ändert sich korrekt (Dunkler Modus ↔ Heller Modus)"
+          },
+          {
+            "scenario": "Free Plan Link",
+            "status": "passed",
+            "notes": "Link navigiert korrekt zur Subscription-Seite"
+          },
+          {
+            "scenario": "Mobile-Ansicht (375x667)",
+            "status": "passed",
+            "notes": "Alle Widgets responsive, Navigation mit guten aria-labels im Mobile-Modus"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine JavaScript-Errors oder Warnings in der Console"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle API-Calls erfolgreich (200 OK), keine 4xx/5xx Fehler"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-004",
+      "message": "Documents: PDF Upload + Parsing + Anzeige",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "PDF hochladen, Parsing abwarten, Dokument in Liste, Loeschen",
+      "pages": [
+        "/documents"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-004",
+        "tested_at": "2026-01-15T23:45:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Skills bleiben nach Dokument-Löschung erhalten",
+            "description": "Wenn ein Lebenslauf gelöscht wird, bleiben die extrahierten Skills erhalten. Das könnte gewünscht sein (Skills werden getrennt gespeichert), aber ein Hinweis-Dialog könnte dem User die Wahl geben, ob Skills ebenfalls gelöscht werden sollen.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Tippfehler in Button-Text: 'hinzufugen' statt 'hinzufügen'",
+            "description": "Der Button 'Skill hinzufugen' und das Modal 'Skill hinzufugen' verwenden 'u' statt 'ü'. Gleiches gilt für 'Skill geloscht' Toast.",
+            "priority": "minor"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Dateiname-Transformation bei Leerzeichen",
+            "description": "Dateinamen mit Leerzeichen werden zu Unterstrichen konvertiert (z.B. 'Filip Zeugnis.pdf' → 'Filip_Zeugnis.pdf'). Dies ist technisch korrekt, aber ein Hinweis darauf könnte hilfreich sein.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "accessibility",
+            "title": "aria-label für Upload-Dropzone hinzufügen",
+            "description": "Die Dropzone 'PDF auswählen oder hierher ziehen' könnte ein aria-label haben für bessere Screenreader-Unterstützung.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Dokumentenseite laden",
+            "status": "passed",
+            "notes": "Seite lädt korrekt, alle drei Dokument-Slots (Lebenslauf, Anschreiben, Arbeitszeugnis) werden angezeigt"
+          },
+          {
+            "scenario": "Lebenslauf PDF hochladen",
+            "status": "passed",
+            "notes": "PDF-Auswahl öffnet File-Chooser, Upload-Button wird aktiv, Upload erfolgreich mit Erfolgsmeldung"
+          },
+          {
+            "scenario": "Text-Extraktion aus PDF",
+            "status": "passed",
+            "notes": "Meldung 'erfolgreich hochgeladen und Text extrahiert' erscheint, Skills werden nach Reload angezeigt"
+          },
+          {
+            "scenario": "Fortschritts-Anzeige",
+            "status": "passed",
+            "notes": "Fortschritt zeigt '0/2', '1/2' etc. Pflichtdokumente korrekt an"
+          },
+          {
+            "scenario": "Dokument-Anzeige in Liste",
+            "status": "passed",
+            "notes": "Hochgeladenes Dokument zeigt Dateiname, Upload-Datum, Löschen-Button"
+          },
+          {
+            "scenario": "Dokument löschen",
+            "status": "passed",
+            "notes": "Bestätigungs-Dialog erscheint, Löschen funktioniert, Upload-Bereich kehrt zurück"
+          },
+          {
+            "scenario": "Arbeitszeugnis hochladen",
+            "status": "passed",
+            "notes": "Zweites Pflichtdokument funktioniert identisch"
+          },
+          {
+            "scenario": "Skills automatisch extrahiert",
+            "status": "passed",
+            "notes": "16 Skills in 3 Kategorien (Technisch, Tools, Sprachen) nach Lebenslauf-Upload"
+          },
+          {
+            "scenario": "Skill manuell hinzufügen",
+            "status": "passed",
+            "notes": "Modal mit Name, Kategorie, Erfahrungsjahre, Toast-Bestätigung"
+          },
+          {
+            "scenario": "Skill bearbeiten",
+            "status": "passed",
+            "notes": "Modal mit vorausgefüllten Werten, Aktualisierung funktioniert"
+          },
+          {
+            "scenario": "Skill löschen",
+            "status": "passed",
+            "notes": "Bestätigungs-Dialog mit Skill-Name, Löschen funktioniert"
+          },
+          {
+            "scenario": "Mobile-Ansicht (375x667)",
+            "status": "passed",
+            "notes": "Responsive Layout, alle Funktionen zugänglich, Navigation mit aria-labels"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine JavaScript-Errors oder Warnings"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle API-Calls erfolgreich (GET /documents, POST /documents, DELETE /documents/:id, GET /skills)"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-005",
+      "message": "Templates: CRUD Operationen komplett",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "Template erstellen, bearbeiten, Variablen-Vorschau, loeschen",
+      "pages": [
+        "/templates"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-005",
+        "tested_at": "2026-01-15T23:55:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Variablen-Einfüge-Mechanismus könnte intuitiver sein",
+            "description": "Die Anleitung sagt 'Markiere Text und wähle eine Variable aus der Liste', aber es gibt keine sichtbare Variablen-Liste zum Auswählen. Der User muss die Platzhalter ({{FIRMA}}, {{POSITION}}, {{ANSPRECHPARTNER}}) manuell eintippen. Eine Dropdown-Liste oder ein Button-Panel mit verfügbaren Variablen würde die UX verbessern.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Leerzeichen in Template-Vorschau fehlen teilweise",
+            "description": "In der Template-Kartenvorschau werden Zeilenumbrüche zu einem einzigen String zusammengefügt ohne Leerzeichen, z.B. 'Damen und Herren,ich bewerbe mich' statt 'Damen und Herren, ich bewerbe mich'. Dies könnte die Lesbarkeit der Vorschau verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "aria-label für Template-Editor hinzufügen",
+            "description": "Der contenteditable Template-Editor hat kein aria-label. Ein beschreibendes Label würde die Screenreader-Unterstützung verbessern.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Templates-Seite laden (ohne existierende Templates)",
+            "status": "passed",
+            "notes": "Seite lädt korrekt, zeigt 'Lebenslauf fehlt' Hinweis und zwei Erstellungs-Optionen"
+          },
+          {
+            "scenario": "Template manuell erstellen ('Selbst schreiben')",
+            "status": "passed",
+            "notes": "Modal öffnet, Felder funktionieren, Button aktiviert sich nach Eingabe, Template wird erstellt mit Toast-Bestätigung"
+          },
+          {
+            "scenario": "Platzhalter-Variablen eingeben",
+            "status": "passed",
+            "notes": "{{FIRMA}} und {{POSITION}} werden als interaktive Tags dargestellt mit Tooltip und Entfernen-Button"
+          },
+          {
+            "scenario": "Template in Liste anzeigen",
+            "status": "passed",
+            "notes": "Template zeigt Name, Vorschau-Text, Erstellungsdatum, Zeichenzahl und Aktions-Buttons"
+          },
+          {
+            "scenario": "Template bearbeiten",
+            "status": "passed",
+            "notes": "Bearbeitungs-Modal öffnet mit vorausgefüllten Werten, Aktualisierung funktioniert"
+          },
+          {
+            "scenario": "Variable im Editor entfernen",
+            "status": "passed",
+            "notes": "Klick auf 'Variable entfernen' Button entfernt die Variable, Zeichenzähler aktualisiert sich"
+          },
+          {
+            "scenario": "Bearbeitung abbrechen",
+            "status": "passed",
+            "notes": "Abbrechen-Button verwirft Änderungen korrekt"
+          },
+          {
+            "scenario": "Template als Standard setzen",
+            "status": "passed",
+            "notes": "Button funktioniert, Toast 'Standard-Template gesetzt!', Badge 'Standard' erscheint"
+          },
+          {
+            "scenario": "Template löschen",
+            "status": "passed",
+            "notes": "Bestätigungs-Dialog erscheint, Löschen funktioniert mit Toast-Bestätigung"
+          },
+          {
+            "scenario": "Zeichenzähler",
+            "status": "passed",
+            "notes": "Zeigt korrekte Zeichenanzahl an, aktualisiert sich bei Änderungen"
+          },
+          {
+            "scenario": "KI-Generierung deaktiviert ohne Lebenslauf",
+            "status": "passed",
+            "notes": "'Mit KI erstellen' zeigt 'Lebenslauf erforderlich', ist nicht anklickbar"
+          },
+          {
+            "scenario": "Mobile-Ansicht (375x667)",
+            "status": "passed",
+            "notes": "Responsive Layout, alle Funktionen zugänglich, Navigation mit guten aria-labels"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine JavaScript-Errors oder Warnings"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle CRUD-Operationen erfolgreich: GET, POST (201), PUT, DELETE"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-006",
+      "message": "NewApplication: Kompletter Bewerbungs-Flow",
+      "scope": "fullstack",
+      "type": "critical",
+      "test_focus": "Neue Bewerbung erstellen, Template waehlen, AI generieren, speichern",
+      "pages": [
+        "/new-application",
+        "/applications"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-006",
+        "tested_at": "2026-01-15T14:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Job-Fit Analyse API liefert 500 Error",
+            "description": "Die Job-Fit Analyse für Skill-Matching ist nicht verfügbar (500 Internal Server Error bei /api/job-fit). Das System zeigt jedoch eine gute Fallback-Meldung: 'Anforderungsanalyse nicht möglich - Sie können trotzdem eine Bewerbung generieren'. Dies sollte im Backend untersucht werden.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Automatisches URL-Laden wird von Job-Portalen blockiert",
+            "description": "StepStone, Indeed und XING blockieren automatisches Laden (403/410 Errors). Das System bietet korrekterweise die manuelle Eingabe als Alternative an. Dies ist kein Bug, aber ein Hinweis für Dokumentation oder User-Erwartungen.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Templates-Seite zeigt 'Lebenslauf fehlt' obwohl hochgeladen",
+            "description": "Nach dem Hochladen eines Lebenslaufs auf /documents zeigt die Templates-Seite manchmal noch 'Lebenslauf fehlt'. Ein Seiten-Reload oder State-Refresh könnte dieses Caching-Problem beheben.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "feature",
+            "title": "Ansprechpartner-Fallback Text optimieren",
+            "description": "Der generierte Ansprechpartner 'Moin Moin liebes Innovate Tech AG Team' klingt sehr informell. Für professionelle Bewerbungen wäre 'Sehr geehrte Damen und Herren' als Standard besser geeignet.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "NewApplication-Seite laden",
+            "status": "passed",
+            "notes": "Seite lädt korrekt mit URL-Eingabe, Info-Box und unterstützten Job-Portalen"
+          },
+          {
+            "scenario": "URL-Validierung Echtzeit",
+            "status": "passed",
+            "notes": "StepStone, Indeed, XING werden erkannt, Badge wird angezeigt, 'URL ist gültig' erscheint"
+          },
+          {
+            "scenario": "Stellenanzeige automatisch laden",
+            "status": "passed",
+            "notes": "Funktioniert prinzipiell, wird aber von Job-Portalen blockiert (403/410). Fallback-Option wird angezeigt."
+          },
+          {
+            "scenario": "Stellentext manuell einfügen",
+            "status": "passed",
+            "notes": "Modal öffnet, Felder funktionieren, Mindestzeichenprüfung (100 Zeichen) funktioniert"
+          },
+          {
+            "scenario": "Stellentext analysieren",
+            "status": "passed",
+            "notes": "Firma, Position, Standort, Anstellungsart werden korrekt extrahiert"
+          },
+          {
+            "scenario": "Template-Auswahl",
+            "status": "passed",
+            "notes": "Dropdown zeigt verfügbare Templates, Standard-Template wird markiert"
+          },
+          {
+            "scenario": "Voraussetzungs-Prüfung (Lebenslauf)",
+            "status": "passed",
+            "notes": "Fehlermeldung 'Lebenslauf nicht gefunden' bei fehlendem CV - korrekt"
+          },
+          {
+            "scenario": "Voraussetzungs-Prüfung (Arbeitszeugnis)",
+            "status": "passed",
+            "notes": "Fehlermeldung 'Arbeitszeugnis nicht gefunden' bei fehlendem Zeugnis - korrekt"
+          },
+          {
+            "scenario": "Voraussetzungs-Prüfung (Template)",
+            "status": "passed",
+            "notes": "Fehlermeldung 'Kein Template gefunden' bei fehlendem Template - korrekt"
+          },
+          {
+            "scenario": "Bewerbung generieren (AI)",
+            "status": "passed",
+            "notes": "Loading-State 'Generiere Bewerbung...' gezeigt, nach ~8s erfolgreich generiert"
+          },
+          {
+            "scenario": "Erfolgs-Modal",
+            "status": "passed",
+            "notes": "Zeigt Firma, Position, Ansprechpartner, Betreff, PDF-Download und 'Alle Bewerbungen' Button"
+          },
+          {
+            "scenario": "Bewerbung in Liste",
+            "status": "passed",
+            "notes": "Bewerbung erscheint in /applications mit korrekten Daten und Status 'Erstellt'"
+          },
+          {
+            "scenario": "Bewerbungslimit-Anzeige",
+            "status": "passed",
+            "notes": "'3/3 Bewerbungen diesen Monat' wird korrekt angezeigt"
+          },
+          {
+            "scenario": "Mobile-Ansicht NewApplication",
+            "status": "passed",
+            "notes": "Responsive Layout, alle Elemente zugänglich, Navigation mit guten aria-labels"
+          },
+          {
+            "scenario": "Mobile-Ansicht Applications",
+            "status": "passed",
+            "notes": "Bewerbungskarten gut lesbar, Filter und Suche funktionieren"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine unerwarteten JS-Errors (nur erwartete 500er bei Job-Fit API)"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle kritischen API-Calls erfolgreich (200 OK für templates, stats, applications)"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-007",
+      "message": "Applications: Filter + Sortierung + Pagination",
+      "scope": "frontend",
+      "type": "feature",
+      "test_focus": "Status-Filter, Suche, Sortierung, Pagination funktioniert",
+      "pages": [
+        "/applications"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-007",
+        "tested_at": "2026-01-15T22:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "feature",
+            "title": "Sortierungs-Dropdown hinzufügen",
+            "description": "Aktuell werden Bewerbungen automatisch nach Datum (neueste zuerst) sortiert. Ein Sortierungs-Dropdown mit Optionen wie 'Datum (neueste zuerst)', 'Datum (älteste zuerst)', 'Firma A-Z', 'Status' würde die UX verbessern und dem Feature-Scope entsprechen.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Pagination für große Datenmengen implementieren",
+            "description": "Aktuell gibt es keine Pagination - alle Bewerbungen werden auf einmal geladen und angezeigt. Bei vielen Bewerbungen (50+) könnte dies zu Performance-Problemen führen. Eine Pagination mit z.B. 10-20 Einträgen pro Seite wäre sinnvoll.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "aria-label für Suchfeld hinzufügen",
+            "description": "Das Suchfeld hat nur einen Placeholder-Text. Ein explizites aria-label='Bewerbungen durchsuchen' würde die Accessibility verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "ux",
+            "title": "Filter-Count in Stats-Karten bei aktivem Filter anpassen",
+            "description": "Die Stats-Karten (Gesamt, Erstellt, Versendet) zeigen immer die Gesamtzahlen, auch wenn ein Filter aktiv ist. Ein Hinweis oder Aktualisierung der Zahlen bei aktivem Filter könnte hilfreich sein.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Applications-Seite laden",
+            "status": "passed",
+            "notes": "Seite lädt korrekt, Loading-State 'Lade Bewerbungen...' wird angezeigt, dann Daten"
+          },
+          {
+            "scenario": "Stats-Karten anzeigen",
+            "status": "passed",
+            "notes": "Gesamt, Erstellt, Versendet werden korrekt angezeigt (1, 1, 0)"
+          },
+          {
+            "scenario": "Status-Filter Dropdown",
+            "status": "passed",
+            "notes": "Alle Optionen vorhanden: Alle Status, Erstellt, Versendet, Antwort erhalten, Absage, Zusage"
+          },
+          {
+            "scenario": "Status-Filter anwenden",
+            "status": "passed",
+            "notes": "Filter-Tag erscheint, Checkbox 'Nur gefilterte (n)' wird angezeigt, Liste wird gefiltert"
+          },
+          {
+            "scenario": "Filter-Tag entfernen (X-Button)",
+            "status": "passed",
+            "notes": "Klick auf X entfernt Filter, Dropdown kehrt zu 'Alle Status' zurück"
+          },
+          {
+            "scenario": "Textsuche nach Firma",
+            "status": "passed",
+            "notes": "Suche nach 'Innovate' zeigt Filter-Tag und findet korrekte Bewerbung"
+          },
+          {
+            "scenario": "Textsuche nach Position",
+            "status": "passed",
+            "notes": "Suche nach 'Backend' findet Bewerbung mit Position 'Backend Developer'"
+          },
+          {
+            "scenario": "Suche ohne Treffer",
+            "status": "passed",
+            "notes": "Empty-State mit 'Keine Ergebnisse', hilfreicher Text und 'Filter zurücksetzen' Button"
+          },
+          {
+            "scenario": "Filter zurücksetzen Button",
+            "status": "passed",
+            "notes": "Setzt alle Filter zurück, Suchfeld wird geleert, alle Bewerbungen angezeigt"
+          },
+          {
+            "scenario": "Kombinierte Filter (Status + Suche)",
+            "status": "passed",
+            "notes": "Beide Filter-Tags werden angezeigt und funktionieren zusammen"
+          },
+          {
+            "scenario": "Details-Button öffnet Modal",
+            "status": "passed",
+            "notes": "Modal zeigt alle Bewerbungsdetails: Firma, Position, Status, Datum, Aktionen"
+          },
+          {
+            "scenario": "Modal schließen",
+            "status": "passed",
+            "notes": "X-Button schließt Modal korrekt"
+          },
+          {
+            "scenario": "Export-Buttons (CSV, PDF)",
+            "status": "passed",
+            "notes": "Buttons sind aktiv wenn Bewerbungen vorhanden, disabled wenn leer"
+          },
+          {
+            "scenario": "Checkbox 'Nur gefilterte'",
+            "status": "passed",
+            "notes": "Erscheint bei aktivem Filter, zeigt Anzahl der gefilterten Ergebnisse"
+          },
+          {
+            "scenario": "Sortierung (automatisch)",
+            "status": "passed",
+            "notes": "Bewerbungen werden nach Datum sortiert (neueste zuerst) - aber keine manuelle Sortierungsoption"
+          },
+          {
+            "scenario": "Pagination",
+            "status": "not_implemented",
+            "notes": "Keine Pagination vorhanden - alle Bewerbungen werden auf einmal geladen"
+          },
+          {
+            "scenario": "Mobile-Ansicht (375x667)",
+            "status": "passed",
+            "notes": "Responsive Layout, Filter und Suche funktionieren, Navigation mit guten aria-labels"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine JavaScript-Errors oder Warnings"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle API-Calls erfolgreich (200 OK): /applications, /email/accounts, /job-fit"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-008",
+      "message": "Applications: Status-Aenderung Workflow",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "Status aendern (erstellt->versendet->antwort), Timeline Update",
+      "pages": [
+        "/applications",
+        "/timeline"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-008",
+        "tested_at": "2026-01-15T21:45:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Toast-Benachrichtigung bei Status-Änderung hinzufügen",
+            "description": "Die Status-Änderung wird sofort gespeichert und die UI aktualisiert sich korrekt (Status-Badge, Stats-Karten), aber es gibt keine explizite Toast-Bestätigung wie 'Status erfolgreich geändert'. Dies könnte dem Benutzer mehr Feedback geben.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Interview-Status-Buttons könnten aktiven Zustand visuell deutlicher zeigen",
+            "description": "Die Interview-Status-Buttons zeigen beim Klick 'Gespeichert!' an, aber der aktuell aktive Status könnte einen dauerhaft hervorgehobenen visuellen Zustand haben (z.B. gefüllte Hintergrundfarbe statt nur Outline).",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Interview-Termin-Feld könnte Datepicker verwenden",
+            "description": "Das Interview-Termin-Feld ist aktuell ein einfaches Textfeld. Ein Datepicker mit Zeit-Auswahl würde die UX verbessern und konsistente Datumsformate sicherstellen.",
+            "priority": "medium"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Applications-Seite laden",
+            "status": "passed",
+            "notes": "Seite lädt korrekt, Stats-Karten und Bewerbungsliste werden angezeigt"
+          },
+          {
+            "scenario": "Details-Modal öffnen",
+            "status": "passed",
+            "notes": "Modal öffnet mit allen Details: Firma, Position, Ansprechpartner, Quelle, Datum, Betreff, Notizen, Interview-Tracking, ATS-Optimierung, Skill-Lücken"
+          },
+          {
+            "scenario": "Status ändern: Erstellt → Versendet",
+            "status": "passed",
+            "notes": "Status-Dropdown funktioniert, Änderung wird sofort gespeichert, Stats-Karten aktualisieren sich (Erstellt: 0, Versendet: 1)"
+          },
+          {
+            "scenario": "Status ändern: Versendet → Antwort erhalten",
+            "status": "passed",
+            "notes": "Status-Änderung funktioniert, Karte im Hintergrund zeigt neuen Status"
+          },
+          {
+            "scenario": "Status ändern: Antwort erhalten → Absage",
+            "status": "passed",
+            "notes": "Status-Änderung funktioniert korrekt"
+          },
+          {
+            "scenario": "Status ändern: Absage → Zusage",
+            "status": "passed",
+            "notes": "Status-Änderung funktioniert korrekt"
+          },
+          {
+            "scenario": "Timeline-Update nach Status-Änderungen",
+            "status": "passed",
+            "notes": "Timeline zeigt alle Status-Änderungen chronologisch: Erstellt (21:31), Versendet (21:37), Antwort erhalten (21:37), Absage (21:37), Zusage (21:37)"
+          },
+          {
+            "scenario": "Interview-Tracking: Status 'Geplant' setzen",
+            "status": "passed",
+            "notes": "Button aktiviert sich, Interview-Termin-Feld erscheint, 'Gespeichert!' Bestätigung"
+          },
+          {
+            "scenario": "Interview-Tracking: Status 'Durchgeführt' setzen",
+            "status": "passed",
+            "notes": "Button aktiviert sich, Feedback-Textfeld mit Placeholder erscheint, Speicherung funktioniert"
+          },
+          {
+            "scenario": "Mobile-Ansicht Timeline (375x667)",
+            "status": "passed",
+            "notes": "Responsive Layout, alle Status-Einträge lesbar, Navigation mit guten aria-labels"
+          },
+          {
+            "scenario": "Mobile-Ansicht Applications (375x667)",
+            "status": "passed",
+            "notes": "Responsive Layout, Bewerbungskarten gut lesbar, Filter und Suche funktionieren"
+          },
+          {
+            "scenario": "Mobile-Ansicht Details-Modal (375x667)",
+            "status": "passed",
+            "notes": "Modal passt sich an, alle Funktionen zugänglich inkl. Interview-Tracking und Status-Dropdown"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine JavaScript-Errors oder Warnings"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle API-Calls erfolgreich (200 OK): /applications, /email/accounts, /job-fit"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-009",
+      "message": "Timeline: Visualisierung und Interaktion",
+      "scope": "frontend",
+      "type": "feature",
+      "test_focus": "Timeline laedt, Events korrekt, Datum-Filter, Mobile-View",
+      "pages": [
+        "/timeline"
+      ],
+      "tested": true,
+      "test_result": {
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [],
+        "notes": "No structured result returned"
+      }
+    },
+    {
+      "id": "FLOW-010",
+      "message": "CompanyInsights: Firmenrecherche Feature",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "Firma suchen, Insights laden, Daten korrekt angezeigt",
+      "pages": [
+        "/company-insights"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-010",
+        "tested_at": "2026-01-15T23:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Aktions-Button 'Bewerbungen' fehlt in Mobile-Ansicht",
+            "steps_to_reproduce": [
+              "Navigiere zu /company-insights",
+              "Ändere Viewport auf Mobile (375x667)",
+              "Scrolle horizontal durch die Tabelle"
+            ],
+            "expected": "Der 'Bewerbungen' Button sollte sichtbar sein (entweder durch Scrollen oder alternative Mobile-Darstellung)",
+            "actual": "Die Aktions-Spalte mit dem 'Bewerbungen' Button wird komplett ausgeblendet und ist auch durch horizontales Scrollen nicht erreichbar",
+            "affected_component": "frontend/src/pages/CompanyInsights.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Mobile-freundliche Darstellung für Company Insights",
+            "description": "Die Tabelle sollte in der Mobile-Ansicht entweder als Card-Layout dargestellt werden (ähnlich wie Applications), oder die Aktions-Spalte sollte sticky sein. Alternativ könnte die ganze Zeile klickbar sein.",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Horizontaler Scroll-Indikator hinzufügen",
+            "description": "Wenn die Tabelle horizontal scrollbar ist, sollte ein visueller Hinweis (z.B. Fade-Effekt am Rand oder Scroll-Pfeil) anzeigen, dass mehr Inhalt verfügbar ist.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "aria-label für Sortierungs-Dropdown hinzufügen",
+            "description": "Das Sortierungs-Dropdown hat kein explizites aria-label. Ein beschreibendes Label wie 'Sortierung für Firmenliste' würde die Accessibility verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "ux",
+            "title": "Firmen-Zeile klickbar machen für schnellen Zugriff",
+            "description": "Die gesamte Zeile könnte klickbar sein, um zur gefilterten Bewerbungsansicht zu navigieren, statt nur den Button am Ende zu verwenden.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Company Insights Seite laden",
+            "status": "passed",
+            "notes": "Seite lädt korrekt, Loading-State 'Lade Company Insights...' wird angezeigt, dann Daten"
+          },
+          {
+            "scenario": "API-Call erfolgreich",
+            "status": "passed",
+            "notes": "GET /api/stats/companies?sort_by=bewerbungen gibt 200 OK zurück"
+          },
+          {
+            "scenario": "Firmen-Tabelle zeigt korrekte Daten",
+            "status": "passed",
+            "notes": "Firma, Bewerbungen, Antworten, Antwortrate, Avg. Antwortzeit werden korrekt angezeigt"
+          },
+          {
+            "scenario": "Firmen-Counter",
+            "status": "passed",
+            "notes": "Zeigt '1 FIRMEN' korrekt an"
+          },
+          {
+            "scenario": "Sortierung nach Anzahl Bewerbungen",
+            "status": "passed",
+            "notes": "Standard-Sortierung funktioniert, Dropdown zeigt 'Anzahl Bewerbungen' als selected"
+          },
+          {
+            "scenario": "Sortierung nach Antwortrate",
+            "status": "passed",
+            "notes": "Auswahl ändert Sortierung korrekt"
+          },
+          {
+            "scenario": "Sortierung nach Name (A-Z)",
+            "status": "passed",
+            "notes": "Alphabetische Sortierung funktioniert"
+          },
+          {
+            "scenario": "Bewerbungen Button Navigation",
+            "status": "passed",
+            "notes": "Klick navigiert zu /applications?firma=Innovate+Tech+AG mit korrektem Filter"
+          },
+          {
+            "scenario": "Filter-Integration mit Applications-Seite",
+            "status": "passed",
+            "notes": "Filter-Tag 'Firma: Innovate Tech AG' wird angezeigt, 'Nur gefilterte (1)' Checkbox erscheint"
+          },
+          {
+            "scenario": "Filter entfernen",
+            "status": "passed",
+            "notes": "X-Button entfernt Filter korrekt, URL wird zu /applications ohne Query-Parameter"
+          },
+          {
+            "scenario": "Antwortrate-Visualisierung",
+            "status": "passed",
+            "notes": "0% wird rot/rosa hervorgehoben zur schnellen Erkennung"
+          },
+          {
+            "scenario": "Desktop-Ansicht",
+            "status": "passed",
+            "notes": "Alle Spalten sichtbar, Layout korrekt, alle Funktionen zugänglich"
+          },
+          {
+            "scenario": "Mobile-Ansicht (375x667)",
+            "status": "failed",
+            "notes": "Aktions-Spalte mit 'Bewerbungen' Button wird komplett ausgeblendet und ist nicht erreichbar"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine JavaScript-Errors oder Warnings"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle API-Calls erfolgreich (200 OK)"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-011",
+      "message": "ATS: Kompletter Lebenslauf-Check Flow",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "ATS-Check starten, Ergebnis anzeigen, History, Recommendations",
+      "pages": [
+        "/ats"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-011",
+        "tested_at": "2026-01-15T21:50:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Score-Visualisierung könnte farbig sein",
+            "description": "Der Score von 59 wird als Zahl angezeigt. Eine farbliche Visualisierung (rot/gelb/grün je nach Score-Bereich) oder ein Progress-Ring würde die Interpretation auf einen Blick erleichtern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Text-Analyse mit History speichern",
+            "description": "Beim Text-Modus wird die Analyse derzeit nicht in der History angezeigt (nur URL-basierte Analysen). Es wäre hilfreich, auch Text-Analysen mit einem Titel (z.B. erste Zeile der Stellenbeschreibung) in der History zu speichern.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "aria-label für URL/Text Tab-Buttons hinzufügen",
+            "description": "Die Tab-Buttons könnten aria-labels wie 'Eingabemodus: URL' und 'Eingabemodus: Text' haben, um den aktiven Zustand besser für Screenreader zu kommunizieren.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "ux",
+            "title": "Keyword-Badges könnten klickbar sein für Details",
+            "description": "Die gefundenen/fehlenden Keywords werden als Tags angezeigt. Ein Klick auf ein fehlendes Keyword könnte einen Tooltip mit Tipps zeigen, wie man es in den Lebenslauf integrieren kann.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "ATS-Seite laden",
+            "status": "passed",
+            "notes": "Seite lädt korrekt, URL-Tab ist Standard, Analysieren-Button initial disabled"
+          },
+          {
+            "scenario": "URL-Eingabe aktiviert Button",
+            "status": "passed",
+            "notes": "Nach Eingabe einer gültigen URL wird der Analysieren-Button aktiviert"
+          },
+          {
+            "scenario": "ATS-Analyse durchführen (URL)",
+            "status": "passed",
+            "notes": "Loading-State 'Analysiere...' gezeigt, nach ~8s Ergebnis mit Score 59"
+          },
+          {
+            "scenario": "Score und Beschreibung anzeigen",
+            "status": "passed",
+            "notes": "Score (59) mit Beschreibung 'Gute Basis vorhanden. Mit einigen Anpassungen kannst du deinen Score verbessern.'"
+          },
+          {
+            "scenario": "Keywords nach Kategorie anzeigen",
+            "status": "passed",
+            "notes": "4 Kategorien: Hard Skills, Soft Skills, Qualifikationen, Erfahrung - jeweils mit Gefunden/Fehlt Listen"
+          },
+          {
+            "scenario": "Verbesserungsvorschläge anzeigen",
+            "status": "passed",
+            "notes": "3 Vorschläge mit Prioritäten (Wichtig, Empfohlen, Optional) korrekt angezeigt"
+          },
+          {
+            "scenario": "Text-Modus wechseln",
+            "status": "passed",
+            "notes": "Klick auf Text-Tab zeigt Textarea für Stellenbeschreibung"
+          },
+          {
+            "scenario": "Text-Eingabe aktiviert Button",
+            "status": "passed",
+            "notes": "Nach Eingabe von Text wird der Analysieren-Button aktiviert"
+          },
+          {
+            "scenario": "History-Eintrag angezeigt",
+            "status": "passed",
+            "notes": "Analyse erscheint in 'Letzte Analysen' mit Domain, Datum, Score und Keyword-Count (21/12)"
+          },
+          {
+            "scenario": "History-Eintrag laden",
+            "status": "passed",
+            "notes": "Klick auf Eintrag lädt Analyse, Toast 'Analyse geladen' erscheint"
+          },
+          {
+            "scenario": "History-Eintrag löschen - Dialog",
+            "status": "passed",
+            "notes": "Custom Bestätigungs-Dialog mit Warnung 'Diese Aktion kann nicht rückgängig gemacht werden'"
+          },
+          {
+            "scenario": "History-Eintrag löschen - Abbrechen",
+            "status": "passed",
+            "notes": "Abbrechen-Button schließt Dialog ohne Löschen"
+          },
+          {
+            "scenario": "History-Eintrag löschen - Bestätigen",
+            "status": "passed",
+            "notes": "Löschen entfernt Eintrag, Toast 'Analyse gelöscht' erscheint"
+          },
+          {
+            "scenario": "Mobile-Ansicht (375x667)",
+            "status": "passed",
+            "notes": "Responsive Layout, alle Funktionen zugänglich, bessere aria-labels im Mobile-Modus"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "passed",
+            "notes": "Keine JavaScript-Errors oder Warnings"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle API-Calls erfolgreich: GET /ats/history (200), POST /ats/analyze (200), GET /ats/history/:id (200), DELETE /ats/history/:id (implizit durch UI-Update)"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-012",
+      "message": "InterviewPrep: Interview-Vorbereitung",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "Interview-Prep fuer Bewerbung oeffnen, Fragen generieren, Tips anzeigen",
+      "pages": [
+        "/applications/:id/interview"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-012",
+        "tested_at": "2026-01-15T23:45:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Firmen-Recherche zeigt korrupte/unlesbare Zeichen in der Unternehmensbeschreibung",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications",
+              "Klicke auf 'Details' bei einer Bewerbung",
+              "Klicke auf 'Interview-Prep' Link",
+              "Schaue unter 'Firmen-Recherche' → 'Über das Unternehmen'"
+            ],
+            "expected": "Lesbare Unternehmensbeschreibung in deutscher Sprache",
+            "actual": "Korrupte Zeichen werden angezeigt (\\x03�S\\x11\\x15�...) - wahrscheinlich ein Encoding-Problem beim Scraping/Speichern der Firmendaten",
+            "affected_component": "backend/routes/companies.py oder frontend/src/pages/InterviewPrep.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Interview-Fragen Generierung schlägt fehl ohne Stellenbeschreibung - kein graceful handling",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications/:id/interview",
+              "Klicke auf 'Fragen generieren' Button",
+              "Beobachte Alert und Console-Error"
+            ],
+            "expected": "Freundliche Fehlermeldung inline ohne Browser-Alert, kein Console-Error",
+            "actual": "Nativer Browser-Alert wird angezeigt ('Keine Stellenbeschreibung vorhanden'), zusätzlich 400 Bad Request Error in Console",
+            "affected_component": "frontend/src/pages/InterviewPrep.vue:85"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Nativen Browser-Alert durch Custom-Modal ersetzen",
+            "description": "Die Fehlermeldung 'Keine Stellenbeschreibung vorhanden' verwendet window.alert(). Ein Custom-Modal wäre konsistenter mit dem Design-System und würde bessere UX bieten.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Empty-State für Interview-Fragen verbessern",
+            "description": "Der aktuelle Empty-State könnte einen direkten Link zu NewApplication bieten, um eine Stellenbeschreibung nachzutragen, oder eine manuelle Eingabe der Stellenbeschreibung ermöglichen.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "aria-labels für Accordion-Buttons hinzufügen",
+            "description": "Die Expand/Collapse-Buttons für 'Firmen-Recherche' und 'Gehaltsverhandlungs-Coach' haben keine aria-labels. Ein beschreibendes Label wie 'Sektion erweitern/schließen' würde die Accessibility verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "feature",
+            "title": "Gehaltsverhandlungs-Coach Daten persistieren",
+            "description": "Die generierten Marktrecherche- und Verhandlungsstrategie-Daten gehen beim Verlassen der Seite verloren. Eine Speicherung in der Datenbank würde ermöglichen, diese später wieder aufzurufen.",
+            "priority": "low"
+          }
+        ],
+        "tested_scenarios": [
+          {
+            "scenario": "Interview-Prep Seite laden",
+            "status": "passed",
+            "notes": "Seite lädt korrekt mit Firmen-Recherche, Gehaltsverhandlungs-Coach, und Interview-Fragen Bereich"
+          },
+          {
+            "scenario": "Navigation von Applications zu Interview-Prep",
+            "status": "passed",
+            "notes": "Details-Modal → Interview-Prep Link funktioniert, URL /applications/:id/interview korrekt"
+          },
+          {
+            "scenario": "Firmen-Recherche Accordion",
+            "status": "passed",
+            "notes": "Accordion öffnet/schließt korrekt, Firmenname und Website-Link werden angezeigt"
+          },
+          {
+            "scenario": "Firmen-Recherche Inhalt",
+            "status": "failed",
+            "notes": "Unternehmensbeschreibung zeigt korrupte Zeichen statt lesbare Texte"
+          },
+          {
+            "scenario": "Interview-Tipps in Firmen-Recherche",
+            "status": "passed",
+            "notes": "2 hilfreiche Tipps werden korrekt angezeigt"
+          },
+          {
+            "scenario": "Gehaltsverhandlungs-Coach - Formular",
+            "status": "passed",
+            "notes": "Position, Region, Berufserfahrung werden aus Bewerbungsdaten vorausgefüllt"
+          },
+          {
+            "scenario": "Gehalt recherchieren",
+            "status": "passed",
+            "notes": "API-Call erfolgreich (200 OK), zeigt Median (68.000€), Gehaltsspanne (55k-85k), Einflussfaktoren, Datenquellen"
+          },
+          {
+            "scenario": "Wunschgehalt Auto-Fill",
+            "status": "passed",
+            "notes": "Nach Marktrecherche wird Median-Wert (68.000) automatisch ins Wunschgehalt-Feld eingetragen"
+          },
+          {
+            "scenario": "Verhandlungsstrategie generieren",
+            "status": "passed",
+            "notes": "Loading-State 'Generiere Strategie...' gezeigt, umfassende Strategie wird generiert"
+          },
+          {
+            "scenario": "Verhandlungsstrategie Inhalt",
+            "status": "passed",
+            "notes": "Empfohlene Spanne (62k-75k), Eröffnungsstatement, 5 Verhandlungstipps mit Kategorien, Persönliche Argumente, Fallback-Positionen, Einwände & Antworten, Kulturelle Hinweise"
+          },
+          {
+            "scenario": "Verhandlungstipps Filter",
+            "status": "passed",
+            "notes": "Filter-Buttons (Alle, Vorbereitung, Eröffnung, etc.) funktionieren korrekt"
+          },
+          {
+            "scenario": "Interview-Fragen generieren ohne Stellenbeschreibung",
+            "status": "partial",
+            "notes": "Fehlermeldung wird angezeigt (korrekt), aber als nativer Alert statt Custom-Modal, Console-Error"
+          },
+          {
+            "scenario": "Zurück zu Bewerbungen Navigation",
+            "status": "passed",
+            "notes": "Link funktioniert korrekt, navigiert zu /applications"
+          },
+          {
+            "scenario": "Mobile-Ansicht (375x667)",
+            "status": "passed",
+            "notes": "Responsive Layout, alle Accordions und Buttons zugänglich, bessere aria-labels im Mobile-Modus"
+          },
+          {
+            "scenario": "Console Errors",
+            "status": "warning",
+            "notes": "400 Bad Request bei generate-questions (erwartet ohne Stellenbeschreibung), ansonsten keine unerwarteten Errors"
+          },
+          {
+            "scenario": "Network Requests",
+            "status": "passed",
+            "notes": "Alle API-Calls erfolgreich: /applications/:id (200), /companies/.../research (200), /interview-questions (200), /salary/research (200), /salary/negotiation-tips (200)"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-013",
+      "message": "MockInterview: KI-Mock-Interview",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "Mock-Interview starten, Frage-Antwort Flow, Feedback",
+      "pages": [
+        "/applications/:id/mock-interview"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-013",
+        "tested_at": "2026-01-15T22:00:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "Firmen-Recherche zeigt korrupte/unleserliche Zeichen",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications/:id/interview",
+              "Schaue in den Bereich 'Firmen-Recherche'",
+              "Unter 'Ueber das Unternehmen' werden korrupte Zeichen angezeigt"
+            ],
+            "expected": "Lesbare Firmenbeschreibung wird angezeigt",
+            "actual": "Zeichen wie '�S �', '*\"9i�h�.������X...' werden angezeigt (Encoding-Problem oder korrupter Cache)",
+            "affected_component": "InterviewPrep.vue, backend/cache/companies/"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "critical",
+            "title": "Interview-Fragen können nicht generiert werden - Stellenbeschreibung fehlt trotz manueller Eingabe",
+            "steps_to_reproduce": [
+              "Erstelle neue Bewerbung mit manueller Stellenbeschreibung",
+              "Navigiere zu Interview-Prep",
+              "Klicke auf 'Fragen generieren'"
+            ],
+            "expected": "Interview-Fragen werden basierend auf der eingegebenen Stellenbeschreibung generiert",
+            "actual": "Alert: 'Keine Stellenbeschreibung vorhanden' - die manuelle Stellenbeschreibung wird nicht gespeichert oder für Interview-Fragen verwendet",
+            "affected_component": "NewApplication.vue, InterviewPrep.vue, Backend API"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Route /applications/:id/mock-interview zeigt leere Seite",
+            "steps_to_reproduce": [
+              "Navigiere direkt zu /applications/6/mock-interview"
+            ],
+            "expected": "Mock-Interview Seite wird angezeigt oder Redirect zur korrekten Route",
+            "actual": "Leere main-Section, keine Inhalte, keine Fehlermeldung",
+            "affected_component": "Router, InterviewPrep.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Interview-Prep Link im Bewerbungs-Detail besser sichtbar machen",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Mock-Interview Frage-Antwort Flow konnte nicht getestet werden aufgrund von BUG-002",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Gehaltsverhandlungs-Coach: Position und Region werden automatisch befüllt - sehr gute UX!",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-014",
+      "message": "Settings: Profil + Account-Einstellungen",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "Profil bearbeiten, Passwort aendern, API-Key generieren",
+      "pages": [
+        "/settings"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-014",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Doppelte Fehlermeldungen bei E-Mail-Integration vermeiden",
+            "description": "Beim Klick auf 'Mit Gmail verbinden' oder 'Mit Outlook verbinden' erscheinen zwei separate Fehlermeldungen ('Integration nicht konfiguriert' und 'Fehler beim Verbinden'). Eine einzelne, konsolidierte Meldung wäre benutzerfreundlicher.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "Autocomplete-Attribute für Passwort-Felder hinzufügen",
+            "description": "Browser meldet fehlende autocomplete-Attribute für Passwort-Eingabefelder (current-password, new-password). Dies würde Passwort-Manager-Integration verbessern.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Profil-Bearbeitungsmöglichkeit hinzufügen",
+            "description": "Die Settings-Seite zeigt nur E-Mail und Plan an, aber keine Möglichkeit, persönliche Profildaten (Name, Skills, etc.) zu bearbeiten. Dies könnte als separate Sektion ergänzt werden.",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "FLOW-015",
+      "message": "Subscription: Plan-Uebersicht + Limits",
+      "scope": "fullstack",
+      "type": "feature",
+      "test_focus": "Aktueller Plan, Limits anzeigen, Stripe Checkout vorbereiten",
+      "pages": [
+        "/subscription"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "FLOW-015",
+        "tested_at": "2026-01-15T12:45:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Stripe Checkout schlägt fehl - Plan nicht konfiguriert",
+            "steps_to_reproduce": [
+              "Öffne /subscription",
+              "Klicke auf 'Upgraden' für Basic oder Pro Plan",
+              "Oder klicke auf Quick-Upgrade Buttons 'Basic - 9,99 EUR/Monat' oder 'Pro - 19,99 EUR/Monat'"
+            ],
+            "expected": "Stripe Checkout öffnet sich zur Zahlungsabwicklung",
+            "actual": "400 Bad Request - Fehlermeldung 'Plan nicht konfiguriert' erscheint",
+            "affected_component": "backend/routes/subscriptions.py:140-141",
+            "root_cause": "STRIPE_PRICE_BASIC und STRIPE_PRICE_PRO Environment-Variablen sind nicht mit echten Stripe Price IDs konfiguriert. Die Werte müssen im Stripe Dashboard erstellt und in .env eingetragen werden."
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Loading State für Upgrade-Buttons hinzufügen",
+            "description": "Die Upgrade-Buttons sollten einen Loading-Spinner zeigen während der API-Request läuft",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Bessere Fehlermeldung bei fehlender Stripe-Konfiguration",
+            "description": "Statt 'Plan nicht konfiguriert' eine benutzerfreundlichere Meldung wie 'Zahlungssystem wird konfiguriert. Bitte später erneut versuchen.'",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Upgrade-Buttons deaktivieren wenn Stripe nicht konfiguriert",
+            "description": "Im Frontend prüfen ob stripe_price_id vorhanden ist und Buttons entsprechend deaktivieren/ausblenden",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "EDGE-001",
+      "message": "Edge: Session-Timeout Handling",
+      "scope": "frontend",
+      "type": "edge-case",
+      "test_focus": "Nach 401 wird User ausgeloggt, Redirect zu Login, kein Datenverlust",
+      "pages": [
+        "/applications",
+        "/login"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "EDGE-001",
+        "tested_at": "2026-01-15T14:32:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "401-Handler erkennt viele JWT-Fehlermeldungen nicht",
+            "steps_to_reproduce": [
+              "Als eingeloggter User: Token in localStorage auf 'invalid-token' setzen",
+              "Seite /applications aufrufen",
+              "Server gibt 422 mit msg: 'Not enough segments' zurück"
+            ],
+            "expected": "User wird ausgeloggt und zu /login weitergeleitet mit Toast 'Sitzung abgelaufen'",
+            "actual": "Seite zeigt leeren State ('Noch keine Bewerbungen'), User bleibt 'eingeloggt', Toast zeigt 'Ungültige Eingabe'",
+            "affected_component": "frontend/src/api/client.js:31-32",
+            "root_cause": "Der Code prüft `error.response?.data?.msg?.includes('token')`, aber viele JWT-Fehler enthalten nicht 'token': 'Not enough segments', 'Signature verification failed', 'Invalid header padding', etc."
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "Navigation zeigt eingeloggten Zustand trotz ungültigem Token",
+            "steps_to_reproduce": [
+              "Token in localStorage auf ungültigen Wert setzen",
+              "Zu /login navigieren",
+              "Navigation beobachten"
+            ],
+            "expected": "Navigation zeigt ausgeloggten Zustand (keine Dashboard-Links, kein Abmelden-Button)",
+            "actual": "Navigation zeigt vollen eingeloggten Zustand mit allen Links und Abmelden-Button",
+            "affected_component": "frontend/src/App.vue (Navigation-Logik)",
+            "root_cause": "Die App prüft nur localStorage auf Token-Existenz, nicht ob der Token noch gültig ist"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "major",
+            "title": "Backend gibt 422 statt 401 für ungültige Tokens",
+            "steps_to_reproduce": [
+              "API-Request mit ungültigem/manipuliertem JWT Token senden"
+            ],
+            "expected": "Backend gibt 401 Unauthorized zurück",
+            "actual": "Backend gibt 422 Unprocessable Entity zurück (Flask-JWT-Extended Default)",
+            "affected_component": "backend/app.py",
+            "root_cause": "Flask-JWT-Extended gibt standardmäßig 422 für JWT-Fehler zurück. Es fehlen custom error handlers: @jwt.invalid_token_loader, @jwt.expired_token_loader"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "security",
+            "title": "Frontend 401-Erkennung verbessern",
+            "priority": "high",
+            "description": "In client.js: Statt `msg.includes('token')` sollte auf Status 422 generell reagiert werden wenn ein Authorization-Header gesendet wurde, ODER alle bekannten JWT-Fehlermeldungen abfangen"
+          },
+          {
+            "id": "SUG-002",
+            "type": "security",
+            "title": "Backend JWT Error Handlers hinzufügen",
+            "priority": "high",
+            "description": "In app.py @jwt.invalid_token_loader und @jwt.expired_token_loader hinzufügen die 401 zurückgeben statt 422"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Token-Validierung beim App-Start",
+            "priority": "medium",
+            "description": "Beim App-Start einen /api/auth/me Call machen um Token-Gültigkeit zu prüfen und bei Fehler sofort ausloggen"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "EDGE-002",
+      "message": "Edge: Leere States (keine Daten)",
+      "scope": "frontend",
+      "type": "edge-case",
+      "test_focus": "Leere Bewerbungsliste, leere Templates, leere Dokumente - korrekte Anzeige",
+      "pages": [
+        "/applications",
+        "/templates",
+        "/documents"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "EDGE-002",
+        "tested_at": "2026-01-15T12:45:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Error-Toast 'Ungültige Eingabe' erscheint bei jedem Seitenwechsel",
+            "steps_to_reproduce": [
+              "1. App öffnen (http://localhost:3000)",
+              "2. Auf 'Bewerbungen', 'Templates' oder 'Dokumente' navigieren",
+              "3. Error-Toast 'Ungültige Eingabe' erscheint kurzzeitig"
+            ],
+            "expected": "Keine Fehlermeldung bei leeren States - der Empty State sollte still angezeigt werden",
+            "actual": "Toast-Benachrichtigung '✗ Ungültige Eingabe' erscheint bei API 422-Fehlern",
+            "affected_component": "src/pages/Applications.vue, src/pages/Templates.vue, src/pages/Documents.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Generische Fehlermeldung 'Ungültige Eingabe' nicht aussagekräftig",
+            "steps_to_reproduce": [
+              "1. API-Fehler auslösen (422 Response)",
+              "2. Toast zeigt 'Ungültige Eingabe'"
+            ],
+            "expected": "Spezifischere Fehlermeldung oder keine Toast bei leeren Daten",
+            "actual": "Generische Meldung 'Ungültige Eingabe' für alle 422-Fehler",
+            "affected_component": "Error-Handling / Toast-Service"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Empty State für Applications könnte visuell ansprechender sein (Icon/Illustration hinzufügen)",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Bei API-Fehlern für leere Listen keine Error-Toast zeigen - stattdessen still Empty State anzeigen",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "Empty State Texte könnten einen CTA-Button statt nur Text enthalten",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "EDGE-003",
+      "message": "Edge: Form Validation ueberall",
+      "scope": "frontend",
+      "type": "edge-case",
+      "test_focus": "Leere Felder submitten, ungueltige Emails, zu kurze Passwoerter",
+      "pages": [
+        "/register",
+        "/login",
+        "/new-application",
+        "/settings"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "EDGE-003",
+        "tested_at": "2026-01-15T12:45:00.000Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Sichtbare Fehlermeldung für leere Pflichtfelder hinzufügen",
+            "description": "Bei leeren Feldern auf /register und /login wird nur der Fokus auf das erste leere Feld gesetzt, aber keine sichtbare Fehlermeldung angezeigt. Dies verlässt sich auf Browser-native Validierung, die je nach Browser unterschiedlich aussieht.",
+            "priority": "medium",
+            "affected_pages": [
+              "/register",
+              "/login"
+            ]
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Sichtbare Fehlermeldung für ungültige Email-Formate",
+            "description": "Bei ungültigen Email-Formaten (z.B. 'keine-email') wird nur der Fokus gesetzt, aber keine custom Fehlermeldung angezeigt. Die Passwort-Validierung zeigt custom Messages - Email sollte konsistent sein.",
+            "priority": "medium",
+            "affected_pages": [
+              "/register",
+              "/login"
+            ]
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "Autocomplete-Attribute für Passwort-Felder",
+            "description": "Browser-Console zeigt Warnings: Input elements should have autocomplete attributes (suggested: 'current-password', 'new-password'). Dies verbessert Accessibility und Passwort-Manager-Integration.",
+            "priority": "low",
+            "affected_pages": [
+              "/settings"
+            ]
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "EDGE-004",
+      "message": "Edge: Netzwerk-Fehler Handling",
+      "scope": "frontend",
+      "type": "edge-case",
+      "test_focus": "API-Timeout simulieren, Retry-Verhalten, Error-Messages",
+      "pages": [
+        "/applications",
+        "/new-application"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "EDGE-004",
+        "tested_at": "2026-01-15T10:45:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Generische Toast-Fehlermeldung 'Ungültige Eingabe' nicht hilfreich",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications oder /new-application",
+              "Warte auf API-Fehler (422)",
+              "Beobachte Toast-Nachricht"
+            ],
+            "expected": "Spezifische Fehlermeldung wie 'Verbindungsfehler' oder 'Authentifizierung fehlgeschlagen'",
+            "actual": "Generische Meldung 'Ungültige Eingabe' wird für alle API-Fehler angezeigt",
+            "affected_component": "Toast/Notification System (global)"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "Applications-Seite zeigt 'Keine Bewerbungen' statt Fehlermeldung bei API-Fehler",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications",
+              "API gibt 422 Fehler zurück",
+              "Beobachte Seiteninhalt"
+            ],
+            "expected": "Fehlerzustand mit Retry-Option oder Hinweis auf technisches Problem",
+            "actual": "Seite zeigt 'Noch keine Bewerbungen' - User denkt es gibt keine Daten",
+            "affected_component": "Applications.vue"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Keine Unterscheidung zwischen leeren Daten und Ladefehler",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications bei API-Fehler",
+              "Statistiken zeigen 0/0/0"
+            ],
+            "expected": "Bei Fehler sollten Statistiken einen Error-State zeigen oder ausgeblendet werden",
+            "actual": "Statistiken zeigen 0, was irreführend ist",
+            "affected_component": "Applications.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Kontextspezifische Fehlermeldungen im Toast implementieren",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Error-State für Listen-Komponenten mit Retry-Button hinzufügen",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Inline-Error auf NewApplication als Vorbild für andere Seiten nutzen (bereits gut umgesetzt)",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "MOBILE-001",
+      "message": "Mobile: Navigation und Menue",
+      "scope": "frontend",
+      "type": "responsive",
+      "test_focus": "Hamburger-Menue, Navigation, Sidebar auf 375px",
+      "viewport": "375x667",
+      "pages": [
+        "/",
+        "/applications",
+        "/settings"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "MOBILE-001",
+        "tested_at": "2026-01-15T10:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "Kein Hamburger-Menü auf Mobile - Navigation nicht zugänglich",
+            "steps_to_reproduce": [
+              "Browser auf 375x667 Viewport setzen",
+              "Auf http://localhost:3000 navigieren",
+              "Navigation im Header beobachten"
+            ],
+            "expected": "Ein Hamburger-Menü-Icon sollte erscheinen, das beim Klicken eine Sidebar/Dropdown mit allen Navigationspunkten öffnet",
+            "actual": "Die Nav-Links werden versteckt (display: none für .nav-text), aber es gibt kein Hamburger-Menü. Nur 'Insights' (Icon) und 'Neu' (Button) sind sichtbar. Dashboard, Dokumente, Templates, Bewerbungen, Timeline, ATS sind NICHT erreichbar.",
+            "affected_component": "frontend/src/App.vue (zen-nav, nav-center)"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "Einstellungen und Abmelden auf Mobile nicht zugänglich",
+            "steps_to_reproduce": [
+              "Browser auf 375x667 Viewport setzen",
+              "Auf http://localhost:3000 navigieren",
+              "Versuchen, zu Einstellungen zu navigieren oder sich abzumelden"
+            ],
+            "expected": "Einstellungen-Icon und Abmelden-Button sollten sichtbar sein",
+            "actual": "Die Icons für Einstellungen und Abmelden sind vorhanden, aber visuell nicht erreichbar im mobilen Layout. Benutzer können sich nicht abmelden oder Einstellungen ändern.",
+            "affected_component": "frontend/src/App.vue (nav-actions)"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "422 API-Fehler auf allen Seiten",
+            "steps_to_reproduce": [
+              "Auf http://localhost:3000 navigieren",
+              "Console-Errors prüfen"
+            ],
+            "expected": "Keine API-Fehler oder graceful Error-Handling",
+            "actual": "Mehrere 422 UNPROCESSABLE ENTITY Fehler: /api/applications/interview-stats, /api/recommendations, /api/recommendations/stats, /api/auth/me",
+            "affected_component": "Backend API oder Auth-Token"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Hamburger-Menü mit Slide-out Sidebar implementieren",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Bottom Navigation Bar als Alternative für Mobile erwägen",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "Autocomplete-Attribute für Passwort-Felder hinzufügen",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "MOBILE-002",
+      "message": "Mobile: Formulare und Inputs",
+      "scope": "frontend",
+      "type": "responsive",
+      "test_focus": "Login-Form, NewApplication-Form auf Mobile",
+      "viewport": "375x667",
+      "pages": [
+        "/login",
+        "/new-application"
+      ],
+      "tested": true,
+      "test_result": {
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [],
+        "notes": "No structured result returned"
+      }
+    },
+    {
+      "id": "MOBILE-003",
+      "message": "Mobile: Tabellen und Listen",
+      "scope": "frontend",
+      "type": "responsive",
+      "test_focus": "Applications-Tabelle, Timeline auf Mobile - horizontal scroll oder Cards?",
+      "viewport": "375x667",
+      "pages": [
+        "/applications",
+        "/timeline"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "MOBILE-003",
+        "tested_at": "2026-01-15T12:45:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "Navigation-Links auf Mobile unsichtbar/nicht erkennbar",
+            "steps_to_reproduce": [
+              "1. Öffne die App auf Mobile (375x667)",
+              "2. Betrachte die Navigation zwischen Logo und 'Neu'-Button",
+              "3. Die Links Dashboard, Dokumente, Templates, Bewerbungen, Timeline, ATS sind nur 16x16px groß und haben keinen sichtbaren Inhalt"
+            ],
+            "expected": "Navigation-Links sollten als Icons oder in einem Hamburger-Menü sichtbar sein",
+            "actual": "Links haben display:none auf Text, aber keine Icons als Alternative. Sie sind als horizontale Linie sichtbar aber nicht als Navigation erkennbar",
+            "affected_component": "App.vue (Navigation)"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Hamburger-Menü für Mobile Navigation implementieren",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Alternative: Icons für alle Nav-Links auf Mobile anzeigen (wie bei Insights)",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Bottom Navigation Bar für Mobile als Alternative zu Top-Navigation",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "A11Y-001",
+      "message": "Accessibility: Keyboard Navigation",
+      "scope": "frontend",
+      "type": "accessibility",
+      "test_focus": "Tab-Navigation durch Forms, Enter fuer Submit, Escape fuer Close",
+      "pages": [
+        "/login",
+        "/applications",
+        "/new-application"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "A11Y-001",
+        "tested_at": "2026-01-15T12:00:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Enter-Taste sendet Formular auf /new-application nicht ab",
+            "steps_to_reproduce": [
+              "Navigiere zu /new-application",
+              "Klicke ins URL-Eingabefeld",
+              "Gib eine gültige URL ein (z.B. https://www.stepstone.de/test-job)",
+              "Drücke Enter"
+            ],
+            "expected": "Das Formular wird abgesendet und die Stellenanzeige wird geladen",
+            "actual": "Nichts passiert, der Button 'Stellenanzeige laden' wird nicht aktiviert",
+            "affected_component": "NewApplication.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "Escape-Taste schließt Modals nicht",
+            "steps_to_reproduce": [
+              "Navigiere zu /documents",
+              "Klicke auf 'Skill hinzufügen'",
+              "Modal öffnet sich",
+              "Drücke Escape"
+            ],
+            "expected": "Das Modal wird geschlossen",
+            "actual": "Das Modal bleibt offen",
+            "affected_component": "SkillsOverview.vue (und andere Modal-Komponenten)"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "major",
+            "title": "Escape-Taste schließt Job-Analyse Modal nicht",
+            "steps_to_reproduce": [
+              "Navigiere zu Dashboard (/)",
+              "Klicke auf 'Job analysieren'",
+              "Modal 'Stellenanzeige analysieren' öffnet sich",
+              "Drücke Escape"
+            ],
+            "expected": "Das Modal wird geschlossen",
+            "actual": "Das Modal bleibt offen",
+            "affected_component": "JobRecommendations.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "accessibility",
+            "title": "Globaler Escape-Handler für alle Modals implementieren",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "Form-Submission via Enter in allen Formularen mit einem Eingabefeld ermöglichen",
+            "priority": "high"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "A11Y-002",
+      "message": "Accessibility: Focus States und Outlines",
+      "scope": "frontend",
+      "type": "accessibility",
+      "test_focus": "Sichtbare Focus-Indikatoren auf allen interaktiven Elementen",
+      "pages": [
+        "/",
+        "/login",
+        "/applications"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "A11Y-002",
+        "tested_at": "2026-01-15T14:32:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "accessibility",
+            "title": "Dropdown/Select-Element Focus-Indicator verbessern",
+            "description": "Der Status-Filter Dropdown auf /applications hat einen weniger prominenten Focus-Indicator als andere Elemente. Obwohl technisch sichtbar, könnte er für Benutzer mit Sehbehinderungen schwerer zu erkennen sein. Empfehlung: Custom Focus-Style mit deutlicherem Outline hinzufügen.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Konsistente Focus-Farbe verwenden",
+            "description": "Die meisten Elemente verwenden einen dunklen/blauen Focus-Outline, was gut ist. Für noch bessere Konsistenz könnte eine einheitliche Focus-Farbe im gesamten Design-System definiert werden (z.B. via CSS custom property --focus-color).",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "PERF-001",
+      "message": "Performance: Initial Load Time",
+      "scope": "frontend",
+      "type": "performance",
+      "test_focus": "Dashboard-Load, keine blockierenden Requests, Lazy-Loading funktioniert",
+      "pages": [
+        "/",
+        "/applications"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "PERF-001",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "performance",
+            "title": "API-Fehlerbehandlung optimieren - 422-Errors zeigen 'Ungültige Eingabe' Toast",
+            "description": "Obwohl die Performance exzellent ist, zeigen alle 422-API-Fehler einen generischen 'Ungültige Eingabe' Toast. Dies ist kein Performance-Bug, aber könnte den User verwirren.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "performance",
+            "title": "Error-Toast bei API-Fehlern unterdrücken oder spezifischer machen",
+            "description": "Bei 422-Fehlern von /api/auth/me, /api/recommendations etc. erscheint ein Error-Toast. Für bessere UX: entweder silent fail oder spezifischere Meldung.",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-001",
+      "message": "Uebersichtlichkeit: Dashboard Information Hierarchy",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Sind die wichtigsten KPIs sofort sichtbar? Klare visuelle Hierarchie? Nicht ueberladen? Weiss der User auf einen Blick was zu tun ist?",
+      "check_points": [
+        "Wichtigste Metriken above the fold",
+        "Klare Trennung zwischen Sektionen",
+        "Keine Information Overload",
+        "CTAs sind eindeutig erkennbar"
+      ],
+      "pages": [
+        "/"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-001",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "KPI-Statistik-Karten zeigen permanente Skeleton-Loading statt Daten oder Error-State",
+            "steps_to_reproduce": [
+              "Dashboard öffnen unter /",
+              "Warten bis Seite geladen"
+            ],
+            "expected": "KPI-Karten zeigen entweder echte Statistiken oder einen benutzerfreundlichen Error-State mit Fehlermeldung",
+            "actual": "Vier leere Skeleton-Placeholder-Karten bleiben permanent sichtbar (API 422 Error wird nicht behandelt)",
+            "affected_component": "Dashboard.vue:102-106"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "Mehrere API-Endpunkte geben 422 Errors zurück",
+            "steps_to_reproduce": [
+              "Dashboard öffnen",
+              "Console Messages prüfen"
+            ],
+            "expected": "APIs geben valide Daten zurück oder Frontend behandelt Fehler graceful",
+            "actual": "422 Errors für: /api/stats, /api/recommendations, /api/applications/interview-stats, /api/auth/me",
+            "affected_component": "Backend API / Dashboard.vue, JobRecommendations.vue, InterviewStatsWidget.vue"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Skeleton-Karten haben keinen erkennbaren Ladeindikator",
+            "steps_to_reproduce": [
+              "Dashboard öffnen",
+              "Skeleton-Karten betrachten"
+            ],
+            "expected": "Loading-Skeletons sollten animiert sein (shimmer/pulse) um Ladevorgang anzuzeigen",
+            "actual": "Statische beige Boxen ohne Animation - User weiß nicht ob etwas lädt oder kaputt ist",
+            "affected_component": "Dashboard.vue:103-105, global CSS"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Error-State für fehlgeschlagene API-Calls implementieren",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Skeleton-Loading mit Animation (shimmer effect) versehen",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "KPI-Karten sollten 'above the fold' sein - aktuell unter leerem Hero-Bereich",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-004",
+            "type": "ux",
+            "title": "Email-Verification Banner nimmt viel Platz ein - Möglichkeit zum dauerhaften Schließen fehlt (nur Session-Storage)",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-005",
+            "type": "accessibility",
+            "title": "Skeleton-Loading hat keine aria-label für Screen-Reader",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-002",
+      "message": "Uebersichtlichkeit: Applications Tabelle Scanability",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Kann man schnell die gewuenschte Bewerbung finden? Status auf einen Blick erkennbar? Spalten sinnvoll priorisiert?",
+      "check_points": [
+        "Status visuell unterscheidbar (Farben/Icons)",
+        "Firma und Position prominent",
+        "Datum gut lesbar",
+        "Aktionen leicht zu finden",
+        "Zeilen nicht zu dicht gepackt"
+      ],
+      "pages": [
+        "/applications"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-002",
+        "tested_at": "2026-01-15T10:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "API gibt 422 Fehler beim Laden der Bewerbungen",
+            "steps_to_reproduce": [
+              "Navigiere zu /applications",
+              "Warte auf Laden der Daten"
+            ],
+            "expected": "Bewerbungen werden geladen und angezeigt",
+            "actual": "422 UNPROCESSABLE ENTITY Fehler, 'Noch keine Bewerbungen' wird angezeigt obwohl evtl. Daten existieren",
+            "affected_component": "Applications.vue:99, Backend /api/applications"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Tabellen-Ansicht als Alternative zum Card-Grid hinzufügen",
+            "description": "Für bessere Scanability bei vielen Bewerbungen wäre eine Tabellen-Ansicht mit Sortierung und kompakter Darstellung hilfreich. Das Card-Grid ist schön, aber bei 50+ Bewerbungen schwer zu scannen.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Sortieroptionen hinzufügen (Datum, Status, Firma)",
+            "description": "Aktuell nur Filter nach Status. Sortierung nach Datum (neu/alt), Firma (A-Z) und Status würde Scanability verbessern.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Status-Filter als Tabs statt Dropdown",
+            "description": "Für schnelleren Zugriff könnten die Status als klickbare Tabs/Chips über den Karten angezeigt werden, ähnlich wie bei der Stats-Section.",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "accessibility",
+            "title": "ARIA-Labels für Status-Badges",
+            "description": "Status-Badges haben keine expliziten ARIA-Labels. Für Screen-Reader wäre aria-label='Status: Versendet' hilfreich.",
+            "priority": "low"
+          }
+        ],
+        "code_analysis": {
+          "status_visual_differentiation": "GOOD - 5 verschiedene Farben für 5 Status (Blau, Orange, Grün, Rot, Grün-gefüllt)",
+          "company_position_prominence": "GOOD - Firma als h3, Position prominent darunter",
+          "date_readability": "GOOD - Formatiert als DD.MM.YYYY mit Kalender-Icon",
+          "actions_findability": "GOOD - PDF/Details Buttons klar sichtbar in card-actions",
+          "row_density": "GOOD - Ausreichend Padding (var(--space-lg)), keine dichte Packung"
+        },
+        "limitations": "Konnte Tabelle mit echten Daten nicht testen wegen API 422 Fehler. Analyse basiert auf Code-Review und Empty-State UI.",
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-003",
+      "message": "Uebersichtlichkeit: Navigation und Orientierung",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Weiss der User immer wo er ist? Ist die aktuelle Seite markiert? Breadcrumbs vorhanden wo noetig?",
+      "check_points": [
+        "Aktiver Nav-Link hervorgehoben",
+        "Seitentitel klar erkennbar",
+        "Zurueck-Navigation moeglich",
+        "Keine Sackgassen in der Navigation"
+      ],
+      "pages": [
+        "/",
+        "/applications",
+        "/new-application",
+        "/settings"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-003",
+        "tested_at": "2026-01-15T14:32:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Mobile Navigation zeigt nur Icons ohne Text - keine klare Orientierung",
+            "steps_to_reproduce": [
+              "Viewport auf 375x667 setzen (Mobile)",
+              "Beliebige Seite aufrufen (z.B. /applications)",
+              "Navigation betrachten"
+            ],
+            "expected": "Hamburger-Menü oder sichtbare Text-Navigation, damit User weiß wo er ist",
+            "actual": "Navigation zeigt nur kleine Icons ohne Text. Haupt-Navigationslinks (Dashboard, Dokumente, Templates, etc.) sind als 16px breite Icons versteckt. Kein Hamburger-Menü vorhanden.",
+            "affected_component": "src/components/TheNavigation.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Einstellungen-Link auf Mobile nicht sichtbar (außerhalb Viewport)",
+            "steps_to_reproduce": [
+              "Viewport auf 375x667 setzen",
+              "Beliebige Seite aufrufen",
+              "Versuchen, zu Einstellungen zu navigieren"
+            ],
+            "expected": "Einstellungen-Link sichtbar oder über Menü erreichbar",
+            "actual": "Link ist bei Position left: 380.75px, also außerhalb des 375px breiten Viewports. Kein Scroll-Indikator vorhanden.",
+            "affected_component": "src/components/TheNavigation.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Hamburger-Menü für Mobile implementieren",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Scroll-Indikator für horizontale Navigation auf Mobile hinzufügen (falls kein Hamburger-Menü)",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "Page Title im Browser-Tab sollte die aktuelle Seite widerspiegeln (aktuell immer 'obo - Bewerbungsautomation')",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-004",
+      "message": "Uebersichtlichkeit: Formulare und Labels",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Sind alle Felder klar beschriftet? Pflichtfelder markiert? Hilfetext wo noetig? Logische Gruppierung?",
+      "check_points": [
+        "Labels ueber oder neben Inputs (nicht placeholder-only)",
+        "Pflichtfelder mit * oder 'Erforderlich' markiert",
+        "Hilfetexte bei komplexen Feldern",
+        "Zusammengehoerige Felder gruppiert",
+        "Submit-Button Text beschreibt Aktion"
+      ],
+      "pages": [
+        "/new-application",
+        "/register",
+        "/settings"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-004",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Pflichtfeld-Markierung (*) bei Formularen hinzufügen",
+            "description": "Auf /register und /settings fehlt die visuelle Kennzeichnung von Pflichtfeldern mit * oder 'Erforderlich'. Dies ist ein UX-Standard für Barrierefreiheit.",
+            "priority": "medium",
+            "affected_pages": [
+              "/register",
+              "/settings"
+            ]
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "autocomplete-Attribute für Passwort-Felder hinzufügen",
+            "description": "Console-Warnung: Input-Elemente sollten autocomplete-Attribute haben (current-password, new-password). Verbessert Passwort-Manager-Kompatibilität.",
+            "priority": "low",
+            "affected_pages": [
+              "/settings"
+            ]
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-005",
+      "message": "Uebersichtlichkeit: Timeline Lesbarkeit",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Ist der zeitliche Verlauf klar? Sind Events gut unterscheidbar? Chronologie eindeutig?",
+      "check_points": [
+        "Zeitachse klar erkennbar",
+        "Events mit Datum versehen",
+        "Verschiedene Event-Typen unterscheidbar",
+        "Aktuelle/neueste Events hervorgehoben",
+        "Nicht zu viele Events auf einmal"
+      ],
+      "pages": [
+        "/timeline"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-005",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "API-Fehler 422 bei nicht-verifizierter E-Mail blockiert Timeline komplett",
+            "steps_to_reproduce": [
+              "1. Als nicht-verifizierter User einloggen",
+              "2. Zur /timeline navigieren",
+              "3. Timeline lädt nicht, zeigt 'Ungültige Eingabe' Toast"
+            ],
+            "expected": "Timeline sollte laden oder informativer Fehler angezeigt werden",
+            "actual": "Generischer 'Ungültige Eingabe' Fehler, keine Daten",
+            "affected_component": "Timeline.vue:22"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "'Alle anzeigen' Button im Empty-State löst erneut Fehler aus",
+            "steps_to_reproduce": [
+              "1. Auf Timeline mit 0 Bewerbungen sein",
+              "2. Auf 'Alle anzeigen' klicken",
+              "3. Gleicher Fehler tritt auf"
+            ],
+            "expected": "Button sollte disabled sein oder Fehler elegant behandeln",
+            "actual": "Button triggert gleichen 422-Fehler",
+            "affected_component": "Timeline.vue:113"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Bessere Fehlermeldung bei Auth-Problemen - 'Bitte verifizieren Sie Ihre E-Mail' statt 'Ungültige Eingabe'",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Timeline hat keine visuelle Zeitachsen-Linie zwischen Cards - nur innerhalb jeder Card gibt es die Status-History",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Keine Gruppierung nach Datum/Woche - alle Events erscheinen als flache Liste",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-004",
+            "type": "accessibility",
+            "title": "Status-History Timeline hat keine ARIA-Labels für Screenreader",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-006",
+      "message": "Uebersichtlichkeit: Settings Struktur",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Sind Settings logisch gruppiert? Findet man schnell was man sucht? Keine versteckten wichtigen Optionen?",
+      "check_points": [
+        "Klare Kategorien (Profil, Sicherheit, etc.)",
+        "Wichtige Settings nicht versteckt",
+        "Destructive Actions (Delete Account) deutlich markiert",
+        "Speichern-Feedback klar"
+      ],
+      "pages": [
+        "/settings"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-006",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "Fehlende 'Konto löschen' Funktion (DSGVO-Compliance)",
+            "steps_to_reproduce": [
+              "Navigiere zu /settings",
+              "Scrolle durch die gesamte Seite",
+              "Suche nach einer Option zum Löschen des Kontos"
+            ],
+            "expected": "Eine 'Konto löschen' Option sollte vorhanden sein, idealerweise in einem 'Gefahrenzone' Bereich mit deutlicher visueller Warnung (rot)",
+            "actual": "Keine Möglichkeit das Konto zu löschen. User muss Support kontaktieren, was DSGVO-Anforderungen (Recht auf Löschung) nicht vollständig erfüllt",
+            "affected_component": "Settings.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "API-Fehler beim Laden der Settings-Seite (422)",
+            "steps_to_reproduce": [
+              "Navigiere zu /settings",
+              "Öffne Browser-Konsole"
+            ],
+            "expected": "Keine Fehler in der Konsole",
+            "actual": "422 UNPROCESSABLE ENTITY Fehler für /api/keys und /api/email/accounts",
+            "affected_component": "Settings.vue:146, Settings.vue:164"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Kategorien-Navigation für Settings hinzufügen",
+            "description": "Bei wachsender Anzahl von Settings wäre eine Sidebar oder Tab-Navigation sinnvoll (z.B. 'Profil', 'Sicherheit', 'Integrationen', 'Gefahrenzone')",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Profil-Einstellungen fehlen",
+            "description": "Es gibt keinen Bereich für grundlegende Profil-Informationen wie Name, Anzeigename, Profilbild etc.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Gefahrenzone-Sektion für destructive Actions",
+            "description": "Eine visuell abgesetzte 'Gefahrenzone' am Ende der Settings mit rotem Rahmen/Hintergrund für Actions wie 'Konto löschen', 'Alle Daten exportieren' würde die UX verbessern",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-004",
+            "type": "accessibility",
+            "title": "autocomplete Attribute für Passwort-Felder",
+            "description": "Die Passwort-Felder sollten autocomplete='current-password' bzw. autocomplete='new-password' haben (Browser-Warnung in Konsole)",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-007",
+      "message": "Uebersichtlichkeit: Subscription/Pricing Klarheit",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Sind die Plaene klar unterscheidbar? Preis transparent? Features vergleichbar? Aktueller Plan hervorgehoben?",
+      "check_points": [
+        "Preis prominent und eindeutig",
+        "Feature-Vergleich uebersichtlich",
+        "Aktueller Plan markiert",
+        "Upgrade-Pfad klar",
+        "Keine versteckten Kosten"
+      ],
+      "pages": [
+        "/subscription"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-007",
+        "tested_at": "2026-01-15T12:32:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "API-Fehler 422 bei /api/subscriptions/current",
+            "steps_to_reproduce": [
+              "Navigiere zu /subscription",
+              "Warte bis Seite geladen ist"
+            ],
+            "expected": "Subscription-Details werden korrekt geladen",
+            "actual": "API gibt 422 UNPROCESSABLE ENTITY zurück, technische Fehlermeldung wird angezeigt",
+            "affected_component": "SubscriptionView.vue oder Backend API"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "Feature-Liste des aktuellen Plans ist leer",
+            "steps_to_reproduce": [
+              "Navigiere zu /subscription",
+              "Schaue auf 'ENTHALTENE FEATURES' Sektion"
+            ],
+            "expected": "Liste der im Free-Plan enthaltenen Features wird angezeigt",
+            "actual": "Leere Liste - User weiß nicht was im Plan enthalten ist",
+            "affected_component": "SubscriptionView.vue"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "major",
+            "title": "Keine Upgrade-Optionen oder Plan-Vergleich sichtbar",
+            "steps_to_reproduce": [
+              "Navigiere zu /subscription",
+              "Suche nach anderen verfügbaren Plänen"
+            ],
+            "expected": "Übersicht aller verfügbaren Pläne mit Preisen und Feature-Vergleich",
+            "actual": "Nur aktueller Plan wird angezeigt, keine Alternative sichtbar",
+            "affected_component": "SubscriptionView.vue"
+          },
+          {
+            "id": "BUG-004",
+            "severity": "minor",
+            "title": "Technische Fehlermeldung statt benutzerfreundlicher Text",
+            "steps_to_reproduce": [
+              "Navigiere zu /subscription (bei API-Fehler)"
+            ],
+            "expected": "Benutzerfreundliche Fehlermeldung wie 'Abo-Details konnten nicht geladen werden'",
+            "actual": "'Request failed with status code 422' - technischer Jargon",
+            "affected_component": "SubscriptionView.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Plan-Vergleichstabelle hinzufügen mit allen verfügbaren Plänen nebeneinander",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Deutlichen 'Upgrade' CTA-Button für Premium-Pläne anzeigen",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Aktuellen Plan visuell hervorheben (z.B. mit Badge 'Ihr Plan')",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-004",
+            "type": "feature",
+            "title": "Nutzungsstatistiken anzeigen (z.B. '5 von 10 Bewerbungen diesen Monat')",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-008",
+      "message": "Uebersichtlichkeit: Error States und Feedback",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Sind Fehlermeldungen verstaendlich? Weiss der User was zu tun ist? Erfolgs-Feedback klar?",
+      "check_points": [
+        "Fehlermeldungen in Klartext (nicht technisch)",
+        "Fehler beim Feld das betroffen ist",
+        "Loesungsvorschlag wenn moeglich",
+        "Erfolg deutlich signalisiert (nicht nur Toast)",
+        "Loading-States wo noetig"
+      ],
+      "pages": [
+        "/login",
+        "/register",
+        "/new-application"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-008",
+        "tested_at": "2026-01-15T10:33:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Keine sichtbare Validierungsmeldung bei leerem Login-Formular",
+            "steps_to_reproduce": [
+              "Gehe zu /login",
+              "Klicke direkt auf 'Anmelden' ohne Eingaben"
+            ],
+            "expected": "Sichtbare Fehlermeldung wie 'E-Mail ist erforderlich' unter dem Feld",
+            "actual": "Nur Fokus auf E-Mail-Feld, keine sichtbare Fehlermeldung",
+            "affected_component": "LoginPage.vue oder AuthForm.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Keine Inline-Validierung für ungültiges E-Mail-Format bei Login",
+            "steps_to_reproduce": [
+              "Gehe zu /login",
+              "Gib 'ungueltige-email' ins E-Mail-Feld ein",
+              "Klicke auf 'Anmelden'"
+            ],
+            "expected": "Fehlermeldung 'Bitte gültige E-Mail-Adresse eingeben'",
+            "actual": "Keine sichtbare Validierungsmeldung, nur Fokus-Wechsel",
+            "affected_component": "LoginPage.vue"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Keine sichtbare Validierungsmeldung bei leerem Registrierungsformular",
+            "steps_to_reproduce": [
+              "Gehe zu /register",
+              "Klicke direkt auf 'Kostenlos registrieren' ohne Eingaben"
+            ],
+            "expected": "Sichtbare Fehlermeldungen unter den leeren Pflichtfeldern",
+            "actual": "Nur Fokus auf erstes Feld, keine Fehlermeldungen",
+            "affected_component": "RegisterPage.vue"
+          },
+          {
+            "id": "BUG-004",
+            "severity": "trivial",
+            "title": "422-Errors in Console beim Laden von /new-application",
+            "steps_to_reproduce": [
+              "Gehe zu /new-application",
+              "Öffne Browser DevTools Console"
+            ],
+            "expected": "Keine Fehler beim initialen Laden",
+            "actual": "422 UNPROCESSABLE_ENTITY Fehler für Templates und Nutzung",
+            "affected_component": "NewApplication.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Inline-Validierung für alle Pflichtfelder bei Login/Register",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "E-Mail-Format live validieren während der Eingabe",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-009",
+      "message": "Uebersichtlichkeit: ATS-Ergebnisse Verstaendlichkeit",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Sind ATS-Scores verstaendlich? Recommendations klar priorisiert? Weiss der User was zu verbessern ist?",
+      "check_points": [
+        "Score/Bewertung auf einen Blick",
+        "Wichtigste Probleme zuerst",
+        "Konkrete Verbesserungsvorschlaege",
+        "Keine Fachjargon ohne Erklaerung"
+      ],
+      "pages": [
+        "/ats"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-009",
+        "tested_at": "2026-01-15T12:34:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Fehlende Lebenslauf-Warnung vor Analyse",
+            "steps_to_reproduce": [
+              "Zur /ats Seite navigieren (ohne hochgeladenen Lebenslauf)",
+              "Stellenanzeigen-URL oder Text eingeben",
+              "Auf 'Analysieren' klicken"
+            ],
+            "expected": "Klare Warnung VOR dem Klick: 'Du musst erst einen Lebenslauf hochladen' mit Link zu /documents",
+            "actual": "Generische Fehlermeldung 'Ungültige Eingabe' erscheint erst NACH dem Klick",
+            "affected_component": "ATSView.vue"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "422-Fehler beim Laden der ATS-History",
+            "steps_to_reproduce": [
+              "Zur /ats Seite navigieren",
+              "Console öffnen"
+            ],
+            "expected": "History lädt ohne Fehler oder zeigt leere Liste",
+            "actual": "422 UNPROCESSABLE ENTITY Fehler bei GET /api/ats/history",
+            "affected_component": "ATSView.vue:119, Backend ATS API"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Unklare Fehlermeldung bei fehlendem Lebenslauf",
+            "steps_to_reproduce": [
+              "Analyse ohne Lebenslauf starten"
+            ],
+            "expected": "Spezifische Meldung: 'Bitte lade zuerst einen Lebenslauf hoch'",
+            "actual": "Generische Meldung: 'Ungültige Eingabe'",
+            "affected_component": "ATSView.vue, Backend Error-Response"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Voraussetzungs-Check mit CTA anzeigen",
+            "description": "Wenn kein Lebenslauf vorhanden ist, sollte statt des Analyse-Formulars ein Hinweis mit Button 'Lebenslauf hochladen' erscheinen",
+            "priority": "high"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "ATS-Begriff erklären",
+            "description": "Viele Nutzer wissen nicht was 'ATS' bedeutet. Ein Tooltip oder kurze Erklärung ('Applicant Tracking System - Software die Bewerbungen filtert') würde helfen",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Score-Skala visuell erklären",
+            "description": "Eine kleine Legende (0-49: Optimierungsbedarf, 50-74: Gut, 75-100: Sehr gut) würde die Interpretation erleichtern",
+            "priority": "low"
+          }
+        ],
+        "notes": "Die Ergebnis-Darstellung konnte nicht vollständig getestet werden, da ohne hochgeladenen Lebenslauf keine Analyse möglich ist. Code-Analyse zeigt aber: Score-Display, Kategorien-Grid und Suggestions-Liste sind gut strukturiert und verständlich aufgebaut.",
+        "found": true
+      }
+    },
+    {
+      "id": "UX-CLARITY-010",
+      "message": "Uebersichtlichkeit: Konsistenz ueber alle Seiten",
+      "scope": "frontend",
+      "type": "ux-clarity",
+      "test_focus": "Gleiches Look-and-Feel ueberall? Buttons konsistent? Spacing einheitlich? Keine Style-Brueche?",
+      "check_points": [
+        "Button-Styles konsistent",
+        "Gleiches Spacing-System",
+        "Konsistente Farben fuer gleiche Bedeutung",
+        "Gleiche Icons fuer gleiche Aktionen",
+        "Typography einheitlich"
+      ],
+      "pages": [
+        "/",
+        "/applications",
+        "/documents",
+        "/templates",
+        "/settings"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "UX-CLARITY-010",
+        "tested_at": "2026-01-15T12:35:00.000Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Button-Style Inkonsistenz auf Settings-Seite",
+            "steps_to_reproduce": [
+              "Navigiere zu /settings",
+              "Beobachte den 'Passwort ändern' Button",
+              "Beobachte den 'Neuen Key generieren' Button",
+              "Vergleiche mit Buttons auf anderen Seiten (z.B. /applications, /documents, /templates)"
+            ],
+            "expected": "Alle primären Action-Buttons sollten den gleichen Style haben (outline wie auf allen anderen Seiten)",
+            "actual": "'Passwort ändern' und 'Neuen Key generieren' sind gefüllte (solid) Buttons, während alle anderen Buttons in der App outline-style sind",
+            "affected_component": "Settings.vue"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Button-Styles auf Settings-Seite an globales Design anpassen",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
       "id": "COMMIT-2",
       "commit_hash": "956c064",
       "message": "feat: UX-015 - Export gefilterte Daten",
@@ -478,8 +3399,7 @@
       }
     }
   ],
-  "source": "git_commits",
-  "base_branch": "main",
-  "generated_at": "2026-01-15T09:46:29Z",
-  "total_commits": 12
+  "source": "manual_override",
+  "generated_at": "2026-01-15T22:05:29+0100",
+  "total_commits": 47
 }

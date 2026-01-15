@@ -19,10 +19,7 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "source": "test-ralph",
-      "fixedAt": 1768480299.315455,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false
+      "source": "test-ralph"
     },
     {
       "id": "BUG-002",
@@ -42,11 +39,7 @@
       ],
       "fixed": true,
       "fixAttempts": 0,
-      "source": "test-ralph",
-      "fixedAt": 1768480689.027358,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false,
-      "fixNote": "Bug bereits in vorherigem Commit behoben - deutsche Übersetzung bereits implementiert"
+      "source": "test-ralph"
     },
     {
       "id": "BUG-003",
@@ -65,10 +58,7 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "source": "test-ralph",
-      "fixedAt": 1768480836.518802,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false
+      "source": "test-ralph"
     },
     {
       "id": "BUG-004",
@@ -88,10 +78,7 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "source": "test-ralph",
-      "fixedAt": 1768480980.907099,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false
+      "source": "test-ralph"
     },
     {
       "id": "BUG-005",
@@ -113,10 +100,7 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "source": "test-ralph",
-      "fixedAt": 1768481200.195308,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false
+      "source": "test-ralph"
     },
     {
       "id": "BUG-006",
@@ -132,13 +116,8 @@
       "affectedFiles": [
         "frontend/package.json"
       ],
-      "suggestedFix": "npm install -D @vitest/coverage-v8",
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768481357.800801,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false,
-      "fixNote": "Bug war bereits behoben - Dependencies waren installiert und Coverage-Tests funktionieren problemlos",
       "source": "test-ralph"
     },
     {
@@ -160,9 +139,6 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768481504.835565,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false,
       "source": "test-ralph"
     },
     {
@@ -181,9 +157,6 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768481633.398003,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false,
       "source": "test-ralph"
     },
     {
@@ -203,9 +176,6 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768482001.157908,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false,
       "source": "test-ralph"
     },
     {
@@ -226,16 +196,13 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768481839.493375,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false,
       "source": "test-ralph"
     },
     {
       "id": "BUG-011",
       "severity": "major",
       "title": "Login-Fehlermeldung wird nicht angezeigt bei falschen Credentials",
-      "steps_to_reproduce": [
+      "stepsToReproduce": [
         "Navigiere zu /login",
         "Gib eine beliebige E-Mail und ein falsches Passwort ein",
         "Klicke auf 'Anmelden'",
@@ -244,15 +211,397 @@
       "expected": "Deutsche Fehlermeldung 'Ungültige E-Mail oder Passwort' sollte angezeigt werden",
       "actual": "Keine Fehlermeldung wird angezeigt - der Benutzer sieht nur das leere Formular",
       "affectedFiles": [
-        "frontend/src/api/client.js, frontend/src/pages/Login.vue"
+        "frontend/src/api/client.js",
+        "frontend/src/pages/Login.vue"
       ],
-      "root_cause": "Der API-Client-Interceptor behandelt alle 401-Fehler als 'Sitzung abgelaufen' und leitet zur Login-Seite weiter, BEVOR die Login-Komponente den Fehler verarbeiten kann. Die Login-Seite sollte 401-Fehler selbst behandeln und nicht vom globalen Interceptor abgefangen werden.",
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768480503.076615,
-      "fixedWithModel": "claude-sonnet-4-20250514",
-      "usedFallback": false,
       "source": "test-ralph"
+    },
+    {
+      "id": "BUG-012",
+      "severity": "critical",
+      "title": "Kein Hamburger-Menü auf Mobile - Navigation nicht zugänglich",
+      "stepsToReproduce": [
+        "Browser auf 375x667 Viewport setzen",
+        "Auf http://localhost:3000 navigieren",
+        "Navigation im Header beobachten"
+      ],
+      "expected": "Ein Hamburger-Menü-Icon sollte erscheinen, das beim Klicken eine Sidebar/Dropdown mit allen Navigationspunkten öffnet",
+      "actual": "Die Nav-Links werden versteckt (display: none für .nav-text), aber es gibt kein Hamburger-Menü. Nur 'Insights' (Icon) und 'Neu' (Button) sind sichtbar. Dashboard, Dokumente, Templates, Bewerbungen, Timeline, ATS sind NICHT erreichbar.",
+      "affectedFiles": [
+        "frontend/src/App.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph MOBILE-001, MOBILE-003"
+    },
+    {
+      "id": "BUG-013",
+      "severity": "major",
+      "title": "Einstellungen und Abmelden auf Mobile nicht zugänglich",
+      "stepsToReproduce": [
+        "Browser auf 375x667 Viewport setzen",
+        "Auf http://localhost:3000 navigieren",
+        "Versuchen, zu Einstellungen zu navigieren oder sich abzumelden"
+      ],
+      "expected": "Einstellungen-Icon und Abmelden-Button sollten sichtbar sein",
+      "actual": "Die Icons für Einstellungen und Abmelden sind vorhanden, aber visuell nicht erreichbar im mobilen Layout",
+      "affectedFiles": [
+        "frontend/src/App.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph MOBILE-001"
+    },
+    {
+      "id": "BUG-014",
+      "severity": "major",
+      "title": "Enter-Taste sendet Formular auf /new-application nicht ab",
+      "stepsToReproduce": [
+        "Navigiere zu /new-application",
+        "Klicke ins URL-Eingabefeld",
+        "Gib eine gültige URL ein (z.B. https://www.stepstone.de/test-job)",
+        "Drücke Enter"
+      ],
+      "expected": "Das Formular wird abgesendet und die Stellenanzeige wird geladen",
+      "actual": "Nichts passiert, der Button 'Stellenanzeige laden' wird nicht aktiviert",
+      "affectedFiles": [
+        "frontend/src/pages/NewApplication.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph A11Y-001"
+    },
+    {
+      "id": "BUG-015",
+      "severity": "major",
+      "title": "Escape-Taste schließt Modals nicht",
+      "stepsToReproduce": [
+        "Navigiere zu /documents",
+        "Klicke auf 'Skill hinzufügen'",
+        "Modal öffnet sich",
+        "Drücke Escape"
+      ],
+      "expected": "Das Modal wird geschlossen",
+      "actual": "Das Modal bleibt offen",
+      "affectedFiles": [
+        "frontend/src/components/SkillsOverview.vue",
+        "frontend/src/components/JobRecommendations.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph A11Y-001"
+    },
+    {
+      "id": "BUG-016",
+      "severity": "critical",
+      "title": "Firmen-Recherche zeigt korrupte/unlesbare Zeichen",
+      "stepsToReproduce": [
+        "Navigiere zu /applications",
+        "Klicke auf 'Details' bei einer Bewerbung",
+        "Klicke auf 'Interview-Prep' Link",
+        "Schaue unter 'Firmen-Recherche' → 'Über das Unternehmen'"
+      ],
+      "expected": "Lesbare Unternehmensbeschreibung in deutscher Sprache",
+      "actual": "Korrupte Zeichen werden angezeigt (\\x03�S\\x11\\x15�...) - Encoding-Problem beim Scraping/Speichern der Firmendaten",
+      "affectedFiles": [
+        "backend/routes/companies.py",
+        "frontend/src/pages/InterviewPrep.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph FLOW-012, FLOW-013"
+    },
+    {
+      "id": "BUG-017",
+      "severity": "critical",
+      "title": "Interview-Fragen können nicht generiert werden - Stellenbeschreibung fehlt",
+      "stepsToReproduce": [
+        "Erstelle neue Bewerbung mit manueller Stellenbeschreibung",
+        "Navigiere zu Interview-Prep",
+        "Klicke auf 'Fragen generieren'"
+      ],
+      "expected": "Interview-Fragen werden basierend auf der eingegebenen Stellenbeschreibung generiert",
+      "actual": "Alert: 'Keine Stellenbeschreibung vorhanden' - die manuelle Stellenbeschreibung wird nicht gespeichert",
+      "affectedFiles": [
+        "frontend/src/pages/NewApplication.vue",
+        "frontend/src/pages/InterviewPrep.vue",
+        "backend/routes/applications.py"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph FLOW-012, FLOW-013"
+    },
+    {
+      "id": "BUG-018",
+      "severity": "minor",
+      "title": "Route /applications/:id/mock-interview zeigt leere Seite",
+      "stepsToReproduce": [
+        "Navigiere direkt zu /applications/6/mock-interview"
+      ],
+      "expected": "Mock-Interview Seite wird angezeigt oder Redirect zur korrekten Route",
+      "actual": "Leere main-Section, keine Inhalte, keine Fehlermeldung",
+      "affectedFiles": [
+        "frontend/src/router/index.js",
+        "frontend/src/pages/InterviewPrep.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph FLOW-013"
+    },
+    {
+      "id": "BUG-019",
+      "severity": "critical",
+      "title": "401-Handler erkennt viele JWT-Fehlermeldungen nicht",
+      "stepsToReproduce": [
+        "Als eingeloggter User: Token in localStorage auf 'invalid-token' setzen",
+        "Seite /applications aufrufen",
+        "Server gibt 422 mit msg: 'Not enough segments' zurück"
+      ],
+      "expected": "User wird ausgeloggt und zu /login weitergeleitet mit Toast 'Sitzung abgelaufen'",
+      "actual": "Seite zeigt leeren State ('Noch keine Bewerbungen'), User bleibt 'eingeloggt', Toast zeigt 'Ungültige Eingabe'",
+      "affectedFiles": [
+        "frontend/src/api/client.js",
+        "backend/app.py"
+      ],
+      "rootCause": "Der Code prüft error.response?.data?.msg?.includes('token'), aber viele JWT-Fehler enthalten nicht 'token': 'Not enough segments', 'Signature verification failed', etc. Backend gibt 422 statt 401.",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph EDGE-001"
+    },
+    {
+      "id": "BUG-020",
+      "severity": "major",
+      "title": "Navigation zeigt eingeloggten Zustand trotz ungültigem Token",
+      "stepsToReproduce": [
+        "Token in localStorage auf ungültigen Wert setzen",
+        "Zu /login navigieren",
+        "Navigation beobachten"
+      ],
+      "expected": "Navigation zeigt ausgeloggten Zustand (keine Dashboard-Links, kein Abmelden-Button)",
+      "actual": "Navigation zeigt vollen eingeloggten Zustand mit allen Links und Abmelden-Button",
+      "affectedFiles": [
+        "frontend/src/App.vue"
+      ],
+      "rootCause": "Die App prüft nur localStorage auf Token-Existenz, nicht ob der Token noch gültig ist",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph EDGE-001"
+    },
+    {
+      "id": "BUG-021",
+      "severity": "major",
+      "title": "Backend gibt 422 statt 401 für ungültige Tokens",
+      "stepsToReproduce": [
+        "API-Request mit ungültigem/manipuliertem JWT Token senden"
+      ],
+      "expected": "Backend gibt 401 Unauthorized zurück",
+      "actual": "Backend gibt 422 Unprocessable Entity zurück (Flask-JWT-Extended Default)",
+      "affectedFiles": [
+        "backend/app.py"
+      ],
+      "suggestedFix": "Custom error handlers hinzufügen: @jwt.invalid_token_loader, @jwt.expired_token_loader",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph EDGE-001"
+    },
+    {
+      "id": "BUG-022",
+      "severity": "major",
+      "title": "Error-Toast 'Ungültige Eingabe' erscheint bei jedem Seitenwechsel",
+      "stepsToReproduce": [
+        "App öffnen (http://localhost:3000)",
+        "Auf 'Bewerbungen', 'Templates' oder 'Dokumente' navigieren",
+        "Error-Toast 'Ungültige Eingabe' erscheint kurzzeitig"
+      ],
+      "expected": "Keine Fehlermeldung bei leeren States - der Empty State sollte still angezeigt werden",
+      "actual": "Toast-Benachrichtigung '✗ Ungültige Eingabe' erscheint bei API 422-Fehlern",
+      "affectedFiles": [
+        "frontend/src/pages/Applications.vue",
+        "frontend/src/pages/Templates.vue",
+        "frontend/src/pages/Documents.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph EDGE-002"
+    },
+    {
+      "id": "BUG-023",
+      "severity": "major",
+      "title": "Applications-Seite zeigt 'Keine Bewerbungen' statt Fehlermeldung bei API-Fehler",
+      "stepsToReproduce": [
+        "Navigiere zu /applications",
+        "API gibt 422 Fehler zurück",
+        "Beobachte Seiteninhalt"
+      ],
+      "expected": "Fehlerzustand mit Retry-Option oder Hinweis auf technisches Problem",
+      "actual": "Seite zeigt 'Noch keine Bewerbungen' - User denkt es gibt keine Daten",
+      "affectedFiles": [
+        "frontend/src/pages/Applications.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph EDGE-004"
+    },
+    {
+      "id": "BUG-024",
+      "severity": "major",
+      "title": "Aktions-Button 'Bewerbungen' fehlt in Mobile-Ansicht auf Company Insights",
+      "stepsToReproduce": [
+        "Navigiere zu /company-insights",
+        "Ändere Viewport auf Mobile (375x667)",
+        "Scrolle horizontal durch die Tabelle"
+      ],
+      "expected": "Der 'Bewerbungen' Button sollte sichtbar sein (entweder durch Scrollen oder alternative Mobile-Darstellung)",
+      "actual": "Die Aktions-Spalte mit dem 'Bewerbungen' Button wird komplett ausgeblendet und ist auch durch horizontales Scrollen nicht erreichbar",
+      "affectedFiles": [
+        "frontend/src/pages/CompanyInsights.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph FLOW-010"
+    },
+    {
+      "id": "BUG-025",
+      "severity": "major",
+      "title": "KPI-Statistik-Karten zeigen permanente Skeleton-Loading statt Daten",
+      "stepsToReproduce": [
+        "Dashboard öffnen unter /",
+        "Warten bis Seite geladen"
+      ],
+      "expected": "KPI-Karten zeigen entweder echte Statistiken oder einen benutzerfreundlichen Error-State",
+      "actual": "Vier leere Skeleton-Placeholder-Karten bleiben permanent sichtbar (API 422 Error wird nicht behandelt)",
+      "affectedFiles": [
+        "frontend/src/pages/Dashboard.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph UX-CLARITY-001"
+    },
+    {
+      "id": "BUG-026",
+      "severity": "critical",
+      "title": "Fehlende 'Konto löschen' Funktion (DSGVO-Compliance)",
+      "stepsToReproduce": [
+        "Navigiere zu /settings",
+        "Scrolle durch die gesamte Seite",
+        "Suche nach einer Option zum Löschen des Kontos"
+      ],
+      "expected": "Eine 'Konto löschen' Option sollte vorhanden sein, idealerweise in einem 'Gefahrenzone' Bereich mit deutlicher visueller Warnung (rot)",
+      "actual": "Keine Möglichkeit das Konto zu löschen. User muss Support kontaktieren, was DSGVO-Anforderungen (Recht auf Löschung) nicht vollständig erfüllt",
+      "affectedFiles": [
+        "frontend/src/pages/Settings.vue",
+        "backend/routes/auth.py"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph UX-CLARITY-006"
+    },
+    {
+      "id": "BUG-027",
+      "severity": "major",
+      "title": "Feature-Liste des aktuellen Plans ist leer",
+      "stepsToReproduce": [
+        "Navigiere zu /subscription",
+        "Schaue auf 'ENTHALTENE FEATURES' Sektion"
+      ],
+      "expected": "Liste der im Free-Plan enthaltenen Features wird angezeigt",
+      "actual": "Leere Liste - User weiß nicht was im Plan enthalten ist",
+      "affectedFiles": [
+        "frontend/src/pages/SubscriptionView.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph UX-CLARITY-007"
+    },
+    {
+      "id": "BUG-028",
+      "severity": "major",
+      "title": "Keine Upgrade-Optionen oder Plan-Vergleich sichtbar",
+      "stepsToReproduce": [
+        "Navigiere zu /subscription",
+        "Suche nach anderen verfügbaren Plänen"
+      ],
+      "expected": "Übersicht aller verfügbaren Pläne mit Preisen und Feature-Vergleich",
+      "actual": "Nur aktueller Plan wird angezeigt, keine Alternative sichtbar",
+      "affectedFiles": [
+        "frontend/src/pages/SubscriptionView.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph UX-CLARITY-007"
+    },
+    {
+      "id": "BUG-029",
+      "severity": "major",
+      "title": "Stripe Checkout schlägt fehl - Plan nicht konfiguriert",
+      "stepsToReproduce": [
+        "Öffne /subscription",
+        "Klicke auf 'Upgraden' für Basic oder Pro Plan"
+      ],
+      "expected": "Stripe Checkout öffnet sich zur Zahlungsabwicklung",
+      "actual": "400 Bad Request - Fehlermeldung 'Plan nicht konfiguriert' erscheint",
+      "affectedFiles": [
+        "backend/routes/subscriptions.py"
+      ],
+      "rootCause": "STRIPE_PRICE_BASIC und STRIPE_PRICE_PRO Environment-Variablen sind nicht mit echten Stripe Price IDs konfiguriert",
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph FLOW-015"
+    },
+    {
+      "id": "BUG-030",
+      "severity": "major",
+      "title": "Fehlende Lebenslauf-Warnung vor ATS-Analyse",
+      "stepsToReproduce": [
+        "Zur /ats Seite navigieren (ohne hochgeladenen Lebenslauf)",
+        "Stellenanzeigen-URL oder Text eingeben",
+        "Auf 'Analysieren' klicken"
+      ],
+      "expected": "Klare Warnung VOR dem Klick: 'Du musst erst einen Lebenslauf hochladen' mit Link zu /documents",
+      "actual": "Generische Fehlermeldung 'Ungültige Eingabe' erscheint erst NACH dem Klick",
+      "affectedFiles": [
+        "frontend/src/pages/ATSView.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph UX-CLARITY-009"
+    },
+    {
+      "id": "BUG-031",
+      "severity": "minor",
+      "title": "Keine sichtbare Validierungsmeldung bei leerem Login-Formular",
+      "stepsToReproduce": [
+        "Gehe zu /login",
+        "Klicke direkt auf 'Anmelden' ohne Eingaben"
+      ],
+      "expected": "Sichtbare Fehlermeldung wie 'E-Mail ist erforderlich' unter dem Feld",
+      "actual": "Nur Fokus auf E-Mail-Feld, keine sichtbare Fehlermeldung",
+      "affectedFiles": [
+        "frontend/src/pages/Login.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph UX-CLARITY-008"
+    },
+    {
+      "id": "BUG-032",
+      "severity": "minor",
+      "title": "Button-Style Inkonsistenz auf Settings-Seite",
+      "stepsToReproduce": [
+        "Navigiere zu /settings",
+        "Beobachte den 'Passwort ändern' Button",
+        "Vergleiche mit Buttons auf anderen Seiten"
+      ],
+      "expected": "Alle primären Action-Buttons sollten den gleichen Style haben (outline wie auf allen anderen Seiten)",
+      "actual": "'Passwort ändern' und 'Neuen Key generieren' sind gefüllte (solid) Buttons, während alle anderen Buttons outline-style sind",
+      "affectedFiles": [
+        "frontend/src/pages/Settings.vue"
+      ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph UX-CLARITY-010"
     }
   ]
 }
