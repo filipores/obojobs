@@ -554,19 +554,42 @@ def download_pdf(app_id, current_user):
 @applications_bp.route("/export", methods=["GET"])
 @jwt_required_custom
 def export_applications(current_user):
-    """Export all applications as CSV or PDF.
+    """Export applications as CSV or PDF.
     Query params:
     - format: 'csv' (default) or 'pdf'
+    - search: (optional) Filter by search term (firma, position)
+    - status: (optional) Filter by status
+    - firma: (optional) Filter by company name
     """
     export_format = request.args.get("format", "csv").lower()
+    search_query = request.args.get("search", "").strip()
+    filter_status = request.args.get("status", "").strip()
+    filter_firma = request.args.get("firma", "").strip()
     today = datetime.utcnow().strftime("%Y-%m-%d")
 
-    # Get all applications for user
-    applications = (
-        Application.query.filter_by(user_id=current_user.id)
-        .order_by(Application.datum.desc())
-        .all()
-    )
+    # Build query with filters
+    query = Application.query.filter_by(user_id=current_user.id)
+
+    # Apply search filter (firma or position)
+    if search_query:
+        search_pattern = f"%{search_query}%"
+        query = query.filter(
+            db.or_(
+                Application.firma.ilike(search_pattern),
+                Application.position.ilike(search_pattern)
+            )
+        )
+
+    # Apply status filter
+    if filter_status:
+        query = query.filter(Application.status == filter_status)
+
+    # Apply firma filter
+    if filter_firma:
+        query = query.filter(Application.firma == filter_firma)
+
+    # Get filtered applications
+    applications = query.order_by(Application.datum.desc()).all()
 
     if export_format == "pdf":
         return _export_as_pdf(applications, today)

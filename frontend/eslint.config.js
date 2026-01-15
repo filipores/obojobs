@@ -29,6 +29,7 @@ export default [
         File: 'readonly',
         Blob: 'readonly',
         URL: 'readonly',
+        URLSearchParams: 'readonly',
         HTMLElement: 'readonly',
         Event: 'readonly',
         alert: 'readonly',

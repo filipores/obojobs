@@ -122,7 +122,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 8,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -137,7 +137,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 9,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -152,7 +152,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 10,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -166,7 +166,7 @@
         "Console.log Warnings addressieren (40 Stück)"
       ],
       "priority": 11,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -181,7 +181,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 12,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -197,7 +197,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 13,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -213,7 +213,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 14,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     },
     {
@@ -228,7 +228,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 15,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph"
     }
   ]

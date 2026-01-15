@@ -8,23 +8,29 @@
             <h1>Bewerbungen</h1>
             <p class="page-subtitle">Verwalten und verfolgen Sie alle Ihre Bewerbungen</p>
           </div>
-          <div class="export-buttons">
-            <button @click="exportApplications('csv')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              CSV
-            </button>
-            <button @click="exportApplications('pdf')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-              PDF
-            </button>
+          <div class="export-section">
+            <label class="export-filter-toggle" v-if="hasActiveFilters">
+              <input type="checkbox" v-model="exportFilteredOnly" />
+              <span>Nur gefilterte ({{ filteredApplications.length }})</span>
+            </label>
+            <div class="export-buttons">
+              <button @click="exportApplications('csv')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                CSV
+              </button>
+              <button @click="exportApplications('pdf')" class="zen-btn zen-btn-sm" :disabled="applications.length === 0">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="7 10 12 15 17 10"/>
+                  <line x1="12" y1="15" x2="12" y2="3"/>
+                </svg>
+                PDF
+              </button>
+            </div>
           </div>
         </div>
       </section>
@@ -523,6 +529,7 @@ const loading = ref(false)
 const searchQuery = ref('')
 const filterStatus = ref('')
 const filterFirma = ref('')
+const exportFilteredOnly = ref(false)
 
 // Email Composer State
 const showEmailComposer = ref(false)
@@ -568,6 +575,10 @@ const filteredApplications = computed(() => {
   }
 
   return filtered.sort((a, b) => new Date(b.datum) - new Date(a.datum))
+})
+
+const hasActiveFilters = computed(() => {
+  return !!(searchQuery.value || filterStatus.value || filterFirma.value)
 })
 
 const loadApplications = async () => {
@@ -735,7 +746,17 @@ const getSentViaLabel = (provider) => {
 
 const exportApplications = async (format) => {
   try {
-    const response = await api.get(`/applications/export?format=${format}`, {
+    // Build query parameters
+    const params = new URLSearchParams({ format })
+
+    // Add filter parameters if exporting filtered only
+    if (exportFilteredOnly.value && hasActiveFilters.value) {
+      if (searchQuery.value) params.append('search', searchQuery.value)
+      if (filterStatus.value) params.append('status', filterStatus.value)
+      if (filterFirma.value) params.append('firma', filterFirma.value)
+    }
+
+    const response = await api.get(`/applications/export?${params}`, {
       responseType: 'blob'
     })
     // Create download link
@@ -746,7 +767,8 @@ const exportApplications = async (format) => {
     const link = document.createElement('a')
     link.href = url
     const today = new Date().toISOString().split('T')[0]
-    link.download = `bewerbungen_${today}.${format}`
+    const suffix = exportFilteredOnly.value && hasActiveFilters.value ? '_gefiltert' : ''
+    link.download = `bewerbungen${suffix}_${today}.${format}`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
