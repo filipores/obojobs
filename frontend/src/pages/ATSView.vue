@@ -119,8 +119,8 @@
             >
               <div class="history-content" @click="loadHistoryItem(item)">
                 <div class="history-info">
-                  <span class="history-url" :title="item.job_url || 'Manuelle Eingabe'">
-                    {{ formatHistoryUrl(item.job_url) }}
+                  <span class="history-url" :title="item.title || item.job_url || 'Manuelle Eingabe'">
+                    {{ formatHistoryTitle(item) }}
                   </span>
                   <span class="history-date">{{ formatDate(item.created_at) }}</span>
                 </div>
@@ -450,14 +450,21 @@ const deleteAnalysis = async (item) => {
   }
 }
 
-const formatHistoryUrl = (url) => {
-  if (!url) return 'Manuelle Eingabe'
-  try {
-    const hostname = new URL(url).hostname.replace('www.', '')
-    return hostname.length > 25 ? hostname.slice(0, 25) + '...' : hostname
-  } catch {
-    return url.slice(0, 25) + '...'
+const formatHistoryTitle = (item) => {
+  // Prefer title if available
+  if (item.title) {
+    return item.title.length > 40 ? item.title.slice(0, 40) + '...' : item.title
   }
+  // Fallback to URL hostname or default
+  if (item.job_url) {
+    try {
+      const hostname = new URL(item.job_url).hostname.replace('www.', '')
+      return hostname.length > 25 ? hostname.slice(0, 25) + '...' : hostname
+    } catch {
+      return item.job_url.slice(0, 25) + '...'
+    }
+  }
+  return 'Manuelle Eingabe'
 }
 
 const formatDate = (isoDate) => {

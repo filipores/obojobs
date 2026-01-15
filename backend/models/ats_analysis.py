@@ -19,6 +19,7 @@ class ATSAnalysis(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     job_url = db.Column(db.String(2048), nullable=True, index=True)
     job_text_hash = db.Column(db.String(64), nullable=True, index=True)
+    title = db.Column(db.String(255), nullable=True)
     score = db.Column(db.Integer, nullable=False)
     result_json = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow, index=True)
@@ -45,6 +46,7 @@ class ATSAnalysis(db.Model):
             "id": self.id,
             "user_id": self.user_id,
             "job_url": self.job_url,
+            "title": self.title,
             "score": self.score,
             "result": result,
             "created_at": self.created_at.isoformat() if self.created_at else None,
@@ -67,6 +69,7 @@ class ATSAnalysis(db.Model):
         return {
             "id": self.id,
             "job_url": self.job_url,
+            "title": self.title,
             "score": self.score,
             "matched_count": matched_count,
             "missing_count": missing_count,

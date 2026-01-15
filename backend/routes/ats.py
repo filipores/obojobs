@@ -146,13 +146,34 @@ def analyze_cv(current_user):
 
             # Save analysis to database
             job_text_hash = None
+            analysis_title = None
+
             if job_text and not job_url:
                 job_text_hash = ATSAnalysis.hash_job_text(job_text)
+                # Extract title from first non-empty line of job text
+                lines = job_text.strip().split('\n')
+                for line in lines:
+                    stripped = line.strip()
+                    if stripped:
+                        # Truncate to 100 chars for display
+                        analysis_title = stripped[:100] + ('...' if len(stripped) > 100 else '')
+                        break
+                if not analysis_title:
+                    analysis_title = 'Manuelle Analyse'
+            elif scraped_url:
+                # Extract hostname as title for URL analyses
+                try:
+                    from urllib.parse import urlparse
+                    parsed = urlparse(scraped_url)
+                    analysis_title = parsed.netloc.replace('www.', '')
+                except Exception:
+                    analysis_title = scraped_url[:100]
 
             ats_analysis = ATSAnalysis(
                 user_id=current_user.id,
                 job_url=scraped_url,
                 job_text_hash=job_text_hash,
+                title=analysis_title,
                 score=response_data["score"],
                 result_json=json.dumps(response_data)
             )
