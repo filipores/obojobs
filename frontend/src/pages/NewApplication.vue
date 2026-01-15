@@ -52,6 +52,10 @@
               {{ urlValidation.message }}
             </p>
             <p v-else class="form-hint">Kopiere die URL der Stellenanzeige und füge sie hier ein</p>
+            <!-- ARIA Live Region for Screenreaders -->
+            <div class="sr-only" aria-live="polite" aria-atomic="true">
+              {{ urlValidationAnnouncement }}
+            </div>
           </div>
 
           <!-- Preview Button (only show if no preview yet) -->
@@ -619,6 +623,18 @@ const showUrlValidation = computed(() => {
   return urlTouched.value && url.value.trim().length > 0
 })
 
+// ARIA announcement for screenreaders
+const urlValidationAnnouncement = computed(() => {
+  if (!showUrlValidation.value) return ''
+  if (urlValidation.value.isValid === true) {
+    return 'URL ist gültig'
+  }
+  if (urlValidation.value.isValid === false) {
+    return `URL ungültig: ${urlValidation.value.message}`
+  }
+  return ''
+})
+
 // Portal detection (real-time based on URL)
 const detectedPortal = computed(() => {
   if (!url.value) return null
@@ -1120,6 +1136,19 @@ onMounted(() => {
   font-size: 0.8125rem;
   color: var(--color-text-tertiary);
   margin-top: var(--space-xs);
+}
+
+/* Screen reader only - visually hidden but accessible */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 /* ========================================
