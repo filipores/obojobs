@@ -848,6 +848,7 @@ const analyzeManualText = async () => {
 
       showManualFallback.value = false
       analyzingManualText.value = false
+      error.value = '' // Clear any previous error from URL loading
 
       if (window.$toast) {
         window.$toast('Stellentext analysiert!', 'success')
