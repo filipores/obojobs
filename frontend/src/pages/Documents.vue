@@ -100,7 +100,7 @@
                   <p class="uploaded-filename">{{ documents.lebenslauf.original_filename }}</p>
                   <p class="uploaded-date">{{ formatDate(documents.lebenslauf.uploaded_at) }}</p>
                 </div>
-                <button @click="deleteDoc(documents.lebenslauf.id)" class="zen-btn zen-btn-sm">
+                <button @click="deleteDoc(documents.lebenslauf.id)" class="zen-btn zen-btn-sm" aria-label="Lebenslauf löschen" title="Lebenslauf löschen">
                   Löschen
                 </button>
               </div>
@@ -181,7 +181,7 @@
                   <p class="uploaded-filename">{{ documents.anschreiben.original_filename }}</p>
                   <p class="uploaded-date">{{ formatDate(documents.anschreiben.uploaded_at) }}</p>
                 </div>
-                <button @click="deleteDoc(documents.anschreiben.id)" class="zen-btn zen-btn-sm">
+                <button @click="deleteDoc(documents.anschreiben.id)" class="zen-btn zen-btn-sm" aria-label="Anschreiben löschen" title="Anschreiben löschen">
                   Löschen
                 </button>
               </div>
@@ -261,7 +261,7 @@
                   <p class="uploaded-filename">{{ documents.arbeitszeugnis.original_filename }}</p>
                   <p class="uploaded-date">{{ formatDate(documents.arbeitszeugnis.uploaded_at) }}</p>
                 </div>
-                <button @click="deleteDoc(documents.arbeitszeugnis.id)" class="zen-btn zen-btn-sm">
+                <button @click="deleteDoc(documents.arbeitszeugnis.id)" class="zen-btn zen-btn-sm" aria-label="Arbeitszeugnis löschen" title="Arbeitszeugnis löschen">
                   Löschen
                 </button>
               </div>

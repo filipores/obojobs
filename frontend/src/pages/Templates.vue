@@ -63,7 +63,7 @@
               >
                 Als Standard
               </button>
-              <button @click="deleteTemplate(template.id)" class="zen-btn zen-btn-sm zen-btn-danger">
+              <button @click="deleteTemplate(template.id)" class="zen-btn zen-btn-sm zen-btn-danger" aria-label="Template löschen" title="Template löschen">
                 Löschen
               </button>
             </div>

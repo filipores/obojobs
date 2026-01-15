@@ -264,7 +264,7 @@
                     <span class="key-date">{{ formatDate(key.created_at) }}</span>
                   </span>
                 </div>
-                <button @click="deleteKey(key.id)" class="zen-btn zen-btn-sm zen-btn-danger">
+                <button @click="deleteKey(key.id)" class="zen-btn zen-btn-sm zen-btn-danger" aria-label="API Key löschen" title="API Key löschen">
                   Löschen
                 </button>
               </div>

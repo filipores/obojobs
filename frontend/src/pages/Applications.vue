@@ -353,7 +353,7 @@
               <button @click="downloadPDF(selectedApp.id)" class="zen-btn">
                 PDF herunterladen
               </button>
-              <button @click="deleteApp(selectedApp.id)" class="zen-btn zen-btn-danger">
+              <button @click="deleteApp(selectedApp.id)" class="zen-btn zen-btn-danger" aria-label="Bewerbung löschen" title="Bewerbung löschen">
                 Löschen
               </button>
             </div>
