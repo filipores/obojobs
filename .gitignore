@@ -48,6 +48,9 @@ scripts/ralph/archive/
 scripts/ralph/*/logs
 scripts/ralph/*/reports
 
+frontend/coverage
+backend/logs
+
 # Playwright-mcp
 .playwright-mcp/
 
