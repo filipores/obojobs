@@ -171,31 +171,184 @@
         </div>
       </section>
 
-      <!-- Available Plans Section (for comparison/upgrade) -->
-      <section v-if="subscription && subscription.plan !== 'pro'" class="subscription-section animate-fade-up" style="animation-delay: 250ms;">
+      <!-- Plan Comparison Section - Always visible -->
+      <section v-if="subscription && availablePlans.length > 0" class="subscription-section animate-fade-up" style="animation-delay: 250ms;">
         <div class="section-header">
           <div class="section-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
             </svg>
           </div>
-          <h2>Verfuegbare Plaene</h2>
+          <div>
+            <h2>Alle Plaene im Vergleich</h2>
+            <p class="section-description">Waehlen Sie den Plan, der zu Ihren Beduerfnissen passt</p>
+          </div>
         </div>
 
-        <div class="plans-grid">
+        <!-- Plan Comparison Table (Desktop) -->
+        <div class="plan-comparison-table zen-card">
+          <table class="comparison-table" role="grid" aria-label="Plan-Vergleichstabelle">
+            <thead>
+              <tr>
+                <th class="feature-column">Features</th>
+                <th
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  class="plan-column"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan, 'recommended-plan': plan.plan_id === 'pro' }"
+                >
+                  <div class="plan-header-cell">
+                    <span v-if="plan.plan_id === subscription.plan" class="table-badge current">Aktuell</span>
+                    <span v-else-if="plan.plan_id === 'pro'" class="table-badge recommended">Empfohlen</span>
+                    <span class="plan-name">{{ plan.name }}</span>
+                    <span class="plan-price-cell">
+                      {{ plan.price === 0 ? 'Kostenlos' : plan.price.toFixed(2).replace('.', ',') + ' EUR/Monat' }}
+                    </span>
+                  </div>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="feature-name">Bewerbungen pro Monat</td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <span class="feature-value" :class="{ 'highlight': plan.plan_id === 'pro' }">
+                    {{ getApplicationLimit(plan.plan_id) }}
+                  </span>
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-name">AI-Bewerbungsgenerator</td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-name">Template-Verwaltung</td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-name">ATS-Analyse</td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <svg class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-name">Email-Vorschlaege</td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <span v-if="plan.plan_id === 'free'" class="feature-limited">Begrenzt</span>
+                  <svg v-else class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-name">Gehalts-Coach</td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <span v-if="plan.plan_id === 'free'" class="feature-unavailable">—</span>
+                  <svg v-else class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </td>
+              </tr>
+              <tr>
+                <td class="feature-name">Prioritaets-Support</td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <span v-if="plan.plan_id !== 'pro'" class="feature-unavailable">—</span>
+                  <svg v-else class="check-icon highlight" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                </td>
+              </tr>
+            </tbody>
+            <tfoot>
+              <tr>
+                <td></td>
+                <td
+                  v-for="plan in availablePlans"
+                  :key="plan.plan_id"
+                  :class="{ 'current-plan': plan.plan_id === subscription.plan }"
+                >
+                  <button
+                    v-if="plan.plan_id !== subscription.plan && plan.plan_id !== 'free'"
+                    @click="handleUpgrade(plan.plan_id)"
+                    class="zen-btn upgrade-btn"
+                    :class="[
+                      plan.plan_id === 'pro' ? 'zen-btn-ai' : 'zen-btn-filled',
+                      { 'is-loading-other': isUpgrading && upgradingPlan !== plan.plan_id }
+                    ]"
+                    :disabled="isUpgrading"
+                  >
+                    <span v-if="upgradingPlan === plan.plan_id" class="btn-spinner"></span>
+                    {{ upgradingPlan === plan.plan_id ? 'Wird geladen...' : getUpgradeButtonText(plan.plan_id) }}
+                  </button>
+                  <span v-else-if="plan.plan_id === subscription.plan" class="current-plan-indicator">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    Ihr aktueller Plan
+                  </span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+
+        <!-- Plan Cards (Mobile) -->
+        <div class="plans-grid mobile-only">
           <div
             v-for="plan in availablePlans"
             :key="plan.plan_id"
             class="plan-card zen-card"
             :class="{ 'current': plan.plan_id === subscription.plan, 'recommended': plan.plan_id === 'pro' }"
           >
-            <div v-if="plan.plan_id === 'pro'" class="recommended-badge">Empfohlen</div>
+            <div v-if="plan.plan_id === 'pro' && plan.plan_id !== subscription.plan" class="recommended-badge">Empfohlen</div>
             <div v-if="plan.plan_id === subscription.plan" class="current-badge">Aktueller Plan</div>
 
             <h3>{{ plan.name }}</h3>
             <div class="plan-price">
               <span class="price-amount">{{ plan.price === 0 ? 'Kostenlos' : plan.price.toFixed(2).replace('.', ',') + ' EUR' }}</span>
               <span v-if="plan.price > 0" class="price-period">/ Monat</span>
+            </div>
+
+            <div class="plan-limit-badge">
+              {{ getApplicationLimit(plan.plan_id) }} Bewerbungen/Monat
             </div>
 
             <ul class="plan-features-list">
@@ -210,7 +363,7 @@
             <button
               v-if="plan.plan_id !== subscription.plan && plan.plan_id !== 'free'"
               @click="handleUpgrade(plan.plan_id)"
-              class="zen-btn"
+              class="zen-btn upgrade-btn-large"
               :class="[
                 plan.plan_id === 'pro' ? 'zen-btn-ai' : 'zen-btn-filled',
                 { 'is-loading-other': isUpgrading && upgradingPlan !== plan.plan_id }
@@ -220,6 +373,12 @@
               <span v-if="upgradingPlan === plan.plan_id" class="btn-spinner"></span>
               {{ upgradingPlan === plan.plan_id ? 'Wird geladen...' : getUpgradeButtonText(plan.plan_id) }}
             </button>
+            <div v-else-if="plan.plan_id === subscription.plan" class="current-plan-text">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+              Ihr aktueller Plan
+            </div>
           </div>
         </div>
       </section>
@@ -279,6 +438,15 @@ const getUpgradeButtonText = (planId) => {
   if (targetOrder > currentOrder) return 'Upgraden'
   if (targetOrder < currentOrder) return 'Downgraden'
   return 'Aktueller Plan'
+}
+
+const getApplicationLimit = (planId) => {
+  const limits = {
+    free: '3',
+    basic: '20',
+    pro: 'Unbegrenzt'
+  }
+  return limits[planId] || '3'
 }
 
 const handleOpenPortal = async () => {
@@ -782,6 +950,196 @@ onMounted(() => {
 }
 
 /* ========================================
+   PLAN COMPARISON TABLE
+   ======================================== */
+.plan-comparison-table {
+  padding: 0;
+  overflow: hidden;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: var(--space-md) var(--space-lg);
+  text-align: center;
+  border-bottom: 1px solid var(--color-border-light);
+  vertical-align: middle;
+}
+
+.comparison-table thead th {
+  background: var(--color-washi-warm);
+  padding: var(--space-lg);
+}
+
+.comparison-table .feature-column {
+  width: 200px;
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.comparison-table .plan-column {
+  min-width: 180px;
+}
+
+.comparison-table .current-plan {
+  background: rgba(61, 90, 108, 0.05);
+}
+
+.comparison-table thead .current-plan {
+  background: rgba(61, 90, 108, 0.1);
+}
+
+.comparison-table .recommended-plan {
+  background: rgba(61, 90, 108, 0.03);
+}
+
+.plan-header-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.table-badge {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.table-badge.current {
+  background: var(--color-ai);
+  color: white;
+}
+
+.table-badge.recommended {
+  background: linear-gradient(135deg, var(--color-ai) 0%, var(--color-ai-light) 100%);
+  color: white;
+}
+
+.plan-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.plan-price-cell {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+}
+
+.feature-name {
+  text-align: left !important;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+.feature-value {
+  font-weight: 600;
+  color: var(--color-sumi);
+}
+
+.feature-value.highlight {
+  color: var(--color-ai);
+}
+
+.check-icon {
+  color: var(--color-koke);
+  margin: 0 auto;
+  display: block;
+}
+
+.check-icon.highlight {
+  color: var(--color-ai);
+}
+
+.feature-limited {
+  font-size: 0.8125rem;
+  color: var(--color-terra);
+  font-weight: 500;
+}
+
+.feature-unavailable {
+  font-size: 1.25rem;
+  color: var(--color-text-ghost);
+}
+
+.comparison-table tfoot td {
+  padding: var(--space-lg);
+  border-bottom: none;
+  background: var(--color-washi-warm);
+}
+
+.upgrade-btn {
+  width: 100%;
+  max-width: 200px;
+  font-size: 0.9375rem;
+  padding: var(--space-sm) var(--space-md);
+}
+
+.current-plan-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-xs);
+  font-size: 0.875rem;
+  color: var(--color-koke);
+  font-weight: 500;
+}
+
+.current-plan-indicator svg {
+  color: var(--color-koke);
+}
+
+/* Mobile Plan Cards */
+.mobile-only {
+  display: none;
+}
+
+.plan-limit-badge {
+  display: inline-block;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  margin-bottom: var(--space-md);
+}
+
+.upgrade-btn-large {
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.current-plan-text {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: var(--space-md);
+  color: var(--color-koke);
+  font-weight: 500;
+  background: rgba(122, 139, 110, 0.1);
+  border-radius: var(--radius-md);
+}
+
+.current-plan-text svg {
+  color: var(--color-koke);
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
@@ -804,6 +1162,15 @@ onMounted(() => {
 
   .plans-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Hide table on mobile, show cards */
+  .plan-comparison-table {
+    display: none;
+  }
+
+  .mobile-only {
+    display: grid;
   }
 }
 
