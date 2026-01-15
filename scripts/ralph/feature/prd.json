@@ -259,7 +259,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 17,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph FLOW-007"
     },
     {
@@ -274,7 +274,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 18,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph FLOW-007"
     },
     {

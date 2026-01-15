@@ -34,9 +34,25 @@ Started: 2026-01-14
 - [x] NEW-004: Manueller ATS-Check mit eigenem Text
 - [x] NEW-005: STAR-Hinweis fuer nicht-behavioral Fragen
 
+#### UX-Improvements (UX)
+- [x] UX-017: Sortierungs-Dropdown fuer Applications hinzufuegen
+
 ---
 
 ## Progress Log
+
+## [2026-01-16] - UX-017
+- **Was implementiert wurde:**
+  - Sortierungs-Dropdown neben Status-Filter auf Applications-Seite
+  - Sortierungsoptionen: Datum (neueste/aelteste zuerst), Firma A-Z/Z-A, Status
+  - Status-Sortierung nach Relevanz: Zusage > Antwort > Versendet > Erstellt > Absage
+  - Sortierung persistiert bei Filter-Aenderungen (separater ref)
+  - Deutsche Locale fuer korrekte Firma-Sortierung (localeCompare 'de')
+- **Geaenderte Dateien:**
+  - frontend/src/pages/Applications.vue (sortBy ref, Dropdown, computed sort logic)
+- **Learnings:**
+  - Vue computed properties mit switch-case fuer flexible Sortierung
+  - localeCompare mit locale fuer sprachspezifische String-Sortierung
 
 ## [2026-01-14] - NEW-005
 - **Was implementiert wurde:**

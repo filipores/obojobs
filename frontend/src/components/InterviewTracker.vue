@@ -19,10 +19,10 @@
     <!-- Interview Date Section -->
     <div v-if="selectedResult" class="tracker-section">
       <label class="tracker-label">Interview-Termin</label>
-      <input
+      <DateTimePicker
         v-model="interviewDate"
-        type="datetime-local"
-        class="form-input date-input"
+        placeholder="Datum und Uhrzeit waehlen"
+        aria-label="Interview-Termin"
         @change="updateInterviewData"
       />
     </div>
@@ -50,6 +50,7 @@
 <script setup>
 import { ref, watch, onMounted } from 'vue'
 import api from '../api/client'
+import DateTimePicker from './DateTimePicker.vue'
 
 const props = defineProps({
   applicationId: {
@@ -85,21 +86,10 @@ const resultOptions = [
   { value: 'offer_received', label: 'Angebot erhalten', color: '#4a9d4a' }
 ]
 
-const formatDateForInput = (isoString) => {
-  if (!isoString) return ''
-  // Convert ISO string to local datetime-local format
-  const date = new Date(isoString)
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-  return `${year}-${month}-${day}T${hours}:${minutes}`
-}
-
 onMounted(() => {
+  // DateTimePicker handles ISO strings directly
   if (props.initialDate) {
-    interviewDate.value = formatDateForInput(props.initialDate)
+    interviewDate.value = props.initialDate
   }
 })
 
@@ -108,7 +98,8 @@ watch(() => props.initialResult, (newVal) => {
 })
 
 watch(() => props.initialDate, (newVal) => {
-  interviewDate.value = formatDateForInput(newVal)
+  // DateTimePicker handles ISO strings directly
+  interviewDate.value = newVal || ''
 })
 
 watch(() => props.initialFeedback, (newVal) => {
@@ -129,12 +120,8 @@ const updateInterviewData = async () => {
       interview_feedback: interviewFeedback.value || null
     }
 
-    // Only include date if set
-    if (interviewDate.value) {
-      payload.interview_date = new Date(interviewDate.value).toISOString()
-    } else {
-      payload.interview_date = null
-    }
+    // DateTimePicker already provides ISO string
+    payload.interview_date = interviewDate.value || null
 
     const { data } = await api.put(`/applications/${props.applicationId}/interview-result`, payload)
 
@@ -224,11 +211,6 @@ const updateInterviewData = async () => {
   flex-shrink: 0;
 }
 
-/* Date Input */
-.date-input {
-  max-width: 280px;
-}
-
 /* Feedback */
 .feedback-hint {
   font-size: 0.8125rem;
@@ -268,10 +250,6 @@ const updateInterviewData = async () => {
   .status-option {
     width: 100%;
     justify-content: flex-start;
-  }
-
-  .date-input {
-    max-width: 100%;
   }
 }
 </style>
