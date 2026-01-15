@@ -904,6 +904,13 @@ onMounted(() => {
 watch(() => route.query.firma, (newFirma) => {
   filterFirma.value = newFirma || ''
 })
+
+// Reset exportFilteredOnly when no filters are active
+watch(hasActiveFilters, (isActive) => {
+  if (!isActive) {
+    exportFilteredOnly.value = false
+  }
+})
 </script>
 
 <style scoped>
