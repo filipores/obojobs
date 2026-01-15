@@ -22,9 +22,14 @@ api.interceptors.response.use(
     // Check if caller wants to suppress automatic toast (e.g., has own error handler)
     const suppressToast = error.config?.suppressToast
 
+    // Check if this is a login request - don't do global 401 handling for login
+    // Login-Route should show its own error message for invalid credentials
+    const isLoginRequest = error.config?.url === '/auth/login'
+
     // 401 Unauthorized or 422 with JWT errors
-    if (error.response?.status === 401 ||
-        (error.response?.status === 422 && error.response?.data?.msg?.includes('token'))) {
+    // Skip global handling for login route to allow proper error display
+    if (!isLoginRequest && (error.response?.status === 401 ||
+        (error.response?.status === 422 && error.response?.data?.msg?.includes('token')))) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       if (window.$toast && !suppressToast) {
