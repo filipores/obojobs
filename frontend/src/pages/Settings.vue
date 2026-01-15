@@ -223,8 +223,8 @@
             <p class="api-key-info">
               Erstellen Sie einen API Key, um die Chrome Extension mit Ihrem Konto zu verbinden.
             </p>
-            <button @click="generateKey" class="zen-btn zen-btn-filled">
-              Neuen Key generieren
+            <button @click="generateKey" class="zen-btn zen-btn-filled" :disabled="isGeneratingKey">
+              {{ isGeneratingKey ? 'Wird generiert...' : 'Neuen Key generieren' }}
             </button>
           </div>
 
@@ -319,6 +319,9 @@ const getPlanLabel = () => {
   return subscription.plan?.charAt(0).toUpperCase() + subscription.plan?.slice(1) || 'Free'
 }
 
+// API Key generation state
+const isGeneratingKey = ref(false)
+
 // Email accounts state
 const emailAccounts = ref([])
 const isConnecting = ref(false)
@@ -393,12 +396,19 @@ const changePassword = async () => {
 }
 
 const generateKey = async () => {
+  if (isGeneratingKey.value) return
+
+  isGeneratingKey.value = true
   try {
     const { data } = await api.post('/keys', { name: 'Chrome Extension' })
     newKey.value = data.api_key
     loadKeys()
   } catch (_e) {
-    alert('Fehler beim Erstellen des Keys')
+    if (window.$toast) {
+      window.$toast('Fehler beim Erstellen des Keys', 'error')
+    }
+  } finally {
+    isGeneratingKey.value = false
   }
 }
 
