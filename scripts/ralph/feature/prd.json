@@ -230,6 +230,199 @@
       "priority": 15,
       "passes": true,
       "source": "test-ralph"
+    },
+    {
+      "id": "UX-016",
+      "title": "Login-401-Fehler korrekt behandeln",
+      "description": "API-Client sollte Login-Route von globaler 401-Behandlung ausschließen, damit Fehlermeldungen bei falschem Passwort angezeigt werden",
+      "acceptanceCriteria": [
+        "Interceptor in client.js prüft ob Anfrage an /auth/login geht",
+        "Bei Login-Route: Fehler durchreichen statt globale Behandlung",
+        "Login-Komponente zeigt deutsche Fehlermeldung bei falschen Credentials",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 16,
+      "passes": false,
+      "source": "test-ralph COMMIT-9"
+    },
+    {
+      "id": "UX-017",
+      "title": "Timeline Details-Modal statt separate Route",
+      "description": "Timeline sollte gleiches Modal-Pattern wie Applications-Seite verwenden für Details-Anzeige",
+      "acceptanceCriteria": [
+        "Details-Button öffnet Modal statt Navigation",
+        "Modal zeigt Bewerbungs-Details an",
+        "Konsistentes UX-Pattern mit Applications-Seite",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 17,
+      "passes": false,
+      "source": "test-ralph COMMIT-15"
+    },
+    {
+      "id": "UX-018",
+      "title": "Tooltips für Mobile-Navigation hinzufügen",
+      "description": "Alle Nav-Links sollten title-Attribute im Mobile-Modus haben, nicht nur Insights",
+      "acceptanceCriteria": [
+        "Alle Nav-Links haben title-Attribut",
+        "Tooltips sind auf Deutsch",
+        "Accessibility für Mobile verbessert",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 18,
+      "passes": false,
+      "source": "test-ralph COMMIT-14"
+    },
+    {
+      "id": "UX-019",
+      "title": "Button-Debounce für API Key Generierung",
+      "description": "Der 'Neuen Key generieren' Button ermöglicht doppelte Klicks, Button sollte während API-Anfrage deaktiviert werden",
+      "acceptanceCriteria": [
+        "Button wird während API-Call disabled",
+        "Loading-State während Generierung",
+        "Keine doppelten API Keys durch Mehrfachklicks",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 19,
+      "passes": false,
+      "source": "test-ralph COMMIT-8"
+    },
+    {
+      "id": "UX-020",
+      "title": "Export-Button deaktivieren bei 0 Ergebnissen",
+      "description": "Wenn 'Nur gefilterte' aktiv ist und 0 Ergebnisse vorhanden, Export-Buttons deaktivieren",
+      "acceptanceCriteria": [
+        "Export-Buttons disabled wenn filteredCount === 0 und onlyFiltered aktiv",
+        "Visuelles Feedback dass Export nicht möglich",
+        "Tooltip erklärt warum Button deaktiviert",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 20,
+      "passes": false,
+      "source": "test-ralph COMMIT-2"
+    },
+    {
+      "id": "UX-021",
+      "title": "Coverage-Threshold in Vitest konfigurieren",
+      "description": "vitest.config.js sollte Coverage-Thresholds definieren um Mindestabdeckung zu erzwingen",
+      "acceptanceCriteria": [
+        "Coverage-Threshold in vitest.config.js konfiguriert",
+        "Mindest-Coverage definiert (z.B. 70%)",
+        "Tests schlagen fehl bei zu niedriger Coverage",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 21,
+      "passes": false,
+      "source": "test-ralph COMMIT-13"
+    },
+    {
+      "id": "UX-022",
+      "title": "Custom Confirm-Modal statt native Browser-Dialoge",
+      "description": "Native Browser-Confirm durch Custom-Modal ersetzen für konsistentes Design",
+      "acceptanceCriteria": [
+        "ConfirmModal-Komponente erstellen",
+        "Deutsche Buttons 'Löschen'/'Abbrechen'",
+        "Alle window.confirm Aufrufe ersetzen",
+        "Konsistentes Design-System",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 22,
+      "passes": false,
+      "source": "test-ralph COMMIT-4"
+    },
+    {
+      "id": "UX-023",
+      "title": "Hidden username field für Password-Manager",
+      "description": "Verstecktes Username-Feld in ResetPassword für bessere Password-Manager Kompatibilität",
+      "acceptanceCriteria": [
+        "Hidden input type='text' autocomplete='username' hinzufügen",
+        "Browser-Warnung verschwindet",
+        "Password-Manager können Credentials besser speichern",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 23,
+      "passes": false,
+      "source": "test-ralph COMMIT-3"
+    },
+    {
+      "id": "UX-024",
+      "title": "Upgrade-Buttons visuell disabled während Loading",
+      "description": "Alle anderen Upgrade-Buttons sollten während des Ladens auch visuell disabled werden",
+      "acceptanceCriteria": [
+        "Alle Upgrade-Buttons grau/disabled wenn einer lädt",
+        "Visuelles Feedback durch Opacity/Cursor-Change",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 24,
+      "passes": false,
+      "source": "test-ralph COMMIT-10"
+    },
+    {
+      "id": "UX-025",
+      "title": "ARIA-Live-Region für URL-Validierungsstatus",
+      "description": "Für Screen-Reader-Nutzer aria-live Region hinzufügen die Validierungsänderungen ankündigt",
+      "acceptanceCriteria": [
+        "aria-live='polite' Region für Validierungsstatus",
+        "Screenreader kündigt gültig/ungültig an",
+        "Funktioniert bei Eingabe und Paste",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 25,
+      "passes": false,
+      "source": "test-ralph COMMIT-11"
+    },
+    {
+      "id": "UX-026",
+      "title": "aria-label für Delete-Buttons hinzufügen",
+      "description": "Delete-Buttons brauchen aria-label zusätzlich zu title für bessere Accessibility",
+      "acceptanceCriteria": [
+        "aria-label='Eintrag löschen' auf allen Delete-Buttons",
+        "Screenreader liest Aktion vor",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 26,
+      "passes": false,
+      "source": "test-ralph COMMIT-4"
+    },
+    {
+      "id": "UX-027",
+      "title": "Vue Warnings auf Templates-Seite beheben",
+      "description": "Properties FIRMA, POSITION, ANSPRECHPARTNER werden aufgerufen aber nicht definiert",
+      "acceptanceCriteria": [
+        "Alle undefined Properties in Templates.vue beheben",
+        "Keine Vue Warnings mehr in Konsole",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 27,
+      "passes": false,
+      "source": "test-ralph COMMIT-9"
+    },
+    {
+      "id": "UX-028",
+      "title": "Checkbox-Zustand zurücksetzen bei fehlendem Filter",
+      "description": "Die Checkbox 'Nur gefilterte' sollte auf false zurückgesetzt werden wenn kein Filter aktiv ist",
+      "acceptanceCriteria": [
+        "onlyFiltered wird auf false gesetzt wenn kein Filter aktiv",
+        "Watcher oder computed property für Filter-State",
+        "Konsistentes Verhalten beim Wechseln zwischen Views",
+        "Alle Tests grün (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 28,
+      "passes": false,
+      "source": "test-ralph COMMIT-2"
     }
   ]
 }
