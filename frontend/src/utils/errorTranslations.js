@@ -43,6 +43,10 @@ const errorTranslations = {
   'body is required': 'Nachrichtentext ist erforderlich',
   'to_email is required': 'Empfänger-E-Mail ist erforderlich',
   'Application not found': 'Bewerbung nicht gefunden',
+  'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set': 'Gmail-Integration ist derzeit nicht konfiguriert.',
+  'MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET must be set': 'Outlook-Integration ist derzeit nicht konfiguriert.',
+  'GOOGLE_REDIRECT_URI must be set': 'Gmail-Integration ist derzeit nicht konfiguriert.',
+  'MICROSOFT_REDIRECT_URI must be set': 'Outlook-Integration ist derzeit nicht konfiguriert.',
 
   // Subscription errors
   'No active subscription. Please subscribe first.': 'Kein aktives Abonnement. Bitte abonniere zuerst einen Plan.',
