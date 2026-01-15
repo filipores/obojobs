@@ -35,13 +35,10 @@ CLAUDE_OUTPUT_FORMAT="json"
 CLAUDE_ALLOWED_TOOLS="Write,Edit,Read,Bash,Glob,Grep"
 
 # ============================================
-# Model Selection (Token-Optimierung)
+# Model Selection
 # ============================================
-# Sonnet für Bug-Fixes (ausreichend für die meisten Fixes)
+# Sonnet für Bug-Fixes
 CLAUDE_MODEL_IMPL=${CLAUDE_MODEL_IMPL:-"claude-sonnet-4-20250514"}
-# Haiku für QA-Verifikation
-CLAUDE_MODEL_QA=${CLAUDE_MODEL_QA:-"claude-haiku-4-5-20251001"}
-ENABLE_QA_PHASE=${ENABLE_QA_PHASE:-true}
 
 # ============================================
 # State Files
@@ -71,7 +68,5 @@ export LEARNINGS_FILE
 export CLAUDE_OUTPUT_FORMAT
 export CLAUDE_ALLOWED_TOOLS
 export CLAUDE_MODEL_IMPL
-export CLAUDE_MODEL_QA
-export ENABLE_QA_PHASE
 export SPLIT_MODE
 export LIVE_LOG_FILE

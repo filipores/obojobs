@@ -221,45 +221,6 @@ get_current_story() {
 }
 
 # ============================================
-# Execute QA Phase (Haiku - Token-optimiert)
-# ============================================
-execute_qa_phase() {
-    local loop_count=$1
-
-    if [[ "$ENABLE_QA_PHASE" != "true" ]]; then
-        return 0
-    fi
-
-    log_info "QA-Phase mit Haiku..."
-
-    local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
-    local qa_output="$LOG_DIR/qa_output_${timestamp}.log"
-
-    # Kurzer QA-Check mit Haiku (2 Min Timeout)
-    if ${TIMEOUT_CMD:+$TIMEOUT_CMD 120s} claude \
-        --model "$CLAUDE_MODEL_QA" \
-        --output-format json \
-        --allowedTools "Bash,Read" \
-        -p "$(cat "$SCRIPT_DIR/qa_prompt.md")" \
-        > "$qa_output" 2>&1; then
-
-        # Parse QA result
-        local qa_result=$(jq -r '.result // ""' "$qa_output" 2>/dev/null)
-        if echo "$qa_result" | grep -q "SUMMARY: ALL_PASS"; then
-            log_success "QA-Phase: Alle Checks bestanden"
-            return 0
-        elif echo "$qa_result" | grep -q "SUMMARY: HAS_FAILURES"; then
-            local failures=$(echo "$qa_result" | grep "FAILURES:" | sed 's/FAILURES:[[:space:]]*//')
-            log_warn "QA-Phase: Fehler in: $failures"
-            return 1
-        fi
-    fi
-
-    log_warn "QA-Phase: Konnte nicht ausgeführt werden"
-    return 0  # Non-blocking
-}
-
-# ============================================
 # Execute Claude (Implementation)
 # ============================================
 execute_claude() {
@@ -301,7 +262,7 @@ ${file_context}"
 
         if $timeout_prefix claude \
             --model "$CLAUDE_MODEL_IMPL" \
-            --output-format stream-json \
+            --output-format stream-json --verbose \
             --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
             --append-system-prompt "$context" \
             -p "$(cat "$SCRIPT_DIR/prompt.md")" \
@@ -431,10 +392,7 @@ while true; do
 
     case $exec_result in
         0)
-            # Success - run QA phase with Haiku
-            execute_qa_phase "$loop_count"
-
-            # Update passed count
+            # Success
             PASSED_STORIES=$(jq '[.userStories[] | select(.passes == true)] | length' "$SCRIPT_DIR/prd.json")
             log_info "Stories passed: $PASSED_STORIES/$TOTAL_STORIES"
             update_status "$loop_count" "$(get_remaining_calls)" "$current_story" "success"

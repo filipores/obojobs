@@ -362,7 +362,7 @@ $(cat "$SCRIPT_DIR/prompt.md")"
         echo "" >> "$RALPH_LIVE_LOG"
 
         if $timeout_prefix claude \
-            --output-format stream-json \
+            --output-format stream-json --verbose \
             --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
             --append-system-prompt "$context" \
             -p "$full_prompt" \

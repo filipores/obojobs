@@ -2,9 +2,9 @@
 # response_analyzer.sh - Analysiert Claude Output
 # Parst RALPH_STATUS Block und Exit Signals
 
-# Source date utilities
+# Source date utilities from shared lib
 RA_DIR="$(dirname "${BASH_SOURCE[0]}")"
-source "$RA_DIR/date_utils.sh"
+source "$RA_DIR/../../lib/date_utils.sh"
 
 # State files
 RESPONSE_ANALYSIS_FILE="${SCRIPT_DIR:-.}/.response_analysis"

@@ -250,38 +250,6 @@ get_current_bug() {
 }
 
 # ============================================
-# Execute QA Phase (Haiku - Token-optimiert)
-# ============================================
-execute_qa_phase() {
-    if [[ "$ENABLE_QA_PHASE" != "true" ]]; then
-        return 0
-    fi
-
-    log_info "QA-Phase mit Haiku..."
-
-    local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
-    local qa_output="$LOG_DIR/qa_output_${timestamp}.log"
-
-    if ${TIMEOUT_CMD:+$TIMEOUT_CMD 120s} claude \
-        --model "$CLAUDE_MODEL_QA" \
-        --output-format json \
-        --allowedTools "Bash,Read" \
-        -p "$(cat "$SCRIPT_DIR/qa_prompt.md")" \
-        > "$qa_output" 2>&1; then
-
-        local qa_result=$(jq -r '.result // ""' "$qa_output" 2>/dev/null)
-        if echo "$qa_result" | grep -q "SUMMARY: ALL_PASS"; then
-            log_success "QA-Phase: Alle Checks bestanden"
-            return 0
-        elif echo "$qa_result" | grep -q "SUMMARY: HAS_FAILURES"; then
-            log_warn "QA-Phase: Hat Fehler"
-            return 1
-        fi
-    fi
-    return 0
-}
-
-# ============================================
 # Execute Claude
 # ============================================
 execute_claude() {
@@ -328,7 +296,7 @@ ${file_context}"
 
         if $timeout_prefix claude \
             --model "$CLAUDE_MODEL_IMPL" \
-            --output-format stream-json \
+            --output-format stream-json --verbose \
             --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
             --append-system-prompt "$context" \
             -p "$(cat "$SCRIPT_DIR/prompt.md")" \
@@ -461,9 +429,7 @@ while true; do
 
     case $exec_result in
         0)
-            # Run QA phase with Haiku
-            execute_qa_phase
-
+            # Success
             log_success "Bug $current_bug gefixt"
             update_status "$loop_count" "$current_bug" "success"
             FIXED_BUGS=$((FIXED_BUGS + 1))

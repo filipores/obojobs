@@ -40,14 +40,10 @@ CLAUDE_ALLOWED_TOOLS="Write,Edit,Read,Bash,Glob,Grep,WebFetch,WebSearch"
 CLAUDE_MIN_VERSION="2.0.76"
 
 # ============================================
-# Model Selection (Token-Optimierung)
+# Model Selection
 # ============================================
-# Opus für komplexe Implementation
+# Opus für Implementation und QA
 CLAUDE_MODEL_IMPL=${CLAUDE_MODEL_IMPL:-"claude-opus-4-5-20251101"}
-# Haiku für QA (Tests, Linting) - ~95% günstiger
-CLAUDE_MODEL_QA=${CLAUDE_MODEL_QA:-"claude-haiku-4-5-20251001"}
-# QA-Phase aktivieren (separater Haiku-Call für Tests)
-ENABLE_QA_PHASE=${ENABLE_QA_PHASE:-true}
 
 # ============================================
 # Split Mode - tmux split screen
@@ -96,8 +92,6 @@ export CLAUDE_USE_CONTINUE
 export CLAUDE_OUTPUT_FORMAT
 export CLAUDE_ALLOWED_TOOLS
 export CLAUDE_MODEL_IMPL
-export CLAUDE_MODEL_QA
-export ENABLE_QA_PHASE
 export SPLIT_MODE
 export LIVE_LOG_FILE
 export LOG_DIR

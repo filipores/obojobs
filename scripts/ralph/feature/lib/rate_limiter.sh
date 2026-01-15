@@ -2,9 +2,10 @@
 # rate_limiter.sh - Rate Limiting für RALF
 # Begrenzt API-Calls pro Stunde
 
-# Source date utilities
+# Source date utilities from shared lib
 RATE_LIMITER_DIR="$(dirname "${BASH_SOURCE[0]}")"
-source "$RATE_LIMITER_DIR/date_utils.sh"
+SHARED_LIB_DIR="$RATE_LIMITER_DIR/../../lib"
+source "$SHARED_LIB_DIR/date_utils.sh"
 
 # Get rate limit file path (must be called after LOG_DIR is set)
 get_rate_limit_file() {
