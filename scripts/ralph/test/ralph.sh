@@ -38,7 +38,7 @@ REPORTS_DIR="$SCRIPT_DIR/reports"
 mkdir -p "$LOG_DIR" "$REPORTS_DIR"
 
 # Session tracking
-RALPH_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+RALPH_STARTED_AT=$(get_iso_timestamp)
 export RALPH_STARTED_AT
 
 # ============================================
@@ -445,7 +445,7 @@ update_status() {
         --arg status "$status" \
         --arg loop "$loop_count" \
         --arg started_at "$RALPH_STARTED_AT" \
-        --arg updated_at "$(date -u +"%Y-%m-%dT%H:%M:%SZ")" \
+        --arg updated_at "$(get_iso_timestamp)" \
         '{
             mode: "test",
             status: $status,

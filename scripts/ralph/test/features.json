@@ -1,105 +1,101 @@
 {
   "features": [
     {
-      "id": "NEW-001",
-      "commit_hash": "af49079",
-      "message": "feat: NEW-001 - Manueller Stellentext-Import als Fallback",
+      "id": "COMMIT-2",
+      "commit_hash": "956c064",
+      "message": "feat: UX-015 - Export gefilterte Daten",
       "scope": "fullstack",
       "type": "feature",
       "changed_files": [
         "backend/routes/applications.py",
-        "backend/routes/recommendations.py",
-        "backend/services/job_recommender.py",
-        "frontend/src/components/JobRecommendations.vue",
-        "frontend/src/pages/NewApplication.vue"
+        "frontend/eslint.config.js",
+        "frontend/src/pages/Applications.vue",
+        "scripts/ralph/feature/prd.json"
       ],
       "tested": true,
       "test_result": {
-        "feature_id": "NEW-001",
-        "tested_at": "2026-01-14T12:45:00Z",
+        "feature_id": "COMMIT-2",
+        "tested_at": "2026-01-15T12:30:00Z",
         "has_bugs": false,
         "bugs": [],
         "suggestions": [
           {
             "id": "SUG-001",
             "type": "ux",
-            "title": "Automatische Extraktion von Kontaktdaten aus manuellem Text verbessern",
-            "description": "Bei der manuellen Texteingabe wurden Standort (Berlin), Ansprechpartner (Max Mustermann) und Kontakt-Email (hr@ralf-test.de) nicht automatisch aus dem Text extrahiert, obwohl diese Informationen vorhanden waren. Die AI-Analyse könnte diese Felder automatisch befüllen.",
-            "priority": "medium"
+            "title": "Checkbox-Zustand beim Seitenwechsel beibehalten",
+            "description": "Die Checkbox 'Nur gefilterte' behält ihren Zustand (checked) auch wenn der Filter entfernt wird und die Checkbox verschwindet. Bei erneutem Setzen eines Filters ist sie wieder checked. Könnte auf false zurückgesetzt werden wenn kein Filter aktiv ist.",
+            "priority": "low"
           },
           {
             "id": "SUG-002",
             "type": "ux",
-            "title": "Fehlermeldung im Error-Banner kürzen",
-            "description": "Die technische Fehlermeldung (HTTPSConnectionPool, NameResolutionError etc.) ist für Endbenutzer zu technisch. Eine benutzerfreundlichere Meldung wie 'Die Stellenanzeige konnte nicht geladen werden' wäre besser.",
-            "priority": "low"
+            "title": "Export-Button deaktivieren bei 0 gefilterten Ergebnissen",
+            "description": "Wenn 'Nur gefilterte (0)' aktiv ist und keine Ergebnisse vorhanden sind, könnten die Export-Buttons deaktiviert werden, um einen leeren Export zu vermeiden.",
+            "priority": "medium"
           }
-        ],
-        "test_coverage": {
-          "new_application_page": {
-            "url_input": "PASS",
-            "portal_detection": "PASS",
-            "error_with_fallback_button": "PASS",
-            "manual_fallback_form": "PASS",
-            "manual_text_analysis": "PASS",
-            "preview_generation": "PASS"
-          },
-          "job_recommendations": {
-            "analyze_modal": "PASS",
-            "url_input": "PASS",
-            "error_with_fallback_link": "PASS",
-            "manual_input_form": "PASS"
-          },
-          "responsive": {
-            "mobile_375x667": "PASS",
-            "desktop_1280x720": "PASS"
-          },
-          "dark_mode": "PASS"
-        },
-        "screenshots": [
-          "new-001-error-with-fallback.png",
-          "new-001-manual-fallback-form.png",
-          "new-001-manual-form-filled.png",
-          "new-001-preview-after-analysis.png",
-          "new-001-preview-top.png",
-          "new-001-mobile-initial.png",
-          "new-001-mobile-error-fallback.png",
-          "new-001-mobile-manual-form.png",
-          "new-001-dark-mode-form.png",
-          "new-001-dark-mode-full.png",
-          "new-001-job-recommendations-modal.png",
-          "new-001-recommendations-error-fallback.png",
-          "new-001-recommendations-manual-form.png"
         ],
         "found": true
       }
     },
     {
-      "id": "NEW-002",
-      "commit_hash": "0dc106b",
-      "message": "feat: NEW-002 - Timer für realistische Interview-Simulation",
+      "id": "COMMIT-3",
+      "commit_hash": "77b4a60",
+      "message": "feat: UX-014 - Passwort-Sichtbarkeits-Toggle hinzufügen",
       "scope": "frontend",
       "type": "feature",
       "changed_files": [
-        "frontend/src/pages/MockInterview.vue"
+        "frontend/src/pages/Login.vue",
+        "frontend/src/pages/Register.vue",
+        "frontend/src/pages/ResetPassword.vue"
       ],
       "tested": true,
       "test_result": {
-        "feature_id": "NEW-002",
-        "tested_at": "2026-01-14T22:30:00Z",
+        "feature_id": "COMMIT-3",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "accessibility",
+            "title": "Hidden username field für Password-Manager hinzufügen",
+            "description": "Browser-Konsole zeigt Hinweis: 'Password forms should have (optionally hidden) username fields for accessibility'. Ein verstecktes Username-Feld würde die Kompatibilität mit Password-Managern verbessern.",
+            "priority": "low",
+            "affected_component": "ResetPassword.vue"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-4",
+      "commit_hash": "e487953",
+      "message": "feat: UX-013 - Möglichkeit zum Löschen einzelner History-Einträge",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/routes/ats.py",
+        "frontend/src/pages/ATSView.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-4",
+        "tested_at": "2026-01-15T09:30:00Z",
         "has_bugs": false,
         "bugs": [],
         "suggestions": [
           {
             "id": "SUG-001",
             "type": "ux",
-            "title": "Timer-Sound-Feedback könnte optional sein",
+            "title": "Nativer Browser-Confirm durch Custom-Modal ersetzen",
+            "description": "Der native Browser-Confirm-Dialog funktioniert, aber ein Custom-Modal wäre konsistenter mit dem Design-System und würde eine bessere UX bieten (z.B. mit 'Löschen' und 'Abbrechen' Buttons statt OK/Cancel).",
             "priority": "low"
           },
           {
             "id": "SUG-002",
             "type": "accessibility",
-            "title": "Visuelles Feedback bei Timer-Warnung (10 Sek) könnte stärker sein",
+            "title": "aria-label für Delete-Button hinzufügen",
+            "description": "Der Delete-Button hat bereits ein title-Attribut, aber ein zusätzliches aria-label würde die Accessibility für Screenreader verbessern.",
             "priority": "low"
           }
         ],
@@ -107,9 +103,243 @@
       }
     },
     {
-      "id": "NEW-003",
-      "commit_hash": "f0f69b8",
-      "message": "feat: NEW-003 - Automatische Anforderungsanalyse bei Bewerbungserstellung",
+      "id": "COMMIT-5",
+      "commit_hash": "3cd2c75",
+      "message": "feat: UX-012 - Pre-fill Empfänger-Email aus Bewerbungsdaten",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/pages/Applications.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-5",
+        "tested_at": "2026-01-15T10:30:00.000Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Pre-populate email from job posting source when available",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-7",
+      "commit_hash": "461012b",
+      "message": "feat: UX-010 - ARIA-Attribute für Toasts hinzufügen",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/components/Toast.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-7",
+        "tested_at": "2026-01-15T12:45:00.000Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "accessibility",
+            "title": "Fokus-Management bei Toast-Erscheinen erwägen",
+            "description": "Bei kritischen error/warning Toasts könnte der Fokus optional auf den Toast gesetzt werden, damit Screenreader-Nutzer sofort informiert werden. Aktuell wird aria-live='assertive' verwendet, was bereits gut ist.",
+            "priority": "low"
+          }
+        ],
+        "test_summary": {
+          "aria_attributes_verified": {
+            "container": {
+              "aria-live": "polite",
+              "aria-label": "Benachrichtigungen"
+            },
+            "error_toast": {
+              "role": "alert",
+              "aria-live": "assertive"
+            },
+            "warning_toast": {
+              "role": "alert",
+              "aria-live": "assertive"
+            },
+            "success_toast": {
+              "role": "status",
+              "aria-live": "polite"
+            },
+            "info_toast": {
+              "role": "status",
+              "aria-live": "polite"
+            },
+            "icon": {
+              "aria-hidden": "true"
+            },
+            "close_button": {
+              "aria-label": "Benachrichtigung schließen"
+            }
+          },
+          "functionality_tested": [
+            "Toast-Container mit korrektem aria-label",
+            "Dynamische role-Zuweisung (alert vs status)",
+            "Dynamische aria-live-Zuweisung (assertive vs polite)",
+            "Icon mit aria-hidden='true' (korrekt versteckt)",
+            "Close-Button mit aria-label",
+            "Mobile-Ansicht funktioniert",
+            "Toast schließen via Button funktioniert"
+          ]
+        },
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-8",
+      "commit_hash": "b9df26a",
+      "message": "feat: UX-009 - Doppelte Toast-Benachrichtigungen vermeiden",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/api/client.js",
+        "frontend/src/components/Toast.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-8",
+        "tested_at": "2026-01-15T12:45:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Button-Debounce für API Key Generierung hinzufügen",
+            "priority": "medium",
+            "description": "Der 'Neuen Key generieren' Button ermöglicht doppelte Klicks, die zu mehreren API Keys führen. Dies ist kein Toast-Bug, aber eine verwandte UX-Verbesserung. Button sollte während der API-Anfrage deaktiviert werden."
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Keyword-Matching für englische/deutsche Mischung verbessern",
+            "priority": "low",
+            "description": "Die isSimilarMessage-Funktion erkennt 'Fehler' und 'error' als separate Keywords. Bei mehrsprachigen Apps könnte cross-language Matching sinnvoll sein (z.B. 'error' auch als Duplikat von 'Fehler' erkennen)."
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-9",
+      "commit_hash": "6169c84",
+      "message": "feat: UX-008 - Backend-Fehlermeldungen auf Deutsch lokalisieren",
+      "scope": "fullstack",
+      "type": "feature",
+      "changed_files": [
+        "backend/app.py",
+        "backend/middleware/api_key_required.py",
+        "backend/middleware/jwt_required.py",
+        "backend/middleware/subscription_limit.py",
+        "backend/routes/api_keys.py",
+        "backend/routes/auth.py",
+        "backend/routes/email.py",
+        "backend/routes/subscriptions.py",
+        "backend/routes/templates.py",
+        "backend/services/auth_service.py",
+        "backend/services/email_verification_service.py",
+        "backend/services/password_reset_service.py",
+        "backend/tests/test_auth.py",
+        "backend/tests/test_email_verification.py",
+        "backend/tests/test_password_reset.py",
+        "frontend/src/api/client.js",
+        "frontend/src/utils/errorTranslations.js",
+        "frontend/vite.config.js"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-9",
+        "tested_at": "2026-01-15T10:45:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "Login-Fehlermeldung wird nicht angezeigt bei falschen Credentials",
+            "steps_to_reproduce": [
+              "Navigiere zu /login",
+              "Gib eine beliebige E-Mail und ein falsches Passwort ein",
+              "Klicke auf 'Anmelden'",
+              "401-Fehler wird zurückgegeben, aber keine Fehlermeldung erscheint"
+            ],
+            "expected": "Deutsche Fehlermeldung 'Ungültige E-Mail oder Passwort' sollte angezeigt werden",
+            "actual": "Keine Fehlermeldung wird angezeigt - der Benutzer sieht nur das leere Formular",
+            "affected_component": "frontend/src/api/client.js, frontend/src/pages/Login.vue",
+            "root_cause": "Der API-Client-Interceptor behandelt alle 401-Fehler als 'Sitzung abgelaufen' und leitet zur Login-Seite weiter, BEVOR die Login-Komponente den Fehler verarbeiten kann. Die Login-Seite sollte 401-Fehler selbst behandeln und nicht vom globalen Interceptor abgefangen werden."
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "API-Client sollte Login-Route von globaler 401-Behandlung ausschließen",
+            "priority": "high",
+            "description": "Der Interceptor in client.js sollte prüfen, ob die Anfrage an /auth/login geht und in diesem Fall den Fehler durchreichen, damit die Login-Komponente ihn behandeln kann."
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Vue Warnings auf Templates-Seite beheben",
+            "priority": "low",
+            "description": "Properties FIRMA, POSITION, ANSPRECHPARTNER werden während des Renderns aufgerufen, sind aber nicht auf der Instanz definiert. Dies betrifft Templates.vue."
+          }
+        ],
+        "working_features": [
+          "Registrierung mit existierender E-Mail zeigt deutsche Fehlermeldung korrekt an",
+          "Passwort-Reset mit ungültigem Token zeigt deutsche Fehlermeldung korrekt an",
+          "Backend-Fehlermeldungen sind korrekt auf Deutsch lokalisiert",
+          "Toast-Benachrichtigungen zeigen deutsche Texte an",
+          "translateError-Funktion in errorTranslations.js funktioniert korrekt"
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-10",
+      "commit_hash": "a4aaf3c",
+      "message": "feat: UX-007 - Loading-Spinner für Upgrade-Buttons hinzufügen",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/pages/SubscriptionView.vue",
+        "scripts/ralph/feature/prd.json"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-10",
+        "tested_at": "2026-01-15T12:30:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Spinner-Animation könnte etwas größer sein für bessere Sichtbarkeit",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Alle anderen Upgrade-Buttons könnten während des Ladens visuell disabled werden (aktuell nur funktional disabled)",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-11",
+      "commit_hash": "07f2fb7",
+      "message": "feat: UX-005 - Echtzeit-URL-Validierung mit visuellem Feedback",
       "scope": "frontend",
       "type": "feature",
       "changed_files": [
@@ -117,102 +347,23 @@
       ],
       "tested": true,
       "test_result": {
-        "feature_id": "NEW-003",
-        "tested_at": "2026-01-14T12:30:00Z",
-        "has_bugs": true,
-        "bugs": [
-          {
-            "id": "BUG-001",
-            "severity": "minor",
-            "title": "Alte Fehlermeldung bleibt nach manuellem Fallback sichtbar",
-            "steps_to_reproduce": [
-              "Auf /new-application navigieren",
-              "Eine StepStone-URL eingeben und auf 'Stellenanzeige laden' klicken",
-              "Fehler 403 erscheint mit manuellem Fallback-Option",
-              "Auf 'Stellentext manuell einfügen' klicken",
-              "Formular ausfüllen und 'Stellentext analysieren' klicken"
-            ],
-            "expected": "Die alte Fehlermeldung (403 Forbidden) sollte verschwinden, wenn der manuelle Flow erfolgreich abgeschlossen wird",
-            "actual": "Die alte Fehlermeldung bleibt unten im Preview sichtbar, obwohl 'Stellentext analysiert!' Toast erscheint",
-            "affected_component": "frontend/src/pages/NewApplication.vue"
-          },
-          {
-            "id": "BUG-002",
-            "severity": "minor",
-            "title": "Inkonsistente Umlaute in Fehlermeldung (Anforderungsanalyse)",
-            "steps_to_reproduce": [
-              "Stellentext manuell analysieren lassen",
-              "Anforderungsanalyse-Box betrachten"
-            ],
-            "expected": "Einheitliche deutsche Umlaute (ö, ü, etc.)",
-            "actual": "Gemischte Schreibweisen: 'Anforderungsanalyse nicht moeglich' (Überschrift) vs 'Anforderungsanalyse nicht möglich' (Text) und 'koennen' vs 'können', 'verfuegbar' vs 'verfügbar'",
-            "affected_component": "frontend/src/pages/NewApplication.vue"
-          },
-          {
-            "id": "BUG-003",
-            "severity": "trivial",
-            "title": "Keine Client-seitige URL-Validierung vor Submit",
-            "steps_to_reproduce": [
-              "Auf /new-application navigieren",
-              "Ungültige URL eingeben (z.B. 'ungültige-url-test')",
-              "Button 'Stellenanzeige laden' ist aktiv und klickbar"
-            ],
-            "expected": "Button sollte disabled bleiben oder visuelle Warnung bei offensichtlich ungültiger URL (ohne http/https)",
-            "actual": "Button ist aktiv, Fehler wird erst nach Server-Request angezeigt (400 Bad Request)",
-            "affected_component": "frontend/src/pages/NewApplication.vue"
-          }
-        ],
-        "suggestions": [
-          {
-            "id": "SUG-001",
-            "type": "ux",
-            "title": "Job-Portal-Badge sollte auch bei manuellem Eingabe-Flow angezeigt werden",
-            "priority": "low"
-          },
-          {
-            "id": "SUG-002",
-            "type": "ux",
-            "title": "Echtzeit-URL-Validierung mit visueller Feedback (grün/rot) vor Submit",
-            "priority": "medium"
-          },
-          {
-            "id": "SUG-003",
-            "type": "feature",
-            "title": "Standort und Anstellungsart sollten aus manuellem Stellentext extrahiert werden",
-            "priority": "medium"
-          }
-        ],
-        "found": true
-      }
-    },
-    {
-      "id": "NEW-004",
-      "commit_hash": "fb75790",
-      "message": "feat: NEW-004 - Manueller ATS-Check mit eigenem Text",
-      "scope": "frontend",
-      "type": "feature",
-      "changed_files": [
-        "frontend/src/components/ATSOptimizer.vue"
-      ],
-      "tested": true,
-      "test_result": {
-        "feature_id": "NEW-004",
-        "tested_at": "2026-01-14T22:15:00Z",
+        "feature_id": "COMMIT-11",
+        "tested_at": "2026-01-15T12:34:00.000Z",
         "has_bugs": false,
         "bugs": [],
         "suggestions": [
           {
             "id": "SUG-001",
             "type": "ux",
-            "title": "Hinweis bei fehlendem Stellentext ergaenzen",
-            "description": "Im manuellen Modus koennte ein zusaetzlicher Hinweis erscheinen, dass fuer den ATS-Check auch eine Stellenbeschreibung benoetigt wird, bevor der User den Check startet.",
+            "title": "Validierung beim Einfügen (Paste) direkt triggern",
+            "description": "Die Validierung reagiert gut auf Tastatureingaben. Ein expliziter Test mit Paste-Events wäre sinnvoll, um sicherzustellen, dass URLs aus der Zwischenablage sofort validiert werden.",
             "priority": "low"
           },
           {
             "id": "SUG-002",
-            "type": "ux",
-            "title": "Textarea Mindesthoehe auf Mobile anpassen",
-            "description": "Die Textarea koennte auf mobilen Geraeten etwas mehr Hoehe haben fuer bessere Lesbarkeit bei laengeren Texten.",
+            "type": "accessibility",
+            "title": "ARIA-Live-Region für Validierungsstatus",
+            "description": "Für Screen-Reader-Nutzer könnte eine aria-live Region hinzugefügt werden, die Validierungsänderungen ankündigt.",
             "priority": "low"
           }
         ],
@@ -220,127 +371,115 @@
       }
     },
     {
-      "id": "NEW-005",
-      "commit_hash": "7308b3a",
-      "message": "feat: NEW-005 - STAR-Hinweis fuer nicht-behavioral Fragen",
+      "id": "COMMIT-13",
+      "commit_hash": "accc9e7",
+      "message": "feat: UX-003 - Install @vitest/coverage-v8 dependency",
       "scope": "frontend",
       "type": "feature",
       "changed_files": [
-        "frontend/src/pages/MockInterview.vue"
-      ],
-      "tested": true,
-      "test_result": {
-        "feature_id": "NEW-005",
-        "tested_at": "2026-01-14T22:45:00Z",
-        "has_bugs": false,
-        "bugs": [],
-        "suggestions": [
-          {
-            "id": "SUG-001",
-            "type": "ux",
-            "title": "Sticky navigation overlaps hint box on some scroll positions",
-            "priority": "low"
-          }
-        ],
-        "found": true
-      }
-    },
-    {
-      "id": "QUAL-001",
-      "commit_hash": "4a382b5",
-      "message": "feat: QUAL-001 - Skill-Extraktion aus CV",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/app.py",
-        "backend/migrations/add_user_skills.py",
-        "backend/models/__init__.py",
-        "backend/models/user.py",
-        "backend/models/user_skill.py",
-        "backend/routes/documents.py",
-        "backend/routes/skills.py",
-        "backend/services/skill_extractor.py",
-        "frontend/src/components/SkillsOverview.vue",
-        "frontend/src/pages/Documents.vue"
-      ],
-      "tested": true,
-      "test_result": {
-        "feature_id": "QUAL-001",
-        "tested_at": "2026-01-14T12:45:00Z",
-        "has_bugs": true,
-        "bugs": [
-          {
-            "id": "BUG-001",
-            "severity": "minor",
-            "title": "Keine Fehlermeldung bei Duplikat-Skill",
-            "steps_to_reproduce": [
-              "1. Zur Dokumente-Seite navigieren",
-              "2. 'Skill hinzufügen' klicken",
-              "3. Einen bereits existierenden Skill-Namen eingeben (z.B. 'JavaScript')",
-              "4. Kategorie auswählen und 'Hinzufügen' klicken"
-            ],
-            "expected": "Eine Fehlermeldung wie 'Skill existiert bereits' sollte angezeigt werden",
-            "actual": "Modal bleibt offen ohne Feedback, 409 CONFLICT Error nur in Console sichtbar",
-            "affected_component": "frontend/src/components/SkillsOverview.vue"
-          }
-        ],
-        "suggestions": [
-          {
-            "id": "SUG-001",
-            "type": "ux",
-            "title": "Umlaute in Button-Texten verwenden ('hinzufügen' statt 'hinzufugen', 'Löschen' statt 'Loschen')",
-            "priority": "low"
-          },
-          {
-            "id": "SUG-002",
-            "type": "ux",
-            "title": "Loading-State während 'Neu extrahieren' anzeigen",
-            "priority": "low"
-          }
-        ],
-        "found": true
-      }
-    },
-    {
-      "id": "STRIPE-001",
-      "commit_hash": "53c2bf3",
-      "message": "feat: STRIPE-001 - Stripe SDK Setup",
-      "scope": "fullstack",
-      "type": "feature",
-      "changed_files": [
-        "backend/.env.example",
-        "backend/config.py",
-        "backend/requirements.txt",
-        "backend/services/stripe_service.py",
-        "frontend/.env.example",
         "frontend/package-lock.json",
-        "frontend/package.json",
-        "frontend/src/composables/useStripe.js"
+        "frontend/package.json"
       ],
       "tested": true,
       "test_result": {
-        "feature_id": "STRIPE-001",
-        "tested_at": "2026-01-14T12:30:00Z",
+        "feature_id": "COMMIT-13",
+        "tested_at": "2026-01-15T11:14:22.000Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "feature",
+            "title": "Coverage-Threshold konfigurieren - vitest.config.js könnte Coverage-Thresholds definieren um Mindestabdeckung zu erzwingen",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Coverage-Report in CI integrieren - Coverage-Reports könnten automatisch in der CI-Pipeline generiert und als Artifact gespeichert werden",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-14",
+      "commit_hash": "f2b640c",
+      "message": "feat: UX-002 - Navigationslink zu Company Insights hinzufügen",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/App.vue",
+        "scripts/ralph/feature/prd.json"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-14",
+        "tested_at": "2026-01-15T12:45:00.000Z",
         "has_bugs": false,
         "bugs": [],
         "suggestions": [
           {
             "id": "SUG-001",
             "type": "ux",
-            "title": "Improve error message for unconfigured Stripe plans",
-            "description": "When Stripe price IDs are not configured, the error message 'Plan not configured' is technical. Consider a more user-friendly message like 'This plan is currently unavailable. Please contact support.'",
+            "title": "Tooltip für andere Nav-Links im Mobile-Modus hinzufügen",
+            "description": "Der Insights-Link hat ein title-Attribut für Accessibility, aber andere Nav-Links (Dashboard, Dokumente, etc.) haben keines im Mobile-Modus, wo nur Icons sichtbar sind.",
             "priority": "low"
+          }
+        ],
+        "found": true
+      }
+    },
+    {
+      "id": "COMMIT-15",
+      "commit_hash": "55fbf37",
+      "message": "feat: UX-001 - Details-Link auf spezifische Bewerbung verlinken",
+      "scope": "frontend",
+      "type": "feature",
+      "changed_files": [
+        "frontend/src/pages/Timeline.vue"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "COMMIT-15",
+        "tested_at": "2026-01-15T10:30:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "Details-Link führt zu nicht existierender Route - leere Seite",
+            "steps_to_reproduce": [
+              "Navigiere zu /timeline",
+              "Klicke auf 'Details' Button bei einer Bewerbung",
+              "Beobachte die leere Seite"
+            ],
+            "expected": "Detailansicht der spezifischen Bewerbung wird angezeigt (entweder als Modal oder als separate Seite)",
+            "actual": "Leere Seite wird angezeigt, Vue Router Warnung: 'No match found for location with path /applications/:id'",
+            "affected_component": "frontend/src/pages/Timeline.vue:100"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "feature",
+            "title": "Route /applications/:id im Router registrieren oder Link auf /applications mit Query-Parameter ändern",
+            "priority": "high"
           },
           {
             "id": "SUG-002",
-            "type": "feature",
-            "title": "Add loading state to upgrade buttons",
-            "description": "The upgrade buttons could show a spinner/loading indicator while the checkout session is being created to provide better feedback",
+            "type": "ux",
+            "title": "Konsistentes Verhalten: Applications-Seite nutzt Modal für Details, Timeline sollte gleiches Pattern verwenden",
             "priority": "medium"
           }
         ],
         "found": true
       }
     }
-  ]
+  ],
+  "source": "git_commits",
+  "base_branch": "main",
+  "generated_at": "2026-01-15T09:46:29Z",
+  "total_commits": 12
 }

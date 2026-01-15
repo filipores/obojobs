@@ -7,7 +7,7 @@ TR_DIR="$(dirname "${BASH_SOURCE[0]}")"
 if [[ -f "$TR_DIR/../../feature/lib/date_utils.sh" ]]; then
     source "$TR_DIR/../../feature/lib/date_utils.sh"
 else
-    get_iso_timestamp() { date -u +"%Y-%m-%dT%H:%M:%SZ"; }
+    get_iso_timestamp() { TZ="Europe/Berlin" date +"%Y-%m-%dT%H:%M:%S%z"; }
 fi
 
 # State files
