@@ -1,12 +1,12 @@
 {
-    "timestamp": "2026-01-14T02:57:16+00:00",
-    "loop_count": 11,
+    "timestamp": "2026-01-15T00:59:24+00:00",
+    "loop_count": 6,
     "calls_made_this_hour": Rate limit counter reset for new hour
 50,
     "max_calls_per_hour": 50,
-    "current_story": "INT-005",
-    "status": "running",
+    "current_story": "",
+    "status": "complete",
     "last_error": "",
-    "started_at": "2026-01-14T00:50:44+00:00",
-    "next_reset": "04:57:16"
+    "started_at": "2026-01-14T23:02:42+00:00",
+    "next_reset": "02:59:24"
 }

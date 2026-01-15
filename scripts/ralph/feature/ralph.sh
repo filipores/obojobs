@@ -1,8 +1,4 @@
 #!/bin/bash
-# RALF Feature Mode - PRD-basierte Feature-Entwicklung
-# Mit Rate Limiting, Circuit Breaker, Timeout und Status Reporting
-# Basierend auf ralph-claude-code Best Practices
-
 set -e
 
 # ============================================
