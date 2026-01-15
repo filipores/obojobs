@@ -79,6 +79,16 @@
 
         <!-- Form -->
         <form v-else @submit.prevent="handleSubmit" class="auth-form">
+          <!-- Hidden username field for password managers -->
+          <input
+            type="text"
+            autocomplete="username"
+            :value="email"
+            class="visually-hidden"
+            tabindex="-1"
+            aria-hidden="true"
+          />
+
           <div class="form-group">
             <label class="form-label" for="password">Neues Passwort</label>
             <div class="password-input-wrapper">
@@ -236,6 +246,7 @@ const invalidToken = ref(false)
 const tokenError = ref('')
 const isDarkMode = ref(false)
 const token = ref('')
+const email = ref('')
 
 const passwordChecks = reactive({
   min_length: false,
@@ -327,8 +338,9 @@ const handleSubmit = async () => {
 onMounted(() => {
   initTheme()
 
-  // Get token from query parameter
+  // Get token and email from query parameters
   token.value = route.query.token || ''
+  email.value = route.query.email || ''
 
   if (!token.value) {
     invalidToken.value = true
@@ -338,6 +350,19 @@ onMounted(() => {
 </script>
 
 <style scoped>
+/* Hidden input for password managers - truly invisible but accessible */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .auth-page {
   min-height: 100vh;
   background: var(--color-washi);
