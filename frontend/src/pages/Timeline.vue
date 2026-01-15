@@ -97,9 +97,9 @@
 
             <!-- Actions -->
             <div class="timeline-actions">
-              <router-link :to="`/applications/${app.id}`" class="zen-btn zen-btn-sm">
+              <button @click="openDetails(app)" class="zen-btn zen-btn-sm">
                 Details
-              </router-link>
+              </button>
             </div>
           </div>
         </div>
@@ -114,6 +114,130 @@
           Alle anzeigen
         </button>
       </section>
+
+      <!-- Detail Modal -->
+      <Teleport to="body">
+        <div v-if="selectedApp" class="modal-overlay" @click="closeDetails">
+          <div class="modal zen-card animate-fade-up" @click.stop>
+            <div class="modal-header">
+              <div>
+                <h2>{{ selectedApp.firma }}</h2>
+                <p class="modal-subtitle">{{ selectedApp.position }}</p>
+              </div>
+              <button @click="closeDetails" class="modal-close">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+
+            <div class="modal-content">
+              <!-- Status -->
+              <div class="detail-group detail-group-highlight">
+                <label class="detail-label">Status</label>
+                <select v-model="selectedApp.status" @change="updateStatus(selectedApp)" class="form-select">
+                  <option value="erstellt">Erstellt</option>
+                  <option value="versendet">Versendet</option>
+                  <option value="antwort_erhalten">Antwort erhalten</option>
+                  <option value="interview">Interview</option>
+                  <option value="absage">Absage</option>
+                  <option value="zusage">Zusage</option>
+                </select>
+              </div>
+
+              <!-- Info Grid -->
+              <div class="info-grid">
+                <div class="detail-group">
+                  <label class="detail-label">Firma</label>
+                  <p class="detail-value">{{ selectedApp.firma }}</p>
+                </div>
+
+                <div v-if="selectedApp.position" class="detail-group">
+                  <label class="detail-label">Position</label>
+                  <p class="detail-value">{{ selectedApp.position }}</p>
+                </div>
+
+                <div v-if="selectedApp.ansprechpartner" class="detail-group">
+                  <label class="detail-label">Ansprechpartner</label>
+                  <p class="detail-value">{{ selectedApp.ansprechpartner }}</p>
+                </div>
+
+                <div v-if="selectedApp.email" class="detail-group">
+                  <label class="detail-label">Email</label>
+                  <p class="detail-value">
+                    <a :href="`mailto:${selectedApp.email}`" class="detail-link">{{ selectedApp.email }}</a>
+                  </p>
+                </div>
+
+                <div v-if="selectedApp.quelle" class="detail-group">
+                  <label class="detail-label">Quelle</label>
+                  <p class="detail-value">
+                    <a :href="selectedApp.quelle" target="_blank" class="detail-link">{{ getDomain(selectedApp.quelle) }}</a>
+                  </p>
+                </div>
+
+                <div class="detail-group">
+                  <label class="detail-label">Erstellt</label>
+                  <p class="detail-value">{{ formatDateTime(selectedApp.datum) }}</p>
+                </div>
+              </div>
+
+              <!-- Status History Timeline -->
+              <div v-if="selectedApp.status_history && selectedApp.status_history.length > 0" class="detail-group">
+                <label class="detail-label">Verlauf</label>
+                <div class="status-history">
+                  <div
+                    v-for="(event, index) in selectedApp.status_history"
+                    :key="index"
+                    class="history-event"
+                    :class="{ 'history-event-latest': index === selectedApp.status_history.length - 1 }"
+                  >
+                    <div class="history-marker">
+                      <div class="history-dot"></div>
+                      <div v-if="index < selectedApp.status_history.length - 1" class="history-line"></div>
+                    </div>
+                    <div class="history-content">
+                      <span class="history-status">{{ getStatusLabel(event.status) }}</span>
+                      <span class="history-time">{{ formatDateTime(event.timestamp) }}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Notes -->
+              <div class="detail-group">
+                <label class="detail-label">Notizen</label>
+                <textarea
+                  v-model="selectedApp.notizen"
+                  @blur="updateNotes(selectedApp)"
+                  placeholder="Notizen hinzufügen..."
+                  rows="4"
+                  class="form-textarea"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="modal-footer">
+              <router-link
+                :to="`/applications/${selectedApp.id}/interview`"
+                class="zen-btn zen-btn-interview"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                Interview-Prep
+              </router-link>
+              <button @click="downloadPDF(selectedApp.id)" class="zen-btn">
+                PDF herunterladen
+              </button>
+              <button @click="closeDetails" class="zen-btn">
+                Schließen
+              </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
     </div>
   </div>
 </template>
@@ -125,6 +249,7 @@ import api from '../api/client'
 const applications = ref([])
 const loading = ref(false)
 const daysFilter = ref('30')
+const selectedApp = ref(null)
 
 const loadTimeline = async () => {
   loading.value = true
@@ -177,6 +302,50 @@ const getStatusLabel = (status) => {
     'zusage': 'Zusage'
   }
   return labels[status] || status
+}
+
+const openDetails = (app) => {
+  selectedApp.value = { ...app }
+}
+
+const closeDetails = () => {
+  selectedApp.value = null
+}
+
+const updateStatus = async (app) => {
+  try {
+    await api.put(`/applications/${app.id}`, {
+      status: app.status
+    })
+    const index = applications.value.findIndex(a => a.id === app.id)
+    if (index !== -1) {
+      applications.value[index].status = app.status
+    }
+  } catch (_e) {
+    alert('Fehler beim Aktualisieren des Status')
+  }
+}
+
+const updateNotes = async (app) => {
+  try {
+    await api.put(`/applications/${app.id}`, {
+      notizen: app.notizen
+    })
+    const index = applications.value.findIndex(a => a.id === app.id)
+    if (index !== -1) {
+      applications.value[index].notizen = app.notizen
+    }
+  } catch (_e) {
+    alert('Fehler beim Speichern der Notizen')
+  }
+}
+
+const downloadPDF = async (id) => {
+  try {
+    window.open(`/api/applications/${id}/pdf`, '_blank')
+  } catch (_e) {
+    alert('Fehler beim PDF-Download')
+  }
 }
 
 onMounted(() => {
@@ -525,6 +694,143 @@ onMounted(() => {
   }
 
   .timeline-item-header {
+    flex-direction: column;
+  }
+}
+
+/* ========================================
+   MODAL
+   ======================================== */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(44, 44, 44, 0.6);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-lg);
+}
+
+.modal {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: var(--space-xl);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.modal-header h2 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.modal-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: var(--color-stone);
+  cursor: pointer;
+  padding: var(--space-xs);
+  transition: color var(--transition-base);
+}
+
+.modal-close:hover {
+  color: var(--color-sumi);
+}
+
+.modal-content {
+  padding: var(--space-xl);
+}
+
+.detail-group {
+  margin-bottom: var(--space-lg);
+}
+
+.detail-group-highlight {
+  padding: var(--space-md);
+  background: var(--color-ai-subtle);
+  border-radius: var(--radius-md);
+  border-left: 3px solid var(--color-ai);
+}
+
+.detail-label {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+  margin-bottom: var(--space-xs);
+}
+
+.detail-value {
+  margin: 0;
+  color: var(--color-sumi);
+  font-size: 1rem;
+}
+
+.detail-link {
+  color: var(--color-ai);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.detail-link:hover {
+  text-decoration: underline;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.modal-footer {
+  display: flex;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  border-top: 1px solid var(--color-border-light);
+  background: var(--color-washi);
+}
+
+/* Interview Prep Button */
+.zen-btn-interview {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: rgba(138, 79, 125, 0.1);
+  border-color: rgba(138, 79, 125, 0.3);
+  color: #8a4f7d;
+  text-decoration: none;
+}
+
+.zen-btn-interview:hover {
+  background: rgba(138, 79, 125, 0.2);
+  border-color: #8a4f7d;
+}
+
+@media (max-width: 768px) {
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-footer {
     flex-direction: column;
   }
 }
