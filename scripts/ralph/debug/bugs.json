@@ -5,15 +5,15 @@
   "bugs": [
     {
       "id": "BUG-001",
-      "title": "Details-Link führt nicht zur spezifischen Bewerbung",
+      "title": "Details-Link führt zu nicht existierender Route - leere Seite",
       "severity": "major",
       "description": "Link führt zur allgemeinen Bewerbungsübersicht statt zur spezifischen Bewerbungsdetail-Seite",
       "stepsToReproduce": [
         "Timeline-Seite öffnen (/timeline)",
         "Auf 'Details' Button bei einer Bewerbung klicken"
       ],
-      "expected": "Link führt zur spezifischen Bewerbungsdetail-Seite (/applications/{id})",
-      "actual": "Link führt zur allgemeinen Bewerbungsübersicht (/applications)",
+     "expected": "Detailansicht der spezifischen Bewerbung wird angezeigt (entweder als Modal oder als separate Seite)",
+      "actual": "Leere Seite wird angezeigt, Vue Router Warnung: 'No match found for location with path /applications/:id'",
       "affectedFiles": [
         "frontend/src/pages/Timeline.vue:100"
       ],
@@ -195,6 +195,26 @@
       "affectedFiles": [
         "frontend/src/components/SkillsOverview.vue"
       ],
+      "fixed": false,
+      "fixAttempts": 0,
+      "source": "test-ralph"
+    },
+    {
+      "id": "BUG-001",
+      "severity": "major",
+      "title": "Login-Fehlermeldung wird nicht angezeigt bei falschen Credentials",
+      "steps_to_reproduce": [
+        "Navigiere zu /login",
+        "Gib eine beliebige E-Mail und ein falsches Passwort ein",
+        "Klicke auf 'Anmelden'",
+        "401-Fehler wird zurückgegeben, aber keine Fehlermeldung erscheint"
+      ],
+      "expected": "Deutsche Fehlermeldung 'Ungültige E-Mail oder Passwort' sollte angezeigt werden",
+      "actual": "Keine Fehlermeldung wird angezeigt - der Benutzer sieht nur das leere Formular",
+      "affectedFiles": [
+        "frontend/src/api/client.js, frontend/src/pages/Login.vue"
+      ],
+      "root_cause": "Der API-Client-Interceptor behandelt alle 401-Fehler als 'Sitzung abgelaufen' und leitet zur Login-Seite weiter, BEVOR die Login-Komponente den Fehler verarbeiten kann. Die Login-Seite sollte 401-Fehler selbst behandeln und nicht vom globalen Interceptor abgefangen werden.",
       "fixed": false,
       "fixAttempts": 0,
       "source": "test-ralph"

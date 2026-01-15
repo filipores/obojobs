@@ -37,8 +37,12 @@ CLAUDE_ALLOWED_TOOLS="Write,Edit,Read,Bash,Glob,Grep"
 # ============================================
 # Model Selection
 # ============================================
-# Sonnet für Bug-Fixes
+# Sonnet für Bug-Fixes (schnell, günstig)
 CLAUDE_MODEL_IMPL=${CLAUDE_MODEL_IMPL:-"claude-sonnet-4-20250514"}
+# Opus als Fallback für schwierige Bugs (nach FALLBACK_THRESHOLD Fehlversuchen)
+CLAUDE_MODEL_FALLBACK=${CLAUDE_MODEL_FALLBACK:-"claude-opus-4-5-20251101"}
+# Nach wie vielen Fehlversuchen auf Opus wechseln
+FALLBACK_THRESHOLD=${FALLBACK_THRESHOLD:-2}
 
 # ============================================
 # State Files
@@ -68,5 +72,7 @@ export LEARNINGS_FILE
 export CLAUDE_OUTPUT_FORMAT
 export CLAUDE_ALLOWED_TOOLS
 export CLAUDE_MODEL_IMPL
+export CLAUDE_MODEL_FALLBACK
+export FALLBACK_THRESHOLD
 export SPLIT_MODE
 export LIVE_LOG_FILE

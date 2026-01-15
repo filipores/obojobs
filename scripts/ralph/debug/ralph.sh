@@ -34,7 +34,7 @@ LOG_DIR="$SCRIPT_DIR/logs"
 mkdir -p "$LOG_DIR"
 
 # Session tracking
-RALPH_STARTED_AT=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+RALPH_STARTED_AT=$(get_iso_timestamp)
 export RALPH_STARTED_AT
 
 # ============================================
@@ -259,7 +259,22 @@ execute_claude() {
     local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
     local output_file="$LOG_DIR/debug_output_${current_bug}_${timestamp}.log"
 
-    log_loop "Starte Claude Code für Bug: $current_bug (${CLAUDE_MODEL_IMPL##*-})"
+    # Check fix attempts for this bug and decide on model
+    local fix_attempts=$(jq -r --arg id "$current_bug" '.bugs[] | select(.id == $id) | .fixAttempts // 0' "$SCRIPT_DIR/bugs.json")
+    local current_model="$CLAUDE_MODEL_IMPL"
+    local using_fallback=false
+
+    if [[ $fix_attempts -ge $FALLBACK_THRESHOLD ]]; then
+        current_model="$CLAUDE_MODEL_FALLBACK"
+        using_fallback=true
+        log_warn "Wechsle zu Opus (Fallback nach $fix_attempts Fehlversuchen)"
+    fi
+
+    # Export for status tracking
+    export CURRENT_MODEL="$current_model"
+    export USING_FALLBACK="$using_fallback"
+
+    log_loop "Starte Claude Code für Bug: $current_bug (${current_model##*-})"
 
     local timeout_seconds=$((TIMEOUT_MINUTES * 60))
 
@@ -295,7 +310,7 @@ ${file_context}"
         echo "" >> "$RALPH_LIVE_LOG"
 
         if $timeout_prefix claude \
-            --model "$CLAUDE_MODEL_IMPL" \
+            --model "$current_model" \
             --output-format stream-json --verbose \
             --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
             --append-system-prompt "$context" \
@@ -311,7 +326,7 @@ ${file_context}"
     else
         # Normal mode
         if $timeout_prefix claude \
-            --model "$CLAUDE_MODEL_IMPL" \
+            --model "$current_model" \
             --output-format json \
             --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
             --append-system-prompt "$context" \
@@ -364,6 +379,10 @@ update_status() {
 
     FIXED_BUGS=$(jq '[.bugs[] | select(.fixed == true)] | length' "$SCRIPT_DIR/bugs.json")
 
+    # Get current model info (set by execute_claude)
+    local model_name="${CURRENT_MODEL:-$CLAUDE_MODEL_IMPL}"
+    local is_fallback="${USING_FALLBACK:-false}"
+
     cat > "$LOG_DIR/status.json" << EOF
 {
     "mode": "debug",
@@ -372,8 +391,10 @@ update_status() {
     "current_bug": "$current_bug",
     "bugs_fixed": $FIXED_BUGS,
     "bugs_total": $TOTAL_BUGS,
+    "model": "$model_name",
+    "using_fallback": $is_fallback,
     "started_at": "$RALPH_STARTED_AT",
-    "updated_at": "$(date -u +"%Y-%m-%dT%H:%M:%SZ")"
+    "updated_at": "$(get_iso_timestamp)"
 }
 EOF
 }
@@ -429,8 +450,23 @@ while true; do
 
     case $exec_result in
         0)
-            # Success
-            log_success "Bug $current_bug gefixt"
+            # Success - mark bug as fixed and record model used
+            if [[ "$USING_FALLBACK" == "true" ]]; then
+                log_success "Bug $current_bug gefixt (mit Opus Fallback)"
+            else
+                log_success "Bug $current_bug gefixt"
+            fi
+            # Update bugs.json with fix info
+            jq --arg id "$current_bug" --arg model "$CURRENT_MODEL" --argjson fallback "$USING_FALLBACK" '
+                .bugs = [.bugs[] |
+                    if .id == $id then
+                        .fixed = true |
+                        .fixedAt = now |
+                        .fixedWithModel = $model |
+                        .usedFallback = $fallback
+                    else . end
+                ]' "$SCRIPT_DIR/bugs.json" > "$SCRIPT_DIR/bugs.json.tmp"
+            mv "$SCRIPT_DIR/bugs.json.tmp" "$SCRIPT_DIR/bugs.json"
             update_status "$loop_count" "$current_bug" "success"
             FIXED_BUGS=$((FIXED_BUGS + 1))
             log_info "Bugs fixed: $FIXED_BUGS/$TOTAL_BUGS"
