@@ -66,51 +66,67 @@
       <div class="container">
         <div v-if="stats" class="stats-grid">
           <!-- Subscription Card - Featured -->
-          <div class="stat-card stat-featured stagger-item">
+          <div
+            class="stat-card stat-featured stagger-item"
+            :aria-label="getSubscriptionAriaLabel()"
+            role="region"
+          >
             <div class="stat-header">
               <span class="stat-label">Diesen Monat</span>
-              <div class="stat-icon">
+              <div class="stat-icon" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <circle cx="12" cy="12" r="10"/>
                   <path d="M12 6v6l4 2"/>
                 </svg>
               </div>
             </div>
-            <div class="stat-value">{{ usage?.unlimited ? '∞' : usage?.remaining || 0 }}</div>
-            <div class="stat-name">{{ usage?.unlimited ? 'Unbegrenzt' : 'Verbleibend' }}</div>
+            <div class="stat-value" aria-hidden="true">{{ usage?.unlimited ? '∞' : usage?.remaining || 0 }}</div>
+            <div class="stat-name" aria-hidden="true">{{ usage?.unlimited ? 'Unbegrenzt' : 'Verbleibend' }}</div>
             <router-link to="/subscription" class="stat-link">
               {{ getPlanLabel() }} Plan
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
             </router-link>
           </div>
 
           <!-- Applications Card -->
-          <div class="stat-card stagger-item">
+          <div
+            class="stat-card stagger-item"
+            :aria-label="`Gesamt: ${stats.gesamt} Bewerbungen`"
+            role="region"
+          >
             <div class="stat-header">
               <span class="stat-label">Gesamt</span>
             </div>
-            <div class="stat-value">{{ stats.gesamt }}</div>
-            <div class="stat-name">Bewerbungen</div>
+            <div class="stat-value" aria-hidden="true">{{ stats.gesamt }}</div>
+            <div class="stat-name" aria-hidden="true">Bewerbungen</div>
           </div>
 
           <!-- Created Card -->
-          <div class="stat-card stagger-item">
+          <div
+            class="stat-card stagger-item"
+            :aria-label="`Erstellt: ${stats.erstellt} Anschreiben`"
+            role="region"
+          >
             <div class="stat-header">
               <span class="stat-label">Erstellt</span>
             </div>
-            <div class="stat-value">{{ stats.erstellt }}</div>
-            <div class="stat-name">Anschreiben</div>
+            <div class="stat-value" aria-hidden="true">{{ stats.erstellt }}</div>
+            <div class="stat-name" aria-hidden="true">Anschreiben</div>
           </div>
 
           <!-- Sent Card -->
-          <div class="stat-card stagger-item">
+          <div
+            class="stat-card stagger-item"
+            :aria-label="`Versendet: ${stats.versendet} Bewerbungen`"
+            role="region"
+          >
             <div class="stat-header">
               <span class="stat-label">Versendet</span>
             </div>
-            <div class="stat-value">{{ stats.versendet }}</div>
-            <div class="stat-name">Bewerbungen</div>
+            <div class="stat-value" aria-hidden="true">{{ stats.versendet }}</div>
+            <div class="stat-name" aria-hidden="true">Bewerbungen</div>
           </div>
         </div>
 
@@ -292,6 +308,14 @@ const dismissBanner = () => {
 const getPlanLabel = () => {
   const plan = usage.value?.plan || 'free'
   return plan.charAt(0).toUpperCase() + plan.slice(1)
+}
+
+const getSubscriptionAriaLabel = () => {
+  if (usage.value?.unlimited) {
+    return `Diesen Monat: Unbegrenzte Bewerbungen im ${getPlanLabel()} Plan`
+  }
+  const remaining = usage.value?.remaining || 0
+  return `Diesen Monat: ${remaining} Bewerbungen verbleibend im ${getPlanLabel()} Plan`
 }
 
 const loadStats = async () => {
