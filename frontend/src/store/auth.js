@@ -41,14 +41,45 @@ export const authStore = reactive({
       console.warn('Server logout failed:', error)
     } finally {
       // Always clear local state
-      this.user = null
-      this.token = null
-      localStorage.removeItem('token')
-      localStorage.removeItem('user')
+      this.clearAuthState()
     }
   },
 
   isAuthenticated() {
-    return !!this.token
+    if (!this.token) {
+      return false
+    }
+
+    try {
+      // Check if token is a valid JWT structure (3 parts separated by dots)
+      const parts = this.token.split('.')
+      if (parts.length !== 3) {
+        this.clearAuthState()
+        return false
+      }
+
+      // Decode the payload to check expiration
+      const payload = JSON.parse(window.atob(parts[1]))
+
+      // Check if token is expired (exp is in seconds, Date.now() is in milliseconds)
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        this.clearAuthState()
+        return false
+      }
+
+      return true
+    } catch (error) {
+      // If parsing fails, token is invalid
+      console.warn('Invalid token format:', error)
+      this.clearAuthState()
+      return false
+    }
+  },
+
+  clearAuthState() {
+    this.user = null
+    this.token = null
+    localStorage.removeItem('token')
+    localStorage.removeItem('user')
   }
 })
