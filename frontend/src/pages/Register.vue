@@ -132,23 +132,23 @@
                 </svg>
               </button>
             </div>
-            <div class="password-requirements">
-              <p class="requirements-label">Passwort-Anforderungen:</p>
-              <ul class="requirements-list">
-                <li :class="{ 'requirement-met': passwordChecks.min_length }">
-                  <span class="check-icon">{{ passwordChecks.min_length ? '✓' : '○' }}</span>
+            <div class="password-requirements" aria-live="polite" aria-atomic="false">
+              <p class="requirements-label" id="password-requirements-label">Passwort-Anforderungen:</p>
+              <ul class="requirements-list" aria-labelledby="password-requirements-label">
+                <li :class="{ 'requirement-met': passwordChecks.min_length }" :aria-label="passwordChecks.min_length ? 'Erfüllt: Mindestens 8 Zeichen' : 'Nicht erfüllt: Mindestens 8 Zeichen'">
+                  <span class="check-icon" aria-hidden="true">{{ passwordChecks.min_length ? '✓' : '○' }}</span>
                   Mindestens 8 Zeichen
                 </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_uppercase }">
-                  <span class="check-icon">{{ passwordChecks.has_uppercase ? '✓' : '○' }}</span>
+                <li :class="{ 'requirement-met': passwordChecks.has_uppercase }" :aria-label="passwordChecks.has_uppercase ? 'Erfüllt: Mindestens ein Großbuchstabe' : 'Nicht erfüllt: Mindestens ein Großbuchstabe'">
+                  <span class="check-icon" aria-hidden="true">{{ passwordChecks.has_uppercase ? '✓' : '○' }}</span>
                   Mindestens ein Großbuchstabe (A-Z)
                 </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_lowercase }">
-                  <span class="check-icon">{{ passwordChecks.has_lowercase ? '✓' : '○' }}</span>
+                <li :class="{ 'requirement-met': passwordChecks.has_lowercase }" :aria-label="passwordChecks.has_lowercase ? 'Erfüllt: Mindestens ein Kleinbuchstabe' : 'Nicht erfüllt: Mindestens ein Kleinbuchstabe'">
+                  <span class="check-icon" aria-hidden="true">{{ passwordChecks.has_lowercase ? '✓' : '○' }}</span>
                   Mindestens ein Kleinbuchstabe (a-z)
                 </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_number }">
-                  <span class="check-icon">{{ passwordChecks.has_number ? '✓' : '○' }}</span>
+                <li :class="{ 'requirement-met': passwordChecks.has_number }" :aria-label="passwordChecks.has_number ? 'Erfüllt: Mindestens eine Zahl' : 'Nicht erfüllt: Mindestens eine Zahl'">
+                  <span class="check-icon" aria-hidden="true">{{ passwordChecks.has_number ? '✓' : '○' }}</span>
                   Mindestens eine Zahl (0-9)
                 </li>
               </ul>

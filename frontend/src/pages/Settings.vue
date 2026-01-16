@@ -220,17 +220,18 @@
                 autocomplete="new-password"
               />
               <!-- Password Requirements -->
-              <div v-if="passwordForm.newPassword" class="password-requirements">
+              <div v-if="passwordForm.newPassword" class="password-requirements" aria-live="polite" aria-atomic="false">
                 <div
                   v-for="req in passwordRequirements"
                   :key="req.key"
                   class="requirement-item"
                   :class="{ 'met': passwordChecks[req.key] }"
+                  :aria-label="passwordChecks[req.key] ? `Erfüllt: ${req.label}` : `Nicht erfüllt: ${req.label}`"
                 >
-                  <svg v-if="passwordChecks[req.key]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg v-if="passwordChecks[req.key]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
-                  <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                     <circle cx="12" cy="12" r="10"/>
                   </svg>
                   <span>{{ req.label }}</span>
