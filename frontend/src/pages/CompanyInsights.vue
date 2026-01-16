@@ -57,7 +57,15 @@
                 class="company-row"
               >
                 <td class="td-firma">
-                  <span class="firma-name">{{ company.firma }}</span>
+                  <div class="firma-cell">
+                    <span class="firma-name">{{ company.firma }}</span>
+                    <button
+                      @click="filterByCompany(company.firma)"
+                      class="zen-btn zen-btn-xs mobile-action-btn"
+                    >
+                      Bewerbungen
+                    </button>
+                  </div>
                 </td>
                 <td class="td-center">
                   <span class="count-badge">{{ company.bewerbungen }}</span>
@@ -314,9 +322,20 @@ onMounted(() => {
   min-width: 200px;
 }
 
+.firma-cell {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
 .firma-name {
   font-weight: 500;
   color: var(--color-sumi);
+}
+
+.mobile-action-btn {
+  display: none;
+  align-self: flex-start;
 }
 
 .td-center {
@@ -451,6 +470,14 @@ onMounted(() => {
 
   .td-action {
     display: none;
+  }
+
+  .mobile-action-btn {
+    display: inline-flex !important;
+  }
+
+  .td-firma {
+    min-width: 180px;
   }
 }
 </style>
