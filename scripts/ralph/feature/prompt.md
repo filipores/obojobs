@@ -23,6 +23,7 @@ Implementiere User Stories aus `scripts/ralph/feature/prd.json` eine nach der an
    cd frontend && npm test && npm run lint && npm run build
    ```
 5. **Bei Erfolg**:
+   - Änderungen mit dem security-review skill untersuchen und ggf. verändern
    - Git Commit: `feat: STORY-ID - Title` (mit Co-Authored-By: Claude)
    - PRD: `passes: true` setzen
    - Progress in `scripts/ralph/feature/progress.txt` dokumentieren

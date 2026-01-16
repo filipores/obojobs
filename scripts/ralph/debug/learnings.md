@@ -51,6 +51,32 @@ Diese Datei enthält Erkenntnisse aus Debug-Sessions. Jeder Eintrag dokumentiert
 
 ---
 
+## [2026-01-16] - BUG-017: Interview-Fragen können nicht generiert werden - Stellenbeschreibung fehlt
+
+**Problem:** Bei manuell eingegebenen Stellenbeschreibungen konnten keine Interview-Fragen generiert werden. Fehlermeldung: "Keine Stellenbeschreibung vorhanden".
+
+**Root Cause:** Datenflussproblem in der manuellen Stelleneingabe:
+- `NewApplication.vue`: Bei manueller Eingabe wurde `editableData.description` befüllt
+- Frontend sendete an `/generate-from-text` nur `job_text`, `company`, `title` - NICHT die verarbeitete `description`
+- Backend speicherte nur temp file mit ursprünglichem `job_text`, nicht die strukturierte Beschreibung
+- `InterviewPrep.vue` suchte Stellenbeschreibung in `app.notizen`, fand aber nur "[Draft - Job-Fit Analyse]" Text
+
+**Fix:**
+1. **Frontend:** `NewApplication.vue` sendet zusätzlich `description: editableData.value.description`
+2. **Backend:** `applications.py` nimmt `description` Parameter und speichert in `latest.notizen`
+
+**Learning:**
+1. **Datenfluss tracken:** Bei manuellen Eingaben mehrere Processing-Schritte verfolgen (Eingabe → Analyse → Speicherung → Abruf)
+2. **Strukturierte vs. rohe Daten:** Unterscheidung zwischen ursprünglichem Text (`job_text`) und verarbeiteter Beschreibung (`description`)
+3. **Datenvertrag:** Verschiedene Endpoints nutzen verschiedene Datenquellen (URL-based vs. manual-based)
+4. **Cross-Feature Dependencies:** Interview-Prep hängt von korrekt gespeicherten Application-Daten ab
+
+**Betroffene Dateien:**
+- `frontend/src/pages/NewApplication.vue` (Zeile 942-946)
+- `backend/routes/applications.py` (Zeile 409, 453-459)
+
+---
+
 ## [2026-01-16] - BUG-016: Firmen-Recherche zeigt korrupte/unlesbare Zeichen
 
 **Problem:** Bei der Firmen-Recherche wurden korrupte Zeichen angezeigt (`\x03�S\x11\x15�...`) in der "Über das Unternehmen" Sektion.
