@@ -4,7 +4,7 @@
       <!-- Header Section -->
       <section class="page-header animate-fade-up">
         <div class="page-header-content">
-          <router-link :to="`/applications/${applicationId}/interview`" class="back-link">
+          <router-link v-if="applicationId" :to="applicationId ? `/applications/${applicationId}/interview` : '/applications'" class="back-link">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M19 12H5"/>
               <polyline points="12 19 5 12 12 5"/>
@@ -22,8 +22,26 @@
         </div>
       </section>
 
+      <!-- Error State -->
+      <section v-if="error" class="empty-state">
+        <div class="empty-card zen-card">
+          <div class="empty-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+          </div>
+          <h2>Fehler beim Laden</h2>
+          <p>{{ error }}</p>
+          <router-link to="/applications" class="zen-btn zen-btn-ai">
+            Zurück zu Bewerbungen
+          </router-link>
+        </div>
+      </section>
+
       <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
+      <div v-else-if="loading" class="loading-state">
         <div class="loading-enso"></div>
         <p>Lade Interview-Fragen...</p>
       </div>
@@ -40,7 +58,7 @@
           </div>
           <h2>Keine Fragen vorhanden</h2>
           <p>Generieren Sie zuerst Interview-Fragen in der Interview-Vorbereitung.</p>
-          <router-link :to="`/applications/${applicationId}/interview`" class="zen-btn zen-btn-ai">
+          <router-link :to="applicationId ? `/applications/${applicationId}/interview` : '/applications'" class="zen-btn zen-btn-ai">
             Zur Interview-Vorbereitung
           </router-link>
         </div>
@@ -472,7 +490,7 @@
                 </svg>
                 Nochmal ueben
               </button>
-              <router-link :to="`/applications/${applicationId}/interview`" class="zen-btn zen-btn-ai">
+              <router-link :to="applicationId ? `/applications/${applicationId}/interview` : '/applications'" class="zen-btn zen-btn-ai">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M19 12H5"/>
                   <polyline points="12 19 5 12 12 5"/>
@@ -502,6 +520,7 @@ const startQuestionId = computed(() => route.query.questionId)
 const application = ref(null)
 const questions = ref([])
 const loading = ref(true)
+const error = ref(null)
 const isEvaluating = ref(false)
 const currentQuestionIndex = ref(0)
 const currentAnswer = ref('')
@@ -561,10 +580,15 @@ const averageAnswerTimeDisplay = computed(() => {
 const loadApplication = async () => {
   try {
     const { data } = await api.get(`/applications/${applicationId.value}`)
-    application.value = data.application
+    if (data.success && data.application) {
+      application.value = data.application
+    } else {
+      throw new Error('Bewerbung nicht gefunden')
+    }
   } catch (err) {
     console.error('Fehler beim Laden der Bewerbung:', err)
-    router.push('/applications')
+    error.value = 'Bewerbung konnte nicht geladen werden'
+    loading.value = false
   }
 }
 
@@ -936,8 +960,27 @@ const getQuestionTypeHint = (type) => {
 }
 
 onMounted(async () => {
-  await loadApplication()
-  await loadQuestions()
+  // Validate application ID
+  if (!applicationId.value || isNaN(parseInt(applicationId.value))) {
+    console.error('Invalid application ID:', applicationId.value)
+    error.value = 'Ungültige Bewerbungs-ID'
+    loading.value = false
+    return
+  }
+
+  try {
+    await loadApplication()
+    // Only load questions if application was loaded successfully
+    if (!error.value) {
+      await loadQuestions()
+    }
+  } catch (err) {
+    console.error('Error during component initialization:', err)
+    if (!error.value) {
+      error.value = 'Fehler beim Laden der Daten'
+    }
+    loading.value = false
+  }
 })
 
 onUnmounted(() => {
