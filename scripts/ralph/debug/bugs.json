@@ -234,7 +234,11 @@
       ],
       "fixed": true,
       "fixAttempts": 1,
-      "source": "test-ralph MOBILE-001, MOBILE-003"
+      "source": "test-ralph MOBILE-001, MOBILE-003",
+      "fixedAt": 1768557927.42704,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-013",
@@ -309,9 +313,13 @@
         "backend/routes/companies.py",
         "frontend/src/pages/InterviewPrep.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph FLOW-012, FLOW-013"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph FLOW-012, FLOW-013",
+      "fixedAt": 1768558089.325,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-017",

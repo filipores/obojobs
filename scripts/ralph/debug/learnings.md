@@ -51,6 +51,31 @@ Diese Datei enthält Erkenntnisse aus Debug-Sessions. Jeder Eintrag dokumentiert
 
 ---
 
+## [2026-01-16] - BUG-016: Firmen-Recherche zeigt korrupte/unlesbare Zeichen
+
+**Problem:** Bei der Firmen-Recherche wurden korrupte Zeichen angezeigt (`\x03�S\x11\x15�...`) in der "Über das Unternehmen" Sektion.
+
+**Root Cause:** Encoding-Problem beim Web-Scraping in `CompanyResearcher` Service:
+- Direktes Setzen von `response.encoding = response.apparent_encoding`
+- `apparent_encoding` kann None sein oder falsch detektiert werden (z.B. 'ascii' bei deutschen Umlauten)
+- BeautifulSoup bekommt dadurch falsches Encoding und produziert korrupte Zeichen
+
+**Fix:**
+- Defensive Encoding-Behandlung in `company_researcher.py`
+- Prüfung: Ist `apparent_encoding` gültig und nicht 'ascii'/'none'?
+- UTF-8 als sicherer Fallback wenn `apparent_encoding` problematisch ist
+- Anwendung auf alle HTTP-Requests: Homepage, About-Page, Job-Posting
+
+**Learning:**
+1. `response.apparent_encoding` nie blind vertrauen - kann None oder 'ascii' zurückgeben
+2. Bei deutschem Content immer UTF-8 als Fallback verwenden
+3. Encoding-Probleme zeigen sich als `\x03` etc. - klarer Indikator für falsches Encoding
+4. Alle HTTP-Request-Stellen im Service konsistent behandeln
+
+**Betroffene Dateien:** `backend/services/company_researcher.py`
+
+---
+
 ## [2026-01-14] - BUG-003: Modal-State wird nicht zurückgesetzt beim erneuten Öffnen
 
 **Problem:** Wenn das Analyse-Modal geschlossen und erneut geöffnet wurde, blieben die vorherige URL-Eingabe und Fehlermeldung erhalten.
