@@ -172,7 +172,7 @@
       </section>
 
       <!-- Plan Comparison Section - Always visible -->
-      <section v-if="subscription && availablePlans.length > 0" class="subscription-section animate-fade-up" style="animation-delay: 250ms;">
+      <section v-if="subscription" class="subscription-section animate-fade-up" style="animation-delay: 250ms;">
         <div class="section-header">
           <div class="section-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -192,7 +192,7 @@
               <tr>
                 <th class="feature-column">Features</th>
                 <th
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   class="plan-column"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan, 'recommended-plan': plan.plan_id === 'pro' }"
@@ -212,7 +212,7 @@
               <tr>
                 <td class="feature-name">Bewerbungen pro Monat</td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -224,7 +224,7 @@
               <tr>
                 <td class="feature-name">AI-Bewerbungsgenerator</td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -236,7 +236,7 @@
               <tr>
                 <td class="feature-name">Template-Verwaltung</td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -248,7 +248,7 @@
               <tr>
                 <td class="feature-name">ATS-Analyse</td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -260,7 +260,7 @@
               <tr>
                 <td class="feature-name">Email-Vorschlaege</td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -273,7 +273,7 @@
               <tr>
                 <td class="feature-name">Gehalts-Coach</td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -286,7 +286,7 @@
               <tr>
                 <td class="feature-name">Prioritaets-Support</td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -301,7 +301,7 @@
               <tr>
                 <td></td>
                 <td
-                  v-for="plan in availablePlans"
+                  v-for="plan in getAvailablePlans()"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -333,7 +333,7 @@
         <!-- Plan Cards (Mobile) -->
         <div class="plans-grid mobile-only">
           <div
-            v-for="plan in availablePlans"
+            v-for="plan in getAvailablePlans()"
             :key="plan.plan_id"
             class="plan-card zen-card"
             :class="{ 'current': plan.plan_id === subscription.plan, 'recommended': plan.plan_id === 'pro' }"
@@ -419,7 +419,7 @@ const getCurrentPlanFeatures = computed(() => {
 
   // Fallback: get features from the current plan based on plan name
   const currentPlan = subscription.value?.plan || 'free'
-  const planFromAvailable = availablePlans.value?.find(plan => plan.plan_id === currentPlan)
+  const planFromAvailable = getAvailablePlans().find(plan => plan.plan_id === currentPlan)
   if (planFromAvailable?.features?.length) {
     return planFromAvailable.features
   }
@@ -452,6 +452,55 @@ const getCurrentPlanFeatures = computed(() => {
 
   // Absolute fallback
   return ['Keine Features verfügbar']
+})
+
+const getAvailablePlans = computed(() => {
+  // If API data is available, use it
+  if (availablePlans.value?.length > 0) {
+    return availablePlans.value
+  }
+
+  // Fallback: hardcoded plan data that matches backend structure
+  return [
+    {
+      plan_id: 'free',
+      name: 'Free',
+      price: 0,
+      price_formatted: '€0/Monat',
+      features: [
+        '3 Bewerbungen pro Monat',
+        'Basis-Templates',
+        'PDF Export'
+      ]
+    },
+    {
+      plan_id: 'basic',
+      name: 'Basic',
+      price: 9.99,
+      price_formatted: '€9,99/Monat',
+      features: [
+        '20 Bewerbungen pro Monat',
+        'Alle Templates',
+        'PDF Export',
+        'ATS-Optimierung',
+        'E-Mail Support'
+      ]
+    },
+    {
+      plan_id: 'pro',
+      name: 'Pro',
+      price: 19.99,
+      price_formatted: '€19,99/Monat',
+      features: [
+        'Unbegrenzte Bewerbungen',
+        'Alle Templates',
+        'PDF Export',
+        'ATS-Optimierung',
+        'Prioritäts-Support',
+        'Erweiterte Analyse'
+      ]
+    }
+  ]
 })
 
 const getPlanDisplayName = (plan) => {
