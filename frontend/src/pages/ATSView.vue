@@ -256,6 +256,7 @@
           <!-- Categories -->
           <div v-if="result.categories" class="categories-section">
             <h3 class="section-title">Keywords nach Kategorie</h3>
+            <p class="categories-hint">💡 Klicke auf fehlende Keywords für Integrationstipps</p>
 
             <div class="categories-grid">
               <!-- Hard Skills -->
@@ -273,9 +274,28 @@
                   </div>
                   <div v-if="result.categories.hard_skills.missing?.length" class="keyword-list missing">
                     <span class="list-label">Fehlt:</span>
-                    <span v-for="kw in result.categories.hard_skills.missing" :key="kw" class="keyword-tag missing">
+                    <button
+                      v-for="kw in result.categories.hard_skills.missing"
+                      :key="kw"
+                      class="keyword-tag missing clickable"
+                      @click="toggleKeywordTooltip(kw, 'hard_skills')"
+                      :aria-expanded="activeKeywordTooltip === kw"
+                      :aria-label="`Tipp für ${kw} anzeigen`"
+                    >
                       {{ kw }}
-                    </span>
+                      <svg class="keyword-info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <div v-if="activeKeywordTooltip === kw" class="keyword-tooltip" role="tooltip">
+                        <div class="keyword-tooltip-header">
+                          <span class="keyword-tooltip-title">💡 Tipp: {{ kw }}</span>
+                          <button class="keyword-tooltip-close" @click.stop="closeAllTooltips" aria-label="Schließen">×</button>
+                        </div>
+                        <p class="keyword-tooltip-text">{{ getKeywordTip(kw, 'hard_skills') }}</p>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -295,9 +315,28 @@
                   </div>
                   <div v-if="result.categories.soft_skills.missing?.length" class="keyword-list missing">
                     <span class="list-label">Fehlt:</span>
-                    <span v-for="kw in result.categories.soft_skills.missing" :key="kw" class="keyword-tag missing">
+                    <button
+                      v-for="kw in result.categories.soft_skills.missing"
+                      :key="kw"
+                      class="keyword-tag missing clickable"
+                      @click="toggleKeywordTooltip(kw, 'soft_skills')"
+                      :aria-expanded="activeKeywordTooltip === kw"
+                      :aria-label="`Tipp für ${kw} anzeigen`"
+                    >
                       {{ kw }}
-                    </span>
+                      <svg class="keyword-info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <div v-if="activeKeywordTooltip === kw" class="keyword-tooltip" role="tooltip">
+                        <div class="keyword-tooltip-header">
+                          <span class="keyword-tooltip-title">💡 Tipp: {{ kw }}</span>
+                          <button class="keyword-tooltip-close" @click.stop="closeAllTooltips" aria-label="Schließen">×</button>
+                        </div>
+                        <p class="keyword-tooltip-text">{{ getKeywordTip(kw, 'soft_skills') }}</p>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -317,9 +356,28 @@
                   </div>
                   <div v-if="result.categories.qualifications.missing?.length" class="keyword-list missing">
                     <span class="list-label">Fehlt:</span>
-                    <span v-for="kw in result.categories.qualifications.missing" :key="kw" class="keyword-tag missing">
+                    <button
+                      v-for="kw in result.categories.qualifications.missing"
+                      :key="kw"
+                      class="keyword-tag missing clickable"
+                      @click="toggleKeywordTooltip(kw, 'qualifications')"
+                      :aria-expanded="activeKeywordTooltip === kw"
+                      :aria-label="`Tipp für ${kw} anzeigen`"
+                    >
                       {{ kw }}
-                    </span>
+                      <svg class="keyword-info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <div v-if="activeKeywordTooltip === kw" class="keyword-tooltip" role="tooltip">
+                        <div class="keyword-tooltip-header">
+                          <span class="keyword-tooltip-title">💡 Tipp: {{ kw }}</span>
+                          <button class="keyword-tooltip-close" @click.stop="closeAllTooltips" aria-label="Schließen">×</button>
+                        </div>
+                        <p class="keyword-tooltip-text">{{ getKeywordTip(kw, 'qualifications') }}</p>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -339,9 +397,28 @@
                   </div>
                   <div v-if="result.categories.experience.missing?.length" class="keyword-list missing">
                     <span class="list-label">Fehlt:</span>
-                    <span v-for="kw in result.categories.experience.missing" :key="kw" class="keyword-tag missing">
+                    <button
+                      v-for="kw in result.categories.experience.missing"
+                      :key="kw"
+                      class="keyword-tag missing clickable"
+                      @click="toggleKeywordTooltip(kw, 'experience')"
+                      :aria-expanded="activeKeywordTooltip === kw"
+                      :aria-label="`Tipp für ${kw} anzeigen`"
+                    >
                       {{ kw }}
-                    </span>
+                      <svg class="keyword-info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"/>
+                        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                      </svg>
+                      <div v-if="activeKeywordTooltip === kw" class="keyword-tooltip" role="tooltip">
+                        <div class="keyword-tooltip-header">
+                          <span class="keyword-tooltip-title">💡 Tipp: {{ kw }}</span>
+                          <button class="keyword-tooltip-close" @click.stop="closeAllTooltips" aria-label="Schließen">×</button>
+                        </div>
+                        <p class="keyword-tooltip-text">{{ getKeywordTip(kw, 'experience') }}</p>
+                      </div>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -386,6 +463,56 @@ const history = ref([])
 const loadingHistory = ref(false)
 const hasResume = ref(true) // Assume true until checked
 const checkingResume = ref(true)
+
+// Keyword tooltip state
+const activeKeywordTooltip = ref(null)
+
+// Generate integration tip for a keyword
+const getKeywordTip = (keyword, category = null) => {
+  const tips = {
+    hard_skills: [
+      `Füge "${keyword}" in deine Berufserfahrung ein, z.B.: "Anwendung von ${keyword} in..."`,
+      `Erwähne konkrete Projekte, in denen du ${keyword} eingesetzt hast.`,
+      `Liste ${keyword} in einem separaten "Technische Fähigkeiten" Abschnitt auf.`
+    ],
+    soft_skills: [
+      `Beschreibe eine Situation, in der du ${keyword} unter Beweis gestellt hast.`,
+      `Verwende Formulierungen wie "Durch ${keyword} konnte ich..." in deinen Erfolgen.`,
+      `Integriere ${keyword} in die Beschreibung deiner Teamarbeit.`
+    ],
+    qualifications: [
+      `Stelle sicher, dass ${keyword} in deinem Bildungsabschnitt erwähnt wird.`,
+      `Falls du ${keyword} besitzt, hebe es prominent hervor.`,
+      `Erwäge relevante Zertifikate oder Weiterbildungen zu ${keyword}.`
+    ],
+    experience: [
+      `Quantifiziere deine Erfahrung mit ${keyword}, z.B. "3+ Jahre ${keyword}".`,
+      `Beschreibe konkrete Aufgaben und Verantwortlichkeiten mit ${keyword}.`,
+      `Zeige Progression und Entwicklung in ${keyword} auf.`
+    ],
+    default: [
+      `Füge "${keyword}" natürlich in deine Berufserfahrung oder Fähigkeiten ein.`,
+      `Verwende "${keyword}" im Kontext deiner bisherigen Tätigkeiten.`,
+      `Beschreibe konkrete Beispiele, wo du "${keyword}" angewandt hast.`
+    ]
+  }
+
+  const categoryTips = tips[category] || tips.default
+  // Return a random tip from the category
+  return categoryTips[Math.floor(Math.random() * categoryTips.length)]
+}
+
+const toggleKeywordTooltip = (keyword) => {
+  if (activeKeywordTooltip.value === keyword) {
+    activeKeywordTooltip.value = null
+  } else {
+    activeKeywordTooltip.value = keyword
+  }
+}
+
+const closeAllTooltips = () => {
+  activeKeywordTooltip.value = null
+}
 
 const canAnalyze = computed(() => {
   if (inputMode.value === 'url') {
@@ -940,7 +1067,13 @@ onMounted(() => {
 .section-title {
   font-size: 1.125rem;
   font-weight: 500;
-  margin-bottom: var(--space-lg);
+  margin-bottom: var(--space-sm);
+}
+
+.categories-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-lg) 0;
 }
 
 .categories-grid {
@@ -1002,6 +1135,124 @@ onMounted(() => {
 .keyword-tag.missing {
   background: rgba(180, 80, 80, 0.15);
   color: #b45050;
+}
+
+/* Clickable missing keyword badges */
+.keyword-tag.clickable {
+  position: relative;
+  cursor: pointer;
+  border: none;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-family: inherit;
+  transition: all var(--transition-base);
+}
+
+.keyword-tag.clickable:hover {
+  background: rgba(180, 80, 80, 0.25);
+  transform: translateY(-1px);
+}
+
+.keyword-tag.clickable:focus {
+  outline: 2px solid #b45050;
+  outline-offset: 2px;
+}
+
+.keyword-info-icon {
+  opacity: 0.7;
+  flex-shrink: 0;
+  transition: opacity var(--transition-base);
+}
+
+.keyword-tag.clickable:hover .keyword-info-icon {
+  opacity: 1;
+}
+
+/* Keyword tooltip */
+.keyword-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: var(--color-sumi);
+  color: var(--color-washi);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  animation: tooltipFadeIn 0.2s ease-out;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.keyword-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: var(--color-sumi);
+}
+
+.keyword-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.keyword-tooltip-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.keyword-tooltip-close {
+  background: none;
+  border: none;
+  color: var(--color-washi);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity var(--transition-base);
+}
+
+.keyword-tooltip-close:hover {
+  opacity: 1;
+}
+
+.keyword-tooltip-text {
+  padding: var(--space-md);
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: var(--leading-relaxed);
+  color: var(--color-washi);
+}
+
+/* Tooltip position adjustments for edge cases */
+@media (max-width: 768px) {
+  .keyword-tooltip {
+    width: 240px;
+    left: 0;
+    transform: translateX(0);
+  }
+
+  .keyword-tooltip::after {
+    left: 20px;
+  }
 }
 
 /* ========================================

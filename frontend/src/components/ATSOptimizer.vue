@@ -139,10 +139,30 @@
           </svg>
           Fehlende Keywords ({{ atsData.missing_keywords.length }})
         </h4>
+        <p class="keywords-hint">Klicke auf ein Keyword für Integrationstipps</p>
         <div class="keywords-list">
-          <span v-for="keyword in atsData.missing_keywords" :key="keyword" class="keyword-tag missing">
+          <button
+            v-for="keyword in atsData.missing_keywords"
+            :key="keyword"
+            class="keyword-tag missing clickable"
+            @click="toggleKeywordTooltip(keyword)"
+            :aria-expanded="activeKeywordTooltip === keyword"
+            :aria-label="`Tipp für ${keyword} anzeigen`"
+          >
             {{ keyword }}
-          </span>
+            <svg class="keyword-info-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
+            <div v-if="activeKeywordTooltip === keyword" class="keyword-tooltip" role="tooltip">
+              <div class="keyword-tooltip-header">
+                <span class="keyword-tooltip-title">💡 Tipp: {{ keyword }}</span>
+                <button class="keyword-tooltip-close" @click.stop="closeAllTooltips" aria-label="Schließen">×</button>
+              </div>
+              <p class="keyword-tooltip-text">{{ getKeywordTip(keyword) }}</p>
+            </div>
+          </button>
         </div>
       </div>
 
@@ -286,6 +306,35 @@ const comparisonData = ref(null)
 // Manual text input mode
 const inputMode = ref('auto')
 const manualCoverLetter = ref('')
+
+// Keyword tooltip state
+const activeKeywordTooltip = ref(null)
+
+// Generate integration tip for a keyword
+const getKeywordTip = (keyword) => {
+  const tips = [
+    `Füge "${keyword}" natürlich in deine Berufserfahrung ein, z.B.: "Anwendung von ${keyword} in..."`,
+    `Erwähne konkrete Projekte, in denen du ${keyword} eingesetzt hast.`,
+    `Liste ${keyword} in einem separaten "Technische Fähigkeiten" Abschnitt auf.`,
+    `Beschreibe eine Situation, in der du ${keyword} unter Beweis gestellt hast.`,
+    `Verwende "${keyword}" im Kontext deiner bisherigen Tätigkeiten.`
+  ]
+  // Return a consistent tip based on keyword hash
+  const index = keyword.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0) % tips.length
+  return tips[index]
+}
+
+const toggleKeywordTooltip = (keyword) => {
+  if (activeKeywordTooltip.value === keyword) {
+    activeKeywordTooltip.value = null
+  } else {
+    activeKeywordTooltip.value = keyword
+  }
+}
+
+const closeAllTooltips = () => {
+  activeKeywordTooltip.value = null
+}
 
 const scoreCategory = computed(() => {
   if (!atsData.value) return ''
@@ -590,6 +639,116 @@ defineExpose({
 .keyword-tag.missing {
   background: var(--color-error-light);
   color: var(--color-error);
+}
+
+/* Clickable missing keyword badges */
+.keyword-tag.clickable {
+  position: relative;
+  cursor: pointer;
+  border: none;
+  font-family: inherit;
+  transition: all var(--transition-base);
+}
+
+.keyword-tag.clickable:hover {
+  background: rgba(180, 80, 80, 0.25);
+  transform: translateY(-1px);
+}
+
+.keyword-tag.clickable:focus {
+  outline: 2px solid var(--color-error);
+  outline-offset: 2px;
+}
+
+.keyword-info-icon {
+  opacity: 0.7;
+  flex-shrink: 0;
+  transition: opacity var(--transition-base);
+}
+
+.keyword-tag.clickable:hover .keyword-info-icon {
+  opacity: 1;
+}
+
+/* Keywords hint */
+.keywords-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+/* Keyword tooltip */
+.keyword-tooltip {
+  position: absolute;
+  bottom: calc(100% + 12px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 280px;
+  background: var(--color-sumi);
+  color: var(--color-washi);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lg);
+  z-index: 100;
+  animation: tooltipFadeIn 0.2s ease-out;
+  text-align: left;
+}
+
+@keyframes tooltipFadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
+.keyword-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 8px solid transparent;
+  border-top-color: var(--color-sumi);
+}
+
+.keyword-tooltip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) var(--space-md);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.keyword-tooltip-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.keyword-tooltip-close {
+  background: none;
+  border: none;
+  color: var(--color-washi);
+  font-size: 1.25rem;
+  cursor: pointer;
+  padding: 0;
+  line-height: 1;
+  opacity: 0.7;
+  transition: opacity var(--transition-base);
+}
+
+.keyword-tooltip-close:hover {
+  opacity: 1;
+}
+
+.keyword-tooltip-text {
+  padding: var(--space-md);
+  margin: 0;
+  font-size: 0.8125rem;
+  line-height: var(--leading-relaxed);
+  color: var(--color-washi);
 }
 
 .keyword-count {
