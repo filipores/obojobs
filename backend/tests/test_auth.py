@@ -1011,3 +1011,164 @@ class TestLogout:
             headers=new_headers,
         )
         assert response.status_code == 200
+
+
+class TestDeleteAccount:
+    """Tests for DELETE /api/auth/delete-account"""
+
+    def test_delete_account_requires_authentication(self, client):
+        """Test that delete-account requires authentication."""
+        response = client.delete("/api/auth/delete-account")
+        assert response.status_code == 401
+
+    def test_delete_account_success_returns_200(self, client, test_user, auth_headers):
+        """Test successful account deletion returns 200."""
+        response = client.delete(
+            "/api/auth/delete-account",
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "message" in data
+        assert "erfolgreich gelöscht" in data["message"]
+
+    def test_delete_account_removes_user_from_database(self, app, client, test_user, auth_headers):
+        """Test that user is actually removed from database."""
+        # Get user ID before deletion
+        user_id = test_user["id"]
+
+        response = client.delete(
+            "/api/auth/delete-account",
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+
+        # Verify user no longer exists in database
+        with app.app_context():
+            from models import User
+            deleted_user = User.query.get(user_id)
+            assert deleted_user is None
+
+    def test_delete_account_invalidates_token(self, client, test_user, auth_headers):
+        """Test that current token becomes invalid after user deletion."""
+        # Delete account
+        response = client.delete(
+            "/api/auth/delete-account",
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+
+        # Try to use the same token - should be invalid (user not found)
+        response = client.get(
+            "/api/auth/me",
+            headers=auth_headers,
+        )
+        assert response.status_code == 404
+
+    def test_delete_account_removes_related_data(self, app, client, test_user, auth_headers):
+        """Test that user's related data is also deleted via cascade."""
+        # Create some related data first
+        with app.app_context():
+            from models import APIKey, Document, User, db
+
+            user = User.query.get(test_user["id"])
+
+            # Create an API key
+            api_key = APIKey(
+                user_id=user.id,
+                key_hash="test_hash",
+                key_prefix="test_prefix",
+                name="Test Key"
+            )
+            db.session.add(api_key)
+
+            # Create a document
+            document = Document(
+                user_id=user.id,
+                original_filename="test.pdf",
+                file_path="/test/path",
+                doc_type="cv_pdf"
+            )
+            db.session.add(document)
+            db.session.commit()
+
+            api_key_id = api_key.id
+            document_id = document.id
+
+        # Delete account
+        response = client.delete(
+            "/api/auth/delete-account",
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+
+        # Verify related data is also deleted
+        with app.app_context():
+            from models import APIKey, Document
+
+            # API key should be gone
+            deleted_api_key = APIKey.query.get(api_key_id)
+            assert deleted_api_key is None
+
+            # Document should be gone
+            deleted_document = Document.query.get(document_id)
+            assert deleted_document is None
+
+    def test_delete_account_nonexistent_user_returns_404(self, app, client):
+        """Test that deleting account for nonexistent user returns 404."""
+        # Create a JWT for a nonexistent user
+        from flask_jwt_extended import create_access_token
+
+        with app.app_context():
+            # Use a user ID that doesn't exist
+            fake_token = create_access_token(identity="99999")
+
+        headers = {"Authorization": f"Bearer {fake_token}"}
+        response = client.delete(
+            "/api/auth/delete-account",
+            headers=headers,
+        )
+
+        assert response.status_code == 404
+        data = response.get_json()
+        assert "Benutzer nicht gefunden" in data["error"]
+
+    def test_delete_account_handles_database_errors_gracefully(self, app, client, test_user, auth_headers, monkeypatch):
+        """Test that database errors are handled gracefully during deletion."""
+        # Mock db.session.commit to raise an exception
+        def mock_commit():
+            raise Exception("Database error")
+
+        with app.app_context():
+            from models import db
+            monkeypatch.setattr(db.session, "commit", mock_commit)
+
+            response = client.delete(
+                "/api/auth/delete-account",
+                headers=auth_headers,
+            )
+
+            assert response.status_code == 500
+            data = response.get_json()
+            assert "Fehler beim Löschen" in data["error"]
+
+        # Verify user still exists after failed deletion
+        with app.app_context():
+            from models import User
+            user = User.query.get(test_user["id"])
+            assert user is not None
+
+    def test_delete_account_logs_deletion_for_gdpr_compliance(self, app, client, test_user, auth_headers, capfd):
+        """Test that account deletion is logged for GDPR compliance."""
+        response = client.delete(
+            "/api/auth/delete-account",
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+
+        # Check that GDPR log entry was created
+        captured = capfd.readouterr()
+        assert "[GDPR]" in captured.out
+        assert test_user["email"] in captured.out
+        assert "Account deleted" in captured.out
