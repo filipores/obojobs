@@ -779,9 +779,18 @@ const loadPreview = async () => {
       loading.value = false
     }
   } catch (e) {
-    if (e.response?.data?.error) {
+    // Handle different HTTP status codes appropriately
+    if (e.response?.status === 400 && e.response?.data?.error) {
+      // Client errors (403, 404, 429, etc.) from WebScraper - show original error message
+      error.value = e.response.data.error
+    } else if (e.response?.status === 500 && e.response?.data?.error) {
+      // Server errors - show user-friendly message from backend
+      error.value = e.response.data.error
+    } else if (e.response?.data?.error) {
+      // Generic case - use provided error message
       error.value = e.response.data.error
     } else {
+      // Network or unknown errors
       error.value = 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.'
     }
     loading.value = false

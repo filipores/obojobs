@@ -237,7 +237,20 @@ def preview_job(current_user):
         }), 200
 
     except Exception as e:
-        return jsonify({"success": False, "error": f"Fehler beim Laden der Stellenanzeige: {str(e)}"}), 500
+        error_message = str(e)
+
+        # HTTP errors from WebScraper should be treated as client errors (400)
+        # not server errors (500) to provide consistent error handling
+        if any(code in error_message for code in ["403", "404", "429", "400", "401", "502", "503"]):
+            return jsonify({"success": False, "error": error_message}), 400
+
+        # Server errors (connection, parsing, etc.) are legitimate 500 errors
+        # but should be logged and have user-friendly messages
+        print(f"preview-job server error for {url}: {error_message}")
+        return jsonify({
+            "success": False,
+            "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe."
+        }), 500
 
 
 @applications_bp.route("/analyze-manual-text", methods=["POST"])
