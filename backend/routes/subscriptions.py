@@ -142,6 +142,13 @@ def create_checkout():
 
     price_id = plan_data["stripe_price_id"]
 
+    # Check if using mock/development price IDs
+    if price_id.startswith("price_dev_"):
+        return jsonify({
+            "success": False,
+            "error": "Stripe ist im Development-Modus nicht konfiguriert. Upgrade-Funktionen sind nur in der Produktionsumgebung verfügbar."
+        }), 503  # Service Unavailable
+
     # Get current user
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))

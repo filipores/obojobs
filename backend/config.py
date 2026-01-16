@@ -47,8 +47,8 @@ class Config:
     STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
     # Stripe Subscription Plans (Price IDs from Stripe Dashboard)
-    STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC")  # €9.99/month
-    STRIPE_PRICE_PRO = os.getenv("STRIPE_PRICE_PRO")  # €19.99/month
+    STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC", "price_dev_basic_mock")  # €9.99/month
+    STRIPE_PRICE_PRO = os.getenv("STRIPE_PRICE_PRO", "price_dev_pro_mock")  # €19.99/month
 
     @staticmethod
     def validate_config():
