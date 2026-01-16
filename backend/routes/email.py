@@ -18,6 +18,42 @@ MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 email_bp = Blueprint("email", __name__)
 
 
+@email_bp.route("/integration-status", methods=["GET"])
+@jwt_required()
+def integration_status():
+    """
+    Check which email integrations are properly configured.
+
+    Returns:
+        JSON with configuration status for Gmail and Outlook
+    """
+    gmail_configured = all([
+        os.environ.get("GOOGLE_CLIENT_ID"),
+        os.environ.get("GOOGLE_CLIENT_SECRET"),
+        os.environ.get("GOOGLE_REDIRECT_URI")
+    ])
+
+    outlook_configured = all([
+        os.environ.get("MICROSOFT_CLIENT_ID"),
+        os.environ.get("MICROSOFT_CLIENT_SECRET"),
+        os.environ.get("MICROSOFT_REDIRECT_URI")
+    ])
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "gmail": {
+                "configured": gmail_configured,
+                "provider": "gmail"
+            },
+            "outlook": {
+                "configured": outlook_configured,
+                "provider": "outlook"
+            }
+        }
+    }), 200
+
+
 @email_bp.route("/accounts", methods=["GET"])
 @jwt_required()
 def list_email_accounts():
@@ -81,6 +117,22 @@ def gmail_auth_url():
         JSON with authorization_url to redirect the user to
     """
     try:
+        # Check if Gmail integration is configured before attempting OAuth
+        client_id = os.environ.get("GOOGLE_CLIENT_ID")
+        client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
+        redirect_uri = os.environ.get("GOOGLE_REDIRECT_URI")
+
+        if not client_id or not client_secret or not redirect_uri:
+            return jsonify({
+                "success": False,
+                "error": "Gmail-Integration ist derzeit nicht konfiguriert.",
+                "config_status": {
+                    "client_id": bool(client_id),
+                    "client_secret": bool(client_secret),
+                    "redirect_uri": bool(redirect_uri)
+                }
+            }), 400
+
         # Generate a random state for CSRF protection
         state = secrets.token_urlsafe(32)
 
@@ -194,6 +246,22 @@ def outlook_auth_url():
         JSON with authorization_url to redirect the user to
     """
     try:
+        # Check if Outlook integration is configured before attempting OAuth
+        client_id = os.environ.get("MICROSOFT_CLIENT_ID")
+        client_secret = os.environ.get("MICROSOFT_CLIENT_SECRET")
+        redirect_uri = os.environ.get("MICROSOFT_REDIRECT_URI")
+
+        if not client_id or not client_secret or not redirect_uri:
+            return jsonify({
+                "success": False,
+                "error": "Outlook-Integration ist derzeit nicht konfiguriert.",
+                "config_status": {
+                    "client_id": bool(client_id),
+                    "client_secret": bool(client_secret),
+                    "redirect_uri": bool(redirect_uri)
+                }
+            }), 400
+
         # Generate a random state for CSRF protection
         state = secrets.token_urlsafe(32)
 

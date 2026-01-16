@@ -315,17 +315,23 @@
 
               <!-- Connect Buttons -->
               <div class="connect-buttons">
-                <button @click="connectGmail" class="connect-btn gmail" :disabled="isConnecting">
+                <button @click="connectGmail" class="connect-btn gmail"
+                  :disabled="isConnecting || !integrationStatus.gmail.configured"
+                  :title="!integrationStatus.gmail.configured ? 'Gmail-Integration ist nicht konfiguriert' : 'Mit Gmail verbinden'">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M20 18h-2V9.25L12 13 6 9.25V18H4V6h1.2l6.8 4.25L18.8 6H20m0-2H4c-1.11 0-2 .89-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/>
                   </svg>
                   <span>Mit Gmail verbinden</span>
+                  <span v-if="!integrationStatus.gmail.configured" class="config-status">(nicht konfiguriert)</span>
                 </button>
-                <button @click="connectOutlook" class="connect-btn outlook" :disabled="isConnecting">
+                <button @click="connectOutlook" class="connect-btn outlook"
+                  :disabled="isConnecting || !integrationStatus.outlook.configured"
+                  :title="!integrationStatus.outlook.configured ? 'Outlook-Integration ist nicht konfiguriert' : 'Mit Outlook verbinden'">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.38q0-.46.33-.8.33-.32.8-.32h14.74q.46 0 .8.33.32.33.32.8V12z"/>
                   </svg>
                   <span>Mit Outlook verbinden</span>
+                  <span v-if="!integrationStatus.outlook.configured" class="config-status">(nicht konfiguriert)</span>
                 </button>
               </div>
             </div>
@@ -490,6 +496,12 @@ const isGeneratingKey = ref(false)
 // Email accounts state
 const emailAccounts = ref([])
 const isConnecting = ref(false)
+
+// Integration status
+const integrationStatus = ref({
+  gmail: { configured: false },
+  outlook: { configured: false }
+})
 
 // Profile form state
 const profileForm = reactive({
@@ -690,7 +702,24 @@ const loadEmailAccounts = async () => {
   }
 }
 
+const loadIntegrationStatus = async () => {
+  try {
+    const { data } = await api.get('/email/integration-status')
+    integrationStatus.value = data.data
+  } catch (err) {
+    console.error('Fehler beim Laden des Integrationsstatus:', err)
+  }
+}
+
 const connectGmail = async () => {
+  // Check if Gmail integration is configured
+  if (!integrationStatus.value.gmail.configured) {
+    if (window.$toast) {
+      window.$toast('Gmail-Integration ist derzeit nicht konfiguriert.', 'warning')
+    }
+    return
+  }
+
   isConnecting.value = true
   try {
     const { data } = await api.get('/email/gmail/auth-url')
@@ -710,13 +739,19 @@ const connectGmail = async () => {
     }, 500)
   } catch (_err) {
     isConnecting.value = false
-    if (window.$toast) {
-      window.$toast('Fehler beim Verbinden mit Gmail', 'error')
-    }
+    // Error message is handled by api client interceptor
   }
 }
 
 const connectOutlook = async () => {
+  // Check if Outlook integration is configured
+  if (!integrationStatus.value.outlook.configured) {
+    if (window.$toast) {
+      window.$toast('Outlook-Integration ist derzeit nicht konfiguriert.', 'warning')
+    }
+    return
+  }
+
   isConnecting.value = true
   try {
     const { data } = await api.get('/email/outlook/auth-url')
@@ -736,9 +771,7 @@ const connectOutlook = async () => {
     }, 500)
   } catch (_err) {
     isConnecting.value = false
-    if (window.$toast) {
-      window.$toast('Fehler beim Verbinden mit Outlook', 'error')
-    }
+    // Error message is handled by api client interceptor
   }
 }
 
@@ -803,6 +836,7 @@ const requestAccountDeletion = async () => {
 onMounted(() => {
   loadKeys()
   loadEmailAccounts()
+  loadIntegrationStatus()
   initProfileForm()
 })
 </script>
@@ -1268,6 +1302,12 @@ onMounted(() => {
 .connect-btn.outlook:hover:not(:disabled) {
   border-color: #0078D4;
   color: #0078D4;
+}
+
+.config-status {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  margin-left: var(--space-xs);
 }
 
 /* ========================================
