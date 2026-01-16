@@ -836,7 +836,7 @@ const visiblePages = computed(() => {
 const loadApplications = async (page = 1) => {
   loading.value = true
   try {
-    const { data } = await api.get('/applications', {
+    const { data } = await api.silent.get('/applications', {
       params: {
         page,
         per_page: perPage.value

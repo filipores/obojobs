@@ -439,7 +439,7 @@ const deleteDoc = async (id, docType) => {
 
 const loadDocuments = async () => {
   try {
-    const { data } = await api.get('/documents')
+    const { data } = await api.silent.get('/documents')
 
     // Reset
     documents.value = {

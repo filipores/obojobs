@@ -500,7 +500,7 @@ const setDefault = async (id) => {
 
 const loadTemplates = async () => {
   try {
-    const { data } = await api.get('/templates')
+    const { data } = await api.silent.get('/templates')
     templates.value = data.templates
   } catch (err) {
     console.error('Fehler beim Laden:', err)
@@ -509,7 +509,7 @@ const loadTemplates = async () => {
 
 const checkLebenslauf = async () => {
   try {
-    const { data } = await api.get('/documents')
+    const { data } = await api.silent.get('/documents')
     hasLebenslauf.value = data.documents.some(doc => doc.doc_type === 'lebenslauf')
   } catch (err) {
     console.error('Fehler beim Prüfen:', err)
