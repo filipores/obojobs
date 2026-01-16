@@ -316,7 +316,7 @@
       "fixed": true,
       "fixAttempts": 1,
       "source": "test-ralph FLOW-012, FLOW-013",
-      "fixedAt": 1768558089.325,
+      "fixedAt": 1768558171.500866,
       "fixedWithModel": "claude-sonnet-4-20250514",
       "usedFallback": false,
       "overEngineeringFlagged": false

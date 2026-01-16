@@ -942,7 +942,8 @@ const generateApplication = async () => {
         job_text: editableData.value.description,
         company: editableData.value.company,
         title: editableData.value.title,
-        template_id: selectedTemplateId.value
+        template_id: selectedTemplateId.value,
+        description: editableData.value.description // Include structured description for interview prep
       })
     } else {
       // Generate from URL

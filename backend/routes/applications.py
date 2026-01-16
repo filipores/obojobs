@@ -406,6 +406,7 @@ def generate_from_text(current_user):
     company = data.get("company", "").strip()
     title = data.get("title", "").strip()
     template_id = data.get("template_id")
+    description = data.get("description", "").strip()  # Structured description for interview prep
 
     if not job_text:
         return jsonify({
@@ -448,9 +449,13 @@ def generate_from_text(current_user):
                 user_id=current_user.id
             ).order_by(Application.datum.desc()).first()
 
-            # Update application with title if provided
-            if latest and title:
-                latest.position = title
+            # Update application with title and description if provided
+            if latest:
+                if title:
+                    latest.position = title
+                # Store the structured description in notizen for interview prep
+                if description:
+                    latest.notizen = description
                 db.session.commit()
 
             # Increment subscription usage counter
