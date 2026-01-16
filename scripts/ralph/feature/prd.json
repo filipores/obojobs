@@ -666,7 +666,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 45,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph A11Y-002"
     },
     {

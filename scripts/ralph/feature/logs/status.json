@@ -1,11 +1,11 @@
 {
-    "timestamp": "2026-01-16T09:50:17+01:00",
-    "loop_count": 16,
-    "calls_made_this_hour": 36,
+    "timestamp": "2026-01-16T09:52:54+01:00",
+    "loop_count": 17,
+    "calls_made_this_hour": 35,
     "max_calls_per_hour": 50,
-    "current_story": "UX-045",
+    "current_story": "UX-046",
     "status": "running",
     "last_error": "",
     "started_at": "2026-01-16T08:59:04+01:00",
-    "next_reset": "10:50:17"
+    "next_reset": "10:52:54"
 }

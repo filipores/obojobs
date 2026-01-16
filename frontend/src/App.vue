@@ -107,6 +107,50 @@
       </router-view>
     </main>
 
+    <!-- Bottom Navigation - Mobile Only -->
+    <nav v-if="authStore.isAuthenticated()" class="bottom-nav" aria-label="Mobile Navigation">
+      <router-link to="/" class="bottom-nav-item" exact-active-class="active" title="Dashboard">
+        <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+          <polyline points="9 22 9 12 15 12 15 22"/>
+        </svg>
+        <span class="bottom-nav-label">Start</span>
+      </router-link>
+      <router-link to="/applications" class="bottom-nav-item" active-class="active" title="Bewerbungen">
+        <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
+        </svg>
+        <span class="bottom-nav-label">Bewerbungen</span>
+      </router-link>
+      <router-link to="/new-application" class="bottom-nav-item bottom-nav-cta" active-class="active" title="Neue Bewerbung">
+        <div class="bottom-nav-cta-circle">
+          <svg class="bottom-nav-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+        </div>
+        <span class="bottom-nav-label">Neu</span>
+      </router-link>
+      <router-link to="/ats" class="bottom-nav-item" active-class="active" title="ATS-Optimierung">
+        <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 20V10"/>
+          <path d="M18 20V4"/>
+          <path d="M6 20v-4"/>
+        </svg>
+        <span class="bottom-nav-label">ATS</span>
+      </router-link>
+      <router-link to="/timeline" class="bottom-nav-item" active-class="active" title="Timeline">
+        <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <polyline points="12 6 12 12 16 14"/>
+        </svg>
+        <span class="bottom-nav-label">Timeline</span>
+      </router-link>
+    </nav>
+
     <!-- Footer -->
     <footer class="zen-footer">
       <div class="footer-container">
@@ -613,5 +657,110 @@ onMounted(() => {
   .footer-copyright {
     order: 3;
   }
+
+  /* Add padding for bottom nav */
+  .main-content.with-nav {
+    padding-bottom: 72px;
+  }
+
+  .zen-footer {
+    padding-bottom: calc(var(--space-lg) + 72px);
+  }
+}
+
+/* ========================================
+   BOTTOM NAVIGATION - Mobile Only
+   ======================================== */
+.bottom-nav {
+  display: none;
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: var(--z-nav);
+  background: var(--color-washi);
+  border-top: 1px solid var(--color-border-light);
+  padding: var(--space-xs) 0;
+  padding-bottom: calc(var(--space-xs) + env(safe-area-inset-bottom, 0px));
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .bottom-nav {
+    display: flex;
+    justify-content: space-around;
+    align-items: flex-end;
+  }
+}
+
+.bottom-nav-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: var(--space-xs);
+  text-decoration: none;
+  color: var(--color-text-tertiary);
+  transition: color var(--transition-base);
+  min-width: 60px;
+}
+
+.bottom-nav-item:hover,
+.bottom-nav-item.active {
+  color: var(--color-ai);
+}
+
+.bottom-nav-icon {
+  flex-shrink: 0;
+  transition: transform var(--transition-base);
+}
+
+.bottom-nav-item.active .bottom-nav-icon {
+  transform: scale(1.1);
+}
+
+.bottom-nav-label {
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wide);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+/* CTA Button (Neu) - Elevated */
+.bottom-nav-cta {
+  position: relative;
+  margin-top: -12px;
+}
+
+.bottom-nav-cta-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: var(--color-ai);
+  border-radius: 50%;
+  color: var(--color-washi);
+  box-shadow: 0 2px 8px rgba(61, 90, 108, 0.3);
+  transition: all var(--transition-base);
+}
+
+.bottom-nav-cta:hover .bottom-nav-cta-circle {
+  background: var(--color-ai-light);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(61, 90, 108, 0.4);
+}
+
+.bottom-nav-cta.active .bottom-nav-cta-circle {
+  background: var(--color-sumi);
+}
+
+.bottom-nav-cta .bottom-nav-icon {
+  color: var(--color-washi);
+}
+
+.bottom-nav-cta .bottom-nav-label {
+  margin-top: 4px;
 }
 </style>
