@@ -65,6 +65,24 @@
         </div>
       </section>
 
+      <!-- Status Filter Tabs -->
+      <section class="status-tabs-section animate-fade-up" style="animation-delay: 125ms;">
+        <div class="status-tabs" role="tablist" aria-label="Status-Filter">
+          <button
+            v-for="status in statusOptions"
+            :key="status.value"
+            :class="['status-tab', { 'status-tab-active': filterStatus === status.value }]"
+            @click="filterStatus = status.value"
+            role="tab"
+            :aria-selected="filterStatus === status.value"
+            :aria-controls="'applications-list'"
+          >
+            <span class="status-tab-label">{{ status.label }}</span>
+            <span class="status-tab-count">{{ status.count }}</span>
+          </button>
+        </div>
+      </section>
+
       <!-- Filter Section -->
       <section class="filter-section animate-fade-up" style="animation-delay: 150ms;">
         <div class="filter-row">
@@ -79,16 +97,6 @@
               placeholder="Suche nach Firma oder Position..."
               class="form-input search-input"
             />
-          </div>
-          <div class="filter-group">
-            <select v-model="filterStatus" class="form-select">
-              <option value="">Alle Status</option>
-              <option value="erstellt">Erstellt</option>
-              <option value="versendet">Versendet</option>
-              <option value="antwort_erhalten">Antwort erhalten</option>
-              <option value="absage">Absage</option>
-              <option value="zusage">Zusage</option>
-            </select>
           </div>
           <div class="filter-group sort-group">
             <select v-model="sortBy" class="form-select">
@@ -729,6 +737,25 @@ const stats = computed(() => {
     erstellt: applications.value.filter(a => a.status === 'erstellt').length,
     versendet: applications.value.filter(a => a.status === 'versendet').length
   }
+})
+
+const statusOptions = computed(() => {
+  const counts = {
+    '': applications.value.length,
+    'erstellt': applications.value.filter(a => a.status === 'erstellt').length,
+    'versendet': applications.value.filter(a => a.status === 'versendet').length,
+    'antwort_erhalten': applications.value.filter(a => a.status === 'antwort_erhalten').length,
+    'absage': applications.value.filter(a => a.status === 'absage').length,
+    'zusage': applications.value.filter(a => a.status === 'zusage').length
+  }
+  return [
+    { value: '', label: 'Alle', count: counts[''] },
+    { value: 'erstellt', label: 'Erstellt', count: counts['erstellt'] },
+    { value: 'versendet', label: 'Versendet', count: counts['versendet'] },
+    { value: 'antwort_erhalten', label: 'Antwort', count: counts['antwort_erhalten'] },
+    { value: 'absage', label: 'Absage', count: counts['absage'] },
+    { value: 'zusage', label: 'Zusage', count: counts['zusage'] }
+  ]
 })
 
 const filteredApplications = computed(() => {
@@ -2262,6 +2289,91 @@ watch(viewMode, (newMode) => {
 @media (max-width: 768px) {
   .view-toggle {
     display: none;
+  }
+}
+
+/* ========================================
+   STATUS FILTER TABS
+   ======================================== */
+.status-tabs-section {
+  margin-bottom: var(--space-md);
+}
+
+.status-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.status-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.status-tab:hover {
+  background: var(--color-washi-aged);
+  border-color: var(--color-stone);
+  color: var(--color-sumi);
+}
+
+.status-tab:focus-visible {
+  outline: 2px solid var(--color-ai);
+  outline-offset: 2px;
+}
+
+.status-tab-active {
+  background: var(--color-ai);
+  border-color: var(--color-ai);
+  color: var(--color-washi);
+}
+
+.status-tab-active:hover {
+  background: var(--color-ai-dark, #2d4a5a);
+  border-color: var(--color-ai-dark, #2d4a5a);
+  color: var(--color-washi);
+}
+
+.status-tab-label {
+  white-space: nowrap;
+}
+
+.status-tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 var(--space-xs);
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.status-tab-active .status-tab-count {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+@media (max-width: 768px) {
+  .status-tabs {
+    overflow-x: auto;
+    flex-wrap: nowrap;
+    padding-bottom: var(--space-sm);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .status-tab {
+    flex-shrink: 0;
   }
 }
 </style>
