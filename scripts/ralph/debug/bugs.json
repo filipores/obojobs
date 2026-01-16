@@ -340,7 +340,7 @@
       "fixed": true,
       "fixAttempts": 1,
       "source": "test-ralph FLOW-012, FLOW-013",
-      "fixedAt": 1768559594.678,
+      "fixedAt": 1768558541.087517,
       "fixedWithModel": "claude-sonnet-4-20250514",
       "usedFallback": false,
       "overEngineeringFlagged": false
@@ -378,9 +378,13 @@
         "backend/app.py"
       ],
       "rootCause": "Der Code prüft error.response?.data?.msg?.includes('token'), aber viele JWT-Fehler enthalten nicht 'token': 'Not enough segments', 'Signature verification failed', etc. Backend gibt 422 statt 401.",
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph EDGE-001"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph EDGE-001",
+      "fixedAt": 1768558837.089993,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-020",
@@ -506,9 +510,13 @@
         "frontend/src/pages/Settings.vue",
         "backend/routes/auth.py"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph UX-CLARITY-006"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph UX-CLARITY-006",
+      "fixedAt": 1768559455,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-027",

@@ -4,6 +4,32 @@ Diese Datei enthält Erkenntnisse aus Debug-Sessions. Jeder Eintrag dokumentiert
 
 ---
 
+## [2026-01-16] - BUG-026: Fehlende 'Konto löschen' Funktion (DSGVO-Compliance)
+
+**Problem:** Die Settings-Seite hatte zwar bereits eine "Gefahrenzone" mit einem "Konto löschen" Button, aber die Implementierung war nur ein Platzhalter der User zum Support-Kontakt verwies.
+
+**Root Cause:** DSGVO-Compliance Lücke:
+- Frontend zeigte nur Toast mit "Bitte Support kontaktieren" statt echte Löschung
+- Kein Backend-Endpoint `/auth/delete-account` vorhanden
+- "Recht auf Löschung" nach DSGVO war nicht implementiert
+
+**Fix:**
+- Backend: Neuer `DELETE /auth/delete-account` Endpoint mit JWT-Schutz
+- Löscht User und alle zugehörigen Daten via CASCADE (documents, applications, API keys, etc.)
+- Spezielle Behandlung für TokenBlacklist wegen Foreign Key Constraints
+- Frontend: Echte API-Integration mit Toast & Redirect nach erfolgreicher Löschung
+- Umfassende Tests mit 8 verschiedenen Testfällen
+
+**Learning:**
+- **Foreign Key Constraints bei User Deletion**: TokenBlacklist hatte FK zu User ohne CASCADE. Solution: Zuerst alle TokenBlacklist Entries löschen, dann User löschen
+- **GDPR Logging**: Account-Löschungen müssen für Compliance geloggt werden
+- **User Model CASCADE**: Gut designte User-Relationships mit `cascade="all, delete-orphan"` machten Cleanup automatisch
+- **Test Coverage**: Account-Deletion braucht viele Edge Cases (404, DB-Errors, Related Data, etc.)
+
+**Code Quality:** Alle 288 Backend Tests + Frontend Tests bestehen, Linting clean.
+
+---
+
 ## [2026-01-14] - BUG-001: Interview-Fragen werden auf InterviewPrep-Seite nicht angezeigt
 
 **Problem:** Die InterviewPrep-Seite zeigte "Keine Interview-Fragen vorhanden", obwohl die API erfolgreich Fragen zurückgab (200 OK).
@@ -454,6 +480,42 @@ Wenn keine Daten vorhanden waren oder der API-Call fehlschlug, wurde die gesamte
 5. **Progressive Enhancement**: URL-Input mit real-time validation + Button-state = bessere UX als Server-only validation
 
 **Betroffene Dateien:** `frontend/src/pages/NewApplication.vue` (Zeile 61)
+
+---
+
+## [2026-01-16] - BUG-019: 401-Handler erkennt viele JWT-Fehlermeldungen nicht
+
+**Problem:** JWT-Fehler wurden nicht korrekt als Authentication-Fehler erkannt. User wurde nicht ausgeloggt und zu Login weitergeleitet, sondern blieb "eingeloggt" mit "Ungültige Eingabe" Toast-Meldungen.
+
+**Root Cause:** Doppeltes Problem in JWT-Error-Recognition:
+1. **Backend**: Flask-JWT-Extended gibt standardmäßig 422 (Unprocessable Entity) für JWT-Fehler zurück, nicht 401 (Unauthorized)
+2. **Frontend**: Error-Detection in `api/client.js:32` prüfte nur `error.response?.data?.msg?.includes('token')`
+   - Viele JWT-Fehler enthalten nicht das Wort "token": "Not enough segments", "Signature verification failed", "Invalid header", etc.
+   - Diese Fehler wurden als normale Validation-Errors (422) behandelt statt als Auth-Errors
+
+**Fix:**
+1. **Backend** (`app.py`): Custom JWT Error-Handler hinzugefügt:
+   - `@jwt.invalid_token_loader` → 401 mit "Ungültiger Token"
+   - `@jwt.expired_token_loader` → 401 mit "Token ist abgelaufen"
+   - `@jwt.unauthorized_loader` → 401 mit "Token fehlt"
+   - Alle JWT-Fehler geben jetzt konsistent 401 zurück
+
+2. **Frontend** (`client.js`): Erweiterte JWT-Error-Detection:
+   - `isJWTErrorMessage()` Helper-Function mit Pattern-Matching
+   - Erkennt alle gängigen JWT-Fehler: "token", "Not enough segments", "Signature verification failed", "jwt", "Bearer", etc.
+   - Bessere Boolean-Logic: `isJWTError = status === 401 || (status === 422 && isJWTErrorMessage(msg))`
+
+**Learning:**
+1. **JWT-Error-Standards**: Flask-JWT-Extended gibt defaultmäßig 422 zurück - Custom Error-Handler nötig für konsistente 401-Response
+2. **Pattern-Based Error-Detection**: Nicht nur auf spezifische Keywords verlassen, sondern Pattern-Arrays für robuste Error-Recognition
+3. **Error-Classification**: JWT-Errors haben viele Formen ("segments", "signature", "header") - alle müssen als Auth-Fehler behandelt werden
+4. **Auth-Error-UX**: Konsistenter Flow: JWT-Error → Logout → Redirect zu Login → Toast "Sitzung abgelaufen"
+5. **Backend-Frontend-Consistency**: Error-Handler auf Backend-Seite sollten HTTP-Status-Standards befolgen für erwartbare Frontend-Behandlung
+6. **Comprehensive Error-Patterns**: Error-Detection sollte aktuell UND zukünftig mögliche Error-Messages abdecken
+
+**Betroffene Dateien:**
+- `backend/app.py` (JWT Error-Handler hinzugefügt)
+- `frontend/src/api/client.js` (isJWTErrorMessage() Helper + erweiterte Detection)
 
 ---
 
