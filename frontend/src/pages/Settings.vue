@@ -249,7 +249,7 @@
 
                 <button
                   type="submit"
-                  class="zen-btn zen-btn-filled"
+                  class="zen-btn"
                   :disabled="!canSubmitPassword || isChangingPassword"
                 >
                   {{ isChangingPassword ? 'Wird geändert...' : 'Passwort ändern' }}
@@ -352,7 +352,7 @@
                   <p class="api-key-info">
                     Erstellen Sie einen API Key, um die Chrome Extension mit Ihrem Konto zu verbinden.
                   </p>
-                  <button @click="generateKey" class="zen-btn zen-btn-filled" :disabled="isGeneratingKey">
+                  <button @click="generateKey" class="zen-btn" :disabled="isGeneratingKey">
                     {{ isGeneratingKey ? 'Wird generiert...' : 'Neuen Key generieren' }}
                   </button>
                 </div>
