@@ -221,9 +221,34 @@
 
           <!-- Score Display -->
           <div class="score-display">
-            <div class="score-circle" :class="scoreClass">
-              <span class="score-value">{{ result.score }}</span>
-              <span class="score-label">Score</span>
+            <div class="score-ring-container" :class="scoreClass">
+              <svg class="score-ring" viewBox="0 0 120 120">
+                <!-- Background circle -->
+                <circle
+                  class="ring-background"
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke-width="8"
+                />
+                <!-- Progress circle -->
+                <circle
+                  class="ring-progress"
+                  cx="60"
+                  cy="60"
+                  r="52"
+                  fill="none"
+                  stroke-width="8"
+                  stroke-linecap="round"
+                  :stroke-dasharray="circumference"
+                  :stroke-dashoffset="progressOffset"
+                />
+              </svg>
+              <div class="score-ring-content">
+                <span class="score-value">{{ result.score }}</span>
+                <span class="score-label">Score</span>
+              </div>
             </div>
             <p class="score-description">{{ scoreDescription }}</p>
           </div>
@@ -383,6 +408,15 @@ const scoreDescription = computed(() => {
   if (score >= 75) return 'Sehr gute Übereinstimmung! Dein Lebenslauf passt gut zur Stelle.'
   if (score >= 50) return 'Gute Basis vorhanden. Mit einigen Anpassungen kannst du deinen Score verbessern.'
   return 'Es gibt einige wichtige Keywords die fehlen. Optimiere deinen Lebenslauf für diese Stelle.'
+})
+
+// Progress ring calculations
+const circumference = computed(() => 2 * Math.PI * 52) // 2πr where r=52
+
+const progressOffset = computed(() => {
+  if (!result.value) return circumference.value
+  const score = result.value.score
+  return circumference.value - (score / 100) * circumference.value
 })
 
 const hasCategory = (category) => {
@@ -804,7 +838,7 @@ onMounted(() => {
 }
 
 /* ========================================
-   SCORE DISPLAY
+   SCORE DISPLAY - Progress Ring
    ======================================== */
 .score-display {
   text-align: center;
@@ -813,50 +847,70 @@ onMounted(() => {
   border-bottom: 1px solid var(--color-border-light);
 }
 
-.score-circle {
+.score-ring-container {
+  position: relative;
   width: 140px;
   height: 140px;
-  border-radius: 50%;
+  margin: 0 auto var(--space-lg);
+}
+
+.score-ring {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.ring-background {
+  stroke: var(--color-washi-aged);
+}
+
+.ring-progress {
+  transition: stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Score colors */
+.score-ring-container.score-high .ring-progress {
+  stroke: var(--color-koke);
+}
+
+.score-ring-container.score-medium .ring-progress {
+  stroke: #c9a227;
+}
+
+.score-ring-container.score-low .ring-progress {
+  stroke: #b45050;
+}
+
+.score-ring-content {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  margin: 0 auto var(--space-lg);
-  border: 4px solid;
-  transition: all var(--transition-base);
-}
-
-.score-circle.score-high {
-  border-color: var(--color-koke);
-  background: rgba(122, 139, 110, 0.1);
-}
-
-.score-circle.score-medium {
-  border-color: #c9a227;
-  background: rgba(201, 162, 39, 0.1);
-}
-
-.score-circle.score-low {
-  border-color: #b45050;
-  background: rgba(180, 80, 80, 0.1);
 }
 
 .score-value {
   font-family: var(--font-display);
-  font-size: 3rem;
+  font-size: 2.5rem;
   font-weight: 600;
   line-height: 1;
 }
 
-.score-high .score-value {
+.score-high .score-value,
+.score-ring-container.score-high .score-value {
   color: var(--color-koke);
 }
 
-.score-medium .score-value {
+.score-medium .score-value,
+.score-ring-container.score-medium .score-value {
   color: #c9a227;
 }
 
-.score-low .score-value {
+.score-low .score-value,
+.score-ring-container.score-low .score-value {
   color: #b45050;
 }
 
@@ -1326,13 +1380,13 @@ onMounted(() => {
     grid-template-columns: 1fr;
   }
 
-  .score-circle {
+  .score-ring-container {
     width: 120px;
     height: 120px;
   }
 
   .score-value {
-    font-size: 2.5rem;
+    font-size: 2rem;
   }
 
   .suggestion-item {
