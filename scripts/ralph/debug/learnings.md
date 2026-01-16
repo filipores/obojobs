@@ -4,6 +4,115 @@ Diese Datei enthält Erkenntnisse aus Debug-Sessions. Jeder Eintrag dokumentiert
 
 ---
 
+## [2026-01-16] - BUG-018: Route /applications/:id/mock-interview zeigt leere Seite
+
+**Problem:** Die Route `/applications/6/mock-interview` zeigte eine leere main-Section ohne Inhalte oder Fehlermeldungen, wenn eine ungültige Application-ID verwendet wurde.
+
+**Root Cause:** Fehlende defensive Programmierung bei Route-Parameter-Validierung:
+- `applicationId` wurde aus `route.params.id` ohne Validierung extrahiert
+- Bei ungültigen IDs (nicht-numerisch, undefined) entstanden JavaScript-Fehler
+- Keine Error-States für Benutzer-Feedback bei fehlgeschlagenen API-Calls
+- Router-Links verwendeten ungeprüfte Template-Interpolation
+
+**Fix:** Umfassende Error-Handling und Validation:
+```js
+// Application-ID Validation in onMounted
+if (!applicationId.value || isNaN(parseInt(applicationId.value))) {
+  error.value = 'Ungültige Bewerbungs-ID'
+  loading.value = false
+  return
+}
+
+// Error-State im Template
+<section v-if="error" class="empty-state">
+  <div class="empty-card zen-card">
+    <h2>Fehler beim Laden</h2>
+    <p>{{ error }}</p>
+    <router-link to="/applications" class="zen-btn zen-btn-ai">
+      Zurück zu Bewerbungen
+    </router-link>
+  </div>
+</section>
+
+// Defensive Router-Links
+:to="applicationId ? `/applications/${applicationId}/interview` : '/applications'"
+```
+
+**Learning:**
+1. **Route Parameter Validation**: Immer URL-Parameter validieren bevor sie verwendet werden
+2. **Error State Design**: Jede SPA-Seite braucht Loading, Error und Empty States
+3. **Template Safety**: Router-Links mit Template-Interpolation brauchen Safeguards
+4. **User Experience**: Niemals leere Seiten - immer Feedback oder Redirect
+5. **Defensive Programming**: Ungültige IDs sollten graceful behandelt werden, nicht zu JS-Fehlern führen
+
+**Code Quality:** 71 Tests bestehen, build erfolgreich, robuste Error-Handling ohne Over-Engineering.
+
+---
+
+## [2026-01-16] - BUG-032: Button-Style Inkonsistenz auf Settings-Seite
+
+**Problem:** Die Buttons "Passwort ändern" und "Neuen Key generieren" auf der Settings-Seite verwendeten `zen-btn-filled` (solid style) statt `zen-btn` (outline style) wie andere primäre Action-Buttons in der App.
+
+**Root Cause:** Inkonsistente Button-Style-Anwendung zwischen verschiedenen Seitenkategorien:
+- **Authentication Pages** (Login, Register, ResetPassword): Verwenden `zen-btn-filled` für Submit-Buttons
+- **Application Pages** (NewApplication, Applications, etc.): Verwenden `zen-btn` für primäre Actions
+- **Settings Page**: Verwendete fälschlicherweise `zen-btn-filled` wie Authentication Pages
+
+**Fix:** Button-Classes harmonisiert für Settings-Seite:
+```js
+// Vorher
+<button class="zen-btn zen-btn-filled">Passwort ändern</button>
+<button class="zen-btn zen-btn-filled">Neuen Key generieren</button>
+
+// Nachher
+<button class="zen-btn">Passwort ändern</button>
+<button class="zen-btn">Neuen Key generieren</button>
+```
+
+**Learning:**
+1. **Design System Consistency**: Button-Styles sollten nach Kontext gruppiert werden (Auth vs App vs Admin)
+2. **CSS Architecture**: `.zen-btn` = outline (primary), `.zen-btn-filled` = solid (emphasis)
+3. **Style Patterns**: Authentication = high emphasis (filled), Application = medium emphasis (outline)
+4. **Visual Hierarchy**: Filled buttons signalisieren kritische/finale Actions, outline für reguläre Actions
+5. **UX Consistency**: User erwartet gleiche Interaktionsmuster innerhalb derselben App-Sektion
+
+**Code Quality:** 71 Tests bestehen, build erfolgreich, minimal invasive Änderung.
+
+---
+
+## [2026-01-16] - BUG-031: Keine sichtbare Validierungsmeldung bei leerem Login-Formular
+
+**Problem:** Beim Klicken auf "Anmelden" ohne Eingaben erschienen keine sichtbaren Validierungsmeldungen. Nur der Fokus wurde auf das E-Mail-Feld gesetzt, aber keine roten Fehlertexte waren sichtbar.
+
+**Root Cause:** Vue-Validation-Logic Timing-Problem:
+- Validation existierte bereits via `emailError` und `passwordError` computed properties
+- Fehlermeldungen werden nur angezeigt wenn entsprechende `touched` flags gesetzt sind
+- `handleLogin()` führte Validation durch, aber setzte `touched` flags nie auf `true`
+- Ohne `touched = true` bleiben Fehlermeldungen unsichtbar
+
+**Fix:** Pre-Submit-Validation in `handleLogin()`:
+```js
+// Vor der Validation touched-Flags setzen
+emailTouched.value = true
+passwordTouched.value = true
+
+// Dann Validation prüfen
+if (emailError.value || passwordError.value) {
+  return // Prevent submission
+}
+```
+
+**Learning:**
+1. **Vue Form Validation Pattern**: `touched` flags sind essentiell für UX - Fehler erst nach User-Interaction zeigen
+2. **Validation Timing**: Bei Submit-Buttons immer touched-Flags explizit setzen um Fehler sichtbar zu machen
+3. **Defensive UX**: Auch wenn Focus-Management funktioniert, braucht der User visuelle Fehlermeldungen
+4. **Existing Logic Leverage**: Oft ist Validation-Logic schon da, nur die Trigger fehlen
+5. **Two-Stage Validation**: Touched-Flags setzen → Validation prüfen → Submit verhindern wenn ungültig
+
+**Code Quality:** Alle 71 Tests bestehen, npm run build erfolgreich, minimale Änderung ohne Over-Engineering.
+
+---
+
 ## [2026-01-16] - BUG-020: Navigation zeigt eingeloggten Zustand trotz ungültigem Token
 
 **Problem:** Die Navigation zeigte vollen eingeloggten Zustand (Dashboard-Links, Abmelden-Button) obwohl der Token in localStorage ungültig/abgelaufen war.

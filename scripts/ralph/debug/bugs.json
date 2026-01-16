@@ -370,9 +370,13 @@
         "frontend/src/router/index.js",
         "frontend/src/pages/InterviewPrep.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph FLOW-013"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph FLOW-013",
+      "fixedAt": 1737956400.000,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-019",
@@ -655,9 +659,13 @@
       "affectedFiles": [
         "frontend/src/pages/Login.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph UX-CLARITY-008"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph UX-CLARITY-008",
+      "fixedAt": 1737955200.000,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-032",
@@ -673,9 +681,13 @@
       "affectedFiles": [
         "frontend/src/pages/Settings.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph UX-CLARITY-010"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph UX-CLARITY-010",
+      "fixedAt": 1737955800.000,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     }
   ]
 }
