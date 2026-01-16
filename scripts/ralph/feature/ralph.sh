@@ -52,16 +52,9 @@ Optionen:
     -h, --help              Zeige diese Hilfe
     -c, --calls NUM         Max API-Calls pro Stunde (default: $MAX_CALLS_PER_HOUR)
     -t, --timeout MIN       Claude Timeout in Minuten (default: $TIMEOUT_MINUTES)
-    --split                 Split-Screen: links Ralph, rechts Claude (benötigt tmux)
     --status                Zeige aktuellen Status
     --reset-circuit         Reset Circuit Breaker
     --circuit-status        Zeige Circuit Breaker Status
-
-Beispiele:
-    ./ralph.sh                      # Standard-Ausführung
-    ./ralph.sh --calls 30           # Max 30 Calls pro Stunde
-    ./ralph.sh --split              # Split-Screen mit tmux
-    ./ralph.sh --reset-circuit      # Circuit Breaker zurücksetzen
 
 EOF
 }
@@ -82,10 +75,6 @@ while [[ $# -gt 0 ]]; do
         -t|--timeout)
             TIMEOUT_MINUTES="$2"
             shift 2
-            ;;
-        --split)
-            SPLIT_MODE=true
-            shift
             ;;
         --status)
             if [[ -f "$LOG_DIR/status.json" ]]; then
@@ -110,42 +99,6 @@ while [[ $# -gt 0 ]]; do
             ;;
     esac
 done
-
-# ============================================
-# Split Mode (tmux)
-# ============================================
-launch_split_mode() {
-    if ! command -v tmux &>/dev/null; then
-        echo -e "${RED}Error: tmux ist nicht installiert${NC}"
-        echo "Installation: brew install tmux (macOS) oder sudo apt install tmux (Ubuntu)"
-        exit 1
-    fi
-
-    mkdir -p "$SCRIPT_DIR/logs"
-    LIVE_LOG_FILE="$SCRIPT_DIR/logs/claude_live.log"
-    > "$LIVE_LOG_FILE"
-
-    local session_name="ralph-feature-$$"
-    local ralph_cmd="$SCRIPT_DIR/ralph.sh"
-    [[ -n "$MAX_CALLS_PER_HOUR" && "$MAX_CALLS_PER_HOUR" != "50" ]] && ralph_cmd+=" --calls $MAX_CALLS_PER_HOUR"
-    [[ "$TIMEOUT_MINUTES" != "15" ]] && ralph_cmd+=" --timeout $TIMEOUT_MINUTES"
-
-    export RALPH_LIVE_LOG="$LIVE_LOG_FILE"
-    export RALPH_IN_SPLIT_MODE=true
-
-    echo -e "${CYAN}Starte Split-Screen Mode...${NC}"
-
-    tmux new-session -d -s "$session_name" -x 200 -y 50
-    tmux send-keys -t "$session_name" "cd '$PROJECT_ROOT' && RALPH_LIVE_LOG='$LIVE_LOG_FILE' RALPH_IN_SPLIT_MODE=true $ralph_cmd" C-m
-    tmux split-window -h -t "$session_name"
-    tmux send-keys -t "$session_name" "echo -e '${GREEN}═══════════════════════════════════════${NC}' && echo -e '${GREEN}       Claude Live Output${NC}' && echo -e '${GREEN}═══════════════════════════════════════${NC}' && echo '' && tail -f '$LIVE_LOG_FILE'" C-m
-    tmux attach-session -t "$session_name"
-    exit 0
-}
-
-if [[ "$SPLIT_MODE" == "true" && "$RALPH_IN_SPLIT_MODE" != "true" ]]; then
-    launch_split_mode
-fi
 
 # ============================================
 # Validation

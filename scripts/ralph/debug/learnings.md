@@ -4,6 +4,83 @@ Diese Datei enthält Erkenntnisse aus Debug-Sessions. Jeder Eintrag dokumentiert
 
 ---
 
+## [2026-01-16] - BUG-020: Navigation zeigt eingeloggten Zustand trotz ungültigem Token
+
+**Problem:** Die Navigation zeigte vollen eingeloggten Zustand (Dashboard-Links, Abmelden-Button) obwohl der Token in localStorage ungültig/abgelaufen war.
+
+**Root Cause:** Schwache Token-Validierung in `authStore.isAuthenticated()`:
+```js
+// Vorher - nur Existenz-Check
+isAuthenticated() {
+  return !!this.token
+}
+```
+
+**Fix:** Verbesserte `isAuthenticated()` mit echter JWT-Validierung:
+- Strukturelle JWT-Prüfung (3 Teile)
+- Payload-Dekodierung mit `window.atob()`
+- Expiration-Check basierend auf `exp` claim
+- Automatische State-Bereinigung bei ungültigen Tokens
+- Neue `clearAuthState()` Hilfsmethode
+
+**Learning:**
+1. **Frontend JWT Validation**: Client-seitige Token-Validierung ist kritisch für UX - nicht nur auf API-Responses verlassen
+2. **JWT Structure**: `token.split('.')` + `atob()` ermöglicht einfache Browser-basierte Token-Inspektion
+3. **Expiry Math**: `exp` claim ist in Sekunden, `Date.now()` in Millisekunden - `exp * 1000 < Date.now()`
+4. **Error Handling**: Try-catch um Token-Parsing, da ungültige Tokens JSON.parse() zum Crash bringen
+5. **State Consistency**: Bei Token-Invalidierung immer User + Token + localStorage bereinigen
+
+**Code Quality:** Alle Tests bestehen, ESLint clean (nur existing warnings bleiben).
+
+---
+
+## [2026-01-16] - BUG-021: Backend gibt 422 statt 401 für ungültige Tokens
+
+**Problem:** Flask-JWT-Extended gab 422 Unprocessable Entity zurück statt 401 Unauthorized für ungültige JWT-Tokens wie "invalid-token" oder malformierte Tokens.
+
+**Root Cause:** Flask-JWT-Extended Library Problem:
+- JWT-Parsing-Fehler werden VOR Custom Error Handlers abgefangen
+- Die Library gibt direkte 422 Responses zurück für Token-Strukturfehler
+- Standard-Error-Handler wie `@jwt.invalid_token_loader` greifen nur bei bereits geparsten Tokens
+- Fehler wie "Not enough segments", "Invalid header string" werden nicht abgefangen
+
+**Fix:** Middleware-Lösung mit `@app.after_request`:
+```python
+@app.after_request
+def after_request(response):
+    # Intercepte 422 JSON-Responses
+    if response.status_code == 422 and 'application/json' in response.content_type:
+        try:
+            response_data = json.loads(response.data.decode('utf-8'))
+            error_msg = response_data.get('msg', '')
+
+            # JWT-Fehler-Patterns erkennen
+            jwt_error_patterns = ['Not enough segments', 'Invalid header string', ...]
+            for pattern in jwt_error_patterns:
+                if pattern in error_msg:
+                    # Neuen 401 Response erstellen
+                    return Response(json.dumps({"error": "Ungültiger Token"}), status=401)
+        except:
+            pass
+    return response
+```
+
+**Learning:**
+1. **Flask-JWT-Extended Limitation**: Standard Error Handlers reichen nicht für Parsing-Fehler
+2. **Middleware Pattern**: `@app.after_request` ist mächtiger als Error Handlers für Library-interne Fehler
+3. **Response Interception**: JSON Response Data kann nach Library-Verarbeitung noch modifiziert werden
+4. **Error Pattern Matching**: Liste häufiger JWT-Fehler hilft bei umfassendem Error Handling
+5. **Status Code Consistency**: 401 für alle Authentication-Fehler verbessert API-Konsistenz
+
+**Testing:** Validiert mit curl:
+- `Authorization: Bearer invalid-token` → 401 ✅
+- `Authorization: Bearer not.enough.segments` → 401 ✅
+- Kein Authorization Header → 401 ✅ (bleibt unverändert)
+
+**Code Quality:** 288 Tests bestehen, Ruff checks clean, Frontend Build erfolgreich.
+
+---
+
 ## [2026-01-16] - BUG-026: Fehlende 'Konto löschen' Funktion (DSGVO-Compliance)
 
 **Problem:** Die Settings-Seite hatte zwar bereits eine "Gefahrenzone" mit einem "Konto löschen" Button, aber die Implementierung war nur ein Platzhalter der User zum Support-Kontakt verwies.
@@ -557,6 +634,164 @@ Wenn keine Daten vorhanden waren oder der API-Call fehlschlug, wurde die gesamte
 6. **Testing-Viewports**: Mobile-Tests bei verschiedenen Breakpoints (375px, 480px, 768px) zeigen Layout-Probleme auf
 
 **Betroffene Dateien:** `frontend/src/App.vue` (383 neue Zeilen: Hamburger-Button, Sidebar-Component, Mobile-CSS)
+
+---
+
+## [2026-01-16] - BUG-013: Einstellungen und Abmelden auf Mobile nicht zugänglich
+
+**Problem:** Auf sehr kleinen Mobile-Viewports (375x667) waren Settings-Icon und Logout-Button in der Top-Navigation nicht erreichbar oder zu klein/überlappend dargestellt.
+
+**Root Cause:** Unoptimiertes Responsive Layout bei extremen Mobile-Sizes:
+- **Layout-Overflow**: Bei 375px Viewport-Breite hatten alle Navigation-Elemente (Brand, Hamburger, Subscription-Display, Theme-Toggle, Settings, Logout) zu wenig Platz
+- **CSS Media Queries**: Nur bis max-width: 480px definiert, aber keine spezifische Behandlung für ≤375px
+- **Nav-Actions-Spacing**: Bei kleinen Screens waren Gaps zu groß und Icons möglicherweise überlappend
+- **Alternative Access**: Mobile Sidebar hatte bereits Settings/Logout, aber diese waren evtl. nicht für User sichtbar bei Navigation-Overflow
+
+**Fix:**
+1. **Responsive Optimization**: Neue Media Query für ≤375px hinzugefügt
+2. **Tighter Spacing**: Nav-actions gap von space-sm auf 2px reduziert bei sehr kleinen Screens
+3. **Icon-Size Reduction**: Nav-icons von 36px auf 32px verkleinert bei ≤375px
+4. **Subscription-Display Optimization**: min-width: 0 und kleinere Schrift für besseres Flex-Verhalten
+5. **Layout-Protection**: flex-shrink: 0 und min-width: fit-content für nav-actions um Overflow zu verhindern
+
+**Learning:**
+1. **Extreme Mobile Testing**: Standard Mobile (480px) ist nicht genug - auch 375px und 320px testen für moderne Smartphones
+2. **Nav-Element-Priority**: Bei Platz-Konflikt haben Settings/Logout höhere Priorität als große Subscription-Display
+3. **Flex-Layout-Robustness**: min-width: 0 und flex-shrink Controls verhindern unerwartetes Layout-Verhalten bei kleinen Screens
+4. **Alternative-Access-Paths**: Mobile Sidebar als Backup-Navigation ist wichtig wenn Top-Nav überfüllt wird
+5. **Progressive Space-Reduction**: Bei verschiedenen Breakpoints schrittweise Gap/Padding/Icon-Sizes reduzieren statt alles auf einmal zu verstecken
+6. **Layout-Testing**: Visual Testing bei verschiedenen Viewport-Größen deckt solche Probleme vor Production auf
+
+**Betroffene Dateien:** `frontend/src/App.vue` (Responsive CSS für ≤375px hinzugefügt, nav-actions Layout-Protection)
+
+---
+
+## [2026-01-16] - BUG-014: Enter-Taste sendet Formular auf /new-application nicht ab
+
+**Problem:** Die Enter-Taste im URL-Eingabefeld auf der /new-application Seite löste nicht das Laden der Stellenanzeige aus. User mussten manuell auf den "Stellenanzeige laden" Button klicken.
+
+**Root Cause:** Fehlende Keyboard-Event-Behandlung im URL-Input:
+- **URL-Input-Field**: Hatte kein `@keydown.enter` Event-Handler (Zeile 21-32)
+- **Form-Structure**: Kein `<form>` Element um Standard-Submit-Verhalten zu ermöglichen
+- **Button-Only-Activation**: "Stellenanzeige laden" wurde nur durch Click ausgelöst, nicht durch Enter
+- **A11Y-Gap**: Keine Tastatur-Zugänglichkeit für häufig verwendete Primär-Action
+
+**Fix:**
+1. **Event-Handler hinzugefügt**: `@keydown.enter="onUrlEnterPressed"` zum URL-Input
+2. **Validation-Logic**: `onUrlEnterPressed()` prüft URL-Validierung, Loading-State und Preview-Status
+3. **Progressive Enhancement**: Enter-Taste aktiviert nur bei gültiger URL (`urlValidation.isValid === true`)
+4. **Prevent-Default**: `event.preventDefault()` verhindert unerwünschtes Form-Submit-Verhalten
+
+**Learning:**
+1. **Keyboard-A11Y**: Primäre Actions sollten sowohl mit Maus als auch Tastatur ausführbar sein
+2. **Enter-Key-Convention**: User erwarten Enter-Taste bei Input-Feldern für Formular-Submission
+3. **Validation-Before-Action**: Enter-Key-Handler sollte dieselbe Validation wie Button-Click verwenden
+4. **State-Awareness**: Event-Handler müssen Loading/Generating-States respektieren um Race-Conditions zu vermeiden
+5. **UX-Consistency**: Keyboard- und Mouse-Interaktionen sollten identische Validation/Feedback haben
+
+**Code-Implementation:**
+```javascript
+// Handle Enter key press in URL input
+const onUrlEnterPressed = (event) => {
+  // Only proceed if URL is valid and not already loading
+  if (url.value && urlValidation.value.isValid === true && !loading.value && !generating.value && !previewData.value) {
+    event.preventDefault()
+    loadPreview()
+  }
+}
+```
+
+**Betroffene Dateien:** `frontend/src/pages/NewApplication.vue` (Zeile 32: Event-Handler + Zeile 720-726: Handler-Function)
+
+---
+
+## [2026-01-16] - BUG-015: Escape-Taste schließt Modals nicht
+
+**Problem:** Modals in der Anwendung konnten nicht mit der Escape-Taste geschlossen werden. User mussten das X-Icon klicken oder außerhalb des Modals klicken.
+
+**Root Cause:** Fehlende Keyboard-Event-Handler für Modal-Komponenten:
+- **SkillsOverview.vue**: "Skill hinzufügen/bearbeiten" Modal hatte keinen Escape-Key-Handler
+- **JobRecommendations.vue**: "Job analysieren" Modal hatte keinen Escape-Key-Handler
+- **Standard-Accessibility**: Escape-Taste ist Standard-Erwartung für Modal-Navigation
+- **Event-Listener-Management**: Keine dynamische Registrierung/Deregistrierung von keydown-Events
+
+**Fix:**
+1. **Event-Handler implementiert**: `handleEscapeKey(event)` function für beide Komponenten
+2. **Dynamic Listener Management**: `watch()` für Modal-State mit addEventListener/removeEventListener
+3. **Conditional Logic**: Handler prüft sowohl Escape-Key als auch Modal-State vor Aktion
+4. **Vue Composition API**: Import von `watch` hinzugefügt für reaktive Event-Listener
+
+**Implementation Details:**
+```javascript
+// Escape key handler for modal
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape' && showModal.value) {
+    closeModal()
+  }
+}
+
+// Watch for modal state changes to add/remove escape key listener
+watch(showModal, (isModalOpen) => {
+  if (isModalOpen) {
+    document.addEventListener('keydown', handleEscapeKey)
+  } else {
+    document.removeEventListener('keydown', handleEscapeKey)
+  }
+})
+```
+
+**Learning:**
+1. **Modal-A11Y-Standards**: Escape-Taste ist Essential für barrierefreie Modal-Navigation
+2. **Event-Listener-Lifecycle**: Event-Listener müssen mit Component-State synchronisiert sein - bei Modal-Open hinzufügen, bei Close entfernen
+3. **Memory-Leak-Prevention**: removeEventListener ist wichtig um Event-Handler nicht zu akkumulieren
+4. **Conditional-Event-Handling**: Handler sollten sowohl Key-Type als auch Application-State prüfen
+5. **Vue-Watch-Pattern**: `watch()` ist ideal für Event-Listener-Management basierend auf reaktiven State-Änderungen
+6. **Cross-Component-Consistency**: Alle Modals in der App sollten dasselbe Keyboard-Verhalten haben
+
+**Betroffene Dateien:**
+- `frontend/src/components/SkillsOverview.vue` (Escape-Handler für Skill-Modal)
+- `frontend/src/components/JobRecommendations.vue` (Escape-Handler für Job-Analyse-Modal)
+
+---
+
+## [2026-01-16] - BUG-022: Error-Toast 'Ungültige Eingabe' erscheint bei jedem Seitenwechsel
+
+**Problem:** Beim Navigieren zu Bewerbungen/Templates/Dokumente erschien kurzzeitig ein störender Error-Toast "✗ Ungültige Eingabe", auch wenn die Seiten korrekt geladen wurden und leere States anzeigten.
+
+**Root Cause:** Zu aggressive automatische Toast-Nachrichten im API Client:
+- **Load-Funktionen**: `loadApplications()`, `loadDocuments()`, `loadTemplates()` verwenden normale `api.get()` calls
+- **API-Interceptor**: `client.js:68-75` fängt ALLE 422-Fehler ab und zeigt automatisch Toast-Nachrichten
+- **Backend-Response**: Bei leeren Datasets (keine Bewerbungen/Templates/Dokumente) gibt Backend 422 zurück
+- **False-Positive**: Leere States sind kein "Ungültige Eingabe" Error, sondern normaler Zustand
+- **UX-Problem**: User werden mit unnötigen Error-Toasts bei legitimem "no data found" Zustand belästigt
+
+**Fix:**
+1. **Silent API-Calls**: Load-Funktionen verwenden nun `api.silent.get()` statt `api.get()`
+   - `loadApplications()` → `api.silent.get('/applications', ...)`
+   - `loadDocuments()` → `api.silent.get('/documents')`
+   - `loadTemplates()` → `api.silent.get('/templates')`
+   - `checkLebenslauf()` → `api.silent.get('/documents')`
+2. **Suppressierte Toasts**: `api.silent` setzt `suppressToast: true` Config-Parameter
+3. **Selective Error-Handling**: Nur User-Actions (Form-Submits, Button-Clicks) zeigen automatische Error-Toasts
+
+**Learning:**
+1. **Silent System Operations**: Load-/Init-Funktionen sollten silent sein - nur User-Actions brauchen Feedback
+2. **API-Error-Classification**: Unterscheidung zwischen "System-Requests" (silent) und "User-Actions" (mit Toast)
+3. **Empty-State vs Error-State**: Leere Datasets sind nicht dasselbe wie Validation-Fehler
+4. **UX-Noise-Reduction**: Automatische Error-Handler müssen zwischen verschiedenen Fehler-Kontexten unterscheiden
+5. **API-Client-Architecture**: `api.silent` Pattern ermöglicht selective Toast-Suppression ohne globale Interceptor-Änderungen
+6. **Error-Handling-Scope**: Global-Interceptor für User-facing Errors, Component-Level für System-Errors
+
+**API-Pattern-Changes:**
+- **System/Load Calls**: `api.silent.get()`, `api.silent.post()` für automatische Background-Operationen
+- **User Actions**: `api.get()`, `api.post()` für Formular-Submits und Button-Actions
+- **Granular Control**: Components können bei Bedarf weiterhin eigene Error-Handling haben
+
+**Betroffene Dateien:**
+- `frontend/src/pages/Applications.vue:839` (loadApplications mit api.silent)
+- `frontend/src/pages/Documents.vue:442` (loadDocuments mit api.silent)
+- `frontend/src/pages/Templates.vue:503` (loadTemplates mit api.silent)
+- `frontend/src/pages/Templates.vue:512` (checkLebenslauf mit api.silent)
 
 ---
 

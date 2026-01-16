@@ -161,6 +161,27 @@
         <p>Lade Bewerbungen...</p>
       </div>
 
+      <!-- Error State -->
+      <div v-else-if="loadError" class="error-state">
+        <div class="error-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <h3>Fehler beim Laden der Bewerbungen</h3>
+        <p>Es gab ein technisches Problem beim Laden Ihrer Bewerbungen. Bitte versuchen Sie es erneut.</p>
+        <button @click="loadApplications()" class="zen-btn zen-btn-ai">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="23 4 23 10 17 10"/>
+            <polyline points="1 20 1 14 7 14"/>
+            <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
+          </svg>
+          Erneut versuchen
+        </button>
+      </div>
+
       <!-- Applications Grid -->
       <section v-else-if="filteredApplications.length > 0" class="applications-section">
         <!-- Grid View -->
@@ -703,6 +724,7 @@ const router = useRouter()
 const applications = ref([])
 const selectedApp = ref(null)
 const loading = ref(false)
+const loadError = ref(false)
 const searchQuery = ref('')
 const filterStatus = ref('')
 const filterFirma = ref('')
@@ -835,6 +857,7 @@ const visiblePages = computed(() => {
 
 const loadApplications = async (page = 1) => {
   loading.value = true
+  loadError.value = false
   try {
     const { data } = await api.silent.get('/applications', {
       params: {
@@ -846,8 +869,11 @@ const loadApplications = async (page = 1) => {
     currentPage.value = data.page || 1
     totalPages.value = data.pages || 1
     totalApplications.value = data.total || 0
+    loadError.value = false
   } catch (err) {
     console.error('Fehler beim Laden:', err)
+    loadError.value = true
+    applications.value = []
   } finally {
     loading.value = false
   }
@@ -1497,6 +1523,38 @@ watch(viewMode, (newMode) => {
 .card-actions {
   display: flex;
   gap: var(--space-sm);
+}
+
+/* ========================================
+   ERROR STATE
+   ======================================== */
+.error-state {
+  text-align: center;
+  padding: var(--space-ma-xl) 0;
+}
+
+.error-icon {
+  color: var(--color-terra);
+  margin: 0 auto var(--space-lg);
+}
+
+.error-state h3 {
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: var(--space-sm);
+  color: var(--color-sumi);
+}
+
+.error-state p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-lg);
+  line-height: var(--leading-relaxed);
+}
+
+.error-state .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
 }
 
 /* ========================================

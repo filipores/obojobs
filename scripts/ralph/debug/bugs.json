@@ -254,9 +254,13 @@
       "affectedFiles": [
         "frontend/src/App.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph MOBILE-001"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph MOBILE-001",
+      "fixedAt": 1768560034.928305,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-014",
@@ -273,9 +277,13 @@
       "affectedFiles": [
         "frontend/src/pages/NewApplication.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph A11Y-001"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph A11Y-001",
+      "fixedAt": 1768560662.621929,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-015",
@@ -293,9 +301,13 @@
         "frontend/src/components/SkillsOverview.vue",
         "frontend/src/components/JobRecommendations.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph A11Y-001"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph A11Y-001",
+      "fixedAt": 1768560913.219425,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-016",
@@ -398,12 +410,16 @@
       "expected": "Navigation zeigt ausgeloggten Zustand (keine Dashboard-Links, kein Abmelden-Button)",
       "actual": "Navigation zeigt vollen eingeloggten Zustand mit allen Links und Abmelden-Button",
       "affectedFiles": [
-        "frontend/src/App.vue"
+        "frontend/src/store/auth.js"
       ],
       "rootCause": "Die App prüft nur localStorage auf Token-Existenz, nicht ob der Token noch gültig ist",
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph EDGE-001"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph EDGE-001",
+      "fixedAt": 1768561211.272343,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-021",
@@ -418,9 +434,13 @@
         "backend/app.py"
       ],
       "suggestedFix": "Custom error handlers hinzufügen: @jwt.invalid_token_loader, @jwt.expired_token_loader",
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph EDGE-001"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph EDGE-001",
+      "fixedAt": 1768561746.050743,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-022",
@@ -438,9 +458,15 @@
         "frontend/src/pages/Templates.vue",
         "frontend/src/pages/Documents.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph EDGE-002"
+      "rootCause": "loadApplications(), loadDocuments(), loadTemplates() verwenden reguläre API calls die automatisch Toast bei 422-Fehlern zeigen",
+      "suggestedFix": "Verwende api.silent.get() für load-Funktionen um automatische Toast-Nachrichten bei leeren States zu vermeiden",
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph EDGE-002",
+      "fixedAt": 1768562195.013384,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-023",
@@ -513,7 +539,7 @@
       "fixed": true,
       "fixAttempts": 1,
       "source": "test-ralph UX-CLARITY-006",
-      "fixedAt": 1768559455,
+      "fixedAt": 1768559429.812166,
       "fixedWithModel": "claude-sonnet-4-20250514",
       "usedFallback": false,
       "overEngineeringFlagged": false
