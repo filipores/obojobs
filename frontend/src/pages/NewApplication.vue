@@ -29,6 +29,7 @@
                 }"
                 :disabled="loading || generating"
                 @input="onUrlInput"
+                @keydown.enter="onUrlEnterPressed"
               />
               <!-- Validation Icon -->
               <span v-if="showUrlValidation && urlValidation.isValid === true" class="url-validation-icon url-validation-valid">
@@ -712,6 +713,15 @@ const onUrlInput = () => {
       salary: '',
       description: ''
     }
+  }
+}
+
+// Handle Enter key press in URL input
+const onUrlEnterPressed = (event) => {
+  // Only proceed if URL is valid and not already loading
+  if (url.value && urlValidation.value.isValid === true && !loading.value && !generating.value && !previewData.value) {
+    event.preventDefault()
+    loadPreview()
   }
 }
 
