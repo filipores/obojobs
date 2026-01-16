@@ -166,7 +166,7 @@
               <p class="error-hint">
                 Einige Portale blockieren automatisches Laden.
               </p>
-              <button @click="showManualInput = true" class="fallback-link">
+              <button @click="switchToManualInput" class="fallback-link">
                 Stellentext manuell einfügen
               </button>
             </div>
@@ -388,6 +388,11 @@ const openAnalyzeModal = () => {
   manualCompany.value = ''
   manualTitle.value = ''
   showAnalyzeModal.value = true
+}
+
+const switchToManualInput = () => {
+  showManualInput.value = true
+  analyzeError.value = '' // Clear error message when switching to manual input
 }
 
 const closeAnalyzeModal = () => {
