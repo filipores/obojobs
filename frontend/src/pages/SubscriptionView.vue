@@ -52,7 +52,7 @@
           <div class="plan-features">
             <h4>Enthaltene Features</h4>
             <ul class="features-list">
-              <li v-for="feature in subscription?.plan_details?.features" :key="feature">
+              <li v-for="feature in getCurrentPlanFeatures()" :key="feature">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
@@ -409,6 +409,49 @@ const usagePercentage = computed(() => {
   const { used, limit } = subscription.value.usage
   if (limit === 0) return 0
   return Math.min(Math.round((used / limit) * 100), 100)
+})
+
+const getCurrentPlanFeatures = computed(() => {
+  // First try to get features from subscription plan_details
+  if (subscription.value?.plan_details?.features?.length) {
+    return subscription.value.plan_details.features
+  }
+
+  // Fallback: get features from the current plan based on plan name
+  const currentPlan = subscription.value?.plan || 'free'
+  const planFromAvailable = availablePlans.value?.find(plan => plan.plan_id === currentPlan)
+  if (planFromAvailable?.features?.length) {
+    return planFromAvailable.features
+  }
+
+  // Last resort: hardcoded features for the free plan
+  if (currentPlan === 'free') {
+    return [
+      '3 Bewerbungen pro Monat',
+      'Basis-Templates',
+      'PDF Export'
+    ]
+  } else if (currentPlan === 'basic') {
+    return [
+      '20 Bewerbungen pro Monat',
+      'Alle Templates',
+      'PDF Export',
+      'ATS-Optimierung',
+      'E-Mail Support'
+    ]
+  } else if (currentPlan === 'pro') {
+    return [
+      'Unbegrenzte Bewerbungen',
+      'Alle Templates',
+      'PDF Export',
+      'ATS-Optimierung',
+      'Prioritäts-Support',
+      'Erweiterte Analyse'
+    ]
+  }
+
+  // Absolute fallback
+  return ['Keine Features verfügbar']
 })
 
 const getPlanDisplayName = (plan) => {
