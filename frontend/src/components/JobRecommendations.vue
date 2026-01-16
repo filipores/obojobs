@@ -345,7 +345,15 @@ const analyzeJob = async () => {
       await loadStats()
     }
   } catch (error) {
-    analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
+    // Only show component error message for client errors (400/422)
+    // Server errors (500+) are already handled by API client with toast
+    if (error.response?.status >= 500) {
+      // Server error - don't show duplicate error message
+      analyzeError.value = ''
+    } else {
+      // Client error - show specific error message
+      analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
+    }
   } finally {
     analyzing.value = false
   }
@@ -372,7 +380,15 @@ const analyzeManualJob = async () => {
       await loadStats()
     }
   } catch (error) {
-    analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
+    // Only show component error message for client errors (400/422)
+    // Server errors (500+) are already handled by API client with toast
+    if (error.response?.status >= 500) {
+      // Server error - don't show duplicate error message
+      analyzeError.value = ''
+    } else {
+      // Client error - show specific error message
+      analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
+    }
   } finally {
     analyzing.value = false
   }

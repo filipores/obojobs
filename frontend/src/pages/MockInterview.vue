@@ -512,7 +512,7 @@ import api from '../api/client'
 import STARFeedback from '../components/STARFeedback.vue'
 
 const route = useRoute()
-const router = useRouter()
+const _router = useRouter()
 
 const applicationId = computed(() => route.params.id)
 const startQuestionId = computed(() => route.query.questionId)
