@@ -784,6 +784,9 @@ const updateStatus = async (app) => {
     if (index !== -1) {
       applications.value[index].status = app.status
     }
+    if (window.$toast) {
+      window.$toast('Status erfolgreich geändert', 'success')
+    }
   } catch (_e) {
     alert('Fehler beim Aktualisieren')
   }
