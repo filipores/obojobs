@@ -514,7 +514,12 @@ class CompanyResearcher:
                 # Fetch homepage
                 response = self.session.get(website_url, timeout=self.timeout)
                 response.raise_for_status()
-                response.encoding = response.apparent_encoding
+
+                # Fix encoding - prefer UTF-8, fallback to apparent_encoding
+                if response.apparent_encoding and response.apparent_encoding.lower() not in ['ascii', 'none']:
+                    response.encoding = response.apparent_encoding
+                else:
+                    response.encoding = 'utf-8'
 
                 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -533,7 +538,12 @@ class CompanyResearcher:
 
                     about_response = self.session.get(about_url, timeout=self.timeout)
                     if about_response.status_code < 400:
-                        about_response.encoding = about_response.apparent_encoding
+                        # Fix encoding - prefer UTF-8, fallback to apparent_encoding
+                        if about_response.apparent_encoding and about_response.apparent_encoding.lower() not in ['ascii', 'none']:
+                            about_response.encoding = about_response.apparent_encoding
+                        else:
+                            about_response.encoding = 'utf-8'
+
                         about_soup = BeautifulSoup(about_response.text, "html.parser")
 
                         about_info = self._extract_about_info(about_soup, about_url)
@@ -585,6 +595,12 @@ class CompanyResearcher:
             try:
                 response = self.session.get(job_url, timeout=self.timeout)
                 if response.status_code < 400:
+                    # Fix encoding - prefer UTF-8, fallback to apparent_encoding
+                    if response.apparent_encoding and response.apparent_encoding.lower() not in ['ascii', 'none']:
+                        response.encoding = response.apparent_encoding
+                    else:
+                        response.encoding = 'utf-8'
+
                     soup = BeautifulSoup(response.text, "html.parser")
 
                     # Look for company website links in job posting
