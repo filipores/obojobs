@@ -228,6 +228,21 @@ const toggleTheme = () => {
 }
 
 const handleLogin = async () => {
+  // Mark fields as touched to trigger validation display
+  emailTouched.value = true
+  passwordTouched.value = true
+
+  // Check if there are validation errors
+  if (emailError.value || passwordError.value) {
+    // Focus first invalid field for better UX
+    if (emailError.value) {
+      document.getElementById('email')?.focus()
+    } else if (passwordError.value) {
+      document.getElementById('password')?.focus()
+    }
+    return // Don't submit if validation fails
+  }
+
   try {
     loading.value = true
     error.value = ''

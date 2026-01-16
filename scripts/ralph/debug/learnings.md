@@ -795,3 +795,323 @@ watch(showModal, (isModalOpen) => {
 
 ---
 
+## BUG-023: Error State vs Empty State korrekt unterscheiden
+
+**Problem:** Applications-Seite zeigte "Noch keine Bewerbungen" auch bei API-Fehlern (422). User konnten nicht zwischen "keine Daten vorhanden" und "technischer Fehler" unterscheiden.
+
+**Root Cause:** Keine Unterscheidung zwischen "keine Daten" und "API-Fehler":
+- `loadApplications()` hatte keinen Error State - nur console.error() im catch-Block
+- Template zeigte immer Empty State bei `applications.length === 0`
+- User dachten bei API-Fehlern "ich habe keine Bewerbungen" statt "es gibt ein technisches Problem"
+- Fehlende Retry-Option bei temporären API-Problemen
+
+**Fix:** Comprehensive Error State Handling hinzugefügt:
+1. `loadError` reactive State Variable in Applications.vue:706
+2. `loadApplications()` setzt `loadError = true` bei catch + `applications = []` für klaren State
+3. Template verwendet drei States: `v-if="loading"` → `v-else-if="loadError"` → `v-else-if="applications.length > 0"` → `v-else` (Empty)
+4. Error State zeigt Retry-Button mit Reload-Funktionalität + klare Fehlermeldung
+5. CSS-Styling für Error State mit Terra-Color-Scheme (warning-orange) und Retry-Icon
+
+**Template Logic Pattern:**
+```vue
+<!-- Loading State -->
+<div v-if="loading">Loading...</div>
+
+<!-- Error State mit Retry -->
+<div v-else-if="loadError" class="error-state">
+  <div class="error-icon">⚠️ Icon</div>
+  <h3>Fehler beim Laden der Bewerbungen</h3>
+  <p>Es gab ein technisches Problem beim Laden. Bitte versuchen Sie es erneut.</p>
+  <button @click="loadApplications()" class="zen-btn zen-btn-ai">
+    🔄 Erneut versuchen
+  </button>
+</div>
+
+<!-- Data Available -->
+<section v-else-if="applications.length > 0">Show Data</section>
+
+<!-- Empty State -->
+<section v-else class="empty-state">
+  <h3>Noch keine Bewerbungen</h3>
+  <p>Generieren Sie Ihre erste Bewerbung...</p>
+</section>
+```
+
+**Learning:**
+1. **4-State-Pattern für Async Data**: Loading → Error → Data → Empty sind vier verschiedene UI-Zustände
+2. **Error vs Empty Distinction**: Technische Fehler ≠ leere Datasets - brauchen verschiedene User-Experience
+3. **Retry-UX**: Error State sollte IMMER Retry-Möglichkeit bieten für temporäre API-Probleme
+4. **Clear Error-Messages**: "Fehler beim Laden der Bewerbungen" + "technisches Problem" ist klarer als generische Meldungen
+5. **Error-State-Reset**: Bei erneutem Load-Versuch `loadError = false` setzen für korrekten State-Cycle
+6. **Visual-Hierarchy**: Error State mit auffälliger Farbe (Terra-Orange) vs. Empty State mit subtilen Grau-Tönen
+7. **Icon-Usage**: Warning-Icon für Error State vs. Circle-Icon für Empty State - semantische Unterscheidung
+
+**Pattern für andere Pages**: Dashboard, Documents, Templates, etc. sollten dasselbe 4-State-Pattern verwenden.
+
+**Betroffene Dateien:**
+- `frontend/src/pages/Applications.vue:706` (loadError State)
+- `frontend/src/pages/Applications.vue:165-183` (Error State Template)
+- `frontend/src/pages/Applications.vue:1531-1558` (Error State CSS)
+
+---
+
+## [2026-01-16] - BUG-024: Aktions-Button 'Bewerbungen' fehlt in Mobile-Ansicht auf Company Insights
+
+**Problem:** Der 'Bewerbungen' Button in der Company Insights Tabelle war in Mobile-Ansicht (< 480px) komplett unzugänglich. Die Aktions-Spalte wurde ausgeblendet und auch horizontales Scrollen machte sie nicht erreichbar.
+
+**Root Cause:** Naive CSS Media Query Behandlung ohne Mobile-Alternative:
+- **CSS Rule**: `@media (max-width: 480px) { .th-action, .td-action { display: none; } }`
+- **Design-Gap**: Spalte wurde komplett versteckt ohne alternative Darstellung für Mobile
+- **UX-Blackhole**: User hatten keine Möglichkeit, von Company-Insights zu spezifischen Bewerbungen zu navigieren
+- **Responsive-Pattern-Missing**: Keine mobile Darstellung für komplexe Tabellen mit Action-Buttons
+
+**Fix:** Mobile-Button-Integration in Firma-Zelle:
+1. **HTML-Structure**: Button in Firma-Zelle mit flexbox-Layout hinzugefügt:
+   ```html
+   <div class="firma-cell">
+     <span class="firma-name">{{ company.firma }}</span>
+     <button class="zen-btn zen-btn-xs mobile-action-btn">Bewerbungen</button>
+   </div>
+   ```
+
+2. **CSS Mobile-Pattern**:
+   - Desktop: Action-Button bleibt in separater Spalte (rechts)
+   - Mobile: Action-Button wird unter Firma-Name angezeigt
+   - `mobile-action-btn` per default hidden, nur bei ≤480px mit `display: inline-flex !important`
+
+3. **Responsive-Design**:
+   - Action-Spalte bleibt Desktop-sichtbar für Tabellen-Konsistenz
+   - Mobile-Button-Integration ohne Layout-Bruch
+   - Gleiche Funktionalität über alle Breakpoints
+
+**Learning:**
+1. **No-Content-Loss-Principle**: Bei responsive Design darf KEIN Content oder Funktionalität komplett verschwinden
+2. **Mobile-Action-Patterns**: Actions können in Mobile in Inhaltszellen integriert werden (z.B. unter Firma-Name)
+3. **Progressive-Enhancement**: Desktop-Layout bleibt optimal, Mobile bekommt angepasste aber vollständige UX
+4. **CSS-Override-Pattern**: `display: none` → `display: inline-flex !important` für gezieltes Mobile-Override
+5. **Button-Size-Mobile**: `zen-btn-xs` für kompakte Mobile-Buttons in dichten Layouts
+6. **Testing-Multiple-Viewports**: 480px, 375px, 768px sind kritische Mobile-Breakpoints für Navigation/Actions
+
+**Code-Pattern für Tables-with-Actions:**
+```css
+/* Desktop: Separate Action Column */
+.td-action { text-align: right; }
+
+/* Mobile: Integrate Actions in Content Cells */
+.mobile-action-btn { display: none; }
+
+@media (max-width: 480px) {
+  .th-action, .td-action { display: none; }      /* Hide action column */
+  .mobile-action-btn { display: inline-flex !important; }  /* Show integrated button */
+}
+```
+
+**Betroffene Dateien:** `frontend/src/pages/CompanyInsights.vue` (Mobile-Button-Integration + CSS-Responsive-Pattern)
+
+---
+
+## [2026-01-16] - BUG-025: KPI-Statistik-Karten zeigen permanente Skeleton-Loading statt Daten
+
+**Problem:** Das Dashboard zeigte permanent Skeleton-Placeholder-Karten statt KPI-Statistiken. API gab 422-Fehler zurück, aber Error State wurde nicht korrekt angezeigt.
+
+**Root Cause:** Template-Logic Bug in Error State Handling:
+- **Template-Condition**: `v-else-if="!loadError"` für Loading State war zu permissiv
+- **Logic-Gap**: Wenn `loadError = true` UND `stats = null`, wurde weder Loading noch Error State gezeigt
+- **Result**: Permanent sichtbare Skeleton-Cards ohne Daten oder Error-Feedback
+- **Missing CSS**: Error State Templates verwendeten CSS-Klassen die nicht definiert waren
+
+**Fix:**
+1. **Template-Logic Correction**: `v-else-if="!loadError"` → `v-else-if="!loadError && !stats"`
+   - Loading State nur wenn KEIN Error UND KEINE Daten vorhanden
+   - Error State wird bei `loadError = true` über `v-else` korrekt angezeigt
+
+2. **Silent API Usage**: `api.get('/stats')` → `api.silent.get('/stats')`
+   - Verhindert automatische Toast-Nachrichten bei API-Fehlern
+   - Ermöglicht eigene Error State UI statt disruptive Toasts
+
+3. **Complete Error State CSS**:
+   - `.loading-error`, `.loading-error-icon`, `.loading-error-message`, `.loading-error-retry`
+   - Grid-spanning Layout (`grid-column: 1 / -1`)
+   - Zen-styled Retry-Button mit Hover-States
+
+**Template-Logic-Pattern (3-State-System):**
+```vue
+<!-- Data Available -->
+<div v-if="stats" class="stats-grid">Show Data</div>
+
+<!-- Loading State: Kein Error UND keine Daten -->
+<div v-else-if="!loadError && !stats" class="stats-grid">Skeleton Loading</div>
+
+<!-- Error State: Bei loadError = true -->
+<div v-else class="loading-error">
+  <ErrorIcon />
+  <p>Statistiken konnten nicht geladen werden</p>
+  <button @click="retryLoadStats">Erneut versuchen</button>
+</div>
+```
+
+**Learning:**
+1. **3-State-Logic-Precision**: Data/Loading/Error States brauchen präzise Boolean-Logic - nicht nur `!error` sondern `!error && !data`
+2. **Template-v-if-Chain**: Bei if/else-if/else-Ketten alle State-Kombinationen durchdenken (error+data, error+no-data, no-error+data, no-error+no-data)
+3. **Silent-API-for-Background-Loads**: Dashboard/Stats-Loading sollte keine Toasts zeigen - nur User-Actions brauchen immediate Feedback
+4. **CSS-Template-Sync**: Wenn Template CSS-Klassen verwendet, müssen diese definiert sein - nicht nur HTML ohne Styling
+5. **Error-State-UX**: Retry-Button ist essentiell bei API-Error States - User braucht Möglichkeit zur Wiederholung
+6. **Grid-Layout-Errors**: Error State in Grid-Layout braucht `grid-column: 1 / -1` um alle Spalten zu spannen
+
+**Technical Implementation:**
+- Loading State wird NUR bei `!loadError && !stats` gezeigt
+- `api.silent.get()` verhindert Toast-Pollution bei System-Calls
+- Error State hat vollständiges CSS für konsistente UX
+- Retry-Button setzt `stats = null` vor erneutem API-Call für korrekten Loading-State
+
+**Betroffene Dateien:** `frontend/src/pages/Dashboard.vue` (Template-Logic + Error-State-CSS + Silent-API)
+
+---
+
+## BUG-027: Feature-Liste des aktuellen Plans ist leer (16.01.2026)
+
+**Problem:**
+Subscription-Seite zeigte leere Feature-Liste, weil `subscription.plan_details.features` nicht reliable geladen wurde. User konnte nicht sehen, was in ihrem Plan enthalten ist.
+
+**Root Cause:**
+- Single-Point-of-Failure: Template verließ sich nur auf eine Datenquelle (`subscription?.plan_details?.features`)
+- Keine Fallbacks bei API-Datenstructur-Änderungen oder Lade-Fehlern
+- Hardcoded Features in Backend waren korrekt, aber Frontend-Access war fragil
+
+**Fix:**
+```vue
+// Vorher: Direkte Binding ohne Fallback
+<li v-for="feature in subscription?.plan_details?.features">
+
+// Nachher: Multi-Layer-Fallback-System
+<li v-for="feature in getCurrentPlanFeatures()">
+```
+
+**Learning:**
+1. **Multi-Layer-Fallback-Strategy**: Bei kritischen UI-Elementen immer mehrere Datenquellen vorsehen
+2. **Plan-Data-Redundancy**: Plan-Features sollten von mehreren Quellen (API-Response, availablePlans, hardcoded) abrufbar sein
+3. **Graceful-Degradation**: Auch bei vollständigem API-Fail sollte Basic-Info (Plan-Features) anzeigbar bleiben
+4. **Computed-Properties-for-Complex-Fallbacks**: Komplexe if/else-Logik gehört in Computed Properties, nicht ins Template
+
+**Technical Implementation:**
+- Computed Property `getCurrentPlanFeatures()` mit 4-stufigem Fallback
+- Primär: `subscription.plan_details.features` (API-Response)
+- Sekundär: `availablePlans.find().features` (Plan-Lookup)
+- Tertiär: Hardcoded per Plan-Type (free/basic/pro)
+- Quartär: Error-Message ("Keine Features verfügbar")
+
+**Betroffene Dateien:** `frontend/src/pages/SubscriptionView.vue` (Template-Binding + Computed-Property)
+
+---
+
+## BUG-028: Keine Upgrade-Optionen oder Plan-Vergleich sichtbar (16.01.2026)
+
+**Problem:**
+Plan-Vergleichssektion wurde nicht angezeigt wenn `availablePlans` leer war (API-Fehler/Ladeprobleme). User konnten keine anderen Pläne sehen oder upgraden.
+
+**Root Cause:**
+- Fragile UI-Bedingung: `v-if="subscription && availablePlans.length > 0"`
+- Single-Point-of-Failure: Komplette Sektion versteckt bei API-Problemen
+- Keine Fallback-Strategie für kritische Business-Features (Plan-Verkauf)
+
+**Fix:**
+```vue
+// Vorher: Fragile API-abhängige Bedingung
+v-if="subscription && availablePlans.length > 0"
+
+// Nachher: Robuste Bedingung + Fallback-System
+v-if="subscription"
++ getAvailablePlans() computed property mit API + hardcoded Fallback
+```
+
+**Learning:**
+1. **Business-Critical-UI-Never-Hide**: Revenue-generierenden Features (Plan-Verkauf) nie durch API-Fehler verstecken
+2. **Dual-Source-Strategy**: Für Plan-Daten sowohl API als auch hardcoded Fallback vorhalten
+3. **UI-Condition-Review**: `array.length > 0` Bedingungen sind fragil - besser mit Fallback-Daten arbeiten
+4. **Always-Show-Core-Features**: Upgrade-Buttons und Plan-Vergleich sollten immer sichtbar sein
+
+**Technical Implementation:**
+- `getAvailablePlans()` computed property mit API-Daten + Hardcoded-Fallback
+- Entfernte `availablePlans.length > 0` Bedingung aus Template
+- Plan-Vergleich wird immer angezeigt (auch bei API-Fehlern)
+- 3 komplette Plan-Definitionen als Fallback (free/basic/pro)
+
+**Betroffene Dateien:** `frontend/src/pages/SubscriptionView.vue` (Template-Condition + Computed-Fallback)
+
+---
+
+## BUG-029: Stripe Checkout schlägt fehl - Plan nicht konfiguriert (16.01.2026)
+
+**Problem:**
+400 Bad Request "Plan nicht konfiguriert" beim Klick auf Upgrade-Buttons, weil STRIPE_PRICE_BASIC und STRIPE_PRICE_PRO Environment-Variablen nicht gesetzt waren.
+
+**Root Cause:**
+- Missing Environment-Variables: `config.STRIPE_PRICE_BASIC` und `config.STRIPE_PRICE_PRO` waren `None`
+- Hard-Fail ohne Fallback: Code prüfte nur Existenz, keine Development-Alternative
+- Cryptic Error-Message: "Plan nicht konfiguriert" gab keine Hilfestellung
+
+**Fix:**
+```python
+# Vorher: Harter Fehler bei fehlenden Env-Vars
+STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC")  # → None
+
+# Nachher: Mock-IDs als Development-Fallback
+STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC", "price_dev_basic_mock")
+
+# + Benutzerfreundliche Fehlermeldung bei Mock-Usage
+if price_id.startswith("price_dev_"):
+    return jsonify({"error": "Stripe ist im Development-Modus nicht konfiguriert"})
+```
+
+**Learning:**
+1. **Development-Fallbacks-for-External-APIs**: Immer Mock-/Test-Werte für externe Services vorhalten
+2. **Environment-Config-Validation**: Kritische Config-Werte nicht ohne Fallback laden
+3. **User-Friendly-Dev-Messages**: "Development-Modus" statt "nicht konfiguriert" - erklärt warum es nicht funktioniert
+4. **503-vs-400-Error-Codes**: Service Unavailable (503) statt Bad Request (400) für Config-Probleme
+
+**Technical Implementation:**
+- Mock-Price-IDs (`price_dev_basic_mock`, `price_dev_pro_mock`) als config defaults
+- Runtime-Check auf Mock-IDs mit benutzerfreundlicher 503-Fehlermeldung
+- Klare Unterscheidung zwischen User-Fehler (400) und System-Setup-Problem (503)
+
+**Betroffene Dateien:** `backend/config.py` + `backend/routes/subscriptions.py` (Environment-Fallbacks + Error-Handling)
+
+---
+
+## BUG-030: Fehlende Lebenslauf-Warnung vor ATS-Analyse (16.01.2026)
+
+**Problem:**
+User sahen erst NACH dem Klick eine generische Fehlermeldung 'Ungültige Eingabe', anstatt VOR dem Klick eine klare Warnung über den fehlenden Lebenslauf zu bekommen.
+
+**Root Cause:**
+- Unsichere Fallback-Logic: `hasResume = true` als Default + bei API-Fehler
+- API-Error-Catch setzte automatisch `hasResume = true` (Zeile 726)
+- Existierende Warnung-UI wurde durch falsche Variable ausgeblendet
+
+**Fix:**
+```javascript
+// Vorher: Unsichere Defaults
+const hasResume = ref(true) // Assume true until checked
+catch { hasResume.value = true } // Optimistic fallback
+
+// Nachher: Sicherheitsfokussierte Defaults
+const hasResume = ref(false) // Assume false until confirmed (safe default)
+catch { hasResume.value = false } // Pessimistic but safe fallback
+```
+
+**Learning:**
+1. **Security-First-Defaults**: Bei Features mit Voraussetzungen (wie Resume-Upload) immer pessimistische Defaults wählen
+2. **Show-Warning-over-False-Positive**: Lieber eine unnötige Warnung zeigen als kritische Info verstecken
+3. **API-Error-Fallback-Strategy**: Bei Check-APIs sollten Fehler zu restriktivem Zustand führen, nicht zu permissivem
+4. **Silent-API-for-Background-Checks**: `api.silent.get()` für Status-Checks um User-Toast-Spam zu vermeiden
+
+**Technical Implementation:**
+- Initial-State: `hasResume = false` (Warnung wird standardmäßig gezeigt)
+- Error-Fallback: `hasResume = false` (bei API-Fehler bleibt Warnung)
+- Silent-API: Verhindert Toast-Pollution bei Background-Checks
+- Console-Logging: Ermöglicht Debugging ohne User-Störung
+
+**Betroffene Dateien:** `frontend/src/pages/ATSView.vue` (Default-State + Error-Fallback-Logic)
+
+---
+

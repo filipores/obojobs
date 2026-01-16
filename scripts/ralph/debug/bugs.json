@@ -482,9 +482,13 @@
       "affectedFiles": [
         "frontend/src/pages/Applications.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph EDGE-004"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph EDGE-004",
+      "fixedAt": 1768562400.891367,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-024",
@@ -500,9 +504,13 @@
       "affectedFiles": [
         "frontend/src/pages/CompanyInsights.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph FLOW-010"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph FLOW-010",
+      "fixedAt": 1768562693.093687,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-025",
@@ -517,9 +525,13 @@
       "affectedFiles": [
         "frontend/src/pages/Dashboard.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph UX-CLARITY-001"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph UX-CLARITY-001",
+      "fixedAt": 1768563043.055362,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-026",
@@ -557,9 +569,13 @@
       "affectedFiles": [
         "frontend/src/pages/SubscriptionView.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph UX-CLARITY-007"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph UX-CLARITY-007",
+      "fixedAt": 1768563203.755,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-028",
@@ -574,9 +590,13 @@
       "affectedFiles": [
         "frontend/src/pages/SubscriptionView.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph UX-CLARITY-007"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph UX-CLARITY-007",
+      "fixedAt": 1768563551.223,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-029",
@@ -592,9 +612,13 @@
         "backend/routes/subscriptions.py"
       ],
       "rootCause": "STRIPE_PRICE_BASIC und STRIPE_PRICE_PRO Environment-Variablen sind nicht mit echten Stripe Price IDs konfiguriert",
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph FLOW-015"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph FLOW-015",
+      "fixedAt": 1768564087.954,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-030",
@@ -610,9 +634,13 @@
       "affectedFiles": [
         "frontend/src/pages/ATSView.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
-      "source": "test-ralph UX-CLARITY-009"
+      "fixed": true,
+      "fixAttempts": 1,
+      "source": "test-ralph UX-CLARITY-009",
+      "fixedAt": 1768564714.589,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-031",
