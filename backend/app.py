@@ -53,6 +53,19 @@ def create_app():
     def revoked_token_callback(jwt_header, jwt_payload):
         return jsonify({"error": "Token wurde widerrufen"}), 401
 
+    # Handle invalid/expired JWT tokens
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error_string):
+        return jsonify({"error": "Ungültiger Token"}), 401
+
+    @jwt.expired_token_loader
+    def expired_token_callback(jwt_header, jwt_payload):
+        return jsonify({"error": "Token ist abgelaufen"}), 401
+
+    @jwt.unauthorized_loader
+    def missing_token_callback(error_string):
+        return jsonify({"error": "Token fehlt"}), 401
+
     # Initialize rate limiter
     limiter = Limiter(
         app=app,

@@ -1,6 +1,28 @@
 import axios from 'axios'
 import { translateError } from '@/utils/errorTranslations'
 
+// Helper function to detect JWT error messages
+function isJWTErrorMessage(msg) {
+  if (!msg) return false
+
+  const jwtErrorPatterns = [
+    'token',
+    'Not enough segments',
+    'Signature verification failed',
+    'Invalid token',
+    'Expired token',
+    'Token has expired',
+    'Invalid header',
+    'Invalid payload',
+    'jwt',
+    'Bearer'
+  ]
+
+  return jwtErrorPatterns.some(pattern =>
+    msg.toLowerCase().includes(pattern.toLowerCase())
+  )
+}
+
 const api = axios.create({
   baseURL: '/api'
 })
@@ -28,8 +50,10 @@ api.interceptors.response.use(
 
     // 401 Unauthorized or 422 with JWT errors
     // Skip global handling for login route to allow proper error display
-    if (!isLoginRequest && (error.response?.status === 401 ||
-        (error.response?.status === 422 && error.response?.data?.msg?.includes('token')))) {
+    const isJWTError = error.response?.status === 401 ||
+      (error.response?.status === 422 && isJWTErrorMessage(error.response?.data?.msg))
+
+    if (!isLoginRequest && isJWTError) {
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       if (window.$toast && !suppressToast) {
