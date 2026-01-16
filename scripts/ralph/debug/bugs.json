@@ -574,7 +574,7 @@
         "frontend/src/pages/SubscriptionView.vue"
       ],
       "fixed": true,
-      "fixAttempts": 1,
+      "fixAttempts": 2,
       "source": "test-ralph UX-CLARITY-007",
       "fixedAt": 1768563203.755,
       "fixedWithModel": "claude-sonnet-4-20250514",
@@ -688,6 +688,292 @@
       "fixedWithModel": "claude-sonnet-4-20250514",
       "usedFallback": false,
       "overEngineeringFlagged": false
+    },
+    {
+      "id": "BUG-033",
+      "severity": "critical",
+      "title": "Subscription-Seite rendert nicht - getAvailablePlans function fehlt",
+      "description": "Die gesamte Subscription-Seite (/subscription) wird nicht gerendert aufgrund eines JavaScript-Fehlers. Die getAvailablePlans Funktion wird aufgerufen, existiert aber nicht.",
+      "stepsToReproduce": [
+        "Navigiere zu /subscription",
+        "Seite bleibt komplett leer (nur Header/Footer sichtbar)",
+        "Console zeigt TypeError: getAvailablePlans is not a function"
+      ],
+      "expected": "Subscription-Seite sollte Pläne, Preise und Upgrade-Optionen anzeigen",
+      "actual": "Leere main-Sektion, JavaScript-Fehler verhindert Rendering der gesamten Komponente",
+      "affectedFiles": [
+        "frontend/src/pages/SubscriptionView.vue:34"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T16:31:12+01:00",
+      "source": "explore-ralph",
+      "fixed": true,
+      "fixAttempts": 1
+    },
+    {
+      "id": "BUG-034",
+      "severity": "major",
+      "title": "ATS-Seite zeigt nur Überschrift - Hauptfunktionalität fehlt",
+      "description": "Die ATS-Analysefunktion auf /ats zeigt nur eine Überschrift und Beschreibung, aber kein Formular oder andere Interaktionselemente.",
+      "stepsToReproduce": [
+        "Navigiere zu /ats",
+        "Seite zeigt nur 'ATS-Analyse' Überschrift und Beschreibungstext"
+      ],
+      "expected": "Formular zum Eingeben von Stellenanzeige und Hochladen von CV für ATS-Analyse",
+      "actual": "Nur statischer Text, keine Funktionalität verfügbar",
+      "affectedFiles": [
+        "frontend/src/pages/ATSView.vue"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T16:31:12+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-035",
+      "severity": "major",
+      "title": "Stellenanzeigen-Parser wirft 500-Serverfehler bei Job-Portal Requests",
+      "description": "Beim Laden einer Stellenanzeigen-URL von StepStone tritt ein 500-Server-Error auf (POST /api/applications/preview-job). Obwohl ein 403-Forbidden-Error vom Job-Portal erwartet wird, sollte das Backend graceful mit diesem Fehler umgehen und nicht mit einem 500er abstürzen.",
+      "stepsToReproduce": [
+        "Navigiere zu /new-application",
+        "Gib eine StepStone-URL ein (z.B. https://www.stepstone.de/stellenangebote--Softwareentwickler-Frontend-React-Berlin--9876543.html)",
+        "Klicke 'Stellenanzeige laden'",
+        "Server antwortet mit 500 Internal Server Error"
+      ],
+      "expected": "403-Fehler sollte abgefangen werden, manuelle Eingabe-Option sollte ohne Serverfehler erscheinen",
+      "actual": "500-Serverfehler + 403-Fehler gleichzeitig, zeigt schlechtes Error-Handling im Backend",
+      "affectedFiles": [
+        "backend/api/applications/preview-job endpoint"
+      ],
+      "screenshot": "bug-035-server-error-job-loading.png",
+      "found_at": "2026-01-16T16:34:06+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-036",
+      "severity": "minor",
+      "title": "Job-Analyse Dialog zeigt irrelevante Fehlermeldung nach Success-Flow",
+      "description": "Wenn der Job-Analyse Dialog über 'Stellentext manuell einfügen' geöffnet wird, bleibt die ursprüngliche Fehlermeldung der URL-Eingabe im Dialog sichtbar, obwohl sie für den manuellen Modus nicht relevant ist.",
+      "stepsToReproduce": [
+        "Navigiere zum Dashboard",
+        "Klicke 'Job analysieren'",
+        "Gib ungültige URL ein (z.B. 'invalid-url')",
+        "Klicke 'Analysieren' - Fehler wird angezeigt",
+        "Klicke 'Stellentext manuell einfügen'",
+        "Ursprüngliche URL-Fehlermeldung ist weiterhin sichtbar"
+      ],
+      "expected": "Im manuellen Modus sollten keine Fehlermeldungen der URL-Eingabe angezeigt werden",
+      "actual": "Alte Fehlermeldung bleibt persistent im manuellen Dialog sichtbar",
+      "affectedFiles": [
+        "frontend/src/components/JobAnalysisDialog.vue"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T16:37:56+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-037",
+      "severity": "major",
+      "title": "Job-Analyse API schlägt mit 400 Bad Request fehl",
+      "description": "Die Job-Analyse sowohl per URL als auch per manuellem Text schlägt mit 400 Bad Request fehl. Backend-Error zeigt 'RequirementAnalyzer.analyze_requirements() got an unexpected keyword argument job_title'.",
+      "stepsToReproduce": [
+        "Navigiere zum Dashboard",
+        "Klicke 'Job analysieren'",
+        "Versuche URL-Analyse ODER manuelle Text-Eingabe",
+        "API-Call zu /api/recommendations/analyze schlägt mit 400 fehl"
+      ],
+      "expected": "Job-Analyse sollte erfolgreich durchgeführt werden",
+      "actual": "400 Bad Request mit Backend-Fehler über unerwartetes job_title Argument",
+      "affectedFiles": [
+        "backend/api/recommendations/analyze",
+        "backend/RequirementAnalyzer.py"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T16:42:48+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-038",
+      "severity": "minor",
+      "title": "Modal-Overlay blockiert Navigation während Job-Analyse geöffnet ist",
+      "description": "Wenn das Job-Analyse Modal geöffnet ist, können andere Links auf der Seite (z.B. 'Jetzt verifizieren') nicht geklickt werden, da das Modal-Overlay die Klicks abfängt.",
+      "stepsToReproduce": [
+        "Dashboard öffnen",
+        "Job-Analyse Modal öffnen",
+        "Versuche 'Jetzt verifizieren' Link zu klicken",
+        "Klick wird vom Modal-Overlay abgefangen"
+      ],
+      "expected": "Modal sollte nur eigenen Bereich abdecken oder andere Links sollten funktionieren",
+      "actual": "Modal-Overlay blockiert alle anderen Interaktionen auf der Seite",
+      "affectedFiles": [
+        "frontend/src/components/JobAnalysisModal.vue"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T16:42:48+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-039",
+      "severity": "major",
+      "title": "Gmail-Integration nicht konfiguriert - wirft Backend-Fehler",
+      "description": "Der 'Mit Gmail verbinden' Button in den Integrationen wirft einen 400 Bad Request und zeigt sowohl 'Gmail-Integration ist derzeit nicht konfiguriert' als auch 'Fehler beim Verbinden mit Gmail'.",
+      "stepsToReproduce": [
+        "Navigiere zu /settings",
+        "Gehe zu Integrationen Tab",
+        "Klicke 'Mit Gmail verbinden'",
+        "400 Bad Request Error + doppelte Fehlermeldungen"
+      ],
+      "expected": "Entweder funktionierende Gmail-Integration oder disabled Button mit Erklärung",
+      "actual": "Backend-Fehler + verwirrende doppelte Fehlermeldungen",
+      "affectedFiles": [
+        "backend/api/auth/gmail-integration",
+        "frontend/src/pages/SettingsView.vue"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T16:42:48+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-040",
+      "severity": "major",
+      "title": "Mobile Navigation Schließen-Button ist nicht funktional",
+      "description": "In der mobilen Ansicht (375px Breite) kann das geöffnete Navigationsmenü nicht über den 'Navigation schließen' Button geschlossen werden. Der Button ist von anderen DOM-Elementen überdeckt und reagiert nicht auf Klicks.",
+      "stepsToReproduce": [
+        "Browser auf mobile Größe setzen (375x667px)",
+        "Auf 'Navigation öffnen' Button klicken",
+        "Versuchen, das Menu mit 'Navigation schließen' Button zu schließen",
+        "Button reagiert nicht - Element wird von anderem Element überdeckt"
+      ],
+      "expected": "Schließen-Button sollte das mobile Navigationsmenü schließen",
+      "actual": "Button ist nicht klickbar, Overlay von anderen Elementen blockiert Interaktion",
+      "affectedFiles": [
+        "frontend/src/components/Navigation.vue",
+        "frontend/src/components/MobileNavigation.vue"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T16:47:23+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-041",
+      "severity": "major",
+      "title": "Job-Analyse API-Fehlerbehandlung inkonsistent",
+      "description": "Bei der Job-Analyse über /api/recommendations/analyze-manual wird ein 500 Internal Server Error zurückgegeben, aber die UI zeigt eine 403 Forbidden Fehlermeldung an. Dies führt zu verwirrenden Benutzermeldungen.",
+      "stepsToReproduce": [
+        "Öffne Dashboard",
+        "Klicke 'Job analysieren'",
+        "Fülle manuellen Stellentext aus",
+        "Klicke 'Stellentext analysieren'",
+        "Beobachte Diskrepanz zwischen Console (500) und UI (403 Nachricht)"
+      ],
+      "expected": "Fehlermeldung in UI sollte dem tatsächlichen HTTP-Status entsprechen",
+      "actual": "UI zeigt 403 Forbidden aber API gibt 500 Internal Server Error zurück",
+      "affectedFiles": [
+        "frontend/src/components/JobAnalysis.vue",
+        "backend/api/recommendations.py"
+      ],
+      "found_at": "2026-01-16T16:50:39+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-042",
+      "severity": "major",
+      "title": "Stellenanzeige-URL-Fehlerbehandlung inkonsistent",
+      "description": "Bei /api/applications/preview-job wird ein 500 Internal Server Error zurückgegeben, aber die UI zeigt eine 403 Forbidden Fehlermeldung an.",
+      "stepsToReproduce": [
+        "Gehe zu /new-application",
+        "Gib StepStone URL ein",
+        "'Stellenanzeige laden' klicken",
+        "Beobachte Diskrepanz zwischen Console (500) und UI (403 Nachricht)"
+      ],
+      "expected": "Korrekte Fehlerbehandlung entsprechend HTTP-Status",
+      "actual": "UI zeigt falsche 403-Nachricht für 500-Fehler",
+      "affectedFiles": [
+        "frontend/src/pages/NewApplication.vue",
+        "backend/api/applications.py"
+      ],
+      "found_at": "2026-01-16T16:50:39+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-043",
+      "severity": "minor",
+      "title": "Keine 404-Seite für ungültige Routen",
+      "description": "Wenn eine nicht-existierende Route aufgerufen wird (z.B. /nonexistent-page), zeigt die App keine informative 404-Seite, sondern nur eine leere main-Sektion mit Navigation.",
+      "stepsToReproduce": [
+        "Navigiere zu einer ungültigen Route (z.B. http://localhost:3000/nonexistent-page)",
+        "Beobachte, dass nur Navigation und Footer sichtbar sind",
+        "Main-Bereich bleibt leer ohne Fehlertext"
+      ],
+      "expected": "Eine benutzerfreundliche 404-Seite mit 'Seite nicht gefunden' und Navigation zurück zur Startseite",
+      "actual": "Leere main-Sektion, Vue Router Warnung in Console, aber keine Benutzerfeedback",
+      "affectedFiles": [
+        "frontend/src/router/index.js",
+        "frontend/src/views/NotFound.vue"
+      ],
+      "screenshot": null,
+      "found_at": "2026-01-16T17:00:55+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-044",
+      "severity": "minor",
+      "title": "Passwort-Änderung zeigt keine Validierungsfehlermeldung",
+      "description": "Wenn die Passwörter in den Settings nicht übereinstimmen, wird der Button disabled, aber keine sichtbare Fehlermeldung angezeigt",
+      "stepsToReproduce": [
+        "Settings → Sicherheit",
+        "Verschiedene Passwörter eingeben",
+        "Button ist disabled aber keine Fehlermeldung sichtbar"
+      ],
+      "expected": "Fehlermeldung wie 'Passwörter stimmen nicht überein'",
+      "actual": "Nur disabled Button ohne Erklärung",
+      "affectedFiles": [
+        "frontend/src/pages/SettingsView.vue"
+      ],
+      "found_at": "2026-01-16T17:04:56+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
+    },
+    {
+      "id": "BUG-045",
+      "severity": "major",
+      "title": "Bewerbungsgenerierung scheitert - Lebenslauf fehlt",
+      "description": "Nach erfolgreicher Stellenanzeigen-Analyse schlägt die Bewerbungsgenerierung mit 'Lebenslauf nicht gefunden' fehl, aber kein klarer Weg zum Upload",
+      "stepsToReproduce": [
+        "/new-application öffnen",
+        "Stellentext eingeben und analysieren",
+        "'Bewerbung generieren' klicken",
+        "Fehlermeldung über fehlenden Lebenslauf"
+      ],
+      "expected": "Entweder Link zum Lebenslauf-Upload oder Info wo hochzuladen",
+      "actual": "Fehlermeldung ohne Lösungsweg",
+      "affectedFiles": [
+        "frontend/src/pages/NewApplicationView.vue"
+      ],
+      "found_at": "2026-01-16T17:04:56+01:00",
+      "source": "explore-ralph",
+      "fixed": false,
+      "fixAttempts": 0
     }
   ]
 }
