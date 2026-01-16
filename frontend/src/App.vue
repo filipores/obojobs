@@ -1013,7 +1013,7 @@ onUnmounted(() => {
   left: 0;
   right: 0;
   bottom: 0;
-  z-index: 999;
+  z-index: 1001;
   display: none;
   pointer-events: none;
   opacity: 0;
