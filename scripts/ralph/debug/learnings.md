@@ -406,3 +406,44 @@ Wenn keine Daten vorhanden waren oder der API-Call fehlschlug, wurde die gesamte
 
 ---
 
+## [2026-01-16] - BUG-012: Kein Hamburger-Menü auf Mobile - Navigation nicht zugänglich
+
+**Problem:** Auf Mobile (375x667 Viewport) waren wichtige Navigation-Links nicht zugänglich. Nur "Insights" (Icon) und "Neu" (Button) waren sichtbar, während Dashboard, Dokumente, Templates, Bewerbungen, Timeline, ATS komplett versteckt waren.
+
+**Root Cause:** Incomplete Mobile Navigation-Design:
+- **CSS Media Query**: `@media (max-width: 768px)` versteckte nur `.nav-text` (display: none)
+- **Missing Hamburger Menu**: Kein Button vorhanden um versteckte Links zugänglich zu machen
+- **Partial Implementation**: Nur Company Insights hatte `.nav-icon-mobile` Icon als Fallback
+- **Bottom Navigation Gap**: Bottom-Nav hatte nur 5 von 9 Links (fehlten Dokumente, Templates, Insights)
+- **UX-Blackhole**: Benutzer konnten zentrale Features nicht erreichen ohne Desktop-Ansicht
+
+**Fix:**
+✅ **Hamburger-Menu Button** hinzugefügt (nur Mobile ≤768px sichtbar)
+✅ **Mobile Sidebar** mit slide-in Animation implementiert
+✅ **Vollständige Navigation** - alle 9 Hauptbereiche zugänglich:
+   - Dashboard, Dokumente, Templates, Bewerbungen
+   - Timeline, ATS, Company-Insights
+   - Abo-Einstellungen, Account-Einstellungen, Abmelden
+✅ **Accessibility Features**:
+   - Escape-Taste schließt Sidebar
+   - Router-Wechsel schließt Sidebar automatisch
+   - Body-Scroll deaktiviert bei offener Sidebar
+   - Aria-labels für Screen-Reader
+✅ **Japanese Design System Integration**:
+   - Zen-styled Sidebar mit Enso-Branding
+   - Washi-Paper Farbschema
+   - Smooth Transitions mit natürlicher Easing
+   - Backdrop-Blur-Overlay
+
+**Learning:**
+1. **Mobile-First Navigation**: Responsive Design muss sicherstellen dass ALLE Funktionen auf Mobile erreichbar sind, nicht nur Desktop-Features verstecken
+2. **Progressive Disclosure**: Hamburger-Menu ist Standard-Pattern für Mobile Navigation wenn Top-Level-Links zu viele sind
+3. **Accessibility-Complete**: Keyboard-Navigation (Escape), automatisches Schließen und Aria-Labels sind essentiell
+4. **State-Management**: Sidebar-State benötigt Body-Scroll-Management und Route-Change-Listeners für gute UX
+5. **Design-System-Consistency**: Mobile-Komponenten sollten das gleiche Design-Language wie Desktop verwenden
+6. **Testing-Viewports**: Mobile-Tests bei verschiedenen Breakpoints (375px, 480px, 768px) zeigen Layout-Probleme auf
+
+**Betroffene Dateien:** `frontend/src/App.vue` (383 neue Zeilen: Hamburger-Button, Sidebar-Component, Mobile-CSS)
+
+---
+

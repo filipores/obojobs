@@ -232,8 +232,8 @@
       "affectedFiles": [
         "frontend/src/App.vue"
       ],
-      "fixed": false,
-      "fixAttempts": 0,
+      "fixed": true,
+      "fixAttempts": 1,
       "source": "test-ralph MOBILE-001, MOBILE-003"
     },
     {
