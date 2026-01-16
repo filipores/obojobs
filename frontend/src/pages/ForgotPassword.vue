@@ -85,8 +85,8 @@
 
           <!-- Submit Button -->
           <button type="submit" class="zen-btn zen-btn-filled zen-btn-lg" :disabled="loading">
-            <span v-if="!loading">Link anfordern</span>
-            <span v-else>Wird gesendet...</span>
+            <span v-if="loading" class="btn-spinner"></span>
+            {{ loading ? 'Wird gesendet...' : 'Link anfordern' }}
           </button>
         </form>
 
@@ -407,6 +407,25 @@ onMounted(() => {
   background: var(--color-error-subtle, #fbe9e7);
   color: var(--color-error, #c62828);
   border: 1px solid var(--color-error, #c62828);
+}
+
+/* Button Spinner */
+.btn-spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: white;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin-right: var(--space-sm);
+  vertical-align: middle;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 .auth-footer {
