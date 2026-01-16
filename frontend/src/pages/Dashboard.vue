@@ -131,7 +131,7 @@
         </div>
 
         <!-- Loading State -->
-        <div v-else-if="!loadError" class="stats-grid" role="status" aria-label="Statistiken werden geladen">
+        <div v-else-if="!loadError && !stats" class="stats-grid" role="status" aria-label="Statistiken werden geladen">
           <div v-for="i in 4" :key="i" class="stat-card">
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
@@ -323,7 +323,7 @@ const loadStats = async () => {
   try {
     // Fetch fresh user data to get current email_verified status
     await authStore.fetchUser()
-    const { data } = await api.get('/stats')
+    const { data } = await api.silent.get('/stats')
     stats.value = data.stats
     usage.value = data.usage
   } catch (error) {
@@ -596,6 +596,48 @@ onMounted(async () => {
 
 .stat-link:hover {
   gap: var(--space-sm);
+}
+
+/* ========================================
+   LOADING ERROR STATE
+   ======================================== */
+.loading-error {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  grid-column: 1 / -1; /* Span all columns */
+  text-align: center;
+}
+
+.loading-error-icon {
+  width: 48px;
+  height: 48px;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-md);
+}
+
+.loading-error-message {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+.loading-error-retry {
+  background: transparent;
+  border: 1px solid var(--color-ai);
+  color: var(--color-ai);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.loading-error-retry:hover {
+  background: var(--color-ai);
+  color: var(--color-text-inverse);
 }
 
 /* ========================================
