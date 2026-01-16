@@ -7,366 +7,458 @@
         <p class="page-subtitle">Verwalten Sie Ihr Konto und API-Zugang</p>
       </section>
 
-      <!-- Profile Section -->
-      <section class="settings-section animate-fade-up" style="animation-delay: 100ms;">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-              <circle cx="12" cy="7" r="4"/>
-            </svg>
-          </div>
-          <h2>Profil</h2>
-        </div>
-
-        <div class="settings-card zen-card">
-          <form @submit.prevent="updateProfile" class="profile-form">
-            <div class="form-group">
-              <label for="full-name">Vollständiger Name</label>
-              <input
-                id="full-name"
-                v-model="profileForm.fullName"
-                type="text"
-                class="zen-input"
-                placeholder="Max Mustermann"
-                maxlength="255"
-              />
-              <p class="form-hint">Wird in Bewerbungen und offiziellen Dokumenten verwendet</p>
-            </div>
-
-            <div class="form-group">
-              <label for="display-name">Anzeigename (optional)</label>
-              <input
-                id="display-name"
-                v-model="profileForm.displayName"
-                type="text"
-                class="zen-input"
-                placeholder="Max"
-                maxlength="100"
-              />
-              <p class="form-hint">Wird in der App-Oberfläche angezeigt</p>
-            </div>
-
-            <div v-if="profileError" class="profile-error-message">
-              {{ profileError }}
-            </div>
-
-            <div v-if="profileSuccess" class="profile-success-message">
-              {{ profileSuccess }}
-            </div>
-
-            <button
-              type="submit"
-              class="zen-btn zen-btn-filled"
-              :disabled="isUpdatingProfile || !hasProfileChanges"
-            >
-              {{ isUpdatingProfile ? 'Wird gespeichert...' : 'Profil speichern' }}
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <!-- Ink Stroke -->
-      <div class="ink-stroke"></div>
-
-      <!-- Account Section -->
-      <section class="settings-section animate-fade-up" style="animation-delay: 125ms;">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2"/>
-              <path d="M9 9h6v6H9z"/>
-            </svg>
-          </div>
-          <h2>Konto</h2>
-        </div>
-
-        <div class="settings-card zen-card">
-          <div class="account-info">
-            <div class="info-row">
-              <span class="info-label">E-Mail</span>
-              <span class="info-value">{{ authStore.user?.email }}</span>
-            </div>
-            <div class="info-divider"></div>
-            <div class="info-row">
-              <span class="info-label">Aktueller Plan</span>
-              <span class="info-value info-value-highlight">{{ getPlanLabel() }}</span>
-            </div>
-          </div>
-
-          <div class="account-actions">
-            <router-link to="/subscription" class="zen-btn zen-btn-ai">
-              Abo verwalten
-            </router-link>
-          </div>
-        </div>
-      </section>
-
-      <!-- Ink Stroke -->
-      <div class="ink-stroke"></div>
-
-      <!-- Email Accounts Section -->
-      <section class="settings-section animate-fade-up" style="animation-delay: 125ms;">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-          </div>
-          <div>
-            <h2>E-Mail-Konto verbinden</h2>
-            <p class="section-description">Bewerbungen direkt aus der App versenden</p>
-          </div>
-        </div>
-
-        <div class="settings-card zen-card">
-          <!-- Connected Accounts -->
-          <div v-if="emailAccounts.length" class="email-accounts-list">
-            <div class="list-header">
-              <span>Verbundene Konten</span>
-            </div>
-            <div class="accounts-table">
-              <div v-for="account in emailAccounts" :key="account.id" class="account-row">
-                <div class="account-info">
-                  <div class="provider-icon" :class="account.provider">
-                    <!-- Gmail Icon -->
-                    <svg v-if="account.provider === 'gmail'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M20 18h-2V9.25L12 13 6 9.25V18H4V6h1.2l6.8 4.25L18.8 6H20m0-2H4c-1.11 0-2 .89-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/>
-                    </svg>
-                    <!-- Outlook Icon -->
-                    <svg v-else-if="account.provider === 'outlook'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.38q0-.46.33-.8.33-.32.8-.32h14.74q.46 0 .8.33.32.33.32.8V12zM7.5 18H1V7h6.5v11zm-5.65-6q0 .28.06.55.08.27.22.51.15.24.38.44.24.2.57.35-.2.3-.41.62-.22.32-.41.62-.2.32-.34.61-.14.3-.15.55-.01.25.17.47.2.22.46.22.39 0 .55-.36.1-.24.19-.5.1-.24.19-.46.1-.22.15-.37.05-.16.05-.19h-.02q.09.08.21.17.1.09.2.17l.03.02q.18.16.32.26.1.09.2.14.13.07.24.07.21 0 .37-.16.17-.17.17-.37 0-.16-.08-.27-.08-.12-.23-.21-.15-.1-.36-.17-.21-.08-.47-.12-.15-.02-.24-.04-.1-.03-.17-.07-.08-.05-.14-.13-.06-.09-.06-.22 0-.13.06-.23.06-.11.14-.2.09-.09.2-.17.1-.09.19-.17-.2 0-.32-.01-.12-.02-.23-.07-.1-.06-.18-.16-.09-.1-.14-.25-.04-.15-.04-.35 0-.26.08-.51.09-.26.26-.48.17-.23.43-.39.26-.16.61-.2l-.04-.27q-.04-.27-.04-.52 0-.26.06-.51.05-.25.17-.47t.31-.38q.19-.17.46-.24l-.03-.03zm.58 4.62q-.02.06-.04.13-.03.09-.03.2 0 .19.1.29.11.1.28.1.15 0 .27-.06.12-.07.23-.16.1-.09.18-.18.09-.09.14-.16l.05-.05-.06-.06-.15-.11q-.11-.08-.22-.13-.11-.07-.24-.09-.14-.02-.31 0z"/>
-                    </svg>
-                  </div>
-                  <div class="account-details">
-                    <span class="account-email">{{ account.email }}</span>
-                    <span class="account-provider">{{ account.provider === 'gmail' ? 'Gmail' : 'Outlook' }}</span>
-                  </div>
-                </div>
-                <div class="account-status">
-                  <span class="status-badge connected">Verbunden</span>
-                  <button @click="disconnectAccount(account.id)" class="zen-btn zen-btn-sm zen-btn-danger">
-                    Trennen
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- No accounts connected -->
-          <div v-else class="no-accounts">
-            <p>Noch kein E-Mail-Konto verbunden.</p>
-          </div>
-
-          <!-- Connect Buttons -->
-          <div class="connect-buttons">
-            <button @click="connectGmail" class="connect-btn gmail" :disabled="isConnecting">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M20 18h-2V9.25L12 13 6 9.25V18H4V6h1.2l6.8 4.25L18.8 6H20m0-2H4c-1.11 0-2 .89-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/>
-              </svg>
-              <span>Mit Gmail verbinden</span>
-            </button>
-            <button @click="connectOutlook" class="connect-btn outlook" :disabled="isConnecting">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.38q0-.46.33-.8.33-.32.8-.32h14.74q.46 0 .8.33.32.33.32.8V12z"/>
-              </svg>
-              <span>Mit Outlook verbinden</span>
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Ink Stroke -->
-      <div class="ink-stroke"></div>
-
-      <!-- Password Change Section -->
-      <section class="settings-section animate-fade-up" style="animation-delay: 150ms;">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
-              <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
-            </svg>
-          </div>
-          <h2>Passwort ändern</h2>
-        </div>
-
-        <div class="settings-card zen-card">
-          <form @submit.prevent="changePassword" class="password-change-form">
-            <div class="form-group">
-              <label for="current-password" class="required">Aktuelles Passwort</label>
-              <input
-                id="current-password"
-                v-model="passwordForm.currentPassword"
-                type="password"
-                class="zen-input"
-                required
-                aria-required="true"
-                autocomplete="current-password"
-              />
-            </div>
-
-            <div class="form-group">
-              <label for="new-password" class="required">Neues Passwort</label>
-              <input
-                id="new-password"
-                v-model="passwordForm.newPassword"
-                type="password"
-                class="zen-input"
-                @input="validatePassword"
-                required
-                aria-required="true"
-                autocomplete="new-password"
-              />
-              <!-- Password Requirements -->
-              <div v-if="passwordForm.newPassword" class="password-requirements" aria-live="polite" aria-atomic="false">
-                <div
-                  v-for="req in passwordRequirements"
-                  :key="req.key"
-                  class="requirement-item"
-                  :class="{ 'met': passwordChecks[req.key] }"
-                  :aria-label="passwordChecks[req.key] ? `Erfüllt: ${req.label}` : `Nicht erfüllt: ${req.label}`"
-                >
-                  <svg v-if="passwordChecks[req.key]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-                    <circle cx="12" cy="12" r="10"/>
-                  </svg>
-                  <span>{{ req.label }}</span>
-                </div>
-              </div>
-            </div>
-
-            <div class="form-group">
-              <label for="confirm-password" class="required">Neues Passwort bestätigen</label>
-              <input
-                id="confirm-password"
-                v-model="passwordForm.confirmPassword"
-                type="password"
-                class="zen-input"
-                required
-                aria-required="true"
-                autocomplete="new-password"
-              />
-              <p v-if="passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword" class="form-error">
-                Passwörter stimmen nicht überein
-              </p>
-            </div>
-
-            <div v-if="passwordError" class="password-error-message">
-              {{ passwordError }}
-            </div>
-
-            <button
-              type="submit"
-              class="zen-btn zen-btn-filled"
-              :disabled="!canSubmitPassword || isChangingPassword"
-            >
-              {{ isChangingPassword ? 'Wird geändert...' : 'Passwort ändern' }}
-            </button>
-          </form>
-        </div>
-      </section>
-
-      <!-- Ink Stroke -->
-      <div class="ink-stroke"></div>
-
-      <!-- API Keys Section -->
-      <section class="settings-section animate-fade-up" style="animation-delay: 200ms;">
-        <div class="section-header">
-          <div class="section-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
-            </svg>
-          </div>
-          <div>
-            <h2>API Keys</h2>
-            <p class="section-description">Für die Chrome Extension</p>
-          </div>
-        </div>
-
-        <div class="settings-card zen-card">
-          <div class="api-key-header">
-            <p class="api-key-info">
-              Erstellen Sie einen API Key, um die Chrome Extension mit Ihrem Konto zu verbinden.
-            </p>
-            <button @click="generateKey" class="zen-btn zen-btn-filled" :disabled="isGeneratingKey">
-              {{ isGeneratingKey ? 'Wird generiert...' : 'Neuen Key generieren' }}
-            </button>
-          </div>
-
-          <!-- New Key Alert -->
-          <div v-if="newKey" class="new-key-alert">
-            <div class="alert-header">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
-              </svg>
-              <strong>Speichern Sie diesen Key jetzt!</strong>
-            </div>
-            <p>Er wird nicht erneut angezeigt.</p>
-            <div class="key-display">
-              <code>{{ newKey }}</code>
-              <button @click="copyKey" class="copy-btn" title="Kopieren">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
-                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+      <!-- Settings Layout with Sidebar -->
+      <div class="settings-layout">
+        <!-- Sidebar Navigation -->
+        <nav class="settings-nav animate-fade-up" aria-label="Einstellungen-Navigation">
+          <ul class="nav-list" role="tablist" aria-orientation="vertical">
+            <li>
+              <button
+                role="tab"
+                :aria-selected="activeSection === 'profile'"
+                :class="['nav-item', { active: activeSection === 'profile' }]"
+                @click="activeSection = 'profile'"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
                 </svg>
+                <span>Profil</span>
               </button>
-            </div>
-          </div>
+            </li>
+            <li>
+              <button
+                role="tab"
+                :aria-selected="activeSection === 'security'"
+                :class="['nav-item', { active: activeSection === 'security' }]"
+                @click="activeSection = 'security'"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                <span>Sicherheit</span>
+              </button>
+            </li>
+            <li>
+              <button
+                role="tab"
+                :aria-selected="activeSection === 'integrations'"
+                :class="['nav-item', { active: activeSection === 'integrations' }]"
+                @click="activeSection = 'integrations'"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                </svg>
+                <span>Integrationen</span>
+              </button>
+            </li>
+            <li>
+              <button
+                role="tab"
+                :aria-selected="activeSection === 'danger'"
+                :class="['nav-item nav-item-danger', { active: activeSection === 'danger' }]"
+                @click="activeSection = 'danger'"
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                <span>Gefahrenzone</span>
+              </button>
+            </li>
+          </ul>
+        </nav>
 
-          <!-- Existing Keys -->
-          <div v-if="apiKeys.length" class="api-keys-list">
-            <div class="list-header">
-              <span>Ihre API Keys</span>
+        <!-- Settings Content -->
+        <div class="settings-content">
+          <!-- Profile Section -->
+          <section v-show="activeSection === 'profile'" class="settings-section animate-fade-up">
+            <div class="section-header">
+              <div class="section-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </div>
+              <h2>Profil</h2>
             </div>
-            <div class="keys-table">
-              <div v-for="key in apiKeys" :key="key.id" class="key-row">
-                <div class="key-info">
-                  <span class="key-prefix">{{ key.key_prefix }}...</span>
-                  <span class="key-meta">
-                    <span class="key-name">{{ key.name }}</span>
-                    <span class="key-date">{{ formatDate(key.created_at) }}</span>
-                  </span>
+
+            <div class="settings-card zen-card">
+              <form @submit.prevent="updateProfile" class="profile-form">
+                <div class="form-group">
+                  <label for="full-name">Vollständiger Name</label>
+                  <input
+                    id="full-name"
+                    v-model="profileForm.fullName"
+                    type="text"
+                    class="zen-input"
+                    placeholder="Max Mustermann"
+                    maxlength="255"
+                  />
+                  <p class="form-hint">Wird in Bewerbungen und offiziellen Dokumenten verwendet</p>
                 </div>
-                <button @click="deleteKey(key.id)" class="zen-btn zen-btn-sm zen-btn-danger" aria-label="API Key löschen" title="API Key löschen">
-                  Löschen
+
+                <div class="form-group">
+                  <label for="display-name">Anzeigename (optional)</label>
+                  <input
+                    id="display-name"
+                    v-model="profileForm.displayName"
+                    type="text"
+                    class="zen-input"
+                    placeholder="Max"
+                    maxlength="100"
+                  />
+                  <p class="form-hint">Wird in der App-Oberfläche angezeigt</p>
+                </div>
+
+                <div v-if="profileError" class="profile-error-message">
+                  {{ profileError }}
+                </div>
+
+                <div v-if="profileSuccess" class="profile-success-message">
+                  {{ profileSuccess }}
+                </div>
+
+                <button
+                  type="submit"
+                  class="zen-btn zen-btn-filled"
+                  :disabled="isUpdatingProfile || !hasProfileChanges"
+                >
+                  {{ isUpdatingProfile ? 'Wird gespeichert...' : 'Profil speichern' }}
+                </button>
+              </form>
+            </div>
+
+            <!-- Ink Stroke -->
+            <div class="ink-stroke"></div>
+
+            <!-- Account Section -->
+            <div class="settings-subsection">
+              <div class="section-header">
+                <div class="section-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/>
+                    <path d="M9 9h6v6H9z"/>
+                  </svg>
+                </div>
+                <h2>Konto</h2>
+              </div>
+
+              <div class="settings-card zen-card">
+                <div class="account-info">
+                  <div class="info-row">
+                    <span class="info-label">E-Mail</span>
+                    <span class="info-value">{{ authStore.user?.email }}</span>
+                  </div>
+                  <div class="info-divider"></div>
+                  <div class="info-row">
+                    <span class="info-label">Aktueller Plan</span>
+                    <span class="info-value info-value-highlight">{{ getPlanLabel() }}</span>
+                  </div>
+                </div>
+
+                <div class="account-actions">
+                  <router-link to="/subscription" class="zen-btn zen-btn-ai">
+                    Abo verwalten
+                  </router-link>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Security Section -->
+          <section v-show="activeSection === 'security'" class="settings-section animate-fade-up">
+            <div class="section-header">
+              <div class="section-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+              </div>
+              <h2>Passwort ändern</h2>
+            </div>
+
+            <div class="settings-card zen-card">
+              <form @submit.prevent="changePassword" class="password-change-form">
+                <div class="form-group">
+                  <label for="current-password" class="required">Aktuelles Passwort</label>
+                  <input
+                    id="current-password"
+                    v-model="passwordForm.currentPassword"
+                    type="password"
+                    class="zen-input"
+                    required
+                    aria-required="true"
+                    autocomplete="current-password"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="new-password" class="required">Neues Passwort</label>
+                  <input
+                    id="new-password"
+                    v-model="passwordForm.newPassword"
+                    type="password"
+                    class="zen-input"
+                    @input="validatePassword"
+                    required
+                    aria-required="true"
+                    autocomplete="new-password"
+                  />
+                  <!-- Password Requirements -->
+                  <div v-if="passwordForm.newPassword" class="password-requirements" aria-live="polite" aria-atomic="false">
+                    <div
+                      v-for="req in passwordRequirements"
+                      :key="req.key"
+                      class="requirement-item"
+                      :class="{ 'met': passwordChecks[req.key] }"
+                      :aria-label="passwordChecks[req.key] ? `Erfüllt: ${req.label}` : `Nicht erfüllt: ${req.label}`"
+                    >
+                      <svg v-if="passwordChecks[req.key]" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <polyline points="20 6 9 17 4 12"/>
+                      </svg>
+                      <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+                        <circle cx="12" cy="12" r="10"/>
+                      </svg>
+                      <span>{{ req.label }}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="confirm-password" class="required">Neues Passwort bestätigen</label>
+                  <input
+                    id="confirm-password"
+                    v-model="passwordForm.confirmPassword"
+                    type="password"
+                    class="zen-input"
+                    required
+                    aria-required="true"
+                    autocomplete="new-password"
+                  />
+                  <p v-if="passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword" class="form-error">
+                    Passwörter stimmen nicht überein
+                  </p>
+                </div>
+
+                <div v-if="passwordError" class="password-error-message">
+                  {{ passwordError }}
+                </div>
+
+                <button
+                  type="submit"
+                  class="zen-btn zen-btn-filled"
+                  :disabled="!canSubmitPassword || isChangingPassword"
+                >
+                  {{ isChangingPassword ? 'Wird geändert...' : 'Passwort ändern' }}
+                </button>
+              </form>
+            </div>
+          </section>
+
+          <!-- Integrations Section -->
+          <section v-show="activeSection === 'integrations'" class="settings-section animate-fade-up">
+            <!-- Email Accounts -->
+            <div class="section-header">
+              <div class="section-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <div>
+                <h2>E-Mail-Konto verbinden</h2>
+                <p class="section-description">Bewerbungen direkt aus der App versenden</p>
+              </div>
+            </div>
+
+            <div class="settings-card zen-card">
+              <!-- Connected Accounts -->
+              <div v-if="emailAccounts.length" class="email-accounts-list">
+                <div class="list-header">
+                  <span>Verbundene Konten</span>
+                </div>
+                <div class="accounts-table">
+                  <div v-for="account in emailAccounts" :key="account.id" class="account-row">
+                    <div class="account-info">
+                      <div class="provider-icon" :class="account.provider">
+                        <!-- Gmail Icon -->
+                        <svg v-if="account.provider === 'gmail'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M20 18h-2V9.25L12 13 6 9.25V18H4V6h1.2l6.8 4.25L18.8 6H20m0-2H4c-1.11 0-2 .89-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/>
+                        </svg>
+                        <!-- Outlook Icon -->
+                        <svg v-else-if="account.provider === 'outlook'" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.38q0-.46.33-.8.33-.32.8-.32h14.74q.46 0 .8.33.32.33.32.8V12zM7.5 18H1V7h6.5v11z"/>
+                        </svg>
+                      </div>
+                      <div class="account-details">
+                        <span class="account-email">{{ account.email }}</span>
+                        <span class="account-provider">{{ account.provider === 'gmail' ? 'Gmail' : 'Outlook' }}</span>
+                      </div>
+                    </div>
+                    <div class="account-status">
+                      <span class="status-badge connected">Verbunden</span>
+                      <button @click="disconnectAccount(account.id)" class="zen-btn zen-btn-sm zen-btn-danger">
+                        Trennen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- No accounts connected -->
+              <div v-else class="no-accounts">
+                <p>Noch kein E-Mail-Konto verbunden.</p>
+              </div>
+
+              <!-- Connect Buttons -->
+              <div class="connect-buttons">
+                <button @click="connectGmail" class="connect-btn gmail" :disabled="isConnecting">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20 18h-2V9.25L12 13 6 9.25V18H4V6h1.2l6.8 4.25L18.8 6H20m0-2H4c-1.11 0-2 .89-2 2v12a2 2 0 002 2h16a2 2 0 002-2V6a2 2 0 00-2-2z"/>
+                  </svg>
+                  <span>Mit Gmail verbinden</span>
+                </button>
+                <button @click="connectOutlook" class="connect-btn outlook" :disabled="isConnecting">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M7.88 12.04q0 .45-.11.87-.1.41-.33.74-.22.33-.58.52-.37.2-.87.2t-.85-.2q-.35-.21-.57-.55-.22-.33-.33-.75-.1-.42-.1-.86t.1-.87q.1-.43.34-.76.22-.34.59-.54.36-.2.87-.2t.86.2q.35.21.57.55.22.34.31.77.1.43.1.88zM24 12v9.38q0 .46-.33.8-.33.32-.8.32H7.13q-.46 0-.8-.33-.32-.33-.32-.8V18H1q-.41 0-.7-.3-.3-.29-.3-.7V7q0-.41.3-.7Q.58 6 1 6h6.5V2.38q0-.46.33-.8.33-.32.8-.32h14.74q.46 0 .8.33.32.33.32.8V12z"/>
+                  </svg>
+                  <span>Mit Outlook verbinden</span>
                 </button>
               </div>
             </div>
-          </div>
 
-          <div v-else class="no-keys">
-            <p>Sie haben noch keine API Keys erstellt.</p>
-          </div>
-        </div>
-      </section>
+            <!-- Ink Stroke -->
+            <div class="ink-stroke"></div>
 
-      <!-- Chrome Extension Info -->
-      <section class="info-section animate-fade-up" style="animation-delay: 300ms;">
-        <div class="info-banner zen-card">
-          <div class="info-icon">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="16" x2="12" y2="12"/>
-              <line x1="12" y1="8" x2="12.01" y2="8"/>
-            </svg>
-          </div>
-          <div class="info-content">
-            <h3>Chrome Extension einrichten</h3>
-            <ol class="setup-steps">
-              <li>Erstellen Sie einen API Key oben</li>
-              <li>Installieren Sie die Chrome Extension</li>
-              <li>Fügen Sie den API Key in der Extension ein</li>
-              <li>Besuchen Sie eine Stellenanzeige und klicken Sie auf "Bewerbung generieren"</li>
-            </ol>
-          </div>
+            <!-- API Keys Section -->
+            <div class="settings-subsection">
+              <div class="section-header">
+                <div class="section-icon">
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"/>
+                  </svg>
+                </div>
+                <div>
+                  <h2>API Keys</h2>
+                  <p class="section-description">Für die Chrome Extension</p>
+                </div>
+              </div>
+
+              <div class="settings-card zen-card">
+                <div class="api-key-header">
+                  <p class="api-key-info">
+                    Erstellen Sie einen API Key, um die Chrome Extension mit Ihrem Konto zu verbinden.
+                  </p>
+                  <button @click="generateKey" class="zen-btn zen-btn-filled" :disabled="isGeneratingKey">
+                    {{ isGeneratingKey ? 'Wird generiert...' : 'Neuen Key generieren' }}
+                  </button>
+                </div>
+
+                <!-- New Key Alert -->
+                <div v-if="newKey" class="new-key-alert">
+                  <div class="alert-header">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                      <line x1="12" y1="9" x2="12" y2="13"/>
+                      <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
+                    <strong>Speichern Sie diesen Key jetzt!</strong>
+                  </div>
+                  <p>Er wird nicht erneut angezeigt.</p>
+                  <div class="key-display">
+                    <code>{{ newKey }}</code>
+                    <button @click="copyKey" class="copy-btn" title="Kopieren">
+                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2"/>
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Existing Keys -->
+                <div v-if="apiKeys.length" class="api-keys-list">
+                  <div class="list-header">
+                    <span>Ihre API Keys</span>
+                  </div>
+                  <div class="keys-table">
+                    <div v-for="key in apiKeys" :key="key.id" class="key-row">
+                      <div class="key-info">
+                        <span class="key-prefix">{{ key.key_prefix }}...</span>
+                        <span class="key-meta">
+                          <span class="key-name">{{ key.name }}</span>
+                          <span class="key-date">{{ formatDate(key.created_at) }}</span>
+                        </span>
+                      </div>
+                      <button @click="deleteKey(key.id)" class="zen-btn zen-btn-sm zen-btn-danger" aria-label="API Key löschen" title="API Key löschen">
+                        Löschen
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                <div v-else class="no-keys">
+                  <p>Sie haben noch keine API Keys erstellt.</p>
+                </div>
+              </div>
+
+              <!-- Chrome Extension Info -->
+              <div class="info-section">
+                <div class="info-banner zen-card">
+                  <div class="info-icon">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <circle cx="12" cy="12" r="10"/>
+                      <line x1="12" y1="16" x2="12" y2="12"/>
+                      <line x1="12" y1="8" x2="12.01" y2="8"/>
+                    </svg>
+                  </div>
+                  <div class="info-content">
+                    <h3>Chrome Extension einrichten</h3>
+                    <ol class="setup-steps">
+                      <li>Erstellen Sie einen API Key oben</li>
+                      <li>Installieren Sie die Chrome Extension</li>
+                      <li>Fügen Sie den API Key in der Extension ein</li>
+                      <li>Besuchen Sie eine Stellenanzeige und klicken Sie auf "Bewerbung generieren"</li>
+                    </ol>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Danger Zone Section -->
+          <section v-show="activeSection === 'danger'" class="settings-section animate-fade-up">
+            <div class="section-header">
+              <div class="section-icon section-icon-danger">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/>
+                  <line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+              </div>
+              <div>
+                <h2>Gefahrenzone</h2>
+                <p class="section-description">Irreversible Aktionen</p>
+              </div>
+            </div>
+
+            <div class="settings-card zen-card danger-card">
+              <div class="danger-action">
+                <div class="danger-info">
+                  <h3>Konto löschen</h3>
+                  <p>Löscht Ihr Konto und alle zugehörigen Daten unwiderruflich. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+                </div>
+                <button class="zen-btn zen-btn-danger" @click="requestAccountDeletion">
+                  Konto löschen
+                </button>
+              </div>
+            </div>
+          </section>
         </div>
-      </section>
+      </div>
     </div>
   </div>
 </template>
@@ -379,6 +471,9 @@ import { authStore } from '../store/auth'
 import { confirm } from '../composables/useConfirm'
 
 const _router = useRouter()
+
+// Active settings section
+const activeSection = ref('profile')
 
 const apiKeys = ref([])
 const newKey = ref('')
@@ -670,6 +765,21 @@ const disconnectAccount = async (accountId) => {
   }
 }
 
+const requestAccountDeletion = async () => {
+  const confirmed = await confirm({
+    title: 'Konto löschen',
+    message: 'Sind Sie sicher, dass Sie Ihr Konto und alle zugehörigen Daten unwiderruflich löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+    confirmText: 'Endgültig löschen',
+    cancelText: 'Abbrechen',
+    type: 'danger'
+  })
+  if (!confirmed) return
+
+  if (window.$toast) {
+    window.$toast('Bitte kontaktieren Sie den Support unter support@obo.de für die Kontolöschung.', 'info')
+  }
+}
+
 onMounted(() => {
   loadKeys()
   loadEmailAccounts()
@@ -705,10 +815,97 @@ onMounted(() => {
 }
 
 /* ========================================
+   SETTINGS LAYOUT
+   ======================================== */
+.settings-layout {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  gap: var(--space-xl);
+  align-items: start;
+}
+
+/* ========================================
+   SETTINGS NAVIGATION
+   ======================================== */
+.settings-nav {
+  position: sticky;
+  top: calc(73px + var(--space-lg));
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md);
+  box-shadow: var(--shadow-paper);
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  width: 100%;
+  padding: var(--space-md) var(--space-lg);
+  background: none;
+  border: none;
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+  text-align: left;
+}
+
+.nav-item:hover {
+  background: var(--color-washi);
+  color: var(--color-sumi);
+}
+
+.nav-item.active {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+}
+
+.nav-item svg {
+  flex-shrink: 0;
+}
+
+.nav-item-danger {
+  color: var(--color-terra);
+}
+
+.nav-item-danger:hover {
+  background: rgba(184, 122, 94, 0.1);
+  color: var(--color-terra);
+}
+
+.nav-item-danger.active {
+  background: rgba(184, 122, 94, 0.15);
+  color: var(--color-terra);
+}
+
+/* ========================================
+   SETTINGS CONTENT
+   ======================================== */
+.settings-content {
+  min-width: 0;
+}
+
+/* ========================================
    SETTINGS SECTION
    ======================================== */
 .settings-section {
   margin-bottom: var(--space-ma);
+}
+
+.settings-subsection {
+  margin-top: var(--space-lg);
 }
 
 .section-header {
@@ -1239,8 +1436,64 @@ onMounted(() => {
 }
 
 /* ========================================
+   DANGER ZONE
+   ======================================== */
+.section-icon-danger {
+  background: rgba(184, 122, 94, 0.1);
+  color: var(--color-terra);
+}
+
+.danger-card {
+  border: 1px solid rgba(184, 122, 94, 0.3);
+}
+
+.danger-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--space-lg);
+}
+
+.danger-info h3 {
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0 0 var(--space-xs) 0;
+  color: var(--color-sumi);
+}
+
+.danger-info p {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
+@media (max-width: 900px) {
+  .settings-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-nav {
+    position: relative;
+    top: 0;
+  }
+
+  .nav-list {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+  }
+
+  .nav-item {
+    flex: 1 1 auto;
+    min-width: fit-content;
+    justify-content: center;
+    padding: var(--space-sm) var(--space-md);
+  }
+}
+
 @media (max-width: 768px) {
   .api-key-header {
     flex-direction: column;
@@ -1276,6 +1529,15 @@ onMounted(() => {
     width: 100%;
     justify-content: center;
   }
+
+  .danger-action {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .danger-action .zen-btn {
+    width: 100%;
+  }
 }
 
 @media (max-width: 480px) {
@@ -1285,6 +1547,15 @@ onMounted(() => {
 
   .section-header {
     flex-direction: column;
+  }
+
+  .nav-item span {
+    display: none;
+  }
+
+  .nav-item {
+    padding: var(--space-sm);
+    min-width: auto;
   }
 }
 </style>
