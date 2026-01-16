@@ -470,7 +470,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 31,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph FLOW-001, FLOW-002"
     },
     {
@@ -484,7 +484,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 32,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph FLOW-002"
     },
     {
@@ -498,7 +498,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 33,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph FLOW-011"
     },
     {
@@ -512,7 +512,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 34,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph FLOW-008"
     },
     {
@@ -526,7 +526,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 35,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph FLOW-003"
     },
     {

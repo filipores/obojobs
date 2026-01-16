@@ -99,6 +99,33 @@
               <option value="status">Status</option>
             </select>
           </div>
+          <div class="view-toggle" role="group" aria-label="Ansicht wechseln">
+            <button
+              :class="['view-toggle-btn', { active: viewMode === 'grid' }]"
+              @click="viewMode = 'grid'"
+              :aria-pressed="viewMode === 'grid'"
+              title="Karten-Ansicht"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"/>
+                <rect x="14" y="3" width="7" height="7"/>
+                <rect x="3" y="14" width="7" height="7"/>
+                <rect x="14" y="14" width="7" height="7"/>
+              </svg>
+            </button>
+            <button
+              :class="['view-toggle-btn', { active: viewMode === 'table' }]"
+              @click="viewMode = 'table'"
+              :aria-pressed="viewMode === 'table'"
+              title="Tabellen-Ansicht"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="3" y1="6" x2="21" y2="6"/>
+                <line x1="3" y1="12" x2="21" y2="12"/>
+                <line x1="3" y1="18" x2="21" y2="18"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <div v-if="searchQuery || filterStatus || filterFirma" class="active-filters">
@@ -128,7 +155,8 @@
 
       <!-- Applications Grid -->
       <section v-else-if="filteredApplications.length > 0" class="applications-section">
-        <div class="applications-grid">
+        <!-- Grid View -->
+        <div v-if="viewMode === 'grid'" class="applications-grid">
           <div
             v-for="app in filteredApplications"
             :key="app.id"
@@ -177,6 +205,66 @@
               </button>
             </div>
           </div>
+        </div>
+
+        <!-- Table View -->
+        <div v-else class="applications-table-wrapper">
+          <table class="applications-table">
+            <thead>
+              <tr>
+                <th @click="toggleTableSort('firma')" class="sortable-header">
+                  Firma
+                  <span v-if="sortBy.startsWith('firma')" class="sort-indicator">
+                    {{ sortBy === 'firma_asc' ? '↑' : '↓' }}
+                  </span>
+                </th>
+                <th>Position</th>
+                <th @click="toggleTableSort('datum')" class="sortable-header">
+                  Datum
+                  <span v-if="sortBy.startsWith('datum')" class="sort-indicator">
+                    {{ sortBy === 'datum_asc' ? '↑' : '↓' }}
+                  </span>
+                </th>
+                <th @click="toggleTableSort('status')" class="sortable-header">
+                  Status
+                  <span v-if="sortBy === 'status'" class="sort-indicator">●</span>
+                </th>
+                <th>Quelle</th>
+                <th class="actions-header">Aktionen</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr
+                v-for="app in filteredApplications"
+                :key="app.id"
+                class="table-row"
+                @click="openDetails(app)"
+              >
+                <td class="cell-firma">{{ app.firma }}</td>
+                <td class="cell-position">{{ app.position || '–' }}</td>
+                <td class="cell-datum">{{ formatDate(app.datum) }}</td>
+                <td class="cell-status">
+                  <span :class="['status-badge status-badge-sm', `status-${app.status}`]">
+                    {{ getStatusLabel(app.status) }}
+                  </span>
+                </td>
+                <td class="cell-quelle">
+                  <a v-if="app.quelle" :href="app.quelle" target="_blank" @click.stop class="table-link">
+                    {{ getDomain(app.quelle) }}
+                  </a>
+                  <span v-else class="text-muted">–</span>
+                </td>
+                <td class="cell-actions" @click.stop>
+                  <button @click="downloadPDF(app.id)" class="zen-btn zen-btn-sm" title="PDF herunterladen">
+                    PDF
+                  </button>
+                  <button @click="openDetails(app)" class="zen-btn zen-btn-ai zen-btn-sm" title="Details anzeigen">
+                    Details
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
         </div>
 
         <!-- Pagination -->
@@ -611,6 +699,7 @@ const filterStatus = ref('')
 const filterFirma = ref('')
 const sortBy = ref('datum_desc')
 const exportFilteredOnly = ref(false)
+const viewMode = ref(localStorage.getItem('applications_view_mode') || 'grid')
 
 // Pagination State
 const currentPage = ref(1)
@@ -841,6 +930,16 @@ const clearFilters = () => {
   }
 }
 
+const toggleTableSort = (field) => {
+  if (field === 'firma') {
+    sortBy.value = sortBy.value === 'firma_asc' ? 'firma_desc' : 'firma_asc'
+  } else if (field === 'datum') {
+    sortBy.value = sortBy.value === 'datum_desc' ? 'datum_asc' : 'datum_desc'
+  } else if (field === 'status') {
+    sortBy.value = 'status'
+  }
+}
+
 const onATSOptimized = (data) => {
   // Reload application data after optimization
   if (selectedApp.value && data.optimized_text) {
@@ -1037,6 +1136,11 @@ watch(hasActiveFilters, (isActive) => {
   if (!isActive) {
     exportFilteredOnly.value = false
   }
+})
+
+// Persist view mode preference
+watch(viewMode, (newMode) => {
+  localStorage.setItem('applications_view_mode', newMode)
 })
 </script>
 
@@ -1972,6 +2076,192 @@ watch(hasActiveFilters, (isActive) => {
 
   .pagination-page {
     font-size: 0.8125rem;
+  }
+}
+
+/* ========================================
+   VIEW TOGGLE
+   ======================================== */
+.view-toggle {
+  display: flex;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.view-toggle-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 38px;
+  background: transparent;
+  border: none;
+  color: var(--color-stone);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.view-toggle-btn:hover {
+  background: var(--color-washi-aged);
+  color: var(--color-sumi);
+}
+
+.view-toggle-btn.active {
+  background: var(--color-ai);
+  color: var(--color-washi);
+}
+
+.view-toggle-btn:first-child {
+  border-right: 1px solid var(--color-border);
+}
+
+/* ========================================
+   TABLE VIEW
+   ======================================== */
+.applications-table-wrapper {
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+}
+
+.applications-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.applications-table thead {
+  background: var(--color-washi-aged);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.applications-table th {
+  padding: var(--space-md) var(--space-lg);
+  text-align: left;
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+  white-space: nowrap;
+}
+
+.sortable-header {
+  cursor: pointer;
+  user-select: none;
+  transition: color var(--transition-base);
+}
+
+.sortable-header:hover {
+  color: var(--color-ai);
+}
+
+.sort-indicator {
+  margin-left: var(--space-xs);
+  color: var(--color-ai);
+}
+
+.actions-header {
+  text-align: right;
+}
+
+.applications-table tbody tr {
+  border-bottom: 1px solid var(--color-border-light);
+  transition: background var(--transition-base);
+  cursor: pointer;
+}
+
+.applications-table tbody tr:last-child {
+  border-bottom: none;
+}
+
+.applications-table tbody tr:hover {
+  background: var(--color-ai-subtle);
+}
+
+.applications-table td {
+  padding: var(--space-md) var(--space-lg);
+  vertical-align: middle;
+}
+
+.cell-firma {
+  font-weight: 500;
+  color: var(--color-sumi);
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-position {
+  color: var(--color-text-secondary);
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cell-datum {
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+}
+
+.cell-status {
+  white-space: nowrap;
+}
+
+.status-badge-sm {
+  font-size: 0.625rem;
+  padding: 2px var(--space-sm);
+}
+
+.cell-quelle {
+  max-width: 150px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.table-link {
+  color: var(--color-ai);
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.table-link:hover {
+  text-decoration: underline;
+}
+
+.text-muted {
+  color: var(--color-text-ghost);
+}
+
+.cell-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.cell-actions .zen-btn {
+  margin-left: var(--space-xs);
+}
+
+/* Table Responsive */
+@media (max-width: 1024px) {
+  .applications-table-wrapper {
+    overflow-x: auto;
+  }
+
+  .applications-table {
+    min-width: 700px;
+  }
+}
+
+@media (max-width: 768px) {
+  .view-toggle {
+    display: none;
   }
 }
 </style>
