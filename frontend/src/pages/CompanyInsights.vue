@@ -38,7 +38,7 @@
 
       <!-- Company Table -->
       <section v-else-if="companies.length > 0" class="table-section">
-        <div class="table-container zen-card">
+        <ScrollableTable class="zen-card table-container-outer">
           <table class="company-table">
             <thead>
               <tr>
@@ -91,7 +91,7 @@
               </tr>
             </tbody>
           </table>
-        </div>
+        </ScrollableTable>
       </section>
 
       <!-- Empty State -->
@@ -111,6 +111,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
+import ScrollableTable from '../components/ScrollableTable.vue'
 
 const router = useRouter()
 const companies = ref([])
@@ -262,8 +263,7 @@ onMounted(() => {
   margin-top: var(--space-ma);
 }
 
-.table-container {
-  overflow-x: auto;
+.table-container-outer {
   padding: 0;
 }
 

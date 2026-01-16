@@ -216,7 +216,7 @@
         </div>
 
         <!-- Table View -->
-        <div v-else class="applications-table-wrapper">
+        <ScrollableTable v-else class="applications-table-wrapper">
           <table class="applications-table">
             <thead>
               <tr>
@@ -273,7 +273,7 @@
               </tr>
             </tbody>
           </table>
-        </div>
+        </ScrollableTable>
 
         <!-- Pagination -->
         <nav v-if="totalPages > 1" class="pagination" aria-label="Bewerbungs-Seitennavigation">
@@ -694,6 +694,7 @@ import api from '../api/client'
 import ATSOptimizer from '../components/ATSOptimizer.vue'
 import GapAnalysis from '../components/GapAnalysis.vue'
 import InterviewTracker from '../components/InterviewTracker.vue'
+import ScrollableTable from '../components/ScrollableTable.vue'
 import { confirm } from '../composables/useConfirm'
 
 const route = useRoute()
@@ -2151,7 +2152,6 @@ watch(viewMode, (newMode) => {
   background: var(--color-bg-elevated);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  overflow: hidden;
 }
 
 .applications-table {
@@ -2277,10 +2277,6 @@ watch(viewMode, (newMode) => {
 
 /* Table Responsive */
 @media (max-width: 1024px) {
-  .applications-table-wrapper {
-    overflow-x: auto;
-  }
-
   .applications-table {
     min-width: 700px;
   }
