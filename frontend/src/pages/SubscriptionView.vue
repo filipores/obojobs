@@ -192,7 +192,7 @@
               <tr>
                 <th class="feature-column">Features</th>
                 <th
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   class="plan-column"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan, 'recommended-plan': plan.plan_id === 'pro' }"
@@ -212,7 +212,7 @@
               <tr>
                 <td class="feature-name">Bewerbungen pro Monat</td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -224,7 +224,7 @@
               <tr>
                 <td class="feature-name">AI-Bewerbungsgenerator</td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -236,7 +236,7 @@
               <tr>
                 <td class="feature-name">Template-Verwaltung</td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -248,7 +248,7 @@
               <tr>
                 <td class="feature-name">ATS-Analyse</td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -260,7 +260,7 @@
               <tr>
                 <td class="feature-name">Email-Vorschlaege</td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -273,7 +273,7 @@
               <tr>
                 <td class="feature-name">Gehalts-Coach</td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -286,7 +286,7 @@
               <tr>
                 <td class="feature-name">Prioritaets-Support</td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -301,7 +301,7 @@
               <tr>
                 <td></td>
                 <td
-                  v-for="plan in getAvailablePlans()"
+                  v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
@@ -333,7 +333,7 @@
         <!-- Plan Cards (Mobile) -->
         <div class="plans-grid mobile-only">
           <div
-            v-for="plan in getAvailablePlans()"
+            v-for="plan in getAvailablePlans"
             :key="plan.plan_id"
             class="plan-card zen-card"
             :class="{ 'current': plan.plan_id === subscription.plan, 'recommended': plan.plan_id === 'pro' }"
@@ -419,7 +419,7 @@ const getCurrentPlanFeatures = computed(() => {
 
   // Fallback: get features from the current plan based on plan name
   const currentPlan = subscription.value?.plan || 'free'
-  const planFromAvailable = getAvailablePlans().find(plan => plan.plan_id === currentPlan)
+  const planFromAvailable = getAvailablePlans.value.find(plan => plan.plan_id === currentPlan)
   if (planFromAvailable?.features?.length) {
     return planFromAvailable.features
   }
