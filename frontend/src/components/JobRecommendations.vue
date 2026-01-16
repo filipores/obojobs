@@ -287,7 +287,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch } from 'vue'
 import api from '../api/client'
 
 const recommendations = ref([])
@@ -400,6 +400,22 @@ const closeAnalyzeModal = () => {
   manualCompany.value = ''
   manualTitle.value = ''
 }
+
+// Escape key handler for modal
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape' && showAnalyzeModal.value) {
+    closeAnalyzeModal()
+  }
+}
+
+// Watch for modal state changes to add/remove escape key listener
+watch(showAnalyzeModal, (isModalOpen) => {
+  if (isModalOpen) {
+    document.addEventListener('keydown', handleEscapeKey)
+  } else {
+    document.removeEventListener('keydown', handleEscapeKey)
+  }
+})
 
 const dismissRecommendation = async (id) => {
   try {

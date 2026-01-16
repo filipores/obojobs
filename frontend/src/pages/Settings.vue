@@ -775,8 +775,28 @@ const requestAccountDeletion = async () => {
   })
   if (!confirmed) return
 
-  if (window.$toast) {
-    window.$toast('Bitte kontaktieren Sie den Support unter support@obo.de für die Kontolöschung.', 'info')
+  try {
+    await api.delete('/auth/delete-account')
+
+    // Account successfully deleted - user gets logged out automatically
+    // Clear local storage and redirect
+    localStorage.removeItem('token')
+    authStore.logout()
+
+    if (window.$toast) {
+      window.$toast('Ihr Konto wurde erfolgreich gelöscht.', 'success')
+    }
+
+    // Redirect to home page after a brief delay
+    setTimeout(() => {
+      _router.push('/')
+    }, 1000)
+
+  } catch (err) {
+    const errorMsg = err.response?.data?.error || 'Fehler beim Löschen des Kontos'
+    if (window.$toast) {
+      window.$toast(errorMsg, 'error')
+    }
   }
 }
 

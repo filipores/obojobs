@@ -155,7 +155,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import api from '../api/client'
 import { confirm } from '../composables/useConfirm'
 
@@ -336,6 +336,22 @@ const closeModal = () => {
     experience_years: null
   }
 }
+
+// Escape key handler for modal
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape' && (showAddModal.value || editingSkill.value)) {
+    closeModal()
+  }
+}
+
+// Watch for modal state changes to add/remove escape key listener
+watch(() => showAddModal.value || editingSkill.value, (isModalOpen) => {
+  if (isModalOpen) {
+    document.addEventListener('keydown', handleEscapeKey)
+  } else {
+    document.removeEventListener('keydown', handleEscapeKey)
+  }
+})
 
 onMounted(() => {
   loadSkills()
