@@ -1,7 +1,7 @@
 <template>
   <div class="dashboard">
-    <!-- Email Verification Banner -->
-    <div v-if="showVerificationBanner" class="verification-banner">
+    <!-- Email Verification Banner - Full version -->
+    <div v-if="showFullBanner" class="verification-banner">
       <div class="container">
         <div class="banner-content">
           <div class="banner-icon">
@@ -24,6 +24,22 @@
             </svg>
           </button>
         </div>
+      </div>
+    </div>
+
+    <!-- Email Verification Banner - Compact version (after dismissing full banner) -->
+    <div v-else-if="showCompactBanner" class="verification-banner-compact">
+      <div class="container">
+        <router-link to="/email-verification" class="compact-banner-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          <span>E-Mail noch nicht verifiziert</span>
+          <svg class="arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </router-link>
       </div>
     </div>
 
@@ -243,19 +259,34 @@ import JobRecommendations from '../components/JobRecommendations.vue'
 
 const stats = ref(null)
 const usage = ref(null)
-const bannerDismissed = ref(false)
+const bannerDismissedThisSession = ref(false)
 const loadError = ref(false)
 
-const showVerificationBanner = computed(() => {
-  if (bannerDismissed.value) return false
+// Check if user needs to see the verification banner
+const needsVerification = computed(() => {
   if (!authStore.user) return false
   return authStore.user.email_verified === false
 })
 
+// Show full banner if not dismissed this session and never dismissed before
+const showFullBanner = computed(() => {
+  if (!needsVerification.value) return false
+  if (bannerDismissedThisSession.value) return false
+  // Show full banner if never dismissed before (no localStorage entry)
+  return !localStorage.getItem('verificationBannerDismissedOnce')
+})
+
+// Show compact banner if full banner was dismissed (either this session or before)
+const showCompactBanner = computed(() => {
+  if (!needsVerification.value) return false
+  // Show compact if full banner is not shown and user has dismissed before
+  return !showFullBanner.value && (bannerDismissedThisSession.value || localStorage.getItem('verificationBannerDismissedOnce'))
+})
+
 const dismissBanner = () => {
-  bannerDismissed.value = true
-  // Store dismissal for this session
-  sessionStorage.setItem('verificationBannerDismissed', 'true')
+  bannerDismissedThisSession.value = true
+  // Store that user has dismissed the banner at least once (persists across browser sessions)
+  localStorage.setItem('verificationBannerDismissedOnce', 'true')
 }
 
 const getPlanLabel = () => {
@@ -283,11 +314,6 @@ const retryLoadStats = () => {
 }
 
 onMounted(async () => {
-  // Check if banner was dismissed this session
-  if (sessionStorage.getItem('verificationBannerDismissed')) {
-    bannerDismissed.value = true
-  }
-
   await loadStats()
 })
 </script>
@@ -349,6 +375,39 @@ onMounted(async () => {
 .banner-dismiss:hover {
   background: rgba(0, 0, 0, 0.05);
   color: var(--color-sumi);
+}
+
+/* Compact Banner (after first dismissal) */
+.verification-banner-compact {
+  background: var(--color-warning-subtle, #fff3e0);
+  border-bottom: 1px solid var(--color-warning, #f57c00);
+  padding: var(--space-sm) 0;
+}
+
+.compact-banner-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-warning-dark, #e65100);
+  text-decoration: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all var(--transition-base);
+}
+
+.compact-banner-link:hover {
+  color: var(--color-warning, #f57c00);
+}
+
+.compact-banner-link .arrow-icon {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--transition-base);
+}
+
+.compact-banner-link:hover .arrow-icon {
+  opacity: 1;
+  transform: translateX(0);
 }
 
 @media (max-width: 768px) {
