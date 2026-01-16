@@ -3,6 +3,13 @@
     <!-- Zen Navigation - 禅ナビ -->
     <nav v-if="authStore.isAuthenticated()" class="zen-nav">
       <div class="nav-container">
+        <!-- Mobile Hamburger Menu (only visible on mobile) -->
+        <button @click="toggleMobileSidebar" class="mobile-hamburger" aria-label="Navigation öffnen">
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+          <span class="hamburger-line"></span>
+        </button>
+
         <!-- Brand - Minimal mark -->
         <router-link to="/" class="nav-brand" title="Zur Startseite">
           <div class="brand-mark">
@@ -98,6 +105,123 @@
       <div class="nav-ink-stroke"></div>
     </nav>
 
+    <!-- Mobile Sidebar - 禅モバイルサイドバー -->
+    <div v-if="authStore.isAuthenticated()" class="mobile-sidebar" :class="{ 'sidebar-open': isSidebarOpen }">
+      <!-- Sidebar Overlay -->
+      <div class="sidebar-overlay" @click="closeMobileSidebar"></div>
+
+      <!-- Sidebar Content -->
+      <div class="sidebar-content">
+        <!-- Sidebar Header -->
+        <div class="sidebar-header">
+          <div class="sidebar-brand">
+            <div class="sidebar-enso"></div>
+            <span>obo</span>
+          </div>
+          <button @click="closeMobileSidebar" class="sidebar-close" aria-label="Navigation schließen">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Sidebar Navigation -->
+        <nav class="sidebar-nav">
+          <router-link to="/" class="sidebar-link" exact-active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <span>Dashboard</span>
+          </router-link>
+
+          <router-link to="/documents" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>Dokumente</span>
+          </router-link>
+
+          <router-link to="/templates" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+              <polyline points="14.5 2 14.5 8 20.5 8"/>
+            </svg>
+            <span>Templates</span>
+          </router-link>
+
+          <router-link to="/applications" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+            </svg>
+            <span>Bewerbungen</span>
+          </router-link>
+
+          <router-link to="/timeline" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            <span>Timeline</span>
+          </router-link>
+
+          <router-link to="/ats" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 20V10"/>
+              <path d="M18 20V4"/>
+              <path d="M6 20v-4"/>
+            </svg>
+            <span>ATS-Optimierung</span>
+          </router-link>
+
+          <router-link to="/company-insights" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M18 20V10"/>
+              <path d="M12 20V4"/>
+              <path d="M6 20v-6"/>
+            </svg>
+            <span>Firmen-Insights</span>
+          </router-link>
+        </nav>
+
+        <!-- Sidebar Footer -->
+        <div class="sidebar-footer">
+          <router-link to="/subscription" class="sidebar-link" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+              <path d="M12 17h.01"/>
+            </svg>
+            <span>Abo ({{ getPlanLabel() }})</span>
+          </router-link>
+
+          <router-link to="/settings" class="sidebar-link" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+            </svg>
+            <span>Einstellungen</span>
+          </router-link>
+
+          <button @click="logout" class="sidebar-link sidebar-logout">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+              <polyline points="16 17 21 12 16 7"/>
+              <line x1="21" y1="12" x2="9" y2="12"/>
+            </svg>
+            <span>Abmelden</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Main Content -->
     <main class="main-content" :class="{ 'with-nav': authStore.isAuthenticated() }">
       <router-view v-slot="{ Component }">
@@ -175,7 +299,7 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { authStore } from './store/auth'
 import { useRouter } from 'vue-router'
 import Toast from './components/Toast.vue'
@@ -183,6 +307,7 @@ import Toast from './components/Toast.vue'
 const router = useRouter()
 const toastRef = ref(null)
 const isDarkMode = ref(false)
+const isSidebarOpen = ref(false)
 const currentYear = computed(() => new Date().getFullYear())
 
 const THEME_KEY = 'obojobs-theme'
@@ -233,6 +358,37 @@ const getPlanLabel = () => {
   return subscription.plan?.charAt(0).toUpperCase() + subscription.plan?.slice(1) || 'Free'
 }
 
+// Mobile sidebar functions
+const toggleMobileSidebar = () => {
+  isSidebarOpen.value = !isSidebarOpen.value
+
+  // Disable body scroll when sidebar is open
+  if (isSidebarOpen.value) {
+    document.body.classList.add('sidebar-open')
+  } else {
+    document.body.classList.remove('sidebar-open')
+  }
+}
+
+const closeMobileSidebar = () => {
+  isSidebarOpen.value = false
+  document.body.classList.remove('sidebar-open')
+}
+
+// Close sidebar on escape key
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape' && isSidebarOpen.value) {
+    closeMobileSidebar()
+  }
+}
+
+// Close sidebar on route change
+const handleRouteChange = () => {
+  if (isSidebarOpen.value) {
+    closeMobileSidebar()
+  }
+}
+
 // Watch for system preference changes
 const watchSystemTheme = () => {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -255,6 +411,18 @@ onMounted(() => {
   // Initialize theme
   initTheme()
   watchSystemTheme()
+
+  // Add keyboard listener for escape key
+  document.addEventListener('keydown', handleEscapeKey)
+
+  // Watch for route changes to close sidebar
+  router.afterEach(handleRouteChange)
+})
+
+onUnmounted(() => {
+  // Clean up event listeners
+  document.removeEventListener('keydown', handleEscapeKey)
+  document.body.classList.remove('sidebar-open')
 })
 </script>
 
@@ -267,6 +435,42 @@ onMounted(() => {
   top: 0;
   z-index: var(--z-nav);
   background: var(--color-washi);
+}
+
+/* ========================================
+   MOBILE HAMBURGER MENU
+   ======================================== */
+.mobile-hamburger {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  gap: 4px;
+  transition: all var(--transition-base);
+}
+
+.hamburger-line {
+  width: 20px;
+  height: 2px;
+  background: var(--color-sumi);
+  border-radius: 2px;
+  transition: all var(--transition-base);
+}
+
+.mobile-hamburger:hover .hamburger-line {
+  background: var(--color-ai);
+}
+
+/* Show hamburger only on mobile */
+@media (max-width: 768px) {
+  .mobile-hamburger {
+    display: flex;
+  }
 }
 
 .nav-container {
@@ -762,5 +966,183 @@ onMounted(() => {
 
 .bottom-nav-cta .bottom-nav-label {
   margin-top: 4px;
+}
+
+/* ========================================
+   MOBILE SIDEBAR - 禅モバイルサイドバー
+   ======================================== */
+.mobile-sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 999;
+  display: none;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity var(--transition-base);
+}
+
+.mobile-sidebar.sidebar-open {
+  display: block;
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.sidebar-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  transition: opacity var(--transition-base);
+}
+
+.sidebar-content {
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 280px;
+  max-width: 85vw;
+  background: var(--color-washi);
+  border-right: 1px solid var(--color-border-light);
+  box-shadow: 4px 0 20px rgba(0, 0, 0, 0.1);
+  transform: translateX(-100%);
+  transition: transform var(--transition-base);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-open .sidebar-content {
+  transform: translateX(0);
+}
+
+/* Sidebar Header */
+.sidebar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+  background: var(--color-washi-warm);
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.sidebar-enso {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--color-sumi);
+  border-width: 2px 2.5px 2px 2px;
+  opacity: 0.8;
+}
+
+.sidebar-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.sidebar-close:hover {
+  background: var(--color-washi-aged);
+  color: var(--color-text-primary);
+}
+
+/* Sidebar Navigation */
+.sidebar-nav {
+  flex: 1;
+  padding: var(--space-sm) 0;
+}
+
+.sidebar-link {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  text-decoration: none;
+  color: var(--color-text-tertiary);
+  font-weight: 400;
+  transition: all var(--transition-base);
+  border: none;
+  background: transparent;
+  width: 100%;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9375rem;
+}
+
+.sidebar-link:hover {
+  background: var(--color-washi-aged);
+  color: var(--color-text-primary);
+}
+
+.sidebar-link.active {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  font-weight: 500;
+}
+
+.sidebar-link.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 24px;
+  background: var(--color-ai);
+  border-radius: 0 2px 2px 0;
+}
+
+.sidebar-link svg {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+}
+
+/* Sidebar Footer */
+.sidebar-footer {
+  border-top: 1px solid var(--color-border-light);
+  padding: var(--space-sm) 0;
+  background: var(--color-washi-warm);
+}
+
+.sidebar-logout:hover {
+  background: var(--color-error-light);
+  color: var(--color-error);
+}
+
+/* Prevent body scroll when sidebar is open */
+:global(body.sidebar-open) {
+  overflow: hidden;
+}
+
+/* Show sidebar only on mobile */
+@media (min-width: 769px) {
+  .mobile-sidebar {
+    display: none !important;
+  }
 }
 </style>
