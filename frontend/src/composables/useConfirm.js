@@ -9,6 +9,9 @@ const confirmState = ref({
   confirmText: 'Bestätigen',
   cancelText: 'Abbrechen',
   type: 'default',
+  showCheckbox: false,
+  checkboxLabel: '',
+  checkboxDefault: false,
   resolve: null
 })
 
@@ -23,7 +26,10 @@ let containerEl = null
  * @param {string} options.confirmText - Confirm button text (default: 'Bestätigen')
  * @param {string} options.cancelText - Cancel button text (default: 'Abbrechen')
  * @param {string} options.type - 'default' or 'danger' (default: 'default')
- * @returns {Promise<boolean>} - Resolves to true if confirmed, false if cancelled
+ * @param {boolean} options.showCheckbox - Show a checkbox option (default: false)
+ * @param {string} options.checkboxLabel - Label for the checkbox
+ * @param {boolean} options.checkboxDefault - Default checkbox state (default: false)
+ * @returns {Promise<boolean|{confirmed: boolean, checkboxChecked: boolean}>} - Resolves to true/false or object with checkbox state
  *
  * @example
  * // Simple usage
@@ -38,11 +44,23 @@ let containerEl = null
  *   cancelText: 'Abbrechen',
  *   type: 'danger'
  * })
+ *
+ * @example
+ * // With checkbox
+ * const result = await confirm({
+ *   title: 'Dokument löschen',
+ *   message: 'Möchten Sie dieses Dokument wirklich löschen?',
+ *   showCheckbox: true,
+ *   checkboxLabel: 'Auch extrahierte Skills löschen',
+ *   type: 'danger'
+ * })
+ * // result = { confirmed: true, checkboxChecked: true }
  */
 export function confirm(options) {
   return new Promise((resolve) => {
     // Normalize options
     const opts = typeof options === 'string' ? { message: options } : options
+    const hasCheckbox = opts.showCheckbox || false
 
     // Update state
     confirmState.value = {
@@ -52,7 +70,11 @@ export function confirm(options) {
       confirmText: opts.confirmText || 'Bestätigen',
       cancelText: opts.cancelText || 'Abbrechen',
       type: opts.type || 'default',
-      resolve
+      showCheckbox: hasCheckbox,
+      checkboxLabel: opts.checkboxLabel || '',
+      checkboxDefault: opts.checkboxDefault || false,
+      resolve,
+      hasCheckbox
     }
 
     // Create container if it doesn't exist
@@ -70,15 +92,26 @@ export function confirm(options) {
       confirmText: confirmState.value.confirmText,
       cancelText: confirmState.value.cancelText,
       type: confirmState.value.type,
+      showCheckbox: confirmState.value.showCheckbox,
+      checkboxLabel: confirmState.value.checkboxLabel,
+      checkboxDefault: confirmState.value.checkboxDefault,
       'onUpdate:visible': (val) => {
         confirmState.value.visible = val
       },
-      onConfirm: () => {
-        confirmState.value.resolve?.(true)
+      onConfirm: (payload) => {
+        if (confirmState.value.hasCheckbox) {
+          confirmState.value.resolve?.({ confirmed: true, checkboxChecked: payload?.checkboxChecked || false })
+        } else {
+          confirmState.value.resolve?.(true)
+        }
         cleanup()
       },
       onCancel: () => {
-        confirmState.value.resolve?.(false)
+        if (confirmState.value.hasCheckbox) {
+          confirmState.value.resolve?.({ confirmed: false, checkboxChecked: false })
+        } else {
+          confirmState.value.resolve?.(false)
+        }
         cleanup()
       }
     })
@@ -98,7 +131,11 @@ function cleanup() {
     confirmText: 'Bestätigen',
     cancelText: 'Abbrechen',
     type: 'default',
-    resolve: null
+    showCheckbox: false,
+    checkboxLabel: '',
+    checkboxDefault: false,
+    resolve: null,
+    hasCheckbox: false
   }
 }
 

@@ -5,9 +5,10 @@ Migration: Add Payment System
 - Updates default credits from 50 to 5 (for new users only, doesn't affect existing users)
 """
 
+from sqlalchemy import text
+
 from app import create_app
 from models import db
-from sqlalchemy import text
 
 
 def run_migration():

@@ -172,11 +172,22 @@ def get_document(doc_id, current_user):
 @documents_bp.route("/<int:doc_id>", methods=["DELETE"])
 @jwt_required_custom
 def delete_document(doc_id, current_user):
-    """Delete a document"""
+    """Delete a document, optionally including extracted skills"""
     document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first()
 
     if not document:
         return jsonify({"error": "Document not found"}), 404
+
+    # Check if we should also delete skills
+    delete_skills = request.args.get("delete_skills", "false").lower() == "true"
+    skills_deleted = 0
+
+    if delete_skills and document.doc_type == "lebenslauf":
+        # Delete all skills associated with this document
+        skills_deleted = UserSkill.query.filter_by(
+            user_id=current_user.id, source_document_id=document.id
+        ).delete()
+        db.session.flush()
 
     # Delete file
     if os.path.exists(document.file_path):
@@ -186,4 +197,9 @@ def delete_document(doc_id, current_user):
     db.session.delete(document)
     db.session.commit()
 
-    return jsonify({"success": True, "message": "Document deleted"}), 200
+    response = {"success": True, "message": "Dokument gelöscht"}
+    if delete_skills and skills_deleted > 0:
+        response["skills_deleted"] = skills_deleted
+        response["message"] = f"Dokument und {skills_deleted} Skills gelöscht"
+
+    return jsonify(response), 200

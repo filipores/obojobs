@@ -27,6 +27,19 @@
             <h2 :id="titleId">{{ title }}</h2>
           </div>
           <p :id="messageId" class="confirm-message">{{ message }}</p>
+
+          <!-- Optional checkbox -->
+          <div v-if="showCheckbox" class="confirm-checkbox">
+            <label class="checkbox-label">
+              <input
+                type="checkbox"
+                v-model="checkboxChecked"
+                :id="checkboxId"
+              />
+              <span class="checkbox-text">{{ checkboxLabel }}</span>
+            </label>
+          </div>
+
           <div class="confirm-actions">
             <button
               ref="cancelButton"
@@ -80,6 +93,18 @@ const props = defineProps({
     type: String,
     default: 'default', // 'default' or 'danger'
     validator: (val) => ['default', 'danger'].includes(val)
+  },
+  showCheckbox: {
+    type: Boolean,
+    default: false
+  },
+  checkboxLabel: {
+    type: String,
+    default: ''
+  },
+  checkboxDefault: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -88,12 +113,16 @@ const emit = defineEmits(['confirm', 'cancel', 'update:visible'])
 const isVisible = ref(props.visible)
 const confirmButton = ref(null)
 const cancelButton = ref(null)
+const checkboxChecked = ref(props.checkboxDefault)
 const titleId = `confirm-title-${Date.now()}`
 const messageId = `confirm-message-${Date.now()}`
+const checkboxId = `confirm-checkbox-${Date.now()}`
 
 watch(() => props.visible, (newVal) => {
   isVisible.value = newVal
   if (newVal) {
+    // Reset checkbox to default when modal opens
+    checkboxChecked.value = props.checkboxDefault
     nextTick(() => {
       cancelButton.value?.focus()
     })
@@ -103,7 +132,7 @@ watch(() => props.visible, (newVal) => {
 const handleConfirm = () => {
   isVisible.value = false
   emit('update:visible', false)
-  emit('confirm')
+  emit('confirm', { checkboxChecked: checkboxChecked.value })
 }
 
 const handleCancel = () => {
@@ -196,6 +225,36 @@ onUnmounted(() => {
 
 .confirm-actions .zen-btn {
   min-width: 120px;
+}
+
+/* Checkbox */
+.confirm-checkbox {
+  margin-bottom: var(--space-lg);
+  text-align: left;
+  background: var(--color-washi-warm);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-sand);
+}
+
+.checkbox-label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  cursor: pointer;
+  font-size: 0.9375rem;
+  color: var(--color-sumi);
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--color-ai);
+  cursor: pointer;
+}
+
+.checkbox-text {
+  flex: 1;
 }
 
 /* Transition */

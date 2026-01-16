@@ -56,7 +56,6 @@ def upgrade(app):
 
 def downgrade(app):
     """Remove interview tracking columns from applications table"""
-    from models import db
 
     with app.app_context():
         # SQLite doesn't support DROP COLUMN directly

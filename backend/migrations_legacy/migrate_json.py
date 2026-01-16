@@ -2,15 +2,15 @@
 """
 Migration script to import data from bewerbungen.json into SQLite database.
 """
-import sys
-import os
 import json
+import os
+import sys
 from datetime import datetime
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../..')))
 
-from backend.models import db, User, Application
+from backend.models import Application, User, db
 
 
 def migrate_bewerbungen_json(app, user_email='migration@example.com', json_path='bewerbungen.json'):
@@ -36,14 +36,14 @@ def migrate_bewerbungen_json(app, user_email='migration@example.com', json_path=
             user.set_password('migration123')
             db.session.add(user)
             db.session.commit()
-            print(f"✓ Migration user created")
+            print("✓ Migration user created")
 
         # Load bewerbungen.json
         if not os.path.exists(json_path):
             print(f"✗ File not found: {json_path}")
             return
 
-        with open(json_path, 'r', encoding='utf-8') as f:
+        with open(json_path, encoding='utf-8') as f:
             data = json.load(f)
 
         print(f"Found {len(data)} applications to migrate")
@@ -54,7 +54,7 @@ def migrate_bewerbungen_json(app, user_email='migration@example.com', json_path=
             # Parse datum
             try:
                 datum = datetime.strptime(bew['datum'], '%Y-%m-%d %H:%M')
-            except:
+            except (ValueError, KeyError):
                 datum = datetime.utcnow()
 
             # Create application

@@ -6,13 +6,24 @@ from flask_limiter.util import get_remote_address
 from flask_migrate import Migrate
 
 from config import config
-from models import db
+
 # Import all models for Flask-Migrate to detect them
 from models import (  # noqa: F401
-    User, Document, Template, Application, APIKey,
-    Subscription, TokenBlacklist, ATSAnalysis, EmailAccount,
-    UserSkill, JobRequirement, InterviewQuestion, JobRecommendation,
+    APIKey,
+    Application,
+    ATSAnalysis,
+    Document,
+    EmailAccount,
+    InterviewQuestion,
+    JobRecommendation,
+    JobRequirement,
     SalaryCoachData,
+    Subscription,
+    Template,
+    TokenBlacklist,
+    User,
+    UserSkill,
+    db,
 )
 
 # Initialize Flask-Migrate globally for CLI access
@@ -35,7 +46,6 @@ def create_app():
     # Register JWT token blacklist callback
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
-        from models import TokenBlacklist
         jti = jwt_payload["jti"]
         return TokenBlacklist.is_token_blacklisted(jti)
 

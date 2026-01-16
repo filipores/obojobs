@@ -47,7 +47,6 @@ def upgrade(app):
 
 def downgrade(app):
     """Remove subscription usage fields from users table"""
-    from models import db
 
     with app.app_context():
         # Note: SQLite doesn't support DROP COLUMN directly

@@ -100,7 +100,7 @@
                   <p class="uploaded-filename">{{ documents.lebenslauf.original_filename }}</p>
                   <p class="uploaded-date">{{ formatDate(documents.lebenslauf.uploaded_at) }}</p>
                 </div>
-                <button @click="deleteDoc(documents.lebenslauf.id)" class="zen-btn zen-btn-sm" aria-label="Lebenslauf löschen" title="Lebenslauf löschen">
+                <button @click="deleteDoc(documents.lebenslauf.id, 'lebenslauf')" class="zen-btn zen-btn-sm" aria-label="Lebenslauf löschen" title="Lebenslauf löschen">
                   Löschen
                 </button>
               </div>
@@ -181,7 +181,7 @@
                   <p class="uploaded-filename">{{ documents.anschreiben.original_filename }}</p>
                   <p class="uploaded-date">{{ formatDate(documents.anschreiben.uploaded_at) }}</p>
                 </div>
-                <button @click="deleteDoc(documents.anschreiben.id)" class="zen-btn zen-btn-sm" aria-label="Anschreiben löschen" title="Anschreiben löschen">
+                <button @click="deleteDoc(documents.anschreiben.id, 'anschreiben')" class="zen-btn zen-btn-sm" aria-label="Anschreiben löschen" title="Anschreiben löschen">
                   Löschen
                 </button>
               </div>
@@ -261,7 +261,7 @@
                   <p class="uploaded-filename">{{ documents.arbeitszeugnis.original_filename }}</p>
                   <p class="uploaded-date">{{ formatDate(documents.arbeitszeugnis.uploaded_at) }}</p>
                 </div>
-                <button @click="deleteDoc(documents.arbeitszeugnis.id)" class="zen-btn zen-btn-sm" aria-label="Arbeitszeugnis löschen" title="Arbeitszeugnis löschen">
+                <button @click="deleteDoc(documents.arbeitszeugnis.id, 'arbeitszeugnis')" class="zen-btn zen-btn-sm" aria-label="Arbeitszeugnis löschen" title="Arbeitszeugnis löschen">
                   Löschen
                 </button>
               </div>
@@ -403,18 +403,34 @@ const upload = async (docType) => {
   }
 }
 
-const deleteDoc = async (id) => {
-  const confirmed = await confirm({
+const deleteDoc = async (id, docType) => {
+  // Check if this is a lebenslauf - then we offer to delete skills too
+  const isLebenslauf = docType === 'lebenslauf'
+
+  const result = await confirm({
     title: 'Dokument löschen',
-    message: 'Möchten Sie dieses Dokument wirklich löschen?',
+    message: isLebenslauf
+      ? 'Möchten Sie dieses Dokument wirklich löschen? Die extrahierten Skills können erhalten bleiben oder ebenfalls gelöscht werden.'
+      : 'Möchten Sie dieses Dokument wirklich löschen?',
     confirmText: 'Löschen',
     cancelText: 'Abbrechen',
-    type: 'danger'
+    type: 'danger',
+    showCheckbox: isLebenslauf,
+    checkboxLabel: 'Auch extrahierte Skills löschen',
+    checkboxDefault: false
   })
+
+  // Handle both boolean (old behavior) and object (new with checkbox)
+  const confirmed = typeof result === 'object' ? result.confirmed : result
+  const deleteSkills = typeof result === 'object' ? result.checkboxChecked : false
+
   if (!confirmed) return
 
   try {
-    await api.delete(`/documents/${id}`)
+    const url = deleteSkills
+      ? `/documents/${id}?delete_skills=true`
+      : `/documents/${id}`
+    await api.delete(url)
     await loadDocuments()
   } catch (e) {
     alert('Fehler beim Löschen: ' + (e.response?.data?.error || 'Unbekannter Fehler'))

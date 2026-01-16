@@ -3,8 +3,8 @@
 Migration: Add email verification fields to users table.
 Fields: email_verified, email_verification_token, email_verification_sent_at
 """
-import sys
 import os
+import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))

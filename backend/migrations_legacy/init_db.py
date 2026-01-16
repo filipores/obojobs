@@ -3,28 +3,16 @@
 Database initialization script.
 Creates all tables and optionally seeds test data.
 """
-import sys
 import os
+import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Import all models to ensure all tables are created
 from models import (
-    db,
     User,
-    Document,
-    Template,
-    Application,
-    APIKey,
-    Subscription,
-    TokenBlacklist,
-    ATSAnalysis,
-    EmailAccount,
-    UserSkill,
-    JobRequirement,
-    InterviewQuestion,
-    JobRecommendation,
+    db,
 )
 
 
@@ -75,7 +63,7 @@ def seed_test_data(app):
         db.session.commit()
 
         print(f"✓ Test user created: {test_user.email}")
-        print(f"  Password: test123")
+        print("  Password: test123")
         print(f"  Credits: {test_user.credits_remaining}/{test_user.credits_max}")
 
         return test_user

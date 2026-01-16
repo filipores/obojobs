@@ -3,8 +3,8 @@
 Migration: Add password reset fields to users table.
 Fields: password_reset_token, password_reset_sent_at
 """
-import sys
 import os
+import sys
 
 # Add parent directory to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
