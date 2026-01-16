@@ -143,8 +143,7 @@ class JobRecommender:
 
             # Analyze requirements from job posting
             requirements = self.requirement_analyzer.analyze_requirements(
-                job_text=job_data.get("description", ""),
-                job_title=job_data.get("title", ""),
+                job_text=job_data.get("description", "")
             )
 
             if not requirements:
@@ -218,8 +217,7 @@ class JobRecommender:
 
             # Analyze requirements from job posting
             requirements = self.requirement_analyzer.analyze_requirements(
-                job_text=job_text,
-                job_title=title,
+                job_text=job_text
             )
 
             if not requirements:
