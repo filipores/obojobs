@@ -461,7 +461,7 @@ const error = ref('')
 const result = ref(null)
 const history = ref([])
 const loadingHistory = ref(false)
-const hasResume = ref(true) // Assume true until checked
+const hasResume = ref(false) // Assume false until confirmed (safe default)
 const checkingResume = ref(true)
 
 // Keyword tooltip state
@@ -718,12 +718,13 @@ const getScoreClass = (score) => {
 const checkResumeStatus = async () => {
   checkingResume.value = true
   try {
-    const { data } = await api.get('/documents')
+    const { data } = await api.silent.get('/documents')
     const docs = data.documents || []
     hasResume.value = docs.some(doc => doc.doc_type === 'lebenslauf')
-  } catch {
-    // Assume resume exists if check fails, let backend handle it
-    hasResume.value = true
+  } catch (err) {
+    // Safe fallback: assume no resume (show warning rather than false security)
+    hasResume.value = false
+    console.log('Resume check failed, showing warning to be safe:', err.message)
   } finally {
     checkingResume.value = false
   }
