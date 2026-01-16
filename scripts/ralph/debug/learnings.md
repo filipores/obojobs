@@ -1224,3 +1224,51 @@ catch { hasResume.value = false } // Pessimistic but safe fallback
 
 ---
 
+## [2026-01-17] - BUG-033: Subscription-Seite rendert nicht - getAvailablePlans function fehlt
+
+**Problem:** Die gesamte Subscription-Seite (/subscription) wurde nicht gerendert aufgrund eines JavaScript-Fehlers. Console zeigte "TypeError: getAvailablePlans is not a function" - die Seite blieb komplett leer.
+
+**Root Cause:** Funktions-vs-Computed-Property Inkonsistenz:
+- **Template**: Verwendete `getAvailablePlans()` als Funktionsaufruf (mit Klammern) in 10+ v-for Schleifen
+- **Script**: Definierte `getAvailablePlans` als `computed` property, nicht als Funktion
+- **Vue-Rule**: Computed properties werden im Template OHNE Klammern referenziert
+- **JavaScript-Error**: `getAvailablePlans()` call auf computed property führt zu "not a function" TypeError
+- **Page-Crash**: Ein einziger JavaScript-Fehler verhindert Rendering der gesamten Komponente
+
+**Fix:**
+1. **Template-Calls korrigiert**: Alle `getAvailablePlans()` → `getAvailablePlans` (Klammern entfernt)
+2. **Script-Access korrigiert**: `getAvailablePlans.find()` → `getAvailablePlans.value.find()` in computed properties
+
+**Specific Changes:**
+```vue
+// Template: 10 verschiedene v-for Statements
+v-for="plan in getAvailablePlans()"  // ❌ Fehler
+v-for="plan in getAvailablePlans"    // ✅ Korrekt
+
+// Script: Computed property access
+planFromAvailable = getAvailablePlans.find(plan => ...)      // ❌ Fehler
+planFromAvailable = getAvailablePlans.value.find(plan => ...)  // ✅ Korrekt
+```
+
+**Learning:**
+1. **Vue Computed Property Syntax**: Template verwendet `computedProperty`, Script verwendet `computedProperty.value`
+2. **Function vs Computed Distinction**: Funktionen mit `()`, Computed Properties ohne `()`
+3. **Error Cascade Effect**: Ein Template-Fehler kann gesamte Komponente zum Absturz bringen
+4. **Consistent Pattern Enforcement**: Bei Refactoring (function→computed) ALLE Referenzen überprüfen
+5. **Template-Script-Synchronization**: Template-Bindings müssen mit Script-Definitions konsistent sein
+
+**Quality Assurance:**
+- Build: ✅ erfolgreich (alle 166 Module kompiliert)
+- Linting: ✅ ESLint clean für SubscriptionView.vue
+- Tests: ✅ 71 Frontend + 288 Backend Tests bestehen
+- Runtime: ✅ Subscription-Seite rendert korrekt mit Plan-Vergleichstabelle
+
+**Pattern für ähnliche Fixes:**
+- Bei `computed(() => {...})` Definition → Template ohne `()`
+- Bei `function name() {...}` Definition → Template mit `()`
+- Bei computed property access in script → immer `.value` verwenden
+
+**Betroffene Dateien:** `frontend/src/pages/SubscriptionView.vue` (10+ Template-Calls + 1 Script-Access)
+
+---
+
