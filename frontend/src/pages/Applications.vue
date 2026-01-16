@@ -2323,8 +2323,8 @@ watch(viewMode, (newMode) => {
 }
 
 .status-tab:focus-visible {
-  outline: 2px solid var(--color-ai);
-  outline-offset: 2px;
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .status-tab-active {

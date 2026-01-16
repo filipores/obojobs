@@ -122,6 +122,11 @@
   --transition-slow: 500ms var(--ease-zen);
   --transition-drift: 800ms var(--ease-zen);
 
+  /* Focus Ring (A11Y) */
+  --focus-ring-color: var(--color-ai);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
   /* Z-index Scale */
   --z-base: 1;
   --z-elevated: 10;
@@ -569,6 +574,11 @@ small {
   display: none;
 }
 
+.zen-btn:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
 /* Filled variant */
 .zen-btn-filled {
   background: var(--color-sumi);
@@ -694,6 +704,15 @@ small {
   border-bottom-color: var(--color-ai);
 }
 
+/* Enhanced focus-visible styles for keyboard navigation (A11Y) */
+.form-input:focus-visible,
+.form-textarea:focus-visible,
+.form-select:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-bottom-color: var(--color-ai);
+}
+
 .form-input::placeholder,
 .form-textarea::placeholder {
   color: var(--color-text-ghost);
@@ -710,6 +729,11 @@ small {
 
 .form-textarea:focus {
   border-color: var(--color-ai);
+}
+
+.form-textarea:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
 }
 
 .form-error {
