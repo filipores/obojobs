@@ -1,31 +1,33 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authStore } from '../store/auth'
 
+const DEFAULT_TITLE = 'obo'
+
 const routes = [
   // Public routes
-  { path: '/login', component: () => import('../pages/Login.vue') },
-  { path: '/register', component: () => import('../pages/Register.vue') },
-  { path: '/email-verification', component: () => import('../pages/EmailVerification.vue') },
-  { path: '/verify-email', component: () => import('../pages/VerifyEmail.vue') },
-  { path: '/forgot-password', component: () => import('../pages/ForgotPassword.vue') },
-  { path: '/reset-password', component: () => import('../pages/ResetPassword.vue') },
-  { path: '/impressum', component: () => import('../pages/Impressum.vue') },
-  { path: '/datenschutz', component: () => import('../pages/Datenschutz.vue') },
+  { path: '/login', component: () => import('../pages/Login.vue'), meta: { title: 'Anmelden' } },
+  { path: '/register', component: () => import('../pages/Register.vue'), meta: { title: 'Registrieren' } },
+  { path: '/email-verification', component: () => import('../pages/EmailVerification.vue'), meta: { title: 'E-Mail-Bestätigung' } },
+  { path: '/verify-email', component: () => import('../pages/VerifyEmail.vue'), meta: { title: 'E-Mail verifizieren' } },
+  { path: '/forgot-password', component: () => import('../pages/ForgotPassword.vue'), meta: { title: 'Passwort vergessen' } },
+  { path: '/reset-password', component: () => import('../pages/ResetPassword.vue'), meta: { title: 'Passwort zurücksetzen' } },
+  { path: '/impressum', component: () => import('../pages/Impressum.vue'), meta: { title: 'Impressum' } },
+  { path: '/datenschutz', component: () => import('../pages/Datenschutz.vue'), meta: { title: 'Datenschutz' } },
 
   // Protected routes
-  { path: '/', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true } },
-  { path: '/documents', component: () => import('../pages/Documents.vue'), meta: { requiresAuth: true } },
-  { path: '/templates', component: () => import('../pages/Templates.vue'), meta: { requiresAuth: true } },
-  { path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true } },
-  { path: '/timeline', component: () => import('../pages/Timeline.vue'), meta: { requiresAuth: true } },
-  { path: '/company-insights', component: () => import('../pages/CompanyInsights.vue'), meta: { requiresAuth: true } },
-  { path: '/new-application', component: () => import('../pages/NewApplication.vue'), meta: { requiresAuth: true } },
-  { path: '/ats', component: () => import('../pages/ATSView.vue'), meta: { requiresAuth: true } },
-  { path: '/settings', component: () => import('../pages/Settings.vue'), meta: { requiresAuth: true } },
-  { path: '/subscription', component: () => import('../pages/SubscriptionView.vue'), meta: { requiresAuth: true } },
-  { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true } },
-  { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true } },
-  { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true } }
+  { path: '/', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true, title: 'Dashboard' } },
+  { path: '/documents', component: () => import('../pages/Documents.vue'), meta: { requiresAuth: true, title: 'Dokumente' } },
+  { path: '/templates', component: () => import('../pages/Templates.vue'), meta: { requiresAuth: true, title: 'Vorlagen' } },
+  { path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true, title: 'Bewerbungen' } },
+  { path: '/timeline', component: () => import('../pages/Timeline.vue'), meta: { requiresAuth: true, title: 'Timeline' } },
+  { path: '/company-insights', component: () => import('../pages/CompanyInsights.vue'), meta: { requiresAuth: true, title: 'Firmen-Insights' } },
+  { path: '/new-application', component: () => import('../pages/NewApplication.vue'), meta: { requiresAuth: true, title: 'Neue Bewerbung' } },
+  { path: '/ats', component: () => import('../pages/ATSView.vue'), meta: { requiresAuth: true, title: 'ATS-Check' } },
+  { path: '/settings', component: () => import('../pages/Settings.vue'), meta: { requiresAuth: true, title: 'Einstellungen' } },
+  { path: '/subscription', component: () => import('../pages/SubscriptionView.vue'), meta: { requiresAuth: true, title: 'Abonnement' } },
+  { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true, title: 'Abonnement erfolgreich' } },
+  { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true, title: 'Interview-Vorbereitung' } },
+  { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, title: 'Mock-Interview' } }
 ]
 
 const router = createRouter({
@@ -39,6 +41,12 @@ router.beforeEach((to, from, next) => {
   } else {
     next()
   }
+})
+
+// Set dynamic page title after each navigation
+router.afterEach((to) => {
+  const pageTitle = to.meta.title
+  document.title = pageTitle ? `${pageTitle} | ${DEFAULT_TITLE}` : DEFAULT_TITLE
 })
 
 export default router
