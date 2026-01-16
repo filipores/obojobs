@@ -8,6 +8,7 @@
           v-for="option in resultOptions"
           :key="option.value"
           :class="['status-option', { active: selectedResult === option.value }]"
+          :style="{ '--status-color': option.color }"
           @click="selectResult(option.value)"
         >
           <span class="status-icon" :style="{ background: option.color }"></span>
@@ -193,15 +194,25 @@ const updateInterviewData = async () => {
 }
 
 .status-option:hover {
-  border-color: var(--color-ai);
+  border-color: var(--status-color, var(--color-ai));
   color: var(--color-sumi);
 }
 
+.status-option.active:hover {
+  opacity: 0.9;
+  color: #fff;
+}
+
 .status-option.active {
-  border-color: var(--color-ai);
-  background: var(--color-ai-subtle);
-  color: var(--color-ai);
+  border-color: var(--status-color, var(--color-ai));
+  background: var(--status-color, var(--color-ai));
+  color: #fff;
   font-weight: 500;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
+}
+
+.status-option.active .status-icon {
+  background: rgba(255, 255, 255, 0.9) !important;
 }
 
 .status-icon {
