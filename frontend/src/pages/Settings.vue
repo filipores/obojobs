@@ -203,6 +203,7 @@
                 class="zen-input"
                 required
                 aria-required="true"
+                autocomplete="current-password"
               />
             </div>
 
@@ -216,6 +217,7 @@
                 @input="validatePassword"
                 required
                 aria-required="true"
+                autocomplete="new-password"
               />
               <!-- Password Requirements -->
               <div v-if="passwordForm.newPassword" class="password-requirements">
@@ -245,6 +247,7 @@
                 class="zen-input"
                 required
                 aria-required="true"
+                autocomplete="new-password"
               />
               <p v-if="passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword" class="form-error">
                 Passwörter stimmen nicht überein
