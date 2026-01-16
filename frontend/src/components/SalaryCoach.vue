@@ -1,7 +1,13 @@
 <template>
   <div class="salary-coach">
+    <!-- Loading State -->
+    <div v-if="isLoading" class="loading-state zen-card">
+      <div class="loading-spinner"></div>
+      <p>Lade gespeicherte Daten...</p>
+    </div>
+
     <!-- Input Section -->
-    <div class="input-section zen-card">
+    <div v-else class="input-section zen-card">
       <h3 class="section-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 1v22"/>
@@ -109,10 +115,25 @@
           {{ isGenerating ? 'Generiere Strategie...' : 'Verhandlungsstrategie' }}
         </button>
       </div>
+
+      <!-- Autosave indicator -->
+      <div v-if="lastSavedAt || isSaving" class="autosave-indicator">
+        <svg v-if="isSaving" class="saving-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          <path d="M9 12l2 2 4-4"/>
+        </svg>
+        <svg v-else width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/>
+          <polyline points="17 21 17 13 7 13 7 21"/>
+          <polyline points="7 3 7 8 15 8"/>
+        </svg>
+        <span v-if="isSaving">Speichere...</span>
+        <span v-else>Automatisch gespeichert</span>
+      </div>
     </div>
 
     <!-- Salary Research Results -->
-    <div v-if="salaryResearch" class="research-section zen-card animate-fade-up">
+    <div v-if="!isLoading && salaryResearch" class="research-section zen-card animate-fade-up">
       <h3 class="section-title">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="12" y1="20" x2="12" y2="10"/>
@@ -168,7 +189,7 @@
     </div>
 
     <!-- Negotiation Strategy -->
-    <div v-if="strategy" class="strategy-section animate-fade-up">
+    <div v-if="!isLoading && strategy" class="strategy-section animate-fade-up">
       <!-- Recommended Range Card -->
       <div class="range-card zen-card">
         <h3 class="section-title">
@@ -336,7 +357,7 @@
     </div>
 
     <!-- Empty State -->
-    <div v-if="!salaryResearch && !strategy && !isResearching && !isGenerating" class="empty-state">
+    <div v-if="!isLoading && !salaryResearch && !strategy && !isResearching && !isGenerating" class="empty-state">
       <div class="empty-icon">
         <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M12 1v22"/>
@@ -374,9 +395,13 @@ const formData = ref({
 
 const isResearching = ref(false)
 const isGenerating = ref(false)
+const isLoading = ref(true)
+const isSaving = ref(false)
 const salaryResearch = ref(null)
 const strategy = ref(null)
 const activeCategory = ref('all')
+const hasLoadedData = ref(false)
+const lastSavedAt = ref(null)
 
 const tipCategories = [
   { key: 'all', label: 'Alle' },
@@ -417,6 +442,69 @@ const formatCurrency = (value) => {
   }).format(value)
 }
 
+// Load saved data from backend
+const loadSavedData = async () => {
+  try {
+    const { data } = await api.get('/salary/data')
+    if (data.success && data.data) {
+      // Only apply saved data if no initialPosition is provided
+      if (!props.initialPosition) {
+        formData.value = {
+          position: data.data.formData.position || '',
+          region: data.data.formData.region || 'Deutschland',
+          experienceYears: data.data.formData.experienceYears || 3,
+          targetSalary: data.data.formData.targetSalary || null,
+          currentSalary: data.data.formData.currentSalary || null,
+          industry: data.data.formData.industry || ''
+        }
+      }
+      salaryResearch.value = data.data.research
+      strategy.value = data.data.strategy
+      lastSavedAt.value = data.data.updatedAt
+      hasLoadedData.value = true
+    }
+  } catch (err) {
+    console.error('Error loading saved data:', err)
+  } finally {
+    isLoading.value = false
+  }
+}
+
+// Save data to backend (debounced)
+let saveTimeout = null
+const saveData = async () => {
+  if (isSaving.value) return
+
+  // Clear any pending save
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+  }
+
+  // Debounce to avoid too many saves
+  saveTimeout = setTimeout(async () => {
+    isSaving.value = true
+    try {
+      await api.post('/salary/data', {
+        formData: {
+          position: formData.value.position,
+          region: formData.value.region,
+          experienceYears: formData.value.experienceYears,
+          targetSalary: formData.value.targetSalary,
+          currentSalary: formData.value.currentSalary,
+          industry: formData.value.industry
+        },
+        research: salaryResearch.value,
+        strategy: strategy.value
+      })
+      lastSavedAt.value = new Date().toISOString()
+    } catch (err) {
+      console.error('Error saving data:', err)
+    } finally {
+      isSaving.value = false
+    }
+  }, 1000)
+}
+
 const researchSalary = async () => {
   if (!formData.value.position) return
 
@@ -436,6 +524,9 @@ const researchSalary = async () => {
       if (!formData.value.targetSalary && data.research.median_salary) {
         formData.value.targetSalary = data.research.median_salary
       }
+
+      // Save after successful research
+      saveData()
     }
   } catch (err) {
     console.error('Salary research error:', err)
@@ -461,6 +552,9 @@ const getStrategy = async () => {
     if (data.success) {
       strategy.value = data.strategy
       activeCategory.value = 'all'
+
+      // Save after successful strategy generation
+      saveData()
     }
   } catch (err) {
     console.error('Strategy generation error:', err)
@@ -477,7 +571,11 @@ watch(() => props.initialPosition, (newVal) => {
   }
 })
 
-onMounted(() => {
+onMounted(async () => {
+  // Load saved data first
+  await loadSavedData()
+
+  // Override with props if provided
   if (props.initialPosition) {
     formData.value.position = props.initialPosition
   }
@@ -489,6 +587,57 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: var(--space-lg);
+}
+
+/* ========================================
+   LOADING STATE
+   ======================================== */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-ma-xl);
+  text-align: center;
+}
+
+.loading-state p {
+  margin: 0;
+  color: var(--color-text-ghost);
+  font-size: 0.9375rem;
+}
+
+.loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid var(--color-washi-aged);
+  border-top-color: var(--color-ai);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+/* ========================================
+   AUTOSAVE INDICATOR
+   ======================================== */
+.autosave-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-light);
+  font-size: 0.75rem;
+  color: var(--color-text-ghost);
+}
+
+.autosave-indicator svg {
+  color: var(--color-koke);
+}
+
+.autosave-indicator .saving-icon {
+  animation: spin 1s linear infinite;
+  color: var(--color-ai);
 }
 
 /* ========================================

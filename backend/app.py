@@ -12,6 +12,7 @@ from models import (  # noqa: F401
     User, Document, Template, Application, APIKey,
     Subscription, TokenBlacklist, ATSAnalysis, EmailAccount,
     UserSkill, JobRequirement, InterviewQuestion, JobRecommendation,
+    SalaryCoachData,
 )
 
 # Initialize Flask-Migrate globally for CLI access

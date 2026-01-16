@@ -11,6 +11,7 @@ from .email_account import EmailAccount, decrypt_token, encrypt_token  # noqa: E
 from .interview_question import InterviewQuestion  # noqa: E402
 from .job_recommendation import JobRecommendation  # noqa: E402
 from .job_requirement import JobRequirement  # noqa: E402
+from .salary_coach_data import SalaryCoachData  # noqa: E402
 from .subscription import Subscription, SubscriptionPlan, SubscriptionStatus  # noqa: E402
 from .template import Template  # noqa: E402
 from .token_blacklist import TokenBlacklist  # noqa: E402
@@ -36,4 +37,5 @@ __all__ = [
     "JobRequirement",
     "InterviewQuestion",
     "JobRecommendation",
+    "SalaryCoachData",
 ]

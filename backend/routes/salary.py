@@ -2,9 +2,12 @@
 Salary routes - Endpoints for salary research and negotiation coaching.
 """
 
+import json
+
 from flask import Blueprint, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
+from models import SalaryCoachData, db
 from services.salary_coach import SalaryCoach
 
 salary_bp = Blueprint("salary", __name__)
@@ -180,3 +183,142 @@ def get_negotiation_tips(current_user):
             "success": False,
             "error": "Fehler bei der Strategieentwicklung. Bitte versuchen Sie es erneut.",
         }), 500
+
+
+@salary_bp.route("/data", methods=["GET"])
+@jwt_required_custom
+def get_salary_data(current_user):
+    """
+    Get saved salary coach data for the current user.
+
+    Returns:
+    {
+        "success": true,
+        "data": {
+            "formData": {...},
+            "research": {...} | null,
+            "strategy": {...} | null,
+            "updatedAt": "..."
+        }
+    }
+    """
+    salary_data = SalaryCoachData.query.filter_by(user_id=current_user.id).first()
+
+    if not salary_data:
+        return jsonify({
+            "success": True,
+            "data": None,
+        }), 200
+
+    return jsonify({
+        "success": True,
+        "data": salary_data.to_dict(),
+    }), 200
+
+
+@salary_bp.route("/data", methods=["POST"])
+@jwt_required_custom
+def save_salary_data(current_user):
+    """
+    Save salary coach data for the current user.
+
+    Request body:
+    {
+        "formData": {
+            "position": "...",
+            "region": "...",
+            "experienceYears": 5,
+            "targetSalary": 70000,
+            "currentSalary": 55000,
+            "industry": "..."
+        },
+        "research": {...} | null,
+        "strategy": {...} | null
+    }
+
+    Returns:
+    {
+        "success": true,
+        "message": "Daten gespeichert"
+    }
+    """
+    data = request.get_json()
+
+    if not data:
+        return jsonify({"success": False, "error": "Keine Daten übermittelt"}), 400
+
+    # Get or create salary data record for user
+    salary_data = SalaryCoachData.query.filter_by(user_id=current_user.id).first()
+
+    if not salary_data:
+        salary_data = SalaryCoachData(user_id=current_user.id)
+        db.session.add(salary_data)
+
+    # Update form data
+    form_data = data.get("formData", {})
+    salary_data.position = form_data.get("position", "").strip() or None
+    salary_data.region = form_data.get("region", "").strip() or None
+    salary_data.experience_years = form_data.get("experienceYears")
+    salary_data.target_salary = form_data.get("targetSalary")
+    salary_data.current_salary = form_data.get("currentSalary")
+    salary_data.industry = form_data.get("industry", "").strip() or None
+
+    # Update research (JSON)
+    research = data.get("research")
+    if research is not None:
+        salary_data.research_json = json.dumps(research)
+    else:
+        salary_data.research_json = None
+
+    # Update strategy (JSON)
+    strategy = data.get("strategy")
+    if strategy is not None:
+        salary_data.strategy_json = json.dumps(strategy)
+    else:
+        salary_data.strategy_json = None
+
+    try:
+        db.session.commit()
+        return jsonify({
+            "success": True,
+            "message": "Daten gespeichert",
+        }), 200
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error saving salary data: {str(e)}")
+        return jsonify({
+            "success": False,
+            "error": "Fehler beim Speichern der Daten",
+        }), 500
+
+
+@salary_bp.route("/data", methods=["DELETE"])
+@jwt_required_custom
+def delete_salary_data(current_user):
+    """
+    Delete saved salary coach data for the current user.
+
+    Returns:
+    {
+        "success": true,
+        "message": "Daten gelöscht"
+    }
+    """
+    salary_data = SalaryCoachData.query.filter_by(user_id=current_user.id).first()
+
+    if salary_data:
+        db.session.delete(salary_data)
+        try:
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error deleting salary data: {str(e)}")
+            return jsonify({
+                "success": False,
+                "error": "Fehler beim Löschen der Daten",
+            }), 500
+
+    return jsonify({
+        "success": True,
+        "message": "Daten gelöscht",
+    }), 200
