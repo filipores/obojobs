@@ -765,7 +765,7 @@ onUnmounted(() => {
 
 @media (max-width: 480px) {
   .nav-actions {
-    gap: var(--space-sm);
+    gap: var(--space-xs);
   }
 
   .nav-icon {
@@ -775,6 +775,42 @@ onUnmounted(() => {
 
   .subscription-display {
     padding: var(--space-xs) var(--space-sm);
+    min-width: 0; /* Allow flex shrinking */
+  }
+
+  .subscription-plan {
+    font-size: 0.75rem; /* Make subscription text smaller */
+  }
+}
+
+@media (max-width: 375px) {
+  .nav-container {
+    padding: 0 var(--space-sm);
+  }
+
+  .nav-actions {
+    gap: 2px;
+  }
+
+  .nav-icon {
+    width: 32px;
+    height: 32px;
+  }
+
+  .subscription-display {
+    padding: var(--space-xs);
+    min-width: 0;
+  }
+
+  .subscription-plan {
+    font-size: 0.7rem;
+    white-space: nowrap;
+  }
+
+  /* Ensure nav-actions remain visible and accessible on very small screens */
+  .nav-actions {
+    flex-shrink: 0;
+    min-width: fit-content;
   }
 }
 
