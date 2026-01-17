@@ -425,13 +425,27 @@
           </div>
 
           <!-- Error Message -->
-          <div v-if="error && previewData" class="error-box">
+          <div v-if="error && previewData" class="error-box" :class="{ 'error-with-action': isDocumentMissingError }">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="15" y1="9" x2="9" y2="15"/>
               <line x1="9" y1="9" x2="15" y2="15"/>
             </svg>
-            <span>{{ error }}</span>
+            <div class="error-content">
+              <span>{{ error }}</span>
+              <div v-if="isDocumentMissingError" class="error-actions">
+                <router-link to="/documents" class="zen-btn zen-btn-sm">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <line x1="10" y1="9" x2="8" y2="9"/>
+                  </svg>
+                  Zu den Dokumenten
+                </router-link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -684,6 +698,16 @@ const templateVariables = computed(() => ({
 // Can generate check
 const canGenerate = computed(() => {
   return editableData.value.company && editableData.value.title
+})
+
+// Check if error is about missing documents (CV/resume/Lebenslauf)
+const isDocumentMissingError = computed(() => {
+  if (!error.value) return false
+  const errorLower = error.value.toLowerCase()
+  return errorLower.includes('lebenslauf') ||
+         errorLower.includes('resume') ||
+         errorLower.includes('cv') ||
+         errorLower.includes('arbeitszeugnis')
 })
 
 // Helper to display template variable name with double braces
@@ -1668,6 +1692,48 @@ onMounted(() => {
 
 .error-box svg {
   flex-shrink: 0;
+}
+
+/* Error with action button (document missing) */
+.error-box.error-with-action {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.error-box.error-with-action > svg {
+  position: absolute;
+  top: var(--space-md);
+  left: var(--space-md);
+}
+
+.error-box.error-with-action {
+  position: relative;
+  padding-left: calc(var(--space-md) + 28px);
+}
+
+.error-box .error-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  width: 100%;
+}
+
+.error-actions {
+  margin-top: var(--space-sm);
+}
+
+.error-actions .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-ai);
+  border-color: var(--color-ai);
+  text-decoration: none;
+}
+
+.error-actions .zen-btn:hover {
+  background-color: var(--color-ai);
+  color: white;
 }
 
 /* Error with Fallback */
