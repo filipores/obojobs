@@ -294,6 +294,23 @@ log_iteration_summary() {
         return 1
     fi
 
+    # Load feature details from features.json
+    local features_file="${SCRIPT_DIR:-$(dirname "$0")}/features.json"
+    local feature_title=""
+    local feature_type=""
+    local feature_focus=""
+    local feature_pages=""
+
+    if [[ -f "$features_file" ]]; then
+        local feature_data=$(jq -r --arg id "$feature_id" '.features[] | select(.id == $id)' "$features_file" 2>/dev/null)
+        if [[ -n "$feature_data" ]]; then
+            feature_title=$(echo "$feature_data" | jq -r '.message // ""')
+            feature_type=$(echo "$feature_data" | jq -r '.type // ""')
+            feature_focus=$(echo "$feature_data" | jq -r '.test_focus // ""' | head -c 80)
+            feature_pages=$(echo "$feature_data" | jq -r '.pages // [] | join(", ")' | head -c 50)
+        fi
+    fi
+
     # Extract metrics with jq
     local duration_ms=$(jq -r '.duration_ms // 0' "$output_file")
     local duration_s=$(echo "scale=1; $duration_ms / 1000" | bc 2>/dev/null || echo "0")
@@ -303,7 +320,6 @@ log_iteration_summary() {
     local output_tokens=$(jq -r '.usage.output_tokens // 0' "$output_file")
     local cache_read=$(jq -r '.usage.cache_read_input_tokens // 0' "$output_file")
     local is_error=$(jq -r '.is_error // false' "$output_file")
-    local result_preview=$(jq -r '.result // "No result"' "$output_file" | head -c 100)
 
     # Format cost with 2 decimal places
     local cost_formatted=$(printf "%.2f" "$cost" 2>/dev/null || echo "$cost")
@@ -321,18 +337,90 @@ log_iteration_summary() {
         status_text="ERROR"
     fi
 
+    # Color for feature type
+    local type_color=$NC
+    case "$feature_type" in
+        critical) type_color=$RED ;;
+        setup) type_color=$YELLOW ;;
+        core) type_color=$GREEN ;;
+        *) type_color=$BLUE ;;
+    esac
+
+    # Parse test result from RALPH_TEST_RESULT block
+    local test_result=$(parse_test_result "$output_file")
+    local result_found=$(echo "$test_result" | jq -r '.found // false')
+
+    local bugs_count=0
+    local suggestions_count=0
+    local scenarios_count=0
+    local bugs_list=""
+    local suggestions_list=""
+
+    if [[ "$result_found" == "true" ]]; then
+        bugs_count=$(echo "$test_result" | jq -r '.bugs | length // 0')
+        suggestions_count=$(echo "$test_result" | jq -r '.suggestions | length // 0')
+        scenarios_count=$(echo "$test_result" | jq -r '.tested_scenarios | length // 0')
+
+        # Get bug titles if any
+        if [[ $bugs_count -gt 0 ]]; then
+            bugs_list=$(echo "$test_result" | jq -r '.bugs[] | "     - [\(.severity // "unknown")] \(.title // "No title")"' 2>/dev/null)
+        fi
+
+        # Get suggestion titles if any
+        if [[ $suggestions_count -gt 0 ]]; then
+            suggestions_list=$(echo "$test_result" | jq -r '.suggestions[] | "     - [\(.type // "unknown")] \(.title // "No title")"' 2>/dev/null)
+        fi
+    fi
+
+    # Color for bugs
+    local bugs_color=$GREEN
+    if [[ $bugs_count -gt 0 ]]; then
+        bugs_color=$RED
+    fi
+
+    # Color for suggestions
+    local sugg_color=$GREEN
+    if [[ $suggestions_count -gt 0 ]]; then
+        sugg_color=$YELLOW
+    fi
+
     echo ""
-    echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
-    echo -e "${BLUE}║${NC}         ITERATION SUMMARY                ${BLUE}║${NC}"
-    echo -e "${BLUE}╠══════════════════════════════════════════╣${NC}"
-    echo -e "${BLUE}║${NC} Feature:    ${YELLOW}${feature_id:-unknown}${NC}"
-    echo -e "${BLUE}║${NC} Status:     ${status_color}${status_text}${NC}"
-    echo -e "${BLUE}║${NC} Duration:   ${duration_s}s"
-    echo -e "${BLUE}║${NC} Cost:       \$${cost_formatted}"
-    echo -e "${BLUE}║${NC} Turns:      ${num_turns}"
-    echo -e "${BLUE}║${NC} Tokens:     In: ${input_fmt} | Out: ${output_fmt}"
-    echo -e "${BLUE}║${NC} Cache:      ${cache_fmt} tokens"
-    echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
+    echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║${NC}                     ITERATION SUMMARY                            ${BLUE}║${NC}"
+    echo -e "${BLUE}╠══════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${BLUE}║${NC}  ${YELLOW}FEATURE${NC}                                                         ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  ID:        ${YELLOW}${feature_id:-unknown}${NC}"
+    if [[ -n "$feature_title" ]]; then
+        echo -e "${BLUE}║${NC}  Titel:     ${feature_title}"
+    fi
+    if [[ -n "$feature_type" ]]; then
+        echo -e "${BLUE}║${NC}  Typ:       ${type_color}${feature_type}${NC}"
+    fi
+    if [[ -n "$feature_focus" ]]; then
+        echo -e "${BLUE}║${NC}  Focus:     ${feature_focus}..."
+    fi
+    if [[ -n "$feature_pages" ]]; then
+        echo -e "${BLUE}║${NC}  Pages:     ${feature_pages}"
+    fi
+    echo -e "${BLUE}╠══════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${BLUE}║${NC}  ${YELLOW}EXECUTION${NC}                                                        ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  Status:    ${status_color}${status_text}${NC}"
+    echo -e "${BLUE}║${NC}  Duration:  ${duration_s}s"
+    echo -e "${BLUE}║${NC}  Cost:      \$${cost_formatted}"
+    echo -e "${BLUE}║${NC}  Turns:     ${num_turns}"
+    echo -e "${BLUE}║${NC}  Tokens:    In: ${input_fmt} | Out: ${output_fmt} | Cache: ${cache_fmt}"
+    echo -e "${BLUE}╠══════════════════════════════════════════════════════════════════╣${NC}"
+    echo -e "${BLUE}║${NC}  ${YELLOW}TEST RESULTS${NC}                                                     ${BLUE}║${NC}"
+    echo -e "${BLUE}║${NC}  Scenarios: ${scenarios_count} getestet"
+    echo -e "${BLUE}║${NC}  Bugs:      ${bugs_color}${bugs_count}${NC}"
+    if [[ -n "$bugs_list" ]]; then
+        echo -e "$bugs_list"
+    fi
+    echo -e "${BLUE}║${NC}  Vorschläge:${sugg_color}${suggestions_count}${NC}"
+    if [[ -n "$suggestions_list" ]]; then
+        echo -e "$suggestions_list"
+    fi
+    echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
 }
 
