@@ -26,7 +26,7 @@
               Dieser wird für die Erstellung des Anschreibens und den Job-Fit Score verwendet.
             </p>
             <div class="resume-warning-actions">
-              <router-link to="/documents" class="zen-btn zen-btn-ai">
+              <router-link to="/documents?from=new-application&upload=lebenslauf" class="zen-btn zen-btn-ai">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                   <polyline points="17 8 12 3 7 8"/>

@@ -49,6 +49,19 @@
     </div>
 
     <div class="container">
+      <!-- Back to Application Breadcrumb -->
+      <div v-if="fromApplication" class="breadcrumb-banner animate-fade-up">
+        <router-link to="/new-application" class="breadcrumb-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="15 18 9 12 15 6"/>
+          </svg>
+          Zurueck zur Bewerbung
+        </router-link>
+        <span class="breadcrumb-info">
+          Laden Sie Ihren Lebenslauf hoch und kehren Sie dann zur Bewerbungserstellung zurueck
+        </span>
+      </div>
+
       <!-- Header Section -->
       <section class="page-header animate-fade-up">
         <h1>Dokumente</h1>
@@ -77,7 +90,7 @@
       <section class="documents-section">
         <div class="documents-grid">
           <!-- Lebenslauf -->
-          <div class="document-card zen-card stagger-item" :class="{ 'is-complete': documents.lebenslauf }">
+          <div ref="lebenslaufSection" class="document-card zen-card stagger-item" :class="{ 'is-complete': documents.lebenslauf, 'highlight-upload': uploadType === 'lebenslauf' }">
             <div class="document-header">
               <div class="document-icon" :class="{ 'icon-complete': documents.lebenslauf }">
                 <svg v-if="documents.lebenslauf" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -354,8 +367,13 @@ import { confirm } from '../composables/useConfirm'
 
 const route = useRoute()
 const skillsSection = ref(null)
+const lebenslaufSection = ref(null)
 const showOnboardingTooltip = ref(false)
 const onboardingStep = ref(1)
+
+// Check if user came from new-application page
+const fromApplication = computed(() => route.query.from === 'new-application')
+const uploadType = computed(() => route.query.upload)
 
 const documents = ref({
   lebenslauf: null,
@@ -565,8 +583,12 @@ onMounted(async () => {
   if (route.hash === '#skills') {
     await nextTick()
     skillsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  } else {
-    // Only show onboarding if not navigating to skills section
+  } else if (uploadType.value === 'lebenslauf') {
+    // Scroll to lebenslauf upload section if deep-linked
+    await nextTick()
+    lebenslaufSection.value?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  } else if (!fromApplication.value) {
+    // Only show onboarding if not navigating to skills section and not from application
     checkFirstVisit()
   }
 })
@@ -577,6 +599,64 @@ onMounted(async () => {
   min-height: calc(100vh - 73px);
   background: var(--color-washi);
   padding-bottom: var(--space-ma-xl);
+}
+
+/* ========================================
+   BREADCRUMB BANNER (Back to Application)
+   ======================================== */
+.breadcrumb-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-ai-subtle);
+  border: 1px solid var(--color-ai-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.breadcrumb-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-ai);
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9375rem;
+  transition: color var(--transition-base);
+}
+
+.breadcrumb-link:hover {
+  color: var(--color-ai-dark, #5a4a8a);
+  text-decoration: underline;
+}
+
+.breadcrumb-link svg {
+  flex-shrink: 0;
+}
+
+.breadcrumb-info {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  padding-left: var(--space-md);
+  border-left: 1px solid var(--color-ai-light);
+}
+
+@media (max-width: 640px) {
+  .breadcrumb-banner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-sm);
+  }
+
+  .breadcrumb-info {
+    padding-left: 0;
+    border-left: none;
+    padding-top: var(--space-xs);
+    border-top: 1px solid var(--color-ai-light);
+    width: 100%;
+  }
 }
 
 /* ========================================
@@ -670,6 +750,21 @@ onMounted(async () => {
 
 .document-card.is-complete {
   border-color: var(--color-koke);
+}
+
+.document-card.highlight-upload {
+  border-color: var(--color-ai);
+  box-shadow: 0 0 0 3px var(--color-ai-subtle), var(--shadow-card);
+  animation: pulse-highlight 2s ease-in-out;
+}
+
+@keyframes pulse-highlight {
+  0%, 100% {
+    box-shadow: 0 0 0 3px var(--color-ai-subtle), var(--shadow-card);
+  }
+  50% {
+    box-shadow: 0 0 0 6px var(--color-ai-subtle), var(--shadow-lifted);
+  }
 }
 
 .document-header {
