@@ -243,6 +243,19 @@
                   </p>
                 </div>
 
+                <!-- General validation messages for when button is disabled -->
+                <div v-if="showPasswordValidationMessages" class="password-validation-messages">
+                  <p v-if="passwordForm.newPassword && passwordForm.confirmPassword && passwordForm.newPassword !== passwordForm.confirmPassword" class="form-error">
+                    Passwörter stimmen nicht überein
+                  </p>
+                  <p v-if="passwordForm.newPassword && !allPasswordRequirementsMet" class="form-error">
+                    Passwort erfüllt nicht alle Anforderungen
+                  </p>
+                  <p v-if="(!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) && (passwordForm.currentPassword || passwordForm.newPassword || passwordForm.confirmPassword)" class="form-error">
+                    Bitte füllen Sie alle Felder aus
+                  </p>
+                </div>
+
                 <div v-if="passwordError" class="password-error-message">
                   {{ passwordError }}
                 </div>
@@ -584,6 +597,16 @@ const passwordRequirements = ref([
 ])
 const isChangingPassword = ref(false)
 const passwordError = ref('')
+
+const allPasswordRequirementsMet = computed(() => {
+  return Object.values(passwordChecks).every(v => v)
+})
+
+const showPasswordValidationMessages = computed(() => {
+  // Show validation messages when user has started entering data but button is disabled
+  const hasAnyInput = passwordForm.currentPassword || passwordForm.newPassword || passwordForm.confirmPassword
+  return hasAnyInput && !canSubmitPassword.value && !isChangingPassword.value
+})
 
 const canSubmitPassword = computed(() => {
   return (
@@ -1401,6 +1424,16 @@ onMounted(() => {
 .password-change-form .zen-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.password-validation-messages {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.password-validation-messages .form-error {
+  margin: 0;
 }
 
 /* ========================================
