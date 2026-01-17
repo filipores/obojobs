@@ -182,6 +182,16 @@
 
             <div class="settings-card zen-card">
               <form @submit.prevent="changePassword" class="password-change-form">
+                <!-- Hidden username field for accessibility and password manager support -->
+                <input
+                  type="text"
+                  :value="authStore.user?.email"
+                  autocomplete="username"
+                  class="sr-only"
+                  tabindex="-1"
+                  aria-hidden="true"
+                  readonly
+                />
                 <div class="form-group">
                   <label for="current-password" class="required">Aktuelles Passwort</label>
                   <input
