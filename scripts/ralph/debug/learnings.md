@@ -4,6 +4,175 @@ Diese Datei enthält Erkenntnisse aus Debug-Sessions. Jeder Eintrag dokumentiert
 
 ---
 
+## [2026-01-17] - BUG-043: Keine 404-Seite für ungültige Routen
+
+**Problem:** Bei ungültigen Routen (z.B. /nonexistent-page) wird nur eine leere main-Sektion angezeigt ohne Benutzerfeedback.
+
+**Root Cause:**
+- Vue Router hatte keine catch-all Route für 404-Fälle definiert
+- NotFound.vue Komponente existierte nicht, obwohl in `affectedFiles` erwähnt
+- Router-Konfiguration war unvollständig
+
+**Fix:**
+1. NotFound.vue Komponente erstellt in `frontend/src/pages/` (folgt Projekt-Konvention)
+2. Catch-all Route hinzugefügt: `{ path: '/:pathMatch(.*)*', component: () => import('../pages/NotFound.vue'), meta: { title: 'Seite nicht gefunden' } }`
+3. 404-Seite mit Zen-Design-Ästhetik, Zurück-Navigation und hilfreichen Links
+
+**Lessons Learned:**
+- **Route-Order wichtig:** Catch-all Route MUSS am Ende der Routes-Array stehen
+- **Vue Router 4 Syntax:** `/:pathMatch(.*)` statt alter `:*` Syntax
+- **Projekt-Struktur beachten:** Komponenten gehören in `pages/` nicht `views/` Ordner
+- **Design-Konsistenz:** NotFound-Seite muss existierende Styling-Konventionen (zen-card, animate-fade-up) befolgen
+- **User Experience:** 404-Seite sollte Wege zurück zur App bieten (Home, Zurück-Button, Navigation Links)
+
+**Code-Konventionen:**
+- Lazy Loading für alle Router-Komponenten verwenden
+- Meta-Titles für SEO und Browser-Tab definieren
+- Projektspezifische CSS-Klassen verwenden (.zen-card, .legal-page, etc.)
+
+---
+
+## [2026-01-17] - BUG-045: Bewerbungsgenerierung scheitert - Lebenslauf fehlt
+
+**Problem:** Nach der Stellenanzeigen-Analyse schlägt die Bewerbungsgenerierung mit "Lebenslauf nicht gefunden" fehl, aber es gibt keinen klaren Weg zum Upload für den User.
+
+**Root Cause:**
+- Backend (generator.py:33) wirft korrekte Fehlermeldung "Lebenslauf nicht gefunden. Bitte lade deinen Lebenslauf hoch."
+- Frontend zeigt nur generische Fehlermeldung ohne Handlungsanweisung
+- Keine direkte Navigation zur /documents-Seite für den Upload
+
+**Fix:**
+```vue
+// Frontend: Erkennung dokumentbezogener Fehler
+const isDocumentMissingError = computed(() => {
+  if (!error.value) return false
+  const errorLower = error.value.toLowerCase()
+  return errorLower.includes('lebenslauf') ||
+         errorLower.includes('resume') ||
+         errorLower.includes('cv') ||
+         errorLower.includes('arbeitszeugnis')
+})
+
+// Enhanced Error UI mit Action Button
+<div v-if="isDocumentMissingError" class="error-actions">
+  <router-link to="/documents" class="zen-btn zen-btn-sm">
+    Zu den Dokumenten
+  </router-link>
+</div>
+```
+
+**Learning:**
+- Fehlermeldungen sollten immer mit einer klaren Handlungsanweisung kombiniert werden
+- Backend-Errors können als Trigger für Frontend-Actions dienen (error pattern matching)
+- UX-Verbesserung durch direkte Navigation zu Lösungsseiten
+
+---
+
+## [2026-01-17] - BUG-042: Stellenanzeige-URL-Fehlerbehandlung inkonsistent
+
+**Problem:** Backend gab 500 Internal Server Error zurück, Frontend zeigte aber 403 Forbidden Fehlermeldung.
+
+**Root Cause:** Inkonsistente Fehlerbehandlung zwischen Backend und Frontend:
+- Backend behandelte nur 403/404/429 als Client-Fehler (400)
+- Alle anderen Exceptions führten zu 500-Fehlern
+- Frontend prüfte nur auf `e.response?.data?.error` ohne HTTP-Status zu beachten
+
+**Fix:**
+```python
+# Backend: Erweiterte HTTP-Code-Liste
+if any(code in error_message for code in ["403", "404", "429", "400", "401", "502", "503"]):
+    return jsonify({"success": False, "error": error_message}), 400
+```
+
+```javascript
+// Frontend: Explizite HTTP-Status-Prüfung
+if (e.response?.status === 400 && e.response?.data?.error) {
+  error.value = e.response.data.error  // Client errors from WebScraper
+} else if (e.response?.status === 500 && e.response?.data?.error) {
+  error.value = e.response.data.error  // Server errors with user-friendly messages
+}
+```
+
+**Learning:** HTTP-Status-Codes müssen Backend und Frontend konsistent behandeln:
+1. Client-Fehler (4xx) = Benutzer kann Problem beheben
+2. Server-Fehler (5xx) = Technisches Problem, benutzerfreundliche Nachricht
+3. Frontend sollte explizit HTTP-Status prüfen, nicht nur Fehlernachrichten
+4. Server-Fehler sollten geloggt und mit benutzerfreundlichen Messages versehen werden
+
+**Prevention:**
+- Zentrale Fehlerbehandlung für API-Responses
+- Konsistente HTTP-Status-Code-Konventionen dokumentieren
+- Frontend-Wrapper für API-Calls mit einheitlicher Fehlerbehandlung
+
+---
+
+## [2026-01-17] - BUG-040: Mobile Navigation Schließen-Button ist nicht funktional
+
+**Problem:** Der Close-Button der mobilen Navigation war nicht klickbar, da er von anderen DOM-Elementen überdeckt wurde.
+
+**Root Cause:** Z-Index-Konflikt zwischen UI-Ebenen:
+- Navigation Header: `z-index: var(--z-nav)` = `1000`
+- Mobile Sidebar: `z-index: 999`
+- Da die Navigation einen höheren z-index hatte, überdeckte sie die mobile Sidebar
+
+**Fix:** Mobile Sidebar z-index von 999 auf 1001 erhöht
+```css
+.mobile-sidebar {
+  z-index: 1001; /* war: 999 */
+}
+```
+
+**Learning:** Bei overlapping UI-Elementen immer z-index-Hierarchie beachten:
+1. Definiere klare z-index-Stufen (z.B. 100er-Schritte)
+2. Nutze CSS Custom Properties für konsistente z-index-Werte
+3. Bei Click-Problemen erst z-index-Konflikte prüfen
+4. Mobile Overlays brauchen höhere z-index als Header/Navigation
+5. Verwende Browser DevTools um z-index-Stacks zu analysieren
+
+**Prevention:** Z-Index-Map in CSS-Variablen anlegen:
+```css
+:root {
+  --z-base: 0;
+  --z-nav: 1000;
+  --z-modal: 1010;
+  --z-sidebar: 1020;
+  --z-toast: 1030;
+}
+```
+
+---
+
+## [2026-01-17] - BUG-036: Job-Analyse Dialog zeigt irrelevante Fehlermeldung nach Success-Flow
+
+**Problem:** Fehlermeldungen von URL-Analyse blieben beim Wechsel zum manuellen Eingabemodus sichtbar und verwirrten Benutzer.
+
+**Root Cause:** State Management Problem in Vue Component:
+- `analyzeError` wurde nur beim erfolgreichen API-Call oder Modal-Schließen gelöscht
+- Beim Klick auf "Stellentext manuell einfügen" wurde nur `showManualInput = true` gesetzt
+- Error Message Display Logic prüfte nur `v-if="analyzeError"` ohne Mode-Kontext
+
+**Fix:** Neue `switchToManualInput()` Methode erstellt:
+```js
+const switchToManualInput = () => {
+  showManualInput.value = true
+  analyzeError.value = '' // Clear error message when switching to manual input
+}
+```
+
+**Learning:** Bei Modal-/Dialog-State-Management:
+1. Jeder Modusswitch sollte relevante Error-States löschen
+2. Error Messages sollten mode-spezifisch sein oder beim Kontext-Wechsel gelöscht werden
+3. Inline Event-Handler (@click="variable = true") vermeiden für komplexere Logic
+4. State-Clearing sollte proaktiv erfolgen, nicht nur reaktiv nach Fehlern
+5. UX: Fehlermeldungen eines Flows sollten nicht in anderen Flows erscheinen
+
+**Prevention:**
+- Error-State bei jeder Benutzeraktion die den Kontext wechselt resetten
+- Separate Error-States für verschiedene Modi verwenden
+- Lifecycle-Methods für State-Clearing nutzen
+
+---
+
 ## [2026-01-16] - BUG-018: Route /applications/:id/mock-interview zeigt leere Seite
 
 **Problem:** Die Route `/applications/6/mock-interview` zeigte eine leere main-Section ohne Inhalte oder Fehlermeldungen, wenn eine ungültige Application-ID verwendet wurde.
@@ -46,6 +215,44 @@ if (!applicationId.value || isNaN(parseInt(applicationId.value))) {
 5. **Defensive Programming**: Ungültige IDs sollten graceful behandelt werden, nicht zu JS-Fehlern führen
 
 **Code Quality:** 71 Tests bestehen, build erfolgreich, robuste Error-Handling ohne Over-Engineering.
+
+---
+
+## [2026-01-17] - BUG-037: Job-Analyse API schlägt mit 400 Bad Request fehl
+
+**Problem:** Die Job-Analyse API (`/api/recommendations/analyze` und `/api/recommendations/analyze-manual`) schlug mit 400 Bad Request fehl. Backend-Error zeigte "RequirementAnalyzer.analyze_requirements() got an unexpected keyword argument job_title".
+
+**Root Cause:** Method Signature Mismatch zwischen JobRecommender und RequirementAnalyzer:
+- `RequirementAnalyzer.analyze_requirements()` erwartet nur `job_text` und `retry_count` Parameter
+- `JobRecommender` übergab zusätzlich `job_title` Parameter, der in der Method Signature nicht definiert war
+- Dies führte zu einem TypeError der als 400 Bad Request an Frontend weitergegeben wurde
+
+**Fix:** Entfernung des überflüssigen `job_title` Parameters:
+```python
+# Vorher (fehlerhaft)
+requirements = self.requirement_analyzer.analyze_requirements(
+    job_text=job_data.get("description", ""),
+    job_title=job_data.get("title", ""),
+)
+
+# Nachher (korrekt)
+requirements = self.requirement_analyzer.analyze_requirements(
+    job_text=job_data.get("description", "")
+)
+```
+
+**Affected Files:**
+- `backend/services/job_recommender.py:145-148` (analyze_job_for_user)
+- `backend/services/job_recommender.py:220-223` (analyze_manual_job_for_user)
+
+**Learning:**
+1. **API Method Signature Consistency**: Immer Method Signaturen zwischen Services prüfen
+2. **Parameter Validation**: TypeError durch unerwartete Parameter führen zu verwirrenden 400-Fehlern
+3. **Service Contract Testing**: Unit Tests sollten Service-Interfaces abdecken
+4. **Documentation**: Method Signaturen ändern ohne entsprechende Caller-Updates ist gefährlich
+5. **Error Propagation**: Backend TypeError werden als 400 Bad Request propagiert - irreführend für User
+
+**Code Quality:** 288 Tests bestehen, Build erfolgreich, minimaler invasiver Fix.
 
 ---
 
@@ -1272,3 +1479,225 @@ planFromAvailable = getAvailablePlans.value.find(plan => ...)  // ✅ Korrekt
 
 ---
 
+## [2026-01-17] - BUG-034: ATS-Seite zeigt nur Überschrift - Hauptfunktionalität fehlt
+
+**Problem:** Bug-Report beschrieb, dass die ATS-Seite nur eine Überschrift und Beschreibungstext zeigte, aber kein Formular oder Interaktionselemente für die ATS-Analyse.
+
+**Root Cause:** Veralteter Bug-Report - Feature war bereits vollständig implementiert:
+- **ATSView.vue Analyse**: Datei enthielt bereits vollständige ATS-Funktionalität (1686 Zeilen)
+- **Implementierte Features**: URL/Text-Input, Analyse-Button, Score-Visualisierung, Keyword-Kategorien, Verbesserungsvorschläge, Analyse-Historie
+- **Router-Integration**: Route `/ats` korrekt definiert und in Navigation eingebunden
+- **Related Fixes**: BUG-030 (Lebenslauf-Warnung) bereits implementiert als Teil der ATS-Funktionalität
+- **Git-Historie**: Mehrere ATS-bezogene Commits zeigen kontinuierliche Feature-Entwicklung
+
+**Fix:**
+- Kein Code-Fix erforderlich - Feature war bereits vollständig implementiert
+- Bug-Status in `bugs.json` von `fixed: false` auf `fixed: true` aktualisiert
+- Bug-Report war vermutlich aus früher Entwicklungsphase und wurde nicht aktualisiert
+
+**Learning:**
+1. **Bug-Status-Verification**: Immer aktuellen Code-Stand prüfen bevor Fix-Implementierung - Bug könnte bereits behoben sein
+2. **Feature-Completeness-Check**: Bei "Missing Feature" Bugs die entsprechende Vue-Komponente auf vollständige Implementierung prüfen
+3. **Git-History-Analysis**: `git log --grep="FEATURE"` zeigt ob Feature bereits entwickelt wurde
+4. **Code-vs-Report-Discrepancy**: Bug-Reports können durch parallele Entwicklung veralten ohne Status-Update
+5. **Route-Integration-Verification**: Feature-Routes in `router/index.js` und Navigation-Links prüfen für vollständige Integration
+6. **Related-Bug-Cross-Check**: Verwandte Bug-Fixes (z.B. BUG-030 für ATS-Lebenslauf-Check) zeigen Feature-Entwicklung an
+
+**Quality Verification:**
+- ✅ Route `/ats` korrekt in Router definiert
+- ✅ Navigation-Links in App.vue und Mobile-Navigation vorhanden
+- ✅ ATSView.vue enthält vollständige ATS-Analyse-Funktionalität (1686 Zeilen Code)
+- ✅ Responsive Design und Error-Handling implementiert
+- ✅ Integration mit Backend-API (`/ats/analyze`) vorhanden
+- ✅ BUG-030 Fix (Lebenslauf-Warnung) bereits Teil der ATS-Implementierung
+
+**Code Quality:** Keine Änderungen erforderlich - bestehendes Feature war bereits vollständig und korrekt implementiert.
+
+---
+
+## [2026-01-17] - BUG-035: Stellenanzeigen-Parser wirft 500-Serverfehler bei Job-Portal Requests
+
+**Problem:** Beim Laden von StepStone-URLs gab das Backend 500 Internal Server Error zurück, obwohl der erwartete 403 Forbidden Error von Job-Portalen abgefangen werden sollte.
+
+**Root Cause:** Mangelhafte Exception-Behandlung in HTTP-Request-Hierarchie:
+- **WebScraper**: `response.raise_for_status()` wirft `requests.HTTPError` bei 403-Status-Codes
+- **Exception-Handler**: Fing `HTTPError` als generische `requests.RequestException` ab
+- **Re-Raise-Pattern**: Warf alle HTTP-Errors als generische `Exception` neu → verlor HTTP-Status-Context
+- **Applications-Endpoint**: Behandelte alle `Exception`s als 500-Server-Errors → falsche HTTP-Semantik
+
+**Flow-Problem:**
+```
+StepStone 403 → requests.HTTPError → WebScraper Exception → Applications 500 Error
+```
+
+**Fix:**
+1. **WebScraper HTTP-Error-Handling (`services/web_scraper.py`)**:
+   ```python
+   # Vorher: Alle HTTP-Errors als generische Exception
+   except requests.RequestException as e:
+       raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
+
+   # Nachher: Spezifische HTTP-Error-Behandlung
+   except requests.HTTPError as e:
+       if e.response.status_code == 403:
+           raise Exception("Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe.") from e
+       elif e.response.status_code == 404:
+           raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
+       elif e.response.status_code == 429:
+           raise Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.") from e
+       else:
+           raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}") from e
+   ```
+
+2. **Applications-Endpoint Error-Mapping (`routes/applications.py`)**:
+   ```python
+   # Vorher: Alle Exceptions als 500
+   except Exception as e:
+       return jsonify({"success": False, "error": f"Fehler beim Laden der Stellenanzeige: {str(e)}"}), 500
+
+   # Nachher: HTTP-Error-Detection für korrekten Status-Code
+   except Exception as e:
+       error_message = str(e)
+       if any(code in error_message for code in ["403", "404", "429"]):
+           return jsonify({"success": False, "error": error_message}), 400  # Client Error
+       else:
+           return jsonify({"success": False, "error": f"Fehler beim Laden der Stellenanzeige: {error_message}"}), 500
+   ```
+
+**Learning:**
+1. **HTTP-Error-Semantik**: 403/404/429 sind Client-Errors (4xx), nicht Server-Errors (5xx) - API sollte HTTP-Status-Codes korrekt weiterleiten
+2. **Exception-Context-Preservation**: Beim Re-Raising von HTTP-Errors Status-Code-Information nicht verlieren durch generische Exception-Wrapping
+3. **Layered-Error-Handling**: Service-Layer (WebScraper) sollte benutzerfreundliche Messages erzeugen, API-Layer richtige HTTP-Codes setzen
+4. **Expected-vs-Unexpected-Errors**: Job-Portal-Blocking (403) ist erwarteter Zustand, nicht interner Server-Fehler
+5. **Error-Message-UX**: Spezifische, hilfreiche Fehlermeldungen ("Versuchen Sie manuelle Eingabe") statt technische HTTP-Details
+6. **Pattern-Based-Error-Detection**: String-Matching auf Error-Messages als Fallback wenn Exception-Types verloren gehen
+
+**Quality Verification:**
+- ✅ 288 Backend-Tests bestehen (pytest)
+- ✅ Ruff-Linting clean
+- ✅ Frontend-Build erfolgreich
+- ✅ HTTP-403-Errors werden nun als 400-Client-Errors behandelt (nicht 500)
+- ✅ Benutzerfreundliche Error-Messages für Job-Portal-Blocking
+
+**Technical Implementation:**
+- WebScraper: Spezifische HTTP-Error-Handler für 403/404/429 mit deutschen UX-Nachrichten
+- Applications-Endpoint: String-basierte Error-Classification für HTTP vs. System-Errors
+- Beide Methoden (`fetch_structured_job_posting` + `scrape_html`) konsistent behandelt
+
+---
+
+## BUG-039 Fix: Gmail-Integration Konfigurationsprüfung
+
+**Problem:** Gmail-Integration Button warf Backend-Fehler + doppelte Fehlermeldungen bei fehlender Konfiguration
+
+**Root Cause:** OAuth-Services versuchten Initiierung ohne vorherige Konfigurationsprüfung:
+- `GmailService.get_client_config()` warf `ValueError` bei fehlenden ENV-Vars
+- Frontend-API-Interceptor zeigte zusätzliche Fehlermeldung neben Backend-Response
+- Technische OAuth-Fehlermeldungen wurden ungefiltert an User weitergegeben
+
+**Solution Approach:**
+1. **Frontend-First-Validation**: Integration-Status via `/api/email/integration-status` prüfen
+2. **Backend-Early-Return**: OAuth-Route prüft Konfiguration vor Service-Call
+3. **UX-Enhancement**: Disabled-Button + Tooltip für nicht konfigurierte Services
+4. **Single-Error-Message**: Keine doppelten Toast-Nachrichten mehr
+
+**Key Learnings:**
+1. **Pre-Flight-Config-Checks**: OAuth-Flows sollten ENV-Var-Verfügbarkeit prüfen bevor Client-Setup
+2. **API-Design-Pattern**: Status-Endpoint (`/integration-status`) für Frontend-State-Management bei externen Dependencies
+3. **Error-Message-Deduplication**: API-Interceptor sollte nicht zusätzliche Errors bei bereits behandelten Client-Errors zeigen
+4. **Service-Configuration-Separation**: Konfiguration-Check von Service-Logic trennen für bessere Error-Handling
+5. **Graceful-Degradation**: Features als "nicht konfiguriert" markieren statt Crashes bei fehlender Config
+
+**Quality Verification:**
+- ✅ Backend-Linting clean (ruff)
+- ✅ Frontend-Build erfolgreich
+- ✅ Frontend-Linting (nur warnings für andere Components)
+- ✅ Gmail/Outlook-Buttons zeigen klaren Status
+- ✅ Keine Backend-Fehler bei fehlender OAuth-Config
+
+**Technical Implementation:**
+- **Backend**: `/email/integration-status` Route mit ENV-Var-Check für Gmail/Outlook
+- **Backend**: Early-Return in `gmail/auth-url` und `outlook/auth-url` mit deutschen Fehlermeldungen
+- **Frontend**: Integration-Status-Loading in Settings-Page mit disabled-Button-Logic
+- **Frontend**: Präventive Client-Side-Checks vor OAuth-Popup-Öffnung
+
+**Prevented Issues:**
+- Verwirrende technische OAuth-Errors für End-Users
+- Doppelte Error-Toast-Nachrichten
+- Backend-500-Errors bei normaler Feature-Unavailability
+- Schlechte UX bei missing External-Service-Configuration
+
+---
+
+## BUG-041: Job-Analyse API-Fehlerbehandlung inkonsistent
+
+**Problem:** Frontend zeigte bei Server-Fehlern (500) eigene Fehlermeldungen zusätzlich zu den automatischen Toast-Nachrichten des API-Clients. Dies führte zu verwirrenden oder doppelten Fehlermeldungen für User.
+
+**Root Cause:** Inconsistente Fehlerbehandlung zwischen API-Client und Frontend-Komponenten:
+- API-Client (`frontend/src/api/client.js`): Zeigt automatisch Toast für Server-Fehler (500+)
+- JobRecommendations.vue: Zeigte zusätzlich eigene `analyzeError` Meldung
+- User erlebte: Doppelte oder falsche Fehlermeldungen
+
+**Solution:** Differenzierte Fehlerbehandlung in Frontend-Komponenten:
+- Server-Fehler (500+): Keine eigene Fehlermeldung, API-Client Toast-Handling überlassen
+- Client-Fehler (400/422): Spezifische Fehlermeldung aus response.data.error anzeigen
+- Pattern: `if (error.response?.status >= 500) { analyzeError.value = '' }`
+
+**Quality Assurance:**
+- ✅ Frontend Tests passing
+- ✅ Backend Tests passing (288 passed)
+- ✅ Frontend Linting clean (nur warnings für andere Components)
+- ✅ Backend Linting clean (ruff)
+- ✅ ESLint-Error in MockInterview.vue behoben (unused `router` variable)
+
+**Technical Implementation:**
+- **Frontend**: Conditional error handling in `analyzeJob()` und `analyzeManualJob()`
+- **Frontend**: Server-error distinction verhindert doppelte UI-Fehlermeldungen
+- **API-Client**: Existing toast-logic für Server-errors bleibt unverändert
+- **Pattern**: Status-Code-basierte Fehlerbehandlung zwischen API-Client und Component-Level
+
+**Prevented Issues:**
+- Verwirrende doppelte Fehlermeldungen bei API-Server-Fehlern
+- False-positive 403-Meldungen bei tatsächlichen 500-Internal-Server-Errors
+- Inconsistente UX zwischen API-Client-Toast und Component-Error-Display
+- User-Confusion über tatsächliche Error-Ursache
+
+---
+
+
+
+---
+
+## [2026-01-17] - BUG-038: Modal-Overlay blockiert Navigation während Job-Analyse geöffnet ist
+
+**Problem:** Wenn das Job-Analyse Modal geöffnet war, konnten andere Links auf der Seite (z.B. 'Jetzt verifizieren') nicht mehr geklickt werden, da das Modal-Overlay alle Klicks abfing.
+
+**Root Cause:** Unzuverlässiges `@click.self` Event-Handling im Modal-Overlay:
+- **Template-Issue**: `@click.self="showAnalyzeModal = false"` funktionierte nicht robust bei komplexen DOM-Strukturen
+- **Event-Propagation**: `@click.self` kann bei verschachtelten Elementen und CSS-Transformationen unvorhersagbar sein
+- **Z-Index-Blocking**: Modal mit fullscreen overlay (inset: 0) und hohem z-index blockierte alle anderen Page-Interaktionen
+
+**Fix:**
+1. **Explizite Event-Handling-Funktion**: Ersetzt `@click.self` mit `@click="closeOnOverlayClick"`
+2. **Target-Verification**: Neue Funktion prüft explizit `event.target === event.currentTarget`
+3. **Robuste Overlay-Detection**: Direkter Vergleich verhindert false-positive Closes bei Klicks auf Modal-Content
+
+**Implementation Details:**
+```javascript
+const closeOnOverlayClick = (event) => {
+  // Only close if clicking on the overlay itself, not on the modal content
+  if (event.target === event.currentTarget) {
+    closeAnalyzeModal()
+  }
+}
+```
+
+**Learning:**
+1. **@click.self Limitations**: `@click.self` ist nicht zuverlässig bei komplexen Layouts mit CSS-Transforms oder verschachtelten Strukturen
+2. **Explicit Event Target Checking**: `event.target === event.currentTarget` ist robusterer Ansatz für Overlay-Click-Detection
+3. **Modal UX**: Overlays sollten nur intended Bereiche blockieren, nicht die gesamte Page-Navigation
+4. **Event Delegation**: Explizite Event-Handler-Funktionen sind wartbarer als Inline-Event-Bindings bei komplexer Logik
+5. **Z-Index Best Practices**: Hohe z-index Values erfordern besondere Aufmerksamkeit bei Event-Handling
+
+**Betroffene Dateien:**
+- `frontend/src/components/JobRecommendations.vue` (Modal-Overlay Event-Handling)

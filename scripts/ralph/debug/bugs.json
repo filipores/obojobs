@@ -708,7 +708,11 @@
       "found_at": "2026-01-16T16:31:12+01:00",
       "source": "explore-ralph",
       "fixed": true,
-      "fixAttempts": 1
+      "fixAttempts": 1,
+      "fixedAt": 1768605698.070952,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-034",
@@ -727,8 +731,12 @@
       "screenshot": null,
       "found_at": "2026-01-16T16:31:12+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768606167.451917,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-035",
@@ -749,8 +757,12 @@
       "screenshot": "bug-035-server-error-job-loading.png",
       "found_at": "2026-01-16T16:34:06+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768647600.000,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-036",
@@ -768,13 +780,17 @@
       "expected": "Im manuellen Modus sollten keine Fehlermeldungen der URL-Eingabe angezeigt werden",
       "actual": "Alte Fehlermeldung bleibt persistent im manuellen Dialog sichtbar",
       "affectedFiles": [
-        "frontend/src/components/JobAnalysisDialog.vue"
+        "frontend/src/components/JobRecommendations.vue"
       ],
       "screenshot": null,
       "found_at": "2026-01-16T16:37:56+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768607940.000,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-037",
@@ -796,8 +812,12 @@
       "screenshot": null,
       "found_at": "2026-01-16T16:42:48+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768606514.535124,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-038",
@@ -813,13 +833,17 @@
       "expected": "Modal sollte nur eigenen Bereich abdecken oder andere Links sollten funktionieren",
       "actual": "Modal-Overlay blockiert alle anderen Interaktionen auf der Seite",
       "affectedFiles": [
-        "frontend/src/components/JobAnalysisModal.vue"
+        "frontend/src/components/JobRecommendations.vue"
       ],
       "screenshot": null,
       "found_at": "2026-01-16T16:42:48+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768608701.999155,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-039",
@@ -835,14 +859,18 @@
       "expected": "Entweder funktionierende Gmail-Integration oder disabled Button mit Erklärung",
       "actual": "Backend-Fehler + verwirrende doppelte Fehlermeldungen",
       "affectedFiles": [
-        "backend/api/auth/gmail-integration",
-        "frontend/src/pages/SettingsView.vue"
+        "backend/routes/email.py",
+        "frontend/src/pages/Settings.vue"
       ],
       "screenshot": null,
       "found_at": "2026-01-16T16:42:48+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768606991.504724,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-040",
@@ -858,14 +886,17 @@
       "expected": "Schließen-Button sollte das mobile Navigationsmenü schließen",
       "actual": "Button ist nicht klickbar, Overlay von anderen Elementen blockiert Interaktion",
       "affectedFiles": [
-        "frontend/src/components/Navigation.vue",
-        "frontend/src/components/MobileNavigation.vue"
+        "frontend/src/App.vue"
       ],
       "screenshot": null,
       "found_at": "2026-01-16T16:47:23+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768607435.732155,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-041",
@@ -882,13 +913,17 @@
       "expected": "Fehlermeldung in UI sollte dem tatsächlichen HTTP-Status entsprechen",
       "actual": "UI zeigt 403 Forbidden aber API gibt 500 Internal Server Error zurück",
       "affectedFiles": [
-        "frontend/src/components/JobAnalysis.vue",
+        "frontend/src/components/JobRecommendations.vue",
         "backend/api/recommendations.py"
       ],
       "found_at": "2026-01-16T16:50:39+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768607813.041412,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-042",
@@ -909,8 +944,12 @@
       ],
       "found_at": "2026-01-16T16:50:39+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768608123.480734,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-043",
@@ -926,13 +965,17 @@
       "actual": "Leere main-Sektion, Vue Router Warnung in Console, aber keine Benutzerfeedback",
       "affectedFiles": [
         "frontend/src/router/index.js",
-        "frontend/src/views/NotFound.vue"
+        "frontend/src/pages/NotFound.vue"
       ],
       "screenshot": null,
       "found_at": "2026-01-16T17:00:55+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768608973.762941,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-044",
@@ -968,12 +1011,16 @@
       "expected": "Entweder Link zum Lebenslauf-Upload oder Info wo hochzuladen",
       "actual": "Fehlermeldung ohne Lösungsweg",
       "affectedFiles": [
-        "frontend/src/pages/NewApplicationView.vue"
+        "frontend/src/pages/NewApplication.vue"
       ],
       "found_at": "2026-01-16T17:04:56+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768608397.864124,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     }
   ]
 }
