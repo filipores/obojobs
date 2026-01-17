@@ -10,6 +10,17 @@
           </svg>
           Skill hinzufugen
         </button>
+        <button @click="showBulkModal = true" class="zen-btn zen-btn-sm" title="Mehrere Skills auf einmal hinzufuegen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="8" y1="6" x2="21" y2="6"/>
+            <line x1="8" y1="12" x2="21" y2="12"/>
+            <line x1="8" y1="18" x2="21" y2="18"/>
+            <line x1="3" y1="6" x2="3.01" y2="6"/>
+            <line x1="3" y1="12" x2="3.01" y2="12"/>
+            <line x1="3" y1="18" x2="3.01" y2="18"/>
+          </svg>
+          Bulk-Import
+        </button>
         <button v-if="cvDocumentId" @click="reextractSkills" :disabled="extracting" class="zen-btn zen-btn-ai zen-btn-sm">
           <svg v-if="!extracting" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M23 4v6h-6"/>
@@ -20,6 +31,28 @@
           {{ extracting ? 'Extrahiere...' : 'Neu extrahieren' }}
         </button>
       </div>
+    </div>
+
+    <!-- Category Filter -->
+    <div v-if="skills.length > 0" class="category-filter">
+      <button
+        class="filter-btn"
+        :class="{ active: categoryFilter === '' }"
+        @click="categoryFilter = ''"
+      >
+        Alle
+        <span class="filter-count">{{ skills.length }}</span>
+      </button>
+      <button
+        v-for="(count, cat) in categoryCounts"
+        :key="cat"
+        class="filter-btn"
+        :class="{ active: categoryFilter === cat }"
+        @click="categoryFilter = cat"
+      >
+        {{ getCategoryLabel(cat) }}
+        <span class="filter-count">{{ count }}</span>
+      </button>
     </div>
 
     <!-- Loading State -->
@@ -97,6 +130,51 @@
       Gesamt: {{ skills.length }} Skills
     </div>
 
+    <!-- Bulk Import Modal -->
+    <div v-if="showBulkModal" class="modal-overlay" @click.self="closeModal">
+      <div class="modal zen-card">
+        <div class="modal-header">
+          <h3>Bulk-Import</h3>
+          <button @click="closeModal" class="modal-close">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <form @submit.prevent="saveBulkSkills" class="modal-form">
+          <div class="form-group">
+            <label for="bulk-skills">Skills (Komma, Semikolon oder Zeilenumbruch getrennt) *</label>
+            <textarea
+              id="bulk-skills"
+              v-model="bulkFormData.skills_text"
+              rows="4"
+              required
+              placeholder="Python, JavaScript, React&#10;oder&#10;Python&#10;JavaScript&#10;React"
+            ></textarea>
+            <span class="field-hint">Jeder Skill muss mindestens 2 Zeichen haben</span>
+          </div>
+          <div class="form-group">
+            <label for="bulk-category">Kategorie fuer alle *</label>
+            <select id="bulk-category" v-model="bulkFormData.skill_category" required>
+              <option value="">Kategorie wahlen...</option>
+              <option value="technical">Technisch</option>
+              <option value="soft_skills">Soft Skills</option>
+              <option value="languages">Sprachen</option>
+              <option value="tools">Tools</option>
+              <option value="certifications">Zertifikate</option>
+            </select>
+          </div>
+          <div class="modal-actions">
+            <button type="button" @click="closeModal" class="zen-btn">Abbrechen</button>
+            <button type="submit" class="zen-btn zen-btn-ai" :disabled="saving || !bulkFormData.skills_text || !bulkFormData.skill_category">
+              {{ saving ? 'Importiere...' : 'Importieren' }}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
     <!-- Add/Edit Modal -->
     <div v-if="showAddModal || editingSkill" class="modal-overlay" @click.self="closeModal">
       <div class="modal zen-card">
@@ -110,7 +188,7 @@
           </button>
         </div>
         <form @submit.prevent="saveSkill" class="modal-form">
-          <div class="form-group">
+          <div class="form-group autocomplete-container">
             <label for="skill-name">Skill Name *</label>
             <input
               id="skill-name"
@@ -120,8 +198,20 @@
               minlength="2"
               placeholder="z.B. Python, Projektmanagement"
               :class="{ 'input-error': skillNameError }"
-              @input="validateSkillName"
+              autocomplete="off"
+              @input="validateSkillName(); searchSkills(formData.skill_name)"
+              @focus="searchSkills(formData.skill_name)"
+              @blur="setTimeout(() => showAutocomplete = false, 200)"
             />
+            <ul v-if="showAutocomplete && autocompleteResults.length" class="autocomplete-list">
+              <li
+                v-for="suggestion in autocompleteResults"
+                :key="suggestion"
+                @mousedown.prevent="selectAutocomplete(suggestion)"
+              >
+                {{ suggestion }}
+              </li>
+            </ul>
             <span v-if="skillNameError" class="field-error" role="alert">{{ skillNameError }}</span>
           </div>
           <div class="form-group">
@@ -169,8 +259,10 @@ const loadError = ref(false)
 const extracting = ref(false)
 const saving = ref(false)
 const showAddModal = ref(false)
+const showBulkModal = ref(false)
 const editingSkill = ref(null)
 const cvDocumentId = ref(null)
+const categoryFilter = ref('') // empty = all categories
 
 const formData = ref({
   skill_name: '',
@@ -178,7 +270,31 @@ const formData = ref({
   experience_years: null
 })
 
+const bulkFormData = ref({
+  skills_text: '',
+  skill_category: ''
+})
+
 const skillNameError = ref('')
+
+// Common skill suggestions for autocomplete
+const commonSkills = [
+  // Technical
+  'JavaScript', 'TypeScript', 'Python', 'Java', 'C#', 'C++', 'Go', 'Rust', 'PHP', 'Ruby',
+  'React', 'Vue.js', 'Angular', 'Node.js', 'Express', 'Django', 'Flask', 'Spring Boot',
+  'SQL', 'PostgreSQL', 'MySQL', 'MongoDB', 'Redis', 'Docker', 'Kubernetes', 'AWS', 'Azure',
+  'Git', 'Linux', 'REST API', 'GraphQL', 'HTML', 'CSS', 'SASS', 'TailwindCSS',
+  // Soft Skills
+  'Teamarbeit', 'Kommunikation', 'Projektmanagement', 'Problemloesung', 'Zeitmanagement',
+  'Fuehrungskompetenz', 'Kreativitaet', 'Analytisches Denken', 'Flexibilitaet',
+  // Languages
+  'Deutsch', 'Englisch', 'Franzoesisch', 'Spanisch', 'Italienisch', 'Chinesisch',
+  // Tools
+  'Jira', 'Confluence', 'Slack', 'Microsoft Office', 'Excel', 'PowerPoint', 'Figma', 'Photoshop'
+]
+
+const autocompleteResults = ref([])
+const showAutocomplete = ref(false)
 
 const validateSkillName = () => {
   const name = formData.value.skill_name.trim()
@@ -210,9 +326,15 @@ const validateSkillName = () => {
   return true
 }
 
+// Filter skills by selected category
+const filteredSkills = computed(() => {
+  if (!categoryFilter.value) return skills.value
+  return skills.value.filter(s => s.skill_category === categoryFilter.value)
+})
+
 const skillsByCategory = computed(() => {
   const grouped = {}
-  for (const skill of skills.value) {
+  for (const skill of filteredSkills.value) {
     const cat = skill.skill_category
     if (!grouped[cat]) grouped[cat] = []
     grouped[cat].push(skill)
@@ -224,6 +346,16 @@ const skillsByCategory = computed(() => {
     if (grouped[cat]) sorted[cat] = grouped[cat]
   }
   return sorted
+})
+
+// Count skills per category for filter badges
+const categoryCounts = computed(() => {
+  const counts = {}
+  for (const skill of skills.value) {
+    const cat = skill.skill_category
+    counts[cat] = (counts[cat] || 0) + 1
+  }
+  return counts
 })
 
 const getCategoryLabel = (category) => {
@@ -370,13 +502,106 @@ const saveSkill = async () => {
 
 const closeModal = () => {
   showAddModal.value = false
+  showBulkModal.value = false
   editingSkill.value = null
   formData.value = {
     skill_name: '',
     skill_category: '',
     experience_years: null
   }
+  bulkFormData.value = {
+    skills_text: '',
+    skill_category: ''
+  }
   skillNameError.value = ''
+  showAutocomplete.value = false
+  autocompleteResults.value = []
+}
+
+// Autocomplete search
+const searchSkills = (query) => {
+  if (!query || query.length < 2) {
+    autocompleteResults.value = []
+    showAutocomplete.value = false
+    return
+  }
+
+  const normalizedQuery = query.toLowerCase()
+  const existingSkillNames = skills.value.map(s => s.skill_name.toLowerCase())
+
+  autocompleteResults.value = commonSkills
+    .filter(s =>
+      s.toLowerCase().includes(normalizedQuery) &&
+      !existingSkillNames.includes(s.toLowerCase())
+    )
+    .slice(0, 5)
+
+  showAutocomplete.value = autocompleteResults.value.length > 0
+}
+
+const selectAutocomplete = (skillName) => {
+  formData.value.skill_name = skillName
+  showAutocomplete.value = false
+  autocompleteResults.value = []
+  validateSkillName()
+}
+
+// Bulk import skills
+const saveBulkSkills = async () => {
+  if (saving.value) return
+
+  const text = bulkFormData.value.skills_text.trim()
+  const category = bulkFormData.value.skill_category
+
+  if (!text || !category) return
+
+  // Parse comma-separated skills
+  const skillNames = text
+    .split(/[,;\n]/)
+    .map(s => s.trim())
+    .filter(s => s.length >= 2)
+
+  if (skillNames.length === 0) return
+
+  saving.value = true
+  let successCount = 0
+  let errorCount = 0
+
+  for (const skillName of skillNames) {
+    // Check if skill already exists
+    const exists = skills.value.some(
+      s => s.skill_name.toLowerCase() === skillName.toLowerCase()
+    )
+    if (exists) {
+      errorCount++
+      continue
+    }
+
+    try {
+      const { data } = await api.post('/users/me/skills', {
+        skill_name: skillName,
+        skill_category: category,
+        experience_years: null
+      })
+      skills.value.push(data.skill)
+      successCount++
+    } catch (_e) {
+      errorCount++
+    }
+  }
+
+  saving.value = false
+
+  if (window.$toast) {
+    if (successCount > 0) {
+      window.$toast(`${successCount} Skills hinzugefuegt`, 'success')
+    }
+    if (errorCount > 0) {
+      window.$toast(`${errorCount} Skills uebersprungen (bereits vorhanden)`, 'warning')
+    }
+  }
+
+  closeModal()
 }
 
 // Escape key handler for modal
@@ -427,6 +652,55 @@ onMounted(() => {
 .header-actions {
   display: flex;
   gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+/* Category Filter */
+.category-filter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-lg);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.filter-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-washi);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-full);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.filter-btn:hover {
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.filter-btn.active {
+  background: var(--color-ai-subtle);
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+  font-weight: 500;
+}
+
+.filter-count {
+  font-size: 0.6875rem;
+  padding: 2px 6px;
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-full);
+}
+
+.filter-btn.active .filter-count {
+  background: var(--color-ai);
+  color: white;
 }
 
 .skills-loading,
@@ -660,6 +934,60 @@ onMounted(() => {
 
 .form-group input.input-error:focus {
   border-color: var(--color-error);
+}
+
+.form-group textarea {
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-family: inherit;
+  resize: vertical;
+  transition: border-color var(--transition-base);
+}
+
+.form-group textarea:focus {
+  outline: none;
+  border-color: var(--color-ai);
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-top: var(--space-xs);
+}
+
+/* Autocomplete */
+.autocomplete-container {
+  position: relative;
+}
+
+.autocomplete-list {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lifted);
+  z-index: 10;
+  list-style: none;
+  padding: 0;
+  margin: var(--space-xs) 0 0 0;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.autocomplete-list li {
+  padding: var(--space-sm) var(--space-md);
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+
+.autocomplete-list li:hover {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
 }
 
 .field-error {
