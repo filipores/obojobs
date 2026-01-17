@@ -7,8 +7,8 @@ Teste Features durch explorative UI-Tests mit MCP Playwright.
 **WICHTIG:** Vor dem Testen der Kernfunktionalität (CORE-* Features) muss das Test-Setup durchgeführt werden:
 
 ### Test-Dokumente (aus config.sh)
-- **Lebenslauf:** `/Users/filipores/Documents/Bewerbungsunterlagen/Batch/cv-ger.pdf`
-- **Arbeitszeugnis:** `/Users/filipores/Documents/Bewerbungsunterlagen/Batch/Filip Zeugnis.pdf`
+- **Lebenslauf:** `~/cv-ger.pdf`
+- **Arbeitszeugnis:** `~/Filip Zeugnis.pdf`
 
 ### Setup-Ablauf (Feature SETUP-001)
 1. Registriere neuen Test-User ODER logge bestehenden User ein
