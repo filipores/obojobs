@@ -130,7 +130,7 @@
     </div>
 
     <!-- Analyze Modal -->
-    <div v-if="showAnalyzeModal" class="modal-overlay" @click.self="showAnalyzeModal = false">
+    <div v-if="showAnalyzeModal" class="modal-overlay" @click="closeOnOverlayClick">
       <div class="modal zen-card">
         <div class="modal-header">
           <h3>Stellenanzeige analysieren</h3>
@@ -420,6 +420,13 @@ const closeAnalyzeModal = () => {
   manualJobText.value = ''
   manualCompany.value = ''
   manualTitle.value = ''
+}
+
+const closeOnOverlayClick = (event) => {
+  // Only close if clicking on the overlay itself, not on the modal content
+  if (event.target === event.currentTarget) {
+    closeAnalyzeModal()
+  }
 }
 
 // Escape key handler for modal
