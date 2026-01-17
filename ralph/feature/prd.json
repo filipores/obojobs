@@ -740,7 +740,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 50,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-004"
     },
     {
@@ -755,7 +755,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 51,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-005"
     },
     {
@@ -770,7 +770,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 52,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-006"
     },
     {
@@ -784,7 +784,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 53,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-007"
     },
     {
@@ -799,7 +799,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 54,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-008"
     },
     {

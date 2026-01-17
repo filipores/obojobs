@@ -1,5 +1,53 @@
 <template>
   <div class="documents-page">
+    <!-- Onboarding Tooltip Overlay -->
+    <div v-if="showOnboardingTooltip" class="onboarding-overlay" @click.self="dismissOnboarding">
+      <div class="onboarding-tooltip" :class="`step-${onboardingStep}`">
+        <div class="onboarding-header">
+          <span class="onboarding-step-indicator">Tipp {{ onboardingStep }} von 2</span>
+          <button @click="dismissOnboarding" class="onboarding-close" aria-label="Schliessen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+        <div class="onboarding-content">
+          <div v-if="onboardingStep === 1" class="onboarding-step">
+            <div class="onboarding-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="16" y1="13" x2="8" y2="13"/>
+                <line x1="16" y1="17" x2="8" y2="17"/>
+              </svg>
+            </div>
+            <h3>Lebenslauf hochladen</h3>
+            <p>Laden Sie Ihren Lebenslauf als PDF hoch. Der Text wird automatisch extrahiert und fuer Bewerbungen verwendet.</p>
+          </div>
+          <div v-else class="onboarding-step">
+            <div class="onboarding-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                <path d="M2 17l10 5 10-5"/>
+                <path d="M2 12l10 5 10-5"/>
+              </svg>
+            </div>
+            <h3>Skills automatisch extrahieren</h3>
+            <p>Nach dem Upload werden Ihre Skills automatisch erkannt. Diese helfen bei der Job-Analyse und verbessern Ihre Bewerbungen.</p>
+          </div>
+        </div>
+        <div class="onboarding-actions">
+          <button @click="dismissOnboarding" class="zen-btn zen-btn-sm">
+            Ueberspringen
+          </button>
+          <button @click="nextOnboardingStep" class="zen-btn zen-btn-ai zen-btn-sm">
+            {{ onboardingStep < 2 ? 'Weiter' : 'Verstanden' }}
+          </button>
+        </div>
+      </div>
+    </div>
+
     <div class="container">
       <!-- Header Section -->
       <section class="page-header animate-fade-up">
@@ -298,7 +346,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, nextTick } from 'vue'
+import { ref, onMounted, computed, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../api/client'
 import SkillsOverview from '../components/SkillsOverview.vue'
@@ -306,6 +354,8 @@ import { confirm } from '../composables/useConfirm'
 
 const route = useRoute()
 const skillsSection = ref(null)
+const showOnboardingTooltip = ref(false)
+const onboardingStep = ref(1)
 
 const documents = ref({
   lebenslauf: null,
@@ -472,6 +522,42 @@ const formatDate = (dateString) => {
   })
 }
 
+// Check if this is user's first visit to documents page
+const checkFirstVisit = () => {
+  const hasVisited = localStorage.getItem('documentsPageVisited')
+  if (!hasVisited) {
+    showOnboardingTooltip.value = true
+  }
+}
+
+const dismissOnboarding = () => {
+  showOnboardingTooltip.value = false
+  localStorage.setItem('documentsPageVisited', 'true')
+}
+
+const nextOnboardingStep = () => {
+  if (onboardingStep.value < 2) {
+    onboardingStep.value++
+  } else {
+    dismissOnboarding()
+  }
+}
+
+// Handle escape key for onboarding
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape' && showOnboardingTooltip.value) {
+    dismissOnboarding()
+  }
+}
+
+watch(showOnboardingTooltip, (isOpen) => {
+  if (isOpen) {
+    document.addEventListener('keydown', handleEscapeKey)
+  } else {
+    document.removeEventListener('keydown', handleEscapeKey)
+  }
+})
+
 onMounted(async () => {
   await loadDocuments()
 
@@ -479,6 +565,9 @@ onMounted(async () => {
   if (route.hash === '#skills') {
     await nextTick()
     skillsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  } else {
+    // Only show onboarding if not navigating to skills section
+    checkFirstVisit()
   }
 })
 </script>
@@ -831,5 +920,116 @@ onMounted(async () => {
   font-size: 1.5rem;
   font-weight: 500;
   margin-bottom: var(--space-lg);
+}
+
+/* ========================================
+   ONBOARDING TOOLTIP
+   ======================================== */
+.onboarding-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-md);
+}
+
+.onboarding-tooltip {
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lifted);
+  max-width: 400px;
+  width: 100%;
+  padding: var(--space-lg);
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.onboarding-step-indicator {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-ai);
+  background: var(--color-ai-subtle);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.onboarding-close {
+  padding: var(--space-xs);
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+}
+
+.onboarding-close:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-sumi);
+}
+
+.onboarding-content {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.onboarding-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.onboarding-icon {
+  width: 64px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ai-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-ai);
+}
+
+.onboarding-step h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+  margin: 0;
+}
+
+.onboarding-step p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+.onboarding-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-sm);
 }
 </style>

@@ -43,6 +43,34 @@
       </div>
     </div>
 
+    <!-- Skills Onboarding Hint -->
+    <div v-if="showSkillsHint" class="skills-hint-banner">
+      <div class="container">
+        <div class="skills-hint-content">
+          <div class="skills-hint-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+              <path d="M2 17l10 5 10-5"/>
+              <path d="M2 12l10 5 10-5"/>
+            </svg>
+          </div>
+          <div class="skills-hint-text">
+            <strong>Skills fehlen noch</strong>
+            <span>Laden Sie einen Lebenslauf hoch, um Skills automatisch zu extrahieren. Dies verbessert die Job-Analyse und Bewerbungserstellung.</span>
+          </div>
+          <router-link to="/documents" class="zen-btn zen-btn-ai zen-btn-sm">
+            Lebenslauf hochladen
+          </router-link>
+          <button @click="dismissSkillsHint" class="skills-hint-dismiss" aria-label="Hinweis schliessen">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <line x1="18" y1="6" x2="6" y2="18"/>
+              <line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Hero Section with Ma (negative space) -->
     <section class="hero-section">
       <div class="container">
@@ -277,6 +305,8 @@ const stats = ref(null)
 const usage = ref(null)
 const bannerDismissedThisSession = ref(false)
 const loadError = ref(false)
+const skills = ref([])
+const skillsLoaded = ref(false)
 
 // Check if user needs to see the verification banner
 const needsVerification = computed(() => {
@@ -332,13 +362,43 @@ const loadStats = async () => {
   }
 }
 
+const loadSkills = async () => {
+  try {
+    const { data } = await api.silent.get('/users/me/skills')
+    skills.value = data.skills || []
+  } catch (error) {
+    console.error('Failed to load skills:', error)
+  } finally {
+    skillsLoaded.value = true
+  }
+}
+
+// Show skills hint if no skills and not dismissed for 7 days
+const showSkillsHint = computed(() => {
+  if (!skillsLoaded.value) return false
+  if (skills.value.length > 0) return false
+  const dismissed = localStorage.getItem('skillsHintDismissedAt')
+  if (dismissed) {
+    const dismissedAt = new Date(dismissed)
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    if (dismissedAt > sevenDaysAgo) return false
+  }
+  return true
+})
+
+const dismissSkillsHint = () => {
+  localStorage.setItem('skillsHintDismissedAt', new Date().toISOString())
+  skillsLoaded.value = false // Force recompute
+  setTimeout(() => { skillsLoaded.value = true }, 0)
+}
+
 const retryLoadStats = () => {
   stats.value = null
   loadStats()
 }
 
 onMounted(async () => {
-  await loadStats()
+  await Promise.all([loadStats(), loadSkills()])
 })
 </script>
 
@@ -444,6 +504,74 @@ onMounted(async () => {
   }
 
   .verification-banner .zen-btn {
+    width: 100%;
+    margin-top: var(--space-sm);
+  }
+}
+
+/* ========================================
+   SKILLS HINT BANNER
+   ======================================== */
+.skills-hint-banner {
+  background: var(--color-ai-subtle, #e8eef3);
+  border-bottom: 1px solid var(--color-ai, #3d5a6c);
+  padding: var(--space-md) 0;
+}
+
+.skills-hint-content {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.skills-hint-icon {
+  color: var(--color-ai, #3d5a6c);
+  flex-shrink: 0;
+}
+
+.skills-hint-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.skills-hint-text strong {
+  color: var(--color-sumi);
+  font-size: 0.9375rem;
+}
+
+.skills-hint-text span {
+  color: var(--color-text-secondary);
+  font-size: 0.875rem;
+}
+
+.skills-hint-dismiss {
+  padding: var(--space-xs);
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+  flex-shrink: 0;
+}
+
+.skills-hint-dismiss:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: var(--color-sumi);
+}
+
+@media (max-width: 768px) {
+  .skills-hint-content {
+    flex-wrap: wrap;
+  }
+
+  .skills-hint-text {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .skills-hint-banner .zen-btn {
     width: 100%;
     margin-top: var(--space-sm);
   }
