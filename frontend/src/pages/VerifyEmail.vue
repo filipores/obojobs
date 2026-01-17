@@ -62,7 +62,7 @@
           </svg>
         </div>
         <h2>E-Mail erfolgreich verifiziert!</h2>
-        <p>Ihr Konto ist jetzt vollständig aktiviert. Sie werden in {{ redirectSeconds }} Sekunden zum Dashboard weitergeleitet.</p>
+        <p>Ihr Konto ist jetzt vollständig aktiviert. Sie werden in {{ formattedRedirectCountdown }} zum Dashboard weitergeleitet.</p>
         <router-link to="/" class="zen-btn zen-btn-filled zen-btn-lg">
           Zum Dashboard
         </router-link>
@@ -94,7 +94,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../store/auth'
@@ -111,6 +111,17 @@ const isDarkMode = ref(false)
 let redirectInterval = null
 
 const THEME_KEY = 'obojobs-theme'
+
+// Format countdown as "X Min Y Sek" when > 60s, otherwise just "X Sekunden"
+const formattedRedirectCountdown = computed(() => {
+  const seconds = redirectSeconds.value
+  if (seconds > 60) {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes} Min ${remainingSeconds} Sek`
+  }
+  return `${seconds} Sekunden`
+})
 
 // Initialize theme state
 const initTheme = () => {

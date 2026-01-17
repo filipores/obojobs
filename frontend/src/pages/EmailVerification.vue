@@ -77,7 +77,7 @@
           >
             <span v-if="loading">Wird gesendet...</span>
             <span v-else-if="cooldownSeconds > 0">
-              Erneut senden in {{ cooldownSeconds }}s
+              Erneut senden in {{ formattedCooldown }}
             </span>
             <span v-else>Erneut senden</span>
           </button>
@@ -134,7 +134,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../api/client'
 
@@ -150,6 +150,17 @@ const isDarkMode = ref(false)
 let cooldownInterval = null
 
 const THEME_KEY = 'obojobs-theme'
+
+// Format countdown as "X Min Y Sek" when > 60s, otherwise just "Xs"
+const formattedCooldown = computed(() => {
+  const seconds = cooldownSeconds.value
+  if (seconds > 60) {
+    const minutes = Math.floor(seconds / 60)
+    const remainingSeconds = seconds % 60
+    return `${minutes} Min ${remainingSeconds} Sek`
+  }
+  return `${seconds}s`
+})
 
 // Initialize theme state
 const initTheme = () => {

@@ -79,6 +79,37 @@ describe('Email Verification Flow', () => {
     })
   })
 
+  describe('countdown formatting', () => {
+    // Format countdown as "X Min Y Sek" when > 60s, otherwise just "Xs"
+    const formatCooldown = (seconds) => {
+      if (seconds > 60) {
+        const minutes = Math.floor(seconds / 60)
+        const remainingSeconds = seconds % 60
+        return `${minutes} Min ${remainingSeconds} Sek`
+      }
+      return `${seconds}s`
+    }
+
+    it('formats seconds under 60 as "Xs"', () => {
+      expect(formatCooldown(30)).toBe('30s')
+      expect(formatCooldown(1)).toBe('1s')
+      expect(formatCooldown(59)).toBe('59s')
+      expect(formatCooldown(60)).toBe('60s')
+    })
+
+    it('formats seconds over 60 as "X Min Y Sek"', () => {
+      expect(formatCooldown(61)).toBe('1 Min 1 Sek')
+      expect(formatCooldown(90)).toBe('1 Min 30 Sek')
+      expect(formatCooldown(120)).toBe('2 Min 0 Sek')
+      expect(formatCooldown(3600)).toBe('60 Min 0 Sek')
+      expect(formatCooldown(3661)).toBe('61 Min 1 Sek')
+    })
+
+    it('handles edge case of exactly 61 seconds', () => {
+      expect(formatCooldown(61)).toBe('1 Min 1 Sek')
+    })
+  })
+
   describe('email verification status check', () => {
     it('shows banner when email_verified is false', () => {
       const user = { email: 'test@example.com', email_verified: false }
