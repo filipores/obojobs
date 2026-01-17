@@ -117,8 +117,12 @@
               v-model="formData.skill_name"
               type="text"
               required
+              minlength="2"
               placeholder="z.B. Python, Projektmanagement"
+              :class="{ 'input-error': skillNameError }"
+              @input="validateSkillName"
             />
+            <span v-if="skillNameError" class="field-error" role="alert">{{ skillNameError }}</span>
           </div>
           <div class="form-group">
             <label for="skill-category">Kategorie *</label>
@@ -173,6 +177,38 @@ const formData = ref({
   skill_category: '',
   experience_years: null
 })
+
+const skillNameError = ref('')
+
+const validateSkillName = () => {
+  const name = formData.value.skill_name.trim()
+
+  // Check empty
+  if (!name) {
+    skillNameError.value = 'Skill-Name ist erforderlich'
+    return false
+  }
+
+  // Check minimum length
+  if (name.length < 2) {
+    skillNameError.value = 'Skill-Name muss mindestens 2 Zeichen haben'
+    return false
+  }
+
+  // Check for duplicate (case-insensitive)
+  const normalizedName = name.toLowerCase()
+  const isDuplicate = skills.value.some(
+    s => s.skill_name.toLowerCase() === normalizedName &&
+         (!editingSkill.value || s.id !== editingSkill.value.id)
+  )
+  if (isDuplicate) {
+    skillNameError.value = 'Dieser Skill existiert bereits'
+    return false
+  }
+
+  skillNameError.value = ''
+  return true
+}
 
 const skillsByCategory = computed(() => {
   const grouped = {}
@@ -291,6 +327,11 @@ const deleteSkill = async (skill) => {
 const saveSkill = async () => {
   if (saving.value) return
 
+  // Validate before saving
+  if (!validateSkillName()) {
+    return
+  }
+
   saving.value = true
   try {
     if (editingSkill.value) {
@@ -335,6 +376,7 @@ const closeModal = () => {
     skill_category: '',
     experience_years: null
   }
+  skillNameError.value = ''
 }
 
 // Escape key handler for modal
@@ -610,6 +652,20 @@ onMounted(() => {
 .form-group select:focus {
   outline: none;
   border-color: var(--color-ai);
+}
+
+.form-group input.input-error {
+  border-color: var(--color-error);
+}
+
+.form-group input.input-error:focus {
+  border-color: var(--color-error);
+}
+
+.field-error {
+  font-size: 0.8125rem;
+  color: var(--color-error);
+  margin-top: var(--space-xs);
 }
 
 .modal-actions {
