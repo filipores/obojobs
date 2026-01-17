@@ -1,9 +1,9 @@
 # RALF Feature Mode
 
-Implementiere User Stories aus `scripts/ralph/feature/prd.json` eine nach der anderen.
+Implementiere User Stories aus `ralph/feature/prd.json` eine nach der anderen.
 
 ## Dateien
-- **PRD**: `scripts/ralph/feature/prd.json` - Stories mit `passes: false`, sortiert nach `priority`
+- **PRD**: `ralph/feature/prd.json` - Stories mit `passes: false`, sortiert nach `priority`
 - **Kontext**: `AGENTS.md` - Projekt-Konventionen
 
 ## Workflow
@@ -27,7 +27,7 @@ Implementiere User Stories aus `scripts/ralph/feature/prd.json` eine nach der an
 6. **Bei Erfolg**:
    - Git Commit: `feat: STORY-ID - Title` (mit Co-Authored-By: Claude)
    - PRD: `passes: true` setzen
-   - Progress in `scripts/ralph/feature/progress.txt` dokumentieren (siehe unten)
+   - Progress in `ralph/feature/progress.txt` dokumentieren (siehe unten)
 
 ## Regeln
 - Eine Story pro Iteration, alle Criteria erfüllen

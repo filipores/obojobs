@@ -43,10 +43,10 @@ Thumbs.db
 .claude/
 
 # Ralph (AI agent loop)
-scripts/ralph/.last-branch
-scripts/ralph/archive/
-scripts/ralph/*/logs
-scripts/ralph/*/reports
+ralph/.last-branch
+ralph/archive/
+ralph/*/logs
+ralph/*/reports
 
 frontend/coverage
 backend/logs

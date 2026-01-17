@@ -254,7 +254,7 @@ should_exit_gracefully() {
     fi
 
     # Check PRD completion
-    local prd_file="${SCRIPT_DIR:-scripts/ralph/feature}/prd.json"
+    local prd_file="${SCRIPT_DIR:-ralph/feature}/prd.json"
     if [[ -f "$prd_file" ]]; then
         local total_stories=$(jq '.userStories | length' "$prd_file" 2>/dev/null)
         local passed_stories=$(jq '[.userStories[] | select(.passes == true)] | length' "$prd_file" 2>/dev/null)

@@ -1,0 +1,1 @@
+- vor jedem commit code-simplifier plugin ausführen

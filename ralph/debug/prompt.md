@@ -1,11 +1,11 @@
 # RALF Debug Mode
 
-Fixe Bugs aus `scripts/ralph/debug/bugs.json` systematisch.
+Fixe Bugs aus `ralph/debug/bugs.json` systematisch.
 
 ## Dateien
-- **Bugs**: `scripts/ralph/debug/bugs.json` - Bugs mit `fixed: false`
+- **Bugs**: `ralph/debug/bugs.json` - Bugs mit `fixed: false`
 - **Kontext**: `AGENTS.md` - Projekt-Konventionen
-- **Learnings**: `scripts/ralph/debug/learnings.md` - Erkenntnisse dokumentieren
+- **Learnings**: `ralph/debug/learnings.md` - Erkenntnisse dokumentieren
 
 ## Workflow pro Bug
 

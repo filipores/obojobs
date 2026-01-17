@@ -32,7 +32,7 @@ cd frontend && npm run dev
 ## Quick Start
 
 ```bash
-cd scripts/ralph/test
+cd ralph/test
 
 # Standard-Ausführung (testet alle Commits seit main)
 ./ralph.sh
@@ -56,7 +56,7 @@ cd scripts/ralph/test
 ## Dateistruktur
 
 ```
-scripts/ralph/test/
+ralph/test/
 ├── ralph.sh              # Haupt-Script
 ├── config.sh             # Konfiguration
 ├── prompt.md             # Claude Anweisungen

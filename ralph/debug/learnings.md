@@ -693,7 +693,7 @@ Wenn keine Daten vorhanden waren oder der API-Call fehlschlug, wurde die gesamte
 4. **Grep für String-Suche**: `grep` hilft englische vs. deutsche Strings in Codebase zu finden
 5. **Test-Coverage**: Alle Tests (280 Backend, 63 Frontend) bestätigen dass bestehende Übersetzungen funktionieren
 
-**Betroffene Dateien:** `backend/services/auth_service.py` (bereits gefixt), `scripts/ralph/debug/bugs.json` (Status aktualisiert)
+**Betroffene Dateien:** `backend/services/auth_service.py` (bereits gefixt), `ralph/debug/bugs.json` (Status aktualisiert)
 
 ---
 
@@ -799,7 +799,7 @@ Wenn keine Daten vorhanden waren oder der API-Call fehlschlug, wurde die gesamte
 4. **Testing-Pipeline**: `npm test`, `npm run test:coverage`, `npm run build`, `npm run lint` sind wichtige Verification-Steps
 5. **Phantom-Bug-Detection**: Bei scheinbar einfachen Dependency-Issues immer den Ist-Status verifizieren bevor Änderungen vorgenommen werden
 
-**Betroffene Dateien:** `frontend/package.json` (Analyse), `frontend/vitest.config.js` (Analyse), `scripts/ralph/debug/bugs.json` (Status aktualisiert)
+**Betroffene Dateien:** `frontend/package.json` (Analyse), `frontend/vitest.config.js` (Analyse), `ralph/debug/bugs.json` (Status aktualisiert)
 
 ---
 

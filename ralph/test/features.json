@@ -2931,7 +2931,7 @@
         "backend/routes/applications.py",
         "frontend/eslint.config.js",
         "frontend/src/pages/Applications.vue",
-        "scripts/ralph/feature/prd.json"
+        "ralph/feature/prd.json"
       ],
       "tested": true,
       "test_result": {
@@ -3232,7 +3232,7 @@
       "type": "feature",
       "changed_files": [
         "frontend/src/pages/SubscriptionView.vue",
-        "scripts/ralph/feature/prd.json"
+        "ralph/feature/prd.json"
       ],
       "tested": true,
       "test_result": {
@@ -3332,7 +3332,7 @@
       "type": "feature",
       "changed_files": [
         "frontend/src/App.vue",
-        "scripts/ralph/feature/prd.json"
+        "ralph/feature/prd.json"
       ],
       "tested": true,
       "test_result": {

@@ -15,7 +15,7 @@ RALF (Rapid Automated Lean Feature-builder) ist ein autonomer Entwicklungsagent,
 
 ```bash
 # RALF starten
-cd scripts/ralph/feature
+cd ralph/feature
 ./ralph.sh
 
 # Mit Live-Monitor (separates Terminal)
@@ -42,7 +42,7 @@ Alle Einstellungen in `config.sh`:
 ## Dateistruktur
 
 ```
-scripts/ralph/feature/
+ralph/feature/
 ├── ralph.sh           # Haupt-Script
 ├── monitor.sh         # Live-Monitor
 ├── config.sh          # Konfiguration
