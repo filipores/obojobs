@@ -393,16 +393,45 @@
           </div>
 
           <!-- Requirements Error -->
-          <div v-else-if="requirementsError && !tempApplicationId" class="requirements-error">
+          <div v-else-if="requirementsError.message && !tempApplicationId" class="requirements-error" :class="{ 'error-temporary': requirementsError.isTemporary }">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="8" x2="12" y2="12"/>
               <line x1="12" y1="16" x2="12.01" y2="16"/>
             </svg>
-            <div>
-              <strong>Anforderungsanalyse nicht möglich</strong>
-              <p>{{ requirementsError }}</p>
-              <p class="hint">Sie können trotzdem eine Bewerbung generieren, aber der Job-Fit Score ist nicht verfügbar.</p>
+            <div class="requirements-error-content">
+              <strong>{{ requirementsError.message }}</strong>
+              <p v-if="requirementsError.hint">{{ requirementsError.hint }}</p>
+              <p class="hint">Sie koennen trotzdem eine Bewerbung generieren, aber der Job-Fit Score ist nicht verfuegbar.</p>
+              <div class="requirements-error-actions">
+                <!-- Retry Button for temporary errors -->
+                <button
+                  v-if="requirementsError.isTemporary"
+                  @click="retryRequirementsAnalysis"
+                  class="zen-btn zen-btn-sm requirements-retry-btn"
+                  :disabled="analyzingRequirements"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                    <path d="M21 3v5h-5"/>
+                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+                    <path d="M8 16H3v5"/>
+                  </svg>
+                  Erneut versuchen
+                </button>
+                <!-- Contact link for persistent errors -->
+                <router-link
+                  v-if="requirementsError.showContactLink"
+                  to="/support"
+                  class="requirements-contact-link"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                    <polyline points="22,6 12,13 2,6"/>
+                  </svg>
+                  Support kontaktieren
+                </router-link>
+              </div>
             </div>
           </div>
 
@@ -640,7 +669,12 @@ const showLowScoreWarning = ref(false)
 
 // Requirements analysis state
 const analyzingRequirements = ref(false)
-const requirementsError = ref('')
+const requirementsError = ref({
+  message: '',
+  hint: '',
+  isTemporary: false,
+  showContactLink: false
+})
 const requirementsCount = ref(0)
 
 // URL validation
@@ -856,11 +890,73 @@ const loadPreview = async () => {
   }
 }
 
+/**
+ * Parse HTTP error for requirements analysis and return user-friendly error state
+ */
+const parseRequirementsError = (e) => {
+  const status = e.response?.status
+  const serverError = e.response?.data?.error
+
+  // 5xx Server errors - temporary, can retry
+  if (status >= 500) {
+    return {
+      message: 'Voruebergehender Serverfehler',
+      hint: 'Die Anforderungsanalyse ist momentan nicht verfuegbar. Bitte versuchen Sie es spaeter erneut.',
+      isTemporary: true,
+      showContactLink: false
+    }
+  }
+
+  // 429 - Rate limit exceeded
+  if (status === 429) {
+    return {
+      message: 'Zu viele Anfragen',
+      hint: 'Bitte warten Sie einen Moment und versuchen Sie es dann erneut.',
+      isTemporary: true,
+      showContactLink: false
+    }
+  }
+
+  // 404 - Endpoint not found or no requirements
+  if (status === 404) {
+    return {
+      message: 'Anforderungsanalyse nicht verfuegbar',
+      hint: 'Die Stelle enthaelt keine analysierbaren Anforderungen.',
+      isTemporary: false,
+      showContactLink: false
+    }
+  }
+
+  // Network error (no response)
+  if (!e.response) {
+    return {
+      message: 'Netzwerkfehler',
+      hint: 'Bitte pruefen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
+      isTemporary: true,
+      showContactLink: false
+    }
+  }
+
+  // Other/unknown errors
+  return {
+    message: serverError || 'Anforderungsanalyse nicht moeglich',
+    hint: 'Falls das Problem weiterhin besteht, kontaktieren Sie bitte den Support.',
+    isTemporary: false,
+    showContactLink: true
+  }
+}
+
+// Store description/company/title for retry functionality
+const lastAnalysisParams = ref({ description: '', company: '', title: '', jobUrl: null })
+
 // Analyze requirements for job-fit score (separate function for clear state management)
 const analyzeRequirementsForJobFit = async (description, company, title, jobUrl = null) => {
   analyzingRequirements.value = true
-  requirementsError.value = ''
+  requirementsError.value = { message: '', hint: '', isTemporary: false, showContactLink: false }
   requirementsCount.value = 0
+
+  // Store params for potential retry
+  lastAnalysisParams.value = { description, company, title, jobUrl }
 
   try {
     const analyzeResponse = await api.post('/applications/analyze-job-fit', {
@@ -878,13 +974,26 @@ const analyzeRequirementsForJobFit = async (description, company, title, jobUrl 
         window.$toast(`${requirementsCount.value} Anforderungen analysiert`, 'success')
       }
     } else {
-      requirementsError.value = analyzeResponse.data.error || 'Anforderungsanalyse fehlgeschlagen'
+      requirementsError.value = {
+        message: analyzeResponse.data.error || 'Anforderungsanalyse fehlgeschlagen',
+        hint: '',
+        isTemporary: false,
+        showContactLink: true
+      }
     }
   } catch (analyzeError) {
-    console.log('Job-Fit Analyse nicht verfügbar:', analyzeError.message)
-    requirementsError.value = analyzeError.response?.data?.error || 'Anforderungsanalyse nicht möglich'
+    console.log('Job-Fit Analyse nicht verfuegbar:', analyzeError.message)
+    requirementsError.value = parseRequirementsError(analyzeError)
   } finally {
     analyzingRequirements.value = false
+  }
+}
+
+// Retry requirements analysis
+const retryRequirementsAnalysis = () => {
+  const { description, company, title, jobUrl } = lastAnalysisParams.value
+  if (description) {
+    analyzeRequirementsForJobFit(description, company, title, jobUrl)
   }
 }
 
@@ -1757,15 +1866,32 @@ onMounted(() => {
   display: flex;
   gap: var(--space-md);
   padding: var(--space-lg);
-  background: var(--color-warning-light);
-  border: 1px solid var(--color-warning);
+  background: var(--color-error-light);
+  border: 1px solid rgba(180, 80, 80, 0.3);
   border-radius: var(--radius-lg);
   margin-top: var(--space-lg);
 }
 
-.requirements-error svg {
+.requirements-error.error-temporary {
+  background: var(--color-warning-light);
+  border: 1px solid var(--color-warning);
+}
+
+.requirements-error > svg {
   flex-shrink: 0;
+  color: var(--color-error);
+  margin-top: 2px;
+}
+
+.requirements-error.error-temporary > svg {
   color: var(--color-warning);
+}
+
+.requirements-error-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
 }
 
 .requirements-error strong {
@@ -1784,6 +1910,48 @@ onMounted(() => {
   font-size: 0.8125rem;
   font-style: italic;
   color: var(--color-text-tertiary);
+  margin-top: var(--space-sm);
+}
+
+.requirements-error-actions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-top: var(--space-sm);
+}
+
+.requirements-retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: 1px solid #8a6d17;
+  color: #8a6d17;
+  font-size: 0.8125rem;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.requirements-retry-btn:hover {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.requirements-retry-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.requirements-contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-ai);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.requirements-contact-link:hover {
+  text-decoration: underline;
 }
 
 /* ========================================

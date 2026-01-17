@@ -7,13 +7,45 @@
     </div>
 
     <!-- Error State -->
-    <div v-else-if="error" class="job-fit-error">
+    <div v-else-if="errorState.message" class="job-fit-error" :class="{ 'error-temporary': errorState.isTemporary }">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <circle cx="12" cy="12" r="10"/>
         <line x1="12" y1="8" x2="12" y2="12"/>
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
-      <span>{{ error }}</span>
+      <div class="error-content">
+        <span class="error-message">{{ errorState.message }}</span>
+        <p v-if="errorState.hint" class="error-hint">{{ errorState.hint }}</p>
+        <div class="error-actions">
+          <!-- Retry Button for temporary errors -->
+          <button
+            v-if="errorState.isTemporary"
+            @click="loadJobFitScore"
+            class="zen-btn zen-btn-sm retry-btn"
+            :disabled="loading"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+              <path d="M21 3v5h-5"/>
+              <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
+              <path d="M8 16H3v5"/>
+            </svg>
+            Erneut versuchen
+          </button>
+          <!-- Contact link for persistent errors -->
+          <router-link
+            v-if="errorState.showContactLink"
+            to="/support"
+            class="contact-link"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+              <polyline points="22,6 12,13 2,6"/>
+            </svg>
+            Support kontaktieren
+          </router-link>
+        </div>
+      </div>
     </div>
 
     <!-- No Skills Warning -->
@@ -169,15 +201,96 @@ const props = defineProps({
 const emit = defineEmits(['score-loaded'])
 
 const loading = ref(false)
-const error = ref('')
+const errorState = ref({
+  message: '',
+  hint: '',
+  isTemporary: false,
+  showContactLink: false
+})
 const jobFitData = ref(null)
 const hasUserSkills = ref(true)
+
+/**
+ * Parse HTTP error and return user-friendly error state
+ */
+const parseErrorResponse = (e) => {
+  const status = e.response?.status
+  const serverError = e.response?.data?.error
+
+  // 5xx Server errors - temporary, can retry
+  if (status >= 500) {
+    return {
+      message: 'Voruebergehender Serverfehler',
+      hint: 'Der Server ist momentan nicht erreichbar. Bitte versuchen Sie es in einigen Minuten erneut.',
+      isTemporary: true,
+      showContactLink: false
+    }
+  }
+
+  // 404 - No requirements found (not really an error)
+  if (status === 404) {
+    return {
+      message: 'Keine Anforderungen fuer diese Stelle gefunden',
+      hint: 'Die Stellenanzeige enthaelt keine analysierbaren Anforderungen.',
+      isTemporary: false,
+      showContactLink: false
+    }
+  }
+
+  // 429 - Rate limit exceeded
+  if (status === 429) {
+    return {
+      message: 'Zu viele Anfragen',
+      hint: 'Bitte warten Sie einen Moment und versuchen Sie es dann erneut.',
+      isTemporary: true,
+      showContactLink: false
+    }
+  }
+
+  // 401/403 - Auth errors (handled by global interceptor usually)
+  if (status === 401 || status === 403) {
+    return {
+      message: 'Zugriff verweigert',
+      hint: 'Bitte melden Sie sich erneut an.',
+      isTemporary: false,
+      showContactLink: false
+    }
+  }
+
+  // 400 - Bad request (client error)
+  if (status === 400) {
+    return {
+      message: serverError || 'Ungueltige Anfrage',
+      hint: 'Die Anfrage konnte nicht verarbeitet werden.',
+      isTemporary: false,
+      showContactLink: true
+    }
+  }
+
+  // Network error (no response)
+  if (!e.response) {
+    return {
+      message: 'Netzwerkfehler',
+      hint: 'Bitte pruefen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
+      isTemporary: true,
+      showContactLink: false
+    }
+  }
+
+  // Other/unknown errors
+  return {
+    message: serverError || 'Fehler beim Laden des Job-Fit Scores',
+    hint: 'Falls das Problem weiterhin besteht, kontaktieren Sie bitte den Support.',
+    isTemporary: false,
+    showContactLink: true
+  }
+}
 
 const loadJobFitScore = async () => {
   if (!props.applicationId) return
 
   loading.value = true
-  error.value = ''
+  errorState.value = { message: '', hint: '', isTemporary: false, showContactLink: false }
 
   try {
     // First check if user has skills
@@ -199,14 +312,15 @@ const loadJobFitScore = async () => {
       jobFitData.value = data.job_fit
       emit('score-loaded', data.job_fit)
     } else {
-      error.value = data.error || 'Fehler beim Laden des Job-Fit Scores'
+      errorState.value = {
+        message: data.error || 'Fehler beim Laden des Job-Fit Scores',
+        hint: '',
+        isTemporary: false,
+        showContactLink: true
+      }
     }
   } catch (e) {
-    if (e.response?.status === 404) {
-      error.value = 'Keine Anforderungen fuer diese Stelle gefunden'
-    } else {
-      error.value = e.response?.data?.error || 'Fehler beim Laden des Job-Fit Scores'
-    }
+    errorState.value = parseErrorResponse(e)
   } finally {
     loading.value = false
   }
@@ -264,13 +378,87 @@ defineExpose({
 /* Error State */
 .job-fit-error {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--space-md);
   padding: var(--space-md);
   background: var(--color-error-light);
   border-radius: var(--radius-md);
   color: var(--color-error);
   font-size: 0.875rem;
+}
+
+.job-fit-error.error-temporary {
+  background: var(--color-warning-light);
+  color: #8a6d17;
+  border: 1px solid rgba(201, 162, 39, 0.3);
+}
+
+.job-fit-error svg {
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.job-fit-error .error-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.job-fit-error .error-message {
+  font-weight: 500;
+}
+
+.job-fit-error .error-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-weight: normal;
+}
+
+.job-fit-error.error-temporary .error-hint {
+  color: var(--color-text-secondary);
+}
+
+.job-fit-error .error-actions {
+  display: flex;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+  margin-top: var(--space-xs);
+}
+
+.job-fit-error .retry-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: 1px solid currentColor;
+  color: inherit;
+  font-size: 0.8125rem;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.job-fit-error .retry-btn:hover {
+  background: rgba(201, 162, 39, 0.15);
+}
+
+.job-fit-error .retry-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.job-fit-error .contact-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-ai);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 500;
+}
+
+.job-fit-error .contact-link:hover {
+  text-decoration: underline;
 }
 
 /* No Skills State */
