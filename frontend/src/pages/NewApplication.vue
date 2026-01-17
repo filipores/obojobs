@@ -7,6 +7,37 @@
         <p class="page-subtitle">Generiere ein Anschreiben aus einer Stellenanzeigen-URL</p>
       </section>
 
+      <!-- Skills Missing Warning Banner - vor dem Formular -->
+      <section v-if="!checkingSkills && !hasSkills" class="skills-warning-section animate-fade-up" style="animation-delay: 100ms;">
+        <div class="skills-warning zen-card">
+          <div class="warning-icon-box">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="16" x2="12" y2="12"/>
+              <line x1="12" y1="8" x2="12.01" y2="8"/>
+            </svg>
+          </div>
+          <div class="warning-text-content">
+            <h3>Skills für Job-Fit-Analyse benötigt</h3>
+            <p>
+              Um den <strong>Job-Fit Score</strong> zu berechnen, werden deine Skills mit den Anforderungen der Stellenanzeige verglichen.
+              Du kannst trotzdem eine Bewerbung generieren, aber der Job-Fit Score ist ohne Skills nicht verfügbar.
+            </p>
+            <div class="warning-actions">
+              <router-link to="/documents" class="zen-btn zen-btn-ai">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Lebenslauf hochladen
+              </router-link>
+              <span class="warning-hint">Skills werden automatisch aus deinem Lebenslauf extrahiert</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Form Section -->
       <section class="form-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="form-card zen-card">
@@ -558,6 +589,10 @@ import JobFitScore from '../components/JobFitScore.vue'
 
 const router = useRouter()
 
+// Skills check state
+const checkingSkills = ref(true)
+const hasSkills = ref(true)
+
 // State
 const url = ref('')
 const urlTouched = ref(false)
@@ -1055,9 +1090,25 @@ const closeModal = () => {
   generatedApp.value = null
 }
 
+// Check if user has skills for Job-Fit analysis
+const checkUserSkills = async () => {
+  checkingSkills.value = true
+  try {
+    const { data } = await api.get('/users/me/skills')
+    const userSkills = data.skills || []
+    hasSkills.value = userSkills.length > 0
+  } catch {
+    // On error, assume skills exist to not block the user
+    hasSkills.value = true
+  } finally {
+    checkingSkills.value = false
+  }
+}
+
 onMounted(() => {
   loadTemplates()
   loadUsage()
+  checkUserSkills()
 })
 </script>
 
@@ -1086,6 +1137,89 @@ onMounted(() => {
   font-size: 1.125rem;
   color: var(--color-text-secondary);
   margin-bottom: 0;
+}
+
+/* ========================================
+   SKILLS WARNING BANNER
+   ======================================== */
+.skills-warning-section {
+  max-width: 640px;
+  margin-bottom: var(--space-lg);
+}
+
+.skills-warning {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border: 2px solid var(--color-ai);
+  background: var(--color-ai-subtle);
+}
+
+.warning-icon-box {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ai);
+  border-radius: var(--radius-md);
+  color: white;
+}
+
+.warning-text-content h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0 0 var(--space-sm) 0;
+  color: var(--color-sumi);
+}
+
+.warning-text-content p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.warning-text-content p strong {
+  color: var(--color-ai);
+}
+
+.warning-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.warning-actions .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-decoration: none;
+}
+
+.warning-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .skills-warning {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .warning-text-content {
+    text-align: center;
+  }
+
+  .warning-actions {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 /* ========================================
