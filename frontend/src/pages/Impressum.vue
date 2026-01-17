@@ -17,9 +17,9 @@
         <div class="legal-section">
           <h2>Angaben gemäß § 5 TMG</h2>
           <p>
-            <strong>[Ihr vollständiger Name]</strong><br>
-            [Ihre Straße und Hausnummer]<br>
-            [PLZ und Stadt]<br>
+            <strong>obo - Bewerbungsautomation</strong><br>
+            Musterstraße 42<br>
+            10115 Berlin<br>
             Deutschland
           </p>
         </div>
@@ -27,23 +27,15 @@
         <div class="legal-section">
           <h2>Kontakt</h2>
           <p>
-            E-Mail: <a href="mailto:kontakt@ihre-domain.de">kontakt@ihre-domain.de</a>
-          </p>
-        </div>
-
-        <div class="legal-section">
-          <h2>Umsatzsteuer-ID</h2>
-          <p>
-            Umsatzsteuer-Identifikationsnummer gemäß § 27 a Umsatzsteuergesetz:<br>
-            [Ihre USt-ID, falls vorhanden, sonst diesen Abschnitt entfernen]
+            E-Mail: <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>
           </p>
         </div>
 
         <div class="legal-section">
           <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
           <p>
-            [Ihr vollständiger Name]<br>
-            [Ihre Adresse]
+            obo - Bewerbungsautomation<br>
+            Musterstraße 42, 10115 Berlin
           </p>
         </div>
 

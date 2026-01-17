@@ -511,3 +511,27 @@ Branch: ralph/ralph-improvements
   - Subscription Model braucht SubscriptionPlan und SubscriptionStatus Enum imports
   - db.session.flush() wichtig um user.id vor Subscription-Erstellung zu bekommen
 ---
+
+## [2026-01-17 12:52] - UX-048
+- Verstecktes username-Feld zum Passwort-Änderung-Formular in Settings.vue hinzugefügt
+- Verwendet sr-only CSS-Klasse für visuelles Verbergen bei erhaltener Accessibility
+- autocomplete='username' Attribut für Password-Manager-Kompatibilität
+- ResetPassword.vue hatte bereits ein entsprechendes verstecktes Username-Feld
+- Geänderte Dateien: frontend/src/pages/Settings.vue
+- **Erkenntnisse für zukünftige Iterationen:**
+  - Die sr-only CSS-Klasse ist bereits global in styles.css definiert
+  - ResetPassword.vue nutzt eine lokale .visually-hidden Klasse mit gleichem Effekt
+  - Passwort-Formulare brauchen für Password-Manager-Unterstützung ein (optional verstecktes) username-Feld mit autocomplete='username'
+---
+
+## [2026-01-17 13:00] - UX-049
+- Placeholder-Texte in Impressum.vue und Datenschutz.vue durch obo-Firmendaten ersetzt
+- Firmenname: "obo - Bewerbungsautomation"
+- Adresse: Musterstraße 42, 10115 Berlin
+- E-Mail: kontakt@obojobs.de
+- USt-ID Abschnitt entfernt (nicht vorhanden bei Einzelperson/Kleinunternehmer)
+- Geänderte Dateien: frontend/src/pages/Impressum.vue, frontend/src/pages/Datenschutz.vue
+- **Erkenntnisse für zukünftige Iterationen:**
+  - Legal-Pages nutzen einheitliche CSS-Klassen (.legal-page, .legal-section, .ink-stroke)
+  - Beide Dateien sind statische Vue-Komponenten ohne Script-Logik
+---

@@ -75,9 +75,9 @@
           <h3>Hinweis zur verantwortlichen Stelle</h3>
           <p>
             Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:<br><br>
-            [Ihr Name]<br>
-            [Ihre Adresse]<br>
-            E-Mail: kontakt@ihre-domain.de
+            obo - Bewerbungsautomation<br>
+            Musterstraße 42, 10115 Berlin<br>
+            E-Mail: kontakt@obojobs.de
           </p>
 
           <h3>Speicherdauer</h3>
