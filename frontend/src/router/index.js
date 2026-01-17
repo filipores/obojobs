@@ -27,7 +27,10 @@ const routes = [
   { path: '/subscription', component: () => import('../pages/SubscriptionView.vue'), meta: { requiresAuth: true, title: 'Abonnement' } },
   { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true, title: 'Abonnement erfolgreich' } },
   { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true, title: 'Interview-Vorbereitung' } },
-  { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, title: 'Mock-Interview' } }
+  { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, title: 'Mock-Interview' } },
+
+  // Catch-all route for 404 - must be last
+  { path: '/:pathMatch(.*)*', component: () => import('../pages/NotFound.vue'), meta: { title: 'Seite nicht gefunden' } }
 ]
 
 const router = createRouter({
