@@ -681,7 +681,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 46,
-      "passes": false,
+      "passes": true,
       "source": "test-ralph MOBILE-001"
     },
     {
@@ -695,7 +695,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 47,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-001"
     },
     {

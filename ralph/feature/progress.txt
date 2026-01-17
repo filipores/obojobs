@@ -473,3 +473,41 @@ Branch: ralph/ralph-improvements
 - JobBoardParser ABC Pattern für modulare Scraper
 - JSON-LD Parsing für strukturierte Job-Daten (schema.org/JobPosting)
 
+## [2026-01-17 12:45] - UX-046
+- **Was wurde implementiert:**
+  - Story war bereits vollstaendig implementiert in App.vue
+  - Bottom Navigation Bar fuer Mobile mit 5 wichtigsten Links (Start, Bewerbungen, Neu (CTA), ATS, Timeline)
+  - Icons mit Labels darunter
+  - Sticky-Positionierung am unteren Bildschirmrand (position: fixed; bottom: 0)
+  - Elevated CTA-Button in der Mitte mit Shadow-Effekt
+  - Nur auf Mobile sichtbar (@media max-width: 768px)
+  - Safe Area Support fuer Notch-Geraete (env(safe-area-inset-bottom))
+- **Geaenderte Dateien:**
+  - Keine Aenderungen erforderlich - Feature war bereits komplett implementiert
+  - PRD auf passes: true gesetzt
+- **Erkenntnisse fuer zukuenftige Iterationen:**
+  - Bottom Navigation existiert bereits in App.vue (Zeilen 235-276 Template, Zeilen 914-1005 Style)
+  - Mobile Navigation nutzt drei Strategien: Top-Nav, Hamburger Sidebar, Bottom Navigation Bar
+  - Alle Icons sind inline SVG (keine externe Icon-Library)
+  - Design-System: Zen-inspired Japanese (和風) mit Washi-Paper Tones und Sumi-Ink Colors
+---
+
+
+## [2026-01-17 12:49] - UX-047
+- **Was wurde implementiert:**
+  - Neues init_db.py Script in backend/migrations/ erstellt
+  - seed_test_data() Funktion die einen Test-User mit Pro-Subscription anlegt
+  - Test-Credentials: test@example.com / Test1234!
+  - User ist email_verified=True fuer sofortiges Testen
+  - Pro Subscription mit Status active fuer vollen Feature-Zugriff
+  - .env.example mit dokumentierten Test-Credentials erweitert
+- **Geaenderte Dateien:**
+  - backend/migrations/init_db.py (neu)
+  - .env.example (Test-Credentials Dokumentation)
+  - ralph/feature/prd.json (passes: true)
+- **Erkenntnisse fuer zukuenftige Iterationen:**
+  - init_db.py lag vorher nur in migrations_legacy/ (veraltet, nutzte credits_remaining die es nicht mehr gibt)
+  - seed_test_data wird in app.py __main__ Block aufgerufen (Zeile 183)
+  - Subscription Model braucht SubscriptionPlan und SubscriptionStatus Enum imports
+  - db.session.flush() wichtig um user.id vor Subscription-Erstellung zu bekommen
+---
