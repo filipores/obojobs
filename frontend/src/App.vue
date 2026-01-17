@@ -1088,22 +1088,51 @@ onUnmounted(() => {
 }
 
 .sidebar-close {
+  position: relative;
+  z-index: 10;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   background: transparent;
-  border: none;
+  border: 2px solid transparent;
   border-radius: var(--radius-sm);
   color: var(--color-text-tertiary);
   cursor: pointer;
   transition: all var(--transition-base);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .sidebar-close:hover {
   background: var(--color-washi-aged);
   color: var(--color-text-primary);
+  transform: scale(1.05);
+}
+
+.sidebar-close:focus {
+  outline: none;
+  border-color: var(--color-ai);
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  box-shadow: 0 0 0 2px var(--color-ai-subtle);
+}
+
+.sidebar-close:focus-visible {
+  outline: none;
+  border-color: var(--color-ai);
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  box-shadow: 0 0 0 3px rgba(61, 90, 108, 0.3);
+}
+
+.sidebar-close:active {
+  transform: scale(0.95);
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
 }
 
 /* Sidebar Navigation */
