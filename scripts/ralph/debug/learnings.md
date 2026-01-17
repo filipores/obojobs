@@ -4,6 +4,37 @@ Diese Datei enthält Erkenntnisse aus Debug-Sessions. Jeder Eintrag dokumentiert
 
 ---
 
+## [2026-01-17] - BUG-044: Passwort-Änderung zeigt keine Validierungsfehlermeldung
+
+**Problem:** Button für Passwort-Änderung wird disabled, aber User sieht nicht warum.
+
+**Root Cause:**
+- Validierung existierte nur für spezifische Felder (Passwort-Bestätigung unter dem Feld)
+- Keine allgemeine Validierungsmeldung für disabled Button-Zustand
+- User hat keinen Hinweis warum der Button deaktiviert ist
+
+**Lösung:**
+- Zusätzliche Validierungsmeldungen hinzugefügt die erscheinen wenn:
+  - User hat mit Eingabe begonnen UND Button ist disabled UND nicht gerade am Speichern
+- Separate computed properties für bessere Logik-Trennung:
+  - `allPasswordRequirementsMet`: Prüft ob Passwort-Anforderungen erfüllt sind
+  - `showPasswordValidationMessages`: Bestimmt wann Nachrichten gezeigt werden
+
+**Learning:**
+- Disabled Buttons ohne Erklärung sind schlechte UX
+- Validierungslogik sollte proaktiv kommunizieren, nicht nur reaktiv blockieren
+- Computed properties helfen bei komplexer Validierungslogik
+
+**Frontend-Pattern:**
+```vue
+<!-- Zeige Validierung nur wenn User interagiert hat aber Form invalid ist -->
+<div v-if="hasUserInput && !isFormValid && !isProcessing">
+  <!-- Spezifische Fehlermeldungen hier -->
+</div>
+```
+
+---
+
 ## [2026-01-17] - BUG-043: Keine 404-Seite für ungültige Routen
 
 **Problem:** Bei ungültigen Routen (z.B. /nonexistent-page) wird nur eine leere main-Sektion angezeigt ohne Benutzerfeedback.

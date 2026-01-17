@@ -972,7 +972,7 @@
       "source": "explore-ralph",
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768608973.762941,
+      "fixedAt": 1768609015.290597,
       "fixedWithModel": "claude-sonnet-4-20250514",
       "usedFallback": false,
       "overEngineeringFlagged": false
@@ -990,12 +990,16 @@
       "expected": "Fehlermeldung wie 'Passwörter stimmen nicht überein'",
       "actual": "Nur disabled Button ohne Erklärung",
       "affectedFiles": [
-        "frontend/src/pages/SettingsView.vue"
+        "frontend/src/pages/Settings.vue"
       ],
       "found_at": "2026-01-16T17:04:56+01:00",
       "source": "explore-ralph",
-      "fixed": false,
-      "fixAttempts": 0
+      "fixed": true,
+      "fixAttempts": 1,
+      "fixedAt": 1768620523.134,
+      "fixedWithModel": "claude-sonnet-4-20250514",
+      "usedFallback": false,
+      "overEngineeringFlagged": false
     },
     {
       "id": "BUG-045",
