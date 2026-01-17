@@ -250,58 +250,120 @@
 
       <!-- Manual Form -->
       <section v-if="showManualForm" class="manual-section animate-fade-up">
-        <div class="manual-form zen-card">
-          <div class="form-header">
-            <h2>{{ editingTemplate ? 'Template bearbeiten' : 'Neues Template erstellen' }}</h2>
-            <p class="form-subtitle">
-              Verwenden Sie Platzhalter wie <span v-pre>{{FIRMA}}, {{POSITION}}, {{ANSPRECHPARTNER}}</span>
-            </p>
-          </div>
+        <div class="template-editor-layout">
+          <!-- Editor Column -->
+          <div class="manual-form zen-card">
+            <div class="form-header">
+              <div class="header-content">
+                <h2>{{ editingTemplate ? 'Template bearbeiten' : 'Neues Template erstellen' }}</h2>
+                <p class="form-subtitle">
+                  Verwenden Sie Platzhalter wie <span v-pre>{{FIRMA}}, {{POSITION}}, {{ANSPRECHPARTNER}}</span>
+                </p>
+              </div>
+              <!-- Auto-save status indicator -->
+              <div v-if="editingTemplate" class="auto-save-indicator">
+                <span v-if="autoSaveStatus === 'saving'" class="status-saving">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="40" stroke-dashoffset="10">
+                      <animateTransform attributeName="transform" type="rotate" from="0 12 12" to="360 12 12" dur="1s" repeatCount="indefinite"/>
+                    </circle>
+                  </svg>
+                  Speichern...
+                </span>
+                <span v-else-if="autoSaveStatus === 'saved'" class="status-saved">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="20 6 9 17 4 12"/>
+                  </svg>
+                  Gespeichert
+                </span>
+                <span v-else-if="autoSaveStatus === 'error'" class="status-error">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="15" y1="9" x2="9" y2="15"/>
+                    <line x1="9" y1="9" x2="15" y2="15"/>
+                  </svg>
+                  Fehler
+                </span>
+                <span v-else-if="hasUnsavedChanges" class="status-unsaved">
+                  Ungespeicherte Änderungen
+                </span>
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label">Template-Name</label>
-            <input
-              v-model="form.name"
-              type="text"
-              placeholder="z.B. 'Standard Anschreiben'"
-              class="form-input"
-            />
-          </div>
+            <div class="form-group">
+              <label class="form-label">Template-Name</label>
+              <input
+                v-model="form.name"
+                type="text"
+                placeholder="z.B. 'Standard Anschreiben'"
+                class="form-input"
+              />
+            </div>
 
-          <div class="form-group">
-            <label class="form-label">Anschreiben-Text</label>
-            <p class="editor-hint">
-              Markiere Text und wähle eine Variable aus der Liste, um dynamische Platzhalter einzufügen.
-            </p>
-            <TemplateEditor
-              v-model="form.content"
-              :suggestions="suggestions"
-              placeholder="Sehr geehrte Damen und Herren,
+            <div class="form-group">
+              <label class="form-label">Anschreiben-Text</label>
+              <p class="editor-hint">
+                Markiere Text und wähle eine Variable aus der Liste, oder ziehe Variablen per Drag & Drop in den Editor.
+              </p>
+              <TemplateEditor
+                v-model="form.content"
+                :suggestions="suggestions"
+                placeholder="Sehr geehrte Damen und Herren,
 
 mit großem Interesse habe ich Ihre Stellenausschreibung gelesen..."
-              @suggestion-accepted="onSuggestionAccepted"
-              @suggestion-rejected="onSuggestionRejected"
-            />
+                @suggestion-accepted="onSuggestionAccepted"
+                @suggestion-rejected="onSuggestionRejected"
+              />
+            </div>
+
+            <div class="form-group">
+              <label class="form-checkbox">
+                <input type="checkbox" v-model="form.is_default" />
+                <span>Als Standard-Template setzen</span>
+              </label>
+            </div>
+
+            <div class="form-actions">
+              <button @click="cancelEdit" class="zen-btn">
+                Abbrechen
+              </button>
+              <button
+                @click="saveTemplate"
+                :disabled="!form.name || !form.content"
+                class="zen-btn zen-btn-filled"
+              >
+                {{ editingTemplate ? 'Aktualisieren' : 'Template erstellen' }}
+              </button>
+            </div>
           </div>
 
-          <div class="form-group">
-            <label class="form-checkbox">
-              <input type="checkbox" v-model="form.is_default" />
-              <span>Als Standard-Template setzen</span>
-            </label>
-          </div>
-
-          <div class="form-actions">
-            <button @click="cancelEdit" class="zen-btn">
-              Abbrechen
-            </button>
-            <button
-              @click="saveTemplate"
-              :disabled="!form.name || !form.content"
-              class="zen-btn zen-btn-filled"
-            >
-              {{ editingTemplate ? 'Aktualisieren' : 'Template erstellen' }}
-            </button>
+          <!-- Live Preview Column -->
+          <div class="preview-panel zen-card">
+            <div class="preview-header">
+              <h3>Live-Vorschau</h3>
+              <span class="preview-hint">Mit Beispieldaten</span>
+            </div>
+            <div class="preview-content">
+              <div v-if="previewText" class="preview-text">{{ previewText }}</div>
+              <div v-else class="preview-empty">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+                <p>Beginnen Sie mit dem Schreiben, um eine Vorschau zu sehen</p>
+              </div>
+            </div>
+            <div class="preview-legend">
+              <span class="legend-title">Beispieldaten:</span>
+              <div class="legend-items">
+                <span class="legend-item"><strong>Firma:</strong> {{ previewData.FIRMA }}</span>
+                <span class="legend-item"><strong>Position:</strong> {{ previewData.POSITION }}</span>
+                <span class="legend-item"><strong>Ansprechpartner:</strong> {{ previewData.ANSPRECHPARTNER }}</span>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -315,7 +377,7 @@ mit großem Interesse habe ich Ihre Stellenausschreibung gelesen..."
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import api from '../api/client'
 import { TemplateEditor } from '../components/TemplateEditor'
 import { confirm } from '../composables/useConfirm'
@@ -346,6 +408,34 @@ const form = ref({
 
 const suggestions = ref([])
 
+// Auto-save state
+let autoSaveInterval = null
+const lastSavedContent = ref('')
+const autoSaveStatus = ref('') // '', 'saving', 'saved', 'error'
+const hasUnsavedChanges = computed(() => {
+  return showManualForm.value && editingTemplate.value &&
+    (form.value.content !== lastSavedContent.value || form.value.name !== editingTemplate.value.name)
+})
+
+// Example data for live preview
+const previewData = {
+  FIRMA: 'Muster GmbH',
+  POSITION: 'Software-Entwickler',
+  ANSPRECHPARTNER: 'Frau Müller',
+  QUELLE: 'LinkedIn',
+  EINLEITUNG: 'Mit großem Interesse habe ich Ihre Stellenausschreibung auf LinkedIn entdeckt und möchte mich bei Ihnen als engagierter Software-Entwickler bewerben.'
+}
+
+// Computed preview text
+const previewText = computed(() => {
+  if (!form.value.content) return ''
+  let text = form.value.content
+  for (const [key, value] of Object.entries(previewData)) {
+    text = text.replace(new RegExp(`\\{\\{${key}\\}\\}`, 'g'), value)
+  }
+  return text
+})
+
 const isStepValid = computed(() => {
   switch (wizardStep.value) {
     case 1: return wizardData.value.sektor.trim().length > 0
@@ -354,6 +444,51 @@ const isStepValid = computed(() => {
     case 4: return true // Optional
     case 5: return wizardData.value.tonalitaet !== ''
     default: return false
+  }
+})
+
+// Auto-save function
+const autoSave = async () => {
+  if (!editingTemplate.value || !form.value.name || !form.value.content) return
+  if (!hasUnsavedChanges.value) return
+
+  try {
+    autoSaveStatus.value = 'saving'
+    await api.silent.put(`/templates/${editingTemplate.value.id}`, form.value)
+    lastSavedContent.value = form.value.content
+    autoSaveStatus.value = 'saved'
+    // Reset status after 3 seconds
+    setTimeout(() => {
+      if (autoSaveStatus.value === 'saved') {
+        autoSaveStatus.value = ''
+      }
+    }, 3000)
+  } catch (_e) {
+    autoSaveStatus.value = 'error'
+  }
+}
+
+// Start auto-save interval when editing
+const startAutoSave = () => {
+  stopAutoSave()
+  autoSaveInterval = setInterval(autoSave, 30000) // 30 seconds
+}
+
+const stopAutoSave = () => {
+  if (autoSaveInterval) {
+    clearInterval(autoSaveInterval)
+    autoSaveInterval = null
+  }
+  autoSaveStatus.value = ''
+}
+
+// Watch for manual form opening to start/stop auto-save
+watch(showManualForm, (newVal) => {
+  if (newVal && editingTemplate.value) {
+    lastSavedContent.value = form.value.content
+    startAutoSave()
+  } else {
+    stopAutoSave()
   }
 })
 
@@ -383,6 +518,7 @@ const cancelWizard = () => {
 }
 
 const cancelEdit = () => {
+  stopAutoSave()
   showManualForm.value = false
   editingTemplate.value = null
   form.value = { name: '', content: '', is_default: false }
@@ -450,9 +586,11 @@ const editTemplate = (template) => {
     content: template.content,
     is_default: template.is_default
   }
+  lastSavedContent.value = template.content
   suggestions.value = [] // Clear suggestions when editing existing template
   showManualForm.value = true
   showWizard.value = false
+  startAutoSave()
 }
 
 const onSuggestionAccepted = (suggestionId) => {
@@ -528,6 +666,10 @@ const formatDate = (dateString) => {
 onMounted(() => {
   loadTemplates()
   checkLebenslauf()
+})
+
+onUnmounted(() => {
+  stopAutoSave()
 })
 </script>
 
@@ -877,13 +1019,27 @@ onMounted(() => {
   margin-top: var(--space-ma);
 }
 
+.template-editor-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg);
+  align-items: start;
+}
+
 .manual-form {
   padding: var(--space-xl);
 }
 
 .form-header {
-  text-align: center;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
   margin-bottom: var(--space-xl);
+  gap: var(--space-md);
+}
+
+.header-content {
+  text-align: left;
 }
 
 .form-header h2 {
@@ -894,6 +1050,134 @@ onMounted(() => {
 
 .form-subtitle {
   color: var(--color-text-secondary);
+}
+
+/* Auto-save indicator */
+.auto-save-indicator {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.auto-save-indicator span {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.status-saving {
+  color: var(--color-ai);
+}
+
+.status-saved {
+  color: var(--color-success);
+}
+
+.status-error {
+  color: var(--color-error);
+}
+
+.status-unsaved {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+/* Preview Panel */
+.preview-panel {
+  padding: var(--space-lg);
+  position: sticky;
+  top: var(--space-lg);
+  max-height: calc(100vh - 150px);
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.preview-header h3 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-sumi);
+  margin: 0;
+}
+
+.preview-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+}
+
+.preview-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: var(--space-md);
+}
+
+.preview-text {
+  font-size: 0.9375rem;
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-primary);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl);
+  text-align: center;
+  color: var(--color-text-ghost);
+}
+
+.preview-empty svg {
+  margin-bottom: var(--space-md);
+  opacity: 0.5;
+}
+
+.preview-empty p {
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.preview-legend {
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-light);
+}
+
+.legend-title {
+  display: block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.legend-item {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+}
+
+.legend-item strong {
+  color: var(--color-text-primary);
 }
 
 .editor-hint {
@@ -940,6 +1224,17 @@ onMounted(() => {
 /* ========================================
    RESPONSIVE
    ======================================== */
+@media (max-width: 1200px) {
+  .template-editor-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .preview-panel {
+    position: static;
+    max-height: none;
+  }
+}
+
 @media (max-width: 968px) {
   .create-options {
     grid-template-columns: 1fr;
@@ -947,6 +1242,11 @@ onMounted(() => {
 
   .tone-grid {
     grid-template-columns: 1fr;
+  }
+
+  .form-header {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 

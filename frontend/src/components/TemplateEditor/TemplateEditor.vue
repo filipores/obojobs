@@ -27,7 +27,7 @@
     <div
       ref="editorRef"
       class="template-editor"
-      :class="{ 'has-suggestions': hasSuggestions }"
+      :class="{ 'has-suggestions': hasSuggestions, 'drag-over': isDragOver }"
       contenteditable="true"
       :placeholder="placeholder"
       @input="handleInput"
@@ -35,6 +35,9 @@
       @keyup="handleKeyUp"
       @paste="handlePaste"
       @blur="handleBlur"
+      @dragover="handleDragOver"
+      @dragleave="handleDragLeave"
+      @drop="handleDrop"
     ></div>
 
     <!-- Character count -->
@@ -110,6 +113,7 @@ const selectedRange = ref(null)
 const isRendering = ref(false)
 const lastEmittedValue = ref('')
 const isInternalUpdate = ref(false)
+const isDragOver = ref(false)
 
 const charCount = computed(() => plainText.value.length)
 
@@ -553,6 +557,46 @@ function handleBlur() {
   }, 200)
 }
 
+// Drag and drop handlers
+function handleDragOver(event) {
+  event.preventDefault()
+  event.dataTransfer.dropEffect = 'copy'
+  isDragOver.value = true
+}
+
+function handleDragLeave(event) {
+  // Only set to false if we're leaving the editor entirely
+  if (!editorRef.value.contains(event.relatedTarget)) {
+    isDragOver.value = false
+  }
+}
+
+function handleDrop(event) {
+  event.preventDefault()
+  isDragOver.value = false
+
+  // Check if this is a template variable
+  const variableType = event.dataTransfer.getData('application/x-template-variable')
+  if (variableType) {
+    // Insert variable at drop position
+    handleInsertVariable(variableType)
+  } else {
+    // Fallback: insert plain text
+    const text = event.dataTransfer.getData('text/plain')
+    if (text) {
+      const selection = window.getSelection()
+      if (selection && selection.rangeCount > 0) {
+        selection.deleteFromDocument()
+        const textNode = document.createTextNode(text)
+        selection.getRangeAt(0).insertNode(textNode)
+        selection.collapseToEnd()
+        const newPlainText = getPlainTextFromEditor()
+        setContent(newPlainText)
+      }
+    }
+  }
+}
+
 // Selection save/restore helpers
 function saveSelection() {
   const selection = window.getSelection()
@@ -732,6 +776,12 @@ onMounted(() => {
 .template-editor:focus {
   border-color: var(--color-ai, #3D5A6C);
   box-shadow: 0 0 0 3px var(--color-ai-subtle, rgba(61, 90, 108, 0.08));
+}
+
+.template-editor.drag-over {
+  border-color: var(--color-ai, #3D5A6C);
+  border-style: dashed;
+  background: var(--color-ai-subtle, rgba(61, 90, 108, 0.04));
 }
 
 .template-editor:empty::before {

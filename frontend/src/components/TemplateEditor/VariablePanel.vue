@@ -2,7 +2,7 @@
   <div class="variable-panel">
     <div class="panel-header">
       <span class="panel-title">Variablen</span>
-      <span class="panel-hint">Klicken zum Einfügen</span>
+      <span class="panel-hint">Klicken oder ziehen zum Einfügen</span>
     </div>
     <div class="panel-buttons">
       <button
@@ -11,8 +11,21 @@
         class="variable-btn"
         :class="`variable-btn--${info.color}`"
         :title="info.description"
+        draggable="true"
         @click="$emit('insert', type)"
+        @dragstart="handleDragStart($event, type)"
+        @dragend="handleDragEnd"
       >
+        <span class="btn-icon">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor">
+            <circle cx="5" cy="5" r="2"/>
+            <circle cx="12" cy="5" r="2"/>
+            <circle cx="19" cy="5" r="2"/>
+            <circle cx="5" cy="12" r="2"/>
+            <circle cx="12" cy="12" r="2"/>
+            <circle cx="19" cy="12" r="2"/>
+          </svg>
+        </span>
         <span class="btn-label">{{ info.label }}</span>
         <span class="btn-syntax">{{ getVariableSyntax(type) }}</span>
       </button>
@@ -29,6 +42,17 @@ const variableTypes = VARIABLE_TYPES
 
 function getVariableSyntax(type) {
   return '{{' + type + '}}'
+}
+
+function handleDragStart(event, type) {
+  event.dataTransfer.setData('text/plain', `{{${type}}}`)
+  event.dataTransfer.setData('application/x-template-variable', type)
+  event.dataTransfer.effectAllowed = 'copy'
+  event.target.classList.add('dragging')
+}
+
+function handleDragEnd(event) {
+  event.target.classList.remove('dragging')
 }
 </script>
 
@@ -74,10 +98,31 @@ function getVariableSyntax(type) {
   border-radius: var(--radius-full, 9999px);
   font-size: 0.8125rem;
   font-weight: 500;
-  cursor: pointer;
+  cursor: grab;
   transition: all var(--transition-subtle, 200ms ease);
   border: 1.5px solid transparent;
   position: relative;
+  user-select: none;
+}
+
+.variable-btn:active {
+  cursor: grabbing;
+}
+
+.variable-btn.dragging {
+  opacity: 0.5;
+  transform: scale(0.95);
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  opacity: 0.5;
+  transition: opacity var(--transition-subtle, 200ms ease);
+}
+
+.variable-btn:hover .btn-icon {
+  opacity: 1;
 }
 
 .variable-btn:hover {
