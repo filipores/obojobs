@@ -129,11 +129,25 @@ parse_explore_result() {
         return 1
     fi
 
-    # Extract RALPH_EXPLORE_RESULT block
+    # Claude output is JSON with result field containing the text
+    # Extract the result field first, then find the RALPH_EXPLORE_RESULT block
+    local raw_result=""
+
+    # Try to extract from JSON output format
+    if jq -e '.result' "$output_file" >/dev/null 2>&1; then
+        raw_result=$(jq -r '.result' "$output_file" 2>/dev/null)
+    else
+        # Fallback: read file directly
+        raw_result=$(cat "$output_file")
+    fi
+
+    # Extract RALPH_EXPLORE_RESULT block from the result text
     local result_json=""
-    if grep -q "RALPH_EXPLORE_RESULT" "$output_file"; then
-        result_json=$(sed -n '/---RALPH_EXPLORE_RESULT---/,/---END_RALPH_EXPLORE_RESULT---/p' "$output_file" | \
+    if echo "$raw_result" | grep -q "RALPH_EXPLORE_RESULT"; then
+        result_json=$(echo "$raw_result" | \
+            sed -n '/---RALPH_EXPLORE_RESULT---/,/---END_RALPH_EXPLORE_RESULT---/p' | \
             grep -v "RALPH_EXPLORE_RESULT" | \
+            grep -v '```' | \
             tr -d '\r')
     fi
 

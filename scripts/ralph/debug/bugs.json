@@ -996,7 +996,7 @@
       "source": "explore-ralph",
       "fixed": true,
       "fixAttempts": 1,
-      "fixedAt": 1768620523.134,
+      "fixedAt": 1768609271.986971,
       "fixedWithModel": "claude-sonnet-4-20250514",
       "usedFallback": false,
       "overEngineeringFlagged": false

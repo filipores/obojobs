@@ -683,6 +683,228 @@
       "priority": 46,
       "passes": false,
       "source": "test-ralph MOBILE-001"
+    },
+    {
+      "id": "UX-047",
+      "title": "Funktionierende Test-Credentials bereitstellen",
+      "description": "Die in der Session angegebenen Test-Credentials (test@example.com / Test1234!) fuehren zu einem 401-Fehler beim Login. Fuer zukuenftige Tests sollten funktionierende Test-Accounts bereitgestellt werden.",
+      "acceptanceCriteria": [
+        "Test-User in Development-DB seeden",
+        "Credentials in .env.example dokumentieren",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 47,
+      "passes": false,
+      "source": "explore-ralph SUG-001"
+    },
+    {
+      "id": "UX-048",
+      "title": "Versteckte Username-Felder fuer Accessibility",
+      "description": "Browser-Warnung: 'Password forms should have (optionally hidden) username fields for accessibility'. Passwort-Formulare sollten versteckte Username-Felder fuer bessere Accessibility haben.",
+      "acceptanceCriteria": [
+        "Verstecktes username-Feld bei Passwort-Aenderung",
+        "autocomplete='username' Attribut setzen",
+        "Keine Browser-Warnungen mehr in Console",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 48,
+      "passes": false,
+      "source": "explore-ralph SUG-002"
+    },
+    {
+      "id": "UX-049",
+      "title": "Placeholder-Daten in Impressum/Datenschutz ersetzen",
+      "description": "Impressum und Datenschutzerklaerung enthalten noch Placeholder-Texte ([Ihr Name], [Ihre Adresse], kontakt@ihre-domain.de). Diese sollten vor dem Produktivbetrieb durch echte Daten ersetzt werden.",
+      "acceptanceCriteria": [
+        "Echte Firmendaten im Impressum",
+        "Echte Kontaktdaten in Datenschutzerklaerung",
+        "Keine Placeholder-Texte mehr sichtbar",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 49,
+      "passes": false,
+      "source": "explore-ralph SUG-003"
+    },
+    {
+      "id": "UX-050",
+      "title": "Skills-Anforderung bei Job-Analyse vorab kommunizieren",
+      "description": "Bei der Job-Analyse wird erst nach dem Ausfuellen des Formulars mitgeteilt, dass Skills im Profil benoetigt werden. Dies sollte bereits vorher sichtbar sein.",
+      "acceptanceCriteria": [
+        "Hinweis-Banner wenn keine Skills vorhanden",
+        "Link zu Dokumente-Seite zum Skills hinzufuegen",
+        "Voraussetzungen vor Formular-Anzeige pruefen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 50,
+      "passes": false,
+      "source": "explore-ralph SUG-004"
+    },
+    {
+      "id": "UX-051",
+      "title": "Verbesserte Hamburger-Menue Schliessung auf Mobile",
+      "description": "Das Mobile-Navigationsmenue laesst sich schwer per Klick auf den Close-Button schliessen. Der Escape-Key funktioniert gut, aber der Button sollte besser zugaenglich sein.",
+      "acceptanceCriteria": [
+        "Close-Button hat hoeheren z-index",
+        "Klickbereich des Buttons vergroessern",
+        "Visual Feedback beim Hover/Focus",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 51,
+      "passes": false,
+      "source": "explore-ralph SUG-005"
+    },
+    {
+      "id": "UX-052",
+      "title": "Job-Fit-Score Fehlermeldung verbessern",
+      "description": "Wenn die Job-Fit-Analyse fehlschlaegt (500er), zeigt die App 'Anforderungsanalyse nicht moeglich' mit wenig Kontext. Eine spezifischere Meldung wie 'Voruebergehender Serverfehler - versuchen Sie es spaeter nochmal' waere hilfreicher.",
+      "acceptanceCriteria": [
+        "Spezifische Fehlermeldungen je nach HTTP-Status",
+        "Retry-Button bei temporaeren Fehlern",
+        "Kontakt-Link bei persistenten Fehlern",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 52,
+      "passes": false,
+      "source": "explore-ralph SUG-006"
+    },
+    {
+      "id": "UX-053",
+      "title": "Konsistenteres Skill-Management zwischen Job-Analyse und Dokumenten",
+      "description": "Die Job-Analyse zeigt 'Keine Skills im Profil gefunden', leitet aber nicht direkt zum Skill-Management weiter. Nutzer muessen manuell zu /documents navigieren, um Skills hinzuzufuegen.",
+      "acceptanceCriteria": [
+        "Direkter Link zu /documents#skills in Fehlermeldung",
+        "Optional: Inline-Skill-Hinzufuegen im Modal",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 53,
+      "passes": false,
+      "source": "explore-ralph SUG-007"
+    },
+    {
+      "id": "UX-054",
+      "title": "Proaktive Skill-Extraction Anleitung fuer neue Benutzer",
+      "description": "Neue Benutzer wissen moeglicherweise nicht, dass sie einen Lebenslauf hochladen koennen, um Skills automatisch zu extrahieren. Ein Hinweis oder Workflow-Guide waere hilfreich.",
+      "acceptanceCriteria": [
+        "Onboarding-Tooltip bei erstem Besuch",
+        "Hinweis-Card auf Dashboard wenn keine Skills",
+        "Link zu Dokumenten-Upload",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 54,
+      "passes": false,
+      "source": "explore-ralph SUG-008"
+    },
+    {
+      "id": "UX-055",
+      "title": "Validierung bei Skill-Hinzufuegen implementieren",
+      "description": "Bei der Eingabe eines neuen Skills wird keine Frontend-Validierung durchgefuehrt. Nutzer koennen leere Skills hinzufuegen, was das Modal schliesst, aber keine Fehlermeldung zeigt.",
+      "acceptanceCriteria": [
+        "Leere Eingabe blockieren mit Fehlermeldung",
+        "Minimum 2 Zeichen fuer Skill-Namen",
+        "Fehlermeldung bei Duplikaten anzeigen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 55,
+      "passes": false,
+      "source": "explore-ralph SUG-012"
+    },
+    {
+      "id": "UX-056",
+      "title": "Verbesserte Fehlerbehandlung fuer Job-Analyse",
+      "description": "Wenn die Job-Analyse fehlschlaegt, sollte eine klarere Anleitung angezeigt werden, wie der Benutzer trotzdem fortfahren kann. Derzeit gibt es gemischte Erfolgs-/Fehlermeldungen die verwirrend sind.",
+      "acceptanceCriteria": [
+        "Eindeutige Erfolgs- oder Fehlerzustaende",
+        "Keine gemischten Meldungen gleichzeitig",
+        "Alternative Aktionen bei Fehler anbieten",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 56,
+      "passes": false,
+      "source": "explore-ralph SUG-013"
+    },
+    {
+      "id": "UX-057",
+      "title": "Progressiver Workflow fuer Bewerbungserstellung",
+      "description": "Bei der Bewerbungserstellung sollte vorab geprueft werden, ob alle noetigen Dokumente (CV) vorhanden sind, mit Links zur Dokumentenverwaltung.",
+      "acceptanceCriteria": [
+        "Voraussetzungs-Check beim Oeffnen der Seite",
+        "Hinweis-Box wenn Lebenslauf fehlt",
+        "Direkter Link zu /documents",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 57,
+      "passes": false,
+      "source": "explore-ralph SUG-014"
+    },
+    {
+      "id": "UX-058",
+      "title": "Email verification countdown in Minuten anzeigen",
+      "description": "Aktuell wird der Countdown nur in Sekunden angezeigt. Fuer laengere Timeouts (wie das 3-Emails-pro-Stunde-Limit) waere 'X Minuten Y Sekunden' benutzerfreundlicher als von 3600 Sekunden runterzuzaehlen.",
+      "acceptanceCriteria": [
+        "Countdown formatiert als 'X Min Y Sek' wenn > 60s",
+        "Konsistente Formatierung ueber alle Countdown-Anzeigen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 58,
+      "passes": false,
+      "source": "explore-ralph SUG-015"
+    },
+    {
+      "id": "UX-059",
+      "title": "Template-Erstellung Workflow Verbesserung",
+      "description": "Der Template-Erstellungsprozess funktioniert gut, aber koennte durch Auto-Save, Vorschau-Funktion und Drag & Drop fuer Variable-Buttons verbessert werden.",
+      "acceptanceCriteria": [
+        "Auto-Save alle 30 Sekunden",
+        "Live-Vorschau mit Beispieldaten",
+        "Drag & Drop fuer Template-Variablen",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 59,
+      "passes": false,
+      "source": "explore-ralph SUG-016"
+    },
+    {
+      "id": "UX-060",
+      "title": "Skills Management Verbesserungen",
+      "description": "Der Skill-Hinzufuegung funktioniert einwandfrei, koennte aber durch Bulk-Import, Kategorien-Filter und Skill-Suche/Autocomplete verbessert werden.",
+      "acceptanceCriteria": [
+        "Bulk-Import von Skills (Komma-getrennt)",
+        "Filter nach Kategorien",
+        "Autocomplete mit bekannten Skills",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 60,
+      "passes": false,
+      "source": "explore-ralph SUG-017"
+    },
+    {
+      "id": "UX-061",
+      "title": "Bessere Verknuepfung zwischen Bewerbung und Dokument-Upload",
+      "description": "Wenn Lebenslauf fehlt, sollte ein direkter Link zu /documents mit Upload-Funktion bereitgestellt werden",
+      "acceptanceCriteria": [
+        "Fehlermeldung enthaelt Link zu /documents",
+        "Optional: Deep-Link zu Upload-Dialog",
+        "Breadcrumb zurueck zur Bewerbung",
+        "Alle Tests gruen (pytest, npm test)",
+        "Linting OK (ruff, eslint)"
+      ],
+      "priority": 61,
+      "passes": false,
+      "source": "explore-ralph SUG-018"
     }
   ]
 }

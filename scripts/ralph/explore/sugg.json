@@ -2,5 +2,204 @@
   "project": "obojobs",
   "mode": "explore",
   "description": "Suggestions gefunden durch Explore-Ralph - autonome explorative Tests",
-  "suggestions": []
+  "suggestions": [
+    {
+      "id": "SUG-001",
+      "type": "ux",
+      "title": "Test-Credentials funktionieren nicht",
+      "description": "Die in der Session angegebenen Test-Credentials (test@example.com / Test1234!) führen zu einem 401-Fehler beim Login. Für zukünftige Tests sollten funktionierende Test-Accounts bereitgestellt werden.",
+      "priority": "medium",
+      "affectedArea": "Authentication/Testing",
+      "found_at": "2026-01-16T16:26:10+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-002",
+      "type": "accessibility",
+      "title": "Console-Warnung bei Passwort-Feldern",
+      "description": "Browser-Warnung: 'Password forms should have (optionally hidden) username fields for accessibility'. Passwort-Formulare sollten versteckte Username-Felder für bessere Accessibility haben.",
+      "priority": "low",
+      "affectedArea": "Settings/Security",
+      "found_at": "2026-01-16T16:26:10+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-003",
+      "type": "ux",
+      "title": "Placeholder-Daten in Impressum/Datenschutz",
+      "description": "Impressum und Datenschutzerklärung enthalten noch Placeholder-Texte ([Ihr Name], [Ihre Adresse], kontakt@ihre-domain.de). Diese sollten vor dem Produktivbetrieb durch echte Daten ersetzt werden.",
+      "priority": "high",
+      "affectedArea": "Legal Pages",
+      "found_at": "2026-01-16T16:26:10+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-004",
+      "type": "ux",
+      "title": "Job-Analyse sollte Skills-Anforderung vorab kommunizieren",
+      "description": "Bei der Job-Analyse wird erst nach dem Ausfüllen des Formulars mitgeteilt, dass Skills im Profil benötigt werden. Dies sollte bereits vorher sichtbar sein.",
+      "priority": "medium",
+      "affectedArea": "Dashboard Job-Empfehlungen",
+      "found_at": "2026-01-16T16:31:12+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-005",
+      "type": "ux",
+      "title": "Verbesserte Hamburger-Menü Schließung auf Mobile",
+      "description": "Das Mobile-Navigationsmenü lässt sich schwer per Klick auf den Close-Button schließen. Der Escape-Key funktioniert gut, aber der Button sollte besser zugänglich sein.",
+      "priority": "low",
+      "affectedArea": "Mobile Navigation",
+      "found_at": "2026-01-16T16:31:12+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-006",
+      "type": "ux",
+      "title": "Job-Fit-Score Fehlermeldung verbessern",
+      "description": "Wenn die Job-Fit-Analyse fehlschlägt (500er), zeigt die App 'Anforderungsanalyse nicht möglich' mit wenig Kontext. User versteht nicht, warum es nicht funktioniert. Eine spezifischere Meldung wie 'Vorübergehender Serverfehler - versuchen Sie es später nochmal' wäre hilfreicher.",
+      "priority": "low",
+      "affectedArea": "Neue Bewerbung - Job-Analyse Bereich",
+      "found_at": "2026-01-16T16:34:06+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-007",
+      "type": "ux",
+      "title": "Konsistenteres Skill-Management zwischen Job-Analyse und Dokumenten",
+      "description": "Die Job-Analyse zeigt 'Keine Skills im Profil gefunden', leitet aber nicht direkt zum Skill-Management weiter. Nutzer müssen manuell zu /documents navigieren, um Skills hinzuzufügen.",
+      "priority": "medium",
+      "affectedArea": "Dashboard Job-Analyse und Dokumente-Seite",
+      "found_at": "2026-01-16T16:37:56+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-008",
+      "type": "ux",
+      "title": "Proaktive Skill-Extraction Anleitung für neue Benutzer",
+      "description": "Neue Benutzer wissen möglicherweise nicht, dass sie einen Lebenslauf hochladen können, um Skills automatisch zu extrahieren. Ein Hinweis oder Workflow-Guide wäre hilfreich.",
+      "priority": "low",
+      "affectedArea": "Dashboard und Dokumenten-Upload",
+      "found_at": "2026-01-16T16:37:56+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-009",
+      "type": "ux",
+      "title": "API Key Management UX ist sehr gut implementiert",
+      "description": "Die API Key Generierung zeigt excellent UX: Single-show warning, Copy-to-clipboard mit Feedback, und klare Instruktionen für Chrome Extension Setup.",
+      "priority": "low",
+      "affectedArea": "Settings/Integrationen - bereits gut implementiert",
+      "found_at": "2026-01-16T16:42:48+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-010",
+      "type": "ux",
+      "title": "E-Mail-Verifikation Rate Limiting ist vorbildlich",
+      "description": "Der 'Erneut senden' Button hat perfekte UX mit Countdown, Rate Limiting (3 pro Stunde), und klaren Statusmeldungen. Dies ist ein Beispiel für gute UX.",
+      "priority": "low",
+      "affectedArea": "E-Mail Verifikation - bereits optimal implementiert",
+      "found_at": "2026-01-16T16:42:48+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-011",
+      "type": "security",
+      "title": "Passwort-Validierung ist excellent implementiert",
+      "description": "Das Passwort-Änderungs-Formular zeigt detaillierte Real-time-Validierung, prüft Übereinstimmung und hat gute visuelle Indikatoren. Sicherheitstechnisch sehr gut gemacht.",
+      "priority": "low",
+      "affectedArea": "Settings/Sicherheit - bereits sicher und benutzerfreundlich",
+      "found_at": "2026-01-16T16:42:48+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-012",
+      "type": "ux",
+      "title": "Validierung bei Skill-Hinzufügen fehlt",
+      "description": "Bei der Eingabe eines neuen Skills wird keine Frontend-Validierung durchgeführt. Nutzer können leere Skills hinzufügen, was das Modal schließt, aber keine Fehlermeldung zeigt.",
+      "priority": "medium",
+      "affectedArea": "Dokumente-Seite - Skills Management",
+      "found_at": "2026-01-16T16:47:23+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-013",
+      "type": "ux",
+      "title": "Verbesserte Fehlerbehandlung für Job-Analyse",
+      "description": "Wenn die Job-Analyse fehlschlägt, sollte eine klarere Anleitung angezeigt werden, wie der Benutzer trotzdem fortfahren kann. Derzeit gibt es gemischte Erfolgs-/Fehlermeldungen die verwirrend sind.",
+      "priority": "medium",
+      "affectedArea": "Dashboard Job-Empfehlungen Sektion",
+      "found_at": "2026-01-16T16:50:40+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-014",
+      "type": "ux",
+      "title": "Progressiver Workflow für Bewerbungserstellung",
+      "description": "Bei der Bewerbungserstellung sollte vorab geprüft werden, ob alle nötigen Dokumente (CV) vorhanden sind, mit Links zur Dokumentenverwaltung.",
+      "priority": "medium",
+      "affectedArea": "Neue Bewerbung Seite",
+      "found_at": "2026-01-16T16:50:40+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-015",
+      "type": "ux",
+      "title": "Email verification countdown could show minutes for longer waits",
+      "description": "Currently shows countdown in seconds only. For longer timeouts (like the 3-emails-per-hour limit), showing 'X minutes Y seconds' would be more user-friendly than counting down from 3600 seconds.",
+      "priority": "low",
+      "affectedArea": "email-verification page rate limiting display",
+      "found_at": "2026-01-16T16:56:22+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-016",
+      "type": "ux",
+      "title": "Template-Erstellung Workflow Verbesserung",
+      "description": "Der Template-Erstellungsprozess funktioniert gut, aber könnte durch Auto-Save, Vorschau-Funktion und Drag & Drop für Variable-Buttons verbessert werden.",
+      "priority": "medium",
+      "affectedArea": "Templates-Seite (/templates)",
+      "found_at": "2026-01-16T17:00:55+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-017",
+      "type": "ux",
+      "title": "Skills Management Verbesserungen",
+      "description": "Der Skill-Hinzufügung funktioniert einwandfrei, könnte aber durch Bulk-Import, Kategorien-Filter und Skill-Suche/Autocomplete verbessert werden.",
+      "priority": "low",
+      "affectedArea": "Dokumente-Seite Skills-Bereich (/documents)",
+      "found_at": "2026-01-16T17:00:55+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    },
+    {
+      "id": "SUG-018",
+      "type": "ux",
+      "title": "Bessere Verknüpfung zwischen Bewerbung und Dokument-Upload",
+      "description": "Wenn Lebenslauf fehlt, sollte ein direkter Link zu /documents mit Upload-Funktion bereitgestellt werden",
+      "priority": "medium",
+      "affectedArea": "Bewerbungsgenerierung Workflow",
+      "found_at": "2026-01-16T17:04:56+01:00",
+      "source": "explore-ralph",
+      "implemented": false
+    }
+  ]
 }

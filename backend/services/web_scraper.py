@@ -1238,6 +1238,15 @@ class WebScraper:
                 "source_url": url,
             }
 
+        except requests.HTTPError as e:
+            if e.response.status_code == 403:
+                raise Exception("Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe.") from e
+            elif e.response.status_code == 404:
+                raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
+            elif e.response.status_code == 429:
+                raise Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.") from e
+            else:
+                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}") from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
@@ -1364,6 +1373,15 @@ class WebScraper:
 
             return result
 
+        except requests.HTTPError as e:
+            if e.response.status_code == 403:
+                raise Exception("Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe.") from e
+            elif e.response.status_code == 404:
+                raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
+            elif e.response.status_code == 429:
+                raise Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.") from e
+            else:
+                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}") from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
