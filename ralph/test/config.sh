@@ -70,6 +70,17 @@ CLAUDE_OUTPUT_FORMAT="json"
 CLAUDE_ALLOWED_TOOLS="Write,Edit,Read,Bash,Glob,Grep,mcp__playwright__*"
 
 # ============================================
+# Test Documents (fuer Upload in Tests)
+# ============================================
+TEST_DOCS_DIR="/Users/filipores/Documents/Bewerbungsunterlagen/Batch"
+TEST_CV_FILE="$TEST_DOCS_DIR/cv-ger.pdf"
+TEST_ZEUGNIS_FILE="$TEST_DOCS_DIR/Filip Zeugnis.pdf"
+
+# Test User Credentials (fuer Login)
+TEST_USER_EMAIL=${TEST_USER_EMAIL:-"test@example.com"}
+TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-"TestPassword123!"}
+
+# ============================================
 # State Files
 # ============================================
 FEATURES_FILE="features.json"

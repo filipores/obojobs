@@ -278,6 +278,64 @@ log_test_summary() {
     fi
 }
 
+# Log iteration summary from Claude JSON output
+log_iteration_summary() {
+    local output_file=$1
+    local feature_id=$2
+
+    if [[ ! -f "$output_file" ]]; then
+        echo -e "${YELLOW}Keine Output-Datei gefunden${NC}"
+        return 1
+    fi
+
+    # Check if it's valid JSON
+    if ! jq -e '.' "$output_file" > /dev/null 2>&1; then
+        echo -e "${YELLOW}Output ist kein valides JSON${NC}"
+        return 1
+    fi
+
+    # Extract metrics with jq
+    local duration_ms=$(jq -r '.duration_ms // 0' "$output_file")
+    local duration_s=$(echo "scale=1; $duration_ms / 1000" | bc 2>/dev/null || echo "0")
+    local cost=$(jq -r '.total_cost_usd // 0' "$output_file")
+    local num_turns=$(jq -r '.num_turns // 0' "$output_file")
+    local input_tokens=$(jq -r '.usage.input_tokens // 0' "$output_file")
+    local output_tokens=$(jq -r '.usage.output_tokens // 0' "$output_file")
+    local cache_read=$(jq -r '.usage.cache_read_input_tokens // 0' "$output_file")
+    local is_error=$(jq -r '.is_error // false' "$output_file")
+    local result_preview=$(jq -r '.result // "No result"' "$output_file" | head -c 100)
+
+    # Format cost with 2 decimal places
+    local cost_formatted=$(printf "%.2f" "$cost" 2>/dev/null || echo "$cost")
+
+    # Format tokens with thousand separators
+    local input_fmt=$(printf "%'d" "$input_tokens" 2>/dev/null || echo "$input_tokens")
+    local output_fmt=$(printf "%'d" "$output_tokens" 2>/dev/null || echo "$output_tokens")
+    local cache_fmt=$(printf "%'d" "$cache_read" 2>/dev/null || echo "$cache_read")
+
+    # Color based on success/error
+    local status_color=$GREEN
+    local status_text="SUCCESS"
+    if [[ "$is_error" == "true" ]]; then
+        status_color=$RED
+        status_text="ERROR"
+    fi
+
+    echo ""
+    echo -e "${BLUE}╔══════════════════════════════════════════╗${NC}"
+    echo -e "${BLUE}║${NC}         ITERATION SUMMARY                ${BLUE}║${NC}"
+    echo -e "${BLUE}╠══════════════════════════════════════════╣${NC}"
+    echo -e "${BLUE}║${NC} Feature:    ${YELLOW}${feature_id:-unknown}${NC}"
+    echo -e "${BLUE}║${NC} Status:     ${status_color}${status_text}${NC}"
+    echo -e "${BLUE}║${NC} Duration:   ${duration_s}s"
+    echo -e "${BLUE}║${NC} Cost:       \$${cost_formatted}"
+    echo -e "${BLUE}║${NC} Turns:      ${num_turns}"
+    echo -e "${BLUE}║${NC} Tokens:     In: ${input_fmt} | Out: ${output_fmt}"
+    echo -e "${BLUE}║${NC} Cache:      ${cache_fmt} tokens"
+    echo -e "${BLUE}╚══════════════════════════════════════════╝${NC}"
+    echo ""
+}
+
 # Export functions
 export -f init_reports
 export -f parse_test_result
@@ -285,3 +343,4 @@ export -f parse_status_block
 export -f save_test_result
 export -f generate_final_report
 export -f log_test_summary
+export -f log_iteration_summary

@@ -394,6 +394,9 @@ $(cat "$SCRIPT_DIR/prompt.md")"
 
         log_success "Test-Ausführung abgeschlossen"
 
+        # Log iteration summary (cost, tokens, duration)
+        log_iteration_summary "$output_file" "$feature_id"
+
         # Parse test result
         local test_result=$(parse_test_result "$output_file")
         local found=$(echo "$test_result" | jq -r '.found')
@@ -404,9 +407,6 @@ $(cat "$SCRIPT_DIR/prompt.md")"
 
             # Mark feature as tested
             mark_feature_tested "$feature_id" "$test_result"
-
-            # Log summary
-            log_test_summary "$output_file"
 
             return 0
         else
@@ -419,6 +419,9 @@ $(cat "$SCRIPT_DIR/prompt.md")"
             return 0
         fi
     else
+        # Log iteration summary even on failure
+        log_iteration_summary "$output_file" "$feature_id"
+
         if [[ $exec_result -eq 124 ]]; then
             log_error "Timeout nach $TIMEOUT_MINUTES Minuten"
             return 2

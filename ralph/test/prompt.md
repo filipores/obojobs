@@ -2,6 +2,31 @@
 
 Teste Features durch explorative UI-Tests mit MCP Playwright.
 
+## Test-Setup: Dokumente und Login
+
+**WICHTIG:** Vor dem Testen der Kernfunktionalität (CORE-* Features) muss das Test-Setup durchgeführt werden:
+
+### Test-Dokumente (aus config.sh)
+- **Lebenslauf:** `/Users/filipores/Documents/Bewerbungsunterlagen/Batch/cv-ger.pdf`
+- **Arbeitszeugnis:** `/Users/filipores/Documents/Bewerbungsunterlagen/Batch/Filip Zeugnis.pdf`
+
+### Setup-Ablauf (Feature SETUP-001)
+1. Registriere neuen Test-User ODER logge bestehenden User ein
+2. Navigiere zu `/documents`
+3. Lade Lebenslauf hoch via `browser_file_upload` mit dem Pfad oben
+4. Warte auf Upload-Bestätigung
+5. Lade Arbeitszeugnis hoch
+6. Warte auf Upload-Bestätigung
+7. Erstelle mindestens ein Template unter `/templates`
+8. Verifiziere: Beide Dokumente und Template sind vorhanden
+
+### File Upload mit MCP Playwright
+```
+browser_file_upload mit paths: ["/Users/filipores/Documents/Bewerbungsunterlagen/Batch/cv-ger.pdf"]
+```
+
+Nach dem Setup können die CORE-* Features getestet werden.
+
 ## MCP Playwright Tools (Wichtigste)
 
 | Kategorie | Tool | Beschreibung |
