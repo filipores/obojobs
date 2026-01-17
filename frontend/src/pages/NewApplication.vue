@@ -7,8 +7,41 @@
         <p class="page-subtitle">Generiere ein Anschreiben aus einer Stellenanzeigen-URL</p>
       </section>
 
+      <!-- Resume/CV Missing Warning Banner - vor dem Formular (höhere Priorität) -->
+      <section v-if="!checkingResume && !hasResume" class="resume-warning-section animate-fade-up" style="animation-delay: 100ms;">
+        <div class="resume-warning zen-card">
+          <div class="resume-warning-icon-box">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14,2 14,8 20,8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <line x1="10" y1="9" x2="8" y2="9"/>
+            </svg>
+          </div>
+          <div class="resume-warning-text-content">
+            <h3>Lebenslauf erforderlich</h3>
+            <p>
+              Um eine <strong>personalisierte Bewerbung</strong> zu generieren, benötigen wir deinen Lebenslauf.
+              Dieser wird für die Erstellung des Anschreibens und den Job-Fit Score verwendet.
+            </p>
+            <div class="resume-warning-actions">
+              <router-link to="/documents" class="zen-btn zen-btn-ai">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Lebenslauf hochladen
+              </router-link>
+              <span class="resume-warning-hint">PDF-Format, max. 10 MB</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Skills Missing Warning Banner - vor dem Formular -->
-      <section v-if="!checkingSkills && !hasSkills" class="skills-warning-section animate-fade-up" style="animation-delay: 100ms;">
+      <section v-if="!checkingSkills && !hasSkills && hasResume" class="skills-warning-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="skills-warning zen-card">
           <div class="warning-icon-box">
             <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -660,6 +693,10 @@ const router = useRouter()
 const checkingSkills = ref(true)
 const hasSkills = ref(true)
 
+// Resume/CV check state
+const checkingResume = ref(true)
+const hasResume = ref(true)
+
 // State
 const url = ref('')
 const urlTouched = ref(false)
@@ -1260,10 +1297,27 @@ const checkUserSkills = async () => {
   }
 }
 
+// Check if user has a resume/CV uploaded
+const checkUserResume = async () => {
+  checkingResume.value = true
+  try {
+    const { data } = await api.get('/documents')
+    const documents = data.documents || []
+    // Check if any document is of type 'lebenslauf'
+    hasResume.value = documents.some(doc => doc.doc_type === 'lebenslauf')
+  } catch {
+    // On error, assume resume exists to not block the user
+    hasResume.value = true
+  } finally {
+    checkingResume.value = false
+  }
+}
+
 onMounted(() => {
   loadTemplates()
   loadUsage()
   checkUserSkills()
+  checkUserResume()
 })
 </script>
 
@@ -1292,6 +1346,89 @@ onMounted(() => {
   font-size: 1.125rem;
   color: var(--color-text-secondary);
   margin-bottom: 0;
+}
+
+/* ========================================
+   RESUME/CV MISSING WARNING BANNER
+   ======================================== */
+.resume-warning-section {
+  max-width: 640px;
+  margin-bottom: var(--space-lg);
+}
+
+.resume-warning {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border: 2px solid #b45050;
+  background: rgba(180, 80, 80, 0.08);
+}
+
+.resume-warning-icon-box {
+  flex-shrink: 0;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #b45050;
+  border-radius: var(--radius-md);
+  color: white;
+}
+
+.resume-warning-text-content h3 {
+  font-size: 1.125rem;
+  font-weight: 500;
+  margin: 0 0 var(--space-sm) 0;
+  color: #8a3a3a;
+}
+
+.resume-warning-text-content p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0 0 var(--space-lg) 0;
+}
+
+.resume-warning-text-content p strong {
+  color: #b45050;
+}
+
+.resume-warning-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.resume-warning-actions .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  text-decoration: none;
+}
+
+.resume-warning-hint {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .resume-warning {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+  }
+
+  .resume-warning-text-content {
+    text-align: center;
+  }
+
+  .resume-warning-actions {
+    flex-direction: column;
+    align-items: center;
+  }
 }
 
 /* ========================================
