@@ -814,7 +814,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 55,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-012"
     },
     {
@@ -829,7 +829,7 @@
         "Linting OK (ruff, eslint)"
       ],
       "priority": 56,
-      "passes": false,
+      "passes": true,
       "source": "explore-ralph SUG-013"
     },
     {

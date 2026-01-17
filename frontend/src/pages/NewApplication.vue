@@ -392,8 +392,8 @@
             </div>
           </div>
 
-          <!-- Requirements Error -->
-          <div v-else-if="requirementsError.message && !tempApplicationId" class="requirements-error" :class="{ 'error-temporary': requirementsError.isTemporary }">
+          <!-- Requirements Error - nur zeigen wenn kein tempApplicationId und kein allgemeiner error -->
+          <div v-else-if="requirementsError.message && !tempApplicationId && !error" class="requirements-error" :class="{ 'error-temporary': requirementsError.isTemporary }">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="12" y1="8" x2="12" y2="12"/>
@@ -402,7 +402,35 @@
             <div class="requirements-error-content">
               <strong>{{ requirementsError.message }}</strong>
               <p v-if="requirementsError.hint">{{ requirementsError.hint }}</p>
-              <p class="hint">Sie koennen trotzdem eine Bewerbung generieren, aber der Job-Fit Score ist nicht verfuegbar.</p>
+
+              <!-- Alternative Aktionen - klar strukturiert -->
+              <div class="requirements-alternatives">
+                <p class="alternatives-header">Was Sie jetzt tun koennen:</p>
+                <ul class="alternatives-list">
+                  <li>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                    <span>Bewerbung ohne Job-Fit Score generieren</span>
+                  </li>
+                  <li v-if="requirementsError.isTemporary">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
+                      <path d="M21 3v5h-5"/>
+                    </svg>
+                    <span>Analyse erneut versuchen</span>
+                  </li>
+                  <li v-if="!hasSkills">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                      <polyline points="17 8 12 3 7 8"/>
+                      <line x1="12" y1="3" x2="12" y2="15"/>
+                    </svg>
+                    <span>Lebenslauf hochladen fuer bessere Analyse</span>
+                  </li>
+                </ul>
+              </div>
+
               <div class="requirements-error-actions">
                 <!-- Retry Button for temporary errors -->
                 <button
@@ -418,6 +446,16 @@
                     <path d="M8 16H3v5"/>
                   </svg>
                   Erneut versuchen
+                </button>
+                <!-- Continue without score button -->
+                <button
+                  @click="scrollToGenerateButton"
+                  class="zen-btn zen-btn-sm requirements-continue-btn"
+                >
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="9 18 15 12 9 6"/>
+                  </svg>
+                  Ohne Score fortfahren
                 </button>
                 <!-- Contact link for persistent errors -->
                 <router-link
@@ -828,7 +866,7 @@ const loadPreview = async () => {
   jobFitScore.value = null
   showLowScoreWarning.value = false
   analyzingRequirements.value = false
-  requirementsError.value = ''
+  requirementsError.value = { message: '', hint: '', isTemporary: false, showContactLink: false }
   requirementsCount.value = 0
 
   try {
@@ -1003,6 +1041,14 @@ const onJobFitScoreLoaded = (score) => {
   showLowScoreWarning.value = score.overall_score < 40
 }
 
+// Scroll to generate button for "continue without score" action
+const scrollToGenerateButton = () => {
+  const generateSection = document.querySelector('.form-actions')
+  if (generateSection) {
+    generateSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
+  }
+}
+
 // Reset preview and start fresh
 const resetPreview = () => {
   previewData.value = null
@@ -1032,7 +1078,7 @@ const analyzeManualText = async () => {
   analyzingManualText.value = true
   manualTextError.value = ''
   analyzingRequirements.value = false
-  requirementsError.value = ''
+  requirementsError.value = { message: '', hint: '', isTemporary: false, showContactLink: false }
   requirementsCount.value = 0
 
   try {
@@ -1906,11 +1952,41 @@ onMounted(() => {
   color: var(--color-text-secondary);
 }
 
-.requirements-error .hint {
+/* Requirements Alternatives List */
+.requirements-alternatives {
+  margin-top: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-washi);
+  border-radius: var(--radius-md);
+}
+
+.requirements-alternatives .alternatives-header {
   font-size: 0.8125rem;
-  font-style: italic;
-  color: var(--color-text-tertiary);
-  margin-top: var(--space-sm);
+  font-weight: 500;
+  color: var(--color-sumi);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.requirements-alternatives .alternatives-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+}
+
+.requirements-alternatives .alternatives-list li {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+
+.requirements-alternatives .alternatives-list li svg {
+  flex-shrink: 0;
+  color: var(--color-koke);
 }
 
 .requirements-error-actions {
@@ -1938,6 +2014,21 @@ onMounted(() => {
 .requirements-retry-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+.requirements-continue-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: var(--color-koke);
+  border: 1px solid var(--color-koke);
+  color: white;
+  font-size: 0.8125rem;
+  padding: var(--space-xs) var(--space-sm);
+}
+
+.requirements-continue-btn:hover {
+  background: var(--color-koke-dark, #5a6b4e);
 }
 
 .requirements-contact-link {

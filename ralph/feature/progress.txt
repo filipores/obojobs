@@ -535,3 +535,137 @@ Branch: ralph/ralph-improvements
   - Legal-Pages nutzen einheitliche CSS-Klassen (.legal-page, .legal-section, .ink-stroke)
   - Beide Dateien sind statische Vue-Komponenten ohne Script-Logik
 ---
+
+---
+
+## [2026-01-17 13:05] - UX-050
+- **Was wurde implementiert:**
+  - Skills-Warnung Banner auf NewApplication.vue VOR dem Formular
+  - Prüfung ob User Skills hat via /users/me/skills Endpoint
+  - Hinweis erklärt Job-Fit Score und dessen Abhängigkeit von Skills
+  - Link zur Dokumente-Seite zum Lebenslauf hochladen
+  - Responsive Design für Mobile
+  
+- **Geänderte Dateien:**
+  - frontend/src/pages/NewApplication.vue
+
+- **Erkenntnisse für zukünftige Iterationen:**
+  - Skills API Endpoint: GET /users/me/skills - liefert Array mit User-Skills
+  - JobFitScore.vue hat bereits "Keine Skills" Warnung, diese erscheint aber erst NACH API-Call
+  - Bei UX-Verbesserungen: Voraussetzungen möglichst früh prüfen, nicht erst nach User-Aktion
+  - NewApplication.vue hat bereits gute Fehlerbehandlung für fehlende Dokumente (isDocumentMissingError)
+---
+
+## [2026-01-17 13:04] - UX-051
+- Hamburger-Menü Close-Button auf Mobile verbessert
+- Geänderte Dateien: frontend/src/App.vue
+- Änderungen:
+  - z-index auf 10 erhöht für bessere Klickbarkeit
+  - Klickbereich von 36x36px auf 44x44px vergrößert (Touch-Target)
+  - Hover-Effekt mit scale(1.05) Animation
+  - Focus/Focus-visible Styles für Keyboard-Navigation
+  - Active-State mit scale(0.95) für visuelles Feedback
+  - Touch-Optimierungen (tap-highlight, touch-action)
+- **Erkenntnisse für zukünftige Iterationen:**
+  - Mobile Touch-Targets sollten mindestens 44x44px sein (WCAG)
+  - `-webkit-tap-highlight-color: transparent` und `touch-action: manipulation` verbessern Touch-Erlebnis
+  - `:focus-visible` ist besser als `:focus` für Keyboard-Only-Focus
+---
+
+## [2026-01-17 13:10] - UX-052
+- **Was wurde implementiert:**
+  - HTTP-Status-basierte Fehlermeldungen fuer Job-Fit-Score Analyse
+  - 5xx/Netzwerkfehler: "Voruebergehender Serverfehler" mit Retry-Button
+  - 4xx Fehler: Kontakt-Link zum Support
+  - Unterschiedliche visuelle Darstellung (gelb fuer temporaer, rot fuer persistent)
+  - Hilfetexte mit konkreten Handlungsanweisungen
+
+- **Geaenderte Dateien:**
+  - frontend/src/components/JobFitScore.vue (parseErrorResponse Funktion, erweiterte UI)
+  - frontend/src/pages/NewApplication.vue (parseRequirementsError, retryRequirementsAnalysis)
+
+- **Erkenntnisse fuer zukuenftige Iterationen:**
+  - Error-State-Objekte mit {message, hint, isTemporary, showContactLink} sind flexibler als einfache Strings
+  - Bei temporaeren Fehlern sollte immer ein Retry-Button angeboten werden
+  - Support-Link nur bei persistenten Fehlern zeigen, um User nicht zu ueberfordern
+---
+
+## [2026-01-17 13:13] - UX-053
+- **Was wurde implementiert:**
+  - Direkter Link zu /documents#skills in "Keine Skills" Fehlermeldungen
+  - JobRecommendations.vue: Erkennung von "Keine Skills" Fehler mit isNoSkillsError computed
+  - JobFitScore.vue: Link geändert von /documents zu /documents#skills
+  - Documents.vue: id="skills" Anker auf Skills-Sektion
+  - Documents.vue: Automatisches Scrollen zur Skills-Sektion bei Hash-Navigation
+
+- **Geänderte Dateien:**
+  - frontend/src/components/JobRecommendations.vue
+  - frontend/src/components/JobFitScore.vue
+  - frontend/src/pages/Documents.vue
+
+- **Erkenntnisse für zukünftige Iterationen:**
+  - Hash-Navigation in Vue benötigt useRoute() und route.hash Zugriff
+  - scrollIntoView({ behavior: 'smooth', block: 'start' }) für sanftes Scrollen
+  - nextTick() wichtig, um sicherzustellen dass DOM aktualisiert ist vor Scroll
+  - Fehler-String-Matching mit .toLowerCase().includes() ist robust
+---
+
+## [2026-01-17 13:20] - UX-054
+- **Was wurde implementiert:**
+  - Hinweis-Card auf Dashboard wenn keine Skills vorhanden
+  - Skills werden beim Dashboard-Load via /users/me/skills API geladen
+  - Banner mit Link zu /documents fuer Lebenslauf-Upload
+  - 7-Tage Dismiss-Logik via localStorage (skillsHintDismissedAt)
+  - Onboarding-Tooltip bei erstem Besuch der Dokumenten-Seite
+  - 2-Schritt Tooltip erklaert CV-Upload und automatische Skill-Extraktion
+  - Tooltip-Dismiss speichert documentsPageVisited in localStorage
+  - Escape-Key Support fuer Tooltip-Schliessung
+
+- **Geaenderte Dateien:**
+  - frontend/src/pages/Dashboard.vue (Skills-Loading, Hint-Banner, Styles)
+  - frontend/src/pages/Documents.vue (Onboarding-Tooltip, Escape-Handler)
+
+- **Erkenntnisse fuer zukuenftige Iterationen:**
+  - Promise.all() fuer paralleles Laden mehrerer APIs verbessert Performance
+  - localStorage Timestamps fuer "dismiss for X days" Pattern nuetzlich
+  - Onboarding-Tooltips sollten skipbar sein (Escape, Ueberspringen-Button)
+  - Mehrstufige Tooltips mit Step-Counter verbessern UX
+  - watch() auf Boolean zum Add/Remove von Event-Listenern verwenden
+---
+
+## [2026-01-17 13:25] - UX-055
+- **Was wurde implementiert:**
+  - Frontend-Validierung bei Skill-Hinzufuegen Modal
+  - Leere Eingabe blockieren mit Fehlermeldung "Skill-Name ist erforderlich"
+  - Minimum 2 Zeichen fuer Skill-Namen mit Fehlermeldung
+  - Duplikat-Pruefung (case-insensitive) vor Speichern
+  - Inline-Fehlermeldung mit rotem Rahmen bei Validierungsfehler
+  - validateSkillName() Funktion wird bei @input Event und vor saveSkill() aufgerufen
+  - Fehler wird zurueckgesetzt bei Modal-Schliessung
+
+- **Geaenderte Dateien:**
+  - frontend/src/components/SkillsOverview.vue
+
+- **Erkenntnisse fuer zukuenftige Iterationen:**
+  - Form-Validierung sollte sowohl bei @input als auch vor Submit laufen
+  - Bei Duplikat-Check muss editingSkill.value.id ausgeschlossen werden (eigener Skill)
+  - .trim() vor Laengencheck verhindert Whitespace-Tricks
+  - CSS :class="{ 'input-error': error }" fuer dynamische Fehler-Styling
+---
+
+## 2026-01-17 13:30 - UX-056
+- Verbesserte Fehlerbehandlung für Job-Analyse implementiert
+- requirementsError auf konsistentes Objekt-Format umgestellt (war vorher inkonsistent String/'')
+- Eindeutige Zustände: Requirements-Fehler wird NUR angezeigt wenn KEIN allgemeiner error vorhanden ist
+- Alternative Aktionen hinzugefügt: "Was Sie jetzt tun können" Liste mit klaren Optionen
+- "Ohne Score fortfahren" Button scrollt zum Generate-Button
+- Neue CSS-Stile für alternatives-list und continue-button
+
+- Geänderte Dateien:
+  - frontend/src/pages/NewApplication.vue
+
+- **Erkenntnisse für zukünftige Iterationen:**
+  - requirementsError ist ein Objekt mit {message, hint, isTemporary, showContactLink} - beim Reset immer vollständiges Objekt setzen
+  - Bei Fehler-States: Immer prüfen ob andere Fehler-States gleichzeitig aktiv sein könnten
+  - scroll-into-view Pattern: scrollToGenerateButton() für bessere UX bei Fehlern
+---
