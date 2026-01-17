@@ -163,12 +163,22 @@
 
             <div v-if="analyzeError && !showManualInput" class="error-message error-with-action">
               <span>{{ analyzeError }}</span>
-              <p class="error-hint">
-                Einige Portale blockieren automatisches Laden.
-              </p>
-              <button @click="switchToManualInput" class="fallback-link">
-                Stellentext manuell einfügen
-              </button>
+              <template v-if="isNoSkillsError">
+                <p class="error-hint">
+                  Fügen Sie Skills zu Ihrem Profil hinzu, um den Job-Fit Score zu berechnen.
+                </p>
+                <router-link to="/documents#skills" class="fallback-link" @click="closeAnalyzeModal">
+                  Skills hinzufügen →
+                </router-link>
+              </template>
+              <template v-else>
+                <p class="error-hint">
+                  Einige Portale blockieren automatisches Laden.
+                </p>
+                <button @click="switchToManualInput" class="fallback-link">
+                  Stellentext manuell einfügen
+                </button>
+              </template>
             </div>
           </div>
 
@@ -215,8 +225,16 @@
               <p class="form-hint">Mindestens 100 Zeichen</p>
             </div>
 
-            <div v-if="analyzeError" class="error-message">
-              {{ analyzeError }}
+            <div v-if="analyzeError" class="error-message" :class="{ 'error-with-action': isNoSkillsError }">
+              <span>{{ analyzeError }}</span>
+              <template v-if="isNoSkillsError">
+                <p class="error-hint">
+                  Fügen Sie Skills zu Ihrem Profil hinzu, um den Job-Fit Score zu berechnen.
+                </p>
+                <router-link to="/documents#skills" class="fallback-link" @click="closeAnalyzeModal">
+                  Skills hinzufügen →
+                </router-link>
+              </template>
             </div>
           </div>
 
@@ -287,7 +305,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import api from '../api/client'
 
 const recommendations = ref([])
@@ -304,6 +322,11 @@ const showManualInput = ref(false)
 const manualJobText = ref('')
 const manualCompany = ref('')
 const manualTitle = ref('')
+
+// Check if error is "no skills" error
+const isNoSkillsError = computed(() => {
+  return analyzeError.value.toLowerCase().includes('keine skills')
+})
 
 const loadRecommendations = async () => {
   try {

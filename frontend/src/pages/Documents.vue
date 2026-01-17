@@ -288,7 +288,7 @@
       </section>
 
       <!-- Skills Section -->
-      <section class="skills-section animate-fade-up" style="animation-delay: 200ms;">
+      <section id="skills" ref="skillsSection" class="skills-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="ink-stroke"></div>
         <h2 class="section-title">Extrahierte Skills</h2>
         <SkillsOverview />
@@ -298,10 +298,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, nextTick } from 'vue'
+import { useRoute } from 'vue-router'
 import api from '../api/client'
 import SkillsOverview from '../components/SkillsOverview.vue'
 import { confirm } from '../composables/useConfirm'
+
+const route = useRoute()
+const skillsSection = ref(null)
 
 const documents = ref({
   lebenslauf: null,
@@ -468,8 +472,14 @@ const formatDate = (dateString) => {
   })
 }
 
-onMounted(() => {
-  loadDocuments()
+onMounted(async () => {
+  await loadDocuments()
+
+  // Scroll to skills section if hash is present
+  if (route.hash === '#skills') {
+    await nextTick()
+    skillsSection.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 })
 </script>
 

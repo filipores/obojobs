@@ -57,9 +57,9 @@
       </svg>
       <div>
         <strong>Keine Skills gefunden</strong>
-        <p>Laden Sie einen Lebenslauf hoch, um den Job-Fit Score zu berechnen.</p>
-        <router-link to="/documents" class="zen-btn zen-btn-sm">
-          Lebenslauf hochladen
+        <p>Laden Sie einen Lebenslauf hoch oder fügen Sie Skills manuell hinzu, um den Job-Fit Score zu berechnen.</p>
+        <router-link to="/documents#skills" class="zen-btn zen-btn-sm">
+          Skills hinzufügen
         </router-link>
       </div>
     </div>
