@@ -1,74 +1,74 @@
-# RALF Feature Mode
+# RALPH Feature Mode
 
-Implementiere User Stories aus `ralph/feature/prd.json` eine nach der anderen.
+Implement User Stories from `ralph/feature/tasks.json` one by one.
 
-## Dateien
-- **PRD**: `ralph/feature/prd.json` - Stories mit `passes: false`, sortiert nach `priority`
-- **Kontext**: `AGENTS.md` - Projekt-Konventionen
+## Files
+- **PRD**: `ralph/feature/tasks.json` - Stories with `passes: false`, sorted by `priority`
+- **Context**: `AGENTS.md` - Project conventions
 
 ## Workflow
 
-1. **Story finden**: Lies PRD, nimm Story mit `passes: false` und niedrigster `priority`
-2. **Implementieren**: Erfülle ALLE Acceptance Criteria, befolge AGENTS.md
-3. **DB-Migration**: Falls neue/geänderte Models:
+1. **Find story**: Read PRD, take story with `passes: false` and lowest `priority`
+2. **Implement**: Fulfill ALL Acceptance Criteria, follow AGENTS.md
+3. **DB Migration**: If new/modified models:
    ```bash
    cd backend && source venv/bin/activate
-   FLASK_APP=app.py flask db migrate -m "Add/Update: Beschreibung"
+   FLASK_APP=app.py flask db migrate -m "Add/Update: Description"
    FLASK_APP=app.py flask db upgrade
    ```
-   **WICHTIG**: Model-Import in `app.py` hinzufügen falls neues Model!
+   **IMPORTANT**: Add model import to `app.py` if new model!
 4. **Quality Checks**:
    ```bash
    cd backend && source venv/bin/activate && pytest && ruff check .
    cd frontend && npm test && npm run lint && npm run build
    ```
-   - Änderungen mit dem security-review skill untersuchen und ggf. verändern
-5. **AGENTS.md updaten** wenn du wiederverwertbare patterns erkennst (siehe unten): 
-6. **Bei Erfolg**:
-   - Git Commit: `feat: STORY-ID - Title` (mit Co-Authored-By: Claude)
-   - PRD: `passes: true` setzen
-   - Progress in `ralph/feature/progress.txt` dokumentieren (siehe unten)
+   - Review changes with the security-review skill and modify if needed
+5. **Update AGENTS.md** if you recognize reusable patterns (see below)
+6. **On success**:
+   - Git Commit: `feat: STORY-ID - Title` (with Co-Authored-By: Claude)
+   - PRD: set `passes: true`
+   - Document progress in `ralph/feature/logs/progress.txt` (see below)
 
-## Regeln
-- Eine Story pro Iteration, alle Criteria erfüllen
-- Tests ~20% Aufwand, Implementation priorisieren
-- Autonom handeln, nicht nachfragen
+## Rules
+- One story per iteration, fulfill all criteria
+- Tests ~20% effort, prioritize implementation
+- Act autonomously, don't ask questions
 
-## Progess-Format
+## Progress Format
 
-An progress.txt ANHÄNGEN (niemals ersetzen, immer anhängen):
+APPEND to `logs/progress.txt` (never replace, always append):
 ```
-## [Datum/Uhrzeit] - [Story-ID]
-- Was wurde implementiert
-- Geänderte Dateien
-- **Erkenntnisse für zukünftige Iterationen:**
-  - Entdeckte Muster (z.B. "diese Codebase verwendet X für Y")
-  - Aufgetretene Stolperfallen (z.B. "nicht vergessen, Z zu aktualisieren wenn W geändert wird")
-  - Nützlicher Kontext (z.B. "das Evaluierungs-Panel ist in Komponente X")
+## [Date/Time] - [Story-ID]
+- What was implemented
+- Modified files
+- **Insights for future iterations:**
+  - Discovered patterns (e.g. "this codebase uses X for Y")
+  - Pitfalls encountered (e.g. "don't forget to update Z when W changes")
+  - Useful context (e.g. "the evaluation panel is in component X")
 ---
 ```
 
-## AGENTS.md-Dateien aktualisieren
+## Updating AGENTS.md Files
 
-Vor dem Commit prüfen, ob bearbeitete Dateien Erkenntnisse haben, die es wert sind, in nahegelegenen AGENTS.md-Dateien festgehalten zu werden:
+Before committing, check if edited files have insights worth capturing in nearby AGENTS.md files:
 
-1. **Verzeichnisse mit bearbeiteten Dateien identifizieren** - Schauen, welche Verzeichnisse du geändert hast
-2. **Nach vorhandenen AGENTS.md suchen** - Nach AGENTS.md in diesen Verzeichnissen oder übergeordneten Verzeichnissen suchen
-3. **Wertvolle Erkenntnisse hinzufügen** - Wenn du etwas entdeckt hast, das zukünftige Entwickler/Agenten wissen sollten:
-   - API-Muster oder Konventionen spezifisch für dieses Modul
-   - Stolperfallen oder nicht-offensichtliche Anforderungen
-   - Abhängigkeiten zwischen Dateien
-   - Testansätze für diesen Bereich
-   - Konfigurations- oder Umgebungsanforderungen
+1. **Identify directories with edited files** - See which directories you modified
+2. **Look for existing AGENTS.md** - Search for AGENTS.md in these directories or parent directories
+3. **Add valuable insights** - If you discovered something that future developers/agents should know:
+   - API patterns or conventions specific to this module
+   - Pitfalls or non-obvious requirements
+   - Dependencies between files
+   - Testing approaches for this area
+   - Configuration or environment requirements
 
-**NICHT hinzufügen:**
-- Story-spezifische Implementierungsdetails
-- Temporäre Debugging-Notizen
-- Informationen, die bereits in progress.txt stehen
+**DO NOT add:**
+- Story-specific implementation details
+- Temporary debugging notes
+- Information already in `logs/progress.txt`
 
-AGENTS.md nur aktualisieren, wenn du **wirklich wiederverwendbares Wissen** hast, das bei zukünftiger Arbeit in diesem Verzeichnis helfen würde.
+Only update AGENTS.md if you have **truly reusable knowledge** that would help with future work in this directory.
 
-## Status (PFLICHT am Ende jeder Antwort)
+## Status (MANDATORY at end of every response)
 
 ```
 ---RALPH_STATUS---
@@ -78,10 +78,10 @@ FILES_MODIFIED: <n>
 TESTS_STATUS: PASSING|FAILING|NOT_RUN
 WORK_TYPE: IMPLEMENTATION|TESTING|DOCUMENTATION
 EXIT_SIGNAL: false|true
-RECOMMENDATION: <nächster Schritt>
+RECOMMENDATION: <next step>
 ---END_RALPH_STATUS---
 ```
 
-**EXIT_SIGNAL: true** nur wenn ALLE Stories `passes: true` und Tests grün.
+**EXIT_SIGNAL: true** only when ALL stories have `passes: true` and tests are green.
 
-Beginne jetzt!
+Begin now!

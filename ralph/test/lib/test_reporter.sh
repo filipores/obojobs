@@ -1,25 +1,14 @@
 #!/usr/bin/env bash
-# test_reporter.sh - Generiert Test-Reports für Test-Ralph
-# Parst RALPH_TEST_RESULT Block und erstellt strukturierte Reports
-
-# Source date utilities
-TR_DIR="$(dirname "${BASH_SOURCE[0]}")"
-if [[ -f "$TR_DIR/../../feature/lib/date_utils.sh" ]]; then
-    source "$TR_DIR/../../feature/lib/date_utils.sh"
-else
-    get_iso_timestamp() { TZ="Europe/Berlin" date +"%Y-%m-%dT%H:%M:%S%z"; }
-fi
+# test_reporter.sh - Generates Test Reports for Test Ralph
+# Parses RALPH_TEST_RESULT block and creates structured reports
+#
+# Prerequisite: date_utils.sh is loaded by ralph.sh
 
 # State files
 REPORTS_DIR="${SCRIPT_DIR:-.}/reports"
 FINAL_REPORT_FILE="$REPORTS_DIR/final_report.json"
 
-# Farben
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# Colors are loaded from lib/colors.sh (via ralph.sh)
 
 # Initialize reports directory
 init_reports() {
@@ -128,15 +117,15 @@ save_test_result() {
     local result_file="$REPORTS_DIR/test_${feature_id}.json"
     echo "$test_result" | jq '.' > "$result_file"
 
-    echo -e "${GREEN}Test-Ergebnis gespeichert: $result_file${NC}"
+    echo -e "${GREEN}Test result saved: $result_file${NC}"
 }
 
 # Generate final report
 generate_final_report() {
-    local features_file="${SCRIPT_DIR:-.}/features.json"
+    local features_file="${SCRIPT_DIR:-.}/tasks.json"
 
     if [[ ! -f "$features_file" ]]; then
-        echo -e "${RED}Keine features.json gefunden${NC}"
+        echo -e "${RED}No tasks.json found${NC}"
         return 1
     fi
 
@@ -230,25 +219,25 @@ generate_final_report() {
 
     echo "$report" | jq '.' > "$FINAL_REPORT_FILE"
 
-    echo -e "${GREEN}Final Report generiert: $FINAL_REPORT_FILE${NC}"
+    echo -e "${GREEN}Final report generated: $FINAL_REPORT_FILE${NC}"
 
     # Print summary
     echo ""
     echo -e "${BLUE}======================================${NC}"
     echo -e "${BLUE}        TEST REPORT SUMMARY${NC}"
     echo -e "${BLUE}======================================${NC}"
-    echo -e "Features getestet:  $tested / $total"
-    echo -e "Bugs gefunden:      $(echo "$all_bugs" | jq 'length')"
-    echo -e "  - Critical:       $critical_bugs"
-    echo -e "  - Major:          $major_bugs"
-    echo -e "  - Minor:          $minor_bugs"
-    echo -e "  - Trivial:        $trivial_bugs"
-    echo -e "Vorschläge:         $(echo "$all_suggestions" | jq 'length')"
+    echo -e "Features tested:  $tested / $total"
+    echo -e "Bugs found:       $(echo "$all_bugs" | jq 'length')"
+    echo -e "  - Critical:     $critical_bugs"
+    echo -e "  - Major:        $major_bugs"
+    echo -e "  - Minor:        $minor_bugs"
+    echo -e "  - Trivial:      $trivial_bugs"
+    echo -e "Suggestions:      $(echo "$all_suggestions" | jq 'length')"
     echo ""
 
     if [[ $critical_bugs -gt 0 || $major_bugs -gt 0 ]]; then
-        echo -e "${RED}ACHTUNG: $critical_bugs critical und $major_bugs major Bugs gefunden!${NC}"
-        echo -e "${YELLOW}Sende Report an Debug-Ralph: ./ralph.sh --mode debug --input $FINAL_REPORT_FILE${NC}"
+        echo -e "${RED}WARNING: $critical_bugs critical and $major_bugs major bugs found!${NC}"
+        echo -e "${YELLOW}Send report to Debug Ralph: ./ralph.sh --mode debug --input $FINAL_REPORT_FILE${NC}"
     fi
 
     echo ""
@@ -270,72 +259,54 @@ log_test_summary() {
         echo -e "${BLUE}=== TEST SUMMARY ===${NC}"
         echo -e "Feature:      $feature"
         echo -e "Bugs:         $bugs"
-        echo -e "Vorschläge:   $suggestions"
+        echo -e "Suggestions:  $suggestions"
         echo -e "Screenshots:  $screenshots"
         echo -e "${BLUE}===================${NC}"
     else
-        echo -e "${YELLOW}Kein RALPH_STATUS Block gefunden${NC}"
+        echo -e "${YELLOW}No RALPH_STATUS block found${NC}"
     fi
 }
 
-# Log iteration summary from Claude JSON output
-log_iteration_summary() {
+# ============================================
+# Helper functions for log_iteration_summary
+# ============================================
+
+# Extracts JSON from output file (NDJSON or Single-JSON)
+_extract_json_from_output() {
     local output_file=$1
-    local feature_id=$2
-
-    if [[ ! -f "$output_file" ]]; then
-        echo -e "${YELLOW}Keine Output-Datei gefunden${NC}"
-        return 1
-    fi
-
-    # Check if file is empty
-    if [[ ! -s "$output_file" ]]; then
-        echo -e "${YELLOW}Output-Datei ist leer${NC}"
-        return 1
-    fi
-
-    # For stream-json format, extract just the last line (final result)
-    # stream-json produces NDJSON (newline-delimited JSON)
     local json_content
+
     if head -1 "$output_file" | jq -e '.type' > /dev/null 2>&1; then
         # NDJSON format - get last result line
         json_content=$(grep -E '^\{"type":"result"' "$output_file" | tail -1)
         if [[ -z "$json_content" ]]; then
-            # Fallback: try to get any valid JSON line
             json_content=$(tail -1 "$output_file")
         fi
     else
-        # Single JSON object
         json_content=$(cat "$output_file")
     fi
 
-    # Check if it's valid JSON
-    if ! echo "$json_content" | jq -e '.' > /dev/null 2>&1; then
-        echo -e "${YELLOW}Output ist kein valides JSON${NC}"
-        return 1
+    if echo "$json_content" | jq -e '.' > /dev/null 2>&1; then
+        echo "$json_content"
+        return 0
     fi
+    return 1
+}
 
-    # Use json_content instead of output_file from here on
-    local output_json="$json_content"
-
-    # Load feature details from features.json
-    local features_file="${SCRIPT_DIR:-$(dirname "$0")}/features.json"
-    local feature_title=""
-    local feature_type=""
-    local feature_focus=""
-    local feature_pages=""
+# Loads feature details from tasks.json
+_get_feature_details() {
+    local feature_id=$1
+    local features_file="${SCRIPT_DIR:-$(dirname "$0")}/tasks.json"
 
     if [[ -f "$features_file" ]]; then
-        local feature_data=$(jq -r --arg id "$feature_id" '.features[] | select(.id == $id)' "$features_file" 2>/dev/null)
-        if [[ -n "$feature_data" ]]; then
-            feature_title=$(echo "$feature_data" | jq -r '.message // ""')
-            feature_type=$(echo "$feature_data" | jq -r '.type // ""')
-            feature_focus=$(echo "$feature_data" | jq -r '.test_focus // ""' | head -c 80)
-            feature_pages=$(echo "$feature_data" | jq -r '.pages // [] | join(", ")' | head -c 50)
-        fi
+        jq -r --arg id "$feature_id" '.features[] | select(.id == $id)' "$features_file" 2>/dev/null
     fi
+}
 
-    # Extract metrics from json_content (not file, since we may have extracted from NDJSON)
+# Extracts execution metrics from JSON
+_extract_execution_metrics() {
+    local output_json=$1
+
     local duration_ms=$(echo "$output_json" | jq -r '.duration_ms // 0')
     local duration_s=$(echo "scale=1; $duration_ms / 1000" | bc 2>/dev/null || echo "0")
     local cost=$(echo "$output_json" | jq -r '.total_cost_usd // 0')
@@ -345,111 +316,138 @@ log_iteration_summary() {
     local cache_read=$(echo "$output_json" | jq -r '.usage.cache_read_input_tokens // 0')
     local is_error=$(echo "$output_json" | jq -r '.is_error // false')
 
-    # Format cost with 2 decimal places
-    local cost_formatted=$(printf "%.2f" "$cost" 2>/dev/null || echo "$cost")
+    jq -n \
+        --arg duration_s "$duration_s" \
+        --arg cost "$(printf "%.2f" "$cost" 2>/dev/null || echo "$cost")" \
+        --arg num_turns "$num_turns" \
+        --arg input_tokens "$(printf "%'d" "$input_tokens" 2>/dev/null || echo "$input_tokens")" \
+        --arg output_tokens "$(printf "%'d" "$output_tokens" 2>/dev/null || echo "$output_tokens")" \
+        --arg cache_read "$(printf "%'d" "$cache_read" 2>/dev/null || echo "$cache_read")" \
+        --arg is_error "$is_error" \
+        '{duration_s: $duration_s, cost: $cost, num_turns: $num_turns, input_tokens: $input_tokens, output_tokens: $output_tokens, cache_read: $cache_read, is_error: $is_error}'
+}
 
-    # Format tokens with thousand separators
-    local input_fmt=$(printf "%'d" "$input_tokens" 2>/dev/null || echo "$input_tokens")
-    local output_fmt=$(printf "%'d" "$output_tokens" 2>/dev/null || echo "$output_tokens")
-    local cache_fmt=$(printf "%'d" "$cache_read" 2>/dev/null || echo "$cache_read")
+# Extracts test results (Bugs, Suggestions)
+_extract_test_results() {
+    local output_json=$1
 
-    # Color based on success/error
-    local status_color=$GREEN
-    local status_text="SUCCESS"
-    if [[ "$is_error" == "true" ]]; then
-        status_color=$RED
-        status_text="ERROR"
-    fi
-
-    # Color for feature type
-    local type_color=$NC
-    case "$feature_type" in
-        critical) type_color=$RED ;;
-        setup) type_color=$YELLOW ;;
-        core) type_color=$GREEN ;;
-        *) type_color=$BLUE ;;
-    esac
-
-    # Parse test result from RALPH_TEST_RESULT block
-    # Create temp file for parse_test_result (it expects a file path)
     local temp_output=$(mktemp)
     echo "$output_json" > "$temp_output"
     local test_result=$(parse_test_result "$temp_output")
     rm -f "$temp_output"
-    local result_found=$(echo "$test_result" | jq -r '.found // false')
 
-    local bugs_count=0
-    local suggestions_count=0
-    local scenarios_count=0
-    local bugs_list=""
-    local suggestions_list=""
+    echo "$test_result"
+}
+
+# Formats and outputs the iteration summary
+_print_iteration_summary() {
+    local feature_id=$1
+    local feature_data=$2
+    local metrics=$3
+    local test_result=$4
+
+    # Feature Details
+    local feature_title=$(echo "$feature_data" | jq -r '.message // ""' 2>/dev/null)
+    local feature_type=$(echo "$feature_data" | jq -r '.type // ""' 2>/dev/null)
+    local feature_focus=$(echo "$feature_data" | jq -r '.test_focus // ""' 2>/dev/null | head -c 80)
+    local feature_pages=$(echo "$feature_data" | jq -r '.pages // [] | join(", ")' 2>/dev/null | head -c 50)
+
+    # Metrics
+    local duration_s=$(echo "$metrics" | jq -r '.duration_s')
+    local cost=$(echo "$metrics" | jq -r '.cost')
+    local num_turns=$(echo "$metrics" | jq -r '.num_turns')
+    local input_fmt=$(echo "$metrics" | jq -r '.input_tokens')
+    local output_fmt=$(echo "$metrics" | jq -r '.output_tokens')
+    local cache_fmt=$(echo "$metrics" | jq -r '.cache_read')
+    local is_error=$(echo "$metrics" | jq -r '.is_error')
+
+    # Status colors
+    local status_color=$GREEN status_text="SUCCESS"
+    [[ "$is_error" == "true" ]] && { status_color=$RED; status_text="ERROR"; }
+
+    # Type color
+    local type_color=$BLUE
+    case "$feature_type" in
+        critical) type_color=$RED ;; setup) type_color=$YELLOW ;; core) type_color=$GREEN ;;
+    esac
+
+    # Test results
+    local result_found=$(echo "$test_result" | jq -r '.found // false')
+    local bugs_count=0 suggestions_count=0 scenarios_count=0 bugs_list="" suggestions_list=""
 
     if [[ "$result_found" == "true" ]]; then
         bugs_count=$(echo "$test_result" | jq -r '.bugs | length // 0')
         suggestions_count=$(echo "$test_result" | jq -r '.suggestions | length // 0')
         scenarios_count=$(echo "$test_result" | jq -r '.tested_scenarios | length // 0')
-
-        # Get bug titles if any
-        if [[ $bugs_count -gt 0 ]]; then
-            bugs_list=$(echo "$test_result" | jq -r '.bugs[] | "     - [\(.severity // "unknown")] \(.title // "No title")"' 2>/dev/null)
-        fi
-
-        # Get suggestion titles if any
-        if [[ $suggestions_count -gt 0 ]]; then
-            suggestions_list=$(echo "$test_result" | jq -r '.suggestions[] | "     - [\(.type // "unknown")] \(.title // "No title")"' 2>/dev/null)
-        fi
+        [[ $bugs_count -gt 0 ]] && bugs_list=$(echo "$test_result" | jq -r '.bugs[] | "     - [\(.severity // "unknown")] \(.title // "No title")"' 2>/dev/null)
+        [[ $suggestions_count -gt 0 ]] && suggestions_list=$(echo "$test_result" | jq -r '.suggestions[] | "     - [\(.type // "unknown")] \(.title // "No title")"' 2>/dev/null)
     fi
 
-    # Color for bugs
-    local bugs_color=$GREEN
-    if [[ $bugs_count -gt 0 ]]; then
-        bugs_color=$RED
-    fi
+    local bugs_color=$GREEN sugg_color=$GREEN
+    [[ $bugs_count -gt 0 ]] && bugs_color=$RED
+    [[ $suggestions_count -gt 0 ]] && sugg_color=$YELLOW
 
-    # Color for suggestions
-    local sugg_color=$GREEN
-    if [[ $suggestions_count -gt 0 ]]; then
-        sugg_color=$YELLOW
-    fi
-
+    # Output
     echo ""
     echo -e "${BLUE}╔══════════════════════════════════════════════════════════════════╗${NC}"
     echo -e "${BLUE}║${NC}                     ITERATION SUMMARY                            ${BLUE}║${NC}"
     echo -e "${BLUE}╠══════════════════════════════════════════════════════════════════╣${NC}"
     echo -e "${BLUE}║${NC}  ${YELLOW}FEATURE${NC}                                                         ${BLUE}║${NC}"
     echo -e "${BLUE}║${NC}  ID:        ${YELLOW}${feature_id:-unknown}${NC}"
-    if [[ -n "$feature_title" ]]; then
-        echo -e "${BLUE}║${NC}  Titel:     ${feature_title}"
-    fi
-    if [[ -n "$feature_type" ]]; then
-        echo -e "${BLUE}║${NC}  Typ:       ${type_color}${feature_type}${NC}"
-    fi
-    if [[ -n "$feature_focus" ]]; then
-        echo -e "${BLUE}║${NC}  Focus:     ${feature_focus}..."
-    fi
-    if [[ -n "$feature_pages" ]]; then
-        echo -e "${BLUE}║${NC}  Pages:     ${feature_pages}"
-    fi
+    [[ -n "$feature_title" ]] && echo -e "${BLUE}║${NC}  Title:     ${feature_title}"
+    [[ -n "$feature_type" ]] && echo -e "${BLUE}║${NC}  Type:      ${type_color}${feature_type}${NC}"
+    [[ -n "$feature_focus" ]] && echo -e "${BLUE}║${NC}  Focus:     ${feature_focus}..."
+    [[ -n "$feature_pages" ]] && echo -e "${BLUE}║${NC}  Pages:     ${feature_pages}"
     echo -e "${BLUE}╠══════════════════════════════════════════════════════════════════╣${NC}"
     echo -e "${BLUE}║${NC}  ${YELLOW}EXECUTION${NC}                                                        ${BLUE}║${NC}"
     echo -e "${BLUE}║${NC}  Status:    ${status_color}${status_text}${NC}"
     echo -e "${BLUE}║${NC}  Duration:  ${duration_s}s"
-    echo -e "${BLUE}║${NC}  Cost:      \$${cost_formatted}"
+    echo -e "${BLUE}║${NC}  Cost:      \$${cost}"
     echo -e "${BLUE}║${NC}  Turns:     ${num_turns}"
     echo -e "${BLUE}║${NC}  Tokens:    In: ${input_fmt} | Out: ${output_fmt} | Cache: ${cache_fmt}"
     echo -e "${BLUE}╠══════════════════════════════════════════════════════════════════╣${NC}"
     echo -e "${BLUE}║${NC}  ${YELLOW}TEST RESULTS${NC}                                                     ${BLUE}║${NC}"
-    echo -e "${BLUE}║${NC}  Scenarios: ${scenarios_count} getestet"
+    echo -e "${BLUE}║${NC}  Scenarios: ${scenarios_count} tested"
     echo -e "${BLUE}║${NC}  Bugs:      ${bugs_color}${bugs_count}${NC}"
-    if [[ -n "$bugs_list" ]]; then
-        echo -e "$bugs_list"
-    fi
-    echo -e "${BLUE}║${NC}  Vorschläge:${sugg_color}${suggestions_count}${NC}"
-    if [[ -n "$suggestions_list" ]]; then
-        echo -e "$suggestions_list"
-    fi
+    [[ -n "$bugs_list" ]] && echo -e "$bugs_list"
+    echo -e "${BLUE}║${NC}  Suggestions:${sugg_color}${suggestions_count}${NC}"
+    [[ -n "$suggestions_list" ]] && echo -e "$suggestions_list"
     echo -e "${BLUE}╚══════════════════════════════════════════════════════════════════╝${NC}"
     echo ""
+}
+
+# ============================================
+# Main function: Log iteration summary
+# ============================================
+log_iteration_summary() {
+    local output_file=$1
+    local feature_id=$2
+
+    # Validation
+    if [[ ! -f "$output_file" ]]; then
+        echo -e "${YELLOW}No output file found${NC}"
+        return 1
+    fi
+    if [[ ! -s "$output_file" ]]; then
+        echo -e "${YELLOW}Output file is empty${NC}"
+        return 1
+    fi
+
+    # Extract JSON
+    local output_json
+    output_json=$(_extract_json_from_output "$output_file")
+    if [[ $? -ne 0 ]]; then
+        echo -e "${YELLOW}Output is not valid JSON${NC}"
+        return 1
+    fi
+
+    # Collect data
+    local feature_data=$(_get_feature_details "$feature_id")
+    local metrics=$(_extract_execution_metrics "$output_json")
+    local test_result=$(_extract_test_results "$output_json")
+
+    # Output
+    _print_iteration_summary "$feature_id" "$feature_data" "$metrics" "$test_result"
 }
 
 # Export functions

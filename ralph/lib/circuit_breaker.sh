@@ -1,30 +1,26 @@
 #!/usr/bin/env bash
-# circuit_breaker.sh - Stuck Detection für RALF
-# Gemeinsame Library für alle Ralph-Modi
-# Erkennt und stoppt Infinite Loops
+# circuit_breaker.sh - Stuck Detection for RALPH
+# Shared library for all Ralph modes
+# Detects and stops infinite loops
 
-# Source date utilities from same directory
+# Source shared libraries from same directory
 _CB_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "$_CB_DIR/date_utils.sh"
+source "$_CB_DIR/colors.sh"
+source "$_CB_DIR/file_lock.sh"
 
 # Circuit Breaker States
 CB_STATE_CLOSED="CLOSED"        # Normal operation
 CB_STATE_HALF_OPEN="HALF_OPEN"  # Monitoring mode
 CB_STATE_OPEN="OPEN"            # Failure detected, halted
 
-# State files
-CB_STATE_FILE="${SCRIPT_DIR:-.}/.circuit_breaker_state"
-CB_HISTORY_FILE="${LOG_DIR:-logs}/iteration_history.json"
+# State files (all in logs/ for consistency)
+CB_STATE_FILE="${LOG_DIR:-${SCRIPT_DIR:-.}/logs}/.circuit_breaker_state"
+CB_HISTORY_FILE="${LOG_DIR:-${SCRIPT_DIR:-.}/logs}/iteration_history.json"
 
 # Thresholds (from config or defaults)
 CB_NO_PROGRESS_THRESHOLD=${CB_NO_PROGRESS_THRESHOLD:-3}
 CB_SAME_ERROR_THRESHOLD=${CB_SAME_ERROR_THRESHOLD:-5}
-
-# Farben
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-NC='\033[0m'
 
 # Initialize circuit breaker
 init_circuit_breaker() {
@@ -35,17 +31,18 @@ init_circuit_breaker() {
     fi
 
     if [[ ! -f "$CB_STATE_FILE" ]]; then
-        cat > "$CB_STATE_FILE" << EOF
-{
-    "state": "$CB_STATE_CLOSED",
-    "last_change": "$(get_iso_timestamp)",
-    "consecutive_no_progress": 0,
-    "consecutive_same_error": 0,
-    "last_progress_loop": 0,
-    "total_opens": 0,
-    "reason": ""
-}
-EOF
+        jq -n \
+            --arg state "$CB_STATE_CLOSED" \
+            --arg last_change "$(get_iso_timestamp)" \
+            '{
+                state: $state,
+                last_change: $last_change,
+                consecutive_no_progress: 0,
+                consecutive_same_error: 0,
+                last_progress_loop: 0,
+                total_opens: 0,
+                reason: ""
+            }' > "$CB_STATE_FILE"
     fi
 
     if [[ ! -f "$CB_HISTORY_FILE" ]]; then
@@ -131,7 +128,9 @@ check_stuck_pattern() {
             files_changed: $files_changed,
             timestamp: $timestamp
         }')
-    history=$(echo "$history" | jq ". += [$entry] | .[-50:]")
+    # Keep only last MAX_HISTORY_ENTRIES entries
+    local max_entries=${MAX_HISTORY_ENTRIES:-50}
+    history=$(echo "$history" | jq ". += [$entry] | .[-${max_entries}:]")
     echo "$history" > "$CB_HISTORY_FILE"
 
     # Determine new state
@@ -142,28 +141,28 @@ check_stuck_pattern() {
         "$CB_STATE_CLOSED")
             if [[ $consecutive_no_progress -ge $CB_NO_PROGRESS_THRESHOLD ]]; then
                 new_state="$CB_STATE_OPEN"
-                reason="Kein Fortschritt in $consecutive_no_progress Iterationen"
+                reason="No progress in $consecutive_no_progress iterations"
             elif [[ $consecutive_same_error -ge $CB_SAME_ERROR_THRESHOLD ]]; then
                 new_state="$CB_STATE_OPEN"
-                reason="Gleicher Fehler $consecutive_same_error mal hintereinander"
+                reason="Same error $consecutive_same_error times in a row"
             elif [[ $consecutive_no_progress -ge 2 ]]; then
                 new_state="$CB_STATE_HALF_OPEN"
-                reason="Monitoring: $consecutive_no_progress Loops ohne Fortschritt"
+                reason="Monitoring: $consecutive_no_progress loops without progress"
             fi
             ;;
 
         "$CB_STATE_HALF_OPEN")
             if [[ "$has_progress" == "true" ]]; then
                 new_state="$CB_STATE_CLOSED"
-                reason="Fortschritt erkannt, Circuit recovered"
+                reason="Progress detected, circuit recovered"
             elif [[ $consecutive_no_progress -ge $CB_NO_PROGRESS_THRESHOLD ]]; then
                 new_state="$CB_STATE_OPEN"
-                reason="Keine Recovery, öffne Circuit nach $consecutive_no_progress Loops"
+                reason="No recovery, opening circuit after $consecutive_no_progress loops"
             fi
             ;;
 
         "$CB_STATE_OPEN")
-            reason="Circuit Breaker ist offen, Ausführung gestoppt"
+            reason="Circuit breaker is open, execution stopped"
             ;;
     esac
 
@@ -174,19 +173,27 @@ check_stuck_pattern() {
         total_opens=$((total_opens + 1))
     fi
 
-    cat > "$CB_STATE_FILE" << EOF
-{
-    "state": "$new_state",
-    "last_change": "$(get_iso_timestamp)",
-    "consecutive_no_progress": $consecutive_no_progress,
-    "consecutive_same_error": $consecutive_same_error,
-    "last_progress_loop": $last_progress_loop,
-    "total_opens": $total_opens,
-    "reason": "$reason",
-    "last_error": "$error_message",
-    "current_loop": $loop_number
-}
-EOF
+    jq -n \
+        --arg state "$new_state" \
+        --arg last_change "$(get_iso_timestamp)" \
+        --argjson consecutive_no_progress "$consecutive_no_progress" \
+        --argjson consecutive_same_error "$consecutive_same_error" \
+        --argjson last_progress_loop "$last_progress_loop" \
+        --argjson total_opens "$total_opens" \
+        --arg reason "$reason" \
+        --arg last_error "${error_message:-}" \
+        --argjson current_loop "$loop_number" \
+        '{
+            state: $state,
+            last_change: $last_change,
+            consecutive_no_progress: $consecutive_no_progress,
+            consecutive_same_error: $consecutive_same_error,
+            last_progress_loop: $last_progress_loop,
+            total_opens: $total_opens,
+            reason: $reason,
+            last_error: $last_error,
+            current_loop: $current_loop
+        }' > "$CB_STATE_FILE"
 
     # Log state transition
     if [[ "$new_state" != "$current_state" ]]; then
@@ -227,7 +234,7 @@ check_story_stuck() {
     local count=$(jq "[.[-5:][].story_id] | map(select(. == \"$current_story\")) | length" "$CB_HISTORY_FILE" 2>/dev/null)
 
     if [[ $count -ge 5 ]]; then
-        echo -e "${RED}Story $current_story stuck - 5 Iterationen ohne passes:true${NC}"
+        echo -e "${RED}Story $current_story stuck - 5 iterations without passes:true${NC}"
         return 1
     fi
 
@@ -257,31 +264,33 @@ show_circuit_status() {
     echo -e "${color}======================================${NC}"
     echo -e "${color}     Circuit Breaker Status${NC}"
     echo -e "${color}======================================${NC}"
-    echo -e "State:                 $state"
-    echo -e "Reason:                $reason"
-    echo -e "Loops ohne Progress:   $no_progress"
-    echo -e "Gleicher Error:        $same_error mal"
-    echo -e "Letzter Progress:      Loop #$last_progress"
-    echo -e "Aktueller Loop:        #$current_loop"
-    echo -e "Total Opens:           $total_opens"
+    echo -e "State:              $state"
+    echo -e "Reason:             $reason"
+    echo -e "Loops w/o Progress: $no_progress"
+    echo -e "Same Error:         $same_error times"
+    echo -e "Last Progress:      Loop #$last_progress"
+    echo -e "Current Loop:       #$current_loop"
+    echo -e "Total Opens:        $total_opens"
     echo ""
 }
 
 # Reset circuit breaker
 reset_circuit_breaker() {
-    local reason=${1:-"Manual reset"}
+    local reason="${1:-Manual reset}"
 
-    cat > "$CB_STATE_FILE" << EOF
-{
-    "state": "$CB_STATE_CLOSED",
-    "last_change": "$(get_iso_timestamp)",
-    "consecutive_no_progress": 0,
-    "consecutive_same_error": 0,
-    "last_progress_loop": 0,
-    "total_opens": 0,
-    "reason": "$reason"
-}
-EOF
+    jq -n \
+        --arg state "$CB_STATE_CLOSED" \
+        --arg last_change "$(get_iso_timestamp)" \
+        --arg reason "$reason" \
+        '{
+            state: $state,
+            last_change: $last_change,
+            consecutive_no_progress: 0,
+            consecutive_same_error: 0,
+            last_progress_loop: 0,
+            total_opens: 0,
+            reason: $reason
+        }' > "$CB_STATE_FILE"
 
     echo -e "${GREEN}Circuit Breaker reset to CLOSED state${NC}"
 }
@@ -295,16 +304,16 @@ should_halt_execution() {
         echo ""
         echo -e "${RED}EXECUTION HALTED: Circuit Breaker Opened${NC}"
         echo ""
-        echo -e "${YELLOW}Mögliche Gründe:${NC}"
-        echo "  - Projekt ist vielleicht fertig (check prd.json)"
-        echo "  - Claude steckt bei einem Fehler fest"
-        echo "  - prompt.md braucht Klarstellung"
+        echo -e "${YELLOW}Possible reasons:${NC}"
+        echo "  - Project might be finished (check tasks.json)"
+        echo "  - Claude is stuck on an error"
+        echo "  - prompt.md needs clarification"
         echo ""
-        echo -e "${YELLOW}Um fortzufahren:${NC}"
-        echo "  1. Logs prüfen: tail -20 logs/ralph.log"
-        echo "  2. Claude Output: ls -lt logs/claude_output_*.log | head -1"
-        echo "  3. prd.json und prompt.md aktualisieren"
-        echo "  4. Circuit reset: ./ralph.sh --reset-circuit"
+        echo -e "${YELLOW}To continue:${NC}"
+        echo "  1. Check logs: tail -20 logs/ralph.log"
+        echo "  2. Claude output: ls -lt logs/claude_output_*.log | head -1"
+        echo "  3. Update tasks.json and prompt.md"
+        echo "  4. Reset circuit: ./ralph.sh --reset-circuit"
         echo ""
         return 0  # Signal to halt
     else

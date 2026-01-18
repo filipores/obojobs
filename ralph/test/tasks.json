@@ -114,7 +114,79 @@
         "/new-application",
         "/applications"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-001",
+        "tested_at": "2026-01-18T12:00:00Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "critical",
+            "title": "PDF Download fails due to missing JWT authentication",
+            "steps_to_reproduce": [
+              "Complete the application generation flow",
+              "In the success modal, click 'PDF herunterladen'",
+              "Observe the new tab opens with a 401 error"
+            ],
+            "expected": "PDF should download successfully",
+            "actual": "401 Unauthorized error - 'Token fehlt' because window.open() doesn't send Authorization header",
+            "affected_component": "NewApplication.vue:1271-1274, Applications.vue:888-894, Timeline.vue:415"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "major",
+            "title": "Requirements error UI shows broken link to /support page that may not exist",
+            "steps_to_reproduce": [
+              "Enter a job URL that triggers requirements analysis failure",
+              "Observe the error message with 'Support kontaktieren' link",
+              "Click the link to /support"
+            ],
+            "expected": "Support page should exist and load",
+            "actual": "Route /support is not defined in router - will show 404",
+            "affected_component": "NewApplication.vue:494-504"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Umlaut encoding issue in German text",
+            "steps_to_reproduce": [
+              "View requirements error messages",
+              "Observe text like 'Voruebergehender' instead of 'Vorübergehender'"
+            ],
+            "expected": "Proper German umlauts (ü, ö, ä)",
+            "actual": "ASCII alternatives used (ue, oe, ae) in some error messages",
+            "affected_component": "NewApplication.vue:975-1021"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Add loading state feedback for PDF download",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "Add aria-live region for Job-Fit score loading state",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Consider adding email copy-to-clipboard functionality in success modal",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "ux",
+            "title": "Template selection dropdown should show template preview or description",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-002",
@@ -150,7 +222,85 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-002",
+        "tested_at": "2026-01-18T12:38:30.000Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Company extraction extracts entire sentence instead of company name",
+            "steps_to_reproduce": [
+              "Navigate to /new-application",
+              "Trigger URL loading failure",
+              "Click 'Stellentext manuell einfuegen'",
+              "Leave company field empty",
+              "Paste job text containing 'TechStartup GmbH sucht...' within a sentence",
+              "Click 'Stellentext analysieren'"
+            ],
+            "expected": "Company field should extract only 'TechStartup GmbH'",
+            "actual": "Company field extracts the entire line/sentence containing 'GmbH': 'TechStartup GmbH sucht zum naechstmoeglichen Zeitpunkt einen erfahrenen Entwickler fuer unser Team in Berlin...'",
+            "affected_component": "backend/routes/applications.py:303-305"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "critical",
+            "title": "PDF Download fails due to missing JWT authentication (same as CORE-001)",
+            "steps_to_reproduce": [
+              "Complete the manual text application generation flow",
+              "In the success modal, click 'PDF herunterladen'",
+              "Observe the new tab opens with a 401 error"
+            ],
+            "expected": "PDF should download successfully",
+            "actual": "401 Unauthorized error because window.open() doesn't send Authorization header",
+            "affected_component": "NewApplication.vue:1271-1274"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Umlaut encoding issue in German error messages (same as CORE-001)",
+            "steps_to_reproduce": [
+              "View requirements error messages or certain backend responses"
+            ],
+            "expected": "Proper German umlauts (ue -> ü, oe -> ö, ae -> ä)",
+            "actual": "ASCII alternatives used in some error messages like 'Voruebergehender' instead of 'Vorübergehender'",
+            "affected_component": "NewApplication.vue:975-1021"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Add character counter for manual job text input",
+            "description": "Show a live character counter (e.g., '245/100 min') next to the textarea to help users know they've met the 100 character minimum",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Pre-fill company and title fields from analyzed text",
+            "description": "When company/title are extracted from the text, the user shouldn't need to fill them manually beforehand - extract first, then let them edit",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Add paste-from-clipboard button for job text",
+            "description": "A 'Paste from clipboard' button would make it easier to insert job posting text, especially on mobile",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "feature",
+            "title": "Allow URL retry from fallback section",
+            "description": "Add a 'URL erneut versuchen' button in the manual fallback section for users who want to retry the URL instead",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-003",
@@ -181,7 +331,23 @@
         "/new-application",
         "/documents"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-003",
+        "tested_at": "2026-01-18T12:44:48.010Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Scroll animation could be smoother for Lebenslauf section",
+            "description": "When navigating to /documents?upload=lebenslauf, the page scrolls to the section automatically. Consider adding a subtle highlight animation after scroll completes for better visual feedback.",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-004",
@@ -208,7 +374,13 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [],
+        "notes": "No structured result returned"
+      }
     },
     {
       "id": "CORE-005",
@@ -237,7 +409,53 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-005",
+        "tested_at": "2026-01-18T12:55:00.000Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Missing portal-tag CSS class for Arbeitsagentur",
+            "steps_to_reproduce": [
+              "Navigate to /new-application",
+              "Enter a valid Arbeitsagentur URL (e.g., https://www.arbeitsagentur.de/jobsuche/123)",
+              "Click 'Stellenanzeige laden'",
+              "Wait for preview section to load",
+              "Observe the portal tag next to 'Stellenanzeige Preview' heading"
+            ],
+            "expected": "Portal tag should display 'Arbeitsagentur' with dark blue styling (background: rgba(0, 68, 103, 0.15); color: #004467)",
+            "actual": "Portal tag displays 'Arbeitsagentur' text but without proper brand-colored styling (uses default/unstyled appearance)",
+            "affected_component": "NewApplication.vue:1706-1733"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "feature",
+            "title": "Add more job portal detections",
+            "description": "Consider adding detection for other popular German job portals: LinkedIn Jobs (linkedin.com/jobs), Glassdoor (glassdoor.de), Monster (monster.de), Karriere.at for Austrian jobs",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Show portal logo/icon alongside badge",
+            "description": "Adding small portal logos next to the text badges would improve visual recognition and make the UI more polished",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "Add aria-label to portal badge explaining what it means",
+            "description": "The portal badge could benefit from an aria-label like 'Erkannte Jobplattform: StepStone' for better screen reader context",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-006",
@@ -275,7 +493,34 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-006",
+        "tested_at": "2026-01-18T12:55:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Add explicit validation error messages for required fields",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Trim whitespace in required field validation to prevent empty spaces being accepted",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-003",
+            "type": "accessibility",
+            "title": "Add aria-invalid attribute to required fields when validation fails",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-007",
@@ -304,7 +549,13 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [],
+        "notes": "No structured result returned"
+      }
     },
     {
       "id": "CORE-008",
@@ -334,7 +585,68 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-008",
+        "tested_at": "2026-01-18T13:15:00.000Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Support contact link points to non-existent /support route",
+            "steps_to_reproduce": [
+              "Navigate to /new-application",
+              "Load a job posting and wait for Job-Fit analysis",
+              "Trigger a persistent error in job-fit analysis (e.g., network failure)",
+              "Observe error state with 'Support kontaktieren' link",
+              "Click the 'Support kontaktieren' link"
+            ],
+            "expected": "Should navigate to a valid support page",
+            "actual": "Link leads to /support which is not defined in the router - results in 404 or blank page",
+            "affected_component": "JobFitScore.vue:36-46, NewApplication.vue:494-504"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Inconsistent German umlaut encoding in error messages",
+            "steps_to_reproduce": [
+              "Trigger an error in the Job-Fit analysis",
+              "Observe error messages in German text"
+            ],
+            "expected": "Proper German characters (ü, ö, ä) in all messages",
+            "actual": "ASCII alternatives used: 'Voruebergehender' instead of 'Vorübergehender'",
+            "affected_component": "NewApplication.vue:975-1021, JobFitScore.vue:222-228"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "accessibility",
+            "title": "Add aria-live region for requirements analysis loading state",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "feature",
+            "title": "Show skill match confidence level",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Add 'Learn More' links for missing skills using existing backend functionality",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-004",
+            "type": "performance",
+            "title": "Cache Job-Fit results per application to avoid redundant API calls",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-009",
@@ -363,7 +675,100 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-009",
+        "tested_at": "2026-01-18T14:25:00.000Z",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "major",
+            "title": "Support contact link points to non-existent /support route",
+            "steps_to_reproduce": [
+              "Navigate to /new-application",
+              "Load a job posting that triggers job-fit analysis",
+              "Trigger a persistent error in job-fit analysis (e.g., 400 Bad Request)",
+              "Observe error state showing 'Support kontaktieren' link",
+              "Click the 'Support kontaktieren' link"
+            ],
+            "expected": "Should navigate to a valid support page",
+            "actual": "Link leads to /support which is not defined in router/index.js - results in 404 page",
+            "affected_component": "NewApplication.vue:494-504, JobFitScore.vue:36-46"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Inconsistent German umlaut encoding in error messages",
+            "steps_to_reproduce": [
+              "Trigger a 5xx server error during job-fit analysis",
+              "Observe the error message text"
+            ],
+            "expected": "Proper German characters (ü, ö, ä) - e.g., 'Vorübergehender Serverfehler'",
+            "actual": "ASCII alternatives used: 'Voruebergehender Serverfehler', 'pruefen', 'verfuegbar'",
+            "affected_component": "NewApplication.vue:975-1021, JobFitScore.vue:222-228"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Missing mobile responsive styles for requirements error box",
+            "steps_to_reproduce": [
+              "Set viewport to mobile size (375x667)",
+              "Trigger a job-fit analysis error",
+              "Observe the error box layout"
+            ],
+            "expected": "Error box should have mobile-optimized layout (stacked elements, adjusted padding)",
+            "actual": "No @media query styles defined for .requirements-error, .requirements-alternatives, or .requirements-error-actions - may have layout issues on small screens",
+            "affected_component": "NewApplication.vue:2048-2183 (missing responsive styles)"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Add aria-live region for error state changes",
+            "description": "The error message should be announced to screen readers when it appears. Add role='alert' or aria-live='polite' to the requirements-error div.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Add mobile-specific responsive styles for error box",
+            "description": "Add @media (max-width: 768px) styles for .requirements-error to stack the icon and content vertically, and stack action buttons vertically for better mobile usability",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "feature",
+            "title": "Add dismiss/close button for error messages",
+            "description": "Allow users to dismiss the error box once they've seen it, rather than requiring them to click 'Ohne Score fortfahren'",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "ux",
+            "title": "Show remaining retry attempts for rate-limited errors",
+            "description": "When a 429 rate limit error occurs, show estimated wait time or retry countdown",
+            "priority": "low"
+          }
+        ],
+        "code_analysis": {
+          "error_handling_implemented": true,
+          "error_types_covered": [
+            "5xx Server Errors (temporary, yellow styling, retry available)",
+            "429 Rate Limit (temporary, retry available)",
+            "404 Not Found (no requirements found)",
+            "401/403 Auth Errors",
+            "400 Bad Request (persistent, contact link)",
+            "Network Errors (temporary, retry available)",
+            "Unknown Errors (persistent, contact link)"
+          ],
+          "continue_without_score": true,
+          "retry_functionality": true,
+          "generate_button_not_blocked": true
+        },
+        "found": true
+      }
     },
     {
       "id": "CORE-010",
@@ -391,7 +796,28 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-010",
+        "tested_at": "2026-01-18T12:00:00Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Consider adding more actionable guidance in low score warning",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-002",
+            "type": "accessibility",
+            "title": "Add aria-label or role='alert' to low-score-generate-warning for screen readers",
+            "priority": "medium"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-011",
@@ -424,7 +850,101 @@
         "/new-application",
         "/templates"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-011",
+        "tested_at": "2026-01-18T14:30:00.000Z",
+        "test_type": "code_analysis",
+        "test_limitation": "MCP Playwright server failed to connect - UI testing not possible. Code analysis performed instead.",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Template dropdown not sorted - default template may appear in middle of list",
+            "steps_to_reproduce": [
+              "Create 3+ templates",
+              "Set the 2nd or 3rd created template as default",
+              "Navigate to /new-application",
+              "Open the template dropdown"
+            ],
+            "expected": "Default template should appear first (or near top) in the dropdown for easy selection",
+            "actual": "Templates are returned in DB order (not sorted by is_default). The default template could appear anywhere in the list.",
+            "affected_component": "backend/routes/templates.py:107, frontend/src/pages/NewApplication.vue:1175-1176",
+            "code_evidence": "Template.query.filter_by(user_id=current_user.id).all() - no .order_by(Template.is_default.desc())"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Confusing template fallback behavior when 'Standard-Template verwenden' is selected",
+            "steps_to_reproduce": [
+              "Upload a document with type 'anschreiben' (cover letter)",
+              "Also create templates in /templates",
+              "Set one template as 'Standard'",
+              "Navigate to /new-application",
+              "Select 'Standard-Template verwenden' (null option)",
+              "Generate application"
+            ],
+            "expected": "Should use the template marked as 'Standard' in the templates list",
+            "actual": "Backend prioritizes uploaded 'anschreiben' document over the default template. If user has uploaded any anschreiben document, it will be used instead of the default template, which is confusing given the dropdown option text.",
+            "affected_component": "backend/services/generator.py:52-70",
+            "code_evidence": "Lines 54-58: anschreiben_doc check happens BEFORE default template check at lines 61-66"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Sort templates in dropdown with default first",
+            "description": "Add .order_by(Template.is_default.desc(), Template.created_at.desc()) to the /templates GET endpoint, or sort on frontend after loading. This ensures the default template appears at the top.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Rename 'Standard-Template verwenden' to clarify behavior",
+            "description": "Since the option uses uploaded anschreiben first, consider renaming to 'Automatisch wählen' or adding tooltip explaining the fallback logic: 'Nutzt hochgeladenes Anschreiben falls vorhanden, sonst Standard-Template'",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Show template preview/description in dropdown",
+            "description": "Show first ~50 characters of template content as description in dropdown options to help users distinguish templates",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-004",
+            "type": "accessibility",
+            "title": "Add aria-describedby for template selection explaining what happens",
+            "description": "Screen reader users would benefit from description like 'Das gewählte Template bestimmt Stil und Struktur des generierten Anschreibens'",
+            "priority": "low"
+          },
+          {
+            "id": "SUG-005",
+            "type": "feature",
+            "title": "Show which template will actually be used before generation",
+            "description": "Add a small info text below dropdown showing 'Wird verwendet: [Template Name]' that resolves the actual template including fallback logic, so users know exactly what will be used",
+            "priority": "medium"
+          }
+        ],
+        "code_analysis": {
+          "template_dropdown_location": "NewApplication.vue:517-525",
+          "template_loading": "NewApplication.vue:1172-1182 - calls GET /templates",
+          "template_api": "backend/routes/templates.py:103-108 - no sorting applied",
+          "template_selection_passed_to_backend": "NewApplication.vue:1215,1222 - template_id sent in generate request",
+          "template_resolution_backend": "backend/services/generator.py:43-70 - complex fallback logic",
+          "default_template_marking": "Frontend shows ' (Standard)' suffix at line 522",
+          "templates_page": "Templates.vue - users can create templates manually or via AI wizard"
+        },
+        "feature_implementation_status": {
+          "dropdown_shows_all_templates": "IMPLEMENTED - v-for iterates all templates",
+          "standard_template_marked": "IMPLEMENTED - ' (Standard)' suffix added",
+          "selection_changes_generated_letter": "IMPLEMENTED - template_id passed to API",
+          "needs_ui_verification": true
+        },
+        "found": true
+      }
     },
     {
       "id": "CORE-012",

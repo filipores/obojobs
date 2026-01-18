@@ -1,30 +1,19 @@
 #!/usr/bin/env bash
-# commit_analyzer.sh - Analysiert Commits für Test-Ralph
-# Extrahiert Features aus Commit-Range oder manueller Liste
-
-# Source date utilities from feature mode
-CA_DIR="$(dirname "${BASH_SOURCE[0]}")"
-if [[ -f "$CA_DIR/../../feature/lib/date_utils.sh" ]]; then
-    source "$CA_DIR/../../feature/lib/date_utils.sh"
-else
-    get_iso_timestamp() { TZ="Europe/Berlin" date +"%Y-%m-%dT%H:%M:%S%z"; }
-fi
+# commit_analyzer.sh - Analyzes Commits for Test Ralph
+# Extracts features from commit range or manual list
+#
+# Prerequisite: date_utils.sh is loaded by ralph.sh
 
 # State files
-FEATURES_FILE="${SCRIPT_DIR:-.}/features.json"
-MANUAL_FEATURES_FILE="${SCRIPT_DIR:-.}/manual_features.json"
+TASKS_FILE="${SCRIPT_DIR:-.}/tasks.json"
+MANUAL_TASKS_FILE="${SCRIPT_DIR:-.}/manual_tasks.json"
 
-# Farben
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# Colors are loaded from lib/colors.sh (via ralph.sh)
 
 # Initialize features file
 init_features_file() {
-    if [[ ! -f "$FEATURES_FILE" ]]; then
-        echo '{"features": [], "source": "none", "generated_at": ""}' > "$FEATURES_FILE"
+    if [[ ! -f "$TASKS_FILE" ]]; then
+        echo '{"features": [], "source": "none", "generated_at": ""}' > "$TASKS_FILE"
     fi
 }
 
@@ -33,13 +22,13 @@ extract_from_commits() {
     local base_branch=${1:-main}
     local features=()
 
-    echo -e "${BLUE}Analysiere Commits seit $base_branch...${NC}"
+    echo -e "${BLUE}Analyzing commits since $base_branch...${NC}"
 
     # Get commit list
     local commits=$(git log --oneline "$base_branch"..HEAD 2>/dev/null)
 
     if [[ -z "$commits" ]]; then
-        echo -e "${YELLOW}Keine neuen Commits seit $base_branch${NC}"
+        echo -e "${YELLOW}No new commits since $base_branch${NC}"
         return 1
     fi
 
@@ -99,8 +88,13 @@ extract_from_commits() {
                 test_result: null
             }')
 
-        feature_json=$(echo "$feature_json" | jq ". += [$entry]")
-        index=$((index + 1))
+        # Validate JSON before adding
+        if echo "$entry" | jq -e '.' > /dev/null 2>&1; then
+            feature_json=$(echo "$feature_json" | jq ". += [$entry]")
+            index=$((index + 1))
+        else
+            echo -e "${YELLOW}Warning: Invalid JSON for commit $hash, skipping${NC}" >&2
+        fi
 
     done <<< "$commits"
 
@@ -108,7 +102,7 @@ extract_from_commits() {
     local frontend_features=$(echo "$feature_json" | jq '[.[] | select(.scope == "frontend" or .scope == "fullstack")]')
     local frontend_count=$(echo "$frontend_features" | jq 'length')
 
-    echo -e "${GREEN}Gefunden: $index Commits, davon $frontend_count frontend-relevant${NC}"
+    echo -e "${GREEN}Found: $index commits, $frontend_count frontend-relevant${NC}"
 
     # Save to file
     jq -n \
@@ -122,28 +116,28 @@ extract_from_commits() {
             base_branch: $base,
             generated_at: $timestamp,
             total_commits: ($features | length)
-        }' > "$FEATURES_FILE"
+        }' > "$TASKS_FILE"
 
     return 0
 }
 
-# Load manual features from prompt.md or manual_features.json
+# Load manual features from prompt.md or manual_tasks.json
 load_manual_features() {
     local prompt_file="${SCRIPT_DIR:-.}/prompt.md"
 
-    # Check for manual_features.json first (highest priority)
-    if [[ -f "$MANUAL_FEATURES_FILE" ]]; then
-        echo -e "${BLUE}Lade manuelle Features aus manual_features.json...${NC}"
+    # Check for manual_tasks.json first (highest priority)
+    if [[ -f "$MANUAL_TASKS_FILE" ]]; then
+        echo -e "${BLUE}Loading manual features from manual_tasks.json...${NC}"
 
-        local manual_features=$(jq '.features // []' "$MANUAL_FEATURES_FILE" 2>/dev/null)
+        local manual_features=$(jq '.features // []' "$MANUAL_TASKS_FILE" 2>/dev/null)
         local manual_count=$(echo "$manual_features" | jq 'length')
 
         if [[ $manual_count -gt 0 ]]; then
-            echo -e "${GREEN}$manual_count manuelle Features gefunden${NC}"
+            echo -e "${GREEN}$manual_count manual features found${NC}"
 
             # Merge with existing features (manual takes priority)
-            if [[ -f "$FEATURES_FILE" ]]; then
-                local existing=$(cat "$FEATURES_FILE")
+            if [[ -f "$TASKS_FILE" ]]; then
+                local existing=$(cat "$TASKS_FILE")
                 local existing_features=$(echo "$existing" | jq '.features // []')
 
                 # Manual features override commits with same hash
@@ -161,7 +155,7 @@ load_manual_features() {
                         source: $source,
                         generated_at: $timestamp,
                         total_commits: ($features | length)
-                    }' > "$FEATURES_FILE"
+                    }' > "$TASKS_FILE"
             fi
 
             return 0
@@ -173,12 +167,12 @@ load_manual_features() {
 
 # Get next untested feature
 get_next_feature() {
-    if [[ ! -f "$FEATURES_FILE" ]]; then
+    if [[ ! -f "$TASKS_FILE" ]]; then
         echo ""
         return 1
     fi
 
-    local next=$(jq -r '.features | map(select(.tested == false)) | .[0] // empty' "$FEATURES_FILE")
+    local next=$(jq -r '.features | map(select(.tested == false)) | .[0] // empty' "$TASKS_FILE")
 
     if [[ -z "$next" || "$next" == "null" ]]; then
         echo ""
@@ -193,12 +187,12 @@ get_next_feature() {
 get_feature_by_id() {
     local feature_id=$1
 
-    if [[ ! -f "$FEATURES_FILE" ]]; then
+    if [[ ! -f "$TASKS_FILE" ]]; then
         echo ""
         return 1
     fi
 
-    jq -r --arg id "$feature_id" '.features | map(select(.id == $id)) | .[0] // empty' "$FEATURES_FILE"
+    jq -r --arg id "$feature_id" '.features | map(select(.id == $id)) | .[0] // empty' "$TASKS_FILE"
 }
 
 # Mark feature as tested
@@ -206,7 +200,7 @@ mark_feature_tested() {
     local feature_id=$1
     local test_result=$2  # JSON object with test results
 
-    if [[ ! -f "$FEATURES_FILE" ]]; then
+    if [[ ! -f "$TASKS_FILE" ]]; then
         return 1
     fi
 
@@ -217,14 +211,14 @@ mark_feature_tested() {
             else
                 .
             end
-        ]' "$FEATURES_FILE")
+        ]' "$TASKS_FILE")
 
-    echo "$updated" > "$FEATURES_FILE"
+    echo "$updated" > "$TASKS_FILE"
 }
 
 # Get testing progress
 get_test_progress() {
-    if [[ ! -f "$FEATURES_FILE" ]]; then
+    if [[ ! -f "$TASKS_FILE" ]]; then
         echo '{"total": 0, "tested": 0, "remaining": 0, "bugs": 0, "passed": 0}'
         return
     fi
@@ -235,27 +229,27 @@ get_test_progress() {
         remaining: ([.features[] | select(.tested == false)] | length),
         bugs: ([.features[] | select(.test_result.has_bugs == true)] | length),
         passed: ([.features[] | select(.test_result.has_bugs == false and .tested == true)] | length)
-    }' "$FEATURES_FILE"
+    }' "$TASKS_FILE"
 }
 
 # Get all bugs found
 get_all_bugs() {
-    if [[ ! -f "$FEATURES_FILE" ]]; then
+    if [[ ! -f "$TASKS_FILE" ]]; then
         echo '[]'
         return
     fi
 
-    jq '[.features[] | select(.test_result.bugs != null) | .test_result.bugs[]] | flatten' "$FEATURES_FILE"
+    jq '[.features[] | select(.test_result.bugs != null) | .test_result.bugs[]] | flatten' "$TASKS_FILE"
 }
 
 # Get all feature suggestions
 get_all_suggestions() {
-    if [[ ! -f "$FEATURES_FILE" ]]; then
+    if [[ ! -f "$TASKS_FILE" ]]; then
         echo '[]'
         return
     fi
 
-    jq '[.features[] | select(.test_result.suggestions != null) | .test_result.suggestions[]] | flatten' "$FEATURES_FILE"
+    jq '[.features[] | select(.test_result.suggestions != null) | .test_result.suggestions[]] | flatten' "$TASKS_FILE"
 }
 
 # Export functions

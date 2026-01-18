@@ -24,6 +24,7 @@ source "$SCRIPT_DIR/config.sh"
 
 # Source shared libraries (from parent lib/)
 SHARED_LIB="$SCRIPT_DIR/../lib"
+source "$SHARED_LIB/colors.sh"
 source "$SHARED_LIB/date_utils.sh"
 source "$SHARED_LIB/logger.sh"
 source "$SHARED_LIB/circuit_breaker.sh"
@@ -54,7 +55,7 @@ Optionen:
     -h, --help              Zeige diese Hilfe
     -b, --base BRANCH       Base-Branch für Commit-Range (default: main)
     -t, --timeout MIN       Claude Timeout in Minuten (default: $TIMEOUT_MINUTES)
-    -m, --max-iterations N  Max Anzahl Test-Iterationen (default: $MAX_TEST_ITERATIONS)
+    -m, --max-iterations N  Max Anzahl Test-Iterationen (default: $MAX_ITERATIONS)
     --url URL               Frontend URL (default: $FRONTEND_URL)
     --headless              Browser im Headless-Modus (default)
     --headed                Browser mit UI anzeigen
@@ -91,7 +92,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -m|--max-iterations)
-            MAX_TEST_ITERATIONS="$2"
+            MAX_ITERATIONS="$2"
             shift 2
             ;;
         --url)
@@ -111,12 +112,12 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --status)
-            if [[ -f "$SCRIPT_DIR/features.json" ]]; then
+            if [[ -f "$SCRIPT_DIR/tasks.json" ]]; then
                 echo -e "${BLUE}=== Test Progress ===${NC}"
                 get_test_progress | jq '.'
                 echo ""
                 echo -e "${BLUE}=== Features ===${NC}"
-                jq '.features[] | {id, message, tested, has_bugs: .test_result.has_bugs}' "$SCRIPT_DIR/features.json"
+                jq '.features[] | {id, message, tested, has_bugs: .test_result.has_bugs}' "$SCRIPT_DIR/tasks.json"
             else
                 echo "Keine Features geladen. Starte erst ./ralph.sh"
             fi
@@ -128,8 +129,8 @@ while [[ $# -gt 0 ]]; do
             ;;
         --reset)
             log_info "Reset Test-State..."
-            rm -f "$SCRIPT_DIR/features.json"
-            rm -f "$SCRIPT_DIR/.circuit_breaker_state"
+            rm -f "$SCRIPT_DIR/tasks.json"
+            rm -f "$LOG_DIR/.circuit_breaker_state"
             rm -f "$REPORTS_DIR"/*.json
             log_success "Reset abgeschlossen"
             exit 0
@@ -297,13 +298,13 @@ load_features() {
     # Extract from commits
     if ! extract_from_commits "$COMMIT_RANGE_BASE"; then
         # Check if we have manual features
-        local feature_count=$(jq '.features | length' "$SCRIPT_DIR/features.json" 2>/dev/null || echo "0")
+        local feature_count=$(jq '.features | length' "$SCRIPT_DIR/tasks.json" 2>/dev/null || echo "0")
         if [[ "$feature_count" == "0" ]]; then
             log_error "Keine Features zum Testen gefunden"
             echo ""
             echo "Optionen:"
             echo "  1. Commits auf Branch machen"
-            echo "  2. manual_features.json erstellen"
+            echo "  2. manual_tasks.json erstellen"
             echo "  3. Anderen Base-Branch wählen: ./ralph.sh --base develop"
             exit 1
         fi
@@ -433,31 +434,26 @@ $(cat "$SCRIPT_DIR/prompt.md")"
 }
 
 # ============================================
-# Update Status File
+# Update Status File (nutzt generische write_status_json)
 # ============================================
-update_status() {
+update_test_status() {
     local loop_count=$1
     local current_feature=$2
     local status=$3
 
     local progress=$(get_test_progress)
+    local tested=$(echo "$progress" | jq -r '.tested // 0')
+    local total=$(echo "$progress" | jq -r '.total // 0')
+    local bugs=$(echo "$progress" | jq -r '.bugs // 0')
 
-    jq -n \
-        --argjson progress "$progress" \
-        --arg current_feature "$current_feature" \
-        --arg status "$status" \
-        --arg loop "$loop_count" \
-        --arg started_at "$RALPH_STARTED_AT" \
-        --arg updated_at "$(get_iso_timestamp)" \
+    # Extras für Test-Mode
+    local extras=$(jq -n \
+        --argjson bugs_found "$bugs" \
         '{
-            mode: "test",
-            status: $status,
-            loop: $loop,
-            current_feature: $current_feature,
-            progress: $progress,
-            started_at: $started_at,
-            updated_at: $updated_at
-        }' > "$LOG_DIR/status.json"
+            bugs_found: $bugs_found
+        }')
+
+    write_status_json "test" "$status" "$loop_count" "$current_feature" "$tested" "$total" "$extras"
 }
 
 # ============================================
@@ -480,7 +476,7 @@ progress=$(get_test_progress)
 echo -e "Features:      ${BLUE}$(echo "$progress" | jq -r '.remaining')/$(echo "$progress" | jq -r '.total') zu testen${NC}"
 echo -e "Frontend:      ${BLUE}$FRONTEND_URL${NC}"
 echo -e "Base Branch:   ${BLUE}$COMMIT_RANGE_BASE${NC}"
-echo -e "Max Loops:     ${BLUE}$MAX_TEST_ITERATIONS${NC}"
+echo -e "Max Loops:     ${BLUE}$MAX_ITERATIONS${NC}"
 if [[ "$RALPH_IN_SPLIT_MODE" == "true" ]]; then
     echo -e "Split-Mode:    ${PURPLE}AKTIV - Claude Output im rechten Pane${NC}"
 fi
@@ -503,8 +499,8 @@ while true; do
     loop_count=$((loop_count + 1))
 
     # Check max iterations
-    if [[ $loop_count -gt $MAX_TEST_ITERATIONS ]]; then
-        log_warn "Max Iterationen ($MAX_TEST_ITERATIONS) erreicht"
+    if [[ $loop_count -gt $MAX_ITERATIONS ]]; then
+        log_warn "Max Iterationen ($MAX_ITERATIONS) erreicht"
         break
     fi
 
@@ -520,7 +516,7 @@ while true; do
     log_loop "=== Loop #$loop_count - Feature: $feature_id ==="
 
     # Update status
-    update_status "$loop_count" "$feature_id" "running"
+    update_test_status "$loop_count" "$feature_id" "running"
 
     # Execute test
     execute_test "$loop_count" "$feature"
@@ -529,17 +525,17 @@ while true; do
     case $exec_result in
         0)
             log_success "Test für $feature_id abgeschlossen"
-            update_status "$loop_count" "$feature_id" "success"
+            update_test_status "$loop_count" "$feature_id" "success"
             sleep 3
             ;;
         2)
             log_error "Timeout - überspringe Feature"
-            update_status "$loop_count" "$feature_id" "timeout"
+            update_test_status "$loop_count" "$feature_id" "timeout"
             sleep 5
             ;;
         *)
             log_error "Fehler - versuche erneut"
-            update_status "$loop_count" "$feature_id" "error"
+            update_test_status "$loop_count" "$feature_id" "error"
             sleep 10
             ;;
     esac

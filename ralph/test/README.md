@@ -1,30 +1,30 @@
-# RALF Test Mode
+# RALPH Test Mode
 
-RALF Test Mode ist ein explorativer QA-Agent, der MCP Playwright nutzt um neu implementierte Features im Browser zu testen.
+RALPH Test Mode is an exploratory QA agent that uses MCP Playwright to test newly implemented features in the browser.
 
 ## Features
 
-- **MCP Playwright Integration**: Browser-Automation direkt aus Claude Code
-- **Commit-basierte Feature-Erkennung**: Automatisch Features aus Git-History extrahieren
-- **Explorative Tests**: Claude erkundet die UI frei und sucht nach Bugs
-- **Strukturierte Reports**: JSON-Output für Weiterverarbeitung an Debug/Feature Ralph
-- **Loop-basierte Ausführung**: Testet alle Features nacheinander mit Circuit Breaker
+- **MCP Playwright Integration**: Browser automation directly from Claude Code
+- **Commit-based Feature Detection**: Automatically extract features from Git history
+- **Exploratory Tests**: Claude freely explores the UI looking for bugs
+- **Structured Reports**: JSON output for further processing by Debug/Feature Ralph
+- **Loop-based Execution**: Tests all features sequentially with Circuit Breaker
 
-## Voraussetzungen
+## Prerequisites
 
 ### 1. MCP Playwright Server
 
 ```bash
-# MCP Playwright zu Claude Code hinzufügen (offizielles Paket)
+# Add MCP Playwright to Claude Code (official package)
 claude mcp add playwright -- npx @playwright/mcp@latest
 
-# Prüfen ob konfiguriert
+# Check if configured
 claude mcp list
 ```
 
 ### 2. Frontend Server
 
-Der Frontend-Server muss laufen:
+The frontend server must be running:
 ```bash
 cd frontend && npm run dev
 ```
@@ -34,62 +34,62 @@ cd frontend && npm run dev
 ```bash
 cd ralph/test
 
-# Standard-Ausführung (testet alle Commits seit main)
+# Standard execution (tests all commits since main)
 ./ralph.sh
 
-# Mit spezifischem Base-Branch
+# With specific base branch
 ./ralph.sh --base develop
 
-# Browser sichtbar (nicht headless)
+# Browser visible (not headless)
 ./ralph.sh --headed
 
-# Status prüfen
+# Check status
 ./ralph.sh --status
 
-# Finalen Report generieren
+# Generate final report
 ./ralph.sh --report
 
-# Reset und neu starten
+# Reset and start fresh
 ./ralph.sh --reset
 ```
 
-## Dateistruktur
+## File Structure
 
 ```
 ralph/test/
-├── ralph.sh              # Haupt-Script
-├── config.sh             # Konfiguration
-├── prompt.md             # Claude Anweisungen
-├── features.json         # Geladene Features (generiert)
-├── manual_features.json  # Manuelle Feature-Override (optional)
+├── ralph.sh              # Main script
+├── config.sh             # Configuration
+├── prompt.md             # Claude instructions
+├── tasks.json            # Loaded features (generated)
+├── manual_tasks.json     # Manual feature override (optional)
 ├── lib/
-│   ├── commit_analyzer.sh    # Git-Analyse
-│   └── test_reporter.sh      # Report-Generierung
+│   ├── commit_analyzer.sh    # Git analysis
+│   └── test_reporter.sh      # Report generation
 ├── logs/
-│   ├── status.json           # Aktueller Status
-│   └── test_output_*.log     # Claude Outputs
+│   ├── status.json           # Current status
+│   └── test_output_*.log     # Claude outputs
 └── reports/
-    ├── test_*.json           # Einzelne Test-Ergebnisse
-    ├── final_report.json     # Gesamtreport
-    └── screenshots/          # Screenshots von Tests
+    ├── test_*.json           # Individual test results
+    ├── final_report.json     # Overall report
+    └── screenshots/          # Screenshots from tests
 ```
 
-## Feature-Quellen
+## Feature Sources
 
-### Automatisch (Default)
+### Automatic (Default)
 
-Features werden aus der Git-History extrahiert:
+Features are extracted from Git history:
 ```bash
-# Alle Commits seit main
+# All commits since main
 ./ralph.sh --base main
 
-# Alle Commits seit develop
+# All commits since develop
 ./ralph.sh --base develop
 ```
 
-### Manuell (Override)
+### Manual (Override)
 
-Erstelle `manual_features.json` für spezifische Tests:
+Create `manual_tasks.json` for specific tests:
 
 ```json
 {
@@ -97,7 +97,7 @@ Erstelle `manual_features.json` für spezifische Tests:
     {
       "id": "MANUAL-001",
       "commit_hash": "abc1234",
-      "message": "Dashboard neu gestaltet",
+      "message": "Dashboard redesigned",
       "scope": "frontend",
       "type": "feature",
       "changed_files": ["frontend/src/pages/Dashboard.vue"],
@@ -108,11 +108,11 @@ Erstelle `manual_features.json` für spezifische Tests:
 }
 ```
 
-Manuelle Features haben **Priorität** über automatisch erkannte.
+Manual features have **priority** over automatically detected ones.
 
 ## Output Format
 
-### Test-Ergebnis (pro Feature)
+### Test Result (per Feature)
 
 ```json
 {
@@ -123,7 +123,7 @@ Manuelle Features haben **Priorität** über automatisch erkannte.
     {
       "id": "BUG-001",
       "severity": "major",
-      "title": "Button reagiert nicht",
+      "title": "Button not responding",
       "description": "...",
       "steps_to_reproduce": ["..."],
       "affected_component": "Dashboard.vue"
@@ -133,7 +133,7 @@ Manuelle Features haben **Priorität** über automatisch erkannte.
     {
       "id": "SUG-001",
       "type": "ux",
-      "title": "Loading-Indicator fehlt",
+      "title": "Loading indicator missing",
       "priority": "medium"
     }
   ]
@@ -142,12 +142,12 @@ Manuelle Features haben **Priorität** über automatisch erkannte.
 
 ### Final Report
 
-Der finale Report enthält zwei spezielle Sektionen:
+The final report contains two special sections:
 
 ```json
 {
   "for_debug_ralph": {
-    "bugs_to_fix": [/* Critical und Major Bugs */]
+    "bugs_to_fix": [/* Critical and Major Bugs */]
   },
   "for_feature_ralph": {
     "features_to_add": [/* High-Priority Suggestions */]
@@ -159,140 +159,140 @@ Der finale Report enthält zwei spezielle Sektionen:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    RALF Ecosystem                            │
+│                    RALPH Ecosystem                          │
 ├─────────────────────────────────────────────────────────────┤
-│                                                              │
-│  Feature Ralph ──▶ Implementiert Features                   │
-│        │                                                     │
-│        ▼                                                     │
-│  Test Ralph ──▶ Testet Features mit MCP Playwright          │
-│        │                                                     │
-│        ├──▶ Bugs gefunden? ──▶ Debug Ralph                  │
-│        │                                                     │
-│        └──▶ Feature-Ideen? ──▶ Feature Ralph                │
-│                                                              │
+│                                                             │
+│  Feature Ralph ──▶ Implements features                     │
+│        │                                                    │
+│        ▼                                                    │
+│  Test Ralph ──▶ Tests features with MCP Playwright         │
+│        │                                                    │
+│        ├──▶ Bugs found? ──▶ Debug Ralph                    │
+│        │                                                    │
+│        └──▶ Feature ideas? ──▶ Feature Ralph               │
+│                                                             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Konfiguration
+## Configuration
 
-Alle Einstellungen in `config.sh`:
+All settings in `config.sh`:
 
-| Variable | Default | Beschreibung |
-|----------|---------|--------------|
-| `COMMIT_RANGE_BASE` | main | Base-Branch für Commit-Range |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `COMMIT_RANGE_BASE` | main | Base branch for commit range |
 | `FRONTEND_URL` | http://localhost:3000 | Frontend URL |
-| `HEADLESS` | true | Browser im Headless-Modus |
-| `VIEWPORT_SIZE` | 1280x720 | Browser-Viewport |
-| `MCP_CAPABILITIES` | testing | Playwright-Capabilities (testing, vision, pdf, tracing) |
-| `TIMEOUT_MINUTES` | 10 | Claude Timeout |
-| `MAX_TEST_ITERATIONS` | 10 | Max Anzahl Test-Loops |
-| `SAVE_TRACE` | false | Playwright-Trace speichern |
-| `SAVE_VIDEO` | false | Video der Session speichern |
+| `HEADLESS` | true | Browser in headless mode |
+| `VIEWPORT_SIZE` | 1280x720 | Browser viewport |
+| `MCP_CAPABILITIES` | testing | Playwright capabilities (testing, vision, pdf, tracing) |
+| `TIMEOUT_MINUTES` | 10 | Claude timeout |
+| `MAX_ITERATIONS` | 10 | Max number of test loops |
+| `SAVE_TRACE` | false | Save Playwright trace |
+| `SAVE_VIDEO` | false | Save video of session |
 
-### MCP Playwright CLI-Optionen
+### MCP Playwright CLI Options
 
-Der MCP Server unterstützt viele Optionen:
+The MCP server supports many options:
 
 ```bash
-# Mit Test-Assertions
+# With test assertions
 npx @playwright/mcp@latest --caps=testing
 
-# Mit Trace-Recording
+# With trace recording
 npx @playwright/mcp@latest --save-trace --caps=tracing
 
-# Mit spezifischem Browser
+# With specific browser
 npx @playwright/mcp@latest --browser=firefox
 
-# Mit Device-Emulation
+# With device emulation
 npx @playwright/mcp@latest --device="iPhone 15"
 
-# Headless deaktivieren
+# Disable headless
 npx @playwright/mcp@latest --headless=false
 ```
 
 ## MCP Playwright Tools
 
-Das offizielle `@playwright/mcp` Paket (Microsoft) bietet Browser-Automation.
+The official `@playwright/mcp` package (Microsoft) provides browser automation.
 Docs: https://github.com/microsoft/playwright-mcp
 
-### Wichtig: Snapshot vor Screenshot!
+### Important: Snapshot before Screenshot!
 
-`browser_snapshot` liefert strukturierte Accessibility-Daten für LLM-Interaktion.
-`browser_take_screenshot` nur für Dokumentation/Reports verwenden.
+`browser_snapshot` provides structured accessibility data for LLM interaction.
+`browser_take_screenshot` only for documentation/reports.
 
-### Verfügbare Tools
+### Available Tools
 
-**Navigation & Inspektion:**
-- `browser_navigate` - URL aufrufen
-- `browser_snapshot` - Accessibility-Snapshot (BEVORZUGT!)
-- `browser_take_screenshot` - Screenshot speichern
-- `browser_console_messages` - Console-Errors abrufen
-- `browser_network_requests` - API-Requests prüfen
+**Navigation & Inspection:**
+- `browser_navigate` - Open URL
+- `browser_snapshot` - Accessibility snapshot (PREFERRED!)
+- `browser_take_screenshot` - Save screenshot
+- `browser_console_messages` - Get console errors
+- `browser_network_requests` - Check API requests
 
-**Interaktion:**
-- `browser_click` - Element klicken
-- `browser_type` - Text eingeben
-- `browser_fill_form` - Formular ausfüllen
-- `browser_select_option` - Dropdown wählen
-- `browser_press_key` - Taste drücken
+**Interaction:**
+- `browser_click` - Click element
+- `browser_type` - Enter text
+- `browser_fill_form` - Fill form
+- `browser_select_option` - Select dropdown
+- `browser_press_key` - Press key
 
-**Test-Assertions (--caps=testing):**
+**Test Assertions (--caps=testing):**
 - `browser_verify_element_visible`
 - `browser_verify_text_visible`
 - `browser_verify_value`
 
-**Kontrolle:**
-- `browser_wait_for` - Warten auf Text/Zeit
-- `browser_resize` - Viewport ändern
-- `browser_close` - Browser schließen
+**Control:**
+- `browser_wait_for` - Wait for text/time
+- `browser_resize` - Change viewport
+- `browser_close` - Close browser
 
 ## Troubleshooting
 
-### MCP Playwright nicht gefunden
+### MCP Playwright Not Found
 
 ```bash
-# Neu hinzufügen (offizielles Paket)
+# Add again (official package)
 claude mcp add playwright -- npx @playwright/mcp@latest
 
-# Prüfen ob verbunden
+# Check if connected
 claude mcp list
 ```
 
-### Frontend nicht erreichbar
+### Frontend Not Reachable
 
 ```bash
-# Frontend starten
+# Start frontend
 cd frontend && npm run dev
 
-# Oder andere URL verwenden
+# Or use different URL
 ./ralph.sh --url http://localhost:5173
 ```
 
-### Keine Features gefunden
+### No Features Found
 
 ```bash
-# Prüfe ob Commits vorhanden
+# Check if commits exist
 git log --oneline main..HEAD
 
-# Oder manuell Features definieren
-# Erstelle manual_features.json
+# Or define features manually
+# Create manual_tasks.json
 ```
 
-## Bug-Kategorien
+## Bug Categories
 
-| Severity | Beschreibung | Aktion |
-|----------|--------------|--------|
-| **critical** | App crasht, Datenverlust | Sofort an Debug Ralph |
-| **major** | Feature funktioniert nicht | An Debug Ralph |
-| **minor** | Kosmetische Fehler | Backlog |
-| **trivial** | Typos, kleine Inkonsistenzen | Optional |
+| Severity | Description | Action |
+|----------|-------------|--------|
+| **critical** | App crashes, data loss | Immediately to Debug Ralph |
+| **major** | Feature doesn't work | To Debug Ralph |
+| **minor** | Cosmetic errors | Backlog |
+| **trivial** | Typos, small inconsistencies | Optional |
 
-## Suggestion-Typen
+## Suggestion Types
 
-| Type | Beschreibung |
-|------|--------------|
-| **ux** | User Experience Verbesserungen |
-| **performance** | Performance-Optimierungen |
-| **accessibility** | Barrierefreiheit |
-| **feature** | Neue Feature-Ideen |
+| Type | Description |
+|------|-------------|
+| **ux** | User Experience improvements |
+| **performance** | Performance optimizations |
+| **accessibility** | Accessibility |
+| **feature** | New feature ideas |

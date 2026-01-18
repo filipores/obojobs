@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# explorer.sh - Exploration-spezifische Funktionen für RALF Explore Mode
-# Handhabt Session-Management, Parsing und Deduplication
+# explorer.sh - Exploration-specific functions for RALPH Explore Mode
+# Handles session management, parsing and deduplication
 
 # ============================================
 # Session Management
@@ -41,15 +41,15 @@ EOF
         .test_credentials.password = $password
     ' "$session_file" > "$tmp_file" && mv "$tmp_file" "$session_file"
 
-    # Sync known IDs from bugs.json and sugg.json
+    # Sync known IDs from tasks.json and sugg.json
     sync_known_ids
 
-    log_info "Session initialisiert"
+    log_info "Session initialized"
 }
 
 sync_known_ids() {
     local session_file="$SCRIPT_DIR/session.json"
-    local bugs_file="$SCRIPT_DIR/bugs.json"
+    local bugs_file="$SCRIPT_DIR/tasks.json"
     local sugg_file="$SCRIPT_DIR/sugg.json"
 
     # Get existing bug IDs
@@ -80,17 +80,17 @@ save_session() {
         .last_updated = $updated
     ' "$session_file" > "$tmp_file" && mv "$tmp_file" "$session_file"
 
-    log_info "Session gespeichert"
+    log_info "Session saved"
 }
 
 reset_session() {
     rm -f "$SCRIPT_DIR/session.json"
-    rm -f "$SCRIPT_DIR/bugs.json"
+    rm -f "$SCRIPT_DIR/tasks.json"
     rm -f "$SCRIPT_DIR/sugg.json"
     rm -f "$LOG_DIR"/*.log
     rm -f "$LOG_DIR"/*.json
 
-    log_info "Session zurückgesetzt"
+    log_info "Session reset"
 }
 
 get_session_context() {
@@ -125,7 +125,7 @@ parse_explore_result() {
     local output_file=$1
 
     if [[ ! -f "$output_file" ]]; then
-        log_warn "Output-Datei nicht gefunden: $output_file"
+        log_warn "Output file not found: $output_file"
         return 1
     fi
 
@@ -152,13 +152,13 @@ parse_explore_result() {
     fi
 
     if [[ -z "$result_json" ]]; then
-        log_warn "Kein RALPH_EXPLORE_RESULT Block gefunden"
+        log_warn "No RALPH_EXPLORE_RESULT block found"
         return 1
     fi
 
     # Validate JSON
     if ! echo "$result_json" | jq empty 2>/dev/null; then
-        log_warn "Ungültiges JSON im Result-Block"
+        log_warn "Invalid JSON in result block"
         return 1
     fi
 
@@ -189,7 +189,7 @@ parse_explore_result() {
 
 process_new_bugs() {
     local bugs_json=$1
-    local bugs_file="$SCRIPT_DIR/bugs.json"
+    local bugs_file="$SCRIPT_DIR/tasks.json"
     local session_file="$SCRIPT_DIR/session.json"
 
     # Get known bug IDs for deduplication
@@ -201,7 +201,7 @@ process_new_bugs() {
 
         # Check for duplicates
         if [[ "$DEDUPE_ENABLED" == "true" ]] && echo "$known_ids" | grep -q "^$bug_id$"; then
-            log_info "Bug $bug_id bereits bekannt - übersprungen"
+            log_info "Bug $bug_id already known - skipped"
             continue
         fi
 
@@ -220,7 +220,7 @@ process_new_bugs() {
             .fixAttempts = 0
         ')
 
-        # Add to bugs.json
+        # Add to tasks.json
         local tmp_file="$bugs_file.tmp"
         jq --argjson bug "$bug" '.bugs += [$bug]' "$bugs_file" > "$tmp_file" && mv "$tmp_file" "$bugs_file"
 
@@ -229,7 +229,7 @@ process_new_bugs() {
         jq --arg id "$bug_id" '.known_bug_ids += [$id] | .known_bug_ids = (.known_bug_ids | unique)' \
             "$session_file" > "$tmp_file" && mv "$tmp_file" "$session_file"
 
-        log_success "Bug $bug_id hinzugefügt"
+        log_success "Bug $bug_id added"
     done
 }
 
@@ -247,7 +247,7 @@ process_new_suggestions() {
 
         # Check for duplicates
         if [[ "$DEDUPE_ENABLED" == "true" ]] && echo "$known_ids" | grep -q "^$sugg_id$"; then
-            log_info "Suggestion $sugg_id bereits bekannt - übersprungen"
+            log_info "Suggestion $sugg_id already known - skipped"
             continue
         fi
 
@@ -274,7 +274,7 @@ process_new_suggestions() {
         jq --arg id "$sugg_id" '.known_sugg_ids += [$id] | .known_sugg_ids = (.known_sugg_ids | unique)' \
             "$session_file" > "$tmp_file" && mv "$tmp_file" "$session_file"
 
-        log_success "Suggestion $sugg_id hinzugefügt"
+        log_success "Suggestion $sugg_id added"
     done
 }
 
@@ -305,11 +305,11 @@ update_session_stats() {
 
 show_explore_status() {
     local session_file="$SCRIPT_DIR/session.json"
-    local bugs_file="$SCRIPT_DIR/bugs.json"
+    local bugs_file="$SCRIPT_DIR/tasks.json"
     local sugg_file="$SCRIPT_DIR/sugg.json"
     local status_file="$LOG_DIR/status.json"
 
-    echo -e "${ORANGE}=== RALF Explore Status ===${NC}"
+    echo -e "${ORANGE}=== RALPH Explore Status ===${NC}"
     echo ""
 
     if [[ -f "$status_file" ]]; then
@@ -319,9 +319,9 @@ show_explore_status() {
 
         echo -e "Status:        ${BLUE}$status${NC}"
         echo -e "Loop:          ${BLUE}$loop${NC}"
-        echo -e "Gestartet:     ${BLUE}$started${NC}"
+        echo -e "Started:       ${BLUE}$started${NC}"
     else
-        echo -e "Status:        ${YELLOW}Nicht gestartet${NC}"
+        echo -e "Status:        ${YELLOW}Not started${NC}"
     fi
 
     echo ""
@@ -355,15 +355,15 @@ show_explore_status() {
         local interactions=$(jq '.exploration_stats.total_interactions' "$session_file" 2>/dev/null || echo "0")
 
         echo -e "${CYAN}Exploration:${NC}"
-        echo -e "  Seiten:      ${BLUE}$pages${NC}"
-        echo -e "  Interaktionen: ${BLUE}$interactions${NC}"
+        echo -e "  Pages:       ${BLUE}$pages${NC}"
+        echo -e "  Interactions: ${BLUE}$interactions${NC}"
     fi
 
     echo ""
 }
 
 show_findings_summary() {
-    local bugs_file="$SCRIPT_DIR/bugs.json"
+    local bugs_file="$SCRIPT_DIR/tasks.json"
     local sugg_file="$SCRIPT_DIR/sugg.json"
 
     echo ""
@@ -379,7 +379,7 @@ show_findings_summary() {
             jq -r '.bugs[] | "  [\(.severity)] \(.id): \(.title)"' "$bugs_file" 2>/dev/null
             echo ""
         else
-            echo -e "${GREEN}Keine Bugs gefunden${NC}"
+            echo -e "${GREEN}No bugs found${NC}"
             echo ""
         fi
     fi
@@ -393,7 +393,7 @@ show_findings_summary() {
             jq -r '.suggestions[] | "  [\(.priority)] \(.id): \(.title)"' "$sugg_file" 2>/dev/null
             echo ""
         else
-            echo -e "${GREEN}Keine Suggestions gefunden${NC}"
+            echo -e "${GREEN}No suggestions found${NC}"
             echo ""
         fi
     fi
@@ -401,9 +401,9 @@ show_findings_summary() {
     # Next steps
     local bugs_total=$(jq '.bugs | length' "$bugs_file" 2>/dev/null || echo "0")
     if [[ $bugs_total -gt 0 ]]; then
-        echo -e "${YELLOW}Nächste Schritte:${NC}"
-        echo -e "  1. Bugs reviewen:  ${BLUE}cat $bugs_file | jq '.bugs[]'${NC}"
-        echo -e "  2. Debug starten:  ${BLUE}cp bugs.json ../debug/ && cd ../debug && ./ralph.sh${NC}"
+        echo -e "${YELLOW}Next steps:${NC}"
+        echo -e "  1. Review bugs:  ${BLUE}cat $bugs_file | jq '.bugs[]'${NC}"
+        echo -e "  2. Start debug:  ${BLUE}cp tasks.json ../debug/ && cd ../debug && ./ralph.sh${NC}"
         echo ""
     fi
 }

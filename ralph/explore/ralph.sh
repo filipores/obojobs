@@ -178,9 +178,9 @@ check_servers() {
 init_session() {
     log_info "Initialisiere Explore-Session..."
 
-    # Initialize bugs.json if not exists
-    if [[ ! -f "$SCRIPT_DIR/bugs.json" ]]; then
-        cat > "$SCRIPT_DIR/bugs.json" << 'EOF'
+    # Initialize tasks.json if not exists
+    if [[ ! -f "$SCRIPT_DIR/tasks.json" ]]; then
+        cat > "$SCRIPT_DIR/tasks.json" << 'EOF'
 {
   "project": "obojobs",
   "mode": "explore",
@@ -188,7 +188,7 @@ init_session() {
   "bugs": []
 }
 EOF
-        log_info "bugs.json erstellt"
+        log_info "tasks.json erstellt"
     fi
 
     # Initialize sugg.json if not exists
@@ -236,7 +236,7 @@ Session Info: ${session_context}"
     local exec_result=0
 
     if $timeout_prefix claude \
-        --model "$CLAUDE_MODEL_EXPLORE" \
+        --model "$CLAUDE_MODEL" \
         --output-format json \
         --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
         --append-system-prompt "$context" \
@@ -266,28 +266,29 @@ Session Info: ${session_context}"
 }
 
 # ============================================
-# Update Status File
+# Update Status File (nutzt generische write_status_json)
 # ============================================
 update_explore_status() {
     local loop_count=$1
     local status=$2
 
-    local bugs_count=$(jq '.bugs | length' "$SCRIPT_DIR/bugs.json" 2>/dev/null || echo "0")
+    local bugs_count=$(jq '.bugs | length' "$SCRIPT_DIR/tasks.json" 2>/dev/null || echo "0")
     local sugg_count=$(jq '.suggestions | length' "$SCRIPT_DIR/sugg.json" 2>/dev/null || echo "0")
     local pages_count=$(jq '.visited_pages | length' "$SCRIPT_DIR/session.json" 2>/dev/null || echo "0")
 
-    cat > "$LOG_DIR/status.json" << EOF
-{
-    "mode": "explore",
-    "status": "$status",
-    "loop": $loop_count,
-    "bugs_found": $bugs_count,
-    "suggestions_found": $sugg_count,
-    "pages_explored": $pages_count,
-    "started_at": "$RALPH_STARTED_AT",
-    "updated_at": "$(get_iso_timestamp)"
-}
-EOF
+    # Extras für Explore-Mode
+    local extras=$(jq -n \
+        --argjson bugs_found "$bugs_count" \
+        --argjson suggestions_found "$sugg_count" \
+        --argjson pages_explored "$pages_count" \
+        '{
+            bugs_found: $bugs_found,
+            suggestions_found: $suggestions_found,
+            pages_explored: $pages_explored
+        }')
+
+    # Explore hat keine feste Anzahl - pages_explored als Progress, 0 als Total (endlos)
+    write_status_json "explore" "$status" "$loop_count" "Exploration" "$pages_count" "0" "$extras"
 }
 
 # ============================================
@@ -306,7 +307,7 @@ echo -e "${ORANGE}       RALF Explore Mode${NC}"
 echo -e "${ORANGE}==========================================${NC}"
 echo ""
 
-bugs_count=$(jq '.bugs | length' "$SCRIPT_DIR/bugs.json" 2>/dev/null || echo "0")
+bugs_count=$(jq '.bugs | length' "$SCRIPT_DIR/tasks.json" 2>/dev/null || echo "0")
 sugg_count=$(jq '.suggestions | length' "$SCRIPT_DIR/sugg.json" 2>/dev/null || echo "0")
 
 echo -e "Frontend:      ${BLUE}$FRONTEND_URL${NC}"
@@ -338,7 +339,7 @@ while true; do
     loop_count=$((loop_count + 1))
 
     # Safety check (should never hit in normal use)
-    if [[ $loop_count -gt $MAX_EXPLORE_ITERATIONS ]]; then
+    if [[ $loop_count -gt $MAX_ITERATIONS ]]; then
         log_warn "Max Iterationen erreicht (Safety-Limit)"
         break
     fi
@@ -349,7 +350,7 @@ while true; do
     update_explore_status "$loop_count" "exploring"
 
     # Track findings before
-    bugs_before=$(jq '.bugs | length' "$SCRIPT_DIR/bugs.json" 2>/dev/null || echo "0")
+    bugs_before=$(jq '.bugs | length' "$SCRIPT_DIR/tasks.json" 2>/dev/null || echo "0")
     sugg_before=$(jq '.suggestions | length' "$SCRIPT_DIR/sugg.json" 2>/dev/null || echo "0")
 
     # Execute exploration
@@ -357,7 +358,7 @@ while true; do
     exec_result=$?
 
     # Track findings after
-    bugs_after=$(jq '.bugs | length' "$SCRIPT_DIR/bugs.json" 2>/dev/null || echo "0")
+    bugs_after=$(jq '.bugs | length' "$SCRIPT_DIR/tasks.json" 2>/dev/null || echo "0")
     sugg_after=$(jq '.suggestions | length' "$SCRIPT_DIR/sugg.json" 2>/dev/null || echo "0")
 
     new_bugs=$((bugs_after - bugs_before))

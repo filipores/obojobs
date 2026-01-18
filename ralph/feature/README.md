@@ -1,88 +1,88 @@
-# RALF Feature Mode
+# RALPH Feature Mode
 
-RALF (Rapid Automated Lean Feature-builder) ist ein autonomer Entwicklungsagent, der User Stories aus einer PRD (Product Requirements Document) automatisch implementiert.
+RALPH (Rapid Automated Lean Feature-builder) is an autonomous development agent that automatically implements User Stories from a PRD (Product Requirements Document).
 
 ## Features
 
-- **Rate Limiting**: Begrenzt API-Calls auf 50/Stunde (konfigurierbar)
-- **Circuit Breaker**: Erkennt und stoppt Infinite Loops automatisch
-- **Timeout Protection**: Verhindert hängende Claude-Sessions (default: 15 Min)
-- **Status Reporting**: Strukturierte Statusberichte von Claude
-- **Live Monitoring**: Echtzeit-Dashboard im Terminal
-- **Structured Logging**: Umfassendes Logging für Debugging
+- **Rate Limiting**: Limits API calls to 50/hour (configurable)
+- **Circuit Breaker**: Detects and automatically stops infinite loops
+- **Timeout Protection**: Prevents hanging Claude sessions (default: 15 min)
+- **Status Reporting**: Structured status reports from Claude
+- **Live Monitoring**: Real-time dashboard in terminal
+- **Structured Logging**: Comprehensive logging for debugging
 
 ## Quick Start
 
 ```bash
-# RALF starten
+# Start RALPH
 cd ralph/feature
 ./ralph.sh
 
-# Mit Live-Monitor (separates Terminal)
+# With live monitor (separate terminal)
 ./monitor.sh
 
-# Status prüfen
+# Check status
 ./ralph.sh --status
 
-# Circuit Breaker zurücksetzen
+# Reset circuit breaker
 ./ralph.sh --reset-circuit
 ```
 
-## Konfiguration
+## Configuration
 
-Alle Einstellungen in `config.sh`:
+All settings in `config.sh`:
 
-| Variable | Default | Beschreibung |
-|----------|---------|--------------|
-| `MAX_CALLS_PER_HOUR` | 50 | Maximale API-Calls pro Stunde |
-| `TIMEOUT_MINUTES` | 15 | Claude-Ausführungs-Timeout |
-| `CB_NO_PROGRESS_THRESHOLD` | 3 | Loops ohne Fortschritt bis Circuit öffnet |
-| `CB_SAME_ERROR_THRESHOLD` | 5 | Gleicher Fehler bis Circuit öffnet |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAX_CALLS_PER_HOUR` | 50 | Maximum API calls per hour |
+| `TIMEOUT_MINUTES` | 15 | Claude execution timeout |
+| `CB_NO_PROGRESS_THRESHOLD` | 3 | Loops without progress until circuit opens |
+| `CB_SAME_ERROR_THRESHOLD` | 5 | Same error until circuit opens |
 
-## Dateistruktur
+## File Structure
 
 ```
 ralph/feature/
-├── ralph.sh           # Haupt-Script
-├── monitor.sh         # Live-Monitor
-├── config.sh          # Konfiguration
-├── prompt.md          # Anweisungen für Claude
-├── prd.json           # User Stories
-├── progress.txt       # Fortschrittsdokumentation
+├── ralph.sh           # Main script
+├── monitor.sh         # Live monitor
+├── config.sh          # Configuration
+├── prompt.md          # Instructions for Claude
+├── tasks.json         # User Stories
+├── progress.txt       # Progress documentation
 ├── lib/
-│   ├── date_utils.sh      # Datum-Funktionen
-│   ├── logger.sh          # Logging-Funktionen
+│   ├── date_utils.sh      # Date functions
+│   ├── logger.sh          # Logging functions
 │   ├── rate_limiter.sh    # Rate Limiting
 │   ├── circuit_breaker.sh # Stuck Detection
-│   └── response_analyzer.sh # Output-Analyse
+│   └── response_analyzer.sh # Output analysis
 └── logs/
-    ├── ralph.log          # Ausführungslog
-    ├── status.json        # Aktueller Status
-    ├── history.json       # Letzte 50 Iterationen
-    └── claude_output_*.log # Claude-Outputs
+    ├── ralph.log          # Execution log
+    ├── status.json        # Current status
+    ├── history.json       # Last 50 iterations
+    └── claude_output_*.log # Claude outputs
 ```
 
 ## PRD Format
 
-Die `prd.json` enthält User Stories im Format:
+The `tasks.json` contains User Stories in format:
 
 ```json
 {
   "project": "obojobs",
   "branchName": "ralph/feature-name",
-  "description": "Feature-Beschreibung",
+  "description": "Feature description",
   "userStories": [
     {
       "id": "FEATURE-001",
-      "title": "Story Titel",
-      "description": "Was implementiert werden soll",
+      "title": "Story Title",
+      "description": "What should be implemented",
       "acceptanceCriteria": [
-        "Kriterium 1",
-        "Kriterium 2"
+        "Criterion 1",
+        "Criterion 2"
       ],
       "priority": 1,
       "passes": false,
-      "notes": "Zusätzliche Hinweise"
+      "notes": "Additional notes"
     }
   ]
 }
@@ -90,7 +90,7 @@ Die `prd.json` enthält User Stories im Format:
 
 ## Status Reporting (RALPH_STATUS)
 
-Claude gibt am Ende jeder Antwort einen Status-Block aus:
+Claude outputs a status block at the end of each response:
 
 ```
 ---RALPH_STATUS---
@@ -106,99 +106,99 @@ RECOMMENDATION: <one line summary>
 
 ## Circuit Breaker
 
-Der Circuit Breaker hat drei Zustände:
+The Circuit Breaker has three states:
 
-| Zustand | Bedeutung |
-|---------|-----------|
-| **CLOSED** | Normal, Arbeit wird fortgesetzt |
-| **HALF_OPEN** | Monitoring, 2 Loops ohne Fortschritt |
-| **OPEN** | Gestoppt, manuelle Intervention nötig |
+| State | Meaning |
+|-------|---------|
+| **CLOSED** | Normal, work continues |
+| **HALF_OPEN** | Monitoring, 2 loops without progress |
+| **OPEN** | Stopped, manual intervention required |
 
-Der Circuit öffnet wenn:
-- 3+ Loops ohne Dateiänderungen
-- 5+ Loops mit gleichem Fehler
-- Gleiche Story 5x ohne `passes: true`
+The circuit opens when:
+- 3+ loops without file changes
+- 5+ loops with same error
+- Same story 5x without `passes: true`
 
 ## Troubleshooting
 
-### RALF stoppt mit "Circuit Breaker Open"
+### RALPH stops with "Circuit Breaker Open"
 
 ```bash
-# Status prüfen
+# Check status
 ./ralph.sh --circuit-status
 
-# Logs ansehen
+# View logs
 tail -50 logs/ralph.log
 
-# Letzten Claude-Output prüfen
+# Check last Claude output
 ls -lt logs/claude_output_*.log | head -1 | xargs cat
 
-# Circuit zurücksetzen
+# Reset circuit
 ./ralph.sh --reset-circuit
 ```
 
-### Rate Limit erreicht
+### Rate Limit Reached
 
-RALF wartet automatisch auf den nächsten Stunden-Reset. Du kannst:
-- Warten (automatisch fortsetzen)
-- Abbrechen und später starten
-- `MAX_CALLS_PER_HOUR` in config.sh erhöhen
+RALPH automatically waits for the next hour reset. You can:
+- Wait (continues automatically)
+- Cancel and start later
+- Increase `MAX_CALLS_PER_HOUR` in config.sh
 
-### Claude hängt/Timeout
+### Claude Hangs/Timeout
 
-- Timeout in config.sh erhöhen: `TIMEOUT_MINUTES=30`
+- Increase timeout in config.sh: `TIMEOUT_MINUTES=30`
 - Via CLI: `./ralph.sh --timeout 30`
 
-### Story nicht als "passes" markiert
+### Story Not Marked as "passes"
 
-Claude muss:
-1. Alle Tests grün haben
-2. `passes: true` in prd.json setzen
-3. `EXIT_SIGNAL: true` im Status-Block
+Claude must:
+1. Have all tests green
+2. Set `passes: true` in tasks.json
+3. Have `EXIT_SIGNAL: true` in status block
 
-Prüfe ob alle Acceptance Criteria erfüllt sind.
+Check if all Acceptance Criteria are fulfilled.
 
 ## Monitoring
 
-### Live-Monitor (empfohlen)
+### Live Monitor (recommended)
 
 ```bash
-# In separatem Terminal
+# In separate terminal
 ./monitor.sh
 
-# Mit anderem Refresh-Interval (default: 5s)
+# With different refresh interval (default: 5s)
 ./monitor.sh 10
 ```
 
-### Einfache Alternative
+### Simple Alternative
 
 ```bash
-# Status in Echtzeit beobachten
+# Watch status in real-time
 watch -n 5 'cat logs/status.json | jq .'
 
-# Logs verfolgen
+# Follow logs
 tail -f logs/ralph.log
 ```
 
-## CLI Optionen
+## CLI Options
 
 ```
 ./ralph.sh [OPTIONS]
 
-Optionen:
-  -h, --help          Hilfe anzeigen
-  -c, --calls NUM     Max API-Calls pro Stunde
-  -t, --timeout MIN   Claude Timeout in Minuten
-  -v, --verbose       Detaillierte Ausgabe
-  --status            Aktuellen Status anzeigen
-  --reset-circuit     Circuit Breaker zurücksetzen
-  --circuit-status    Circuit Breaker Status anzeigen
+Options:
+  -h, --help          Show help
+  -c, --calls NUM     Max API calls per hour
+  -t, --timeout MIN   Claude timeout in minutes
+  -v, --verbose       Detailed output
+  --status            Show current status
+  --reset-circuit     Reset circuit breaker
+  --circuit-status    Show circuit breaker status
 ```
 
-## Tipps für effektive Nutzung
+## Tips for Effective Use
 
-1. **PRD klar formulieren**: Je klarer die Acceptance Criteria, desto besser das Ergebnis
-2. **Monitor nutzen**: Live-Überwachung hilft bei der Fehlersuche
-3. **Logs prüfen**: Bei Problemen immer `logs/ralph.log` und Claude-Outputs checken
-4. **Kleine Stories**: Lieber viele kleine Stories als wenige große
-5. **Tests wichtig**: RALF setzt `passes: true` nur bei grünen Tests
+1. **Formulate PRD clearly**: The clearer the Acceptance Criteria, the better the result
+2. **Use monitor**: Live monitoring helps with troubleshooting
+3. **Check logs**: Always check `logs/ralph.log` and Claude outputs on problems
+4. **Small stories**: Many small stories are better than few large ones
+5. **Tests important**: RALPH only sets `passes: true` with green tests

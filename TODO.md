@@ -1,1 +1,4 @@
 - vor jedem commit code-simplifier plugin ausführen
+- suggestion ralph
+- für jeden ralph eine eiegne branch
+- nach jeden durchlauf soll die ralph session archiviert werden & und die prds gecleant

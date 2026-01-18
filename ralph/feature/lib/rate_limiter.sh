@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
-# rate_limiter.sh - Rate Limiting für RALF
-# Begrenzt API-Calls pro Stunde
+# rate_limiter.sh - Rate Limiting for RALPH
+# Limits API calls per hour
 
-# Source date utilities from shared lib
+# Source shared libraries
 RATE_LIMITER_DIR="$(dirname "${BASH_SOURCE[0]}")"
 SHARED_LIB_DIR="$RATE_LIMITER_DIR/../../lib"
 source "$SHARED_LIB_DIR/date_utils.sh"
+source "$SHARED_LIB_DIR/file_lock.sh"
 
 # Get rate limit file path (must be called after LOG_DIR is set)
 get_rate_limit_file() {
@@ -17,12 +18,9 @@ init_rate_limiter() {
     local RATE_LIMIT_FILE=$(get_rate_limit_file)
     mkdir -p "$(dirname "$RATE_LIMIT_FILE")"
     if [[ ! -f "$RATE_LIMIT_FILE" ]]; then
-        cat > "$RATE_LIMIT_FILE" << EOF
-{
-    "calls": 0,
-    "hour_started": "$(get_iso_timestamp)"
-}
-EOF
+        jq -n \
+            --arg hour_started "$(get_iso_timestamp)" \
+            '{calls: 0, hour_started: $hour_started}' > "$RATE_LIMIT_FILE"
     fi
 }
 
@@ -49,12 +47,9 @@ reset_if_hour_passed() {
 
     if [[ "$current_hour" != "$started_hour" ]]; then
         # New hour, reset counter
-        cat > "$RATE_LIMIT_FILE" << EOF
-{
-    "calls": 0,
-    "hour_started": "$(get_iso_timestamp)"
-}
-EOF
+        jq -n \
+            --arg hour_started "$(get_iso_timestamp)" \
+            '{calls: 0, hour_started: $hour_started}' > "$RATE_LIMIT_FILE"
         echo "Rate limit counter reset for new hour"
     fi
 }
@@ -76,25 +71,29 @@ check_rate_limit() {
     fi
 }
 
-# Increment call count
+# Increment call count (with file locking)
 increment_call_count() {
     local RATE_LIMIT_FILE=$(get_rate_limit_file)
-    reset_if_hour_passed
 
-    local calls=$(jq -r '.calls' "$RATE_LIMIT_FILE" 2>/dev/null)
-    calls=${calls:-0}
-    calls=$((calls + 1))
+    if acquire_lock "$RATE_LIMIT_FILE"; then
+        reset_if_hour_passed
 
-    local hour_started=$(jq -r '.hour_started' "$RATE_LIMIT_FILE" 2>/dev/null)
+        local calls=$(jq -r '.calls' "$RATE_LIMIT_FILE" 2>/dev/null)
+        calls=${calls:-0}
+        calls=$((calls + 1))
 
-    cat > "$RATE_LIMIT_FILE" << EOF
-{
-    "calls": $calls,
-    "hour_started": "$hour_started"
-}
-EOF
+        local hour_started=$(jq -r '.hour_started' "$RATE_LIMIT_FILE" 2>/dev/null)
 
-    echo $calls
+        jq -n \
+            --argjson calls "$calls" \
+            --arg hour_started "$hour_started" \
+            '{calls: $calls, hour_started: $hour_started}' > "$RATE_LIMIT_FILE"
+
+        release_lock "$RATE_LIMIT_FILE"
+        echo $calls
+    else
+        echo "0"
+    fi
 }
 
 # Get remaining calls

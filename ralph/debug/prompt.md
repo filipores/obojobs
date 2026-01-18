@@ -1,33 +1,52 @@
-# RALF Debug Mode
+# RALPH Debug Mode
 
-Fixe Bugs aus `ralph/debug/bugs.json` systematisch.
+Fix bugs from `ralph/debug/tasks.json` systematically.
 
-## Dateien
-- **Bugs**: `ralph/debug/bugs.json` - Bugs mit `fixed: false`
-- **Kontext**: `AGENTS.md` - Projekt-Konventionen
-- **Learnings**: `ralph/debug/learnings.md` - Erkenntnisse dokumentieren
+## Files
+- **Bugs**: `ralph/debug/tasks.json` - Bugs with `fixed: false`
+- **Context**: `AGENTS.md` - Project conventions
 
-## Workflow pro Bug
+## Workflow per Bug
 
-1. **Bug verstehen**: Lies `stepsToReproduce`, `rootCause`, `affectedFiles`, `suggestedFix`
-2. **Code analysieren**: Verifiziere Root Cause in betroffenen Dateien
-3. **Fix implementieren**: Minimale Änderung, Konventionen aus AGENTS.md befolgen
+1. **Understand bug**: Read `stepsToReproduce`, `rootCause`, `affectedFiles`, `suggestedFix`
+2. **Analyze code**: Verify root cause in affected files
+3. **Implement fix**: Minimal change, follow conventions from AGENTS.md
 4. **Quality Checks**:
    ```bash
    cd backend && source venv/bin/activate && pytest && ruff check .
    cd frontend && npm test && npm run lint && npm run build
    ```
-5. **Bei Erfolg**:
-   - Git Commit: `fix: BUG-ID - Title` (mit Co-Authored-By: Claude)
-   - bugs.json: `fixed: true` setzen
-   - Learnings in `learnings.md` dokumentieren
+5. **Update AGENTS.md** if you recognize reusable patterns (see below)
+6. **On success**:
+   - Git Commit: `fix: BUG-ID - Title` (with Co-Authored-By: Claude)
+   - tasks.json: set `fixed: true`
 
-## Regeln
-- Ein Bug pro Iteration, Root Cause verstehen
-- Minimal invasive Fixes, Tests müssen grün sein
-- Autonom handeln
+## Rules
+- One bug per iteration, understand root cause
+- Minimally invasive fixes, tests must be green
+- Act autonomously
 
-## Status (PFLICHT am Ende jeder Antwort)
+## Updating AGENTS.md Files
+
+Before committing, check if edited files have insights worth capturing in nearby AGENTS.md files:
+
+1. **Identify directories with edited files** - See which directories you modified
+2. **Look for existing AGENTS.md** - Search for AGENTS.md in these directories or parent directories
+3. **Add valuable insights** - If you discovered something that future developers/agents should know:
+   - API patterns or conventions specific to this module
+   - Pitfalls or non-obvious requirements
+   - Dependencies between files
+   - Testing approaches for this area
+   - Configuration or environment requirements
+
+**DO NOT add:**
+- Bug-specific implementation details
+- Temporary debugging notes
+- One-off fixes without reuse value
+
+Only update AGENTS.md if you have **truly reusable knowledge** that would help with future work in this directory.
+
+## Status (MANDATORY at end of every response)
 
 ```
 ---RALPH_STATUS---
@@ -37,10 +56,10 @@ FIX_SUCCESSFUL: true|false
 TESTS_STATUS: PASSING|FAILING|NOT_RUN
 FILES_MODIFIED: <n>
 EXIT_SIGNAL: false|true
-RECOMMENDATION: <nächster Schritt>
+RECOMMENDATION: <next step>
 ---END_RALPH_STATUS---
 ```
 
-**EXIT_SIGNAL: true** nur wenn ALLE Bugs `fixed: true` und Tests grün.
+**EXIT_SIGNAL: true** only when ALL bugs have `fixed: true` and tests are green.
 
-Beginne mit dem nächsten offenen Bug!
+Begin with the next open bug!

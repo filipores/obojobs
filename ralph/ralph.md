@@ -1,34 +1,34 @@
 # RALPH - Autonomous Development Agent Framework
 
-RALPH (Rapid Automated Lean Feature-builder) ist ein Framework für autonome Entwicklungsagenten, die Claude Code nutzen um verschiedene Aufgaben im Software-Entwicklungsprozess auszuführen.
+RALPH (Rapid Automated Lean Feature-builder) is a framework for autonomous development agents that use Claude Code to perform various tasks in the software development process.
 
-## Konzept
+## Concept
 
-Ralph orchestriert Claude Code Sessions in verschiedenen Modi. Jeder Modus hat:
-- Ein **Shell-Script** (`ralph.sh`) das die Hauptschleife ausführt
-- Eine **Prompt-Datei** (`prompt.md`) mit Anweisungen für Claude
-- Eine **Config-Datei** (`config.sh`) mit Konfigurationsoptionen
-- Eine **Datendatei** (JSON) mit den zu bearbeitenden Items
+Ralph orchestrates Claude Code sessions in different modes. Each mode has:
+- A **Shell script** (`ralph.sh`) that runs the main loop
+- A **Prompt file** (`prompt.md`) with instructions for Claude
+- A **Config file** (`config.sh`) with configuration options
+- A **Data file** (JSON) with items to process
 
-Ralph ruft Claude Code in einer Schleife auf, analysiert die Responses und entscheidet ob fortgefahren oder gestoppt werden soll.
+Ralph calls Claude Code in a loop, analyzes responses, and decides whether to continue or stop.
 
-## Modi-Übersicht
+## Mode Overview
 
 ```
 ┌──────────────────────────────────────────────────────────────────┐
 │                     RALPH Ecosystem                               │
 ├──────────────────────────────────────────────────────────────────┤
 │                                                                   │
-│  feature/ ──▶ Implementiert User Stories aus prd.json            │
+│  feature/ ──▶ Implements User Stories from tasks.json             │
 │      │                                                            │
 │      ▼                                                            │
-│  test/ ──▶ Testet Features mit MCP Playwright (Browser)          │
+│  test/ ──▶ Tests Features with MCP Playwright (Browser)          │
 │      │                                                            │
-│      ├──▶ Bugs gefunden? ──▶ debug/                              │
+│      ├──▶ Bugs found? ──▶ debug/                                 │
 │      │                                                            │
-│      └──▶ Suggestions? ──▶ feature/ (neue Stories)               │
+│      └──▶ Suggestions? ──▶ feature/ (new stories)                │
 │                                                                   │
-│  explore/ ──▶ Exploratives Testen der gesamten App               │
+│  explore/ ──▶ Exploratory Testing of the entire app              │
 │      │                                                            │
 │      └──▶ Bugs + Suggestions ──▶ debug/ / feature/               │
 │                                                                   │
@@ -36,95 +36,98 @@ Ralph ruft Claude Code in einer Schleife auf, analysiert die Responses und entsc
 ```
 
 ### Feature Mode (`ralph/feature/`)
-Implementiert User Stories aus einer PRD (Product Requirements Document).
+Implements User Stories from a PRD (Product Requirements Document).
 
-**Dateien:**
-- `prd.json` - User Stories mit `passes: false/true`
-- `progress.txt` - Fortschrittsdokumentation
-- `prompt.md` - Implementierungs-Anweisungen
+**Files:**
+- `tasks.json` - User Stories with `passes: false/true`
+- `logs/progress.txt` - Progress documentation
+- `prompt.md` - Implementation instructions
 
 **Workflow:**
-1. Lies Story mit niedrigster `priority` und `passes: false`
-2. Implementiere alle Acceptance Criteria
-3. Führe Quality Checks aus (Tests, Linting, Build)
-4. Git Commit und `passes: true` setzen
+1. Read story with lowest `priority` and `passes: false`
+2. Implement all Acceptance Criteria
+3. Run Quality Checks (tests, linting, build)
+4. Git commit and set `passes: true`
 
 ### Debug Mode (`ralph/debug/`)
-Fixiert Bugs aus einer Bug-Datenbank.
+Fixes bugs from a bug database.
 
-**Dateien:**
-- `bugs.json` - Bugs mit `fixed: false/true`
-- `learnings.md` - Dokumentierte Erkenntnisse
-- `prompt.md` - Debug-Anweisungen
+**Files:**
+- `tasks.json` - Bugs with `fixed: false/true`
+- `prompt.md` - Debug instructions
 
 **Workflow:**
-1. Lies Bug mit `fixed: false`
-2. Analysiere Root Cause
-3. Implementiere minimalen Fix
-4. Teste und setze `fixed: true`
+1. Read bug with `fixed: false`
+2. Analyze root cause
+3. Implement minimal fix
+4. Test and set `fixed: true`
 
 ### Test Mode (`ralph/test/`)
-Testet Features durch explorative UI-Tests mit MCP Playwright.
+Tests features through exploratory UI tests with MCP Playwright.
 
-**Dateien:**
-- `features.json` - Aus Git-History extrahierte Features
-- `manual_features.json` - Optional: Manuelle Feature-Liste
-- `prompt.md` - Test-Anweisungen
+**Files:**
+- `tasks.json` - Features extracted from Git history
+- `manual_tasks.json` - Optional: Manual feature list
+- `prompt.md` - Test instructions
 
 **Workflow:**
-1. Extrahiere Features aus Git-Commits
-2. Starte Browser via MCP Playwright
-3. Teste jedes Feature explorativ
-4. Dokumentiere Bugs und Suggestions
+1. Extract features from Git commits
+2. Start browser via MCP Playwright
+3. Test each feature exploratively
+4. Document bugs and suggestions
 
-**Voraussetzung:** MCP Playwright Server (`claude mcp add playwright -- npx @playwright/mcp@latest`)
+**Prerequisite:** MCP Playwright Server (`claude mcp add playwright -- npx @playwright/mcp@latest`)
 
 ### Explore Mode (`ralph/explore/`)
-Exploratives Testen der gesamten Applikation.
+Exploratory testing of the entire application.
 
-**Dateien:**
-- `bugs.json` - Gefundene Bugs
-- `sugg.json` - Feature-Suggestions
-- `session.json` - Session-State (besuchte Seiten, etc.)
+**Files:**
+- `tasks.json` - Found bugs
+- `sugg.json` - Feature suggestions
+- `session.json` - Session state (visited pages, etc.)
 
 **Workflow:**
-1. Navigiere durch die App
-2. Teste Interaktionen und Edge Cases
-3. Dokumentiere Bugs und Suggestions
-4. Priorisiere nach Severity
+1. Navigate through the app
+2. Test interactions and edge cases
+3. Document bugs and suggestions
+4. Prioritize by severity
 
-## Architektur
+## Architecture
 
 ```
 ralph/
-├── ralph.md              # Diese Dokumentation
-├── setup-ubuntu.sh       # Setup-Script für Ubuntu
+├── ralph.md              # This documentation
+├── setup-ubuntu.sh       # Setup script for Ubuntu
 ├── lib/                  # Shared Libraries
 │   ├── circuit_breaker.sh    # Stuck Detection
-│   ├── context_builder.sh    # Token-optimierter Kontext
-│   ├── date_utils.sh         # Datum-Funktionen
-│   └── logger.sh             # Strukturiertes Logging
+│   ├── colors.sh             # Terminal colors
+│   ├── context_builder.sh    # Token-optimized context
+│   ├── date_utils.sh         # Date functions
+│   ├── logger.sh             # Structured logging + status
+│   └── monitor.sh            # Generic live monitor (all modes)
 ├── feature/              # Feature Mode
-│   ├── ralph.sh              # Haupt-Script
-│   ├── config.sh             # Konfiguration
-│   ├── prompt.md             # Claude-Anweisungen
-│   ├── prd.json              # User Stories
-│   ├── progress.txt          # Fortschritt
+│   ├── ralph.sh              # Main script
+│   ├── config.sh             # Configuration
+│   ├── prompt.md             # Claude instructions
+│   ├── tasks.json            # User Stories
 │   ├── lib/
 │   │   ├── rate_limiter.sh   # Rate Limiting
 │   │   └── response_analyzer.sh
-│   └── logs/
+│   └── logs/                 # Runtime data
+│       ├── ralph.log
+│       ├── status.json
+│       ├── progress.txt
+│       └── .circuit_breaker_state
 ├── debug/                # Debug Mode
 │   ├── ralph.sh
 │   ├── config.sh
 │   ├── prompt.md
-│   ├── bugs.json
-│   └── learnings.md
+│   └── tasks.json
 ├── test/                 # Test Mode
 │   ├── ralph.sh
 │   ├── config.sh
 │   ├── prompt.md
-│   ├── features.json
+│   ├── tasks.json
 │   └── lib/
 │       ├── commit_analyzer.sh
 │       └── test_reporter.sh
@@ -132,7 +135,7 @@ ralph/
     ├── ralph.sh
     ├── config.sh
     ├── prompt.md
-    ├── bugs.json
+    ├── tasks.json
     ├── sugg.json
     ├── session.json
     └── lib/
@@ -142,32 +145,70 @@ ralph/
 ## Shared Libraries
 
 ### Circuit Breaker (`lib/circuit_breaker.sh`)
-Erkennt und stoppt Infinite Loops automatisch.
+Detects and automatically stops infinite loops.
 
-**Zustände:**
-| Zustand | Bedeutung |
-|---------|-----------|
-| `CLOSED` | Normal, Arbeit wird fortgesetzt |
-| `HALF_OPEN` | Monitoring, 2 Loops ohne Fortschritt |
-| `OPEN` | Gestoppt, manuelle Intervention nötig |
+**States:**
+| State | Meaning |
+|-------|---------|
+| `CLOSED` | Normal, work continues |
+| `HALF_OPEN` | Monitoring, 2 loops without progress |
+| `OPEN` | Stopped, manual intervention required |
 
-**Trigger für OPEN:**
-- 3+ Loops ohne Dateiänderungen (`CB_NO_PROGRESS_THRESHOLD`)
-- 5+ Loops mit gleichem Fehler (`CB_SAME_ERROR_THRESHOLD`)
-- Gleiche Story 5x ohne `passes: true`
+**Triggers for OPEN:**
+- 3+ loops without file changes (`CB_NO_PROGRESS_THRESHOLD`)
+- 5+ loops with same error (`CB_SAME_ERROR_THRESHOLD`)
+- Same story 5x without `passes: true`
 
 ### Rate Limiter (`feature/lib/rate_limiter.sh`)
-Begrenzt API-Calls auf konfigurierbare Anzahl pro Stunde.
+Limits API calls to configurable number per hour.
 
 ### Logger (`lib/logger.sh`)
-Strukturiertes Logging mit Farben und Status-JSON für Monitoring.
+Structured logging with colors and status JSON for monitoring.
 
 ### Context Builder (`lib/context_builder.sh`)
-Berechnet relevante Dateien für eine Story/Bug vor, um Token zu sparen.
+Pre-calculates relevant files for a story/bug to save tokens.
+
+### Monitor (`lib/monitor.sh`)
+Generic live monitor for all Ralph modes.
+
+**Usage:**
+```bash
+# Auto-detect active mode
+./lib/monitor.sh
+
+# Specific mode
+./lib/monitor.sh feature
+./lib/monitor.sh debug 3     # with 3s refresh
+
+# All modes simultaneously
+./lib/monitor.sh --all
+```
+
+**Unified Status JSON Format:**
+All modes write `logs/status.json` in the same format:
+
+```json
+{
+  "mode": "feature|debug|test|explore",
+  "status": "running|complete|error|timeout|circuit_open|interrupted",
+  "loop": 5,
+  "current_task": "Story-ID / Bug-ID / Feature-Name",
+  "progress": {
+    "completed": 3,
+    "total": 10
+  },
+  "started_at": "2024-01-15T10:30:00Z",
+  "updated_at": "2024-01-15T11:45:00Z",
+  // Mode-specific extras:
+  "calls_made_this_hour": 25,    // Feature
+  "model": "claude-opus-4",         // Debug
+  "bugs_found": 3                // Test/Explore
+}
+```
 
 ## Status Reporting
 
-Jede Claude-Response MUSS einen Status-Block enthalten:
+Every Claude response MUST contain a status block:
 
 ```
 ---RALPH_STATUS---
@@ -177,105 +218,112 @@ FILES_MODIFIED: <n>
 TESTS_STATUS: PASSING|FAILING|NOT_RUN
 WORK_TYPE: IMPLEMENTATION|TESTING|DOCUMENTATION|REFACTORING
 EXIT_SIGNAL: false|true
-RECOMMENDATION: <nächster Schritt>
+RECOMMENDATION: <next step>
 ---END_RALPH_STATUS---
 ```
 
-**EXIT_SIGNAL: true** beendet die Ralph-Session sauber.
+**EXIT_SIGNAL: true** cleanly ends the Ralph session.
 
-## Konfiguration
+## Configuration
 
-Wichtige Variablen in `config.sh`:
+Important variables in `config.sh`:
 
-| Variable | Default | Beschreibung |
-|----------|---------|--------------|
-| `MAX_CALLS_PER_HOUR` | 50 | Rate Limit |
-| `TIMEOUT_MINUTES` | 15 | Claude-Timeout |
-| `CB_NO_PROGRESS_THRESHOLD` | 3 | Loops ohne Fortschritt |
-| `CB_SAME_ERROR_THRESHOLD` | 5 | Gleiche Fehler |
-| `CLAUDE_MODEL_IMPL` | claude-opus-4-5-20251101 | Claude Model |
-| `CLAUDE_ALLOWED_TOOLS` | Write,Edit,Read,... | Erlaubte Tools |
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `MAX_CALLS_PER_HOUR` | 50 | Rate limit |
+| `TIMEOUT_MINUTES` | 15 | Claude timeout |
+| `CB_NO_PROGRESS_THRESHOLD` | 3 | Loops without progress |
+| `CB_SAME_ERROR_THRESHOLD` | 5 | Same errors |
+| `CLAUDE_MODEL` | claude-opus-4-5-20251101 | Claude model |
+| `CLAUDE_ALLOWED_TOOLS` | Write,Edit,Read,... | Allowed tools |
 
-## CLI Optionen
+## CLI Options
 
-Alle Ralph-Modi unterstützen ähnliche Optionen:
+All Ralph modes support similar options:
 
 ```bash
 ./ralph.sh [OPTIONS]
 
-Optionen:
-  -h, --help          Hilfe anzeigen
-  -c, --calls NUM     Max API-Calls pro Stunde
-  -t, --timeout MIN   Claude Timeout in Minuten
-  --status            Aktuellen Status anzeigen
-  --reset-circuit     Circuit Breaker zurücksetzen
-  --circuit-status    Circuit Breaker Status anzeigen
+Options:
+  -h, --help          Show help
+  -c, --calls NUM     Max API calls per hour
+  -t, --timeout MIN   Claude timeout in minutes
+  --status            Show current status
+  --reset-circuit     Reset circuit breaker
+  --circuit-status    Show circuit breaker status
 ```
 
-## Für Claude Agents
+## For Claude Agents
 
-### Wichtige Regeln
+### Important Rules
 
-1. **Status-Block ist Pflicht**: Jede Response MUSS mit einem Status-Block enden
-2. **Eine Aufgabe pro Iteration**: Bearbeite eine Story/Bug vollständig
-3. **Quality Checks**: Tests, Linting, Build müssen grün sein
-4. **Autonom handeln**: Nicht nachfragen, eigenständig entscheiden
-5. **Dokumentieren**: Progress in entsprechenden Dateien festhalten
-6. **AGENTS.md beachten**: Projekt-Konventionen befolgen
+1. **Status block is mandatory**: Every response MUST end with a status block
+2. **One task per iteration**: Complete one story/bug fully
+3. **Quality checks**: Tests, linting, build must be green
+4. **Act autonomously**: Don't ask questions, make decisions independently
+5. **Document**: Record progress in corresponding files
+6. **Follow AGENTS.md**: Adhere to project conventions
 
 ### Exit Signals
 
-Setze `EXIT_SIGNAL: true` nur wenn:
-- Alle Stories/Bugs abgearbeitet (`passes: true` / `fixed: true`)
-- Alle Tests grün
-- Build erfolgreich
+Set `EXIT_SIGNAL: true` only when:
+- All stories/bugs completed (`passes: true` / `fixed: true`)
+- All tests green
+- Build successful
 
-### Umgang mit Fehlern
+### Handling Errors
 
-1. Bei Test-Fehlern: Fix implementieren, nicht einfach überspringen
-2. Bei Build-Fehlern: Root Cause finden und beheben
-3. Bei Unklarheiten: Im `RECOMMENDATION` Feld notieren
+1. On test failures: Implement fix, don't just skip
+2. On build errors: Find root cause and resolve
+3. On uncertainties: Note in `RECOMMENDATION` field
 
-### Token-Optimierung
+### Token Optimization
 
-- Context Builder liefert relevante Dateien vor
-- Nur notwendige Dateien lesen
-- Status-Block kompakt halten
+- Context Builder provides relevant files upfront
+- Only read necessary files
+- Keep status block compact
 
 ## Monitoring
 
 ```bash
-# Live-Monitor (separates Terminal)
-./monitor.sh
+# Live monitor for all modes (separate terminal)
+./lib/monitor.sh              # Auto-detect active mode
+./lib/monitor.sh feature      # Feature mode
+./lib/monitor.sh debug        # Debug mode
+./lib/monitor.sh test         # Test mode
+./lib/monitor.sh explore      # Explore mode
+./lib/monitor.sh --all        # All modes simultaneously
 
-# Status prüfen
-./ralph.sh --status
+# Check status
+./feature/ralph.sh --status
+./debug/ralph.sh --status
 
-# Logs verfolgen
-tail -f logs/ralph.log
+# Follow logs
+tail -f feature/logs/ralph.log
+tail -f debug/logs/ralph.log
 
-# Circuit Breaker Status
-./ralph.sh --circuit-status
+# Circuit breaker status
+./feature/ralph.sh --circuit-status
 ```
 
 ## Troubleshooting
 
 ### Circuit Breaker Opened
 ```bash
-./ralph.sh --circuit-status    # Grund prüfen
-tail -50 logs/ralph.log        # Logs ansehen
-./ralph.sh --reset-circuit     # Zurücksetzen
+./ralph.sh --circuit-status    # Check reason
+tail -50 logs/ralph.log        # View logs
+./ralph.sh --reset-circuit     # Reset
 ```
 
-### Rate Limit erreicht
-Ralph wartet automatisch auf Reset. Alternativ:
-- `MAX_CALLS_PER_HOUR` erhöhen
-- Abbrechen und später starten
+### Rate Limit Reached
+Ralph automatically waits for reset. Alternatively:
+- Increase `MAX_CALLS_PER_HOUR`
+- Cancel and start later
 
-### Claude hängt/Timeout
-- `TIMEOUT_MINUTES` erhöhen: `./ralph.sh --timeout 30`
-- Prompt vereinfachen
+### Claude Hangs/Timeout
+- Increase `TIMEOUT_MINUTES`: `./ralph.sh --timeout 30`
+- Simplify prompt
 
 ---
 
-*Diese Dokumentation wird von Ralph-Agenten genutzt um den Kontext des Frameworks zu verstehen.*
+*This documentation is used by Ralph agents to understand the framework context.*

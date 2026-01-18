@@ -1,6 +1,6 @@
 #!/bin/bash
-# RALF Test Mode - Konfiguration
-# Explorative Frontend-Tests mit MCP Playwright
+# RALPH Test Mode - Configuration
+# Exploratory frontend tests with MCP Playwright
 
 # ============================================
 # Git Configuration
@@ -18,22 +18,14 @@ HEADLESS=${HEADLESS:-true}
 VIEWPORT_SIZE=${VIEWPORT_SIZE:-"1280x720"}
 
 # Capabilities: core (default), vision, pdf, testing, tracing
-# testing = Test-Assertions (verify_element_visible, etc.)
-# tracing = Trace-Aufzeichnung für Debugging
+# testing = Test assertions (verify_element_visible, etc.)
+# tracing = Trace recording for debugging
 MCP_CAPABILITIES=${MCP_CAPABILITIES:-"testing"}
-
-# Trace und Video für Debugging
-SAVE_TRACE=${SAVE_TRACE:-false}
-SAVE_VIDEO=${SAVE_VIDEO:-false}
-
-# Timeouts (in ms)
-TIMEOUT_ACTION=${TIMEOUT_ACTION:-5000}
-TIMEOUT_NAVIGATION=${TIMEOUT_NAVIGATION:-60000}
 
 # ============================================
 # Test Configuration
 # ============================================
-MAX_TEST_ITERATIONS=${MAX_TEST_ITERATIONS:-40}
+MAX_ITERATIONS=${MAX_ITERATIONS:-40}
 TIMEOUT_MINUTES=${TIMEOUT_MINUTES:-10}
 SCREENSHOT_ON_FAILURE=${SCREENSHOT_ON_FAILURE:-true}
 
@@ -57,7 +49,7 @@ REPORT_FORMAT="json"
 REPORTS_DIR="reports"
 LOG_DIR="logs"
 
-# Split mode - tmux split screen (links Ralph, rechts Claude logs)
+# Split mode - tmux split screen (left Ralph, right Claude logs)
 SPLIT_MODE=${SPLIT_MODE:-false}
 LIVE_LOG_FILE="$LOG_DIR/claude_live.log"
 
@@ -65,49 +57,43 @@ LIVE_LOG_FILE="$LOG_DIR/claude_live.log"
 # Claude CLI Configuration
 # ============================================
 CLAUDE_OUTPUT_FORMAT="json"
-# Standard Tools + alle MCP Playwright Tools (via Wildcard)
-# Das offizielle @playwright/mcp Paket wird verwendet
+# Standard tools + all MCP Playwright tools (via wildcard)
+# The official @playwright/mcp package is used
 CLAUDE_ALLOWED_TOOLS="Write,Edit,Read,Bash,Glob,Grep,mcp__playwright__*"
 
 # ============================================
-# Test Documents (fuer Upload in Tests)
+# Test Documents (for upload in tests)
+# Can be overridden via environment variables
 # ============================================
-TEST_DOCS_DIR="/Users/filipores/Documents/Bewerbungsunterlagen/Batch"
-TEST_CV_FILE="$TEST_DOCS_DIR/cv-ger.pdf"
-TEST_ZEUGNIS_FILE="$TEST_DOCS_DIR/Filip Zeugnis.pdf"
+TEST_DOCS_DIR="${TEST_DOCS_DIR:-$HOME/Documents/test-docs}"
+TEST_CV_FILE="${TEST_CV_FILE:-$TEST_DOCS_DIR/cv.pdf}"
+TEST_ZEUGNIS_FILE="${TEST_ZEUGNIS_FILE:-$TEST_DOCS_DIR/zeugnis.pdf}"
 
-# Test User Credentials (fuer Login)
+# Test User Credentials (for login)
 TEST_USER_EMAIL=${TEST_USER_EMAIL:-"test@example.com"}
 TEST_USER_PASSWORD=${TEST_USER_PASSWORD:-"TestPassword123!"}
 
 # ============================================
-# State Files
+# State Files (all in logs/ for consistency)
 # ============================================
-FEATURES_FILE="features.json"
+TASKS_FILE="tasks.json"
 TEST_RESULTS_FILE="test_results.json"
-CIRCUIT_BREAKER_FILE=".circuit_breaker_state"
-SESSION_FILE=".ralph_session"
+CIRCUIT_BREAKER_FILE="logs/.circuit_breaker_state"
 
 # ============================================
-# Farben für Terminal Output
+# Colors for Terminal Output
 # ============================================
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-PURPLE='\033[0;35m'
-CYAN='\033[0;36m'
-NC='\033[0m'
+# Use central color definitions from lib/colors.sh
+# These are loaded by ralph.sh
 
-# Export alle Variablen
+# Export all variables
 export DEFAULT_BASE_BRANCH
 export COMMIT_RANGE_BASE
 export MCP_PLAYWRIGHT_SERVER
 export BROWSER_TYPE
 export HEADLESS
-export VIEWPORT_WIDTH
-export VIEWPORT_HEIGHT
-export MAX_TEST_ITERATIONS
+export VIEWPORT_SIZE
+export MAX_ITERATIONS
 export TIMEOUT_MINUTES
 export SCREENSHOT_ON_FAILURE
 export FRONTEND_URL

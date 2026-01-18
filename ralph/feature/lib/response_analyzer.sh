@@ -1,21 +1,15 @@
 #!/usr/bin/env bash
-# response_analyzer.sh - Analysiert Claude Output
-# Parst RALPH_STATUS Block und Exit Signals
+# response_analyzer.sh - Analyzes Claude Output
+# Parses RALPH_STATUS block and exit signals
 
-# Source date utilities from shared lib
+# Source shared libraries
 RA_DIR="$(dirname "${BASH_SOURCE[0]}")"
 source "$RA_DIR/../../lib/date_utils.sh"
+source "$RA_DIR/../../lib/colors.sh"
 
-# State files
-RESPONSE_ANALYSIS_FILE="${SCRIPT_DIR:-.}/.response_analysis"
-EXIT_SIGNALS_FILE="${SCRIPT_DIR:-.}/.exit_signals"
-
-# Farben
-RED='\033[0;31m'
-GREEN='\033[0;32m'
-YELLOW='\033[1;33m'
-BLUE='\033[0;34m'
-NC='\033[0m'
+# State files (in logs/ for consistency)
+RESPONSE_ANALYSIS_FILE="${LOG_DIR:-${SCRIPT_DIR:-.}/logs}/.response_analysis"
+EXIT_SIGNALS_FILE="${LOG_DIR:-${SCRIPT_DIR:-.}/logs}/.exit_signals"
 
 # Parse RALPH_STATUS block from Claude output
 parse_status_block() {
@@ -254,7 +248,7 @@ should_exit_gracefully() {
     fi
 
     # Check PRD completion
-    local prd_file="${SCRIPT_DIR:-ralph/feature}/prd.json"
+    local prd_file="${SCRIPT_DIR:-ralph/feature}/tasks.json"
     if [[ -f "$prd_file" ]]; then
         local total_stories=$(jq '.userStories | length' "$prd_file" 2>/dev/null)
         local passed_stories=$(jq '[.userStories[] | select(.passes == true)] | length' "$prd_file" 2>/dev/null)
@@ -273,11 +267,11 @@ detect_api_limit() {
     local output_file=$1
 
     if grep -qiE '(5.?hour.?limit|usage.?limit.?reached|rate.?limit.?exceeded)' "$output_file" 2>/dev/null; then
-        echo -e "${RED}Claude API 5-Stunden-Limit erkannt!${NC}"
+        echo -e "${RED}Claude API 5-hour limit detected!${NC}"
         echo ""
-        echo "Optionen:"
-        echo "  1) Warten und automatisch fortsetzen (ca. 1 Stunde)"
-        echo "  2) Abbrechen und später manuell starten"
+        echo "Options:"
+        echo "  1) Wait and auto-continue (approx. 1 hour)"
+        echo "  2) Cancel and start manually later"
         echo ""
         return 0  # Limit detected
     fi

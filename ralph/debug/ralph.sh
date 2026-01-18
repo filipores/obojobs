@@ -23,6 +23,19 @@ fi
 source "$SCRIPT_DIR/config.sh"
 
 # ============================================
+# Safe Library Loading
+# ============================================
+source_or_fail() {
+    local file=$1
+    if [[ ! -f "$file" ]]; then
+        echo "FATAL: Required library not found: $file" >&2
+        exit 1
+    fi
+    # shellcheck source=/dev/null
+    source "$file"
+}
+
+# ============================================
 # Konstanten (Magic Strings vermeiden)
 # ============================================
 readonly STATUS_NONE="NONE"
@@ -37,10 +50,10 @@ readonly EXIT_BLOCKED=3
 
 # Source shared libraries (from parent lib/)
 SHARED_LIB="$SCRIPT_DIR/../lib"
-source "$SHARED_LIB/date_utils.sh"
-source "$SHARED_LIB/logger.sh"
-source "$SHARED_LIB/circuit_breaker.sh"
-source "$SHARED_LIB/context_builder.sh"
+source_or_fail "$SHARED_LIB/date_utils.sh"
+source_or_fail "$SHARED_LIB/logger.sh"
+source_or_fail "$SHARED_LIB/circuit_breaker.sh"
+source_or_fail "$SHARED_LIB/context_builder.sh"
 
 # Override paths
 LOG_DIR="$SCRIPT_DIR/logs"
@@ -50,32 +63,46 @@ mkdir -p "$LOG_DIR"
 # Hilfsfunktionen (DRY)
 # ============================================
 
-# JSON-Manipulation mit atomarem Update
+# JSON-Manipulation mit atomarem Update (vereint beide alten Funktionen)
+# Verwendung: update_bugs_json '.filter' oder update_bugs_json --arg x y '.filter'
 update_bugs_json() {
-    local jq_filter="$1"
-    local tmp_file="$SCRIPT_DIR/bugs.json.tmp"
-    if jq "$jq_filter" "$SCRIPT_DIR/bugs.json" > "$tmp_file"; then
-        mv "$tmp_file" "$SCRIPT_DIR/bugs.json"
+    local tmp_file="$SCRIPT_DIR/tasks.json.tmp"
+    # Alle Argumente werden an jq weitergegeben
+    if jq "$@" "$SCRIPT_DIR/tasks.json" > "$tmp_file"; then
+        mv "$tmp_file" "$SCRIPT_DIR/tasks.json"
         return 0
     else
         rm -f "$tmp_file"
-        log_error "Fehler beim Aktualisieren von bugs.json"
+        log_error "Fehler beim Aktualisieren von tasks.json"
         return 1
     fi
 }
 
-# JSON-Manipulation mit Argumenten
-update_bugs_json_with_args() {
-    local tmp_file="$SCRIPT_DIR/bugs.json.tmp"
-    # Alle Argumente werden an jq weitergegeben
-    if jq "$@" "$SCRIPT_DIR/bugs.json" > "$tmp_file"; then
-        mv "$tmp_file" "$SCRIPT_DIR/bugs.json"
-        return 0
-    else
-        rm -f "$tmp_file"
-        log_error "Fehler beim Aktualisieren von bugs.json"
+# Zentrale Funktion für Bug-Feld-Abfragen (vermeidet Duplikation)
+get_bug_field() {
+    local bug_id=$1
+    local field=$2
+    local default=${3:-0}
+    jq -r --arg id "$bug_id" --arg field "$field" --arg default "$default" \
+        '.bugs[] | select(.id == $id) | .[$field] // $default' \
+        "$SCRIPT_DIR/tasks.json" 2>/dev/null || echo "$default"
+}
+
+# Validierung der tasks.json Struktur
+validate_bugs_json() {
+    local bugs_file="$SCRIPT_DIR/tasks.json"
+
+    if ! jq empty "$bugs_file" 2>/dev/null; then
+        log_error "tasks.json ist kein valides JSON"
         return 1
     fi
+
+    if [[ $(jq '.bugs | type' "$bugs_file") != '"array"' ]]; then
+        log_error "tasks.json hat kein 'bugs' Array"
+        return 1
+    fi
+
+    return 0
 }
 
 # Effiziente Bug-Statistik (alle Werte in einem jq-Aufruf)
@@ -84,7 +111,7 @@ get_bug_stats() {
         (.bugs | length),
         ([.bugs[] | select(.fixed == true)] | length),
         ([.bugs[] | select(.fixed == false)] | length)
-    ] | @tsv' "$SCRIPT_DIR/bugs.json"
+    ] | @tsv' "$SCRIPT_DIR/tasks.json"
 }
 
 # Session tracking
@@ -103,16 +130,19 @@ Usage: ./ralph.sh [OPTIONS]
 Optionen:
     -h, --help              Zeige diese Hilfe
     -t, --timeout MIN       Claude Timeout in Minuten (default: $TIMEOUT_MINUTES)
-    -m, --max-attempts N    Max Fix-Versuche pro Bug (default: $MAX_FIX_ATTEMPTS)
+    -m, --max-attempts N    Max Fix-Versuche pro Bug (default: $MAX_ITERATIONS)
     --split                 Split-Screen: links Ralph, rechts Claude (benötigt tmux)
     --status                Zeige aktuellen Bug-Status
     --reset                 Reset Debug-State und starte neu
     --add-bug               Interaktiv neuen Bug hinzufügen
+    --circuit-status        Zeige Circuit Breaker Status
+    --reset-circuit         Reset Circuit Breaker zu CLOSED
 
 Beispiele:
     ./ralph.sh                      # Standard-Ausführung
     ./ralph.sh --split              # Split-Screen mit tmux
     ./ralph.sh --status             # Status anzeigen
+    ./ralph.sh --circuit-status     # Circuit Breaker Status
 
 EOF
 }
@@ -131,7 +161,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -m|--max-attempts)
-            MAX_FIX_ATTEMPTS="$2"
+            MAX_ITERATIONS="$2"
             shift 2
             ;;
         --split)
@@ -139,7 +169,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --status)
-            if [[ -f "$SCRIPT_DIR/bugs.json" ]]; then
+            if [[ -f "$SCRIPT_DIR/tasks.json" ]]; then
                 echo -e "${BLUE}=== Bug Status ===${NC}"
                 read -r total fixed remaining < <(get_bug_stats)
                 echo -e "Total:     $total"
@@ -147,9 +177,9 @@ while [[ $# -gt 0 ]]; do
                 echo -e "Remaining: ${YELLOW}$remaining${NC}"
                 echo ""
                 echo -e "${BLUE}=== Offene Bugs ===${NC}"
-                jq -r '.bugs[] | select(.fixed == false) | "[\(.severity)] \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+                jq -r '.bugs[] | select(.fixed == false) | "[\(.severity)] \(.id): \(.title)"' "$SCRIPT_DIR/tasks.json"
             else
-                echo "Keine bugs.json gefunden."
+                echo "Keine tasks.json gefunden."
             fi
             exit 0
             ;;
@@ -158,6 +188,15 @@ while [[ $# -gt 0 ]]; do
             update_bugs_json '.bugs = [.bugs[] | .fixed = false | .fixAttempts = 0]'
             rm -f "$LOG_DIR"/*.log
             log_success "Reset abgeschlossen"
+            exit 0
+            ;;
+        --circuit-status)
+            init_circuit_breaker
+            show_circuit_status
+            exit 0
+            ;;
+        --reset-circuit)
+            reset_circuit_breaker "Manual reset via CLI"
             exit 0
             ;;
         --add-bug)
@@ -169,7 +208,7 @@ while [[ $# -gt 0 ]]; do
             read -p "Description: " description
             read -p "Affected Files (comma-separated): " files
 
-            # Add bug to bugs.json
+            # Add bug to tasks.json
             new_bug=$(jq -n \
                 --arg id "$bug_id" \
                 --arg title "$title" \
@@ -192,7 +231,7 @@ while [[ $# -gt 0 ]]; do
                     source: "manual"
                 }')
 
-            update_bugs_json_with_args --argjson bug "$new_bug" '.bugs += [$bug]'
+            update_bugs_json --argjson bug "$new_bug" '.bugs += [$bug]'
             log_success "Bug $bug_id hinzugefügt"
             exit 0
             ;;
@@ -221,7 +260,7 @@ launch_split_mode() {
     local session_name="ralph-debug-$$"
     local ralph_cmd="$SCRIPT_DIR/ralph.sh"
     [[ "$TIMEOUT_MINUTES" != "15" ]] && ralph_cmd+=" --timeout $TIMEOUT_MINUTES"
-    [[ "$MAX_FIX_ATTEMPTS" != "3" ]] && ralph_cmd+=" --max-attempts $MAX_FIX_ATTEMPTS"
+    [[ "$MAX_ITERATIONS" != "3" ]] && ralph_cmd+=" --max-attempts $MAX_ITERATIONS"
 
     export RALPH_LIVE_LOG="$LIVE_LOG_FILE"
     export RALPH_IN_SPLIT_MODE=true
@@ -245,9 +284,15 @@ fi
 # ============================================
 cd "$PROJECT_ROOT"
 
-if [[ ! -f "$SCRIPT_DIR/bugs.json" ]]; then
-    log_error "Keine bugs.json gefunden in $SCRIPT_DIR"
-    echo "Erstelle zuerst eine bugs.json oder nutze --add-bug"
+if [[ ! -f "$SCRIPT_DIR/tasks.json" ]]; then
+    log_error "Keine tasks.json gefunden in $SCRIPT_DIR"
+    echo "Erstelle zuerst eine tasks.json oder nutze --add-bug"
+    exit 1
+fi
+
+# Validiere tasks.json Struktur
+if ! validate_bugs_json; then
+    echo "Bitte korrigiere die tasks.json und versuche es erneut"
     exit 1
 fi
 
@@ -262,6 +307,11 @@ fi
 read -r TOTAL_BUGS FIXED_BUGS _remaining < <(get_bug_stats)
 
 # ============================================
+# Circuit Breaker initialisieren
+# ============================================
+init_circuit_breaker
+
+# ============================================
 # Header
 # ============================================
 echo ""
@@ -270,7 +320,7 @@ echo -e "${RED}       RALF Debug Mode${NC}"
 echo -e "${RED}==========================================${NC}"
 echo ""
 echo -e "Bugs:          ${BLUE}$FIXED_BUGS/$TOTAL_BUGS fixed${NC}"
-echo -e "Max Attempts:  ${BLUE}$MAX_FIX_ATTEMPTS${NC}"
+echo -e "Max Attempts:  ${BLUE}$MAX_ITERATIONS${NC}"
 echo -e "Timeout:       ${BLUE}$TIMEOUT_MINUTES minutes${NC}"
 if [[ "$RALPH_IN_SPLIT_MODE" == "true" ]]; then
     echo -e "Split-Mode:    ${PURPLE}AKTIV - Claude Output im rechten Pane${NC}"
@@ -294,7 +344,7 @@ get_current_bug() {
             else 3 end
         )
         | .[0].id // $none
-    ' "$SCRIPT_DIR/bugs.json"
+    ' "$SCRIPT_DIR/tasks.json"
 }
 
 # ============================================
@@ -337,19 +387,16 @@ check_overengineering() {
 # ============================================
 
 # Model-Auswahl basierend auf Fehlversuchen
+# Gibt "model|true/false" zurück (Pipe-Syntax vermeidet Anti-Pattern)
 select_model() {
     local current_bug=$1
     local fix_attempts
-    fix_attempts=$(jq -r --arg id "$current_bug" \
-        '[.bugs[] | select(.id == $id) | .fixAttempts // 0] | first // 0' \
-        "$SCRIPT_DIR/bugs.json") || fix_attempts=0
+    fix_attempts=$(get_bug_field "$current_bug" "fixAttempts" "0")
 
     if [[ $fix_attempts -ge $FALLBACK_THRESHOLD ]]; then
-        echo "$CLAUDE_MODEL_FALLBACK"
-        return 1  # Signal: Fallback verwendet
+        echo "${CLAUDE_MODEL_FALLBACK}|true"
     else
-        echo "$CLAUDE_MODEL_IMPL"
-        return 0  # Signal: Standard-Model
+        echo "${CLAUDE_MODEL}|false"
     fi
 }
 
@@ -358,7 +405,7 @@ get_bug_details() {
     local current_bug=$1
     jq -r --arg id "$current_bug" \
         '.bugs[] | select(.id == $id) | "\(.title)\t\(.severity)"' \
-        "$SCRIPT_DIR/bugs.json"
+        "$SCRIPT_DIR/tasks.json"
 }
 
 # Claude-Kommando ausführen (mit sicherem Array für Timeout)
@@ -397,7 +444,7 @@ parse_claude_result() {
     else
         log_warn "Bug $current_bug noch nicht gefixt"
         # Increment fix attempts
-        update_bugs_json_with_args --arg id "$current_bug" '
+        update_bugs_json --arg id "$current_bug" '
             .bugs = [.bugs[] |
                 if .id == $id then .fixAttempts += 1 else . end
             ]'
@@ -413,16 +460,13 @@ execute_claude() {
     local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
     local output_file="$LOG_DIR/debug_output_${current_bug}_${timestamp}.log"
 
-    # Model-Auswahl
-    local current_model
-    current_model=$(select_model "$current_bug")
-    local using_fallback=$([[ $? -eq 1 ]] && echo "true" || echo "false")
+    # Model-Auswahl (Pipe-Syntax: model|using_fallback)
+    local current_model using_fallback
+    IFS='|' read -r current_model using_fallback < <(select_model "$current_bug")
 
     if [[ "$using_fallback" == "true" ]]; then
         local fix_attempts
-        fix_attempts=$(jq -r --arg id "$current_bug" \
-            '[.bugs[] | select(.id == $id) | .fixAttempts // 0] | first // 0' \
-            "$SCRIPT_DIR/bugs.json")
+        fix_attempts=$(get_bug_field "$current_bug" "fixAttempts" "0")
         log_warn "Wechsle zu Opus (Fallback nach $fix_attempts Fehlversuchen)"
     fi
 
@@ -492,33 +536,29 @@ ${file_context}"
 }
 
 # ============================================
-# Update Status
+# Update Status (nutzt generische write_status_json)
 # ============================================
-update_status() {
+update_debug_status() {
     local loop_count=$1
     local current_bug=$2
     local status=$3
 
-    FIXED_BUGS=$(jq '[.bugs[] | select(.fixed == true)] | length' "$SCRIPT_DIR/bugs.json")
+    local fixed_bugs=$(jq '[.bugs[] | select(.fixed == true)] | length' "$SCRIPT_DIR/tasks.json" 2>/dev/null || echo "0")
 
     # Get current model info (set by execute_claude)
-    local model_name="${CURRENT_MODEL:-$CLAUDE_MODEL_IMPL}"
+    local model_name="${CURRENT_MODEL:-$CLAUDE_MODEL}"
     local is_fallback="${USING_FALLBACK:-false}"
 
-    cat > "$LOG_DIR/status.json" << EOF
-{
-    "mode": "debug",
-    "status": "$status",
-    "loop": $loop_count,
-    "current_bug": "$current_bug",
-    "bugs_fixed": $FIXED_BUGS,
-    "bugs_total": $TOTAL_BUGS,
-    "model": "$model_name",
-    "using_fallback": $is_fallback,
-    "started_at": "$RALPH_STARTED_AT",
-    "updated_at": "$(get_iso_timestamp)"
-}
-EOF
+    # Extras für Debug-Mode
+    local extras=$(jq -n \
+        --arg model "$model_name" \
+        --argjson using_fallback "$is_fallback" \
+        '{
+            model: $model,
+            using_fallback: $using_fallback
+        }')
+
+    write_status_json "debug" "$status" "$loop_count" "$current_bug" "$fixed_bugs" "$TOTAL_BUGS" "$extras"
 }
 
 # ============================================
@@ -529,7 +569,7 @@ loop_count=0
 # Cleanup on interrupt
 cleanup() {
     log_info "RALF Debug unterbrochen. Cleanup..."
-    update_status "$loop_count" "" "interrupted"
+    update_debug_status "$loop_count" "" "interrupted"
     exit 0
 }
 trap cleanup SIGINT SIGTERM
@@ -539,31 +579,38 @@ log_success "Starte RALF Debug Mode Loop..."
 while true; do
     loop_count=$((loop_count + 1))
 
+    # Circuit Breaker Check am Anfang jedes Loops
+    if should_halt_execution; then
+        log_error "Circuit Breaker hat Ausführung gestoppt"
+        update_debug_status "$loop_count" "" "circuit_breaker_open"
+        break
+    fi
+
     # Get current bug
     current_bug=$(get_current_bug)
 
     if [[ "$current_bug" == "$STATUS_NONE" ]]; then
         log_success "Alle Bugs gefixt!"
-        update_status "$loop_count" "" "complete"
+        update_debug_status "$loop_count" "" "complete"
         break
     fi
 
-    # Check fix attempts (use first match to avoid duplicates)
-    attempts=$(jq -r --arg id "$current_bug" '[.bugs[] | select(.id == $id) | .fixAttempts] | first // 0' "$SCRIPT_DIR/bugs.json")
-    if [[ $attempts -ge $MAX_FIX_ATTEMPTS ]]; then
-        log_error "Bug $current_bug: Max Versuche ($MAX_FIX_ATTEMPTS) erreicht - überspringe"
+    # Check fix attempts
+    attempts=$(get_bug_field "$current_bug" "fixAttempts" "0")
+    if [[ $attempts -ge $MAX_ITERATIONS ]]; then
+        log_error "Bug $current_bug: Max Versuche ($MAX_ITERATIONS) erreicht - überspringe"
         # Mark as blocked
-        update_bugs_json_with_args --arg id "$current_bug" '
+        update_bugs_json --arg id "$current_bug" '
             .bugs = [.bugs[] |
                 if .id == $id then .blocked = true else . end
             ]'
         continue
     fi
 
-    log_loop "=== Loop #$loop_count - Bug: $current_bug (Versuch $((attempts + 1))/$MAX_FIX_ATTEMPTS) ==="
+    log_loop "=== Loop #$loop_count - Bug: $current_bug (Versuch $((attempts + 1))/$MAX_ITERATIONS) ==="
 
     # Update status
-    update_status "$loop_count" "$current_bug" "running"
+    update_debug_status "$loop_count" "$current_bug" "running"
 
     # Execute Claude
     execute_claude "$loop_count" "$current_bug"
@@ -584,8 +631,8 @@ while true; do
             oe_flagged="false"
             [[ $oe_result -ne 0 ]] && oe_flagged="true"
 
-            # Update bugs.json with fix info
-            update_bugs_json_with_args \
+            # Update tasks.json with fix info
+            update_bugs_json \
                 --arg id "$current_bug" \
                 --arg model "$CURRENT_MODEL" \
                 --argjson fallback "$USING_FALLBACK" \
@@ -604,27 +651,35 @@ while true; do
                 log_warn "Fix wurde als Over-Engineered markiert - bitte manuell prüfen"
             fi
 
-            update_status "$loop_count" "$current_bug" "success"
+            update_debug_status "$loop_count" "$current_bug" "success"
             FIXED_BUGS=$((FIXED_BUGS + 1))
             log_info "Bugs fixed: $FIXED_BUGS/$TOTAL_BUGS"
             sleep 3
             ;;
         2)
             log_error "Timeout - versuche erneut"
-            update_status "$loop_count" "$current_bug" "timeout"
+            update_debug_status "$loop_count" "$current_bug" "timeout"
             sleep 10
             ;;
         3)
             log_warn "Bug blockiert - überspringe"
-            update_status "$loop_count" "$current_bug" "blocked"
+            update_debug_status "$loop_count" "$current_bug" "blocked"
             sleep 5
             ;;
         *)
             log_warn "Fix nicht erfolgreich - versuche erneut"
-            update_status "$loop_count" "$current_bug" "retry"
+            update_debug_status "$loop_count" "$current_bug" "retry"
             sleep 5
             ;;
     esac
+
+    # Circuit Breaker: Stuck Pattern Detection
+    # Zähle geänderte Dateien seit letztem Commit
+    files_changed=$(git diff --name-only 2>/dev/null | wc -l | tr -d ' ')
+    error_msg=""
+    [[ $exec_result -ne 0 ]] && error_msg="Exit code: $exec_result"
+
+    check_stuck_pattern "$loop_count" "$current_bug" "$error_msg" "$files_changed"
 
     log_loop "=== Loop #$loop_count abgeschlossen ==="
     echo ""
@@ -644,33 +699,33 @@ echo -e "Logs:          ${BLUE}$LOG_DIR/${NC}"
 echo ""
 
 # Show remaining bugs if any
-remaining=$(jq '[.bugs[] | select(.fixed == false and .blocked != true)] | length' "$SCRIPT_DIR/bugs.json")
+remaining=$(jq '[.bugs[] | select(.fixed == false and .blocked != true)] | length' "$SCRIPT_DIR/tasks.json")
 if [[ $remaining -gt 0 ]]; then
     echo -e "${YELLOW}Offene Bugs:${NC}"
-    jq -r '.bugs[] | select(.fixed == false and .blocked != true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+    jq -r '.bugs[] | select(.fixed == false and .blocked != true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/tasks.json"
     echo ""
 fi
 
-blocked=$(jq '[.bugs[] | select(.blocked == true)] | length' "$SCRIPT_DIR/bugs.json")
+blocked=$(jq '[.bugs[] | select(.blocked == true)] | length' "$SCRIPT_DIR/tasks.json")
 if [[ $blocked -gt 0 ]]; then
     echo -e "${RED}Blockierte Bugs (brauchen manuelle Hilfe):${NC}"
-    jq -r '.bugs[] | select(.blocked == true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+    jq -r '.bugs[] | select(.blocked == true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/tasks.json"
     echo ""
 fi
 
 # Show over-engineered fixes that need review
-overengineered=$(jq '[.bugs[] | select(.overEngineeringFlagged == true)] | length' "$SCRIPT_DIR/bugs.json")
+overengineered=$(jq '[.bugs[] | select(.overEngineeringFlagged == true)] | length' "$SCRIPT_DIR/tasks.json")
 if [[ $overengineered -gt 0 ]]; then
     echo -e "${YELLOW}Over-Engineered Fixes (Review empfohlen):${NC}"
-    jq -r '.bugs[] | select(.overEngineeringFlagged == true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+    jq -r '.bugs[] | select(.overEngineeringFlagged == true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/tasks.json"
     echo -e "  ${CYAN}→ Logs: $LOG_DIR/overengineering_review_*.log${NC}"
     echo ""
 fi
 
 # Show Opus fallback usage stats
-opus_used=$(jq '[.bugs[] | select(.usedFallback == true)] | length' "$SCRIPT_DIR/bugs.json")
+opus_used=$(jq '[.bugs[] | select(.usedFallback == true)] | length' "$SCRIPT_DIR/tasks.json")
 if [[ $opus_used -gt 0 ]]; then
     echo -e "${PURPLE}Opus-Fallback verwendet:${NC}"
-    jq -r '.bugs[] | select(.usedFallback == true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/bugs.json"
+    jq -r '.bugs[] | select(.usedFallback == true) | "  - \(.id): \(.title)"' "$SCRIPT_DIR/tasks.json"
     echo ""
 fi

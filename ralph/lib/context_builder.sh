@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# context_builder.sh - Pre-computed Context für Token-Optimierung
-# Gemeinsame Library für alle Ralph-Modi
+# context_builder.sh - Pre-computed Context for Token Optimization
+# Shared library for all Ralph modes
 
 # Get script directory dynamically based on caller
 _get_project_root() {
@@ -8,10 +8,10 @@ _get_project_root() {
     cd "$script_dir/../../.." 2>/dev/null && pwd || pwd
 }
 
-# Get relevant files for a story based on keywords and patterns (Feature-Ralph)
+# Get relevant files for a story based on keywords and patterns (Feature Ralph)
 get_story_context() {
     local story_id=$1
-    local prd_file="${SCRIPT_DIR:-$(pwd)}/prd.json"
+    local prd_file="${SCRIPT_DIR:-$(pwd)}/tasks.json"
     local project_root=$(_get_project_root)
 
     if [[ ! -f "$prd_file" ]]; then
@@ -49,10 +49,10 @@ get_story_context() {
     echo -e "$relevant_files" | sort -u | grep -v '^$' | head -10
 }
 
-# Get bug context from bugs.json (Debug-Ralph)
+# Get bug context from tasks.json (Debug Ralph)
 get_bug_context() {
     local bug_id=$1
-    local bugs_file="${SCRIPT_DIR:-$(pwd)}/bugs.json"
+    local bugs_file="${SCRIPT_DIR:-$(pwd)}/tasks.json"
     local project_root=$(_get_project_root)
 
     if [[ ! -f "$bugs_file" ]]; then

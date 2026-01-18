@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set -e
 
 # ============================================
@@ -22,7 +22,9 @@ source "$SCRIPT_DIR/config.sh"
 
 # Source shared libraries (from parent lib/)
 SHARED_LIB="$SCRIPT_DIR/../lib"
+source "$SHARED_LIB/colors.sh"
 source "$SHARED_LIB/date_utils.sh"
+source "$SHARED_LIB/file_lock.sh"
 source "$SHARED_LIB/logger.sh"
 source "$SHARED_LIB/circuit_breaker.sh"
 source "$SHARED_LIB/context_builder.sh"
@@ -60,6 +62,22 @@ EOF
 }
 
 # ============================================
+# Helper: Validate numeric argument
+# ============================================
+validate_numeric_arg() {
+    local value="$1"
+    local arg_name="$2"
+    if ! [[ "$value" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}Error: $arg_name requires a positive integer, got: '$value'${NC}"
+        exit 1
+    fi
+    if [[ "$value" -le 0 ]]; then
+        echo -e "${RED}Error: $arg_name must be greater than 0${NC}"
+        exit 1
+    fi
+}
+
+# ============================================
 # Command Line Arguments
 # ============================================
 while [[ $# -gt 0 ]]; do
@@ -69,10 +87,20 @@ while [[ $# -gt 0 ]]; do
             exit 0
             ;;
         -c|--calls)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo -e "${RED}Error: --calls requires a value${NC}"
+                exit 1
+            fi
+            validate_numeric_arg "$2" "--calls"
             MAX_CALLS_PER_HOUR="$2"
             shift 2
             ;;
         -t|--timeout)
+            if [[ -z "$2" || "$2" == -* ]]; then
+                echo -e "${RED}Error: --timeout requires a value${NC}"
+                exit 1
+            fi
+            validate_numeric_arg "$2" "--timeout"
             TIMEOUT_MINUTES="$2"
             shift 2
             ;;
@@ -105,9 +133,9 @@ done
 # ============================================
 cd "$PROJECT_ROOT"
 
-# Check if prd.json exists
-if [[ ! -f "$SCRIPT_DIR/prd.json" ]]; then
-    log_error "Keine prd.json gefunden in $SCRIPT_DIR"
+# Check if tasks.json exists
+if [[ ! -f "$SCRIPT_DIR/tasks.json" ]]; then
+    log_error "Keine tasks.json gefunden in $SCRIPT_DIR"
     echo "Erstelle zuerst eine PRD mit dem Plan-RALF oder manuell."
     exit 1
 fi
@@ -119,12 +147,28 @@ if [[ ! -f "$SCRIPT_DIR/prompt.md" ]]; then
 fi
 
 # ============================================
-# PRD Info
+# PRD Info (mit Fehlerbehandlung)
 # ============================================
-PRD_BRANCH=$(jq -r '.branchName // "main"' "$SCRIPT_DIR/prd.json")
-PRD_DESC=$(jq -r '.description // "No description"' "$SCRIPT_DIR/prd.json")
-TOTAL_STORIES=$(jq '.userStories | length' "$SCRIPT_DIR/prd.json")
-PASSED_STORIES=$(jq '[.userStories[] | select(.passes == true)] | length' "$SCRIPT_DIR/prd.json")
+if ! jq -e '.' "$SCRIPT_DIR/tasks.json" > /dev/null 2>&1; then
+    log_error "tasks.json ist kein gültiges JSON"
+    exit 1
+fi
+
+PRD_BRANCH=$(jq -r '.branchName // "main"' "$SCRIPT_DIR/tasks.json") || {
+    log_error "Konnte branchName nicht aus tasks.json lesen"
+    PRD_BRANCH="main"
+}
+PRD_DESC=$(jq -r '.description // "No description"' "$SCRIPT_DIR/tasks.json") || {
+    log_error "Konnte description nicht aus tasks.json lesen"
+    PRD_DESC="No description"
+}
+TOTAL_STORIES=$(jq '.userStories | length' "$SCRIPT_DIR/tasks.json") || {
+    log_error "Konnte userStories nicht aus tasks.json lesen"
+    exit 1
+}
+PASSED_STORIES=$(jq '[.userStories[] | select(.passes == true)] | length' "$SCRIPT_DIR/tasks.json") || {
+    PASSED_STORIES=0
+}
 
 # ============================================
 # Header
@@ -166,11 +210,128 @@ init_circuit_breaker
 # ============================================
 get_current_story() {
     # Find first story with passes: false, ordered by priority
-    jq -r '.userStories | sort_by(.priority) | map(select(.passes == false)) | .[0].id // "NONE"' "$SCRIPT_DIR/prd.json"
+    jq -r '.userStories | sort_by(.priority) | map(select(.passes == false)) | .[0].id // "NONE"' "$SCRIPT_DIR/tasks.json"
 }
 
 # ============================================
-# Execute Claude (Implementation)
+# Execute Claude - Helper Functions
+# ============================================
+
+# Build context string for Claude
+build_claude_context() {
+    local loop_count=$1
+    local current_story=$2
+
+    local relevant_files=$(get_story_context "$current_story")
+    local file_context=$(build_context_string "$relevant_files")
+
+    echo "Loop #${loop_count}. Current Story: ${current_story}. Stories remaining: $((TOTAL_STORIES - PASSED_STORIES)).
+${file_context}"
+}
+
+# Run Claude in split mode (tmux)
+run_claude_split_mode() {
+    local context="$1"
+    local output_file="$2"
+    local timeout_prefix="$3"
+    local loop_count="$4"
+    local current_story="$5"
+
+    # Write header to live log
+    {
+        echo ""
+        echo "═══════════════════════════════════════"
+        echo " Story: $current_story | Loop #$loop_count"
+        echo " $(date '+%H:%M:%S')"
+        echo "═══════════════════════════════════════"
+        echo ""
+    } >> "$RALPH_LIVE_LOG"
+
+    local result=0
+    if $timeout_prefix claude \
+        --model "$CLAUDE_MODEL" \
+        --output-format stream-json --verbose \
+        --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
+        --append-system-prompt "$context" \
+        -p "$(cat "$SCRIPT_DIR/prompt.md")" \
+        2>&1 | tee -a "$RALPH_LIVE_LOG" > "$output_file"; then
+        result=0
+    else
+        result=$?
+    fi
+
+    echo "" >> "$RALPH_LIVE_LOG"
+    echo "─────────────────────────────────────────" >> "$RALPH_LIVE_LOG"
+
+    return $result
+}
+
+# Run Claude in normal mode
+run_claude_normal_mode() {
+    local context="$1"
+    local output_file="$2"
+    local timeout_prefix="$3"
+
+    if $timeout_prefix claude \
+        --model "$CLAUDE_MODEL" \
+        --output-format json \
+        --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
+        --append-system-prompt "$context" \
+        -p "$(cat "$SCRIPT_DIR/prompt.md")" \
+        > "$output_file" 2>&1; then
+        return 0
+    else
+        return $?
+    fi
+}
+
+# Handle successful Claude result
+handle_claude_success() {
+    local output_file="$1"
+    local loop_count="$2"
+    local current_story="$3"
+
+    log_success "Claude Code Ausführung abgeschlossen"
+
+    # Analyze response
+    analyze_response "$output_file" "$loop_count"
+    update_exit_signals
+    log_analysis_summary
+
+    # Get file changes for circuit breaker
+    local files_changed=$(git diff --name-only 2>/dev/null | wc -l | tr -d ' ')
+
+    # Extract error if any
+    local error_message=""
+    if grep -qE '(^Error:|^ERROR:|Exception|Fatal)' "$output_file" 2>/dev/null; then
+        error_message=$(grep -E '(^Error:|^ERROR:|Exception|Fatal)' "$output_file" | head -1)
+    fi
+
+    # Record in circuit breaker
+    check_stuck_pattern "$loop_count" "$current_story" "$error_message" "$files_changed"
+    return $?
+}
+
+# Handle failed Claude result
+handle_claude_failure() {
+    local exec_result="$1"
+    local output_file="$2"
+
+    if [[ $exec_result -eq 124 ]]; then
+        log_error "Timeout nach $TIMEOUT_MINUTES Minuten!"
+        return 2  # Timeout
+    fi
+
+    if detect_api_limit "$output_file"; then
+        return 4  # API limit
+    fi
+
+    log_error "Claude Code Ausführung fehlgeschlagen"
+    return 1  # Error
+}
+
+# ============================================
+# Execute Claude (Main Function)
 # ============================================
 execute_claude() {
     local loop_count=$1
@@ -179,104 +340,39 @@ execute_claude() {
     local timestamp=$(date '+%Y-%m-%d_%H-%M-%S')
     local output_file="$LOG_DIR/claude_output_${timestamp}.log"
 
-    log_loop "Starte Claude Code Ausführung (${CLAUDE_MODEL_IMPL##*-})..."
-
-    local timeout_seconds=$((TIMEOUT_MINUTES * 60))
-
-    # Pre-compute relevant files (Token-Optimierung)
-    local relevant_files=$(get_story_context "$current_story")
-    local file_context=$(build_context_string "$relevant_files")
+    log_loop "Starte Claude Code Ausführung (${CLAUDE_MODEL##*-})..."
 
     # Build context
-    local context="Loop #${loop_count}. Current Story: ${current_story}. Stories remaining: $((TOTAL_STORIES - PASSED_STORIES)).
-${file_context}"
+    local context=$(build_claude_context "$loop_count" "$current_story")
 
     # Build timeout command prefix
     local timeout_prefix=""
+    local timeout_seconds=$((TIMEOUT_MINUTES * 60))
     if [[ -n "$TIMEOUT_CMD" ]]; then
         timeout_prefix="$TIMEOUT_CMD ${timeout_seconds}s"
     fi
 
     # Execute based on mode
     local exec_result=0
-
     if [[ "$RALPH_IN_SPLIT_MODE" == "true" && -n "$RALPH_LIVE_LOG" ]]; then
-        # Split mode: write to live log for right pane
-        echo "" >> "$RALPH_LIVE_LOG"
-        echo "═══════════════════════════════════════" >> "$RALPH_LIVE_LOG"
-        echo " Story: $current_story | Loop #$loop_count" >> "$RALPH_LIVE_LOG"
-        echo " $(date '+%H:%M:%S')" >> "$RALPH_LIVE_LOG"
-        echo "═══════════════════════════════════════" >> "$RALPH_LIVE_LOG"
-        echo "" >> "$RALPH_LIVE_LOG"
-
-        if $timeout_prefix claude \
-            --model "$CLAUDE_MODEL_IMPL" \
-            --output-format stream-json --verbose \
-            --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
-            --append-system-prompt "$context" \
-            -p "$(cat "$SCRIPT_DIR/prompt.md")" \
-            2>&1 | tee -a "$RALPH_LIVE_LOG" > "$output_file"; then
-            exec_result=0
-        else
-            exec_result=$?
-        fi
-
-        echo "" >> "$RALPH_LIVE_LOG"
-        echo "─────────────────────────────────────────" >> "$RALPH_LIVE_LOG"
+        run_claude_split_mode "$context" "$output_file" "$timeout_prefix" "$loop_count" "$current_story"
+        exec_result=$?
     else
-        # Normal mode
-        if $timeout_prefix claude \
-            --model "$CLAUDE_MODEL_IMPL" \
-            --output-format json \
-            --allowedTools "$CLAUDE_ALLOWED_TOOLS" \
-            --append-system-prompt "$context" \
-            -p "$(cat "$SCRIPT_DIR/prompt.md")" \
-            > "$output_file" 2>&1; then
-            exec_result=0
-        else
-            exec_result=$?
-        fi
+        run_claude_normal_mode "$context" "$output_file" "$timeout_prefix"
+        exec_result=$?
     fi
 
+    # Handle result
     if [[ $exec_result -eq 0 ]]; then
-        log_success "Claude Code Ausführung abgeschlossen"
-
-        # Analyze response
-        analyze_response "$output_file" "$loop_count"
-        update_exit_signals
-        log_analysis_summary
-
-        # Get file changes for circuit breaker
-        local files_changed=$(git diff --name-only 2>/dev/null | wc -l | tr -d ' ')
-
-        # Extract error if any
-        local error_message=""
-        if grep -qE '(^Error:|^ERROR:|Exception|Fatal)' "$output_file" 2>/dev/null; then
-            error_message=$(grep -E '(^Error:|^ERROR:|Exception|Fatal)' "$output_file" | head -1)
-        fi
-
-        # Record in circuit breaker
-        check_stuck_pattern "$loop_count" "$current_story" "$error_message" "$files_changed"
-        local circuit_result=$?
-
-        if [[ $circuit_result -ne 0 ]]; then
+        handle_claude_success "$output_file" "$loop_count" "$current_story"
+        local success_result=$?
+        if [[ $success_result -ne 0 ]]; then
             return 3  # Circuit breaker opened
         fi
-
         return 0
     else
-        if [[ $exec_result -eq 124 ]]; then
-            log_error "Timeout nach $TIMEOUT_MINUTES Minuten!"
-            return 2  # Timeout
-        fi
-
-        # Check for API limit
-        if detect_api_limit "$output_file"; then
-            return 4  # API limit
-        fi
-
-        log_error "Claude Code Ausführung fehlgeschlagen"
-        return 1  # Error
+        handle_claude_failure "$exec_result" "$output_file"
+        return $?
     fi
 }
 
@@ -342,7 +438,7 @@ while true; do
     case $exec_result in
         0)
             # Success
-            PASSED_STORIES=$(jq '[.userStories[] | select(.passes == true)] | length' "$SCRIPT_DIR/prd.json")
+            PASSED_STORIES=$(jq '[.userStories[] | select(.passes == true)] | length' "$SCRIPT_DIR/tasks.json")
             log_info "Stories passed: $PASSED_STORIES/$TOTAL_STORIES"
             update_status "$loop_count" "$(get_remaining_calls)" "$current_story" "success"
             sleep 5
