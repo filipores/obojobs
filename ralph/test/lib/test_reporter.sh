@@ -288,11 +288,35 @@ log_iteration_summary() {
         return 1
     fi
 
+    # Check if file is empty
+    if [[ ! -s "$output_file" ]]; then
+        echo -e "${YELLOW}Output-Datei ist leer${NC}"
+        return 1
+    fi
+
+    # For stream-json format, extract just the last line (final result)
+    # stream-json produces NDJSON (newline-delimited JSON)
+    local json_content
+    if head -1 "$output_file" | jq -e '.type' > /dev/null 2>&1; then
+        # NDJSON format - get last result line
+        json_content=$(grep -E '^\{"type":"result"' "$output_file" | tail -1)
+        if [[ -z "$json_content" ]]; then
+            # Fallback: try to get any valid JSON line
+            json_content=$(tail -1 "$output_file")
+        fi
+    else
+        # Single JSON object
+        json_content=$(cat "$output_file")
+    fi
+
     # Check if it's valid JSON
-    if ! jq -e '.' "$output_file" > /dev/null 2>&1; then
+    if ! echo "$json_content" | jq -e '.' > /dev/null 2>&1; then
         echo -e "${YELLOW}Output ist kein valides JSON${NC}"
         return 1
     fi
+
+    # Use json_content instead of output_file from here on
+    local output_json="$json_content"
 
     # Load feature details from features.json
     local features_file="${SCRIPT_DIR:-$(dirname "$0")}/features.json"
@@ -311,15 +335,15 @@ log_iteration_summary() {
         fi
     fi
 
-    # Extract metrics with jq
-    local duration_ms=$(jq -r '.duration_ms // 0' "$output_file")
+    # Extract metrics from json_content (not file, since we may have extracted from NDJSON)
+    local duration_ms=$(echo "$output_json" | jq -r '.duration_ms // 0')
     local duration_s=$(echo "scale=1; $duration_ms / 1000" | bc 2>/dev/null || echo "0")
-    local cost=$(jq -r '.total_cost_usd // 0' "$output_file")
-    local num_turns=$(jq -r '.num_turns // 0' "$output_file")
-    local input_tokens=$(jq -r '.usage.input_tokens // 0' "$output_file")
-    local output_tokens=$(jq -r '.usage.output_tokens // 0' "$output_file")
-    local cache_read=$(jq -r '.usage.cache_read_input_tokens // 0' "$output_file")
-    local is_error=$(jq -r '.is_error // false' "$output_file")
+    local cost=$(echo "$output_json" | jq -r '.total_cost_usd // 0')
+    local num_turns=$(echo "$output_json" | jq -r '.num_turns // 0')
+    local input_tokens=$(echo "$output_json" | jq -r '.usage.input_tokens // 0')
+    local output_tokens=$(echo "$output_json" | jq -r '.usage.output_tokens // 0')
+    local cache_read=$(echo "$output_json" | jq -r '.usage.cache_read_input_tokens // 0')
+    local is_error=$(echo "$output_json" | jq -r '.is_error // false')
 
     # Format cost with 2 decimal places
     local cost_formatted=$(printf "%.2f" "$cost" 2>/dev/null || echo "$cost")
@@ -347,7 +371,11 @@ log_iteration_summary() {
     esac
 
     # Parse test result from RALPH_TEST_RESULT block
-    local test_result=$(parse_test_result "$output_file")
+    # Create temp file for parse_test_result (it expects a file path)
+    local temp_output=$(mktemp)
+    echo "$output_json" > "$temp_output"
+    local test_result=$(parse_test_result "$temp_output")
+    rm -f "$temp_output"
     local result_found=$(echo "$test_result" | jq -r '.found // false')
 
     local bugs_count=0

@@ -41,8 +41,37 @@
         "Template existiert mit korrekten Variablen",
         "Keine Warnbanner auf /new-application"
       ],
-      "pages": ["/register", "/login", "/documents", "/templates", "/new-application"],
-      "tested": false
+      "pages": [
+        "/register",
+        "/login",
+        "/documents",
+        "/templates",
+        "/new-application"
+      ],
+      "tested": true,
+      "test_result": {
+        "feature_id": "SETUP-001",
+        "tested_at": "2026-01-17T19:06:10.538Z",
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "ux",
+            "title": "Lebenslauf-Status auf Templates-Seite nicht synchronisiert",
+            "description": "Nach dem Upload des Lebenslaufs zeigt die Templates-Seite weiterhin 'Lebenslauf fehlt' an. Der Status wird erst nach Verarbeitung aktualisiert.",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Onboarding-Dialog auf Dokumente-Seite",
+            "description": "Nach dem Upload erscheint ein 'Tipp 1 von 2' Dialog, der den Workflow unterbricht. Könnte nach erstem Upload automatisch schliessen.",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-001",
@@ -81,7 +110,10 @@
         "PDF kann heruntergeladen werden",
         "Bewerbung erscheint in /applications"
       ],
-      "pages": ["/new-application", "/applications"],
+      "pages": [
+        "/new-application",
+        "/applications"
+      ],
       "tested": false
     },
     {
@@ -115,7 +147,9 @@
         "Manueller Text wird korrekt analysiert",
         "Bewerbung kann aus manuellem Text generiert werden"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -143,7 +177,10 @@
         "Link fuehrt korrekt zur Documents-Seite",
         "Query-Parameter werden korrekt uebergeben"
       ],
-      "pages": ["/new-application", "/documents"],
+      "pages": [
+        "/new-application",
+        "/documents"
+      ],
       "tested": false
     },
     {
@@ -168,7 +205,9 @@
         "Portal wird automatisch erkannt",
         "Accessibility (ARIA) funktioniert"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -195,7 +234,9 @@
         "Badges haben unterschiedliche Farben",
         "Unbekannte Portale zeigen 'Sonstige'"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -231,7 +272,9 @@
         "Generate-Button reagiert auf Validierung",
         "Stellenbeschreibung ist einklappbar"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -258,7 +301,9 @@
         "Fehlende Variablen sind visuell unterscheidbar",
         "Tooltips zeigen die tatsaechlichen Werte"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -286,7 +331,9 @@
         "Job-Fit Score wird korrekt berechnet",
         "Anforderungen werden kategorisiert angezeigt"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -313,7 +360,9 @@
         "User kann ohne Score fortfahren",
         "Retry-Option bei temporaeren Fehlern"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -339,7 +388,9 @@
         "Warnung ist informativ aber nicht blockierend",
         "User kann selbst entscheiden"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -369,7 +420,10 @@
         "Standard-Template ist markiert",
         "Template-Auswahl wird bei Generierung beruecksichtigt"
       ],
-      "pages": ["/new-application", "/templates"],
+      "pages": [
+        "/new-application",
+        "/templates"
+      ],
       "tested": false
     },
     {
@@ -395,7 +449,9 @@
         "Doppelklick-Prevention funktioniert",
         "Erfolgs-Modal zeigt alle relevanten Infos"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -421,7 +477,10 @@
         "Dokument-Fehler haben direkten Link zur Loesung",
         "Eingaben gehen bei Fehlern nicht verloren"
       ],
-      "pages": ["/new-application", "/documents"],
+      "pages": [
+        "/new-application",
+        "/documents"
+      ],
       "tested": false
     },
     {
@@ -449,7 +508,10 @@
         "Navigation zu Bewerbungsliste funktioniert",
         "Neue Bewerbung erscheint in Liste"
       ],
-      "pages": ["/new-application", "/applications"],
+      "pages": [
+        "/new-application",
+        "/applications"
+      ],
       "tested": false
     },
     {
@@ -471,7 +533,9 @@
         "Zaehler aktualisiert sich nach Generierung",
         "Pro-User sieht 'Unbegrenzt'"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -495,7 +559,10 @@
         "Limit-Fehler ist klar kommuniziert",
         "Upgrade-Option wird angeboten"
       ],
-      "pages": ["/new-application", "/subscription"],
+      "pages": [
+        "/new-application",
+        "/subscription"
+      ],
       "tested": false
     },
     {
@@ -520,7 +587,9 @@
         "URL bleibt erhalten fuer erneutes Laden",
         "Bearbeitungen werden verworfen"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -541,7 +610,9 @@
         "Enter-Taste funktioniert als Shortcut",
         "Verhindert versehentliches Formular-Submit"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -571,7 +642,9 @@
         "Keine horizontale Scroll-Probleme",
         "Touch-Targets sind gross genug"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -601,7 +674,9 @@
         "Focus-States sind sichtbar",
         "Enter aktiviert fokussierte Buttons"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -628,7 +703,9 @@
         "Keine unbehandelten Promise-Rejections",
         "Keine Vue-Warnings"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -654,7 +731,9 @@
         "Keine CORS-Fehler",
         "Keine 401/403 im normalen Flow"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -678,7 +757,9 @@
         "Kein Timeout bei grossen Daten",
         "UI bleibt responsive"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     },
     {
@@ -702,7 +783,10 @@
         "Sonderzeichen wie & werden nicht escaped",
         "PDF-Rendering ist korrekt"
       ],
-      "pages": ["/new-application", "/applications"],
+      "pages": [
+        "/new-application",
+        "/applications"
+      ],
       "tested": false
     },
     {
@@ -729,7 +813,9 @@
         "User kann trotzdem fortfahren",
         "Link zum Hochladen funktioniert"
       ],
-      "pages": ["/new-application"],
+      "pages": [
+        "/new-application"
+      ],
       "tested": false
     }
   ],

@@ -335,8 +335,8 @@ execute_test() {
     # Build context for Claude
     local context="RALF Test Mode - Loop #${loop_count}. Testing Feature: ${feature_id}. Frontend URL: ${FRONTEND_URL}."
 
-    # Build feature context
-    local feature_context=$(echo "$feature" | jq -r '"Feature to test:\n- Commit: \(.commit_hash)\n- Message: \(.message)\n- Scope: \(.scope)\n- Changed Files: \(.changed_files | join(", "))"')
+    # Build feature context (handle missing fields gracefully)
+    local feature_context=$(echo "$feature" | jq -r '"Feature to test:\n- ID: \(.id // "unknown")\n- Message: \(.message // "unknown")\n- Scope: \(.scope // "unknown")\n- Type: \(.type // "unknown")\n- Test Focus: \(.test_focus // "N/A")\n- Pages: \((.pages // []) | join(", "))"')
 
     # Build timeout prefix
     local timeout_prefix=""
