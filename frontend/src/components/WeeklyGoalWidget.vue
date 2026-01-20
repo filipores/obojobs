@@ -186,7 +186,7 @@ const loadGoalData = async () => {
 }
 
 // Watch for goal achievement to trigger confetti
-watch(isAchieved, (newValue, oldValue) => {
+watch(isAchieved, (newValue, _oldValue) => {
   if (newValue && !previousAchieved.value) {
     showConfetti.value = true
     setTimeout(() => {
