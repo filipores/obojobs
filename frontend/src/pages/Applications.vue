@@ -155,10 +155,28 @@
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="loading-enso"></div>
-        <p>Lade Bewerbungen...</p>
+      <!-- Loading State - Skeleton -->
+      <div v-if="loading" class="loading-skeleton" aria-label="Lade Bewerbungen">
+        <div class="skeleton-grid">
+          <div v-for="i in 6" :key="i" class="skeleton-card zen-card">
+            <div class="skeleton-card-header">
+              <div class="skeleton-title-group">
+                <div class="skeleton skeleton-company"></div>
+                <div class="skeleton skeleton-position"></div>
+              </div>
+              <div class="skeleton skeleton-status"></div>
+            </div>
+            <div class="skeleton-card-meta">
+              <div class="skeleton skeleton-date"></div>
+              <div class="skeleton skeleton-source"></div>
+            </div>
+            <div class="skeleton skeleton-notes"></div>
+            <div class="skeleton-card-actions">
+              <div class="skeleton skeleton-btn-sm"></div>
+              <div class="skeleton skeleton-btn-sm"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Error State -->
@@ -1367,29 +1385,100 @@ watch(viewMode, (newMode) => {
 }
 
 /* ========================================
-   LOADING STATE
+   LOADING SKELETON
    ======================================== */
-.loading-state {
-  text-align: center;
-  padding: var(--space-ma-xl) 0;
+.loading-skeleton {
+  padding: var(--space-ma) 0;
 }
 
-.loading-enso {
-  width: 60px;
+.skeleton-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: var(--space-lg);
+}
+
+.skeleton-card {
+  padding: var(--space-lg);
+}
+
+.skeleton-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.skeleton-title-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skeleton-company {
+  width: 60%;
+  height: 1.25rem;
+}
+
+.skeleton-position {
+  width: 40%;
+  height: 1rem;
+}
+
+.skeleton-status {
+  width: 70px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-card-meta {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+  margin-bottom: var(--space-md);
+}
+
+.skeleton-date {
+  width: 90px;
+  height: 1rem;
+}
+
+.skeleton-source {
+  width: 80px;
+  height: 1rem;
+}
+
+.skeleton-notes {
+  width: 100%;
   height: 60px;
-  margin: 0 auto var(--space-lg);
-  border: 2px solid var(--color-sand);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-md);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-card-actions {
+  display: flex;
+  gap: var(--space-sm);
 }
 
-.loading-state p {
-  color: var(--color-text-tertiary);
+.skeleton-btn-sm {
+  width: 60px;
+  height: 2rem;
+  border-radius: var(--radius-md);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ========================================

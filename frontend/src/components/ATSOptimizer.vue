@@ -63,10 +63,25 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="ats-loading">
-      <div class="loading-spinner"></div>
-      <span>{{ loadingText }}</span>
+    <!-- Loading State - Skeleton -->
+    <div v-if="loading" class="ats-loading-skeleton" aria-label="Analysiere ATS-Kompatibilitaet">
+      <div class="skeleton-header">
+        <div class="skeleton skeleton-title" style="width: 150px;"></div>
+        <div class="skeleton skeleton-badge"></div>
+      </div>
+      <div class="skeleton-progress">
+        <div class="skeleton skeleton-bar"></div>
+        <div class="skeleton skeleton-score"></div>
+      </div>
+      <div class="skeleton-keywords">
+        <div class="skeleton skeleton-subtitle" style="width: 140px;"></div>
+        <div class="skeleton-tags">
+          <div class="skeleton skeleton-tag"></div>
+          <div class="skeleton skeleton-tag"></div>
+          <div class="skeleton skeleton-tag"></div>
+          <div class="skeleton skeleton-tag"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Error State -->
@@ -469,27 +484,79 @@ defineExpose({
   margin-top: var(--space-lg);
 }
 
-/* Loading State */
-.ats-loading {
+/* Loading Skeleton */
+.ats-loading-skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
+}
+
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.skeleton-title {
+  height: 1.25rem;
+}
+
+.skeleton-badge {
+  width: 60px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-progress {
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: var(--space-md);
-  padding: var(--space-xl);
-  color: var(--color-text-secondary);
 }
 
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.skeleton-bar {
+  flex: 1;
+  height: 12px;
+  border-radius: var(--radius-full);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-score {
+  width: 50px;
+  height: 2rem;
+}
+
+.skeleton-keywords {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skeleton-subtitle {
+  height: 1rem;
+}
+
+.skeleton-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.skeleton-tag {
+  width: 70px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Error State */

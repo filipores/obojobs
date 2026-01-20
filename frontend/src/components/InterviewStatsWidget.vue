@@ -15,9 +15,17 @@
       </router-link>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="widget-loading">
-      <div class="loading-spinner"></div>
+    <!-- Loading State - Skeleton -->
+    <div v-if="loading" class="widget-loading-skeleton" aria-label="Lade Interview-Statistiken">
+      <div class="skeleton-rate-section">
+        <div class="skeleton skeleton-ring"></div>
+        <div class="skeleton skeleton-text" style="width: 60px; margin-top: var(--space-sm);"></div>
+      </div>
+      <div class="skeleton-breakdown">
+        <div class="skeleton skeleton-text" style="width: 80px;"></div>
+        <div class="skeleton skeleton-text" style="width: 70px;"></div>
+        <div class="skeleton skeleton-text" style="width: 90px;"></div>
+      </div>
     </div>
 
     <!-- Empty State -->
@@ -182,24 +190,49 @@ onMounted(async () => {
   gap: var(--space-sm);
 }
 
-/* Loading */
-.widget-loading {
+/* Loading Skeleton */
+.widget-loading-skeleton {
   display: flex;
-  justify-content: center;
-  padding: var(--space-xl);
+  flex-direction: column;
+  gap: var(--space-lg);
+  padding: var(--space-md) 0;
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--color-sand);
-  border-top-color: var(--color-ai);
+.skeleton-rate-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.skeleton-ring {
+  width: 100px;
+  height: 100px;
   border-radius: 50%;
-  animation: spin 1s linear infinite;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-breakdown {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-md);
+  padding: var(--space-md);
+  background: var(--color-washi);
+  border-radius: var(--radius-sm);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text {
+  height: 1rem;
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Empty State */

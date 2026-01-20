@@ -34,10 +34,22 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="loading-state">
-      <div class="loading-spinner"></div>
-      <p>Lade Empfehlungen...</p>
+    <!-- Loading State - Skeleton -->
+    <div v-if="loading" class="loading-skeleton" aria-label="Lade Empfehlungen">
+      <div v-for="i in 3" :key="i" class="skeleton-card zen-card">
+        <div class="skeleton-card-header">
+          <div class="skeleton skeleton-badge"></div>
+          <div class="skeleton-job-info">
+            <div class="skeleton skeleton-title"></div>
+            <div class="skeleton skeleton-text"></div>
+            <div class="skeleton skeleton-text-short"></div>
+          </div>
+        </div>
+        <div class="skeleton-card-body">
+          <div class="skeleton skeleton-tag"></div>
+          <div class="skeleton skeleton-text-short"></div>
+        </div>
+      </div>
     </div>
 
     <!-- Empty State -->
@@ -589,28 +601,76 @@ onMounted(() => {
   color: var(--color-warning);
 }
 
-/* Loading State */
-.loading-state {
+/* Loading Skeleton */
+.loading-skeleton {
+  display: grid;
+  gap: var(--space-md);
+}
+
+.skeleton-card {
+  padding: var(--space-lg);
+}
+
+.skeleton-card-header {
+  display: flex;
+  gap: var(--space-md);
+  align-items: flex-start;
+}
+
+.skeleton-badge {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.skeleton-job-info {
+  flex: 1;
   display: flex;
   flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skeleton-title {
+  height: 1.25rem;
+  width: 70%;
+}
+
+.skeleton-text {
+  height: 1rem;
+  width: 50%;
+}
+
+.skeleton-text-short {
+  height: 0.875rem;
+  width: 30%;
+}
+
+.skeleton-card-body {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  padding: var(--space-xl);
-  color: var(--color-text-secondary);
+  gap: var(--space-md);
+  margin-top: var(--space-md);
+  padding-top: var(--space-md);
+  border-top: 1px solid var(--color-border-light);
 }
 
-.loading-spinner {
-  width: 32px;
-  height: 32px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-  margin-bottom: var(--space-md);
+.skeleton-tag {
+  height: 1.5rem;
+  width: 60px;
+  border-radius: var(--radius-sm);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Empty State */

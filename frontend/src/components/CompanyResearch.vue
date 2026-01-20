@@ -1,9 +1,33 @@
 <template>
   <div class="company-research">
-    <!-- Loading State -->
-    <div v-if="loading" class="research-loading">
-      <div class="loading-spinner"></div>
-      <span>Recherchiere Firmen-Informationen...</span>
+    <!-- Loading State - Skeleton -->
+    <div v-if="loading" class="research-loading-skeleton" aria-label="Recherchiere Firmen-Informationen">
+      <div class="skeleton-header">
+        <div class="skeleton-header-info">
+          <div class="skeleton skeleton-company-name"></div>
+          <div class="skeleton skeleton-industry"></div>
+        </div>
+        <div class="skeleton-actions">
+          <div class="skeleton skeleton-btn"></div>
+        </div>
+      </div>
+      <div class="skeleton-facts">
+        <div class="skeleton skeleton-fact"></div>
+        <div class="skeleton skeleton-fact"></div>
+        <div class="skeleton skeleton-fact"></div>
+      </div>
+      <div class="skeleton-section">
+        <div class="skeleton skeleton-subtitle"></div>
+        <div class="skeleton-tags">
+          <div class="skeleton skeleton-tag"></div>
+          <div class="skeleton skeleton-tag"></div>
+          <div class="skeleton skeleton-tag"></div>
+        </div>
+      </div>
+      <div class="skeleton-section">
+        <div class="skeleton skeleton-subtitle"></div>
+        <div class="skeleton skeleton-text-block"></div>
+      </div>
     </div>
 
     <!-- Error State -->
@@ -306,27 +330,102 @@ defineExpose({
   padding: var(--space-lg);
 }
 
-/* Loading State */
-.research-loading {
+/* Loading Skeleton */
+.research-loading-skeleton {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.skeleton-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skeleton-company-name {
+  width: 180px;
+  height: 1.25rem;
+}
+
+.skeleton-industry {
+  width: 100px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.skeleton-btn {
+  width: 80px;
+  height: 2rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-facts {
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-md);
-  padding: var(--space-xl);
-  color: var(--color-text-secondary);
+  padding: var(--space-md);
+  background: var(--color-washi);
+  border-radius: var(--radius-md);
 }
 
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.skeleton-fact {
+  width: 120px;
+  height: 1rem;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skeleton-subtitle {
+  width: 160px;
+  height: 1rem;
+}
+
+.skeleton-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.skeleton-tag {
+  width: 80px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-text-block {
+  width: 100%;
+  height: 80px;
+  border-radius: var(--radius-md);
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Error State */
