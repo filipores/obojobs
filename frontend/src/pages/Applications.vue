@@ -359,17 +359,52 @@
 
       <!-- Empty State -->
       <section v-else class="empty-state">
-        <div class="empty-enso"></div>
-        <h3>{{ searchQuery || filterStatus || filterFirma ? 'Keine Ergebnisse' : 'Noch keine Bewerbungen' }}</h3>
-        <p v-if="searchQuery || filterStatus || filterFirma">
-          Keine Bewerbungen gefunden. Versuchen Sie andere Suchbegriffe.
-        </p>
-        <p v-else>
-          Generieren Sie Ihre erste Bewerbung über die Chrome Extension.
-        </p>
-        <button v-if="searchQuery || filterStatus || filterFirma" @click="clearFilters" class="zen-btn">
-          Filter zurücksetzen
-        </button>
+        <!-- Filtered empty state -->
+        <template v-if="searchQuery || filterStatus || filterFirma">
+          <div class="empty-enso"></div>
+          <h3>Keine Ergebnisse</h3>
+          <p>Keine Bewerbungen gefunden. Versuchen Sie andere Suchbegriffe.</p>
+          <button @click="clearFilters" class="zen-btn">
+            Filter zurücksetzen
+          </button>
+        </template>
+
+        <!-- True empty state - no applications at all -->
+        <template v-else>
+          <div class="empty-state-illustration">
+            <svg width="120" height="120" viewBox="0 0 120 120" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <!-- Stylized document stack -->
+              <rect x="25" y="30" width="70" height="80" rx="4" fill="var(--color-washi-warm)" stroke="var(--color-sand)" stroke-width="2"/>
+              <rect x="30" y="25" width="70" height="80" rx="4" fill="var(--color-washi)" stroke="var(--color-sand)" stroke-width="2"/>
+              <rect x="35" y="20" width="70" height="80" rx="4" fill="var(--color-bg-elevated)" stroke="var(--color-ai)" stroke-width="2"/>
+              <!-- Document lines -->
+              <line x1="45" y1="40" x2="95" y2="40" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="45" y1="52" x2="85" y2="52" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="45" y1="64" x2="90" y2="64" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+              <line x1="45" y1="76" x2="75" y2="76" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+              <!-- Plus icon -->
+              <circle cx="95" cy="85" r="18" fill="var(--color-ai)" stroke="var(--color-bg-elevated)" stroke-width="3"/>
+              <line x1="95" y1="77" x2="95" y2="93" stroke="var(--color-washi)" stroke-width="3" stroke-linecap="round"/>
+              <line x1="87" y1="85" x2="103" y2="85" stroke="var(--color-washi)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+          </div>
+          <h3>Noch keine Bewerbungen</h3>
+          <p class="empty-state-description">
+            Starten Sie mit Ihrer ersten Bewerbung! Finden Sie eine passende Stelle und lassen Sie sich ein individuelles Anschreiben generieren.
+          </p>
+          <div class="empty-state-actions">
+            <router-link to="/new-application" class="zen-btn zen-btn-filled">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"/>
+                <line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Erste Bewerbung erstellen
+            </router-link>
+          </div>
+          <p class="empty-state-hint">
+            Tipp: Sie können auch die Chrome Extension nutzen, um direkt von Stellenanzeigen zu bewerben.
+          </p>
+        </template>
       </section>
 
       <!-- Detail Modal -->
@@ -1584,6 +1619,40 @@ watch(viewMode, (newMode) => {
 .empty-state p {
   color: var(--color-text-tertiary);
   margin-bottom: var(--space-lg);
+}
+
+.empty-state-illustration {
+  margin-bottom: var(--space-lg);
+}
+
+.empty-state-illustration svg {
+  opacity: 0.9;
+}
+
+.empty-state-description {
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: var(--leading-relaxed);
+}
+
+.empty-state-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.empty-state-actions .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.empty-state-hint {
+  font-size: 0.875rem;
+  color: var(--color-text-ghost);
+  margin-bottom: 0;
 }
 
 /* ========================================

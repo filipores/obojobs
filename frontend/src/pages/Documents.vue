@@ -86,6 +86,51 @@
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
+      <!-- Empty State Welcome - shown when no documents uploaded -->
+      <section v-if="uploadedCount === 0 && !fromApplication" class="welcome-section animate-fade-up" style="animation-delay: 150ms;">
+        <div class="welcome-card zen-card zen-card-featured">
+          <div class="welcome-content">
+            <div class="welcome-illustration">
+              <svg width="80" height="80" viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Upload cloud/document illustration -->
+                <rect x="15" y="25" width="50" height="45" rx="4" fill="var(--color-bg-elevated)" stroke="var(--color-ai)" stroke-width="2" stroke-dasharray="4 2"/>
+                <!-- Upload arrow -->
+                <path d="M40 35 L40 55" stroke="var(--color-ai)" stroke-width="3" stroke-linecap="round"/>
+                <path d="M32 43 L40 35 L48 43" stroke="var(--color-ai)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Document icon -->
+                <rect x="28" y="50" width="24" height="16" rx="2" fill="var(--color-ai-subtle)" stroke="var(--color-ai)" stroke-width="1.5"/>
+                <line x1="32" y1="55" x2="48" y2="55" stroke="var(--color-ai)" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="32" y1="60" x2="42" y2="60" stroke="var(--color-ai)" stroke-width="1.5" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>Willkommen! Starten Sie mit Ihren Dokumenten</h3>
+            <p>
+              Laden Sie Ihren Lebenslauf als PDF hoch. Der Text wird automatisch extrahiert und Ihre Skills werden erkannt - so können wir perfekt passende Anschreiben generieren.
+            </p>
+            <div class="welcome-features">
+              <div class="welcome-feature">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>Drag & Drop Upload</span>
+              </div>
+              <div class="welcome-feature">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>Automatische Textextraktion</span>
+              </div>
+              <div class="welcome-feature">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span>KI-basierte Skill-Erkennung</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Documents Grid -->
       <section class="documents-section">
         <div class="documents-grid">
@@ -997,6 +1042,73 @@ onMounted(async () => {
     flex-direction: column;
     gap: var(--space-sm);
     align-items: flex-start;
+  }
+}
+
+/* ========================================
+   WELCOME SECTION (Empty State)
+   ======================================== */
+.welcome-section {
+  margin-bottom: var(--space-lg);
+}
+
+.welcome-card {
+  padding: var(--space-xl);
+}
+
+.welcome-content {
+  text-align: center;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.welcome-illustration {
+  margin-bottom: var(--space-lg);
+}
+
+.welcome-illustration svg {
+  opacity: 0.9;
+}
+
+.welcome-content h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+  margin-bottom: var(--space-md);
+}
+
+.welcome-content > p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-lg);
+}
+
+.welcome-features {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-lg);
+  flex-wrap: wrap;
+}
+
+.welcome-feature {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.875rem;
+  color: var(--color-koke);
+  font-weight: 500;
+}
+
+.welcome-feature svg {
+  flex-shrink: 0;
+}
+
+@media (max-width: 640px) {
+  .welcome-features {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-sm);
   }
 }
 

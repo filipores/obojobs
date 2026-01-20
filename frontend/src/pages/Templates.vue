@@ -71,6 +71,36 @@
         </div>
       </section>
 
+      <!-- Empty State for No Templates -->
+      <section v-if="templates.length === 0 && !showWizard && !showManualForm" class="empty-state-section animate-fade-up" style="animation-delay: 150ms;">
+        <div class="empty-state-card zen-card zen-card-featured">
+          <div class="empty-state-content">
+            <div class="empty-state-illustration">
+              <svg width="100" height="100" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <!-- Template document -->
+                <rect x="20" y="10" width="60" height="80" rx="4" fill="var(--color-bg-elevated)" stroke="var(--color-ai)" stroke-width="2"/>
+                <!-- Header area -->
+                <rect x="28" y="18" width="44" height="12" rx="2" fill="var(--color-ai-subtle)"/>
+                <!-- Content lines with variable placeholders -->
+                <line x1="28" y1="40" x2="72" y2="40" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+                <rect x="28" y="48" width="20" height="6" rx="2" fill="var(--color-ai)" opacity="0.6"/>
+                <line x1="52" y1="51" x2="72" y2="51" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+                <line x1="28" y1="62" x2="65" y2="62" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+                <rect x="28" y="70" width="16" height="6" rx="2" fill="var(--color-ai)" opacity="0.6"/>
+                <line x1="48" y1="73" x2="72" y2="73" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+                <!-- Sparkle/AI indicator -->
+                <circle cx="80" cy="20" r="12" fill="var(--color-ai)"/>
+                <path d="M80 14v12M74 20h12" stroke="var(--color-washi)" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </div>
+            <h3>Noch kein Template vorhanden</h3>
+            <p>
+              Erstellen Sie Ihr erstes Anschreiben-Template. Mit Platzhaltern wie <code v-pre>{{FIRMA}}</code> und <code v-pre>{{POSITION}}</code> werden Ihre Bewerbungen automatisch personalisiert.
+            </p>
+          </div>
+        </div>
+      </section>
+
       <!-- Ink Stroke Divider -->
       <div class="ink-stroke"></div>
 
@@ -1211,6 +1241,54 @@ onUnmounted(() => {
   gap: var(--space-md);
   justify-content: flex-end;
   margin-top: var(--space-lg);
+}
+
+/* ========================================
+   EMPTY STATE
+   ======================================== */
+.empty-state-section {
+  margin-bottom: var(--space-ma);
+}
+
+.empty-state-card {
+  padding: var(--space-xl);
+}
+
+.empty-state-content {
+  text-align: center;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.empty-state-illustration {
+  margin-bottom: var(--space-lg);
+}
+
+.empty-state-illustration svg {
+  opacity: 0.9;
+}
+
+.empty-state-content h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+  margin-bottom: var(--space-md);
+}
+
+.empty-state-content p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+.empty-state-content code {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-family: var(--font-mono, monospace);
 }
 
 /* ========================================

@@ -137,12 +137,61 @@
 
       <!-- Empty State -->
       <section v-else class="empty-state">
-        <div class="empty-enso"></div>
-        <h3>Keine Bewerbungen im Zeitraum</h3>
-        <p>Im ausgewaehlten Zeitraum wurden keine Bewerbungen gefunden.</p>
-        <button @click="daysFilter = 'all'; loadTimeline()" class="zen-btn">
-          Alle anzeigen
-        </button>
+        <!-- Empty state with timeline preview illustration -->
+        <div class="empty-state-illustration">
+          <svg width="200" height="160" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <!-- Timeline axis line -->
+            <line x1="40" y1="20" x2="40" y2="140" stroke="var(--color-sand)" stroke-width="3" stroke-linecap="round"/>
+
+            <!-- Timeline node 1 (top) -->
+            <circle cx="40" cy="30" r="8" fill="var(--color-ai)" stroke="var(--color-bg-elevated)" stroke-width="3"/>
+            <!-- Card placeholder 1 -->
+            <rect x="60" y="15" width="120" height="35" rx="4" fill="var(--color-bg-elevated)" stroke="var(--color-sand)" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <line x1="70" y1="25" x2="130" y2="25" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+            <line x1="70" y1="37" x2="110" y2="37" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+
+            <!-- Timeline node 2 (middle) -->
+            <circle cx="40" cy="75" r="6" fill="var(--color-stone)" stroke="var(--color-bg-elevated)" stroke-width="2"/>
+            <!-- Card placeholder 2 -->
+            <rect x="60" y="58" width="120" height="35" rx="4" fill="var(--color-bg-elevated)" stroke="var(--color-sand)" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <line x1="70" y1="68" x2="140" y2="68" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+            <line x1="70" y1="80" x2="100" y2="80" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+
+            <!-- Timeline node 3 (bottom) -->
+            <circle cx="40" cy="120" r="6" fill="var(--color-stone)" stroke="var(--color-bg-elevated)" stroke-width="2"/>
+            <!-- Card placeholder 3 -->
+            <rect x="60" y="103" width="120" height="35" rx="4" fill="var(--color-bg-elevated)" stroke="var(--color-sand)" stroke-width="1.5" stroke-dasharray="4 2"/>
+            <line x1="70" y1="113" x2="120" y2="113" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+            <line x1="70" y1="125" x2="95" y2="125" stroke="var(--color-sand)" stroke-width="2" stroke-linecap="round"/>
+
+            <!-- Status badges hints -->
+            <rect x="140" y="22" width="30" height="12" rx="6" fill="var(--color-ai-subtle)"/>
+            <rect x="140" y="65" width="30" height="12" rx="6" fill="rgba(184, 122, 94, 0.15)"/>
+            <rect x="140" y="110" width="30" height="12" rx="6" fill="rgba(122, 139, 110, 0.15)"/>
+          </svg>
+        </div>
+
+        <h3>{{ daysFilter !== 'all' ? 'Keine Bewerbungen im Zeitraum' : 'Ihre Timeline ist noch leer' }}</h3>
+
+        <p v-if="daysFilter !== 'all'" class="empty-state-description">
+          Im ausgewählten Zeitraum wurden keine Bewerbungen gefunden. Versuchen Sie einen anderen Zeitraum.
+        </p>
+        <p v-else class="empty-state-description">
+          Hier sehen Sie bald den chronologischen Verlauf Ihrer Bewerbungen mit Statusänderungen, Interviews und Antworten - alles auf einen Blick.
+        </p>
+
+        <div class="empty-state-actions">
+          <button v-if="daysFilter !== 'all'" @click="daysFilter = 'all'; loadTimeline()" class="zen-btn">
+            Alle anzeigen
+          </button>
+          <router-link v-else to="/new-application" class="zen-btn zen-btn-filled">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Erste Bewerbung erstellen
+          </router-link>
+        </div>
       </section>
 
       <!-- Detail Modal -->
@@ -838,6 +887,33 @@ onMounted(() => {
 .empty-state p {
   color: var(--color-text-tertiary);
   margin-bottom: var(--space-lg);
+}
+
+.empty-state-illustration {
+  margin-bottom: var(--space-lg);
+}
+
+.empty-state-illustration svg {
+  opacity: 0.85;
+}
+
+.empty-state-description {
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: var(--leading-relaxed);
+}
+
+.empty-state-actions {
+  display: flex;
+  justify-content: center;
+  gap: var(--space-md);
+}
+
+.empty-state-actions .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
 /* ========================================
