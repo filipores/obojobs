@@ -156,11 +156,65 @@
             <div class="stat-value" aria-hidden="true">{{ stats.versendet }}</div>
             <div class="stat-name" aria-hidden="true">Bewerbungen</div>
           </div>
+
+          <!-- Interviews Card - Prominent display of upcoming interviews -->
+          <router-link
+            v-if="nextInterview"
+            :to="`/applications/${nextInterview.id}/interview`"
+            class="stat-card stat-interviews stagger-item"
+            :aria-label="`${upcomingInterviewCount} Interview${upcomingInterviewCount !== 1 ? 's' : ''} geplant, nächstes: ${nextInterview.firma} ${getRelativeTime(nextInterview.interview_date)}`"
+            role="region"
+          >
+            <div class="stat-header">
+              <span class="stat-label">Interviews</span>
+              <div class="stat-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" aria-hidden="true">{{ upcomingInterviewCount }}</div>
+            <div class="stat-name stat-name-highlight" aria-hidden="true">
+              {{ formatInterviewDate(nextInterview.interview_date) }}
+            </div>
+            <div class="stat-interview-company">{{ nextInterview.firma }}</div>
+            <div class="stat-interview-cta">
+              Vorbereiten
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 12h14M12 5l7 7-7 7"/>
+              </svg>
+            </div>
+          </router-link>
+
+          <!-- Interviews Card - Empty state -->
+          <div
+            v-else
+            class="stat-card stagger-item"
+            aria-label="Keine Interviews geplant"
+            role="region"
+          >
+            <div class="stat-header">
+              <span class="stat-label">Interviews</span>
+              <div class="stat-icon" aria-hidden="true">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="16" y1="2" x2="16" y2="6"/>
+                  <line x1="8" y1="2" x2="8" y2="6"/>
+                  <line x1="3" y1="10" x2="21" y2="10"/>
+                </svg>
+              </div>
+            </div>
+            <div class="stat-value" aria-hidden="true">0</div>
+            <div class="stat-name" aria-hidden="true">Geplant</div>
+          </div>
         </div>
 
         <!-- Loading State -->
         <div v-else-if="!loadError && !stats" class="stats-grid" role="status" aria-label="Statistiken werden geladen">
-          <div v-for="i in 4" :key="i" class="stat-card">
+          <div v-for="i in 5" :key="i" class="stat-card">
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
           <span class="sr-only">Statistiken werden geladen...</span>
@@ -307,6 +361,7 @@ const bannerDismissedThisSession = ref(false)
 const loadError = ref(false)
 const skills = ref([])
 const skillsLoaded = ref(false)
+const interviewStats = ref(null)
 
 // Check if user needs to see the verification banner
 const needsVerification = computed(() => {
@@ -373,6 +428,62 @@ const loadSkills = async () => {
   }
 }
 
+const loadInterviewStats = async () => {
+  try {
+    const { data } = await api.silent.get('/applications/interview-stats')
+    if (data.success) {
+      interviewStats.value = data.data
+    }
+  } catch (error) {
+    console.error('Failed to load interview stats:', error)
+  }
+}
+
+// Get count of upcoming interviews
+const upcomingInterviewCount = computed(() => {
+  return interviewStats.value?.upcoming_interviews?.length || 0
+})
+
+// Get the next upcoming interview
+const nextInterview = computed(() => {
+  const upcoming = interviewStats.value?.upcoming_interviews
+  return upcoming?.length > 0 ? upcoming[0] : null
+})
+
+// Format interview date for display in stat card
+const formatInterviewDate = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffDays = Math.ceil((date - now) / (1000 * 60 * 60 * 24))
+
+  // Format day/time
+  const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+  const dayName = dayNames[date.getDay()]
+  const time = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+
+  if (diffDays === 0) {
+    return `Heute ${time}`
+  } else if (diffDays === 1) {
+    return `Morgen ${time}`
+  } else {
+    return `${dayName} ${time}`
+  }
+}
+
+// Get relative time description (e.g., "in 2 Tagen")
+const getRelativeTime = (dateStr) => {
+  if (!dateStr) return ''
+  const date = new Date(dateStr)
+  const now = new Date()
+  const diffMs = date - now
+  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+
+  if (diffDays === 0) return 'heute'
+  if (diffDays === 1) return 'morgen'
+  return `in ${diffDays} Tagen`
+}
+
 // Show skills hint if no skills and not dismissed for 7 days
 const showSkillsHint = computed(() => {
   if (!skillsLoaded.value) return false
@@ -398,7 +509,7 @@ const retryLoadStats = () => {
 }
 
 onMounted(async () => {
-  await Promise.all([loadStats(), loadSkills()])
+  await Promise.all([loadStats(), loadSkills(), loadInterviewStats()])
 })
 </script>
 
@@ -642,7 +753,7 @@ onMounted(async () => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: var(--space-lg);
 }
 
@@ -723,6 +834,61 @@ onMounted(async () => {
 }
 
 .stat-link:hover {
+  gap: var(--space-sm);
+}
+
+/* Interview Stat Card - Prominent display */
+.stat-interviews {
+  background: linear-gradient(135deg, var(--color-koke) 0%, #5a7a5c 100%);
+  border-color: transparent;
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-interviews:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lifted), 0 8px 24px rgba(106, 142, 108, 0.25);
+}
+
+.stat-interviews .stat-label,
+.stat-interviews .stat-value,
+.stat-interviews .stat-name {
+  color: var(--color-text-inverse);
+}
+
+.stat-interviews .stat-icon {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.stat-name-highlight {
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95) !important;
+}
+
+.stat-interview-company {
+  font-size: 0.8125rem;
+  color: rgba(255, 255, 255, 0.8);
+  margin-top: var(--space-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.stat-interview-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  margin-top: auto;
+  padding-top: var(--space-md);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.95);
+  transition: gap var(--transition-base);
+}
+
+.stat-interviews:hover .stat-interview-cta {
   gap: var(--space-sm);
 }
 
@@ -915,6 +1081,12 @@ onMounted(async () => {
 /* ========================================
    RESPONSIVE
    ======================================== */
+@media (max-width: 1280px) {
+  .stats-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1024px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
