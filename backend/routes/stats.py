@@ -10,6 +10,116 @@ from models import Application, db
 stats_bp = Blueprint("stats", __name__)
 
 
+def get_week_boundaries():
+    """Get the start and end of the current week (Monday to Sunday)."""
+    now = datetime.utcnow()
+    # Get Monday of current week (weekday() returns 0 for Monday)
+    week_start = now - timedelta(days=now.weekday())
+    week_start = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+    # End of week is next Monday
+    week_end = week_start + timedelta(days=7)
+    return week_start, week_end
+
+
+@stats_bp.route("/stats/weekly-goal", methods=["GET"])
+@jwt_required_custom
+def get_weekly_goal(current_user):
+    """Get user's weekly application goal and current progress.
+
+    Returns:
+        - goal: Target number of applications per week
+        - completed: Applications created this week
+        - progress: Percentage of goal completed (0-100)
+        - is_achieved: Whether goal has been met or exceeded
+        - week_start: Start of current week (Monday)
+        - week_end: End of current week (Sunday)
+    """
+    week_start, week_end = get_week_boundaries()
+
+    # Count applications created this week
+    completed = Application.query.filter(
+        Application.user_id == current_user.id,
+        Application.datum >= week_start,
+        Application.datum < week_end,
+    ).count()
+
+    goal = current_user.weekly_goal or 5
+    progress = min(round((completed / goal) * 100) if goal > 0 else 100, 100)
+    is_achieved = completed >= goal
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "goal": goal,
+            "completed": completed,
+            "progress": progress,
+            "is_achieved": is_achieved,
+            "week_start": week_start.strftime("%Y-%m-%d"),
+            "week_end": (week_end - timedelta(days=1)).strftime("%Y-%m-%d"),
+        }
+    }), 200
+
+
+@stats_bp.route("/stats/weekly-goal", methods=["PUT"])
+@jwt_required_custom
+def update_weekly_goal(current_user):
+    """Update user's weekly application goal.
+
+    Request body:
+        - goal: New weekly goal (1-50)
+
+    Returns:
+        - goal: Updated weekly goal
+    """
+    data = request.json or {}
+    new_goal = data.get("goal")
+
+    if new_goal is None:
+        return jsonify({
+            "success": False,
+            "error": "goal ist erforderlich"
+        }), 400
+
+    try:
+        new_goal = int(new_goal)
+    except (ValueError, TypeError):
+        return jsonify({
+            "success": False,
+            "error": "goal muss eine Zahl sein"
+        }), 400
+
+    if new_goal < 1 or new_goal > 50:
+        return jsonify({
+            "success": False,
+            "error": "goal muss zwischen 1 und 50 liegen"
+        }), 400
+
+    current_user.weekly_goal = new_goal
+    db.session.commit()
+
+    # Get updated progress
+    week_start, week_end = get_week_boundaries()
+    completed = Application.query.filter(
+        Application.user_id == current_user.id,
+        Application.datum >= week_start,
+        Application.datum < week_end,
+    ).count()
+
+    progress = min(round((completed / new_goal) * 100) if new_goal > 0 else 100, 100)
+    is_achieved = completed >= new_goal
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "goal": new_goal,
+            "completed": completed,
+            "progress": progress,
+            "is_achieved": is_achieved,
+        },
+        "message": f"Wöchentliches Ziel auf {new_goal} Bewerbungen gesetzt"
+    }), 200
+
+
 @stats_bp.route("/stats", methods=["GET"])
 @jwt_required_custom
 def get_stats(current_user):

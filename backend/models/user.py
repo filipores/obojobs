@@ -36,6 +36,9 @@ class User(db.Model):
     applications_this_month = db.Column(db.Integer, default=0, nullable=False)
     month_reset_at = db.Column(db.DateTime, nullable=True)
 
+    # Weekly goal tracking
+    weekly_goal = db.Column(db.Integer, default=5, nullable=False)
+
     # Relationships
     documents = db.relationship("Document", back_populates="user", cascade="all, delete-orphan")
     templates = db.relationship("Template", back_populates="user", cascade="all, delete-orphan")
@@ -65,4 +68,5 @@ class User(db.Model):
             "applications_this_month": self.applications_this_month,
             "month_reset_at": self.month_reset_at.isoformat() if self.month_reset_at else None,
             "subscription": self.subscription.to_dict() if self.subscription else None,
+            "weekly_goal": self.weekly_goal,
         }

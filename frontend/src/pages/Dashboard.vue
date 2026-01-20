@@ -89,6 +89,13 @@
       </div>
     </section>
 
+    <!-- Weekly Goal Section -->
+    <section class="weekly-goal-section">
+      <div class="container">
+        <WeeklyGoalWidget />
+      </div>
+    </section>
+
     <!-- Stats Section -->
     <section class="stats-section">
       <div class="container">
@@ -298,6 +305,7 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
 import { authStore } from '../store/auth'
+import WeeklyGoalWidget from '../components/WeeklyGoalWidget.vue'
 import InterviewStatsWidget from '../components/InterviewStatsWidget.vue'
 import JobRecommendations from '../components/JobRecommendations.vue'
 
@@ -631,6 +639,14 @@ onMounted(async () => {
   border-width: 2px 3px 2px 2.5px;
   opacity: 0.03;
   pointer-events: none;
+}
+
+/* ========================================
+   WEEKLY GOAL SECTION
+   ======================================== */
+.weekly-goal-section {
+  padding: 0 0 var(--space-ma);
+  margin-top: calc(-1 * var(--space-lg));
 }
 
 /* ========================================
