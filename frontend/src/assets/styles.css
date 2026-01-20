@@ -664,6 +664,34 @@ small {
   background: var(--color-error);
 }
 
+/* Loading state for buttons */
+.zen-btn-loading {
+  position: relative;
+  color: transparent !important;
+  pointer-events: none;
+}
+
+.zen-btn-loading::after {
+  content: '';
+  position: absolute;
+  width: 1em;
+  height: 1em;
+  top: 50%;
+  left: 50%;
+  margin-top: -0.5em;
+  margin-left: -0.5em;
+  border: 2px solid var(--color-border);
+  border-top-color: var(--color-ai);
+  border-radius: 50%;
+  animation: spin 0.8s var(--ease-zen) infinite;
+}
+
+.zen-btn-filled.zen-btn-loading::after,
+.btn-primary.zen-btn-loading::after {
+  border-color: rgba(255, 255, 255, 0.3);
+  border-top-color: var(--color-text-inverse);
+}
+
 /* ========================================
    FORM ELEMENTS - Minimal, refined
    ======================================== */
