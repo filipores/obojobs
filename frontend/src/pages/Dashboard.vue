@@ -147,20 +147,49 @@
           <!-- Sent Card -->
           <div
             class="stat-card stagger-item"
-            :aria-label="`Versendet: ${stats.versendet} Bewerbungen`"
+            :aria-label="`Gesendet: ${stats.versendet} Bewerbungen`"
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Versendet</span>
+              <span class="stat-label">Gesendet</span>
+              <span v-if="stats.versendet_heute > 0" class="stat-badge">+{{ stats.versendet_heute }} heute</span>
             </div>
             <div class="stat-value" aria-hidden="true">{{ stats.versendet }}</div>
             <div class="stat-name" aria-hidden="true">Bewerbungen</div>
+          </div>
+
+          <!-- Responses Card -->
+          <div
+            class="stat-card stagger-item"
+            :aria-label="`Antworten: ${stats.antwort_erhalten} erhalten`"
+            role="region"
+          >
+            <div class="stat-header">
+              <span class="stat-label">Antworten</span>
+              <span v-if="stats.antworten_heute > 0" class="stat-badge stat-badge-new">+{{ stats.antworten_heute }} neu</span>
+            </div>
+            <div class="stat-value" aria-hidden="true">{{ stats.antwort_erhalten }}</div>
+            <div class="stat-name" aria-hidden="true">Erhalten</div>
+          </div>
+
+          <!-- Interviews Card -->
+          <div
+            class="stat-card stagger-item"
+            :aria-label="`Interviews: ${stats.interviews} geplant`"
+            role="region"
+          >
+            <div class="stat-header">
+              <span class="stat-label">Interviews</span>
+              <span v-if="stats.interviews_heute > 0" class="stat-badge stat-badge-new">+{{ stats.interviews_heute }} neu</span>
+            </div>
+            <div class="stat-value" aria-hidden="true">{{ stats.interviews }}</div>
+            <div class="stat-name" aria-hidden="true">Geplant</div>
           </div>
         </div>
 
         <!-- Loading State -->
         <div v-else-if="!loadError && !stats" class="stats-grid" role="status" aria-label="Statistiken werden geladen">
-          <div v-for="i in 4" :key="i" class="stat-card">
+          <div v-for="i in 6" :key="i" class="stat-card">
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
           <span class="sr-only">Statistiken werden geladen...</span>
@@ -642,7 +671,7 @@ onMounted(async () => {
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-lg);
 }
 
@@ -708,6 +737,21 @@ onMounted(async () => {
 .stat-name {
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
+}
+
+.stat-badge {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: var(--radius-full, 9999px);
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  white-space: nowrap;
+}
+
+.stat-badge-new {
+  background: var(--color-koke-subtle, rgba(122, 139, 110, 0.15));
+  color: var(--color-koke);
 }
 
 .stat-link {
@@ -918,6 +962,11 @@ onMounted(async () => {
 @media (max-width: 1024px) {
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  .stat-badge {
+    font-size: 0.625rem;
+    padding: 0.125rem 0.375rem;
   }
 }
 

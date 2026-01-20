@@ -14,11 +14,45 @@ stats_bp = Blueprint("stats", __name__)
 @jwt_required_custom
 def get_stats(current_user):
     """Get user statistics"""
+    user_id = current_user.id
+    today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+
     # Count applications by status
-    total = Application.query.filter_by(user_id=current_user.id).count()
-    erstellt = Application.query.filter_by(user_id=current_user.id, status="erstellt").count()
-    versendet = Application.query.filter_by(user_id=current_user.id, status="versendet").count()
-    antwort_erhalten = Application.query.filter_by(user_id=current_user.id, status="antwort_erhalten").count()
+    total = Application.query.filter_by(user_id=user_id).count()
+    erstellt = Application.query.filter_by(user_id=user_id, status="erstellt").count()
+    versendet = Application.query.filter_by(user_id=user_id, status="versendet").count()
+    antwort_erhalten = Application.query.filter_by(user_id=user_id, status="antwort_erhalten").count()
+    interviews = Application.query.filter_by(user_id=user_id, status="interview").count()
+
+    # Count today's sent applications (sent_at is today)
+    versendet_heute = Application.query.filter(
+        Application.user_id == user_id,
+        Application.sent_at >= today_start
+    ).count()
+
+    # Count today's responses and interviews by checking status_history
+    # We parse the JSON status_history to find status changes that happened today
+    antworten_heute = 0
+    interviews_heute = 0
+    today_str = today_start.strftime("%Y-%m-%d")
+
+    apps_with_history = Application.query.filter(
+        Application.user_id == user_id,
+        Application.status.in_(["antwort_erhalten", "interview"])
+    ).all()
+
+    for app in apps_with_history:
+        history = app.get_status_history()
+        for entry in history:
+            ts = entry.get("timestamp", "")
+            status = entry.get("status", "")
+            if ts.startswith(today_str):
+                if status == "antwort_erhalten":
+                    antworten_heute += 1
+                    break
+                elif status == "interview":
+                    interviews_heute += 1
+                    break
 
     # Get subscription usage
     usage = get_subscription_usage(current_user)
@@ -31,6 +65,10 @@ def get_stats(current_user):
                 "erstellt": erstellt,
                 "versendet": versendet,
                 "antwort_erhalten": antwort_erhalten,
+                "interviews": interviews,
+                "versendet_heute": versendet_heute,
+                "antworten_heute": antworten_heute,
+                "interviews_heute": interviews_heute,
             },
             "usage": usage,
         }
