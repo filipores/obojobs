@@ -36,7 +36,7 @@
 
   /* Earth Tones - 土色 */
   --color-stone: #9B958F;
-  --color-clay: #B5A99A;
+  --color-clay: #8A7E70;
   --color-sand: #D4C9BA;
   --color-earth: #C4B8A5;
 
@@ -56,6 +56,13 @@
   --color-natsu: #7A8B6E;       /* Summer - Moss */
   --color-momiji: #D4695E;      /* Autumn - Maple leaves */
   --color-yuki: #A8C8DC;        /* Winter - Snow */
+
+  /* Application Status Colors - 申請状態 */
+  --status-erstellt: var(--color-stone);     /* gray - draft */
+  --status-versendet: var(--color-ai);       /* blue - sent */
+  --status-antwort: #C4A35A;                 /* gold - response */
+  --status-zusage: var(--color-koke);        /* green - accepted */
+  --status-absage: var(--color-terra);       /* red - rejected */
 
   /* Current Season (can be set dynamically) */
   --color-seasonal: var(--color-yuki);
