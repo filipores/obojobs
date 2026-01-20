@@ -972,7 +972,13 @@
       "pages": [
         "/new-application"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "has_bugs": false,
+        "bugs": [],
+        "suggestions": [],
+        "notes": "No structured result returned"
+      }
     },
     {
       "id": "CORE-013",
@@ -1001,7 +1007,86 @@
         "/new-application",
         "/documents"
       ],
-      "tested": false
+      "tested": true,
+      "test_result": {
+        "feature_id": "CORE-013",
+        "tested_at": "2026-01-18T15:30:00.000Z",
+        "test_type": "code_analysis",
+        "has_bugs": true,
+        "bugs": [
+          {
+            "id": "BUG-001",
+            "severity": "minor",
+            "title": "Missing aria-live region for generation error messages",
+            "steps_to_reproduce": [
+              "Navigate to /new-application",
+              "Load a job posting preview",
+              "Trigger a generation error (e.g., by having missing documents)",
+              "Error message appears in .error-box"
+            ],
+            "expected": "Error message should be announced to screen readers via aria-live region",
+            "actual": "No aria-live='assertive' or role='alert' on generation error messages. URL validation has aria-live but generation errors don't.",
+            "affected_component": "NewApplication.vue:559-580"
+          },
+          {
+            "id": "BUG-002",
+            "severity": "minor",
+            "title": "Missing mobile responsive styles for error boxes",
+            "steps_to_reproduce": [
+              "Set viewport to mobile size (375x667)",
+              "Trigger a generation error with document link",
+              "Observe the error box layout"
+            ],
+            "expected": "Error box should have mobile-optimized layout with stacked elements",
+            "actual": "No @media queries defined for .error-box or .error-with-action classes - error may display with cramped layout on mobile",
+            "affected_component": "NewApplication.vue:2210-2268"
+          },
+          {
+            "id": "BUG-003",
+            "severity": "minor",
+            "title": "Arbeitszeugnis treated as required document causing confusing error",
+            "steps_to_reproduce": [
+              "Have Lebenslauf uploaded but no Arbeitszeugnis",
+              "Try to generate an application",
+              "Observe error message"
+            ],
+            "expected": "Clear distinction between required (Lebenslauf) and optional documents, or warning banner before attempt",
+            "actual": "Backend treats Arbeitszeugnis as required (raises ValueError in generator.py:41), but frontend only shows warning banner for missing Lebenslauf",
+            "affected_component": "backend/services/generator.py:35-41, NewApplication.vue:11-41"
+          }
+        ],
+        "suggestions": [
+          {
+            "id": "SUG-001",
+            "type": "accessibility",
+            "title": "Add role='alert' to generation error boxes",
+            "description": "Add role='alert' or aria-live='assertive' to the error-box div to ensure screen readers announce errors immediately",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-002",
+            "type": "ux",
+            "title": "Add mobile responsive styles for error boxes",
+            "description": "Add @media (max-width: 768px) styles: stack icon above text, increase touch target size for 'Zu den Dokumenten' button",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-003",
+            "type": "ux",
+            "title": "Show warning banner for missing Arbeitszeugnis too",
+            "description": "Currently the resume-warning only shows for missing Lebenslauf. Add check for Arbeitszeugnis since it's also required by the backend",
+            "priority": "medium"
+          },
+          {
+            "id": "SUG-004",
+            "type": "feature",
+            "title": "Add retry button for server errors",
+            "description": "For 5xx errors during generation, add a 'Erneut versuchen' button in the error box to allow quick retry",
+            "priority": "low"
+          }
+        ],
+        "found": true
+      }
     },
     {
       "id": "CORE-014",
