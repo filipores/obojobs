@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
+from i18n import t
 from models import TokenBlacklist
 from services.auth_service import AuthService
 from services.email_verification_service import EmailVerificationService
@@ -22,11 +23,11 @@ def register():
     full_name = data.get("full_name")
 
     if not email or not password:
-        return jsonify({"error": "E-Mail und Passwort sind erforderlich"}), 400
+        return jsonify({"error": t("Email and password are required")}), 400
 
     try:
         user = AuthService.register_user(email, password, full_name)
-        return jsonify({"message": "Registrierung erfolgreich", "user": user.to_dict()}), 201
+        return jsonify({"message": t("Registration successful"), "user": user.to_dict()}), 201
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
 
@@ -40,7 +41,7 @@ def login():
     password = data.get("password")
 
     if not email or not password:
-        return jsonify({"error": "E-Mail und Passwort sind erforderlich"}), 400
+        return jsonify({"error": t("Email and password are required")}), 400
 
     try:
         result = AuthService.login_user(email, password)
@@ -66,7 +67,7 @@ def me():
     user = AuthService.get_user_by_id(int(current_user_id))
 
     if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+        return jsonify({"error": t("User not found")}), 404
 
     return jsonify(user.to_dict()), 200
 
@@ -144,16 +145,16 @@ def send_verification():
     user = AuthService.get_user_by_id(int(current_user_id))
 
     if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+        return jsonify({"error": t("User not found")}), 404
 
     # Check if already verified
     if user.email_verified:
-        return jsonify({"error": "E-Mail ist bereits bestätigt"}), 400
+        return jsonify({"error": t("Email is already verified")}), 400
 
     # Check rate limit
     if not _check_verification_rate_limit(user.id):
         return jsonify({
-            "error": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.",
+            "error": t("Too many verification requests. Please try again later."),
             "retry_after_minutes": 60
         }), 429
 
@@ -168,7 +169,7 @@ def send_verification():
     print(f"[DEV] Verification token for {user.email}: {token}")
 
     return jsonify({
-        "message": "Bestätigungs-E-Mail gesendet",
+        "message": t("Verification email sent"),
         "email": user.email
     }), 200
 
@@ -184,7 +185,7 @@ def verify_email():
     token = data.get("token")
 
     if not token:
-        return jsonify({"error": "Token ist erforderlich"}), 400
+        return jsonify({"error": t("Token is required")}), 400
 
     result = EmailVerificationService.verify_token(token)
 
@@ -193,7 +194,7 @@ def verify_email():
 
     user = result["user"]
     return jsonify({
-        "message": "E-Mail erfolgreich bestätigt",
+        "message": t("Email successfully verified"),
         "user": user.to_dict()
     }), 200
 
@@ -247,14 +248,14 @@ def forgot_password():
     if not email:
         # Still return 200 to prevent enumeration
         return jsonify({
-            "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
+            "message": t("If an account with this email exists, a reset link has been sent.")
         }), 200
 
     # Check rate limit (even for non-existent emails to prevent timing attacks)
     if not _check_password_reset_rate_limit(email):
         # Still return 200 to prevent enumeration, but don't process
         return jsonify({
-            "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
+            "message": t("If an account with this email exists, a reset link has been sent.")
         }), 200
 
     # Record the request for rate limiting
@@ -273,7 +274,7 @@ def forgot_password():
 
     # Always return same response to prevent email enumeration
     return jsonify({
-        "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
+        "message": t("If an account with this email exists, a reset link has been sent.")
     }), 200
 
 
@@ -289,16 +290,16 @@ def reset_password():
     new_password = data.get("new_password")
 
     if not token:
-        return jsonify({"error": "Token ist erforderlich"}), 400
+        return jsonify({"error": t("Token is required")}), 400
 
     if not new_password:
-        return jsonify({"error": "Neues Passwort ist erforderlich"}), 400
+        return jsonify({"error": t("New password is required")}), 400
 
     # Validate password strength
     validation = PasswordValidator.validate(new_password)
     if not validation["valid"]:
         return jsonify({
-            "error": "Passwort erfüllt nicht die Anforderungen",
+            "error": t("Password does not meet requirements"),
             "failed_rules": validation["errors"]
         }), 400
 
@@ -308,7 +309,7 @@ def reset_password():
     if not result["success"]:
         return jsonify({"error": result["message"]}), 400
 
-    return jsonify({"message": "Passwort erfolgreich zurückgesetzt"}), 200
+    return jsonify({"message": t("Password successfully reset")}), 200
 
 
 @auth_bp.route("/change-password", methods=["PUT"])
@@ -326,10 +327,10 @@ def change_password():
     new_password = data.get("new_password")
 
     if not current_password:
-        return jsonify({"error": "Aktuelles Passwort ist erforderlich"}), 400
+        return jsonify({"error": t("Current password is required")}), 400
 
     if not new_password:
-        return jsonify({"error": "Neues Passwort ist erforderlich"}), 400
+        return jsonify({"error": t("New password is required")}), 400
 
     try:
         result = AuthService.change_password(
@@ -366,7 +367,7 @@ def logout():
         expires_at=expires_at
     )
 
-    return jsonify({"message": "Erfolgreich abgemeldet"}), 200
+    return jsonify({"message": t("Successfully logged out")}), 200
 
 
 @auth_bp.route("/profile", methods=["PUT"])
@@ -382,26 +383,26 @@ def update_profile():
 
     user = AuthService.get_user_by_id(int(current_user_id))
     if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+        return jsonify({"error": t("User not found")}), 404
 
     # Update allowed fields
     if "full_name" in data:
         full_name = data["full_name"]
         if full_name and len(full_name) > 255:
-            return jsonify({"error": "Name darf maximal 255 Zeichen haben"}), 400
+            return jsonify({"error": t("Name cannot exceed 255 characters")}), 400
         user.full_name = full_name.strip() if full_name else None
 
     if "display_name" in data:
         display_name = data["display_name"]
         if display_name and len(display_name) > 100:
-            return jsonify({"error": "Anzeigename darf maximal 100 Zeichen haben"}), 400
+            return jsonify({"error": t("Display name cannot exceed 100 characters")}), 400
         user.display_name = display_name.strip() if display_name else None
 
     from models import db
     db.session.commit()
 
     return jsonify({
-        "message": "Profil erfolgreich aktualisiert",
+        "message": t("Profile successfully updated"),
         "user": user.to_dict()
     }), 200
 
@@ -424,7 +425,7 @@ def delete_account():
     user = AuthService.get_user_by_id(int(current_user_id))
 
     if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+        return jsonify({"error": t("User not found")}), 404
 
     try:
         # Cancel Stripe subscription if exists
@@ -459,7 +460,7 @@ def delete_account():
         print(f"[GDPR] Account deleted for user {user_email} (ID: {current_user_id})")
 
         return jsonify({
-            "message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."
+            "message": t("Your account and all associated data have been successfully deleted.")
         }), 200
 
     except Exception as e:
@@ -467,5 +468,5 @@ def delete_account():
         db.session.rollback()
         print(f"Error deleting account for user {current_user_id}: {e}")
         return jsonify({
-            "error": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."
+            "error": t("Error deleting account. Please contact support.")
         }), 500
