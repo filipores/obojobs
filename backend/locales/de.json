@@ -1,0 +1,33 @@
+{
+  "auth": {
+    "login_success": "Anmeldung erfolgreich",
+    "login_failed": "Ungültige E-Mail oder Passwort",
+    "logout_success": "Erfolgreich abgemeldet",
+    "registration_success": "Registrierung erfolgreich",
+    "account_locked": "Konto ist gesperrt. Bitte versuchen Sie es später erneut.",
+    "email_verification_sent": "Bestätigungs-E-Mail gesendet",
+    "email_verified": "E-Mail erfolgreich bestätigt",
+    "password_reset_sent": "E-Mail zum Zurücksetzen des Passworts gesendet",
+    "password_reset_success": "Passwort erfolgreich zurückgesetzt"
+  },
+  "common": {
+    "not_found": "Ressource nicht gefunden",
+    "unauthorized": "Nicht autorisierter Zugriff",
+    "forbidden": "Zugriff verboten",
+    "server_error": "Interner Serverfehler",
+    "validation_error": "Validierungsfehler",
+    "success": "Vorgang erfolgreich",
+    "created": "Erfolgreich erstellt",
+    "updated": "Erfolgreich aktualisiert",
+    "deleted": "Erfolgreich gelöscht"
+  },
+  "user": {
+    "profile_updated": "Profil erfolgreich aktualisiert",
+    "password_changed": "Passwort erfolgreich geändert",
+    "preferences_saved": "Einstellungen gespeichert"
+  },
+  "application": {
+    "submitted": "Bewerbung erfolgreich eingereicht",
+    "status_updated": "Bewerbungsstatus aktualisiert"
+  }
+}

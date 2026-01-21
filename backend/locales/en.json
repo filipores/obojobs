@@ -1,0 +1,33 @@
+{
+  "auth": {
+    "login_success": "Login successful",
+    "login_failed": "Invalid email or password",
+    "logout_success": "Logged out successfully",
+    "registration_success": "Registration successful",
+    "account_locked": "Account is locked. Please try again later.",
+    "email_verification_sent": "Verification email sent",
+    "email_verified": "Email verified successfully",
+    "password_reset_sent": "Password reset email sent",
+    "password_reset_success": "Password reset successfully"
+  },
+  "common": {
+    "not_found": "Resource not found",
+    "unauthorized": "Unauthorized access",
+    "forbidden": "Access forbidden",
+    "server_error": "Internal server error",
+    "validation_error": "Validation error",
+    "success": "Operation successful",
+    "created": "Created successfully",
+    "updated": "Updated successfully",
+    "deleted": "Deleted successfully"
+  },
+  "user": {
+    "profile_updated": "Profile updated successfully",
+    "password_changed": "Password changed successfully",
+    "preferences_saved": "Preferences saved"
+  },
+  "application": {
+    "submitted": "Application submitted successfully",
+    "status_updated": "Application status updated"
+  }
+}
