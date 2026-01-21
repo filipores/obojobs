@@ -1,0 +1,23 @@
+{
+  "auth": {
+    "emailAndPasswordRequired": "Email and password are required",
+    "registrationSuccessful": "Registration successful",
+    "userNotFound": "User not found",
+    "emailAlreadyVerified": "Email is already verified",
+    "tooManyVerificationRequests": "Too many verification requests. Please try again later.",
+    "verificationEmailSent": "Verification email sent",
+    "tokenRequired": "Token is required",
+    "emailVerified": "Email verified successfully",
+    "passwordResetEmailSent": "If an account with this email exists, a reset link has been sent.",
+    "newPasswordRequired": "New password is required",
+    "passwordNotMeetRequirements": "Password does not meet requirements",
+    "passwordResetSuccessful": "Password reset successfully",
+    "currentPasswordRequired": "Current password is required",
+    "logoutSuccessful": "Logged out successfully",
+    "nameTooLong": "Name can be at most 255 characters",
+    "displayNameTooLong": "Display name can be at most 100 characters",
+    "profileUpdated": "Profile updated successfully",
+    "accountDeleted": "Your account and all associated data have been deleted successfully.",
+    "accountDeleteError": "Error deleting account. Please contact support."
+  }
+}

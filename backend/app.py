@@ -129,6 +129,11 @@ def create_app():
 
     init_security_headers(app)
 
+    # Initialize locale middleware
+    from middleware.locale import init_locale_middleware
+
+    init_locale_middleware(app)
+
     # Register blueprints
     from routes.api_keys import api_keys_bp
     from routes.applications import applications_bp

@@ -1,0 +1,23 @@
+{
+  "auth": {
+    "emailAndPasswordRequired": "E-Mail und Passwort sind erforderlich",
+    "registrationSuccessful": "Registrierung erfolgreich",
+    "userNotFound": "Benutzer nicht gefunden",
+    "emailAlreadyVerified": "E-Mail ist bereits bestätigt",
+    "tooManyVerificationRequests": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.",
+    "verificationEmailSent": "Bestätigungs-E-Mail gesendet",
+    "tokenRequired": "Token ist erforderlich",
+    "emailVerified": "E-Mail erfolgreich bestätigt",
+    "passwordResetEmailSent": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet.",
+    "newPasswordRequired": "Neues Passwort ist erforderlich",
+    "passwordNotMeetRequirements": "Passwort erfüllt nicht die Anforderungen",
+    "passwordResetSuccessful": "Passwort erfolgreich zurückgesetzt",
+    "currentPasswordRequired": "Aktuelles Passwort ist erforderlich",
+    "logoutSuccessful": "Erfolgreich abgemeldet",
+    "nameTooLong": "Name darf maximal 255 Zeichen haben",
+    "displayNameTooLong": "Anzeigename darf maximal 100 Zeichen haben",
+    "profileUpdated": "Profil erfolgreich aktualisiert",
+    "accountDeleted": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht.",
+    "accountDeleteError": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."
+  }
+}

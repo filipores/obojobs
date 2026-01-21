@@ -1,0 +1,83 @@
+{
+  "errors": {
+    "auth": {
+      "invalidEmailOrPassword": "Ungültige E-Mail oder Passwort",
+      "userExists": "Ein Benutzer mit dieser E-Mail existiert bereits",
+      "accountDisabled": "Konto ist deaktiviert",
+      "invalidOrInactiveUser": "Ungültiger oder inaktiver Benutzer",
+      "userNotFound": "Benutzer nicht gefunden",
+      "tokenRequired": "Token ist erforderlich",
+      "emailAndPasswordRequired": "E-Mail und Passwort sind erforderlich",
+      "emailAlreadyVerified": "E-Mail ist bereits bestätigt",
+      "tooManyVerificationRequests": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.",
+      "newPasswordRequired": "Neues Passwort ist erforderlich",
+      "passwordNotMeetRequirements": "Passwort erfüllt nicht die Anforderungen",
+      "tokenRevoked": "Token wurde widerrufen",
+      "accountLockedMinutes": "Konto vorübergehend gesperrt. Versuche es in {minutes} Minuten erneut.",
+      "accountLockedFailedAttempts": "Konto wegen zu vieler fehlgeschlagener Anmeldeversuche gesperrt. Versuche es in {minutes} Minuten erneut."
+    },
+    "emailVerification": {
+      "invalidToken": "Ungültiger Bestätigungstoken",
+      "tokenExpired": "Bestätigungstoken ist abgelaufen"
+    },
+    "passwordReset": {
+      "invalidOrExpiredToken": "Ungültiger oder abgelaufener Reset-Token",
+      "tokenExpired": "Reset-Token ist abgelaufen"
+    },
+    "apiKey": {
+      "required": "API-Schlüssel erforderlich",
+      "invalid": "Ungültiger API-Schlüssel",
+      "notFound": "API-Schlüssel nicht gefunden"
+    },
+    "email": {
+      "accountNotFound": "E-Mail-Konto nicht gefunden",
+      "authorizationCodeRequired": "Autorisierungscode ist erforderlich",
+      "invalidStateParameter": "Ungültiger State-Parameter",
+      "applicationIdRequired": "Bewerbungs-ID ist erforderlich",
+      "emailAccountIdRequired": "E-Mail-Konto-ID ist erforderlich",
+      "subjectRequired": "Betreff ist erforderlich",
+      "bodyRequired": "Nachrichtentext ist erforderlich",
+      "toEmailRequired": "Empfänger-E-Mail ist erforderlich",
+      "applicationNotFound": "Bewerbung nicht gefunden",
+      "gmailNotConfigured": "Gmail-Integration ist derzeit nicht konfiguriert.",
+      "outlookNotConfigured": "Outlook-Integration ist derzeit nicht konfiguriert.",
+      "attachmentSizeExceeds": "Gesamtgröße der Anhänge überschreitet 10MB Limit ({size}MB)",
+      "unknownProvider": "Unbekannter Anbieter: {provider}",
+      "oauthError": "OAuth-Fehler: {error} - {description}",
+      "failedGenerateAuthUrl": "Fehler beim Erstellen der Autorisierungs-URL: {error}",
+      "failedCompleteOauth": "Fehler beim Abschluss des OAuth-Prozesses: {error}",
+      "failedSendEmail": "Fehler beim Senden der E-Mail: {error}"
+    },
+    "subscription": {
+      "noActiveSubscription": "Kein aktives Abonnement. Bitte abonniere zuerst einen Plan.",
+      "returnUrlRequired": "return_url ist erforderlich",
+      "successAndCancelUrlRequired": "success_url und cancel_url sind erforderlich",
+      "invalidPlan": "Ungültiger Plan. Muss 'basic' oder 'pro' sein.",
+      "planNotConfigured": "Plan nicht konfiguriert",
+      "failedCreateCheckout": "Fehler beim Erstellen der Checkout-Sitzung",
+      "failedCreatePortal": "Fehler beim Erstellen der Portal-Sitzung"
+    },
+    "template": {
+      "notFound": "Template nicht gefunden",
+      "nameAndContentRequired": "Name und Inhalt sind erforderlich",
+      "nameCannotBeEmpty": "Name darf nicht leer sein",
+      "contentCannotBeEmpty": "Inhalt darf nicht leer sein",
+      "failedCreate": "Fehler beim Erstellen des Templates",
+      "failedUpdate": "Fehler beim Aktualisieren des Templates",
+      "nameTooLong": "Name zu lang (max. {max} Zeichen)",
+      "contentTooLong": "Inhalt zu lang (max. {max} Zeichen)"
+    },
+    "document": {
+      "notFound": "Dokument nicht gefunden",
+      "fileNotFound": "Datei nicht gefunden"
+    },
+    "generic": {
+      "notFound": "Nicht gefunden",
+      "badRequest": "Ungültige Anfrage",
+      "unauthorized": "Nicht autorisiert",
+      "forbidden": "Zugriff verweigert",
+      "internalServerError": "Interner Serverfehler",
+      "unknownError": "Ein unbekannter Fehler ist aufgetreten"
+    }
+  }
+}
