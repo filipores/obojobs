@@ -138,10 +138,29 @@
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="loading-enso"></div>
-        <p>Lade Interview-Fragen...</p>
+      <!-- Loading State - Skeleton -->
+      <div v-if="loading" class="loading-skeleton" aria-label="Lade Interview-Fragen">
+        <div class="skeleton-stats">
+          <div class="skeleton skeleton-stat"></div>
+          <div class="skeleton skeleton-stat"></div>
+          <div class="skeleton skeleton-stat"></div>
+        </div>
+        <div class="skeleton-filters">
+          <div class="skeleton skeleton-filter"></div>
+          <div class="skeleton skeleton-filter"></div>
+          <div class="skeleton skeleton-filter"></div>
+        </div>
+        <div class="skeleton-questions">
+          <div v-for="i in 4" :key="i" class="skeleton-question zen-card">
+            <div class="skeleton-question-header">
+              <div class="skeleton-badges">
+                <div class="skeleton skeleton-badge"></div>
+                <div class="skeleton skeleton-badge-sm"></div>
+              </div>
+              <div class="skeleton skeleton-question-text"></div>
+            </div>
+          </div>
+        </div>
       </div>
 
       <!-- Generating State -->
@@ -509,8 +528,87 @@ onMounted(async () => {
 }
 
 /* ========================================
-   LOADING STATE
+   LOADING SKELETON
    ======================================== */
+.loading-skeleton {
+  padding: var(--space-ma) 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.skeleton-stats {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+.skeleton-stat {
+  width: 80px;
+  height: 3rem;
+}
+
+.skeleton-filters {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.skeleton-filter {
+  width: 100px;
+  height: 2.25rem;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skeleton-question {
+  padding: var(--space-lg);
+}
+
+.skeleton-question-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.skeleton-badges {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.skeleton-badge {
+  width: 80px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-badge-sm {
+  width: 60px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-question-text {
+  width: 85%;
+  height: 1.25rem;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Keep loading state for generating mode */
 .loading-state {
   text-align: center;
   padding: var(--space-ma-xl) 0;

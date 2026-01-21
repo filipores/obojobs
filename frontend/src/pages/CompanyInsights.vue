@@ -30,10 +30,24 @@
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="loading-enso"></div>
-        <p>Lade Company Insights...</p>
+      <!-- Loading State - Skeleton -->
+      <div v-if="loading" class="loading-skeleton" aria-label="Lade Company Insights">
+        <div class="skeleton-table zen-card">
+          <div class="skeleton-table-header">
+            <div class="skeleton skeleton-th" style="width: 200px;"></div>
+            <div class="skeleton skeleton-th" style="width: 80px;"></div>
+            <div class="skeleton skeleton-th" style="width: 80px;"></div>
+            <div class="skeleton skeleton-th" style="width: 80px;"></div>
+            <div class="skeleton skeleton-th" style="width: 100px;"></div>
+          </div>
+          <div v-for="i in 5" :key="i" class="skeleton-table-row">
+            <div class="skeleton skeleton-company-name"></div>
+            <div class="skeleton skeleton-count"></div>
+            <div class="skeleton skeleton-count"></div>
+            <div class="skeleton skeleton-rate"></div>
+            <div class="skeleton skeleton-time"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Company Table -->
@@ -239,29 +253,73 @@ onMounted(() => {
 }
 
 /* ========================================
-   LOADING STATE
+   LOADING SKELETON
    ======================================== */
-.loading-state {
-  text-align: center;
-  padding: var(--space-ma-xl) 0;
+.loading-skeleton {
+  margin-top: var(--space-ma);
 }
 
-.loading-enso {
-  width: 60px;
-  height: 60px;
-  margin: 0 auto var(--space-lg);
-  border: 2px solid var(--color-sand);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
+.skeleton-table {
+  padding: 0;
+  overflow: hidden;
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-table-header {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-washi);
+  border-bottom: 1px solid var(--color-border-light);
 }
 
-.loading-state p {
-  color: var(--color-text-tertiary);
+.skeleton-th {
+  height: 1rem;
+}
+
+.skeleton-table-row {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-md) var(--space-lg);
+  border-bottom: 1px solid var(--color-border-light);
+  align-items: center;
+}
+
+.skeleton-table-row:last-child {
+  border-bottom: none;
+}
+
+.skeleton-company-name {
+  width: 180px;
+  height: 1rem;
+}
+
+.skeleton-count {
+  width: 40px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-rate {
+  width: 56px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-time {
+  width: 70px;
+  height: 1rem;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* ========================================

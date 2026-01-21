@@ -1,9 +1,34 @@
 <template>
   <div class="gap-analysis">
-    <!-- Loading State -->
-    <div v-if="loading" class="gap-loading">
-      <div class="loading-spinner"></div>
-      <span>Lade Lernempfehlungen...</span>
+    <!-- Loading State - Skeleton -->
+    <div v-if="loading" class="gap-loading-skeleton" aria-label="Lade Lernempfehlungen">
+      <div class="skeleton-header">
+        <div class="skeleton-header-info">
+          <div class="skeleton skeleton-title"></div>
+          <div class="skeleton skeleton-subtitle"></div>
+        </div>
+        <div class="skeleton skeleton-badge"></div>
+      </div>
+      <div class="skeleton-filters">
+        <div class="skeleton skeleton-filter"></div>
+        <div class="skeleton skeleton-filter"></div>
+        <div class="skeleton skeleton-filter"></div>
+      </div>
+      <div class="skeleton-cards">
+        <div v-for="i in 2" :key="i" class="skeleton-card">
+          <div class="skeleton-card-header">
+            <div class="skeleton skeleton-skill-badge"></div>
+            <div class="skeleton skeleton-priority"></div>
+          </div>
+          <div class="skeleton-card-content">
+            <div class="skeleton skeleton-icon"></div>
+            <div class="skeleton-card-text">
+              <div class="skeleton skeleton-card-title"></div>
+              <div class="skeleton skeleton-card-desc"></div>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
 
     <!-- No Gaps Message -->
@@ -217,27 +242,125 @@ const getPriorityLabel = (priority) => {
   padding: var(--space-lg);
 }
 
-/* Loading State */
-.gap-loading {
+/* Loading Skeleton */
+.gap-loading-skeleton {
   display: flex;
-  align-items: center;
-  justify-content: center;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.gap-loading-skeleton .skeleton-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-bottom: var(--space-md);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.skeleton-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skeleton-title {
+  width: 160px;
+  height: 1.25rem;
+}
+
+.skeleton-subtitle {
+  width: 240px;
+  height: 1rem;
+}
+
+.skeleton-badge {
+  width: 100px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-filters {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.skeleton-filter {
+  width: 80px;
+  height: 2rem;
+  border-radius: var(--radius-md);
+}
+
+.skeleton-cards {
+  display: flex;
+  flex-direction: column;
   gap: var(--space-md);
-  padding: var(--space-xl);
-  color: var(--color-text-secondary);
 }
 
-.loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
+.skeleton-card {
+  padding: var(--space-md);
+  background: var(--color-washi);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
 }
 
-@keyframes spin {
-  to { transform: rotate(360deg); }
+.skeleton-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md);
+}
+
+.skeleton-skill-badge {
+  width: 80px;
+  height: 1.5rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-priority {
+  width: 60px;
+  height: 1.25rem;
+  border-radius: var(--radius-sm);
+}
+
+.skeleton-card-content {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.skeleton-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  flex-shrink: 0;
+}
+
+.skeleton-card-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.skeleton-card-title {
+  width: 70%;
+  height: 1rem;
+}
+
+.skeleton-card-desc {
+  width: 100%;
+  height: 2.5rem;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--color-washi-aged) 25%, var(--color-washi-warm) 50%, var(--color-washi-aged) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.8s ease infinite;
+  border-radius: var(--radius-sm);
+}
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
 }
 
 /* Success State */

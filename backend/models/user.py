@@ -32,6 +32,9 @@ class User(db.Model):
     # Stripe fields
     stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
 
+    # Language preference (de = German, en = English)
+    language = db.Column(db.String(5), nullable=False, default='de')
+
     # Subscription usage tracking
     applications_this_month = db.Column(db.Integer, default=0, nullable=False)
     month_reset_at = db.Column(db.DateTime, nullable=True)
@@ -69,4 +72,5 @@ class User(db.Model):
             "month_reset_at": self.month_reset_at.isoformat() if self.month_reset_at else None,
             "subscription": self.subscription.to_dict() if self.subscription else None,
             "weekly_goal": self.weekly_goal,
+            "language": self.language,
         }

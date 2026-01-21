@@ -1,0 +1,51 @@
+{
+  "auth": {
+    "emailAndPasswordRequired": "Email and password are required",
+    "registrationSuccess": "Registration successful",
+    "userNotFound": "User not found",
+    "emailAlreadyVerified": "Email is already verified",
+    "tooManyVerificationRequests": "Too many verification requests. Please try again later.",
+    "verificationEmailSent": "Verification email sent",
+    "tokenRequired": "Token is required",
+    "emailVerified": "Email verified successfully",
+    "passwordResetSent": "If an account with this email exists, a reset link has been sent.",
+    "newPasswordRequired": "New password is required",
+    "passwordRequirementsNotMet": "Password does not meet requirements",
+    "passwordResetSuccess": "Password reset successfully",
+    "currentPasswordRequired": "Current password is required",
+    "logoutSuccess": "Logged out successfully",
+    "nameTooLong": "Name cannot exceed 255 characters",
+    "displayNameTooLong": "Display name cannot exceed 100 characters",
+    "profileUpdated": "Profile updated successfully",
+    "accountDeleted": "Your account and all associated data have been deleted successfully.",
+    "accountDeleteError": "Error deleting account. Please contact support.",
+    "invalidEmailOrPassword": "Invalid email or password",
+    "userAlreadyExists": "A user with this email already exists",
+    "accountDisabled": "Account is disabled",
+    "invalidOrInactiveUser": "Invalid or inactive user",
+    "accountLocked": "Account temporarily locked. Try again in {minutes} minutes.",
+    "tooManyFailedAttempts": "Account locked due to too many failed login attempts. Try again in {minutes} minutes."
+  },
+  "jwt": {
+    "tokenRevoked": "Token has been revoked",
+    "invalidToken": "Invalid token",
+    "tokenExpired": "Token has expired",
+    "tokenMissing": "Token is missing"
+  },
+  "validation": {
+    "invalidVerificationToken": "Invalid verification token",
+    "verificationTokenExpired": "Verification token has expired",
+    "invalidResetToken": "Invalid or expired reset token",
+    "resetTokenExpired": "Reset token has expired"
+  },
+  "errors": {
+    "notFound": "Not found",
+    "badRequest": "Bad request",
+    "unauthorized": "Unauthorized",
+    "forbidden": "Forbidden",
+    "internalServerError": "Internal server error"
+  },
+  "user": {
+    "languageUpdated": "Language setting updated"
+  }
+}
