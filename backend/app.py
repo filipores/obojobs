@@ -1,4 +1,4 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
@@ -6,6 +6,7 @@ from flask_limiter.util import get_remote_address
 from flask_migrate import Migrate
 
 from config import config
+from i18n import parse_accept_language, set_locale, t
 
 # Import all models for Flask-Migrate to detect them
 from models import (  # noqa: F401
@@ -43,6 +44,13 @@ def create_app():
     CORS(app, origins=config.CORS_ORIGINS)
     jwt = JWTManager(app)
 
+    # Locale middleware - set locale from Accept-Language header
+    @app.before_request
+    def set_locale_from_request():
+        accept_language = request.headers.get("Accept-Language", "")
+        locale = parse_accept_language(accept_language)
+        set_locale(locale)
+
     # Register JWT token blacklist callback
     @jwt.token_in_blocklist_loader
     def check_if_token_revoked(jwt_header, jwt_payload):
@@ -51,24 +59,24 @@ def create_app():
 
     @jwt.revoked_token_loader
     def revoked_token_callback(jwt_header, jwt_payload):
-        return jsonify({"error": "Token wurde widerrufen"}), 401
+        return jsonify({"error": t("jwt.tokenRevoked")}), 401
 
     # Handle invalid/expired JWT tokens
     @jwt.invalid_token_loader
     def invalid_token_callback(error_string):
-        return jsonify({"error": "Ungültiger Token"}), 401
+        return jsonify({"error": t("jwt.invalidToken")}), 401
 
     @jwt.expired_token_loader
     def expired_token_callback(jwt_header, jwt_payload):
-        return jsonify({"error": "Token ist abgelaufen"}), 401
+        return jsonify({"error": t("jwt.tokenExpired")}), 401
 
     @jwt.unauthorized_loader
     def missing_token_callback(error_string):
-        return jsonify({"error": "Token fehlt"}), 401
+        return jsonify({"error": t("jwt.tokenMissing")}), 401
 
     @jwt.token_verification_failed_loader
     def token_verification_failed_callback(jwt_header, jwt_payload):
-        return jsonify({"error": "Ungültiger Token"}), 401
+        return jsonify({"error": t("jwt.invalidToken")}), 401
 
     # Middleware to intercept JWT responses and change status code
     @app.after_request
@@ -95,10 +103,10 @@ def create_app():
 
                 for pattern in jwt_error_patterns:
                     if pattern in error_msg:
-                        # Create new response with 401 status and German error message
+                        # Create new response with 401 status and localized error message
                         from flask import Response
                         new_response = Response(
-                            json.dumps({"error": "Ungültiger Token"}),
+                            json.dumps({"error": t("jwt.invalidToken")}),
                             status=401,
                             mimetype='application/json'
                         )

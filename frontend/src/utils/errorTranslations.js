@@ -1,150 +1,164 @@
 /**
  * Error message translation utility
- * Translates common backend error messages to German
- * Falls back to the original message if no translation is found
+ * Uses vue-i18n for translations with fallback support
  */
 
-// Known error message translations (English -> German)
-const errorTranslations = {
+import i18n from '../i18n'
+
+const { t } = i18n.global
+
+// Mapping from backend error messages to i18n keys
+const errorKeyMap = {
   // Auth errors
-  'Invalid email or password': 'Ungültige E-Mail oder Passwort',
-  'User with this email already exists': 'Ein Benutzer mit dieser E-Mail existiert bereits',
-  'Account is disabled': 'Konto ist deaktiviert',
-  'Invalid or inactive user': 'Ungültiger oder inaktiver Benutzer',
-  'User not found': 'Benutzer nicht gefunden',
-  'Token is required': 'Token ist erforderlich',
-  'Email and password are required': 'E-Mail und Passwort sind erforderlich',
-  'Email is already verified': 'E-Mail ist bereits bestätigt',
-  'Too many verification requests. Please try again later.': 'Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.',
-  'New password is required': 'Neues Passwort ist erforderlich',
-  'Password does not meet requirements': 'Passwort erfüllt nicht die Anforderungen',
-  'Token has been revoked': 'Token wurde widerrufen',
+  'Invalid email or password': 'errors.auth.invalidCredentials',
+  'User with this email already exists': 'errors.auth.emailExists',
+  'Account is disabled': 'errors.auth.accountDisabled',
+  'Invalid or inactive user': 'errors.auth.invalidUser',
+  'User not found': 'errors.auth.userNotFound',
+  'Token is required': 'errors.auth.tokenRequired',
+  'Email and password are required': 'errors.auth.emailPasswordRequired',
+  'Email is already verified': 'errors.auth.emailAlreadyVerified',
+  'Too many verification requests. Please try again later.': 'errors.auth.tooManyVerificationRequests',
+  'New password is required': 'errors.auth.newPasswordRequired',
+  'Password does not meet requirements': 'errors.auth.passwordRequirements',
+  'Token has been revoked': 'errors.auth.tokenRevoked',
 
   // Email verification errors
-  'Invalid verification token': 'Ungültiger Bestätigungstoken',
-  'Verification token has expired': 'Bestätigungstoken ist abgelaufen',
+  'Invalid verification token': 'errors.auth.invalidVerificationToken',
+  'Verification token has expired': 'errors.auth.verificationTokenExpired',
 
   // Password reset errors
-  'Invalid or expired reset token': 'Ungültiger oder abgelaufener Reset-Token',
-  'Reset token has expired': 'Reset-Token ist abgelaufen',
+  'Invalid or expired reset token': 'errors.auth.invalidResetToken',
+  'Reset token has expired': 'errors.auth.resetTokenExpired',
 
   // API key errors
-  'API key required': 'API-Schlüssel erforderlich',
-  'Invalid API key': 'Ungültiger API-Schlüssel',
-  'API key not found': 'API-Schlüssel nicht gefunden',
+  'API key required': 'errors.apiKey.required',
+  'Invalid API key': 'errors.apiKey.invalid',
+  'API key not found': 'errors.apiKey.notFound',
 
   // Email service errors
-  'Email account not found': 'E-Mail-Konto nicht gefunden',
-  'Authorization code is required': 'Autorisierungscode ist erforderlich',
-  'Invalid state parameter': 'Ungültiger State-Parameter',
-  'application_id is required': 'Bewerbungs-ID ist erforderlich',
-  'email_account_id is required': 'E-Mail-Konto-ID ist erforderlich',
-  'subject is required': 'Betreff ist erforderlich',
-  'body is required': 'Nachrichtentext ist erforderlich',
-  'to_email is required': 'Empfänger-E-Mail ist erforderlich',
-  'Application not found': 'Bewerbung nicht gefunden',
-  'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set': 'Gmail-Integration ist derzeit nicht konfiguriert.',
-  'MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET must be set': 'Outlook-Integration ist derzeit nicht konfiguriert.',
-  'GOOGLE_REDIRECT_URI must be set': 'Gmail-Integration ist derzeit nicht konfiguriert.',
-  'MICROSOFT_REDIRECT_URI must be set': 'Outlook-Integration ist derzeit nicht konfiguriert.',
+  'Email account not found': 'errors.email.accountNotFound',
+  'Authorization code is required': 'errors.email.authCodeRequired',
+  'Invalid state parameter': 'errors.email.invalidState',
+  'application_id is required': 'errors.email.applicationIdRequired',
+  'email_account_id is required': 'errors.email.emailAccountIdRequired',
+  'subject is required': 'errors.email.subjectRequired',
+  'body is required': 'errors.email.bodyRequired',
+  'to_email is required': 'errors.email.toEmailRequired',
+  'Application not found': 'errors.email.applicationNotFound',
+  'GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set': 'errors.email.googleNotConfigured',
+  'MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET must be set': 'errors.email.microsoftNotConfigured',
+  'GOOGLE_REDIRECT_URI must be set': 'errors.email.googleNotConfigured',
+  'MICROSOFT_REDIRECT_URI must be set': 'errors.email.microsoftNotConfigured',
 
   // Subscription errors
-  'No active subscription. Please subscribe first.': 'Kein aktives Abonnement. Bitte abonniere zuerst einen Plan.',
-  'return_url is required': 'return_url ist erforderlich',
-  'success_url and cancel_url are required': 'success_url und cancel_url sind erforderlich',
-  "Invalid plan. Must be 'basic' or 'pro'": "Ungültiger Plan. Muss 'basic' oder 'pro' sein.",
-  'Plan not configured': 'Plan nicht konfiguriert',
-  'Failed to create checkout session': 'Fehler beim Erstellen der Checkout-Sitzung',
-  'Failed to create portal session': 'Fehler beim Erstellen der Portal-Sitzung',
+  'No active subscription. Please subscribe first.': 'errors.subscription.noActiveSubscription',
+  'return_url is required': 'errors.subscription.returnUrlRequired',
+  'success_url and cancel_url are required': 'errors.subscription.urlsRequired',
+  "Invalid plan. Must be 'basic' or 'pro'": 'errors.subscription.invalidPlan',
+  'Plan not configured': 'errors.subscription.planNotConfigured',
+  'Failed to create checkout session': 'errors.subscription.checkoutFailed',
+  'Failed to create portal session': 'errors.subscription.portalFailed',
 
   // Template errors
-  'Template not found': 'Template nicht gefunden',
-  'Name and content are required': 'Name und Inhalt sind erforderlich',
-  'Name cannot be empty': 'Name darf nicht leer sein',
-  'Content cannot be empty': 'Inhalt darf nicht leer sein',
-  'Failed to create template': 'Fehler beim Erstellen des Templates',
-  'Failed to update template': 'Fehler beim Aktualisieren des Templates',
+  'Template not found': 'errors.template.notFound',
+  'Name and content are required': 'errors.template.nameContentRequired',
+  'Name cannot be empty': 'errors.template.nameEmpty',
+  'Content cannot be empty': 'errors.template.contentEmpty',
+  'Failed to create template': 'errors.template.createFailed',
+  'Failed to update template': 'errors.template.updateFailed',
 
   // Document errors
-  'Document not found': 'Dokument nicht gefunden',
-  'File not found': 'Datei nicht gefunden',
+  'Document not found': 'errors.document.notFound',
+  'File not found': 'errors.document.fileNotFound',
 
   // Generic errors
-  'Not found': 'Nicht gefunden',
-  'Bad request': 'Ungültige Anfrage',
-  'Unauthorized': 'Nicht autorisiert',
-  'Forbidden': 'Zugriff verweigert',
-  'Internal server error': 'Interner Serverfehler',
+  'Not found': 'errors.generic.notFound',
+  'Bad request': 'errors.generic.badRequest',
+  'Unauthorized': 'errors.generic.unauthorized',
+  'Forbidden': 'errors.generic.forbidden',
+  'Internal server error': 'errors.generic.serverError',
 }
 
 // Regex patterns for dynamic error messages
 const dynamicPatterns = [
   {
     pattern: /^Account is temporarily locked\. Try again in (\d+) minutes\.$/,
-    translate: (match) => `Konto vorübergehend gesperrt. Versuche es in ${match[1]} Minuten erneut.`
+    key: 'errors.auth.accountLocked',
+    extractParams: (match) => ({ minutes: match[1] })
   },
   {
     pattern: /^Account locked due to too many failed login attempts\. Try again in (\d+) minutes\.$/,
-    translate: (match) => `Konto wegen zu vieler fehlgeschlagener Anmeldeversuche gesperrt. Versuche es in ${match[1]} Minuten erneut.`
+    key: 'errors.auth.accountLockedFailedAttempts',
+    extractParams: (match) => ({ minutes: match[1] })
   },
   {
     pattern: /^OAuth error: (.+) - (.+)$/,
-    translate: (match) => `OAuth-Fehler: ${match[1]} - ${match[2]}`
+    key: 'errors.email.oauthError',
+    extractParams: (match) => ({ error: match[1], description: match[2] })
   },
   {
-    pattern: /^Failed to (generate authorization URL|complete OAuth flow|send email): (.+)$/,
-    translate: (match) => {
-      const actionMap = {
-        'generate authorization URL': 'Erstellen der Autorisierungs-URL',
-        'complete OAuth flow': 'Abschluss des OAuth-Prozesses',
-        'send email': 'Senden der E-Mail'
-      }
-      return `Fehler beim ${actionMap[match[1]] || match[1]}: ${match[2]}`
-    }
+    pattern: /^Failed to generate authorization URL: (.+)$/,
+    key: 'errors.email.failedGenerateAuthUrl',
+    extractParams: (match) => ({ details: match[1] })
+  },
+  {
+    pattern: /^Failed to complete OAuth flow: (.+)$/,
+    key: 'errors.email.failedCompleteOAuth',
+    extractParams: (match) => ({ details: match[1] })
+  },
+  {
+    pattern: /^Failed to send email: (.+)$/,
+    key: 'errors.email.failedSendEmail',
+    extractParams: (match) => ({ details: match[1] })
   },
   {
     pattern: /^Total attachment size exceeds 10MB limit \((.+)MB\)$/,
-    translate: (match) => `Gesamtgröße der Anhänge überschreitet 10MB Limit (${match[1]}MB)`
+    key: 'errors.email.attachmentSizeExceeded',
+    extractParams: (match) => ({ size: match[1] })
   },
   {
     pattern: /^Unknown provider: (.+)$/,
-    translate: (match) => `Unbekannter Anbieter: ${match[1]}`
+    key: 'errors.email.unknownProvider',
+    extractParams: (match) => ({ provider: match[1] })
   },
   {
     pattern: /^Name too long \(max (\d+) chars\)$/,
-    translate: (match) => `Name zu lang (max. ${match[1]} Zeichen)`
+    key: 'errors.template.nameTooLong',
+    extractParams: (match) => ({ max: match[1] })
   },
   {
     pattern: /^Content too long \(max (\d+) chars\)$/,
-    translate: (match) => `Inhalt zu lang (max. ${match[1]} Zeichen)`
+    key: 'errors.template.contentTooLong',
+    extractParams: (match) => ({ max: match[1] })
   },
 ]
 
 /**
- * Translates a backend error message to German
+ * Translates a backend error message using vue-i18n
  * @param {string} message - The error message to translate
  * @returns {string} - The translated message or the original if no translation found
  */
 export function translateError(message) {
   if (!message || typeof message !== 'string') {
-    return message || 'Ein unbekannter Fehler ist aufgetreten'
+    return message || t('errors.unknown')
   }
 
   // Check exact matches first
-  if (errorTranslations[message]) {
-    return errorTranslations[message]
+  const key = errorKeyMap[message]
+  if (key) {
+    return t(key)
   }
 
   // Check dynamic patterns
-  for (const { pattern, translate } of dynamicPatterns) {
+  for (const { pattern, key: translationKey, extractParams } of dynamicPatterns) {
     const match = message.match(pattern)
     if (match) {
-      return translate(match)
+      return t(translationKey, extractParams(match))
     }
   }
 
   // Return original message if no translation found
-  // (Backend should already return German messages, this is a fallback)
   return message
 }
 
@@ -155,7 +169,7 @@ export function translateError(message) {
  */
 export function translateErrorResponse(errorData) {
   if (!errorData) {
-    return { error: 'Ein unbekannter Fehler ist aufgetreten' }
+    return { error: t('errors.unknown') }
   }
 
   return {

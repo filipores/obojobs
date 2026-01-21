@@ -1,0 +1,79 @@
+{
+  "errors": {
+    "unknown": "Ein unbekannter Fehler ist aufgetreten",
+    "auth": {
+      "invalidCredentials": "Ungültige E-Mail oder Passwort",
+      "emailExists": "Ein Benutzer mit dieser E-Mail existiert bereits",
+      "accountDisabled": "Konto ist deaktiviert",
+      "invalidUser": "Ungültiger oder inaktiver Benutzer",
+      "userNotFound": "Benutzer nicht gefunden",
+      "tokenRequired": "Token ist erforderlich",
+      "emailPasswordRequired": "E-Mail und Passwort sind erforderlich",
+      "emailAlreadyVerified": "E-Mail ist bereits bestätigt",
+      "tooManyVerificationRequests": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.",
+      "newPasswordRequired": "Neues Passwort ist erforderlich",
+      "passwordRequirements": "Passwort erfüllt nicht die Anforderungen",
+      "tokenRevoked": "Token wurde widerrufen",
+      "invalidVerificationToken": "Ungültiger Bestätigungstoken",
+      "verificationTokenExpired": "Bestätigungstoken ist abgelaufen",
+      "invalidResetToken": "Ungültiger oder abgelaufener Reset-Token",
+      "resetTokenExpired": "Reset-Token ist abgelaufen",
+      "accountLocked": "Konto vorübergehend gesperrt. Versuche es in {minutes} Minuten erneut.",
+      "accountLockedFailedAttempts": "Konto wegen zu vieler fehlgeschlagener Anmeldeversuche gesperrt. Versuche es in {minutes} Minuten erneut."
+    },
+    "apiKey": {
+      "required": "API-Schlüssel erforderlich",
+      "invalid": "Ungültiger API-Schlüssel",
+      "notFound": "API-Schlüssel nicht gefunden"
+    },
+    "email": {
+      "accountNotFound": "E-Mail-Konto nicht gefunden",
+      "authCodeRequired": "Autorisierungscode ist erforderlich",
+      "invalidState": "Ungültiger State-Parameter",
+      "applicationIdRequired": "Bewerbungs-ID ist erforderlich",
+      "emailAccountIdRequired": "E-Mail-Konto-ID ist erforderlich",
+      "subjectRequired": "Betreff ist erforderlich",
+      "bodyRequired": "Nachrichtentext ist erforderlich",
+      "toEmailRequired": "Empfänger-E-Mail ist erforderlich",
+      "applicationNotFound": "Bewerbung nicht gefunden",
+      "googleNotConfigured": "Gmail-Integration ist derzeit nicht konfiguriert.",
+      "microsoftNotConfigured": "Outlook-Integration ist derzeit nicht konfiguriert.",
+      "oauthError": "OAuth-Fehler: {error} - {description}",
+      "failedGenerateAuthUrl": "Fehler beim Erstellen der Autorisierungs-URL: {details}",
+      "failedCompleteOAuth": "Fehler beim Abschluss des OAuth-Prozesses: {details}",
+      "failedSendEmail": "Fehler beim Senden der E-Mail: {details}",
+      "attachmentSizeExceeded": "Gesamtgröße der Anhänge überschreitet 10MB Limit ({size}MB)",
+      "unknownProvider": "Unbekannter Anbieter: {provider}"
+    },
+    "subscription": {
+      "noActiveSubscription": "Kein aktives Abonnement. Bitte abonniere zuerst einen Plan.",
+      "returnUrlRequired": "return_url ist erforderlich",
+      "urlsRequired": "success_url und cancel_url sind erforderlich",
+      "invalidPlan": "Ungültiger Plan. Muss 'basic' oder 'pro' sein.",
+      "planNotConfigured": "Plan nicht konfiguriert",
+      "checkoutFailed": "Fehler beim Erstellen der Checkout-Sitzung",
+      "portalFailed": "Fehler beim Erstellen der Portal-Sitzung"
+    },
+    "template": {
+      "notFound": "Template nicht gefunden",
+      "nameContentRequired": "Name und Inhalt sind erforderlich",
+      "nameEmpty": "Name darf nicht leer sein",
+      "contentEmpty": "Inhalt darf nicht leer sein",
+      "createFailed": "Fehler beim Erstellen des Templates",
+      "updateFailed": "Fehler beim Aktualisieren des Templates",
+      "nameTooLong": "Name zu lang (max. {max} Zeichen)",
+      "contentTooLong": "Inhalt zu lang (max. {max} Zeichen)"
+    },
+    "document": {
+      "notFound": "Dokument nicht gefunden",
+      "fileNotFound": "Datei nicht gefunden"
+    },
+    "generic": {
+      "notFound": "Nicht gefunden",
+      "badRequest": "Ungültige Anfrage",
+      "unauthorized": "Nicht autorisiert",
+      "forbidden": "Zugriff verweigert",
+      "serverError": "Interner Serverfehler"
+    }
+  }
+}

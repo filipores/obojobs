@@ -1,0 +1,79 @@
+{
+  "errors": {
+    "unknown": "An unknown error occurred",
+    "auth": {
+      "invalidCredentials": "Invalid email or password",
+      "emailExists": "User with this email already exists",
+      "accountDisabled": "Account is disabled",
+      "invalidUser": "Invalid or inactive user",
+      "userNotFound": "User not found",
+      "tokenRequired": "Token is required",
+      "emailPasswordRequired": "Email and password are required",
+      "emailAlreadyVerified": "Email is already verified",
+      "tooManyVerificationRequests": "Too many verification requests. Please try again later.",
+      "newPasswordRequired": "New password is required",
+      "passwordRequirements": "Password does not meet requirements",
+      "tokenRevoked": "Token has been revoked",
+      "invalidVerificationToken": "Invalid verification token",
+      "verificationTokenExpired": "Verification token has expired",
+      "invalidResetToken": "Invalid or expired reset token",
+      "resetTokenExpired": "Reset token has expired",
+      "accountLocked": "Account is temporarily locked. Try again in {minutes} minutes.",
+      "accountLockedFailedAttempts": "Account locked due to too many failed login attempts. Try again in {minutes} minutes."
+    },
+    "apiKey": {
+      "required": "API key required",
+      "invalid": "Invalid API key",
+      "notFound": "API key not found"
+    },
+    "email": {
+      "accountNotFound": "Email account not found",
+      "authCodeRequired": "Authorization code is required",
+      "invalidState": "Invalid state parameter",
+      "applicationIdRequired": "application_id is required",
+      "emailAccountIdRequired": "email_account_id is required",
+      "subjectRequired": "subject is required",
+      "bodyRequired": "body is required",
+      "toEmailRequired": "to_email is required",
+      "applicationNotFound": "Application not found",
+      "googleNotConfigured": "Gmail integration is not currently configured.",
+      "microsoftNotConfigured": "Outlook integration is not currently configured.",
+      "oauthError": "OAuth error: {error} - {description}",
+      "failedGenerateAuthUrl": "Failed to generate authorization URL: {details}",
+      "failedCompleteOAuth": "Failed to complete OAuth flow: {details}",
+      "failedSendEmail": "Failed to send email: {details}",
+      "attachmentSizeExceeded": "Total attachment size exceeds 10MB limit ({size}MB)",
+      "unknownProvider": "Unknown provider: {provider}"
+    },
+    "subscription": {
+      "noActiveSubscription": "No active subscription. Please subscribe first.",
+      "returnUrlRequired": "return_url is required",
+      "urlsRequired": "success_url and cancel_url are required",
+      "invalidPlan": "Invalid plan. Must be 'basic' or 'pro'",
+      "planNotConfigured": "Plan not configured",
+      "checkoutFailed": "Failed to create checkout session",
+      "portalFailed": "Failed to create portal session"
+    },
+    "template": {
+      "notFound": "Template not found",
+      "nameContentRequired": "Name and content are required",
+      "nameEmpty": "Name cannot be empty",
+      "contentEmpty": "Content cannot be empty",
+      "createFailed": "Failed to create template",
+      "updateFailed": "Failed to update template",
+      "nameTooLong": "Name too long (max {max} chars)",
+      "contentTooLong": "Content too long (max {max} chars)"
+    },
+    "document": {
+      "notFound": "Document not found",
+      "fileNotFound": "File not found"
+    },
+    "generic": {
+      "notFound": "Not found",
+      "badRequest": "Bad request",
+      "unauthorized": "Unauthorized",
+      "forbidden": "Forbidden",
+      "serverError": "Internal server error"
+    }
+  }
+}

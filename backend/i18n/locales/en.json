@@ -1,0 +1,29 @@
+{
+  "auth": {
+    "emailPasswordRequired": "Email and password are required",
+    "registrationSuccess": "Registration successful",
+    "userNotFound": "User not found",
+    "emailAlreadyVerified": "Email is already verified",
+    "tooManyVerificationRequests": "Too many verification requests. Please try again later.",
+    "verificationEmailSent": "Verification email sent",
+    "tokenRequired": "Token is required",
+    "emailVerified": "Email successfully verified",
+    "passwordResetSent": "If an account with this email exists, a reset link has been sent.",
+    "newPasswordRequired": "New password is required",
+    "passwordRequirements": "Password does not meet requirements",
+    "passwordResetSuccess": "Password successfully reset",
+    "currentPasswordRequired": "Current password is required",
+    "logoutSuccess": "Successfully logged out",
+    "nameTooLong": "Name must be at most 255 characters",
+    "displayNameTooLong": "Display name must be at most 100 characters",
+    "profileUpdated": "Profile successfully updated",
+    "accountDeleted": "Your account and all associated data have been successfully deleted.",
+    "accountDeleteError": "Error deleting account. Please contact support."
+  },
+  "jwt": {
+    "tokenRevoked": "Token has been revoked",
+    "invalidToken": "Invalid token",
+    "tokenExpired": "Token has expired",
+    "tokenMissing": "Token is missing"
+  }
+}
