@@ -37,21 +37,21 @@
 
         <!-- Header -->
         <div class="auth-header">
-          <h1>Willkommen</h1>
-          <p>Melden Sie sich an, um fortzufahren</p>
+          <h1>{{ $t('login.title') }}</h1>
+          <p>{{ $t('login.subtitle') }}</p>
         </div>
 
         <!-- Form -->
         <form @submit.prevent="handleLogin" class="auth-form">
           <div class="form-group">
-            <label class="form-label required" for="email">E-Mail</label>
+            <label class="form-label required" for="email">{{ $t('auth.email') }}</label>
             <input
               id="email"
               v-model="email"
               type="email"
               class="form-input"
               :class="{ 'input-error': emailError, 'input-valid': emailTouched && !emailError && email }"
-              placeholder="ihre@email.de"
+              :placeholder="$t('auth.emailPlaceholder')"
               required
               aria-required="true"
               aria-invalid="emailError ? 'true' : 'false'"
@@ -66,7 +66,7 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label required" for="password">Passwort</label>
+            <label class="form-label required" for="password">{{ $t('auth.password') }}</label>
             <div class="password-input-wrapper">
               <input
                 id="password"
@@ -86,7 +86,7 @@
                 type="button"
                 class="password-toggle"
                 @click="showPassword = !showPassword"
-                :title="showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'"
+                :title="showPassword ? $t('auth.hidePassword') : $t('auth.showPassword')"
               >
                 <svg v-if="showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
@@ -102,7 +102,7 @@
               {{ passwordError }}
             </p>
             <div class="forgot-password-link">
-              <router-link to="/forgot-password">Passwort vergessen?</router-link>
+              <router-link to="/forgot-password">{{ $t('auth.forgotPassword') }}</router-link>
             </div>
           </div>
 
@@ -113,8 +113,8 @@
 
           <!-- Submit Button -->
           <button type="submit" class="zen-btn zen-btn-filled zen-btn-lg" :disabled="loading">
-            <span v-if="!loading">Anmelden</span>
-            <span v-else>Wird angemeldet...</span>
+            <span v-if="!loading">{{ $t('auth.login') }}</span>
+            <span v-else>{{ $t('auth.loggingIn') }}</span>
           </button>
         </form>
 
@@ -123,31 +123,30 @@
 
         <!-- Footer -->
         <div class="auth-footer">
-          <p>Noch kein Konto? <router-link to="/register">Registrieren</router-link></p>
+          <p>{{ $t('auth.noAccount') }} <router-link to="/register">{{ $t('auth.register') }}</router-link></p>
         </div>
       </div>
 
       <!-- Info Section - Offset for asymmetry -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2>KI-gestützte<br/>Bewerbungen</h2>
+          <h2 v-html="$t('login.aiPoweredTitle')"></h2>
           <p class="info-description">
-            Erstellen Sie professionelle, personalisierte Anschreiben
-            in Sekunden mit Künstlicher Intelligenz.
+            {{ $t('login.aiPoweredDescription') }}
           </p>
 
           <ul class="feature-list">
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Automatische Anschreiben-Generierung</span>
+              <span>{{ $t('login.featureAutoGeneration') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Chrome Extension für 1-Klick Bewerbungen</span>
+              <span>{{ $t('login.featureChromeExtension') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Template-Verwaltung</span>
+              <span>{{ $t('login.featureTemplateManagement') }}</span>
             </li>
           </ul>
         </div>
@@ -162,7 +161,10 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { authStore } from '../store/auth'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const email = ref('')
@@ -184,14 +186,14 @@ const isValidEmail = (emailStr) => {
 
 const emailError = computed(() => {
   if (!emailTouched.value) return ''
-  if (!email.value) return 'E-Mail ist erforderlich'
-  if (!isValidEmail(email.value)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein'
+  if (!email.value) return t('auth.emailRequired')
+  if (!isValidEmail(email.value)) return t('auth.emailInvalid')
   return ''
 })
 
 const passwordError = computed(() => {
   if (!passwordTouched.value) return ''
-  if (!password.value) return 'Passwort ist erforderlich'
+  if (!password.value) return t('auth.passwordRequired')
   return ''
 })
 
@@ -249,7 +251,7 @@ const handleLogin = async () => {
     await authStore.login(email.value, password.value)
     router.push('/')
   } catch (e) {
-    error.value = e.response?.data?.error || 'Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.'
+    error.value = e.response?.data?.error || t('auth.loginFailed')
   } finally {
     loading.value = false
   }

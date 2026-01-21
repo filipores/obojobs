@@ -82,6 +82,9 @@
             </svg>
           </button>
 
+          <!-- Language Switcher -->
+          <LanguageSwitcher />
+
           <!-- Settings -->
           <router-link to="/settings" class="nav-icon" title="Einstellungen">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -303,6 +306,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { authStore } from './store/auth'
 import { useRouter } from 'vue-router'
 import Toast from './components/Toast.vue'
+import LanguageSwitcher from './components/LanguageSwitcher.vue'
 
 const router = useRouter()
 const toastRef = ref(null)

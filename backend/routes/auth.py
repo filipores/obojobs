@@ -369,6 +369,36 @@ def logout():
     return jsonify({"message": "Erfolgreich abgemeldet"}), 200
 
 
+@auth_bp.route("/language", methods=["PUT"])
+@jwt_required()
+def update_language():
+    """
+    Update user language preference.
+
+    Requires authentication. Allows updating language preference (de or en).
+    """
+    current_user_id = get_jwt_identity()
+    data = request.json or {}
+
+    user = AuthService.get_user_by_id(int(current_user_id))
+    if not user:
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+
+    language = data.get("language", "").strip().lower()
+    if language not in ["de", "en"]:
+        return jsonify({"error": "Ungültige Sprache. Muss 'de' oder 'en' sein."}), 400
+
+    user.language = language
+
+    from models import db
+    db.session.commit()
+
+    return jsonify({
+        "message": "Spracheinstellung aktualisiert",
+        "language": user.language
+    }), 200
+
+
 @auth_bp.route("/profile", methods=["PUT"])
 @jwt_required()
 def update_profile():

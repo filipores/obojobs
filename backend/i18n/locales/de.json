@@ -1,0 +1,51 @@
+{
+  "auth": {
+    "emailAndPasswordRequired": "E-Mail und Passwort sind erforderlich",
+    "registrationSuccess": "Registrierung erfolgreich",
+    "userNotFound": "Benutzer nicht gefunden",
+    "emailAlreadyVerified": "E-Mail ist bereits bestätigt",
+    "tooManyVerificationRequests": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.",
+    "verificationEmailSent": "Bestätigungs-E-Mail gesendet",
+    "tokenRequired": "Token ist erforderlich",
+    "emailVerified": "E-Mail erfolgreich bestätigt",
+    "passwordResetSent": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet.",
+    "newPasswordRequired": "Neues Passwort ist erforderlich",
+    "passwordRequirementsNotMet": "Passwort erfüllt nicht die Anforderungen",
+    "passwordResetSuccess": "Passwort erfolgreich zurückgesetzt",
+    "currentPasswordRequired": "Aktuelles Passwort ist erforderlich",
+    "logoutSuccess": "Erfolgreich abgemeldet",
+    "nameTooLong": "Name darf maximal 255 Zeichen haben",
+    "displayNameTooLong": "Anzeigename darf maximal 100 Zeichen haben",
+    "profileUpdated": "Profil erfolgreich aktualisiert",
+    "accountDeleted": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht.",
+    "accountDeleteError": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support.",
+    "invalidEmailOrPassword": "Ungültige E-Mail oder Passwort",
+    "userAlreadyExists": "Ein Benutzer mit dieser E-Mail existiert bereits",
+    "accountDisabled": "Konto ist deaktiviert",
+    "invalidOrInactiveUser": "Ungültiger oder inaktiver Benutzer",
+    "accountLocked": "Konto vorübergehend gesperrt. Versuche es in {minutes} Minuten erneut.",
+    "tooManyFailedAttempts": "Konto wegen zu vieler fehlgeschlagener Anmeldeversuche gesperrt. Versuche es in {minutes} Minuten erneut."
+  },
+  "jwt": {
+    "tokenRevoked": "Token wurde widerrufen",
+    "invalidToken": "Ungültiger Token",
+    "tokenExpired": "Token ist abgelaufen",
+    "tokenMissing": "Token fehlt"
+  },
+  "validation": {
+    "invalidVerificationToken": "Ungültiger Bestätigungstoken",
+    "verificationTokenExpired": "Bestätigungstoken ist abgelaufen",
+    "invalidResetToken": "Ungültiger oder abgelaufener Reset-Token",
+    "resetTokenExpired": "Reset-Token ist abgelaufen"
+  },
+  "errors": {
+    "notFound": "Nicht gefunden",
+    "badRequest": "Ungültige Anfrage",
+    "unauthorized": "Nicht autorisiert",
+    "forbidden": "Zugriff verweigert",
+    "internalServerError": "Interner Serverfehler"
+  },
+  "user": {
+    "languageUpdated": "Spracheinstellung aktualisiert"
+  }
+}
