@@ -40,7 +40,7 @@
     "loggingIn": "Signing in...",
     "registering": "Registering...",
     "loginFailed": "Login failed. Please check your credentials.",
-    "emailPlaceholder": "you@email.com",
+    "emailPlaceholder": "you{'@'}email.com",
     "passwordPlaceholder": "••••••••",
     "showPassword": "Show password",
     "hidePassword": "Hide password",

@@ -40,7 +40,7 @@
     "loggingIn": "Wird angemeldet...",
     "registering": "Wird registriert...",
     "loginFailed": "Login fehlgeschlagen. Bitte überprüfen Sie Ihre Anmeldedaten.",
-    "emailPlaceholder": "ihre@email.de",
+    "emailPlaceholder": "ihre{'@'}email.de",
     "passwordPlaceholder": "••••••••",
     "showPassword": "Passwort anzeigen",
     "hidePassword": "Passwort verbergen",
