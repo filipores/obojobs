@@ -3,6 +3,10 @@ FROM node:18-alpine as build
 
 WORKDIR /app
 
+# Build argument for Stripe key (needed at build time for Vite)
+ARG VITE_STRIPE_PUBLISHABLE_KEY
+ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
+
 # Copy package files
 COPY package*.json ./
 
@@ -17,6 +21,9 @@ RUN npm run build
 
 # Production stage
 FROM nginx:alpine
+
+# Install curl for healthcheck
+RUN apk add --no-cache curl
 
 # Copy built files
 COPY --from=build /app/dist /usr/share/nginx/html

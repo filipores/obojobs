@@ -14,7 +14,6 @@ requests==2.31.0
 beautifulsoup4==4.12.3
 werkzeug==3.0.1
 gunicorn==21.2.0
-paypalrestsdk==1.13.1
 psycopg2-binary==2.9.9
 cryptography>=42.0.0
 google-auth-oauthlib>=1.2.0
