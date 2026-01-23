@@ -62,6 +62,7 @@ services:
       - CORS_ORIGINS=https://${DOMAIN}
       - UPLOAD_FOLDER=/app/uploads
       - MAX_CONTENT_LENGTH=10485760
+      - REGISTRATION_ENABLED=${REGISTRATION_ENABLED:-true}
     volumes:
       - uploads:/app/uploads
     depends_on:
