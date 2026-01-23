@@ -41,6 +41,9 @@ class Config:
     SECURITY_HEADERS_ENABLED = os.getenv("SECURITY_HEADERS_ENABLED", "false").lower() == "true"
     FORCE_HTTPS = os.getenv("FORCE_HTTPS", "false").lower() == "true"
 
+    # Registration (set to "false" to disable public registration)
+    REGISTRATION_ENABLED = os.getenv("REGISTRATION_ENABLED", "true").lower() == "true"
+
     # Stripe
     STRIPE_SECRET_KEY = os.getenv("STRIPE_SECRET_KEY")
     STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")

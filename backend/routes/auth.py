@@ -3,6 +3,7 @@ from datetime import datetime, timedelta
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 
+from config import Config
 from models import TokenBlacklist
 from services.auth_service import AuthService
 from services.email_verification_service import EmailVerificationService
@@ -15,6 +16,10 @@ auth_bp = Blueprint("auth", __name__)
 @auth_bp.route("/register", methods=["POST"])
 def register():
     """Register a new user"""
+    # Check if registration is enabled
+    if not Config.REGISTRATION_ENABLED:
+        return jsonify({"error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."}), 403
+
     data = request.json
 
     email = data.get("email")
