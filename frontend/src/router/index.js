@@ -4,15 +4,15 @@ import { authStore } from '../store/auth'
 const DEFAULT_TITLE = 'obo'
 
 const routes = [
-  // Public routes
-  { path: '/login', component: () => import('../pages/Login.vue'), meta: { title: 'Anmelden' } },
-  { path: '/register', component: () => import('../pages/Register.vue'), meta: { title: 'Registrieren' } },
-  { path: '/email-verification', component: () => import('../pages/EmailVerification.vue'), meta: { title: 'E-Mail-Bestätigung' } },
-  { path: '/verify-email', component: () => import('../pages/VerifyEmail.vue'), meta: { title: 'E-Mail verifizieren' } },
-  { path: '/forgot-password', component: () => import('../pages/ForgotPassword.vue'), meta: { title: 'Passwort vergessen' } },
-  { path: '/reset-password', component: () => import('../pages/ResetPassword.vue'), meta: { title: 'Passwort zurücksetzen' } },
-  { path: '/impressum', component: () => import('../pages/Impressum.vue'), meta: { title: 'Impressum' } },
-  { path: '/datenschutz', component: () => import('../pages/Datenschutz.vue'), meta: { title: 'Datenschutz' } },
+  // Public routes - explicitly marked to skip auth checks entirely
+  { path: '/login', component: () => import('../pages/Login.vue'), meta: { title: 'Anmelden', public: true } },
+  { path: '/register', component: () => import('../pages/Register.vue'), meta: { title: 'Registrieren', public: true } },
+  { path: '/email-verification', component: () => import('../pages/EmailVerification.vue'), meta: { title: 'E-Mail-Bestätigung', public: true } },
+  { path: '/verify-email', component: () => import('../pages/VerifyEmail.vue'), meta: { title: 'E-Mail verifizieren', public: true } },
+  { path: '/forgot-password', component: () => import('../pages/ForgotPassword.vue'), meta: { title: 'Passwort vergessen', public: true } },
+  { path: '/reset-password', component: () => import('../pages/ResetPassword.vue'), meta: { title: 'Passwort zurücksetzen', public: true } },
+  { path: '/impressum', component: () => import('../pages/Impressum.vue'), meta: { title: 'Impressum', public: true } },
+  { path: '/datenschutz', component: () => import('../pages/Datenschutz.vue'), meta: { title: 'Datenschutz', public: true } },
 
   // Protected routes
   { path: '/', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true, title: 'Dashboard' } },
@@ -39,6 +39,13 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // Public routes: skip all auth checks to prevent side effects
+  if (to.meta.public) {
+    next()
+    return
+  }
+
+  // Protected routes: check authentication
   if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
     next('/login')
   } else {

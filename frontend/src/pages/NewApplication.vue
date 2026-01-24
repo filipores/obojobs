@@ -682,12 +682,23 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import JobFitScore from '../components/JobFitScore.vue'
 
 const router = useRouter()
+
+// Escape key handler for modal
+const handleKeydown = (e) => {
+  if (e.key === 'Escape' && generatedApp.value) {
+    closeModal()
+  }
+}
+
+onUnmounted(() => {
+  document.removeEventListener('keydown', handleKeydown)
+})
 
 // Skills check state
 const checkingSkills = ref(true)
@@ -1318,6 +1329,8 @@ onMounted(() => {
   loadUsage()
   checkUserSkills()
   checkUserResume()
+  // Add escape key listener for modal
+  document.addEventListener('keydown', handleKeydown)
 })
 </script>
 
