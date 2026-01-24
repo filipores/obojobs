@@ -15,15 +15,11 @@ export default defineConfig({
         'src/__tests__/',
       ],
       thresholds: {
-        // Global thresholds - set conservatively to not break CI
-        // Increase these values as test coverage improves
-        statements: 0,
-        branches: 0,
-        functions: 0,
-        lines: 0
-      },
-      // Report will show coverage metrics and highlight files below thresholds
-      // To enforce stricter thresholds later, increase the values above
+        statements: 80,
+        branches: 80,
+        functions: 80,
+        lines: 80
+      }
     }
   }
 })

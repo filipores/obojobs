@@ -51,8 +51,15 @@ ralph/*/reports
 frontend/coverage
 backend/logs
 
-# Playwright-mcp
+# Playwright
 .playwright-mcp/
+playwright-report/
+playwright/.cache/
+test-results/
 
 
 .beads/
+
+# Gas Town (added by gt)
+.runtime/
+.logs/
