@@ -313,8 +313,9 @@
             <!-- Location and Employment Type Row -->
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Standort</label>
+                <label class="form-label" for="location-input">Standort</label>
                 <input
+                  id="location-input"
                   v-model="editableData.location"
                   type="text"
                   class="form-input"
@@ -322,8 +323,9 @@
                 />
               </div>
               <div class="form-group">
-                <label class="form-label">Anstellungsart</label>
+                <label class="form-label" for="employment-type-input">Anstellungsart</label>
                 <input
+                  id="employment-type-input"
                   v-model="editableData.employment_type"
                   type="text"
                   class="form-input"
@@ -335,8 +337,9 @@
             <!-- Contact Fields Row -->
             <div class="form-row">
               <div class="form-group">
-                <label class="form-label">Ansprechpartner</label>
+                <label class="form-label" for="contact-person-input">Ansprechpartner</label>
                 <input
+                  id="contact-person-input"
                   v-model="editableData.contact_person"
                   type="text"
                   class="form-input"
@@ -344,8 +347,9 @@
                 />
               </div>
               <div class="form-group">
-                <label class="form-label">Kontakt-Email</label>
+                <label class="form-label" for="contact-email-input">Kontakt-Email</label>
                 <input
+                  id="contact-email-input"
                   v-model="editableData.contact_email"
                   type="email"
                   class="form-input"
@@ -356,8 +360,9 @@
 
             <!-- Salary (if available) -->
             <div v-if="editableData.salary || previewData.salary" class="form-group">
-              <label class="form-label">Gehalt</label>
+              <label class="form-label" for="salary-input">Gehalt</label>
               <input
+                id="salary-input"
                 v-model="editableData.salary"
                 type="text"
                 class="form-input"
@@ -367,9 +372,18 @@
 
             <!-- Description (collapsible) -->
             <div class="form-group description-group">
-              <div class="description-header" @click="showDescription = !showDescription">
+              <div
+                class="description-header"
+                tabindex="0"
+                role="button"
+                :aria-expanded="showDescription"
+                aria-controls="description-content"
+                @click="showDescription = !showDescription"
+                @keydown.enter.prevent="showDescription = !showDescription"
+                @keydown.space.prevent="showDescription = !showDescription"
+              >
                 <label class="form-label">Stellenbeschreibung</label>
-                <button type="button" class="toggle-btn">
+                <button type="button" class="toggle-btn" tabindex="-1" aria-hidden="true">
                   <svg
                     :class="['toggle-icon', { rotated: showDescription }]"
                     width="16"
@@ -383,7 +397,7 @@
                   </svg>
                 </button>
               </div>
-              <div v-show="showDescription" class="description-content">
+              <div v-show="showDescription" id="description-content" class="description-content">
                 <textarea
                   v-model="editableData.description"
                   class="form-textarea"
@@ -551,12 +565,12 @@
             </button>
             <p class="usage-info">
               <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
-              <span v-else>{{ usage?.remaining || 0 }}/{{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
+              <span v-else>Noch {{ usage?.remaining || 0 }} von {{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
             </p>
           </div>
 
           <!-- Error Message -->
-          <div v-if="error && previewData" class="error-box" :class="{ 'error-with-action': isDocumentMissingError }">
+          <div v-if="error && previewData" class="error-box" :class="{ 'error-with-action': isDocumentMissingError || isSubscriptionLimitError }">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <circle cx="12" cy="12" r="10"/>
               <line x1="15" y1="9" x2="9" y2="15"/>
@@ -574,6 +588,16 @@
                     <line x1="10" y1="9" x2="8" y2="9"/>
                   </svg>
                   Zu den Dokumenten
+                </router-link>
+              </div>
+              <div v-if="isSubscriptionLimitError" class="error-actions">
+                <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+                    <path d="M2 17l10 5 10-5"/>
+                    <path d="M2 12l10 5 10-5"/>
+                  </svg>
+                  Abo upgraden
                 </router-link>
               </div>
             </div>
@@ -613,7 +637,14 @@
       <!-- Success Modal -->
       <Teleport to="body">
         <div v-if="generatedApp" class="modal-overlay" @click="closeModal">
-          <div class="modal zen-card animate-fade-up" @click.stop>
+          <div
+            class="modal zen-card animate-fade-up"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="success-modal-title"
+            @click.stop
+            @keydown.tab="trapFocus"
+          >
             <div class="modal-header success-header">
               <div class="success-icon">
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -622,10 +653,10 @@
                 </svg>
               </div>
               <div>
-                <h2>Bewerbung erstellt!</h2>
+                <h2 id="success-modal-title">Bewerbung erstellt!</h2>
                 <p class="modal-subtitle">{{ generatedApp.firma }}</p>
               </div>
-              <button @click="closeModal" class="modal-close">
+              <button @click="closeModal" class="modal-close" aria-label="Modal schließen">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"/>
                   <line x1="6" y1="6" x2="18" y2="18"/>
@@ -863,6 +894,16 @@ const isDocumentMissingError = computed(() => {
          errorLower.includes('resume') ||
          errorLower.includes('cv') ||
          errorLower.includes('arbeitszeugnis')
+})
+
+// Check if error is about subscription limit (CORE-016-BUG-001)
+const isSubscriptionLimitError = computed(() => {
+  if (!error.value) return false
+  const errorLower = error.value.toLowerCase()
+  return errorLower.includes('limit') ||
+         errorLower.includes('subscription') ||
+         errorLower.includes('abonnement') ||
+         errorLower.includes('kontingent')
 })
 
 // Helper to display template variable name with double braces
@@ -1291,6 +1332,30 @@ const goToApplications = () => {
 
 const closeModal = () => {
   generatedApp.value = null
+}
+
+// Focus trap for success modal (CORE-020-BUG-002)
+const trapFocus = (e) => {
+  const modal = e.currentTarget
+  const focusableElements = modal.querySelectorAll(
+    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+  )
+  const firstFocusable = focusableElements[0]
+  const lastFocusable = focusableElements[focusableElements.length - 1]
+
+  if (e.shiftKey) {
+    // Shift + Tab: if on first element, go to last
+    if (document.activeElement === firstFocusable) {
+      e.preventDefault()
+      lastFocusable.focus()
+    }
+  } else {
+    // Tab: if on last element, go to first
+    if (document.activeElement === lastFocusable) {
+      e.preventDefault()
+      firstFocusable.focus()
+    }
+  }
 }
 
 // Check if user has skills for Job-Fit analysis

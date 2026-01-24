@@ -197,8 +197,17 @@ class ContactExtractor:
         if not self.client:
             return {}
 
-        # Limit text length for API efficiency
-        text_truncated = text[:3000]
+        # CORE-023-BUG-001 Fix: Contact info is often at the end of job postings
+        # Extract from beginning (first 4000 chars) and end (last 1500 chars)
+        # to ensure we don't miss contact info at the end of long postings
+        text_len = len(text)
+        if text_len > 5000:
+            # Take first 4000 + last 1500 characters with overlap detection
+            text_start = text[:4000]
+            text_end = text[-1500:]
+            text_truncated = text_start + "\n\n[...]\n\n" + text_end
+        else:
+            text_truncated = text[:5000]
 
         prompt = f"""Extrahiere die folgenden Kontaktdaten aus diesem Stellentext. Antworte NUR im angegebenen Format.
 
