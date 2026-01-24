@@ -139,13 +139,17 @@
       <div class="ink-stroke"></div>
 
       <!-- Loading State - Skeleton -->
+      <!-- SKEL-002-BUG-001: Changed from 3 to 4 skeletons to match actual stats count -->
       <div v-if="loading" class="loading-skeleton" aria-label="Lade Interview-Fragen">
         <div class="skeleton-stats">
           <div class="skeleton skeleton-stat"></div>
           <div class="skeleton skeleton-stat"></div>
           <div class="skeleton skeleton-stat"></div>
+          <div class="skeleton skeleton-stat"></div>
         </div>
+        <!-- SKEL-002-BUG-002: Increased to 4 filters (1 "All" + 3 categories) to better match dynamic tabs -->
         <div class="skeleton-filters">
+          <div class="skeleton skeleton-filter"></div>
           <div class="skeleton skeleton-filter"></div>
           <div class="skeleton skeleton-filter"></div>
           <div class="skeleton skeleton-filter"></div>

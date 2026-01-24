@@ -236,9 +236,9 @@
         </div>
 
         <!-- Loading State -->
+        <!-- SKEL-002-BUG-001: Changed from 5 to 6 skeletons to match actual stats count -->
         <div v-else-if="!loadError && !stats" class="stats-grid" role="status" aria-label="Statistiken werden geladen">
-          <div v-for="i in 5" :key="i" class="stat-card">
-
+          <div v-for="i in 6" :key="i" class="stat-card">
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
           <span class="sr-only">Statistiken werden geladen...</span>

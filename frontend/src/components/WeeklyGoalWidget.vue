@@ -131,7 +131,31 @@ const goalInput = ref(null)
 const showConfetti = ref(false)
 const previousAchieved = ref(false)
 
+// GOAL-002-BUG-001: Track celebration in localStorage to prevent repeat triggers on page load
+const CELEBRATION_KEY = 'obojobs-goal-celebration'
+const celebrationShownThisWeek = ref(false)
+
 const remaining = computed(() => Math.max(0, goal.value - completed.value))
+
+// Get current week identifier (ISO week)
+const getCurrentWeekId = () => {
+  const now = new Date()
+  const onejan = new Date(now.getFullYear(), 0, 1)
+  const week = Math.ceil((((now - onejan) / 86400000) + onejan.getDay() + 1) / 7)
+  return `${now.getFullYear()}-W${week}`
+}
+
+// Check if celebration was already shown this week
+const wasCelebrationShownThisWeek = () => {
+  const stored = localStorage.getItem(CELEBRATION_KEY)
+  return stored === getCurrentWeekId()
+}
+
+// Mark celebration as shown this week
+const markCelebrationShown = () => {
+  localStorage.setItem(CELEBRATION_KEY, getCurrentWeekId())
+  celebrationShownThisWeek.value = true
+}
 
 const startEditing = () => {
   editGoal.value = goal.value
@@ -186,9 +210,11 @@ const loadGoalData = async () => {
 }
 
 // Watch for goal achievement to trigger confetti
+// GOAL-002-BUG-001: Only show confetti once per week, not on page refreshes
 watch(isAchieved, (newValue, _oldValue) => {
-  if (newValue && !previousAchieved.value) {
+  if (newValue && !previousAchieved.value && !wasCelebrationShownThisWeek()) {
     showConfetti.value = true
+    markCelebrationShown()
     setTimeout(() => {
       showConfetti.value = false
     }, 3000)
@@ -475,14 +501,16 @@ onMounted(() => {
 }
 
 /* Confetti Animation */
+/* GOAL-002-BUG-002: Fixed clipping by allowing overflow visible during animation */
 .confetti-container {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: 100%;
+  bottom: 0;
   pointer-events: none;
-  overflow: hidden;
+  overflow: visible;
+  z-index: 10;
 }
 
 .confetti {
@@ -501,7 +529,7 @@ onMounted(() => {
   }
   100% {
     opacity: 0;
-    transform: translateY(200px) rotate(720deg);
+    transform: translateY(300px) rotate(720deg);
   }
 }
 
