@@ -325,6 +325,11 @@ function getPlainTextFromEditor() {
   let node
   while ((node = walker.nextNode()) !== null) {
     if (node.nodeType === Node.TEXT_NODE) {
+      // Skip text nodes inside chips (already handled by the chip element handlers)
+      if (node.parentElement?.closest('.variable-chip') ||
+          node.parentElement?.closest('.suggestion-chip')) {
+        continue
+      }
       text += node.textContent
     } else if (node.nodeType === Node.ELEMENT_NODE) {
       if (node.classList?.contains('variable-chip')) {
