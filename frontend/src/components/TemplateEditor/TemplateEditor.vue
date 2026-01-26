@@ -265,6 +265,9 @@ function createSuggestionChipElement(segment) {
 }
 
 function removeVariable(segmentId) {
+  // Block input events during removal to prevent capturing orphaned label text
+  isRendering.value = true
+
   const newSegments = segments.value.filter(s => s.id !== segmentId)
   // Merge adjacent text segments
   const merged = []
