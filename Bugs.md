@@ -190,3 +190,128 @@ Create a migration script to fix corrupted templates in the database by removing
 - **Frontend:** Vite dev server on localhost:3000
 - **Backend:** Flask on localhost:5001
 - **Test Account:** test@example.com
+
+---
+---
+
+# New Application Component Bugs
+
+**Tested on:** 2026-01-26
+**Tested by:** Automated Playwright Testing
+**Component:** New Application (`/new-application` page)
+**Files affected:**
+- `frontend/src/pages/NewApplication.vue`
+
+---
+
+## Medium Priority Bugs
+
+### BUG-007: URL Validation State Lost After Reset
+
+**Severity:** MEDIUM
+**Status:** Open
+**Reproducible:** Yes (100%)
+
+**Description:**
+After clicking the "Neu laden" (reset) button, the URL validation icon and message disappear even though the URL is still present in the input field.
+
+**Steps to Reproduce:**
+1. Go to `/new-application`
+2. Enter a valid URL (e.g., `https://www.stepstone.de/jobs/test-123`)
+3. Wait for validation - green checkmark and "URL ist gültig" message appear
+4. Load the job preview (or use manual text input)
+5. Click "Neu laden" button to reset
+
+**Expected Result:**
+- URL remains in input field ✓
+- Validation icon and message should persist (URL is still valid)
+
+**Actual Result:**
+- URL remains in input field ✓
+- Validation icon and "URL ist gültig" message disappear
+- User must modify URL to trigger re-validation
+
+**Impact:**
+Minor UX issue - confusing state where URL appears unvalidated despite being valid.
+
+---
+
+### BUG-008: "Ohne Score fortfahren" Button Does Not Dismiss Error Section
+
+**Severity:** LOW
+**Status:** Open
+**Reproducible:** Yes
+
+**Description:**
+When the Job-Fit analysis fails and the user clicks "Ohne Score fortfahren" (continue without score), the button becomes active but the error section with all options remains fully visible.
+
+**Steps to Reproduce:**
+1. Go to `/new-application`
+2. Load a job preview (via URL or manual text input)
+3. Wait for Job-Fit analysis to fail (shows error section)
+4. Click "Ohne Score fortfahren" button
+
+**Expected Result:**
+- Error section should collapse or show a success indicator
+- User should clearly see they've acknowledged the error and can proceed
+
+**Actual Result:**
+- Button shows as "active" state
+- Entire error section remains visible with both buttons
+- No clear visual feedback that the action was acknowledged
+
+**Impact:**
+Confusing UX - user doesn't get clear feedback that their choice was registered.
+
+---
+
+## Working Features (Verified)
+
+The following New Application features were tested and work correctly:
+
+- URL input with real-time validation
+- URL format validation with clear error messages
+- Portal detection badges (StepStone, Indeed, XING, Sonstige)
+- "Stellenanzeige laden" button disabled for invalid URLs
+- Manual text input fallback ("Keinen Link? Text hier eingeben...")
+- Location auto-detection from job description text
+- Preview form with all editable fields (Firma, Position, Standort, etc.)
+- Stellenbeschreibung collapsible section
+- Template dropdown selection with multiple options
+- Template variable info display
+- Application quota counter ("Noch X von Y Bewerbungen diesen Monat")
+- "Neu laden" button resets form correctly (except validation state bug)
+- Error notifications display correctly
+- "Erneut versuchen" button for Job-Fit retry
+
+---
+
+## Notes
+
+### Job-Fit Analysis
+The Job-Fit analysis endpoint (`/api/applications/analyze-job-fit`) returns a 500 error in the development environment. This may be expected behavior due to:
+- Missing API keys for AI analysis
+- Backend service not fully configured
+- External service dependency
+
+This should be verified against production environment to determine if it's a real bug.
+
+### Portal Badge in Preview Header
+When using manual text input, the preview header correctly shows "Manuell eingegeben" badge. Portal detection works correctly when a URL is entered (tested with StepStone URL showing "StepStone" badge).
+
+---
+
+## Recommended Fixes
+
+### Priority 1: Fix Validation State Persistence
+**File:** `frontend/src/pages/NewApplication.vue`
+
+The `handleReset()` function should preserve the URL validation state, or alternatively re-trigger validation after reset if the URL field is not empty.
+
+### Priority 2: Improve "Ohne Score fortfahren" UX
+**File:** `frontend/src/pages/NewApplication.vue`
+
+When "Ohne Score fortfahren" is clicked:
+- Hide or collapse the error section
+- Show a small indicator that proceeding without score is active
+- Or simply hide the error section and show the generate button more prominently
