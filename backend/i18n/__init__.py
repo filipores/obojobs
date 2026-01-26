@@ -13,11 +13,11 @@ from typing import Any
 from flask import g, request
 
 # Supported locales
-SUPPORTED_LOCALES = ['de', 'en']
-DEFAULT_LOCALE = 'de'
+SUPPORTED_LOCALES = ["de", "en"]
+DEFAULT_LOCALE = "de"
 
 # Path to locale files
-LOCALES_DIR = os.path.join(os.path.dirname(__file__), 'locales')
+LOCALES_DIR = os.path.join(os.path.dirname(__file__), "locales")
 
 
 @lru_cache(maxsize=2)
@@ -34,10 +34,10 @@ def load_translations(locale: str) -> dict:
     if locale not in SUPPORTED_LOCALES:
         locale = DEFAULT_LOCALE
 
-    locale_file = os.path.join(LOCALES_DIR, f'{locale}.json')
+    locale_file = os.path.join(LOCALES_DIR, f"{locale}.json")
 
     try:
-        with open(locale_file, 'r', encoding='utf-8') as f:
+        with open(locale_file, encoding="utf-8") as f:
             return json.load(f)
     except FileNotFoundError:
         # Fallback to default locale
@@ -61,14 +61,14 @@ def get_locale() -> str:
         Locale code string
     """
     # Check if locale was set by middleware (from user preference)
-    if hasattr(g, 'locale') and g.locale in SUPPORTED_LOCALES:
+    if hasattr(g, "locale") and g.locale in SUPPORTED_LOCALES:
         return g.locale
 
     # Try Accept-Language header
     if request:
         accept_languages = request.accept_languages
         for lang in accept_languages:
-            lang_code = lang[0].split('-')[0].lower()
+            lang_code = lang[0].split("-")[0].lower()
             if lang_code in SUPPORTED_LOCALES:
                 return lang_code
 
@@ -90,7 +90,7 @@ def t(key: str, **kwargs: Any) -> str:
     translations = load_translations(locale)
 
     # Navigate nested keys
-    keys = key.split('.')
+    keys = key.split(".")
     value = translations
     for k in keys:
         if isinstance(value, dict) and k in value:
