@@ -2,10 +2,11 @@ import json
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 class JobBoardParser(ABC):
@@ -184,7 +185,7 @@ class IndeedParser(JobBoardParser):
             if company_elem:
                 # Company name might be in a link
                 company_link = company_elem.find("a")
-                if company_link:
+                if isinstance(company_link, Tag):
                     result["company"] = company_link.get_text(strip=True)
                 else:
                     result["company"] = company_elem.get_text(strip=True)
@@ -426,8 +427,10 @@ class StepStoneParser(JobBoardParser):
             else:
                 # Try meta tag
                 meta_company = soup.find("meta", property="og:site_name")
-                if meta_company and meta_company.get("content"):
-                    result["company"] = meta_company["content"]
+                if isinstance(meta_company, Tag):
+                    content = meta_company.get("content")
+                    if isinstance(content, str):
+                        result["company"] = content
 
         # Location fallback
         if not result["location"]:
@@ -668,12 +671,13 @@ class XingParser(JobBoardParser):
             company_link = soup.find("a", href=re.compile(r"xing\.com/companies/"))
             if not company_link:
                 company_link = soup.find("a", href=re.compile(r"/companies/"))
-            if company_link:
-                href = company_link.get("href", "")
-                if href.startswith("/"):
-                    result["company_profile_url"] = urljoin("https://www.xing.com", href)
-                else:
-                    result["company_profile_url"] = href
+            if isinstance(company_link, Tag):
+                href = company_link.get("href")
+                if isinstance(href, str):
+                    if href.startswith("/"):
+                        result["company_profile_url"] = urljoin("https://www.xing.com", href)
+                    else:
+                        result["company_profile_url"] = href
 
         # Contact person / Ansprechpartner
         if not result["contact_person"]:
@@ -1179,7 +1183,7 @@ class WebScraper:
                 return parser_class.__name__.replace("Parser", "").lower()
         return None
 
-    def fetch_job_posting(self, url: str) -> dict[str, any]:
+    def fetch_job_posting(self, url: str) -> dict[str, Any]:
         """
         Fetched eine Stellenanzeige von einer URL und extrahiert Text + Links.
 
@@ -1259,7 +1263,7 @@ class WebScraper:
         company = domain.split(".")[0]
         return company.capitalize()
 
-    def fetch_structured_job_posting(self, url: str) -> dict[str, any]:
+    def fetch_structured_job_posting(self, url: str) -> dict[str, Any]:
         """
         Fetched und parst eine Stellenanzeige mit job-board-spezifischem Parser.
 
