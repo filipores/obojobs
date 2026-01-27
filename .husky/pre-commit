@@ -9,13 +9,22 @@ fi
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(ts|tsx|js|jsx|py|go|rs|sh)$' || true)
 
 if [ -n "$STAGED_FILES" ]; then
-    echo "🔧 Running code-simplifier on staged files..."
+    echo "🔧 Running code-simplifier on staged changes..."
 
-    # Create a comma-separated list for the prompt
+    # Get the actual diff of staged changes
+    STAGED_DIFF=$(git diff --cached -- $STAGED_FILES)
+
+    # Create file list for context
     FILE_LIST=$(echo "$STAGED_FILES" | tr '\n' ',' | sed 's/,$//')
 
+    # Create prompt with diff context
+    PROMPT="Review and simplify ONLY the changed code shown in this diff. Files: $FILE_LIST
+
+DIFF:
+$STAGED_DIFF"
+
     # Run code-simplifier via Claude CLI in non-interactive mode
-    if claude -p "/code-simplifier Review and simplify these staged files: $FILE_LIST" --dangerously-skip-permissions 2>/dev/null; then
+    if claude -p "/code-simplifier $PROMPT" --dangerously-skip-permissions 2>/dev/null; then
         # Re-stage any changes made by the simplifier
         echo "$STAGED_FILES" | while read -r file; do
             if [ -f "$file" ]; then
