@@ -3,7 +3,7 @@ from datetime import datetime
 from . import db
 
 
-class UserSkill(db.Model):
+class UserSkill(db.Model):  # type: ignore[name-defined]
     __tablename__ = "user_skills"
 
     id = db.Column(db.Integer, primary_key=True)

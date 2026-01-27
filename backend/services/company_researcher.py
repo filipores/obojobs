@@ -14,7 +14,7 @@ from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
 
 class CompanyResearchResult:
@@ -232,8 +232,10 @@ class CompanyResearcher:
                     keyword in link_text
                     for keyword in ["über uns", "about", "unternehmen", "wir sind"]
                 ):
-                    full_url = urljoin(base_url, link.get("href"))
-                    return full_url
+                    link_href = link.get("href")
+                    if isinstance(link_href, str):
+                        return urljoin(base_url, link_href)
+                    return None
 
         # Fallback: try common about page URLs directly
         for pattern in self.ABOUT_PAGE_PATTERNS:
@@ -247,15 +249,13 @@ class CompanyResearcher:
 
         return None
 
-    def _extract_about_info(self, soup: BeautifulSoup, url: str) -> dict:
+    def _extract_about_info(self, soup: BeautifulSoup, url: str) -> dict[str, str | list[str] | None]:
         """Extract company information from About page."""
-        result = {
-            "about_text": None,
-            "mission_values": None,
-            "founded_year": None,
-            "company_size": None,
-            "locations": [],
-        }
+        about_text: str | None = None
+        mission_values: str | None = None
+        founded_year: str | None = None
+        company_size: str | None = None
+        locations: list[str] = []
 
         # Remove navigation, header, footer for cleaner text
         for element in soup(["nav", "header", "footer", "script", "style"]):
@@ -270,7 +270,7 @@ class CompanyResearcher:
         clean_text = "\n".join(lines[:100])  # Limit to first 100 lines
 
         if clean_text and len(clean_text) > 50:
-            result["about_text"] = clean_text[:2000]  # Limit to 2000 chars
+            about_text = clean_text[:2000]  # Limit to 2000 chars
 
         # Try to extract founded year
         year_pattern = re.compile(
@@ -278,7 +278,7 @@ class CompanyResearcher:
         )
         year_match = year_pattern.search(text)
         if year_match:
-            result["founded_year"] = year_match.group(1)
+            founded_year = year_match.group(1)
 
         # Try to extract company size
         size_patterns = [
@@ -288,7 +288,7 @@ class CompanyResearcher:
         for pattern, flags in size_patterns:
             size_match = re.search(pattern, text, flags)
             if size_match:
-                result["company_size"] = f"{size_match.group(1)} Mitarbeiter"
+                company_size = f"{size_match.group(1)} Mitarbeiter"
                 break
 
         # Try to extract locations from text
@@ -311,7 +311,7 @@ class CompanyResearcher:
         ]
         for city in german_cities:
             if city.lower() in text.lower():
-                result["locations"].append(city)
+                locations.append(city)
 
         # Look for mission/vision sections
         mission_keywords = ["mission", "vision", "werte", "values", "philosophie", "leitbild"]
@@ -324,12 +324,18 @@ class CompanyResearcher:
                 # Get the next sibling content
                 next_content = mission_elem.find_next(["p", "div", "ul"])
                 if next_content:
-                    mission_text = next_content.get_text(strip=True)
-                    if mission_text and len(mission_text) > 20:
-                        result["mission_values"] = mission_text[:500]
+                    mission_text_content = next_content.get_text(strip=True)
+                    if mission_text_content and len(mission_text_content) > 20:
+                        mission_values = mission_text_content[:500]
                         break
 
-        return result
+        return {
+            "about_text": about_text,
+            "mission_values": mission_values,
+            "founded_year": founded_year,
+            "company_size": company_size,
+            "locations": locations,
+        }
 
     def _extract_products_services(self, soup: BeautifulSoup, text: str) -> list[str]:
         """Extract products/services from page content."""
@@ -346,6 +352,8 @@ class CompanyResearcher:
             if section:
                 # Find list items or paragraphs in this section
                 parent = section.find_parent(["section", "div"]) or section
+                if not isinstance(parent, Tag):
+                    continue
                 items = parent.find_all(["li", "h4", "strong"])
                 for item in items[:8]:  # Limit to 8 items
                     item_text = item.get_text(strip=True)
@@ -547,11 +555,21 @@ class CompanyResearcher:
                         about_soup = BeautifulSoup(about_response.text, "html.parser")
 
                         about_info = self._extract_about_info(about_soup, about_url)
-                        result.about_text = about_info.get("about_text")
-                        result.mission_values = about_info.get("mission_values")
-                        result.founded_year = about_info.get("founded_year")
-                        result.company_size = about_info.get("company_size")
-                        result.locations = about_info.get("locations", [])
+                        about_text_val = about_info.get("about_text")
+                        if isinstance(about_text_val, str) or about_text_val is None:
+                            result.about_text = about_text_val
+                        mission_val = about_info.get("mission_values")
+                        if isinstance(mission_val, str) or mission_val is None:
+                            result.mission_values = mission_val
+                        founded_val = about_info.get("founded_year")
+                        if isinstance(founded_val, str) or founded_val is None:
+                            result.founded_year = founded_val
+                        size_val = about_info.get("company_size")
+                        if isinstance(size_val, str) or size_val is None:
+                            result.company_size = size_val
+                        locations_val = about_info.get("locations")
+                        if isinstance(locations_val, list):
+                            result.locations = locations_val
 
                         # Re-determine industry with about text
                         if not result.industry and result.about_text:
