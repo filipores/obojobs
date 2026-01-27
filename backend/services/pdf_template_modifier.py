@@ -221,7 +221,7 @@ class PDFTemplateModifier:
 
             page = doc[page_num]
 
-            for var_name, position in positions:
+            for _, position in positions:
                 rect = self._get_rect_from_position(position)
 
                 # Add redaction annotation (white fill to cover original text)

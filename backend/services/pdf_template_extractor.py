@@ -8,7 +8,7 @@ for scanned PDFs using pytesseract.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import fitz  # PyMuPDF - only for type checking
@@ -233,7 +233,7 @@ class PDFTemplateExtractor:
         y_min: float,
         x_max: float,
         y_max: float,
-        page: Optional[int] = None,
+        page: int | None = None,
     ) -> list[dict]:
         """
         Extract text blocks within a specific region.
@@ -271,7 +271,7 @@ class PDFTemplateExtractor:
         return filtered_blocks
 
     def get_text_by_font(
-        self, pdf_path: str, font_name: Optional[str] = None, min_font_size: Optional[float] = None
+        self, pdf_path: str, font_name: str | None = None, min_font_size: float | None = None
     ) -> list[dict]:
         """
         Extract text blocks filtered by font properties.
