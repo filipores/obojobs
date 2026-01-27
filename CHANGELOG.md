@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/filipores/obojobs/compare/v1.2.0...v1.2.1) (2026-01-27)
+
+
+### Bug Fixes
+
+* **deps:** add pdfjs-dist for pdf template wizard ([4810888](https://github.com/filipores/obojobs/commit/48108884dcf743d913194389f98e1cac09d1ae0f))
+
 # [1.2.0](https://github.com/filipores/obojobs/compare/v1.1.0...v1.2.0) (2026-01-27)
 
 
