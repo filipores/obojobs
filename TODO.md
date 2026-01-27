@@ -6,6 +6,238 @@
 
 ---
 
+## Feature Request: Cover Letter Template Upload with AI Variable Detection
+
+**Added:** 2026-01-26
+**Priority:** High
+**Description:** Allow users to upload a cover letter PDF template (Anschreiben) on the /templates page. The AI scans the uploaded template and recommends placeholder variables ({{FIRMA}}, {{POSITION}}, etc.). The original PDF formatting must be preserved when generating applications.
+
+### Problem Statement
+
+Currently, users can only create templates via:
+1. Manual text entry with variable insertion
+2. AI Wizard that generates a new template from scratch
+
+Users who already have well-designed cover letter templates (with specific formatting, fonts, layout) cannot use them. They would need to recreate them from scratch, losing their original design.
+
+### User Story
+
+> As a job applicant, I want to upload my existing cover letter PDF template so that obojobs can scan it, suggest which parts should be dynamic variables, and generate personalized applications while preserving my original design and formatting.
+
+### Technical Requirements
+
+#### 1. Backend: PDF Template Upload & Storage
+
+- [ ] **New document type:** Add `anschreiben_template` to allowed document types in `backend/routes/documents.py`
+- [ ] **Storage structure:** Store templates in `backend/uploads/user_{id}/templates/` (separate from documents)
+- [ ] **Keep original PDF:** Unlike CV/Arbeitszeugnis, do NOT delete the PDF after text extraction. The original PDF is needed for formatting preservation.
+- [ ] **Template model extension:** Add optional `pdf_path` field to `Template` model for PDF-based templates
+  ```python
+  # backend/models/template.py
+  pdf_path = db.Column(db.String(500), nullable=True)  # Path to uploaded PDF
+  is_pdf_template = db.Column(db.Boolean, default=False)
+  ```
+- [ ] **Migration script:** Create Alembic migration for new Template fields
+
+#### 2. Backend: PDF Text Extraction with Position Mapping
+
+- [ ] **Enhanced PDF parsing:** Extract text WITH position/coordinate data (not just raw text)
+  - Use `pdfplumber` or `PyMuPDF (fitz)` instead of just PyPDF2
+  - Store text blocks with: text content, x/y position, font name, font size, page number
+- [ ] **Create new service:** `backend/services/pdf_template_parser.py`
+  ```python
+  class PDFTemplateParser:
+      def extract_with_positions(pdf_path) -> List[TextBlock]
+      def get_text_for_ai_analysis() -> str
+      def replace_text_in_pdf(pdf_path, replacements: Dict[str, str]) -> bytes
+  ```
+
+#### 3. Backend: AI Variable Suggestion Endpoint
+
+- [ ] **New endpoint:** `POST /api/templates/analyze-pdf`
+  - Input: PDF file upload
+  - Process:
+    1. Extract text with positions
+    2. Send text to Claude API with prompt to identify variable candidates
+    3. Return suggested variables with their exact text positions
+  - Output:
+    ```json
+    {
+      "success": true,
+      "extracted_text": "Full text preview...",
+      "suggestions": [
+        {
+          "original_text": "XXX",
+          "suggested_variable": "FIRMA",
+          "reason": "Company name placeholder detected",
+          "occurrences": [
+            {"page": 1, "position": {"x": 100, "y": 200}}
+          ]
+        },
+        {
+          "original_text": "Softwareentwickler",
+          "suggested_variable": "POSITION",
+          "reason": "Job title that should be dynamic",
+          "occurrences": [...]
+        }
+      ]
+    }
+    ```
+
+- [ ] **AI Prompt Design:** Create prompt that:
+  - Identifies placeholder text (XXX, [FIRMA], generic terms)
+  - Suggests which phrases should become variables
+  - Maps to existing variable types: FIRMA, POSITION, ANSPRECHPARTNER, QUELLE, EINLEITUNG
+  - Allows custom variables for special cases
+
+#### 4. Backend: PDF Generation with Original Formatting
+
+- [ ] **PDF manipulation service:** `backend/services/pdf_template_generator.py`
+  - Use `PyMuPDF (fitz)` or `reportlab` with PDF overlay
+  - Replace text at exact positions while preserving:
+    - Font family and size
+    - Text alignment
+    - Line spacing
+    - Page layout
+    - Images/logos
+    - Colors
+  ```python
+  class PDFTemplateGenerator:
+      def generate_from_template(
+          template_pdf_path: str,
+          variable_mappings: Dict[str, Tuple[str, str]],  # {position_id: (original, replacement)}
+          output_path: str
+      ) -> str
+  ```
+
+- [ ] **Fallback strategy:** If exact text replacement fails (complex layouts), use PDF overlay technique:
+  1. White-out original text area
+  2. Draw new text on top with matched styling
+
+#### 5. Frontend: Template Upload UI
+
+- [ ] **Templates.vue updates:**
+  - Add third creation method: "Upload existing template"
+  - File input accepting only PDF (max 500KB, same as other templates)
+  - Upload progress indicator
+
+- [ ] **New component:** `TemplateUploadWizard.vue`
+  - Step 1: Upload PDF
+  - Step 2: Preview extracted text
+  - Step 3: Review AI suggestions (accept/reject each)
+  - Step 4: Manual variable adjustment (similar to existing TemplateEditor)
+  - Step 5: Save template with PDF reference
+
+- [ ] **Variable mapping UI:**
+  - Show PDF preview (use pdf.js or similar)
+  - Highlight suggested variable positions
+  - Click to accept/reject suggestions
+  - Drag to select custom text for variables
+
+#### 6. Frontend: PDF Preview Component
+
+- [ ] **New component:** `PDFPreview.vue`
+  - Render PDF pages using pdf.js
+  - Overlay highlights on suggested variable positions
+  - Interactive: click on highlights to accept/modify
+  - Show current variable mappings as colored overlays
+
+#### 7. Integration: Application Generation Flow
+
+- [ ] **Modify BewerbungsGenerator:**
+  - Check if template has `is_pdf_template = True`
+  - If yes: Use `PDFTemplateGenerator` instead of text replacement
+  - Generate PDF by modifying original template PDF
+  - Store generated PDF in `backend/uploads/user_{id}/pdfs/`
+
+- [ ] **Update application generation endpoint:**
+  - Handle PDF-based templates differently
+  - Return generated PDF path as usual
+
+#### 8. Database Schema Changes
+
+```sql
+-- Migration: add_pdf_template_fields_to_templates
+ALTER TABLE templates ADD COLUMN pdf_path VARCHAR(500);
+ALTER TABLE templates ADD COLUMN is_pdf_template BOOLEAN DEFAULT FALSE;
+ALTER TABLE templates ADD COLUMN variable_positions JSON;  -- Store position mappings
+```
+
+#### 9. Dependencies to Add
+
+**Backend (requirements.txt):**
+```
+PyMuPDF>=1.23.0  # or pdfplumber>=0.10.0
+```
+
+**Frontend (package.json):**
+```json
+"pdfjs-dist": "^4.0.0"
+```
+
+### Variable Detection Heuristics
+
+The AI should identify these patterns as variable candidates:
+
+| Pattern | Suggested Variable | Confidence |
+|---------|-------------------|------------|
+| `XXX`, `[XXX]`, `___` | Context-dependent | High |
+| Company name placeholders | FIRMA | High |
+| Job title mentions | POSITION | Medium |
+| "Sehr geehrte/r ..." followed by name | ANSPRECHPARTNER | High |
+| "über ... gefunden" patterns | QUELLE | Medium |
+| Opening paragraphs (motivation) | EINLEITUNG | Low |
+
+### Testing Requirements
+
+- [ ] Unit tests for `PDFTemplateParser`
+- [ ] Unit tests for `PDFTemplateGenerator`
+- [ ] Integration test: Upload → Analyze → Generate flow
+- [ ] E2E test: Full template upload wizard
+- [ ] Test with various PDF formats (different fonts, layouts, scanned vs. digital)
+
+### Edge Cases to Handle
+
+1. **Scanned PDFs:** OCR text may have positioning errors → Show warning, suggest manual adjustment
+2. **Complex layouts:** Multi-column, tables → May need manual variable placement
+3. **Non-standard fonts:** If font not available → Use closest system font
+4. **Very long replacements:** Text longer than original may overflow → Auto-adjust or warn user
+5. **Multiple occurrences:** Same placeholder appears multiple times → Replace all or let user choose
+
+### Security Considerations
+
+- [ ] Validate PDF files (check magic bytes, not just extension)
+- [ ] Sanitize PDF content (remove JavaScript, forms, embedded files)
+- [ ] Limit PDF file size (500KB max)
+- [ ] Rate limit the AI analysis endpoint (expensive operation)
+
+### UI/UX Considerations
+
+- Show clear preview of how the final PDF will look
+- Allow reverting to original template at any point
+- Provide "test generation" with sample data before saving
+- Show confidence scores for AI suggestions
+- Allow manual override of all AI suggestions
+
+### Files to Create/Modify
+
+**New files:**
+- `backend/services/pdf_template_parser.py`
+- `backend/services/pdf_template_generator.py`
+- `backend/routes/template_upload.py` (or extend `templates.py`)
+- `backend/migrations/versions/xxx_add_pdf_template_fields.py`
+- `frontend/src/components/TemplateUploadWizard.vue`
+- `frontend/src/components/PDFPreview.vue`
+
+**Files to modify:**
+- `backend/models/template.py` - Add PDF fields
+- `backend/services/generator.py` - Handle PDF templates
+- `backend/routes/templates.py` - Add analyze endpoint
+- `frontend/src/pages/Templates.vue` - Add upload option
+- `frontend/src/api/templates.js` - Add upload/analyze API calls
+
+---
+
 ## Critical Bugs (P0)
 
 ### CORE-020-BUG-001: Success Modal has no Escape key handler
@@ -346,6 +578,7 @@
 
 | Category | Count |
 |----------|-------|
+| **Feature Requests** | **1** |
 | Critical Bugs | 2 |
 | Major Bugs | 11 |
 | Minor Bugs | 7 |

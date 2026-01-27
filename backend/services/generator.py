@@ -6,6 +6,7 @@ from models import Application, Document, JobRequirement, Template, db
 
 from .api_client import ClaudeAPIClient
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
+from .pdf_template_modifier import PDFTemplateModifier
 from .requirement_analyzer import RequirementAnalyzer
 
 
@@ -16,6 +17,7 @@ class BewerbungsGenerator:
         self.api_client = ClaudeAPIClient()
         self.cv_text = None
         self.anschreiben_template = None
+        self.template = None  # Store template object for PDF template support
         self.zeugnis_text = None
         self.extracted_links = None
         self.load_user_documents()
@@ -45,8 +47,11 @@ class BewerbungsGenerator:
             # Specific template requested
             template = Template.query.filter_by(id=self.template_id, user_id=self.user_id).first()
             if template:
+                self.template = template
                 self.anschreiben_template = template.content
                 print(f"✓ Template '{template.name}' geladen (ID: {self.template_id})")
+                if template.is_pdf_template:
+                    print(f"  → PDF-Template erkannt: {template.pdf_path}")
             else:
                 raise ValueError(f"Template mit ID {self.template_id} nicht gefunden.")
         else:
@@ -62,8 +67,11 @@ class BewerbungsGenerator:
                 if not template:
                     template = Template.query.filter_by(user_id=self.user_id).first()
                 if template:
+                    self.template = template
                     self.anschreiben_template = template.content
                     print("✓ Template geladen")
+                    if template.is_pdf_template:
+                        print(f"  → PDF-Template erkannt: {template.pdf_path}")
                 else:
                     raise ValueError(
                         "Kein Template gefunden. Bitte erstelle ein Template oder lade ein Anschreiben hoch."
@@ -116,25 +124,47 @@ class BewerbungsGenerator:
         print(f"✓ Einleitung generiert ({len(einleitung)} Zeichen)")
         print(f"\nGenerierte Einleitung:\n{'-' * 60}\n{einleitung}\n{'-' * 60}\n")
 
-        print("4/5 Erstelle vollständiges Anschreiben...")
-        anschreiben_vollstaendig = self.anschreiben_template
-        for placeholder, value in {
-            "{{FIRMA}}": firma_name,
-            "{{ANSPRECHPARTNER}}": details["ansprechpartner"],
-            "{{POSITION}}": details["position"],
-            "{{QUELLE}}": details["quelle"],
-            "{{EINLEITUNG}}": einleitung,
-        }.items():
-            anschreiben_vollstaendig = anschreiben_vollstaendig.replace(placeholder, value)
+        # Prepare variable replacements
+        replacements = {
+            "FIRMA": firma_name,
+            "ANSPRECHPARTNER": details["ansprechpartner"],
+            "POSITION": details["position"],
+            "QUELLE": details["quelle"],
+            "EINLEITUNG": einleitung,
+        }
 
-        print("5/5 Erstelle PDF...")
         # Create user-specific PDF directory
         pdf_dir = os.path.join(config.UPLOAD_FOLDER, f"user_{self.user_id}", "pdfs")
         os.makedirs(pdf_dir, exist_ok=True)
-
         output_filename = output_filename or f"Anschreiben_{firma_name.replace(' ', '_')}.pdf"
         output_path = os.path.join(pdf_dir, output_filename)
-        create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
+
+        # Check if using PDF template or text template
+        if self.template and self.template.is_pdf_template:
+            print("4/5 PDF-Template wird verwendet...")
+            print("5/5 Erstelle PDF aus Template...")
+
+            # Use PDFTemplateModifier to generate PDF from template
+            modifier = PDFTemplateModifier()
+            pdf_bytes = modifier.generate_from_template(
+                pdf_path=self.template.pdf_path,
+                variable_positions=self.template.variable_positions or {},
+                replacements=replacements,
+            )
+
+            # Write the PDF bytes to output file
+            with open(output_path, "wb") as f:
+                f.write(pdf_bytes)
+        else:
+            print("4/5 Erstelle vollständiges Anschreiben...")
+            anschreiben_vollstaendig = self.anschreiben_template
+            for var_name, value in replacements.items():
+                placeholder = f"{{{{{var_name}}}}}"
+                anschreiben_vollstaendig = anschreiben_vollstaendig.replace(placeholder, value)
+
+            print("5/5 Erstelle PDF...")
+            create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
+
         print(f"✓ Bewerbung erstellt: {output_path}")
 
         # Email-Daten generieren mit verbesserter Personalisierung

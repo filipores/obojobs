@@ -7,12 +7,13 @@ describe('ScrollableTable', () => {
   let mockResizeObserver
 
   beforeEach(() => {
-    // Mock ResizeObserver
-    mockResizeObserver = vi.fn().mockImplementation(() => ({
-      observe: vi.fn(),
-      unobserve: vi.fn(),
-      disconnect: vi.fn()
-    }))
+    // Mock ResizeObserver with class syntax for vitest 4.x compatibility
+    mockResizeObserver = class {
+      constructor() {}
+      observe = vi.fn()
+      unobserve = vi.fn()
+      disconnect = vi.fn()
+    }
     window.ResizeObserver = mockResizeObserver
   })
 
@@ -153,8 +154,17 @@ describe('ScrollableTable', () => {
   })
 
   it('creates ResizeObserver when available', async () => {
-    // Reset the mock to track new calls
-    mockResizeObserver.mockClear()
+    // Track constructor calls using a spy
+    const resizeObserverSpy = vi.fn()
+    mockResizeObserver = class {
+      constructor(callback) {
+        resizeObserverSpy(callback)
+      }
+      observe = vi.fn()
+      unobserve = vi.fn()
+      disconnect = vi.fn()
+    }
+    window.ResizeObserver = mockResizeObserver
 
     wrapper = mount(ScrollableTable, {
       slots: {
@@ -168,6 +178,6 @@ describe('ScrollableTable', () => {
     await new Promise(resolve => setTimeout(resolve, 10))
 
     // ResizeObserver should be instantiated during mount
-    expect(mockResizeObserver).toHaveBeenCalled()
+    expect(resizeObserverSpy).toHaveBeenCalled()
   })
 })
