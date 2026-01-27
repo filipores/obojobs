@@ -94,9 +94,9 @@ class IndeedParser(JobBoardParser):
                 data = json.loads(script.string)
                 if isinstance(data, list):
                     for item in data:
-                        if item.get("@type") == "JobPosting":
+                        if isinstance(item, dict) and item.get("@type") == "JobPosting":
                             return item
-                elif data.get("@type") == "JobPosting":
+                elif isinstance(data, dict) and data.get("@type") == "JobPosting":
                     return data
             except (json.JSONDecodeError, TypeError):
                 continue
@@ -338,9 +338,9 @@ class StepStoneParser(JobBoardParser):
                 # Handle array of JSON-LD objects
                 if isinstance(data, list):
                     for item in data:
-                        if item.get("@type") == "JobPosting":
+                        if isinstance(item, dict) and item.get("@type") == "JobPosting":
                             return item
-                elif data.get("@type") == "JobPosting":
+                elif isinstance(data, dict) and data.get("@type") == "JobPosting":
                     return data
             except (json.JSONDecodeError, TypeError):
                 continue
@@ -549,9 +549,9 @@ class XingParser(JobBoardParser):
                 data = json.loads(script.string)
                 if isinstance(data, list):
                     for item in data:
-                        if item.get("@type") == "JobPosting":
+                        if isinstance(item, dict) and item.get("@type") == "JobPosting":
                             return item
-                elif data.get("@type") == "JobPosting":
+                elif isinstance(data, dict) and data.get("@type") == "JobPosting":
                     return data
             except (json.JSONDecodeError, TypeError):
                 continue
@@ -853,9 +853,9 @@ class ArbeitsagenturParser(JobBoardParser):
                 data = json.loads(script.string)
                 if isinstance(data, list):
                     for item in data:
-                        if item.get("@type") == "JobPosting":
+                        if isinstance(item, dict) and item.get("@type") == "JobPosting":
                             return item
-                elif data.get("@type") == "JobPosting":
+                elif isinstance(data, dict) and data.get("@type") == "JobPosting":
                     return data
             except (json.JSONDecodeError, TypeError):
                 continue
