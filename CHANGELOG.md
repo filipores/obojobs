@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/filipores/obojobs/compare/v1.2.1...v1.2.2) (2026-01-27)
+
+
+### Bug Fixes
+
+* **frontend:** update PdfTemplateWizard API endpoints to match backend ([498d102](https://github.com/filipores/obojobs/commit/498d1028ca698e7e0756f9021540abbc49d1dbc9))
+
 ## [1.2.1](https://github.com/filipores/obojobs/compare/v1.2.0...v1.2.1) (2026-01-27)
 
 
