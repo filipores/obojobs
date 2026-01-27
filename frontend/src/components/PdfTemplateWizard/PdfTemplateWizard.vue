@@ -218,6 +218,10 @@ const suggestions = ref([])
 // Error state
 const errorMessage = ref('')
 
+// Template state (from upload)
+const templateId = ref(null)
+const templateData = ref(null)
+
 // Computed
 const acceptedSuggestions = computed(() =>
   suggestions.value.filter(s => s.status === 'accepted')
@@ -255,32 +259,37 @@ async function startAnalysis() {
   errorMessage.value = ''
 
   try {
-    // Create FormData for file upload
-    const formData = new FormData()
-    formData.append('pdf', selectedFile.value)
+    // Step 1: Upload PDF to create template
+    const uploadFormData = new FormData()
+    uploadFormData.append('file', selectedFile.value)
+    uploadFormData.append('name', selectedFile.value.name.replace(/\.pdf$/i, ''))
 
-    // Simulate analysis phases
     analysisStatus.value = 'PDF wird hochgeladen...'
-    await delay(500)
 
-    analysisStatus.value = 'Textinhalte werden extrahiert...'
-    await delay(800)
-
-    analysisStatus.value = 'KI analysiert Dokumentstruktur...'
-    await delay(600)
-
-    analysisStatus.value = 'Variablen werden identifiziert...'
-
-    // Make API call
-    const { data } = await api.post('/pdf-templates/analyze', formData, {
+    const uploadResponse = await api.post('/templates/upload-pdf', uploadFormData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     })
 
+    // Store template ID for later
+    templateId.value = uploadResponse.data.template.id
+    templateData.value = uploadResponse.data.template
+
+    analysisStatus.value = 'Textinhalte wurden extrahiert...'
+    await delay(500)
+
+    // Step 2: Analyze variables using AI
+    analysisStatus.value = 'KI analysiert Dokumentstruktur...'
+
+    const analyzeResponse = await api.post(`/templates/${templateId.value}/analyze-variables`)
+
+    analysisStatus.value = 'Variablen werden identifiziert...'
+    await delay(400)
+
     // Process suggestions from API
-    if (data.suggestions && Array.isArray(data.suggestions)) {
-      suggestions.value = data.suggestions.map((s, index) => ({
+    if (analyzeResponse.data.suggestions && Array.isArray(analyzeResponse.data.suggestions)) {
+      suggestions.value = analyzeResponse.data.suggestions.map((s, index) => ({
         id: s.id || `suggestion_${index}`,
         variable_name: s.variable_name || s.variableName,
         suggested_text: s.suggested_text || s.suggestedText || s.text,
@@ -328,26 +337,24 @@ async function handleSave() {
     return
   }
 
-  try {
-    // Create FormData with file and accepted variables
-    const formData = new FormData()
-    formData.append('pdf', selectedFile.value)
-    formData.append('variables', JSON.stringify(
-      acceptedSuggestions.value.map(s => ({
-        variable_name: s.variable_name,
-        suggested_text: s.suggested_text,
-        position: s.position
-      }))
-    ))
-    formData.append('name', `PDF Template - ${selectedFile.value.name}`)
+  if (!templateId.value) {
+    errorMessage.value = 'Kein Template vorhanden. Bitte starten Sie die Analyse erneut.'
+    return
+  }
 
-    const { data } = await api.post('/pdf-templates', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
-      }
+  try {
+    // Save variable positions to the existing template
+    const variablePositions = acceptedSuggestions.value.map(s => ({
+      variable_name: s.variable_name,
+      suggested_text: s.suggested_text,
+      position: s.position
+    }))
+
+    const { data } = await api.put(`/templates/${templateId.value}/variable-positions`, {
+      variables: variablePositions
     })
 
-    emit('template-created', data.template)
+    emit('template-created', data.template || templateData.value)
 
   } catch (err) {
     console.error('Save error:', err)
