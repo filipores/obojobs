@@ -9,10 +9,7 @@ Tests cover:
 
 import io
 import json
-import os
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 
 class TestUploadPdfTemplate:
@@ -197,7 +194,7 @@ class TestAnalyzeVariables:
         """Test successful variable analysis with AI."""
         # Create a PDF template first
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -266,7 +263,7 @@ class TestAnalyzeVariables:
     def test_analyze_variables_non_pdf_template(self, client, auth_headers, app):
         """Test analysis fails for non-PDF templates."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -291,7 +288,7 @@ class TestAnalyzeVariables:
     def test_analyze_variables_empty_content(self, client, auth_headers, app):
         """Test analysis fails for template with no content."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -316,7 +313,7 @@ class TestAnalyzeVariables:
     def test_analyze_variables_ai_error(self, client, auth_headers, app):
         """Test handling of AI API errors."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -350,7 +347,7 @@ class TestSaveVariablePositions:
     def test_save_positions_dict_format(self, client, auth_headers, app):
         """Test saving variable positions as dictionary."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -382,7 +379,7 @@ class TestSaveVariablePositions:
     def test_save_positions_list_format(self, client, auth_headers, app):
         """Test saving variable positions as list."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -423,7 +420,7 @@ class TestSaveVariablePositions:
     def test_save_positions_missing_data(self, client, auth_headers, app):
         """Test saving positions with missing data."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -448,7 +445,7 @@ class TestSaveVariablePositions:
     def test_save_positions_invalid_variable_name_dict(self, client, auth_headers, app):
         """Test rejection of unknown variable names in dict format."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -477,7 +474,7 @@ class TestSaveVariablePositions:
     def test_save_positions_invalid_variable_name_list(self, client, auth_headers, app):
         """Test rejection of unknown variable names in list format."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -506,7 +503,7 @@ class TestSaveVariablePositions:
     def test_save_positions_all_valid_variables(self, client, auth_headers, app):
         """Test all valid variable names are accepted."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -537,7 +534,7 @@ class TestSaveVariablePositions:
     def test_save_positions_empty_dict(self, client, auth_headers, app):
         """Test saving empty positions is allowed."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.filter_by(email="test@example.com").first()
             template = Template(
@@ -560,7 +557,7 @@ class TestSaveVariablePositions:
     def test_save_positions_unauthorized(self, client, app):
         """Test saving positions requires authentication."""
         with app.app_context():
-            from models import Template, db, User
+            from models import Template, User, db
 
             user = User.query.first()
             if user:
