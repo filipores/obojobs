@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/filipores/obojobs/compare/v1.1.0...v1.2.0) (2026-01-27)
+
+
+### Features
+
+* **templates:** integrate pdf template wizard into templates page ([1f68ef5](https://github.com/filipores/obojobs/commit/1f68ef58dbd3eec3e8c32be67ecd8ed95d56a5e2))
+
 # [1.1.0](https://github.com/filipores/obojobs/compare/v1.0.0...v1.1.0) (2026-01-27)
 
 
