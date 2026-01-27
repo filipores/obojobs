@@ -2,12 +2,13 @@ import csv
 import json
 import os
 from datetime import datetime
+from typing import Any
 
 
 class BewerbungsTracker:
     def __init__(self, json_path: str):
         self.json_path = json_path
-        self.bewerbungen = []
+        self.bewerbungen: list[dict[str, Any]] = []
 
         # Migration: CSV zu JSON falls CSV existiert
         csv_path = json_path.replace(".json", ".csv")
