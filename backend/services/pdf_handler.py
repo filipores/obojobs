@@ -55,7 +55,8 @@ def read_document(file_path: str, return_links: bool = False) -> str | dict:
         if return_links:
             return result
         else:
-            return result["text"]
+            text: str = result["text"]
+            return text
     elif file_path.lower().endswith(".pdf"):
         text = extract_text_from_pdf(file_path)
         if return_links:
