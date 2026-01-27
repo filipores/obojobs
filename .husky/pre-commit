@@ -1,4 +1,4 @@
-npx lint-staged
+npx lint-staged --allow-empty
 
 # Skip code-simplifier if SKIP_SIMPLIFIER is set
 if [ -n "$SKIP_SIMPLIFIER" ]; then
