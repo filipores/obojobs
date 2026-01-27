@@ -21,7 +21,7 @@ LOCALES_DIR = os.path.join(os.path.dirname(__file__), "locales")
 
 
 @lru_cache(maxsize=2)
-def load_translations(locale: str) -> dict:
+def load_translations(locale: str) -> dict[str, Any]:
     """
     Load translations for a given locale.
 
@@ -38,7 +38,8 @@ def load_translations(locale: str) -> dict:
 
     try:
         with open(locale_file, encoding="utf-8") as f:
-            return json.load(f)
+            data: dict[str, Any] = json.load(f)
+            return data
     except FileNotFoundError:
         # Fallback to default locale
         if locale != DEFAULT_LOCALE:
@@ -62,7 +63,7 @@ def get_locale() -> str:
     """
     # Check if locale was set by middleware (from user preference)
     if hasattr(g, "locale") and g.locale in SUPPORTED_LOCALES:
-        return g.locale
+        return str(g.locale)
 
     # Try Accept-Language header
     if request:
