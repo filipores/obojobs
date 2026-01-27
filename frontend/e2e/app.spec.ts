@@ -8,7 +8,7 @@ test.describe('Application', () => {
 
   test('should have the app container', async ({ page }) => {
     await page.goto('/');
-    const app = page.locator('#app');
+    const app = page.locator('#app').first();
     await expect(app).toBeVisible();
   });
 
