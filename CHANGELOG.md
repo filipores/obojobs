@@ -1,3 +1,10 @@
+# [1.1.0](https://github.com/filipores/obojobs/compare/v1.0.0...v1.1.0) (2026-01-27)
+
+
+### Features
+
+* **api:** add dedicated /api/version endpoint ([d2d6e50](https://github.com/filipores/obojobs/commit/d2d6e5068cda04bf1c396aa8fd76cad62ec31210))
+
 # 1.0.0 (2026-01-27)
 
 
