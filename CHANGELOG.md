@@ -1,3 +1,10 @@
+# [1.3.0](https://github.com/filipores/obojobs/compare/v1.2.2...v1.3.0) (2026-01-27)
+
+
+### Features
+
+* **backend:** add PDF template upload and analysis endpoints ([8928078](https://github.com/filipores/obojobs/commit/892807894b6452027d85449c6582b7f394e3bb75))
+
 ## [1.2.2](https://github.com/filipores/obojobs/compare/v1.2.1...v1.2.2) (2026-01-27)
 
 
