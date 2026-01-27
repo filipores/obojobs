@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 
 // Set worker source
