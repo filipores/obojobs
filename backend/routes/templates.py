@@ -1,20 +1,30 @@
 import json
 import os
 import re
+import time
 
 from flask import Blueprint, jsonify, request
+from werkzeug.utils import secure_filename
 
+from config import config
 from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
 from models import Document, Template, db
 from services.api_client import ClaudeAPIClient
 from services.pdf_handler import read_document
+from services.pdf_template_extractor import PDFTemplateExtractor
 
 # Validation constants
 MAX_NAME_LENGTH = 200
 MAX_CONTENT_LENGTH = 100000  # 100KB
 MAX_PROMPT_INPUT_LENGTH = 2000
 MAX_CV_LENGTH = 10000
+MAX_PDF_SIZE = 10 * 1024 * 1024  # 10MB
+
+
+def allowed_pdf_file(filename):
+    """Check if file is a PDF based on extension"""
+    return "." in filename and filename.rsplit(".", 1)[1].lower() == "pdf"
 
 
 def sanitize_text(text, max_length=None):
@@ -370,3 +380,272 @@ def list_templates_simple(current_user):
     return jsonify(
         {"success": True, "templates": [{"id": t.id, "name": t.name, "is_default": t.is_default} for t in templates]}
     ), 200
+
+
+@templates_bp.route("/upload-pdf", methods=["POST"])
+@jwt_required_custom
+def upload_pdf_template(current_user):
+    """Upload a PDF template and extract text with positions"""
+    # Validate file presence
+    if "file" not in request.files:
+        return jsonify({"error": "Keine Datei hochgeladen"}), 400
+
+    file = request.files["file"]
+
+    if file.filename == "":
+        return jsonify({"error": "Keine Datei ausgewählt"}), 400
+
+    # Validate file type (PDF only)
+    if not allowed_pdf_file(file.filename):
+        return jsonify({"error": "Nur PDF-Dateien erlaubt"}), 400
+
+    # Validate file size (max 10MB)
+    file.seek(0, 2)  # Seek to end
+    file_size = file.tell()
+    file.seek(0)  # Reset to beginning
+
+    if file_size > MAX_PDF_SIZE:
+        return jsonify({"error": f"Datei zu groß. Maximale Größe: {MAX_PDF_SIZE // (1024 * 1024)}MB"}), 400
+
+    # Get optional template name from form data
+    template_name = sanitize_text(request.form.get("name", ""), MAX_NAME_LENGTH)
+    if not template_name:
+        template_name = os.path.splitext(file.filename)[0][:MAX_NAME_LENGTH]
+
+    # Create user templates directory
+    user_dir = os.path.join(config.UPLOAD_FOLDER, f"user_{current_user.id}", "templates")
+    os.makedirs(user_dir, exist_ok=True)
+
+    # Save PDF file
+    filename = secure_filename(file.filename)
+    # Add timestamp to avoid conflicts
+    timestamp = int(time.time())
+    pdf_filename = f"{timestamp}_{filename}"
+    pdf_path = os.path.join(user_dir, pdf_filename)
+    file.save(pdf_path)
+
+    try:
+        # Extract text with positions using PDFTemplateExtractor
+        extractor = PDFTemplateExtractor()
+        extraction_result = extractor.extract_text_with_positions(pdf_path)
+
+        text_blocks = extraction_result.get("text_blocks", [])
+
+        # Concatenate text for template content
+        plain_text = extractor.get_plain_text(pdf_path)
+
+        # Create Template record
+        template = Template(
+            user_id=current_user.id,
+            name=template_name,
+            content=plain_text,
+            is_pdf_template=True,
+            pdf_path=pdf_path,
+            is_default=False,
+        )
+
+        db.session.add(template)
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "PDF-Template erfolgreich hochgeladen",
+            "template": template.to_dict(),
+            "text_blocks": text_blocks,
+            "extraction_source": extraction_result.get("source", "unknown"),
+            "total_blocks": extraction_result.get("total_blocks", 0),
+        }), 201
+
+    except Exception as e:
+        # Cleanup on error
+        if os.path.exists(pdf_path):
+            os.remove(pdf_path)
+        print(f"Fehler beim PDF-Template Upload: {str(e)}")
+        return jsonify({"error": f"Fehler beim Verarbeiten der PDF: {str(e)}"}), 500
+
+
+@templates_bp.route("/<int:template_id>/analyze-variables", methods=["POST"])
+@jwt_required_custom
+def analyze_template_variables(template_id, current_user):
+    """Analyze template text with AI to identify variable candidates"""
+    template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
+
+    if not template:
+        return jsonify({"error": "Template nicht gefunden"}), 404
+
+    if not template.is_pdf_template:
+        return jsonify({"error": "Nur PDF-Templates können analysiert werden"}), 400
+
+    # Get text blocks if PDF exists
+    text_blocks = []
+    if template.pdf_path and os.path.exists(template.pdf_path):
+        try:
+            extractor = PDFTemplateExtractor()
+            extraction_result = extractor.extract_text_with_positions(template.pdf_path)
+            text_blocks = extraction_result.get("text_blocks", [])
+        except Exception as e:
+            print(f"Warnung: Konnte Text-Blöcke nicht neu extrahieren: {str(e)}")
+
+    # Use template content for analysis
+    template_text = template.content
+    if not template_text:
+        return jsonify({"error": "Template enthält keinen Text"}), 400
+
+    try:
+        # Send to Claude API for variable analysis
+        api_client = ClaudeAPIClient()
+
+        prompt = f"""Analysiere diesen Bewerbungs-Template-Text und identifiziere Passagen, die als dynamische Variablen markiert werden sollten.
+
+TEMPLATE TEXT:
+{template_text[:5000]}
+
+VERFÜGBARE VARIABLEN:
+- FIRMA: Firmenname (z.B. "Musterfirma GmbH", "ABC AG")
+- POSITION: Stellenbezeichnung (z.B. "Softwareentwickler", "Marketing Manager")
+- ANSPRECHPARTNER: Komplette Anrede (z.B. "Sehr geehrte Frau Müller", "Sehr geehrter Herr Schmidt")
+- QUELLE: Wo die Stelle gefunden wurde (z.B. "auf LinkedIn", "auf StepStone")
+- EINLEITUNG: Ein personalisierbarer Einleitungsabsatz
+
+AUFGABE:
+Identifiziere konkrete Textpassagen, die bei jeder Bewerbung angepasst werden sollten.
+
+AUSGABEFORMAT (NUR JSON, keine Erklärungen):
+[
+  {{"text": "exakter Text aus dem Template", "variable": "FIRMA", "confidence": 0.95, "reason": "Kurze Begründung"}},
+  {{"text": "weiterer Text", "variable": "POSITION", "confidence": 0.85, "reason": "Begründung"}}
+]
+
+WICHTIG:
+- Der "text" muss EXAKT im Template vorkommen
+- "confidence" ist ein Wert zwischen 0.0 und 1.0
+- Identifiziere mindestens FIRMA, POSITION und ANSPRECHPARTNER falls vorhanden
+- Gib NUR das JSON-Array zurück, keine anderen Texte"""
+
+        response = api_client.client.messages.create(
+            model="claude-3-5-haiku-20241022",
+            max_tokens=1500,
+            temperature=0.3,
+            messages=[{"role": "user", "content": prompt}],
+        )
+
+        response_text = response.content[0].text.strip()
+
+        # Parse JSON response
+        suggestions = []
+        try:
+            # Try to extract JSON from response
+            if response_text.startswith("["):
+                suggestions = json.loads(response_text)
+            else:
+                # Try to find JSON array in response
+                json_match = re.search(r'\[[\s\S]*\]', response_text)
+                if json_match:
+                    suggestions = json.loads(json_match.group())
+        except json.JSONDecodeError as e:
+            print(f"Warnung: JSON-Parsing fehlgeschlagen: {str(e)}")
+            print(f"Response: {response_text[:500]}")
+
+        # Enrich suggestions with position data from text_blocks
+        enriched_suggestions = []
+        for i, sug in enumerate(suggestions):
+            suggestion_text = sug.get("text", "")
+            variable = sug.get("variable", "")
+            confidence = sug.get("confidence", 0.5)
+            reason = sug.get("reason", "")
+
+            # Find position in text blocks
+            position_data = None
+            for block in text_blocks:
+                if suggestion_text in block.get("text", "") or block.get("text", "") in suggestion_text:
+                    position_data = {
+                        "x": block.get("x"),
+                        "y": block.get("y"),
+                        "width": block.get("width"),
+                        "height": block.get("height"),
+                        "page": block.get("page"),
+                    }
+                    break
+
+            enriched_suggestions.append({
+                "id": f"var_{i}_{hash(suggestion_text) % 10000}",
+                "text": suggestion_text,
+                "variable": variable,
+                "confidence": confidence,
+                "reason": reason,
+                "position": position_data,
+            })
+
+        return jsonify({
+            "success": True,
+            "template_id": template.id,
+            "suggestions": enriched_suggestions,
+            "total_suggestions": len(enriched_suggestions),
+        }), 200
+
+    except Exception as e:
+        print(f"Fehler bei der Variablen-Analyse: {str(e)}")
+        return jsonify({"error": f"Fehler bei der Analyse: {str(e)}"}), 500
+
+
+@templates_bp.route("/<int:template_id>/variable-positions", methods=["PUT"])
+@jwt_required_custom
+def save_variable_positions(template_id, current_user):
+    """Save user-confirmed variable positions for a template"""
+    template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
+
+    if not template:
+        return jsonify({"error": "Template nicht gefunden"}), 404
+
+    data = request.json
+
+    if not data:
+        return jsonify({"error": "Keine Daten übermittelt"}), 400
+
+    # Validate the variable positions format
+    variable_positions = data.get("variable_positions")
+
+    if variable_positions is None:
+        return jsonify({"error": "variable_positions ist erforderlich"}), 400
+
+    if not isinstance(variable_positions, (list, dict)):
+        return jsonify({"error": "variable_positions muss ein Array oder Objekt sein"}), 400
+
+    # Allowed variable names
+    allowed_variables = {"FIRMA", "POSITION", "ANSPRECHPARTNER", "QUELLE", "EINLEITUNG"}
+
+    # Validate structure if it's a list
+    if isinstance(variable_positions, list):
+        for item in variable_positions:
+            if not isinstance(item, dict):
+                return jsonify({"error": "Jeder Eintrag muss ein Objekt sein"}), 400
+
+            variable = item.get("variable")
+            if variable and variable not in allowed_variables:
+                return jsonify({
+                    "error": f"Unbekannte Variable: {variable}. Erlaubt: {', '.join(allowed_variables)}"
+                }), 400
+
+    # Validate structure if it's a dict (variable name -> positions)
+    elif isinstance(variable_positions, dict):
+        for key in variable_positions.keys():
+            if key not in allowed_variables:
+                return jsonify({
+                    "error": f"Unbekannte Variable: {key}. Erlaubt: {', '.join(allowed_variables)}"
+                }), 400
+
+    try:
+        # Update template with variable positions
+        template.variable_positions = variable_positions
+        db.session.commit()
+
+        return jsonify({
+            "success": True,
+            "message": "Variablen-Positionen erfolgreich gespeichert",
+            "template": template.to_dict(),
+        }), 200
+
+    except Exception as e:
+        db.session.rollback()
+        print(f"Fehler beim Speichern der Variablen-Positionen: {str(e)}")
+        return jsonify({"error": f"Fehler beim Speichern: {str(e)}"}), 500
