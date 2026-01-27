@@ -1,5 +1,5 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
+import { describe, it, expect } from 'vitest'
+import { mount } from '@vue/test-utils'
 import PdfUploadStep from '../components/PdfTemplateWizard/PdfUploadStep.vue'
 import VariableReviewStep from '../components/PdfTemplateWizard/VariableReviewStep.vue'
 
