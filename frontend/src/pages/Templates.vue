@@ -75,7 +75,7 @@
       <div class="ink-stroke"></div>
 
       <!-- Create New Template -->
-      <section v-if="!showWizard && !showManualForm" class="create-section animate-fade-up">
+      <section v-if="!showWizard && !showPdfWizard && !showManualForm" class="create-section animate-fade-up">
         <h2 class="section-title">Neues Template erstellen</h2>
         <div class="create-options">
           <div class="option-card zen-card" @click="startManual">
@@ -109,6 +109,20 @@
             >
               {{ hasLebenslauf ? 'Wizard starten' : 'Lebenslauf erforderlich' }}
             </span>
+          </div>
+
+          <div class="option-card zen-card" @click="startPdfWizard">
+            <div class="option-icon option-icon-pdf">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <line x1="12" y1="18" x2="12" y2="12"/>
+                <line x1="9" y1="15" x2="15" y2="15"/>
+              </svg>
+            </div>
+            <h3>PDF hochladen</h3>
+            <p>Laden Sie ein bestehendes Anschreiben hoch und lassen Sie Variablen automatisch erkennen</p>
+            <span class="zen-btn zen-btn-ai zen-btn-sm">PDF analysieren</span>
           </div>
         </div>
       </section>
@@ -248,6 +262,14 @@
         </div>
       </section>
 
+      <!-- PDF Template Wizard -->
+      <section v-if="showPdfWizard" class="pdf-wizard-section animate-fade-up">
+        <PdfTemplateWizard
+          @template-created="onPdfWizardComplete"
+          @cancel="cancelPdfWizard"
+        />
+      </section>
+
       <!-- Manual Form -->
       <section v-if="showManualForm" class="manual-section animate-fade-up">
         <div class="template-editor-layout">
@@ -380,11 +402,13 @@ mit großem Interesse habe ich Ihre Stellenausschreibung gelesen..."
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import api from '../api/client'
 import { TemplateEditor } from '../components/TemplateEditor'
+import { PdfTemplateWizard } from '../components/PdfTemplateWizard'
 import { confirm } from '../composables/useConfirm'
 
 const templates = ref([])
 const hasLebenslauf = ref(false)
 const showWizard = ref(false)
+const showPdfWizard = ref(false)
 const showManualForm = ref(false)
 const editingTemplate = ref(null)
 const generating = ref(false)
@@ -495,6 +519,7 @@ watch(showManualForm, (newVal) => {
 const startWizard = () => {
   if (!hasLebenslauf.value) return
   showWizard.value = true
+  showPdfWizard.value = false
   showManualForm.value = false
   wizardStep.value = 1
   wizardData.value = {
@@ -506,9 +531,27 @@ const startWizard = () => {
   }
 }
 
+const startPdfWizard = () => {
+  showPdfWizard.value = true
+  showWizard.value = false
+  showManualForm.value = false
+}
+
+const cancelPdfWizard = () => {
+  showPdfWizard.value = false
+}
+
+const onPdfWizardComplete = async (_templateData) => {
+  showPdfWizard.value = false
+  message.value = 'PDF-Template erfolgreich erstellt!'
+  messageClass.value = 'success'
+  await loadTemplates()
+}
+
 const startManual = () => {
   showManualForm.value = true
   showWizard.value = false
+  showPdfWizard.value = false
   editingTemplate.value = null
   form.value = { name: '', content: '', is_default: false }
 }
@@ -807,7 +850,7 @@ onUnmounted(() => {
 
 .create-options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-lg);
 }
 
@@ -845,6 +888,11 @@ onUnmounted(() => {
   color: var(--color-ai);
 }
 
+.option-icon-pdf {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
 .option-card h3 {
   font-size: 1.25rem;
   font-weight: 500;
@@ -857,6 +905,13 @@ onUnmounted(() => {
   color: var(--color-text-secondary);
   margin-bottom: var(--space-lg);
   line-height: var(--leading-relaxed);
+}
+
+/* ========================================
+   PDF WIZARD SECTION
+   ======================================== */
+.pdf-wizard-section {
+  margin-top: var(--space-ma);
 }
 
 /* ========================================
@@ -1232,6 +1287,12 @@ onUnmounted(() => {
   .preview-panel {
     position: static;
     max-height: none;
+  }
+}
+
+@media (max-width: 1200px) {
+  .create-options {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
