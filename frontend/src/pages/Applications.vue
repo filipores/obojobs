@@ -259,20 +259,41 @@
           <table class="applications-table">
             <thead>
               <tr>
-                <th @click="toggleTableSort('firma')" class="sortable-header">
+                <th
+                  @click="toggleTableSort('firma')"
+                  @keydown="handleSortKeydown($event, 'firma')"
+                  class="sortable-header"
+                  tabindex="0"
+                  role="columnheader"
+                  aria-sort="none"
+                >
                   Firma
                   <span v-if="sortBy.startsWith('firma')" class="sort-indicator">
                     {{ sortBy === 'firma_asc' ? '↑' : '↓' }}
                   </span>
                 </th>
                 <th>Position</th>
-                <th @click="toggleTableSort('datum')" class="sortable-header">
+                <th
+                  @click="toggleTableSort('datum')"
+                  @keydown="handleSortKeydown($event, 'datum')"
+                  class="sortable-header"
+                  tabindex="0"
+                  role="columnheader"
+                  aria-sort="none"
+                >
                   Datum
                   <span v-if="sortBy.startsWith('datum')" class="sort-indicator">
                     {{ sortBy === 'datum_asc' ? '↑' : '↓' }}
                   </span>
                 </th>
-                <th @click="toggleTableSort('status')" class="sortable-header">
+                <th
+                  @click="toggleTableSort('status')"
+                  @keydown="handleSortKeydown($event, 'status')"
+                  class="sortable-header"
+                  tabindex="0"
+                  role="columnheader"
+                  aria-sort="none"
+                >
                   Status
                   <span v-if="sortBy === 'status'" class="sort-indicator">●</span>
                 </th>
@@ -1015,6 +1036,14 @@ const toggleTableSort = (field) => {
   }
 }
 
+// Keyboard handler for sortable headers
+const handleSortKeydown = (event, field) => {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault()
+    toggleTableSort(field)
+  }
+}
+
 const onATSOptimized = (data) => {
   // Reload application data after optimization
   if (selectedApp.value && data.optimized_text) {
@@ -1192,6 +1221,17 @@ const sendEmail = async () => {
   }
 }
 
+// Escape key handler for modals
+const handleEscapeKey = (event) => {
+  if (event.key === 'Escape') {
+    if (showEmailComposer.value) {
+      closeEmailComposer()
+    } else if (selectedApp.value) {
+      closeDetails()
+    }
+  }
+}
+
 onMounted(() => {
   // Check for firma query parameter from Company Insights
   if (route.query.firma) {
@@ -1199,11 +1239,16 @@ onMounted(() => {
   }
   loadApplications()
   loadEmailAccounts()
+
+  // Add escape key listener for modals
+  document.addEventListener('keydown', handleEscapeKey)
 })
 
 onUnmounted(() => {
   // Clean up search debounce timeout
   if (searchTimeout) clearTimeout(searchTimeout)
+  // Remove escape key listener
+  document.removeEventListener('keydown', handleEscapeKey)
 })
 
 // Watch for route query changes

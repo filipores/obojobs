@@ -60,6 +60,16 @@ api.interceptors.response.use(
         window.$toast('Sitzung abgelaufen. Bitte neu anmelden.', 'warning')
       }
       window.location.href = '/login'
+    } else if (error.response?.status === 403) {
+      // Forbidden - show permission denied
+      if (window.$toast && !suppressToast) {
+        window.$toast('Keine Berechtigung', 'error')
+      }
+    } else if (error.response?.status === 404) {
+      // Not found
+      if (window.$toast && !suppressToast) {
+        window.$toast('Nicht gefunden', 'error')
+      }
     } else if (error.response?.status >= 500) {
       // Server errors - always show unless suppressed
       if (window.$toast && !suppressToast) {
