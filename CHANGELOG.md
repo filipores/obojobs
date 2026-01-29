@@ -1,3 +1,10 @@
+## [1.5.10](https://github.com/filipores/obojobs/compare/v1.5.9...v1.5.10) (2026-01-29)
+
+
+### Bug Fixes
+
+* replace hardcoded de-DE locale with dynamic getFullLocale() ([feda1f3](https://github.com/filipores/obojobs/commit/feda1f3380287cd49d0b70c8914ef3cd1bb17f94))
+
 ## [1.5.9](https://github.com/filipores/obojobs/compare/v1.5.8...v1.5.9) (2026-01-29)
 
 
