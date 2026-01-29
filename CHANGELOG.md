@@ -1,3 +1,10 @@
+## [1.5.12](https://github.com/filipores/obojobs/compare/v1.5.11...v1.5.12) (2026-01-29)
+
+
+### Bug Fixes
+
+* **seo:** add meta description to index.html ([3725f05](https://github.com/filipores/obojobs/commit/3725f05a71282ac244d5093a6420a581f69bb446))
+
 ## [1.5.11](https://github.com/filipores/obojobs/compare/v1.5.10...v1.5.11) (2026-01-29)
 
 
