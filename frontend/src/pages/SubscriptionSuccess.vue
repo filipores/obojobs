@@ -77,6 +77,7 @@
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import { authStore } from '../store/auth'
+import { getFullLocale } from '../i18n'
 
 const route = useRoute()
 
@@ -97,7 +98,7 @@ const getPlanName = (plan) => {
 
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
-  return new Date(dateStr).toLocaleDateString('de-DE', {
+  return new Date(dateStr).toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'

@@ -319,6 +319,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import api from '../api/client'
+import { getFullLocale } from '../i18n'
 
 const recommendations = ref([])
 const stats = ref(null)
@@ -505,7 +506,7 @@ const openJobUrl = (url) => {
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleDateString('de-DE', {
+  return date.toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'

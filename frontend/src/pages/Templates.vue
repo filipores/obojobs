@@ -421,6 +421,7 @@ import api from '../api/client'
 import { TemplateEditor } from '../components/TemplateEditor'
 import { PdfTemplateWizard } from '../components/PdfTemplateWizard'
 import { confirm } from '../composables/useConfirm'
+import { getFullLocale } from '../i18n'
 
 const templates = ref([])
 const hasLebenslauf = ref(false)
@@ -716,7 +717,7 @@ const checkLebenslauf = async () => {
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleDateString('de-DE', {
+  return date.toLocaleDateString(getFullLocale(), {
     year: 'numeric',
     month: 'long',
     day: 'numeric'

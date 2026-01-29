@@ -275,6 +275,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import api from '../api/client'
+import { getFullLocale } from '../i18n'
 
 const applications = ref([])
 const loading = ref(false)
@@ -307,7 +308,7 @@ const groupedApplications = computed(() => {
       label = 'Diese Woche'
     } else {
       // Group by month
-      label = appDate.toLocaleDateString('de-DE', { month: 'long', year: 'numeric' })
+      label = appDate.toLocaleDateString(getFullLocale(), { month: 'long', year: 'numeric' })
     }
 
     if (!groupMap.has(label)) {
@@ -338,7 +339,7 @@ const loadTimeline = async () => {
 }
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('de-DE', {
+  return new Date(date).toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
@@ -346,7 +347,7 @@ const formatDate = (date) => {
 }
 
 const formatDateTime = (date) => {
-  return new Date(date).toLocaleString('de-DE', {
+  return new Date(date).toLocaleString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

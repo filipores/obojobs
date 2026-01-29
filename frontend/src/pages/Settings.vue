@@ -498,6 +498,7 @@ import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../store/auth'
 import { confirm } from '../composables/useConfirm'
+import { getFullLocale } from '../i18n'
 
 const _router = useRouter()
 
@@ -719,7 +720,7 @@ const loadKeys = async () => {
 }
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('de-DE', {
+  return new Date(dateString).toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'

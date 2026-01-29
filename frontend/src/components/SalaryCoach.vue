@@ -377,6 +377,7 @@
 <script setup>
 import { ref, computed, defineProps, watch, onMounted, onUnmounted } from 'vue'
 import api from '../api/client'
+import { getFullLocale } from '../i18n'
 
 const props = defineProps({
   initialPosition: {
@@ -439,7 +440,7 @@ const getTipsForCategory = (category) => {
 
 const formatCurrency = (value) => {
   if (!value) return '0 EUR'
-  return new Intl.NumberFormat('de-DE', {
+  return new Intl.NumberFormat(getFullLocale(), {
     style: 'currency',
     currency: 'EUR',
     minimumFractionDigits: 0,

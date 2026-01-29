@@ -43,4 +43,14 @@ export function getLocale() {
   return i18n.global.locale.value
 }
 
+// Helper to get full locale for Intl APIs (de-DE, en-US)
+export function getFullLocale() {
+  const locale = i18n.global.locale.value
+  const localeMap = {
+    de: 'de-DE',
+    en: 'en-US'
+  }
+  return localeMap[locale] || 'de-DE'
+}
+
 export default i18n

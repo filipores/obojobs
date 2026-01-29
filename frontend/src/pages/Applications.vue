@@ -756,6 +756,7 @@ import GapAnalysis from '../components/GapAnalysis.vue'
 import InterviewTracker from '../components/InterviewTracker.vue'
 import ScrollableTable from '../components/ScrollableTable.vue'
 import { confirm } from '../composables/useConfirm'
+import { getFullLocale } from '../i18n'
 
 const route = useRoute()
 const router = useRouter()
@@ -1065,7 +1066,7 @@ const onInterviewUpdated = (updatedApp) => {
 }
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('de-DE', {
+  return new Date(date).toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'
@@ -1073,7 +1074,7 @@ const formatDate = (date) => {
 }
 
 const formatDateTime = (date) => {
-  return new Date(date).toLocaleString('de-DE', {
+  return new Date(date).toLocaleString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric',

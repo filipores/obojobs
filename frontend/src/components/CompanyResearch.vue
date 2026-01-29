@@ -216,6 +216,7 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
 import api from '../api/client'
+import { getFullLocale } from '../i18n'
 
 const props = defineProps({
   companyName: {
@@ -252,7 +253,7 @@ const truncatedAbout = computed(() => {
 const formatCacheDate = (isoString) => {
   try {
     const date = new Date(isoString)
-    return date.toLocaleDateString('de-DE', {
+    return date.toLocaleDateString(getFullLocale(), {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',

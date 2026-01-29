@@ -364,6 +364,7 @@ import { useRoute } from 'vue-router'
 import api from '../api/client'
 import SkillsOverview from '../components/SkillsOverview.vue'
 import { confirm } from '../composables/useConfirm'
+import { getFullLocale } from '../i18n'
 
 const route = useRoute()
 const skillsSection = ref(null)
@@ -533,7 +534,7 @@ const loadDocuments = async () => {
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  return date.toLocaleDateString('de-DE', {
+  return date.toLocaleDateString(getFullLocale(), {
     year: 'numeric',
     month: 'long',
     day: 'numeric'

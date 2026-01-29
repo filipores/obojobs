@@ -394,6 +394,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useSubscription } from '../composables/useSubscription'
+import { getFullLocale } from '../i18n'
 
 const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, isLoading } = useSubscription()
 
@@ -514,7 +515,7 @@ const getPlanDisplayName = (plan) => {
 
 const formatDate = (dateString) => {
   if (!dateString) return null
-  return new Date(dateString).toLocaleDateString('de-DE', {
+  return new Date(dateString).toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     year: 'numeric'

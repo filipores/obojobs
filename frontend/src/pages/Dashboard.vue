@@ -379,6 +379,7 @@ import { authStore } from '../store/auth'
 import WeeklyGoalWidget from '../components/WeeklyGoalWidget.vue'
 import InterviewStatsWidget from '../components/InterviewStatsWidget.vue'
 import JobRecommendations from '../components/JobRecommendations.vue'
+import { getFullLocale } from '../i18n'
 
 const stats = ref(null)
 const usage = ref(null)
@@ -485,7 +486,7 @@ const formatInterviewDate = (dateStr) => {
   // Format day/time
   const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
   const dayName = dayNames[date.getDay()]
-  const time = date.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })
+  const time = date.toLocaleTimeString(getFullLocale(), { hour: '2-digit', minute: '2-digit' })
 
   if (diffDays === 0) {
     return `Heute ${time}`

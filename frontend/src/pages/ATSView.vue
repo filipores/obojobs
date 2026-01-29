@@ -450,6 +450,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { confirm } from '../composables/useConfirm'
+import { getFullLocale } from '../i18n'
 
 const router = useRouter()
 
@@ -701,7 +702,7 @@ const formatHistoryTitle = (item) => {
 const formatDate = (isoDate) => {
   if (!isoDate) return ''
   const date = new Date(isoDate)
-  return date.toLocaleDateString('de-DE', {
+  return date.toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',

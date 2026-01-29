@@ -98,6 +98,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '../api/client'
+import { getFullLocale } from '../i18n'
 
 const stats = ref(null)
 const loading = ref(true)
@@ -124,7 +125,7 @@ const getResultColor = (result) => resultColors[result] || 'var(--color-stone)'
 const formatDate = (dateStr) => {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  return date.toLocaleDateString('de-DE', {
+  return date.toLocaleDateString(getFullLocale(), {
     day: '2-digit',
     month: '2-digit',
     hour: '2-digit',
