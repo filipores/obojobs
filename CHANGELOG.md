@@ -1,3 +1,10 @@
+## [1.5.9](https://github.com/filipores/obojobs/compare/v1.5.8...v1.5.9) (2026-01-29)
+
+
+### Bug Fixes
+
+* **auth:** add try-catch for localStorage, fix OAuth timer leaks ([cf39765](https://github.com/filipores/obojobs/commit/cf39765e2cdf4378e1da8eb1b32bbb4d08ff47a1))
+
 ## [1.5.8](https://github.com/filipores/obojobs/compare/v1.5.7...v1.5.8) (2026-01-29)
 
 
