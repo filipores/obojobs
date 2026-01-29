@@ -143,7 +143,7 @@
 
     <!-- Analyze Modal -->
     <div v-if="showAnalyzeModal" class="modal-overlay" @click="closeOnOverlayClick">
-      <div class="modal zen-card">
+      <div class="modal zen-card" role="dialog" aria-modal="true">
         <div class="modal-header">
           <h3>Stellenanzeige analysieren</h3>
           <button @click="showAnalyzeModal = false" class="modal-close">

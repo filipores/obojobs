@@ -132,7 +132,7 @@
 
     <!-- Bulk Import Modal -->
     <div v-if="showBulkModal" class="modal-overlay" @click.self="closeModal">
-      <div class="modal zen-card">
+      <div class="modal zen-card" role="dialog" aria-modal="true">
         <div class="modal-header">
           <h3>Bulk-Import</h3>
           <button @click="closeModal" class="modal-close">
@@ -177,7 +177,7 @@
 
     <!-- Add/Edit Modal -->
     <div v-if="showAddModal || editingSkill" class="modal-overlay" @click.self="closeModal">
-      <div class="modal zen-card">
+      <div class="modal zen-card" role="dialog" aria-modal="true">
         <div class="modal-header">
           <h3>{{ editingSkill ? 'Skill bearbeiten' : 'Skill hinzufugen' }}</h3>
           <button @click="closeModal" class="modal-close">

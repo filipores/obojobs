@@ -9,6 +9,7 @@
           :key="option.value"
           :class="['status-option', { active: selectedResult === option.value }]"
           :style="{ '--status-color': option.color }"
+          :aria-pressed="selectedResult === option.value"
           @click="selectResult(option.value)"
         >
           <span class="status-icon" :style="{ background: option.color }"></span>

@@ -66,15 +66,19 @@
       </div>
 
       <!-- Filter Tabs -->
-      <div class="filter-tabs">
+      <div class="filter-tabs" role="tablist">
         <button
           :class="['filter-tab', { active: activeFilter === 'all' }]"
+          role="tab"
+          :aria-selected="activeFilter === 'all'"
           @click="activeFilter = 'all'"
         >
           Alle
         </button>
         <button
           :class="['filter-tab', { active: activeFilter === 'online_course' }]"
+          role="tab"
+          :aria-selected="activeFilter === 'online_course'"
           @click="activeFilter = 'online_course'"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -85,6 +89,8 @@
         </button>
         <button
           :class="['filter-tab', { active: activeFilter === 'certification' }]"
+          role="tab"
+          :aria-selected="activeFilter === 'certification'"
           @click="activeFilter = 'certification'"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -95,6 +101,8 @@
         </button>
         <button
           :class="['filter-tab', { active: activeFilter === 'project_idea' }]"
+          role="tab"
+          :aria-selected="activeFilter === 'project_idea'"
           @click="activeFilter = 'project_idea'"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -104,6 +112,8 @@
         </button>
         <button
           :class="['filter-tab', { active: activeFilter === 'book' }]"
+          role="tab"
+          :aria-selected="activeFilter === 'book'"
           @click="activeFilter = 'book'"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
