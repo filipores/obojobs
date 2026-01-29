@@ -1,3 +1,10 @@
+# [1.6.0](https://github.com/filipores/obojobs/compare/v1.5.13...v1.6.0) (2026-01-29)
+
+
+### Features
+
+* add upload progress indicator to PDF template wizard ([bf1a8a4](https://github.com/filipores/obojobs/commit/bf1a8a4e615287cfec2881d4d00f5ca6bbe4645a))
+
 ## [1.5.13](https://github.com/filipores/obojobs/compare/v1.5.12...v1.5.13) (2026-01-29)
 
 
