@@ -1,3 +1,15 @@
+## [1.5.7](https://github.com/filipores/obojobs/compare/v1.5.6...v1.5.7) (2026-01-29)
+
+
+### Bug Fixes
+
+* **css:** standardize z-index values with CSS variables ([3b3b604](https://github.com/filipores/obojobs/commit/3b3b6044f4c3bf0895e75119da0c8097fd566370))
+
+
+### Performance Improvements
+
+* **recommendations:** combine 6 count queries into single query ([e4cbcfd](https://github.com/filipores/obojobs/commit/e4cbcfd8ad2ad614dee3d06b36668929581a022f))
+
 ## [1.5.6](https://github.com/filipores/obojobs/compare/v1.5.5...v1.5.6) (2026-01-29)
 
 
