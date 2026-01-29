@@ -62,6 +62,13 @@
                   </div>
                   <h3>KI analysiert PDF...</h3>
                   <p>{{ analysisStatus }}</p>
+                  <!-- Upload Progress Bar -->
+                  <div v-if="uploadProgress > 0 && uploadProgress < 100" class="upload-progress">
+                    <div class="progress-bar">
+                      <div class="progress-fill" :style="{ width: uploadProgress + '%' }"></div>
+                    </div>
+                    <span class="progress-text">{{ uploadProgress }}%</span>
+                  </div>
                 </div>
               </div>
 
@@ -213,6 +220,7 @@ const selectedFile = ref(null)
 // Analysis state
 const analyzing = ref(false)
 const analysisStatus = ref('Starte Analyse...')
+const uploadProgress = ref(0)
 const suggestions = ref([])
 
 // Error state
@@ -255,6 +263,7 @@ async function startAnalysis() {
   step.value = 2
   analyzing.value = true
   analysisStatus.value = 'Starte Analyse...'
+  uploadProgress.value = 0
   suggestions.value = []
   errorMessage.value = ''
 
@@ -269,6 +278,11 @@ async function startAnalysis() {
     const uploadResponse = await api.post('/templates/upload-pdf', uploadFormData, {
       headers: {
         'Content-Type': 'multipart/form-data'
+      },
+      onUploadProgress: (progressEvent) => {
+        if (progressEvent.total) {
+          uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+        }
       }
     })
 
@@ -585,6 +599,36 @@ function truncateText(text, maxLength) {
 
 .loading-content p {
   color: var(--color-text-secondary, #4A4A4A);
+}
+
+/* Upload Progress */
+.upload-progress {
+  margin-top: var(--space-lg, 1.5rem);
+  max-width: 300px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.progress-bar {
+  height: 8px;
+  background: var(--color-border, #D4C9BA);
+  border-radius: var(--radius-full, 9999px);
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--color-ai, #3D5A6C);
+  border-radius: var(--radius-full, 9999px);
+  transition: width 150ms ease;
+}
+
+.progress-text {
+  display: block;
+  margin-top: var(--space-sm, 0.5rem);
+  font-size: 0.875rem;
+  color: var(--color-text-secondary, #4A4A4A);
+  font-weight: 500;
 }
 
 /* Analysis Result / Review Layout */
