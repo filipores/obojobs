@@ -1,3 +1,10 @@
+## [1.5.13](https://github.com/filipores/obojobs/compare/v1.5.12...v1.5.13) (2026-01-29)
+
+
+### Bug Fixes
+
+* **css:** replace inset shorthand for browser compatibility ([ea56992](https://github.com/filipores/obojobs/commit/ea56992af95fba8d2b9ffab261c0331ab799dc32))
+
 ## [1.5.12](https://github.com/filipores/obojobs/compare/v1.5.11...v1.5.12) (2026-01-29)
 
 
