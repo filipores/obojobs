@@ -1,3 +1,10 @@
+## [1.6.1](https://github.com/filipores/obojobs/compare/v1.6.0...v1.6.1) (2026-01-29)
+
+
+### Bug Fixes
+
+* **css:** replace hardcoded colors with CSS variables ([65ea71d](https://github.com/filipores/obojobs/commit/65ea71d842d9e86136cfbaa68f5584cb7c503d30)), closes [#fff](https://github.com/filipores/obojobs/issues/fff) [#dc3545](https://github.com/filipores/obojobs/issues/dc3545)
+
 # [1.6.0](https://github.com/filipores/obojobs/compare/v1.5.13...v1.6.0) (2026-01-29)
 
 
