@@ -739,10 +739,24 @@ const getVariableNames = (content) => {
   return unique.join(', ')
 }
 
-// Highlight variables in preview text
+// Escape HTML entities to prevent XSS
+const escapeHtml = (text) => {
+  const htmlEntities = {
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    '"': '&quot;',
+    "'": '&#39;'
+  }
+  return text.replace(/[&<>"']/g, char => htmlEntities[char])
+}
+
+// Highlight variables in preview text (with XSS protection)
 const highlightVariables = (text) => {
   if (!text) return ''
-  return text.replace(
+  // First escape HTML entities to prevent XSS, then apply highlighting
+  const escaped = escapeHtml(text)
+  return escaped.replace(
     /\{\{([A-Z_]+)\}\}/g,
     '<span class="var-highlight">{{$1}}</span>'
   )
