@@ -1332,3 +1332,90 @@ tbody tr:hover {
     font-size: 1.75rem;
   }
 }
+
+/* ========================================
+   PRINT STYLES - 印刷
+   ======================================== */
+@media print {
+  /* Reset backgrounds and shadows */
+  *,
+  *::before,
+  *::after {
+    background: transparent !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+  }
+
+  /* Basic typography for print */
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+    color: #000 !important;
+  }
+
+  /* Hide non-essential UI elements */
+  nav,
+  aside,
+  header,
+  footer,
+  .nav-link,
+  .sidebar,
+  .navbar,
+  .zen-btn,
+  .toast-container,
+  .modal-overlay,
+  .language-switcher,
+  .no-print {
+    display: none !important;
+  }
+
+  /* Show main content full width */
+  main,
+  .main-content,
+  .page-content {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Links: show URL after text */
+  a[href^="http"]::after {
+    content: " (" attr(href) ")";
+    font-size: 0.8em;
+    color: #666;
+  }
+
+  /* Don't show URL for internal links */
+  a[href^="/"]::after,
+  a[href^="#"]::after {
+    content: none;
+  }
+
+  /* Page breaks */
+  h1, h2, h3 {
+    page-break-after: avoid;
+  }
+
+  img, table, figure {
+    page-break-inside: avoid;
+  }
+
+  /* Cards and sections for print */
+  .zen-card {
+    border: 1px solid #ddd !important;
+    padding: 1rem !important;
+    margin-bottom: 1rem !important;
+    page-break-inside: avoid;
+  }
+
+  /* Ensure text is readable */
+  p, li, td, th {
+    color: #000 !important;
+  }
+
+  /* Print-specific class to force visibility */
+  .print-only {
+    display: block !important;
+  }
+}
