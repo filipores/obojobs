@@ -1109,7 +1109,6 @@ const analyzeRequirementsForJobFit = async (description, company, title, jobUrl 
       }
     }
   } catch (analyzeError) {
-    console.log('Job-Fit Analyse nicht verfuegbar:', analyzeError.message)
     requirementsError.value = parseRequirementsError(analyzeError)
   } finally {
     analyzingRequirements.value = false

@@ -722,10 +722,9 @@ const checkResumeStatus = async () => {
     const { data } = await api.silent.get('/documents')
     const docs = data.documents || []
     hasResume.value = docs.some(doc => doc.doc_type === 'lebenslauf')
-  } catch (err) {
+  } catch {
     // Safe fallback: assume no resume (show warning rather than false security)
     hasResume.value = false
-    console.log('Resume check failed, showing warning to be safe:', err.message)
   } finally {
     checkingResume.value = false
   }

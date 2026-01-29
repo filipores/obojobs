@@ -948,9 +948,8 @@ const loadJobFitData = async (appId) => {
     if (data.success) {
       jobFitData.value = data.job_fit
     }
-  } catch (err) {
+  } catch {
     // Silently fail - job fit data is optional
-    console.log('Job-Fit Daten nicht verfuegbar:', err.response?.data?.error || err.message)
   } finally {
     jobFitLoading.value = false
   }
