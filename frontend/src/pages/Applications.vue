@@ -92,7 +92,7 @@
               <path d="M21 21l-4.35-4.35"/>
             </svg>
             <input
-              v-model="searchQuery"
+              v-model="searchInput"
               type="text"
               placeholder="Suche nach Firma oder Position..."
               class="form-input search-input"
@@ -139,7 +139,7 @@
         <div v-if="searchQuery || filterStatus || filterFirma" class="active-filters">
           <span v-if="searchQuery" class="filter-tag">
             "{{ searchQuery }}"
-            <button @click="searchQuery = ''" class="filter-tag-close">&times;</button>
+            <button @click="searchInput = ''; searchQuery = ''" class="filter-tag-close">&times;</button>
           </span>
           <span v-if="filterStatus" class="filter-tag">
             {{ getStatusLabel(filterStatus) }}
@@ -727,7 +727,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, computed, watch } from 'vue'
+import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
 import ATSOptimizer from '../components/ATSOptimizer.vue'
@@ -743,7 +743,9 @@ const applications = ref([])
 const selectedApp = ref(null)
 const loading = ref(false)
 const loadError = ref(false)
-const searchQuery = ref('')
+const searchInput = ref('')  // What user types (for v-model)
+const searchQuery = ref('')  // What filtering uses (debounced)
+let searchTimeout = null
 const filterStatus = ref('')
 const filterFirma = ref('')
 const sortBy = ref('datum_desc')
@@ -993,6 +995,7 @@ const deleteApp = async (id) => {
 }
 
 const clearFilters = () => {
+  searchInput.value = ''
   searchQuery.value = ''
   filterStatus.value = ''
   filterFirma.value = ''
@@ -1198,9 +1201,22 @@ onMounted(() => {
   loadEmailAccounts()
 })
 
+onUnmounted(() => {
+  // Clean up search debounce timeout
+  if (searchTimeout) clearTimeout(searchTimeout)
+})
+
 // Watch for route query changes
 watch(() => route.query.firma, (newFirma) => {
   filterFirma.value = newFirma || ''
+})
+
+// Debounce search input
+watch(searchInput, (newVal) => {
+  if (searchTimeout) clearTimeout(searchTimeout)
+  searchTimeout = setTimeout(() => {
+    searchQuery.value = newVal
+  }, 300)
 })
 
 // Reset exportFilteredOnly when no filters are active
