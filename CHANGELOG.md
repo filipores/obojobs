@@ -1,3 +1,10 @@
+## [1.3.1](https://github.com/filipores/obojobs/compare/v1.3.0...v1.3.1) (2026-01-29)
+
+
+### Bug Fixes
+
+* **templates:** correct api payload key for variable positions ([bbd8eee](https://github.com/filipores/obojobs/commit/bbd8eee1bbd279e17f960c3f51418150a0960a42))
+
 # [1.3.0](https://github.com/filipores/obojobs/compare/v1.2.2...v1.3.0) (2026-01-27)
 
 
