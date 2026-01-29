@@ -1,3 +1,10 @@
+## [1.5.4](https://github.com/filipores/obojobs/compare/v1.5.3...v1.5.4) (2026-01-29)
+
+
+### Bug Fixes
+
+* **a11y:** add ARIA attributes to GapAnalysis, InterviewTracker, and modals ([1ae1880](https://github.com/filipores/obojobs/commit/1ae18808daa6ef73b5fd2759c9383259695b08f0))
+
 ## [1.5.3](https://github.com/filipores/obojobs/compare/v1.5.2...v1.5.3) (2026-01-29)
 
 
