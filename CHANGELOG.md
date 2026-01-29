@@ -1,3 +1,10 @@
+## [1.5.11](https://github.com/filipores/obojobs/compare/v1.5.10...v1.5.11) (2026-01-29)
+
+
+### Bug Fixes
+
+* add error handling to clipboard copy in Settings ([5202838](https://github.com/filipores/obojobs/commit/520283862b67e5821700685dfb28ce22db56ef04))
+
 ## [1.5.10](https://github.com/filipores/obojobs/compare/v1.5.9...v1.5.10) (2026-01-29)
 
 
