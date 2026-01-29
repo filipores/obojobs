@@ -1,8 +1,8 @@
 <template>
   <div class="job-fit-score">
     <!-- Loading State -->
-    <div v-if="loading" class="job-fit-loading">
-      <div class="loading-spinner"></div>
+    <div v-if="loading" class="job-fit-loading" role="status" aria-live="polite">
+      <div class="loading-spinner" aria-hidden="true"></div>
       <span>Analysiere Job-Fit...</span>
     </div>
 
@@ -23,8 +23,9 @@
             @click="loadJobFitScore"
             class="zen-btn zen-btn-sm retry-btn"
             :disabled="loading"
+            aria-label="Erneut versuchen - Job-Fit Score neu laden"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
               <path d="M21 3v5h-5"/>
               <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>

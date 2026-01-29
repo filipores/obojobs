@@ -80,8 +80,9 @@
             @click="refreshResearch"
             :disabled="loading"
             title="Daten aktualisieren"
+            aria-label="Firmen-Informationen aktualisieren - Neue Daten abrufen"
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <polyline points="23 4 23 10 17 10"/>
               <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/>
             </svg>
@@ -144,13 +145,15 @@
           </svg>
           Ueber das Unternehmen
         </h4>
-        <p class="about-text" :class="{ expanded: aboutExpanded }">
+        <p id="about-text-content" class="about-text" :class="{ expanded: aboutExpanded }">
           {{ aboutExpanded ? research.about_text : truncatedAbout }}
         </p>
         <button
           v-if="research.about_text.length > 300"
           class="expand-btn"
           @click="aboutExpanded = !aboutExpanded"
+          :aria-expanded="aboutExpanded"
+          aria-controls="about-text-content"
         >
           {{ aboutExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen' }}
         </button>

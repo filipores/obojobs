@@ -2,16 +2,20 @@
   <div class="ats-optimizer">
     <!-- Manual Text Input Section -->
     <div v-if="!atsData && !loading" class="manual-input-section">
-      <div class="input-toggle">
+      <div class="input-toggle" role="group" aria-label="Eingabemodus wählen">
         <button
           :class="['toggle-btn', { active: inputMode === 'auto' }]"
           @click="inputMode = 'auto'"
+          :aria-pressed="inputMode === 'auto'"
+          aria-label="Automatischer Modus - Bewerbungstext automatisch analysieren"
         >
           Automatisch
         </button>
         <button
           :class="['toggle-btn', { active: inputMode === 'manual' }]"
           @click="inputMode = 'manual'"
+          :aria-pressed="inputMode === 'manual'"
+          aria-label="Manueller Modus - Eigenen Text eingeben"
         >
           Eigener Text
         </button>
@@ -32,8 +36,9 @@
           @click="analyzeManualText"
           :disabled="!manualCoverLetter.trim()"
           class="zen-btn zen-btn-ai analyze-btn"
+          aria-label="ATS-Check starten - Bewerbungstext auf Kompatibilität mit Bewerbermanagementsystemen prüfen"
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
             <circle cx="11" cy="11" r="8"/>
             <line x1="21" y1="21" x2="16.65" y2="16.65"/>
           </svg>
@@ -102,8 +107,8 @@
       <!-- Score Header -->
       <div class="score-header">
         <div class="score-header-left">
-          <button @click="resetAnalysis" class="back-btn" title="Neue Analyse">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <button @click="resetAnalysis" class="back-btn" title="Neue Analyse" aria-label="Zurück zur Eingabe - Neue Analyse starten">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
               <path d="M19 12H5M12 19l-7-7 7-7"/>
             </svg>
           </button>
