@@ -1,3 +1,11 @@
+## [1.5.8](https://github.com/filipores/obojobs/compare/v1.5.7...v1.5.8) (2026-01-29)
+
+
+### Bug Fixes
+
+* add API error handlers and keyboard accessibility ([208f8f9](https://github.com/filipores/obojobs/commit/208f8f9a4cc98a8f95019cb7a8ef8fdc4e4f5281))
+* **applications:** add search input debouncing ([0eb343a](https://github.com/filipores/obojobs/commit/0eb343a1adc8d5b1aacdbc10cfac15eb179c9040))
+
 ## [1.5.7](https://github.com/filipores/obojobs/compare/v1.5.6...v1.5.7) (2026-01-29)
 
 
