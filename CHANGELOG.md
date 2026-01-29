@@ -1,3 +1,10 @@
+## [1.5.1](https://github.com/filipores/obojobs/compare/v1.5.0...v1.5.1) (2026-01-29)
+
+
+### Bug Fixes
+
+* address bug report findings (LanguageSwitcher, XSS, port configs) ([952e531](https://github.com/filipores/obojobs/commit/952e531cba9e873f772df974049531bfedaac455))
+
 # [1.5.0](https://github.com/filipores/obojobs/compare/v1.4.0...v1.5.0) (2026-01-29)
 
 
