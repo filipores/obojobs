@@ -351,7 +351,7 @@ async function handleSave() {
     }))
 
     const { data } = await api.put(`/templates/${templateId.value}/variable-positions`, {
-      variables: variablePositions
+      variable_positions: variablePositions
     })
 
     emit('template-created', data.template || templateData.value)
