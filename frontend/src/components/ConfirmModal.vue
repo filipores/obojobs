@@ -205,8 +205,8 @@ onUnmounted(() => {
 }
 
 .confirm-icon.danger {
-  background: rgba(220, 53, 69, 0.1);
-  color: #dc3545;
+  background: var(--color-error-light);
+  color: var(--color-error);
 }
 
 .confirm-icon.default {

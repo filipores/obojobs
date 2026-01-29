@@ -201,13 +201,13 @@ const updateInterviewData = async () => {
 
 .status-option.active:hover {
   opacity: 0.9;
-  color: #fff;
+  color: var(--color-text-inverse);
 }
 
 .status-option.active {
   border-color: var(--status-color, var(--color-ai));
   background: var(--status-color, var(--color-ai));
-  color: #fff;
+  color: var(--color-text-inverse);
   font-weight: 500;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
 }

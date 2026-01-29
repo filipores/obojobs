@@ -153,19 +153,19 @@ defineExpose({ add, remove })
 }
 
 .toast.success {
-  border-left-color: #28a745;
+  border-left-color: var(--color-success);
 }
 
 .toast.error {
-  border-left-color: #dc3545;
+  border-left-color: var(--color-error);
 }
 
 .toast.warning {
-  border-left-color: #ffc107;
+  border-left-color: var(--color-warning);
 }
 
 .toast.info {
-  border-left-color: #17a2b8;
+  border-left-color: var(--color-ai);
 }
 
 .toast-icon {
