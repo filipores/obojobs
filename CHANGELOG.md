@@ -1,3 +1,10 @@
+# [1.5.0](https://github.com/filipores/obojobs/compare/v1.4.0...v1.5.0) (2026-01-29)
+
+
+### Features
+
+* **scraper:** add SoftgardenParser for softgarden.io job postings ([c008682](https://github.com/filipores/obojobs/commit/c008682cf511c0de30550896ba9ba0cfbfb1a4c0))
+
 # [1.4.0](https://github.com/filipores/obojobs/compare/v1.3.1...v1.4.0) (2026-01-29)
 
 
