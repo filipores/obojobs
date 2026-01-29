@@ -1,3 +1,10 @@
+## [1.5.5](https://github.com/filipores/obojobs/compare/v1.5.4...v1.5.5) (2026-01-29)
+
+
+### Bug Fixes
+
+* address round 4 bugs (memory leak, validation, index) ([ceb1b1c](https://github.com/filipores/obojobs/commit/ceb1b1cbeb05ed89bfe0220c5997749838fdd038))
+
 ## [1.5.4](https://github.com/filipores/obojobs/compare/v1.5.3...v1.5.4) (2026-01-29)
 
 
