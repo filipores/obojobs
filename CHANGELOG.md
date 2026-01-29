@@ -1,3 +1,10 @@
+## [1.5.6](https://github.com/filipores/obojobs/compare/v1.5.5...v1.5.6) (2026-01-29)
+
+
+### Bug Fixes
+
+* update Datenschutz to Stripe, fix env examples ([a7a03fa](https://github.com/filipores/obojobs/commit/a7a03fadf2c6b96baefd893886ef2b3dae2a78a5))
+
 ## [1.5.5](https://github.com/filipores/obojobs/compare/v1.5.4...v1.5.5) (2026-01-29)
 
 
