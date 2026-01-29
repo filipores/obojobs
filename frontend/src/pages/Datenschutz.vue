@@ -161,16 +161,16 @@
             </a>
           </p>
 
-          <h3>PayPal</h3>
+          <h3>Stripe</h3>
           <p>
-            Für Zahlungen nutzen wir PayPal (Europe) S.à r.l. et Cie, S.C.A. Bei der
-            Zahlung werden Sie auf PayPal weitergeleitet. PayPal erhebt und verarbeitet
-            Ihre Zahlungsdaten selbständig.
+            Für Zahlungen nutzen wir Stripe, Inc. (USA). Bei der Zahlung werden Ihre
+            Zahlungsdaten direkt an Stripe übermittelt und dort verarbeitet. Wir
+            speichern keine vollständigen Kreditkartendaten auf unseren Servern.
           </p>
           <p>
-            Datenschutzerklärung von PayPal:
-            <a href="https://www.paypal.com/de/webapps/mpp/ua/privacy-full" target="_blank" rel="noopener">
-              https://www.paypal.com/de/webapps/mpp/ua/privacy-full
+            Datenschutzerklärung von Stripe:
+            <a href="https://stripe.com/privacy" target="_blank" rel="noopener">
+              https://stripe.com/privacy
             </a>
           </p>
         </div>
