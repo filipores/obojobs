@@ -144,7 +144,7 @@ onUnmounted(() => {
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lifted);
   min-width: 140px;
-  z-index: 1000;
+  z-index: var(--z-dropdown);
   overflow: hidden;
 }
 

@@ -749,7 +749,7 @@ function truncateText(text, maxLength) {
   color: white;
   border-radius: var(--radius-md, 0.5rem);
   box-shadow: var(--shadow-elevated, 0 8px 32px rgba(44, 44, 44, 0.15));
-  z-index: 1000;
+  z-index: var(--z-toast);
 }
 
 .toast-close {
