@@ -1,3 +1,10 @@
+# [1.7.0](https://github.com/filipores/obojobs/compare/v1.6.1...v1.7.0) (2026-01-29)
+
+
+### Features
+
+* add print styles for clean document printing ([495e98c](https://github.com/filipores/obojobs/commit/495e98c210c7875093fdcf649265875104939a50))
+
 ## [1.6.1](https://github.com/filipores/obojobs/compare/v1.6.0...v1.6.1) (2026-01-29)
 
 
