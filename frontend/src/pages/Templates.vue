@@ -30,24 +30,41 @@
             class="template-card zen-card stagger-item"
           >
             <div class="template-header">
-              <div class="template-icon">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <div class="template-icon" :class="{ 'template-icon-pdf': template.is_pdf_template }">
+                <!-- PDF icon for PDF templates -->
+                <svg v-if="template.is_pdf_template" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <path d="M9 15h2v2H9z"/>
+                  <path d="M13 15h2v2h-2z"/>
+                </svg>
+                <!-- Edit icon for regular templates -->
+                <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                   <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                 </svg>
               </div>
               <div class="template-title-group">
                 <h3>{{ template.name }}</h3>
+                <span v-if="template.is_pdf_template" class="badge badge-pdf">PDF</span>
                 <span v-if="template.is_default" class="badge badge-success">Standard</span>
               </div>
             </div>
 
             <div class="template-preview">
-              <p>{{ template.content.substring(0, 180) }}...</p>
+              <p v-html="highlightVariables(template.content.substring(0, 180) + '...')"></p>
             </div>
 
             <div class="template-meta">
               <span class="meta-item">{{ formatDate(template.created_at) }}</span>
+              <span class="meta-divider"></span>
+              <span class="meta-item" :title="getVariableNames(template.content)">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -1px; margin-right: 3px;">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                </svg>
+                {{ countVariables(template.content) }} Variablen
+              </span>
               <span class="meta-divider"></span>
               <span class="meta-item">{{ template.content.length }} Zeichen</span>
             </div>
@@ -706,6 +723,31 @@ const formatDate = (dateString) => {
   })
 }
 
+// Count variables in template content
+const countVariables = (content) => {
+  if (!content) return 0
+  const matches = content.match(/\{\{[A-Z_]+\}\}/g)
+  return matches ? new Set(matches).size : 0
+}
+
+// Get variable names for tooltip
+const getVariableNames = (content) => {
+  if (!content) return ''
+  const matches = content.match(/\{\{([A-Z_]+)\}\}/g)
+  if (!matches) return 'Keine Variablen'
+  const unique = [...new Set(matches.map(m => m.replace(/\{\{|\}\}/g, '')))]
+  return unique.join(', ')
+}
+
+// Highlight variables in preview text
+const highlightVariables = (text) => {
+  if (!text) return ''
+  return text.replace(
+    /\{\{([A-Z_]+)\}\}/g,
+    '<span class="var-highlight">{{$1}}</span>'
+  )
+}
+
 onMounted(() => {
   loadTemplates()
   checkLebenslauf()
@@ -1274,6 +1316,27 @@ onUnmounted(() => {
 .badge-success {
   background: var(--color-koke);
   color: var(--color-washi);
+}
+
+.badge-pdf {
+  background: rgba(220, 38, 38, 0.12);
+  color: #dc2626;
+}
+
+/* PDF template icon style */
+.template-icon-pdf {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+/* Variable highlight in preview */
+.var-highlight {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  padding: 0.125em 0.25em;
+  border-radius: var(--radius-xs, 2px);
+  font-family: var(--font-mono, monospace);
+  font-size: 0.9em;
 }
 
 /* ========================================
