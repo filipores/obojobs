@@ -17,7 +17,7 @@ class JobRecommendation(db.Model):
     fit_score = db.Column(db.Integer, nullable=False)  # 0-100
     fit_category = db.Column(db.String(50), nullable=False)  # sehr_gut, gut, mittel
     source = db.Column(db.String(100))  # Job board source (indeed, stepstone, etc.)
-    job_url = db.Column(db.String(500))
+    job_url = db.Column(db.String(500), index=True)
     job_title = db.Column(db.String(255))
     company_name = db.Column(db.String(255))
     location = db.Column(db.String(255))

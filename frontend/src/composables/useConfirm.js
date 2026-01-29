@@ -15,6 +15,8 @@ const confirmState = ref({
   resolve: null
 })
 
+// Container element is intentionally reused as a singleton to avoid
+// creating multiple DOM elements. It persists for the app lifecycle.
 let containerEl = null
 
 /**

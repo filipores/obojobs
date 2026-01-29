@@ -16,7 +16,10 @@ bp = Blueprint("recommendations", __name__)
 def get_recommendations(current_user):
     """Get job recommendations for the current user."""
     include_dismissed = request.args.get("include_dismissed", "false").lower() == "true"
-    limit = min(int(request.args.get("limit", 20)), 50)
+    try:
+        limit = min(int(request.args.get("limit", 20)), 50)
+    except ValueError:
+        limit = 20
 
     recommender = JobRecommender()
     recommendations = recommender.get_recommendations(

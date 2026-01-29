@@ -375,7 +375,7 @@
 </template>
 
 <script setup>
-import { ref, computed, defineProps, watch, onMounted } from 'vue'
+import { ref, computed, defineProps, watch, onMounted, onUnmounted } from 'vue'
 import api from '../api/client'
 
 const props = defineProps({
@@ -583,6 +583,12 @@ onMounted(async () => {
   // Override with props if provided
   if (props.initialPosition) {
     formData.value.position = props.initialPosition
+  }
+})
+
+onUnmounted(() => {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
   }
 })
 </script>
