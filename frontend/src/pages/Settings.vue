@@ -685,10 +685,17 @@ const generateKey = async () => {
   }
 }
 
-const copyKey = () => {
-  navigator.clipboard.writeText(newKey.value)
-  if (window.$toast) {
-    window.$toast('API Key kopiert!', 'success')
+const copyKey = async () => {
+  try {
+    await navigator.clipboard.writeText(newKey.value)
+    if (window.$toast) {
+      window.$toast('API Key kopiert!', 'success')
+    }
+  } catch (error) {
+    console.warn('Clipboard copy failed:', error)
+    if (window.$toast) {
+      window.$toast('Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'error')
+    }
   }
 }
 
