@@ -1,3 +1,10 @@
+## [1.5.3](https://github.com/filipores/obojobs/compare/v1.5.2...v1.5.3) (2026-01-29)
+
+
+### Bug Fixes
+
+* **a11y:** add missing ARIA labels to SalaryCoach, ATSOptimizer, JobFitScore, CompanyResearch ([d8fac50](https://github.com/filipores/obojobs/commit/d8fac50dac2e2c008d4348308392b658c66e2f37))
+
 ## [1.5.2](https://github.com/filipores/obojobs/compare/v1.5.1...v1.5.2) (2026-01-29)
 
 
