@@ -1,3 +1,10 @@
+# [1.4.0](https://github.com/filipores/obojobs/compare/v1.3.1...v1.4.0) (2026-01-29)
+
+
+### Features
+
+* **templates:** add PDF indicator, variable count, and preview highlights ([9574faa](https://github.com/filipores/obojobs/commit/9574faa55ebaae7a7e23d82da9032a1657718000))
+
 ## [1.3.1](https://github.com/filipores/obojobs/compare/v1.3.0...v1.3.1) (2026-01-29)
 
 
