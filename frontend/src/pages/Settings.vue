@@ -493,7 +493,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../store/auth'
@@ -519,6 +519,7 @@ const isGeneratingKey = ref(false)
 // Email accounts state
 const emailAccounts = ref([])
 const isConnecting = ref(false)
+const oauthPollTimer = ref(null)
 
 // Integration status
 const integrationStatus = ref({
@@ -763,9 +764,10 @@ const connectGmail = async () => {
       'width=600,height=700,scrollbars=yes'
     )
     // Poll for popup close and reload accounts
-    const pollTimer = setInterval(() => {
+    oauthPollTimer.value = setInterval(() => {
       if (popup && popup.closed) {
-        clearInterval(pollTimer)
+        clearInterval(oauthPollTimer.value)
+        oauthPollTimer.value = null
         isConnecting.value = false
         loadEmailAccounts()
       }
@@ -795,9 +797,10 @@ const connectOutlook = async () => {
       'width=600,height=700,scrollbars=yes'
     )
     // Poll for popup close and reload accounts
-    const pollTimer = setInterval(() => {
+    oauthPollTimer.value = setInterval(() => {
       if (popup && popup.closed) {
-        clearInterval(pollTimer)
+        clearInterval(oauthPollTimer.value)
+        oauthPollTimer.value = null
         isConnecting.value = false
         loadEmailAccounts()
       }
@@ -871,6 +874,14 @@ onMounted(() => {
   loadEmailAccounts()
   loadIntegrationStatus()
   initProfileForm()
+})
+
+onUnmounted(() => {
+  // Clear OAuth poll timer to prevent memory leaks
+  if (oauthPollTimer.value) {
+    clearInterval(oauthPollTimer.value)
+    oauthPollTimer.value = null
+  }
 })
 </script>
 

@@ -1,8 +1,21 @@
 import { reactive } from 'vue'
 import api from '../api/client'
 
+// Safe localStorage JSON parse with corruption handling
+function safeParseUser() {
+  try {
+    const stored = localStorage.getItem('user')
+    return stored ? JSON.parse(stored) : null
+  } catch {
+    // Clear corrupted data
+    localStorage.removeItem('user')
+    localStorage.removeItem('token')
+    return null
+  }
+}
+
 export const authStore = reactive({
-  user: JSON.parse(localStorage.getItem('user') || 'null'),
+  user: safeParseUser(),
   token: localStorage.getItem('token'),
 
   async login(email, password) {
