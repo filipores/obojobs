@@ -3,6 +3,7 @@ Recommendations Routes - API endpoints for job recommendations.
 """
 
 from flask import Blueprint, jsonify, request
+from sqlalchemy import case, func
 
 from middleware.jwt_required import jwt_required_custom
 from models import JobRecommendation, db
@@ -302,32 +303,54 @@ def save_recommendation(current_user):
 @jwt_required_custom
 def get_recommendation_stats(current_user):
     """Get recommendation statistics for the current user."""
-    total = JobRecommendation.query.filter_by(user_id=current_user.id).count()
-    dismissed = JobRecommendation.query.filter_by(
-        user_id=current_user.id, dismissed=True
-    ).count()
-    applied = JobRecommendation.query.filter_by(
-        user_id=current_user.id, applied=True
-    ).count()
-    active = JobRecommendation.query.filter_by(
-        user_id=current_user.id, dismissed=False, applied=False
-    ).count()
-
-    # Score breakdown
-    sehr_gut = JobRecommendation.query.filter_by(
-        user_id=current_user.id, fit_category="sehr_gut", dismissed=False
-    ).count()
-    gut = JobRecommendation.query.filter_by(
-        user_id=current_user.id, fit_category="gut", dismissed=False
-    ).count()
+    # Combine 6 separate count queries into a single query using conditional aggregation
+    stats = db.session.query(
+        func.count(JobRecommendation.id).label("total"),
+        func.sum(case((JobRecommendation.dismissed == True, 1), else_=0)).label(  # noqa: E712
+            "dismissed"
+        ),
+        func.sum(case((JobRecommendation.applied == True, 1), else_=0)).label(  # noqa: E712
+            "applied"
+        ),
+        func.sum(
+            case(
+                (
+                    (JobRecommendation.dismissed == False)  # noqa: E712
+                    & (JobRecommendation.applied == False),  # noqa: E712
+                    1,
+                ),
+                else_=0,
+            )
+        ).label("active"),
+        func.sum(
+            case(
+                (
+                    (JobRecommendation.fit_category == "sehr_gut")
+                    & (JobRecommendation.dismissed == False),  # noqa: E712
+                    1,
+                ),
+                else_=0,
+            )
+        ).label("sehr_gut"),
+        func.sum(
+            case(
+                (
+                    (JobRecommendation.fit_category == "gut")
+                    & (JobRecommendation.dismissed == False),  # noqa: E712
+                    1,
+                ),
+                else_=0,
+            )
+        ).label("gut"),
+    ).filter(JobRecommendation.user_id == current_user.id).first()
 
     return jsonify({
-        "total": total,
-        "active": active,
-        "dismissed": dismissed,
-        "applied": applied,
+        "total": stats.total or 0,
+        "active": stats.active or 0,
+        "dismissed": stats.dismissed or 0,
+        "applied": stats.applied or 0,
         "by_score": {
-            "sehr_gut": sehr_gut,
-            "gut": gut,
+            "sehr_gut": stats.sehr_gut or 0,
+            "gut": stats.gut or 0,
         }
     })
