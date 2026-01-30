@@ -1,3 +1,10 @@
+## [1.7.1](https://github.com/filipores/obojobs/compare/v1.7.0...v1.7.1) (2026-01-30)
+
+
+### Bug Fixes
+
+* **pdf-preview:** use shallowRef to fix Vue 3 reactivity issue with pdf.js ([8353c80](https://github.com/filipores/obojobs/commit/8353c807144c16c58e15de9b3f4046c2f83a1e55))
+
 # [1.7.0](https://github.com/filipores/obojobs/compare/v1.6.1...v1.7.0) (2026-01-29)
 
 
