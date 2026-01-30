@@ -1,38 +1,13 @@
 import { test, expect } from '@playwright/test';
-
-// Setup auth by setting localStorage and forcing a full page reload so Vue app picks up the token
-async function setupAuth(page: import('@playwright/test').Page, targetUrl: string) {
-  // Navigate to login page first to initialize the browser context
-  await page.goto('/login');
-
-  // Set auth token in localStorage and force full page reload to target
-  await page.evaluate((target) => {
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const payload = btoa(JSON.stringify({
-      sub: '1',
-      email: 'test@example.com',
-      exp: Math.floor(Date.now() / 1000) + 3600
-    }));
-    localStorage.setItem('token', `${header}.${payload}.test-signature`);
-    localStorage.setItem('user', JSON.stringify({
-      id: 1,
-      email: 'test@example.com',
-      name: 'Test User'
-    }));
-    // Force full page reload to target - this reinitializes Vue with the token
-    window.location.href = target;
-  }, targetUrl);
-
-  await page.waitForLoadState('networkidle');
-}
+import { setupAuthWithMocks } from './utils/auth';
 
 test.describe('Dashboard Page', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should load the dashboard page', async ({ page }) => {
-    await expect(page).toHaveURL(/\/dashboard/);
+    await expect(page).toHaveURL(/^http:\/\/localhost:\d+\/$/);  // Root URL
     await expect(page.locator('body')).toBeVisible();
   });
 
@@ -57,7 +32,7 @@ test.describe('Dashboard Page', () => {
 
 test.describe('Dashboard - Stats Section', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should display stats section', async ({ page }) => {
@@ -118,7 +93,7 @@ test.describe('Dashboard - Stats Section', () => {
 
 test.describe('Dashboard - Quick Actions', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should display quick actions section', async ({ page }) => {
@@ -186,7 +161,7 @@ test.describe('Dashboard - Quick Actions', () => {
 
 test.describe('Dashboard - Weekly Goal Widget', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should display weekly goal section', async ({ page }) => {
@@ -199,7 +174,7 @@ test.describe('Dashboard - Weekly Goal Widget', () => {
 
 test.describe('Dashboard - Interview Stats Widget', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should display interview stats section', async ({ page }) => {
@@ -212,7 +187,7 @@ test.describe('Dashboard - Interview Stats Widget', () => {
 
 test.describe('Dashboard - Job Recommendations', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should display recommendations section', async ({ page }) => {
@@ -225,7 +200,7 @@ test.describe('Dashboard - Job Recommendations', () => {
 
 test.describe('Dashboard - Info Banner', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should display info section', async ({ page }) => {
@@ -252,7 +227,7 @@ test.describe('Dashboard - Info Banner', () => {
 
 test.describe('Dashboard - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should have proper heading hierarchy', async ({ page }) => {
@@ -291,7 +266,7 @@ test.describe('Dashboard - Accessibility', () => {
 
 test.describe('Dashboard - Error Handling', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should handle API errors gracefully', async ({ page }) => {
@@ -318,7 +293,7 @@ test.describe('Dashboard - Error Handling', () => {
 test.describe('Dashboard - Responsive Design', () => {
   test('should adapt layout on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
     await expect(page.locator('body')).toBeVisible();
 
     // Stats grid should stack on mobile
@@ -330,7 +305,7 @@ test.describe('Dashboard - Responsive Design', () => {
 
   test('should adapt layout on tablet', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
     await expect(page.locator('body')).toBeVisible();
 
     // Hero section should be visible
@@ -343,7 +318,7 @@ test.describe('Dashboard - Responsive Design', () => {
 
 test.describe('Dashboard - Navigation Links', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/dashboard');
+    await setupAuthWithMocks(page, '/');
   });
 
   test('should have subscription link in stat card', async ({ page }) => {

@@ -1,30 +1,5 @@
 import { test, expect } from '@playwright/test';
-
-// Setup auth by setting localStorage and forcing a full page reload so Vue app picks up the token
-async function setupAuth(page: import('@playwright/test').Page, targetUrl: string) {
-  // Navigate to login page first to initialize the browser context
-  await page.goto('/login');
-
-  // Set auth token in localStorage and force full page reload to target
-  await page.evaluate((target) => {
-    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-    const payload = btoa(JSON.stringify({
-      sub: '1',
-      email: 'test@example.com',
-      exp: Math.floor(Date.now() / 1000) + 3600
-    }));
-    localStorage.setItem('token', `${header}.${payload}.test-signature`);
-    localStorage.setItem('user', JSON.stringify({
-      id: 1,
-      email: 'test@example.com',
-      name: 'Test User'
-    }));
-    // Force full page reload to target - this reinitializes Vue with the token
-    window.location.href = target;
-  }, targetUrl);
-
-  await page.waitForLoadState('networkidle');
-}
+import { setupAuthWithMocks } from './utils/auth';
 
 // German job site test URLs
 const GERMAN_JOB_SITES = {
@@ -36,7 +11,7 @@ const GERMAN_JOB_SITES = {
 
 test.describe('New Application Page - German Job Sites', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/new-application');
+    await setupAuthWithMocks(page, '/new-application');
   });
 
   test('should load the new application page', async ({ page }) => {
@@ -125,7 +100,7 @@ test.describe('New Application Page - German Job Sites', () => {
 
 test.describe('New Application - Form Validation', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/new-application');
+    await setupAuthWithMocks(page, '/new-application');
   });
 
   test('should validate required fields', async ({ page }) => {
@@ -144,7 +119,7 @@ test.describe('New Application - Form Validation', () => {
 
 test.describe('New Application - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await setupAuth(page, '/new-application');
+    await setupAuthWithMocks(page, '/new-application');
   });
 
   test('should have proper form labels', async ({ page }) => {
