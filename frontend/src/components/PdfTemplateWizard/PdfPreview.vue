@@ -140,7 +140,7 @@ const loading = ref(false)
 const error = ref('')
 const currentPage = ref(1)
 const totalPages = ref(0)
-const scale = ref(1)
+const scale = ref(0.75)  // Default to 75% zoom for better fit
 const pageWidth = ref(0)
 const pageHeight = ref(0)
 
@@ -295,13 +295,17 @@ function getHighlightClass(highlight) {
   return HIGHLIGHT_CLASS_MAP[name] || 'hl-default'
 }
 
+// PDF render scale (must match the scale used in renderPage)
+const PDF_RENDER_SCALE = 1.5
+
 function getHighlightStyle(highlight) {
   const pos = highlight.position || {}
-  // Convert relative positions (0-1) to pixels
-  const x = (pos.x || 0) * pageWidth.value
-  const y = (pos.y || 0) * pageHeight.value
-  const width = (pos.width || 0.1) * pageWidth.value
-  const height = (pos.height || 0.02) * pageHeight.value
+  // Backend sends absolute PDF coordinates (in points)
+  // Multiply by render scale to convert to canvas pixels
+  const x = (pos.x || 0) * PDF_RENDER_SCALE
+  const y = (pos.y || 0) * PDF_RENDER_SCALE
+  const width = (pos.width || 50) * PDF_RENDER_SCALE
+  const height = (pos.height || 15) * PDF_RENDER_SCALE
 
   return {
     left: `${x}px`,

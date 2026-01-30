@@ -737,8 +737,9 @@ onUnmounted(() => {
     gap: var(--space-md);
   }
 
+  /* Hide center nav on mobile - users use sidebar or bottom nav instead */
   .nav-center {
-    gap: 0;
+    display: none;
   }
 
   .nav-link {

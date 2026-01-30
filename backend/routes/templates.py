@@ -546,6 +546,40 @@ WICHTIG:
             print(f"Warnung: JSON-Parsing fehlgeschlagen: {str(e)}")
             print(f"Response: {response_text[:500]}")
 
+        # Calculate line numbers for each page based on Y positions
+        page_line_numbers: dict[int, list[float]] = {}
+        for block in text_blocks:
+            page_num = block.get("page", 0)
+            if page_num not in page_line_numbers:
+                page_line_numbers[page_num] = []
+            y_pos = block.get("y", 0)
+            # Group similar Y positions (within 5px tolerance)
+            found_similar = False
+            for existing_y in page_line_numbers[page_num]:
+                if abs(existing_y - y_pos) < 5:
+                    found_similar = True
+                    break
+            if not found_similar:
+                page_line_numbers[page_num].append(y_pos)
+
+        # Sort Y positions to get line numbers
+        for page_num in page_line_numbers:
+            page_line_numbers[page_num].sort()
+
+        def get_line_number(page: int, y: float) -> int:
+            """Get line number for a given Y position on a page."""
+            if page not in page_line_numbers:
+                return 1
+            lines = page_line_numbers[page]
+            for i, line_y in enumerate(lines):
+                if abs(line_y - y) < 5:
+                    return i + 1
+            # If not found exactly, find closest
+            for i, line_y in enumerate(lines):
+                if y <= line_y + 5:
+                    return i + 1
+            return len(lines)
+
         # Enrich suggestions with position data from text_blocks
         enriched_suggestions = []
         for i, sug in enumerate(suggestions):
@@ -558,12 +592,16 @@ WICHTIG:
             position_data = None
             for block in text_blocks:
                 if suggestion_text in block.get("text", "") or block.get("text", "") in suggestion_text:
+                    page_num = block.get("page", 0)
+                    y_pos = block.get("y", 0)
+                    line_num = get_line_number(page_num, y_pos)
                     position_data = {
                         "x": block.get("x"),
                         "y": block.get("y"),
                         "width": block.get("width"),
                         "height": block.get("height"),
-                        "page": block.get("page"),
+                        "page": page_num + 1,  # Convert to 1-based indexing for display
+                        "line": line_num,
                     }
                     break
 
@@ -591,7 +629,7 @@ WICHTIG:
 @templates_bp.route("/<int:template_id>/variable-positions", methods=["PUT"])
 @jwt_required_custom
 def save_variable_positions(template_id, current_user):
-    """Save user-confirmed variable positions for a template"""
+    """Save user-confirmed variable positions for a template and replace text with placeholders"""
     template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
 
     if not template:
@@ -620,7 +658,7 @@ def save_variable_positions(template_id, current_user):
             if not isinstance(item, dict):
                 return jsonify({"error": "Jeder Eintrag muss ein Objekt sein"}), 400
 
-            variable = item.get("variable")
+            variable = item.get("variable_name") or item.get("variable")
             if variable and variable not in allowed_variables:
                 return jsonify({
                     "error": f"Unbekannte Variable: {variable}. Erlaubt: {', '.join(allowed_variables)}"
@@ -635,14 +673,36 @@ def save_variable_positions(template_id, current_user):
                 }), 400
 
     try:
-        # Update template with variable positions
+        # Update template content by replacing matched text with {{VARIABLE}} placeholders
+        updated_content = template.content
+
+        if isinstance(variable_positions, list):
+            # Sort by text length descending to replace longer matches first
+            # This prevents partial replacements (e.g., "XXX Hamburg" before "XXX")
+            sorted_positions = sorted(
+                variable_positions,
+                key=lambda x: len(x.get("suggested_text", "") or x.get("text", "")),
+                reverse=True
+            )
+
+            for item in sorted_positions:
+                variable_name = item.get("variable_name") or item.get("variable")
+                suggested_text = item.get("suggested_text") or item.get("text", "")
+
+                if variable_name and suggested_text and suggested_text in updated_content:
+                    placeholder = "{{" + variable_name + "}}"
+                    updated_content = updated_content.replace(suggested_text, placeholder, 1)
+
+        # Update template with variable positions and transformed content
         template.variable_positions = variable_positions
+        template.content = updated_content
         db.session.commit()
 
         return jsonify({
             "success": True,
             "message": "Variablen-Positionen erfolgreich gespeichert",
             "template": template.to_dict(),
+            "variables_replaced": len(variable_positions) if isinstance(variable_positions, list) else 0,
         }), 200
 
     except Exception as e:

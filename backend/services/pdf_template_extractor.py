@@ -194,11 +194,14 @@ class PDFTemplateExtractor:
         """
         Extract plain text from PDF without position information.
 
+        Preserves paragraph structure by detecting line breaks based on
+        vertical spacing between text blocks.
+
         Args:
             pdf_path: Path to the PDF file
 
         Returns:
-            Plain text concatenation of all blocks
+            Plain text with preserved paragraphs and line breaks
         """
         result = self.extract_text_with_positions(pdf_path)
         text_blocks = result.get("text_blocks", [])
@@ -218,11 +221,51 @@ class PDFTemplateExtractor:
         for page_num in pages:
             pages[page_num].sort(key=lambda b: (b["y"], b["x"]))
 
-        # Concatenate text from all pages
+        # Concatenate text from all pages, preserving line breaks
         plain_text_parts = []
         for page_num in sorted(pages.keys()):
-            page_texts = [block["text"] for block in pages[page_num]]
-            plain_text_parts.append(" ".join(page_texts))
+            page_blocks = pages[page_num]
+            if not page_blocks:
+                continue
+
+            # Build page text with line break detection
+            lines: list[str] = []
+            current_line: list[str] = []
+            prev_y: float | None = None
+            prev_height: float = 12.0  # Default line height
+
+            for block in page_blocks:
+                curr_y = block["y"]
+                curr_height = block.get("height", 12.0)
+
+                if prev_y is not None:
+                    # Calculate vertical gap between blocks
+                    y_gap = curr_y - prev_y
+
+                    # If gap is larger than 1.5x the line height, it's a new paragraph
+                    if y_gap > prev_height * 1.8:
+                        # Save current line and add paragraph break
+                        if current_line:
+                            lines.append(" ".join(current_line))
+                            current_line = []
+                        lines.append("")  # Empty line for paragraph break
+                    # If gap is larger than line height, it's a new line
+                    elif y_gap > prev_height * 0.8:
+                        if current_line:
+                            lines.append(" ".join(current_line))
+                            current_line = []
+
+                current_line.append(block["text"])
+                prev_y = curr_y + curr_height
+                prev_height = curr_height if curr_height > 0 else prev_height
+
+            # Don't forget the last line
+            if current_line:
+                lines.append(" ".join(current_line))
+
+            # Join lines and add to page parts
+            page_text = "\n".join(lines)
+            plain_text_parts.append(page_text)
 
         return "\n\n".join(plain_text_parts)
 
