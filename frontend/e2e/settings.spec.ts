@@ -1,30 +1,34 @@
 import { test, expect } from '@playwright/test';
 
-// Helper to create a valid JWT token for testing
-function createTestToken(): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = btoa(JSON.stringify({
-    sub: '1',
-    email: 'test@example.com',
-    exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
-  }));
-  return `${header}.${payload}.test-signature`;
+// Setup auth by setting localStorage and forcing a full page reload so Vue app picks up the token
+async function setupAuth(page: import('@playwright/test').Page, targetUrl: string) {
+  // Navigate to login page first to initialize the browser context
+  await page.goto('/login');
+
+  // Set auth token in localStorage and force full page reload to target
+  await page.evaluate((target) => {
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const payload = btoa(JSON.stringify({
+      sub: '1',
+      email: 'test@example.com',
+      exp: Math.floor(Date.now() / 1000) + 3600
+    }));
+    localStorage.setItem('token', `${header}.${payload}.test-signature`);
+    localStorage.setItem('user', JSON.stringify({
+      id: 1,
+      email: 'test@example.com',
+      name: 'Test User'
+    }));
+    // Force full page reload to target - this reinitializes Vue with the token
+    window.location.href = target;
+  }, targetUrl);
+
+  await page.waitForLoadState('networkidle');
 }
 
 test.describe('Settings Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock authentication
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/settings');
   });
 
   test('should load the settings page', async ({ page }) => {
@@ -75,17 +79,7 @@ test.describe('Settings Page', () => {
 
 test.describe('Settings Page - Profile Section', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/settings');
   });
 
   test('should display full name input', async ({ page }) => {
@@ -112,17 +106,7 @@ test.describe('Settings Page - Profile Section', () => {
 
 test.describe('Settings Page - Section Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/settings');
   });
 
   test('should switch to security section on click', async ({ page }) => {
@@ -164,17 +148,7 @@ test.describe('Settings Page - Section Navigation', () => {
 
 test.describe('Settings Page - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/settings');
   });
 
   test('should have proper heading hierarchy', async ({ page }) => {
@@ -205,29 +179,15 @@ test.describe('Settings Page - Accessibility', () => {
 });
 
 test.describe('Settings Page - Responsive Design', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-  });
-
   test('should adapt layout on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/settings');
     await expect(page.locator('body')).toBeVisible();
   });
 
   test('should adapt layout on tablet', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/settings');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/settings');
     await expect(page.locator('body')).toBeVisible();
   });
 });

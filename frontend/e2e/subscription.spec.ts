@@ -1,30 +1,34 @@
 import { test, expect } from '@playwright/test';
 
-// Helper to create a valid JWT token for testing
-function createTestToken(): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = btoa(JSON.stringify({
-    sub: '1',
-    email: 'test@example.com',
-    exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
-  }));
-  return `${header}.${payload}.test-signature`;
+// Setup auth by setting localStorage and forcing a full page reload so Vue app picks up the token
+async function setupAuth(page: import('@playwright/test').Page, targetUrl: string) {
+  // Navigate to login page first to initialize the browser context
+  await page.goto('/login');
+
+  // Set auth token in localStorage and force full page reload to target
+  await page.evaluate((target) => {
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const payload = btoa(JSON.stringify({
+      sub: '1',
+      email: 'test@example.com',
+      exp: Math.floor(Date.now() / 1000) + 3600
+    }));
+    localStorage.setItem('token', `${header}.${payload}.test-signature`);
+    localStorage.setItem('user', JSON.stringify({
+      id: 1,
+      email: 'test@example.com',
+      name: 'Test User'
+    }));
+    // Force full page reload to target - this reinitializes Vue with the token
+    window.location.href = target;
+  }, targetUrl);
+
+  await page.waitForLoadState('networkidle');
 }
 
 test.describe('Subscription Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock authentication
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/subscription');
   });
 
   test('should load the subscription page', async ({ page }) => {
@@ -51,17 +55,7 @@ test.describe('Subscription Page', () => {
 
 test.describe('Subscription Page - Current Plan Section', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/subscription');
   });
 
   test('should display current plan section header', async ({ page }) => {
@@ -95,17 +89,7 @@ test.describe('Subscription Page - Current Plan Section', () => {
 
 test.describe('Subscription Page - Usage Section', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/subscription');
   });
 
   test('should display usage section header', async ({ page }) => {
@@ -138,17 +122,7 @@ test.describe('Subscription Page - Usage Section', () => {
 
 test.describe('Subscription Page - Manage Section', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/subscription');
   });
 
   test('should display manage section header', async ({ page }) => {
@@ -174,17 +148,7 @@ test.describe('Subscription Page - Manage Section', () => {
 
 test.describe('Subscription Page - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/subscription');
   });
 
   test('should have proper heading hierarchy', async ({ page }) => {
@@ -201,53 +165,26 @@ test.describe('Subscription Page - Accessibility', () => {
 });
 
 test.describe('Subscription Page - Responsive Design', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-  });
-
   test('should adapt layout on mobile', async ({ page }) => {
     await page.setViewportSize({ width: 375, height: 667 });
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/subscription');
     await expect(page.locator('body')).toBeVisible();
   });
 
   test('should adapt layout on tablet', async ({ page }) => {
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
+    await setupAuth(page, '/subscription');
     await expect(page.locator('body')).toBeVisible();
   });
 });
 
 test.describe('Subscription Page - Error Handling', () => {
-  test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-  });
-
   test('should handle API errors gracefully', async ({ page }) => {
-    await page.goto('/subscription');
-    await page.waitForLoadState('networkidle');
-    
+    await setupAuth(page, '/subscription');
+
     // Page should remain functional even with API errors
     await expect(page.locator('body')).toBeVisible();
-    
+
     // Should not crash - either show content or error state
     const hasContent = await page.locator('.subscription-section, .loading-state, .error-state').isVisible({ timeout: 5000 }).catch(() => false);
     expect(hasContent || await page.locator('h1').isVisible()).toBe(true);

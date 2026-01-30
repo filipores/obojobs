@@ -1,14 +1,29 @@
 import { test, expect } from '@playwright/test';
 
-// Helper to create a valid JWT token for testing
-function createTestToken(): string {
-  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
-  const payload = btoa(JSON.stringify({
-    sub: '1',
-    email: 'test@example.com',
-    exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
-  }));
-  return `${header}.${payload}.test-signature`;
+// Setup auth by setting localStorage and forcing a full page reload so Vue app picks up the token
+async function setupAuth(page: import('@playwright/test').Page, targetUrl: string) {
+  // Navigate to login page first to initialize the browser context
+  await page.goto('/login');
+
+  // Set auth token in localStorage and force full page reload to target
+  await page.evaluate((target) => {
+    const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+    const payload = btoa(JSON.stringify({
+      sub: '1',
+      email: 'test@example.com',
+      exp: Math.floor(Date.now() / 1000) + 3600
+    }));
+    localStorage.setItem('token', `${header}.${payload}.test-signature`);
+    localStorage.setItem('user', JSON.stringify({
+      id: 1,
+      email: 'test@example.com',
+      name: 'Test User'
+    }));
+    // Force full page reload to target - this reinitializes Vue with the token
+    window.location.href = target;
+  }, targetUrl);
+
+  await page.waitForLoadState('networkidle');
 }
 
 // German job site test URLs
@@ -21,18 +36,7 @@ const GERMAN_JOB_SITES = {
 
 test.describe('New Application Page - German Job Sites', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock authentication by setting localStorage with correct keys
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
-    // Navigate to new application page
-    await page.goto('/new-application');
+    await setupAuth(page, '/new-application');
   });
 
   test('should load the new application page', async ({ page }) => {
@@ -121,20 +125,10 @@ test.describe('New Application Page - German Job Sites', () => {
 
 test.describe('New Application - Form Validation', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
+    await setupAuth(page, '/new-application');
   });
 
   test('should validate required fields', async ({ page }) => {
-    await page.goto('/new-application');
-
     // Check for required field indicators
     const requiredFields = page.locator('[required], .required, *:has-text("*")');
     // Page should have some required fields
@@ -142,8 +136,6 @@ test.describe('New Application - Form Validation', () => {
   });
 
   test('should display error messages for invalid input', async ({ page }) => {
-    await page.goto('/new-application');
-
     // Try submitting invalid data and check for error handling
     await page.waitForTimeout(500);
     await expect(page.locator('body')).toBeVisible();
@@ -152,28 +144,16 @@ test.describe('New Application - Form Validation', () => {
 
 test.describe('New Application - Accessibility', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('/login');
-    await page.evaluate((token) => {
-      localStorage.setItem('token', token);
-      localStorage.setItem('user', JSON.stringify({
-        id: 1,
-        email: 'test@example.com',
-        name: 'Test User'
-      }));
-    }, createTestToken());
+    await setupAuth(page, '/new-application');
   });
 
   test('should have proper form labels', async ({ page }) => {
-    await page.goto('/new-application');
-
     // Check that inputs have associated labels
     const inputs = page.locator('input:not([type="hidden"])');
     await expect(page.locator('body')).toBeVisible();
   });
 
   test('should be keyboard navigable', async ({ page }) => {
-    await page.goto('/new-application');
-
     // Tab through the form
     await page.keyboard.press('Tab');
     await page.keyboard.press('Tab');
