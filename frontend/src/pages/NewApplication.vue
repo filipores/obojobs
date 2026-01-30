@@ -1267,10 +1267,17 @@ const generateApplication = async () => {
         description: editableData.value.description // Include structured description for interview prep
       })
     } else {
-      // Generate from URL
+      // Generate from URL with user-edited preview data
       response = await api.post('/applications/generate-from-url', {
         url: url.value,
-        template_id: selectedTemplateId.value
+        template_id: selectedTemplateId.value,
+        // Include user-edited data to preserve their changes
+        company: editableData.value.company,
+        title: editableData.value.title,
+        contact_person: editableData.value.contact_person,
+        contact_email: editableData.value.contact_email,
+        location: editableData.value.location,
+        description: editableData.value.description
       })
     }
 
@@ -1319,9 +1326,28 @@ const generateApplication = async () => {
   }
 }
 
-const downloadPDF = () => {
-  if (generatedApp.value?.id) {
-    window.open(`/api/applications/${generatedApp.value.id}/pdf`, '_blank')
+const downloadPDF = async () => {
+  if (!generatedApp.value?.id) return
+
+  try {
+    // Use authenticated request to fetch PDF blob
+    const response = await api.get(`/applications/${generatedApp.value.id}/pdf`, {
+      responseType: 'blob'
+    })
+
+    // Create download link from blob
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `bewerbung_${generatedApp.value.id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+  } catch (err) {
+    console.error('PDF download error:', err)
+    error.value = 'Fehler beim Herunterladen des PDF'
   }
 }
 

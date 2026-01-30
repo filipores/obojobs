@@ -193,10 +193,29 @@ def preview_job(current_user):
         # Fetch structured job data
         job_data = scraper.fetch_structured_job_posting(url)
 
-        if not job_data.get("text") and not job_data.get("title"):
-            return jsonify(
-                {"success": False, "error": "Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL."}
-            ), 400
+        # Check for missing important fields
+        missing_fields = []
+        if not job_data.get("title"):
+            missing_fields.append("Titel")
+        if not job_data.get("company"):
+            missing_fields.append("Firma")
+        if not job_data.get("description") and not job_data.get("text"):
+            missing_fields.append("Beschreibung")
+
+        # If ALL required fields are missing, scraping failed completely
+        has_title = bool(job_data.get("title") and job_data.get("title").strip())
+        has_company = bool(job_data.get("company") and job_data.get("company").strip())
+        has_description = bool(
+            (job_data.get("description") and job_data.get("description").strip()) or
+            (job_data.get("text") and job_data.get("text").strip())
+        )
+
+        if not has_title and not has_company and not has_description:
+            return jsonify({
+                "success": False,
+                "error": "Konnte keine Stellenanzeige von der URL laden. Die Seite scheint keine Stellenanzeige zu enthalten oder ist nicht zugänglich. Bitte verwenden Sie die manuelle Eingabe.",
+                "use_manual_input": True
+            }), 400
 
         # Map job board to display name
         portal_names = {
@@ -204,15 +223,6 @@ def preview_job(current_user):
             "indeed": "Indeed",
             "xing": "XING",
         }
-
-        # Check for missing important fields
-        missing_fields = []
-        if not job_data.get("title"):
-            missing_fields.append("Titel")
-        if not job_data.get("company"):
-            missing_fields.append("Firma")
-        if not job_data.get("description"):
-            missing_fields.append("Beschreibung")
 
         return jsonify({
             "success": True,
@@ -345,10 +355,22 @@ def analyze_manual_text(current_user):
 @jwt_required_custom
 @check_subscription_limit
 def generate_from_url(current_user):
-    """Generate a new application from URL (Web App)"""
+    """Generate a new application from URL (Web App)
+
+    Accepts optional user-edited data from the preview step. If provided,
+    uses the edited data instead of re-scraping the URL.
+    """
     data = request.json
     url = data.get("url", "").strip()
     template_id = data.get("template_id")
+
+    # Optional user-edited data from preview step
+    user_company = data.get("company", "").strip()
+    user_title = data.get("title", "").strip()
+    user_contact_person = data.get("contact_person", "").strip()
+    user_contact_email = data.get("contact_email", "").strip()
+    user_location = data.get("location", "").strip()
+    user_description = data.get("description", "").strip()
 
     if not url:
         return jsonify({"success": False, "error": "URL ist erforderlich"}), 400
@@ -357,17 +379,26 @@ def generate_from_url(current_user):
         return jsonify({"success": False, "error": "Ungültige URL. Bitte mit http:// oder https:// beginnen."}), 400
 
     try:
-        # Scrape the job posting
         scraper = WebScraper()
-        job_data = scraper.fetch_job_posting(url)
 
-        if not job_data.get("text"):
-            return jsonify(
-                {"success": False, "error": "Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL."}
-            ), 400
+        # If user provided edited data from preview, use it
+        # Otherwise fall back to scraping
+        if user_company or user_description:
+            # Use user's edited data
+            company = user_company if user_company else scraper.extract_company_name_from_url(url)
+            job_text = user_description
+        else:
+            # Scrape the job posting (legacy flow)
+            job_data = scraper.fetch_job_posting(url)
 
-        # Extract company name from URL
-        company = scraper.extract_company_name_from_url(url)
+            if not job_data.get("text"):
+                return jsonify(
+                    {"success": False, "error": "Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL."}
+                ), 400
+
+            # Extract company name - prefer scraped, fallback to URL extraction
+            company = job_data.get("company") or scraper.extract_company_name_from_url(url)
+            job_text = job_data.get("text")
 
         # Validate template if provided
         if template_id:
