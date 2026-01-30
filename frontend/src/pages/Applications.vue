@@ -156,7 +156,7 @@
       <div class="ink-stroke"></div>
 
       <!-- Loading State - Skeleton -->
-      <div v-if="loading" class="loading-skeleton" aria-label="Lade Bewerbungen">
+      <div v-if="loading" class="loading-skeleton" aria-label="Lade Bewerbungen" data-testid="loading-state">
         <div class="skeleton-grid">
           <div v-for="i in 6" :key="i" class="skeleton-card zen-card">
             <div class="skeleton-card-header">
@@ -180,7 +180,7 @@
       </div>
 
       <!-- Error State -->
-      <div v-else-if="loadError" class="error-state">
+      <div v-else-if="loadError" class="error-state" data-testid="error-state">
         <div class="error-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -201,13 +201,15 @@
       </div>
 
       <!-- Applications Grid -->
-      <section v-else-if="filteredApplications.length > 0" class="applications-section">
+      <section v-else-if="filteredApplications.length > 0" id="applications-list" class="applications-section" aria-live="polite">
         <!-- Grid View -->
-        <div v-if="viewMode === 'grid'" class="applications-grid">
+        <div v-if="viewMode === 'grid'" class="applications-grid" role="list" data-testid="applications-grid">
           <div
             v-for="app in filteredApplications"
             :key="app.id"
             class="application-card zen-card stagger-item"
+            role="listitem"
+            data-testid="application-card"
             @click="openDetails(app)"
           >
             <div class="card-header">
@@ -255,7 +257,7 @@
         </div>
 
         <!-- Table View -->
-        <ScrollableTable v-else class="applications-table-wrapper">
+        <ScrollableTable v-else class="applications-table-wrapper" data-testid="applications-table">
           <table class="applications-table">
             <thead>
               <tr>
@@ -397,8 +399,8 @@
       </section>
 
       <!-- Empty State -->
-      <section v-else class="empty-state">
-        <div class="empty-enso"></div>
+      <section v-else id="applications-list" class="empty-state" data-testid="empty-state" aria-live="polite">
+        <div class="empty-enso" aria-hidden="true"></div>
         <h3>{{ searchQuery || filterStatus || filterFirma ? 'Keine Ergebnisse' : 'Noch keine Bewerbungen' }}</h3>
         <p v-if="searchQuery || filterStatus || filterFirma">
           Keine Bewerbungen gefunden. Versuchen Sie andere Suchbegriffe.
@@ -406,7 +408,7 @@
         <p v-else>
           Generieren Sie Ihre erste Bewerbung über die Chrome Extension.
         </p>
-        <button v-if="searchQuery || filterStatus || filterFirma" @click="clearFilters" class="zen-btn">
+        <button v-if="searchQuery || filterStatus || filterFirma" @click="clearFilters" class="zen-btn" data-testid="clear-filters-btn">
           Filter zurücksetzen
         </button>
       </section>
