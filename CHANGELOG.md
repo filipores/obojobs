@@ -1,3 +1,10 @@
+## [1.7.6](https://github.com/filipores/obojobs/compare/v1.7.5...v1.7.6) (2026-01-30)
+
+
+### Bug Fixes
+
+* **e2e:** fix auth pattern for Vue SPA - use window.location.href ([f1a1ac6](https://github.com/filipores/obojobs/commit/f1a1ac61a4fb2286f5472ae495080b8777c9d5b8))
+
 ## [1.7.5](https://github.com/filipores/obojobs/compare/v1.7.4...v1.7.5) (2026-01-30)
 
 
