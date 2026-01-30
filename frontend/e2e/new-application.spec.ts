@@ -1,5 +1,16 @@
 import { test, expect } from '@playwright/test';
 
+// Helper to create a valid JWT token for testing
+function createTestToken(): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(JSON.stringify({
+    sub: '1',
+    email: 'test@example.com',
+    exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+  }));
+  return `${header}.${payload}.test-signature`;
+}
+
 // German job site test URLs
 const GERMAN_JOB_SITES = {
   stepstone: 'https://www.stepstone.de/stellenangebote--Software-Engineer-Berlin--12345.html',
@@ -10,7 +21,17 @@ const GERMAN_JOB_SITES = {
 
 test.describe('New Application Page - German Job Sites', () => {
   test.beforeEach(async ({ page }) => {
-    // Navigate to new application page (requires auth in real scenario)
+    // Mock authentication by setting localStorage with correct keys
+    await page.goto('/login');
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+        id: 1,
+        email: 'test@example.com',
+        name: 'Test User'
+      }));
+    }, createTestToken());
+    // Navigate to new application page
     await page.goto('/new-application');
   });
 
@@ -99,6 +120,18 @@ test.describe('New Application Page - German Job Sites', () => {
 });
 
 test.describe('New Application - Form Validation', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/login');
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+        id: 1,
+        email: 'test@example.com',
+        name: 'Test User'
+      }));
+    }, createTestToken());
+  });
+
   test('should validate required fields', async ({ page }) => {
     await page.goto('/new-application');
 
@@ -118,6 +151,18 @@ test.describe('New Application - Form Validation', () => {
 });
 
 test.describe('New Application - Accessibility', () => {
+  test.beforeEach(async ({ page }) => {
+    await page.goto('/login');
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
+        id: 1,
+        email: 'test@example.com',
+        name: 'Test User'
+      }));
+    }, createTestToken());
+  });
+
   test('should have proper form labels', async ({ page }) => {
     await page.goto('/new-application');
 

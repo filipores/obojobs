@@ -1,17 +1,28 @@
 import { test, expect } from '@playwright/test';
 
+// Helper to create a valid JWT token for testing
+function createTestToken(): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }));
+  const payload = btoa(JSON.stringify({
+    sub: '1',
+    email: 'test@example.com',
+    exp: Math.floor(Date.now() / 1000) + 3600 // 1 hour from now
+  }));
+  return `${header}.${payload}.test-signature`;
+}
+
 test.describe('Templates Page', () => {
   test.beforeEach(async ({ page }) => {
-    // Mock authentication by setting localStorage
+    // Mock authentication by setting localStorage with correct keys
     await page.goto('/login');
-    await page.evaluate(() => {
-      localStorage.setItem('obojobs-token', 'test-token');
-      localStorage.setItem('obojobs-user', JSON.stringify({
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
         id: 1,
         email: 'test@example.com',
         name: 'Test User'
       }));
-    });
+    }, createTestToken());
   });
 
   test('should load templates page', async ({ page }) => {
@@ -109,14 +120,14 @@ test.describe('Templates Page', () => {
 test.describe('Templates Page - Create Options', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.evaluate(() => {
-      localStorage.setItem('obojobs-token', 'test-token');
-      localStorage.setItem('obojobs-user', JSON.stringify({
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
         id: 1,
         email: 'test@example.com',
         name: 'Test User'
       }));
-    });
+    }, createTestToken());
     await page.goto('/templates');
     await page.waitForLoadState('networkidle');
   });
@@ -168,14 +179,14 @@ test.describe('Templates Page - Create Options', () => {
 test.describe('Templates Page - Manual Form', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.evaluate(() => {
-      localStorage.setItem('obojobs-token', 'test-token');
-      localStorage.setItem('obojobs-user', JSON.stringify({
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
         id: 1,
         email: 'test@example.com',
         name: 'Test User'
       }));
-    });
+    }, createTestToken());
     await page.goto('/templates');
     await page.waitForLoadState('networkidle');
 
@@ -218,14 +229,14 @@ test.describe('Templates Page - Manual Form', () => {
 test.describe('Templates Page - Template Cards', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.evaluate(() => {
-      localStorage.setItem('obojobs-token', 'test-token');
-      localStorage.setItem('obojobs-user', JSON.stringify({
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
         id: 1,
         email: 'test@example.com',
         name: 'Test User'
       }));
-    });
+    }, createTestToken());
     await page.goto('/templates');
     await page.waitForLoadState('networkidle');
   });
@@ -274,14 +285,14 @@ test.describe('Templates Page - Template Cards', () => {
 test.describe('Templates Page - Responsive Design', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.evaluate(() => {
-      localStorage.setItem('obojobs-token', 'test-token');
-      localStorage.setItem('obojobs-user', JSON.stringify({
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
         id: 1,
         email: 'test@example.com',
         name: 'Test User'
       }));
-    });
+    }, createTestToken());
   });
 
   test('should adapt layout on mobile', async ({ page }) => {
@@ -304,14 +315,14 @@ test.describe('Templates Page - Responsive Design', () => {
 test.describe('Templates Page - Warning States', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/login');
-    await page.evaluate(() => {
-      localStorage.setItem('obojobs-token', 'test-token');
-      localStorage.setItem('obojobs-user', JSON.stringify({
+    await page.evaluate((token) => {
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify({
         id: 1,
         email: 'test@example.com',
         name: 'Test User'
       }));
-    });
+    }, createTestToken());
     await page.goto('/templates');
     await page.waitForLoadState('networkidle');
   });
