@@ -121,4 +121,81 @@ describe('Toast.vue', () => {
       expect(remainingToasts[0].find('.toast-message').text()).toBe('Second')
     })
   })
+
+  describe('deduplication', () => {
+    it('deduplicates exact same message within 2 second window', async () => {
+      const wrapper = mount(Toast)
+      wrapper.vm.add('Same message', 'error', 0)
+      wrapper.vm.add('Same message', 'error', 0)
+      await wrapper.vm.$nextTick()
+
+      // Should only show one toast due to deduplication
+      expect(wrapper.findAll('.toast')).toHaveLength(1)
+    })
+
+    it('allows same message after 2 second window expires', async () => {
+      const wrapper = mount(Toast)
+      wrapper.vm.add('Same message', 'error', 0)
+      await wrapper.vm.$nextTick()
+
+      // Advance time past the 2 second deduplication window
+      vi.advanceTimersByTime(2100)
+
+      wrapper.vm.add('Same message', 'error', 0)
+      await wrapper.vm.$nextTick()
+
+      // Should show both toasts now
+      expect(wrapper.findAll('.toast')).toHaveLength(2)
+    })
+
+    it('deduplicates similar messages with common error keywords', async () => {
+      const wrapper = mount(Toast)
+      wrapper.vm.add('Fehler aufgetreten', 'error', 0)
+      wrapper.vm.add('Fehler beim Laden', 'error', 0)
+      await wrapper.vm.$nextTick()
+
+      // Should only show one toast (similar short error messages)
+      expect(wrapper.findAll('.toast')).toHaveLength(1)
+    })
+
+    it('deduplicates messages where one contains the other', async () => {
+      const wrapper = mount(Toast)
+      wrapper.vm.add('Fehler', 'error', 0)
+      wrapper.vm.add('Fehler beim Speichern', 'error', 0)
+      await wrapper.vm.$nextTick()
+
+      // Should only show one toast
+      expect(wrapper.findAll('.toast')).toHaveLength(1)
+    })
+
+    it('allows different types of same message', async () => {
+      const wrapper = mount(Toast)
+      wrapper.vm.add('Same message', 'error', 0)
+      wrapper.vm.add('Same message', 'success', 0)
+      await wrapper.vm.$nextTick()
+
+      // Should show both (different types)
+      expect(wrapper.findAll('.toast')).toHaveLength(2)
+    })
+
+    it('allows genuinely different messages', async () => {
+      const wrapper = mount(Toast)
+      wrapper.vm.add('First unique message about documents', 'info', 0)
+      wrapper.vm.add('Second unique message about templates', 'info', 0)
+      await wrapper.vm.$nextTick()
+
+      // Should show both (different messages)
+      expect(wrapper.findAll('.toast')).toHaveLength(2)
+    })
+
+    it('normalizes messages by removing punctuation and whitespace', async () => {
+      const wrapper = mount(Toast)
+      wrapper.vm.add('Same message!', 'error', 0)
+      wrapper.vm.add('Same   message', 'error', 0)
+      await wrapper.vm.$nextTick()
+
+      // Should only show one (normalized to same)
+      expect(wrapper.findAll('.toast')).toHaveLength(1)
+    })
+  })
 })
