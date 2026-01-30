@@ -1,13 +1,24 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
-import axios from 'axios'
 
-// Mock axios
+// Store interceptor callbacks globally so they persist across module resets
+let capturedRequestInterceptor = null
+let capturedResponseInterceptor = null
+
+// Mock axios with interceptor capture
 vi.mock('axios', () => ({
   default: {
     create: vi.fn(() => ({
       interceptors: {
-        request: { use: vi.fn() },
-        response: { use: vi.fn() }
+        request: {
+          use: vi.fn((fn) => {
+            capturedRequestInterceptor = fn
+          })
+        },
+        response: {
+          use: vi.fn((success, error) => {
+            capturedResponseInterceptor = { success, error }
+          })
+        }
       },
       get: vi.fn(),
       post: vi.fn(),
@@ -24,13 +35,12 @@ vi.mock('@/utils/errorTranslations', () => ({
 }))
 
 describe('API Client', () => {
-  let mockAxiosInstance
-  let requestInterceptor
-  let responseInterceptor
   let mockToast
 
   beforeEach(() => {
-    vi.clearAllMocks()
+    // Reset captured interceptors
+    capturedRequestInterceptor = null
+    capturedResponseInterceptor = null
 
     // Setup mock toast
     mockToast = vi.fn()
@@ -42,17 +52,9 @@ describe('API Client', () => {
       setItem: vi.fn(),
       removeItem: vi.fn()
     }
-    Object.defineProperty(window, 'localStorage', { value: localStorageMock })
-
-    // Get mock axios instance
-    mockAxiosInstance = axios.create()
-
-    // Capture interceptors
-    mockAxiosInstance.interceptors.request.use.mockImplementation((fn) => {
-      requestInterceptor = fn
-    })
-    mockAxiosInstance.interceptors.response.use.mockImplementation((success, error) => {
-      responseInterceptor = { success, error }
+    Object.defineProperty(window, 'localStorage', {
+      value: localStorageMock,
+      writable: true
     })
   })
 
@@ -64,8 +66,9 @@ describe('API Client', () => {
       vi.resetModules()
       await import('../api/client.js')
 
+      expect(capturedRequestInterceptor).toBeDefined()
       const config = { headers: {} }
-      const result = requestInterceptor(config)
+      const result = capturedRequestInterceptor(config)
 
       expect(result.headers.Authorization).toBe('Bearer test-token')
     })
@@ -76,8 +79,9 @@ describe('API Client', () => {
       vi.resetModules()
       await import('../api/client.js')
 
+      expect(capturedRequestInterceptor).toBeDefined()
       const config = { headers: {} }
-      const result = requestInterceptor(config)
+      const result = capturedRequestInterceptor(config)
 
       expect(result.headers.Authorization).toBeUndefined()
     })
@@ -90,46 +94,57 @@ describe('API Client', () => {
     })
 
     it('should show toast for 403 Forbidden errors', async () => {
+      expect(capturedResponseInterceptor).toBeDefined()
+      expect(capturedResponseInterceptor.error).toBeDefined()
+
       const error = {
         response: { status: 403 },
         config: {}
       }
 
-      await expect(responseInterceptor.error(error)).rejects.toEqual(error)
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(mockToast).toHaveBeenCalledWith('Keine Berechtigung', 'error')
     })
 
     it('should show toast for 404 Not Found errors', async () => {
+      expect(capturedResponseInterceptor?.error).toBeDefined()
+
       const error = {
         response: { status: 404 },
         config: {}
       }
 
-      await expect(responseInterceptor.error(error)).rejects.toEqual(error)
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(mockToast).toHaveBeenCalledWith('Nicht gefunden', 'error')
     })
 
     it('should show toast for 500+ Server errors', async () => {
+      expect(capturedResponseInterceptor?.error).toBeDefined()
+
       const error = {
         response: { status: 500 },
         config: {}
       }
 
-      await expect(responseInterceptor.error(error)).rejects.toEqual(error)
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(mockToast).toHaveBeenCalledWith('Serverfehler. Bitte später erneut versuchen.', 'error')
     })
 
     it('should not show toast when suppressToast is true', async () => {
+      expect(capturedResponseInterceptor?.error).toBeDefined()
+
       const error = {
         response: { status: 500 },
         config: { suppressToast: true }
       }
 
-      await expect(responseInterceptor.error(error)).rejects.toEqual(error)
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(mockToast).not.toHaveBeenCalled()
     })
 
     it('should handle validation errors (400/422)', async () => {
+      expect(capturedResponseInterceptor?.error).toBeDefined()
+
       const error = {
         response: {
           status: 400,
@@ -138,7 +153,7 @@ describe('API Client', () => {
         config: {}
       }
 
-      await expect(responseInterceptor.error(error)).rejects.toEqual(error)
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(mockToast).toHaveBeenCalledWith('Ungültige E-Mail-Adresse', 'error')
     })
   })
@@ -150,6 +165,8 @@ describe('API Client', () => {
     })
 
     it('should clear auth and redirect on 401 errors (non-login)', async () => {
+      expect(capturedResponseInterceptor?.error).toBeDefined()
+
       delete window.location
       window.location = { href: '' }
 
@@ -158,13 +175,15 @@ describe('API Client', () => {
         config: { url: '/some/endpoint' }
       }
 
-      await expect(responseInterceptor.error(error)).rejects.toEqual(error)
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(localStorage.removeItem).toHaveBeenCalledWith('token')
       expect(localStorage.removeItem).toHaveBeenCalledWith('user')
       expect(window.location.href).toBe('/login')
     })
 
     it('should not redirect on 401 for login route', async () => {
+      expect(capturedResponseInterceptor?.error).toBeDefined()
+
       delete window.location
       window.location = { href: '' }
 
@@ -173,7 +192,7 @@ describe('API Client', () => {
         config: { url: '/auth/login' }
       }
 
-      await expect(responseInterceptor.error(error)).rejects.toEqual(error)
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(window.location.href).not.toBe('/login')
     })
   })

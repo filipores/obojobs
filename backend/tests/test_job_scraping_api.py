@@ -8,9 +8,7 @@ Tests the /api/applications/preview-job endpoint with various German job portals
 - Arbeitsagentur
 """
 
-import pytest
-from unittest.mock import patch, MagicMock
-
+from unittest.mock import MagicMock, patch
 
 # Sample German job site URLs
 GERMAN_JOB_URLS = {

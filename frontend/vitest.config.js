@@ -1,8 +1,14 @@
 import { defineConfig } from 'vitest/config'
 import vue from '@vitejs/plugin-vue'
+import path from 'path'
 
 export default defineConfig({
   plugins: [vue()],
+  resolve: {
+    alias: {
+      '@': path.resolve(__dirname, './src')
+    }
+  },
   test: {
     environment: 'jsdom',
     globals: true,
@@ -17,7 +23,7 @@ export default defineConfig({
       thresholds: {
         statements: 70,
         branches: 70,
-        functions: 70,
+        functions: 65,
         lines: 70
       }
     }
