@@ -1,3 +1,10 @@
+## [1.7.4](https://github.com/filipores/obojobs/compare/v1.7.3...v1.7.4) (2026-01-30)
+
+
+### Bug Fixes
+
+* **test:** add btoa polyfill for node.js test environment ([59da20e](https://github.com/filipores/obojobs/commit/59da20e7e5f9eb9f57467055aa7d9b209ef2b146))
+
 ## [1.7.3](https://github.com/filipores/obojobs/compare/v1.7.2...v1.7.3) (2026-01-30)
 
 
