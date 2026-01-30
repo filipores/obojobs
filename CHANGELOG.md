@@ -1,3 +1,10 @@
+## [1.7.5](https://github.com/filipores/obojobs/compare/v1.7.4...v1.7.5) (2026-01-30)
+
+
+### Bug Fixes
+
+* **ci:** resolve test failures and linting issues ([b3841f3](https://github.com/filipores/obojobs/commit/b3841f3466ceda8758b33c078ea040d6f78b203d))
+
 ## [1.7.4](https://github.com/filipores/obojobs/compare/v1.7.3...v1.7.4) (2026-01-30)
 
 
