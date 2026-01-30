@@ -1,3 +1,10 @@
+## [1.7.3](https://github.com/filipores/obojobs/compare/v1.7.2...v1.7.3) (2026-01-30)
+
+
+### Bug Fixes
+
+* **a11y:** add missing list elements and test IDs to Applications page ([cede92d](https://github.com/filipores/obojobs/commit/cede92d0265bb28813c4f122435027b28510ae80))
+
 ## [1.7.2](https://github.com/filipores/obojobs/compare/v1.7.1...v1.7.2) (2026-01-30)
 
 
