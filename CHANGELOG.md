@@ -1,3 +1,10 @@
+## [1.7.2](https://github.com/filipores/obojobs/compare/v1.7.1...v1.7.2) (2026-01-30)
+
+
+### Bug Fixes
+
+* **e2e:** correct auth mock localStorage keys and add valid JWT token ([f97d318](https://github.com/filipores/obojobs/commit/f97d3183be017dbf3daa59198cc5d9c16d4f3886))
+
 ## [1.7.1](https://github.com/filipores/obojobs/compare/v1.7.0...v1.7.1) (2026-01-30)
 
 
