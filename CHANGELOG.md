@@ -1,3 +1,10 @@
+## [1.7.7](https://github.com/filipores/obojobs/compare/v1.7.6...v1.7.7) (2026-01-30)
+
+
+### Bug Fixes
+
+* **e2e:** add shared auth utility with xhr mocking for vue spa tests ([ab10455](https://github.com/filipores/obojobs/commit/ab1045500aeec14a8fe08db51740d289cf1d5872))
+
 ## [1.7.6](https://github.com/filipores/obojobs/compare/v1.7.5...v1.7.6) (2026-01-30)
 
 
