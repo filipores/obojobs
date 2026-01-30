@@ -305,7 +305,7 @@ async function startAnalysis() {
     if (analyzeResponse.data.suggestions && Array.isArray(analyzeResponse.data.suggestions)) {
       suggestions.value = analyzeResponse.data.suggestions.map((s, index) => ({
         id: s.id || `suggestion_${index}`,
-        variable_name: s.variable_name || s.variableName,
+        variable_name: s.variable_name || s.variableName || s.variable,
         suggested_text: s.suggested_text || s.suggestedText || s.text,
         reason: s.reason || s.explanation,
         position: s.position || null,
@@ -317,6 +317,12 @@ async function startAnalysis() {
 
     analysisStatus.value = 'Analyse abgeschlossen!'
     await delay(400)
+
+    // Automatically advance to review step if variables were found
+    if (suggestions.value.length > 0) {
+      await delay(800)  // Brief pause to show the summary
+      step.value = 3
+    }
 
   } catch (err) {
     console.error('Analysis error:', err)
