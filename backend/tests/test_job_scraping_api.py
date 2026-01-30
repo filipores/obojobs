@@ -332,8 +332,8 @@ class TestMissingFieldsDetection:
 
     @patch("routes.applications.WebScraper")
     def test_reports_missing_description(self, mock_scraper_class, client, auth_headers):
-        """Should report missing description field."""
-        job_data = {**SAMPLE_JOB_DATA, "description": None}
+        """Should report missing description field when both description and text are missing."""
+        job_data = {**SAMPLE_JOB_DATA, "description": None, "text": None}
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = "stepstone"
         mock_scraper.fetch_structured_job_posting.return_value = job_data
