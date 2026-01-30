@@ -110,7 +110,7 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
+import { ref, shallowRef, computed, watch, onUnmounted, nextTick } from 'vue'
 import * as pdfjsLib from 'pdfjs-dist'
 
 // Set worker source
@@ -141,11 +141,26 @@ const error = ref('')
 const currentPage = ref(1)
 const totalPages = ref(0)
 const scale = ref(1)
-const pdfDoc = ref(null)
 const pageWidth = ref(0)
 const pageHeight = ref(0)
 
-// Get highlights for current page
+// shallowRef prevents Vue's Proxy wrapping which breaks pdf.js private fields
+const pdfDoc = shallowRef(null)
+
+// Tracks current load operation to prevent race conditions
+let loadId = 0
+
+const HIGHLIGHT_CLASS_MAP = {
+  FIRMA: 'hl-firma',
+  POSITION: 'hl-position',
+  ANSPRECHPARTNER: 'hl-ansprechpartner',
+  QUELLE: 'hl-quelle',
+  EINLEITUNG: 'hl-einleitung',
+  DATUM: 'hl-datum',
+  NAME: 'hl-name',
+  ADRESSE: 'hl-adresse'
+}
+
 const currentPageHighlights = computed(() => {
   return props.highlights.filter(h => {
     const page = h.position?.page || h.page || 1
@@ -153,26 +168,16 @@ const currentPageHighlights = computed(() => {
   })
 })
 
-// Get unique variable types for legend
 const uniqueVariableTypes = computed(() => {
-  const types = new Set(props.highlights.map(h => h.variable_name))
-  return Array.from(types)
+  return [...new Set(props.highlights.map(h => h.variable_name))]
 })
 
-// Load PDF when URL or file changes
-watch([() => props.pdfUrl, () => props.pdfFile], async () => {
-  await loadPdf()
-}, { immediate: true })
+watch([() => props.pdfUrl, () => props.pdfFile], loadPdf, { immediate: true })
 
-// Re-render when page or scale changes
 watch([currentPage, scale], async () => {
-  if (pdfDoc.value) {
+  if (pdfDoc.value && !loading.value) {
     await renderPage()
   }
-})
-
-onMounted(() => {
-  loadPdf()
 })
 
 onUnmounted(() => {
@@ -187,60 +192,81 @@ async function loadPdf() {
     return
   }
 
+  const currentLoadId = ++loadId
   loading.value = true
   error.value = ''
+
+  function isStale() {
+    return currentLoadId !== loadId
+  }
 
   try {
     let loadingTask
 
     if (props.pdfFile) {
-      // Load from File object
       const arrayBuffer = await props.pdfFile.arrayBuffer()
+      if (isStale()) return
       loadingTask = pdfjsLib.getDocument({ data: arrayBuffer })
-    } else if (props.pdfUrl) {
-      // Load from URL
+    } else {
       loadingTask = pdfjsLib.getDocument(props.pdfUrl)
     }
 
-    if (pdfDoc.value) {
-      pdfDoc.value.destroy()
+    const newDoc = await loadingTask.promise
+    if (isStale()) {
+      newDoc.destroy()
+      return
     }
 
-    pdfDoc.value = await loadingTask.promise
-    totalPages.value = pdfDoc.value.numPages
+    pdfDoc.value = newDoc
+    totalPages.value = newDoc.numPages
     currentPage.value = 1
+    loading.value = false
 
+    await nextTick()
+    if (isStale()) return
     await renderPage()
   } catch (err) {
+    if (isStale()) return
     console.error('Error loading PDF:', err)
     error.value = err.message || 'Unbekannter Fehler beim Laden des PDF'
-  } finally {
     loading.value = false
   }
 }
 
 async function renderPage() {
-  if (!pdfDoc.value || !canvasRef.value) return
+  const currentDoc = pdfDoc.value
+  if (!currentDoc || !canvasRef.value) return
+
+  function isStale() {
+    return pdfDoc.value !== currentDoc
+  }
 
   try {
-    const page = await pdfDoc.value.getPage(currentPage.value)
-    const viewport = page.getViewport({ scale: 1.5 }) // Base scale for quality
+    const page = await currentDoc.getPage(currentPage.value)
+    if (isStale()) return
 
+    const viewport = page.getViewport({ scale: 1.5 })
     const canvas = canvasRef.value
-    const context = canvas.getContext('2d')
+    if (!canvas) return
 
     canvas.height = viewport.height
     canvas.width = viewport.width
     pageWidth.value = viewport.width
     pageHeight.value = viewport.height
 
+    if (isStale()) return
+
     await page.render({
-      canvasContext: context,
-      viewport: viewport
+      canvasContext: canvas.getContext('2d'),
+      viewport
     }).promise
   } catch (err) {
-    console.error('Error rendering page:', err)
-    error.value = 'Fehler beim Rendern der Seite'
+    // Ignore private field errors from pdf.js race conditions during document switching
+    const isPrivateFieldError = err?.message?.includes('private field')
+    if (!isStale() && !isPrivateFieldError) {
+      console.error('Error rendering page:', err)
+      error.value = 'Fehler beim Rendern der Seite'
+    }
   }
 }
 
@@ -257,30 +283,16 @@ function nextPage() {
 }
 
 function zoomIn() {
-  if (scale.value < 2) {
-    scale.value = Math.min(2, scale.value + 0.25)
-  }
+  scale.value = Math.min(2, scale.value + 0.25)
 }
 
 function zoomOut() {
-  if (scale.value > 0.5) {
-    scale.value = Math.max(0.5, scale.value - 0.25)
-  }
+  scale.value = Math.max(0.5, scale.value - 0.25)
 }
 
 function getHighlightClass(highlight) {
   const name = highlight.variable_name?.toUpperCase() || ''
-  const classMap = {
-    'FIRMA': 'hl-firma',
-    'POSITION': 'hl-position',
-    'ANSPRECHPARTNER': 'hl-ansprechpartner',
-    'QUELLE': 'hl-quelle',
-    'EINLEITUNG': 'hl-einleitung',
-    'DATUM': 'hl-datum',
-    'NAME': 'hl-name',
-    'ADRESSE': 'hl-adresse'
-  }
-  return classMap[name] || 'hl-default'
+  return HIGHLIGHT_CLASS_MAP[name] || 'hl-default'
 }
 
 function getHighlightStyle(highlight) {
