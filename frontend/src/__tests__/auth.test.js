@@ -1,5 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
+/* eslint-disable no-undef */
+// Polyfill btoa for Node.js test environment (Buffer is a Node.js global)
+const btoa = (str) => Buffer.from(str, 'utf-8').toString('base64')
+/* eslint-enable no-undef */
+
 // Mock localStorage
 const localStorageMock = (() => {
   let store = {}
