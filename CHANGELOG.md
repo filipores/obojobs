@@ -1,3 +1,10 @@
+# [1.9.0](https://github.com/filipores/obojobs/compare/v1.8.0...v1.9.0) (2026-01-31)
+
+
+### Features
+
+* **templates:** add rich-text editor with Tiptap for formatting preservation ([4fcc825](https://github.com/filipores/obojobs/commit/4fcc825ba0563938f2d9f59099c6aa9f7e810c10))
+
 # [1.8.0](https://github.com/filipores/obojobs/compare/v1.7.9...v1.8.0) (2026-01-31)
 
 
