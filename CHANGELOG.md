@@ -1,3 +1,10 @@
+# [1.8.0](https://github.com/filipores/obojobs/compare/v1.7.9...v1.8.0) (2026-01-31)
+
+
+### Features
+
+* add GenericJobParser fallback for unknown job boards (ob-ax9) ([06a54c4](https://github.com/filipores/obojobs/commit/06a54c47159a57a06fc252ff71adeb2d67b12c09))
+
 ## [1.7.9](https://github.com/filipores/obojobs/compare/v1.7.8...v1.7.9) (2026-01-31)
 
 
