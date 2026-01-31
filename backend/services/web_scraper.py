@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -7,6 +8,8 @@ from urllib.parse import urljoin, urlparse
 
 import requests
 from bs4 import BeautifulSoup, Tag
+
+logger = logging.getLogger(__name__)
 
 
 class JobBoardParser(ABC):
@@ -1504,6 +1507,600 @@ class ArbeitsagenturParser(JobBoardParser):
             return date_str
 
 
+class GenericJobParser:
+    """Generic fallback parser for job postings from unknown sources.
+
+    Uses multiple extraction strategies in priority order:
+    1. JSON-LD Schema.org JobPosting
+    2. OpenGraph meta tags
+    3. Standard meta tags
+    4. Title tag parsing
+    5. Common HTML patterns/selectors
+    6. Heuristics (first h1, domain-based company name)
+
+    Returns partial data - extracts whatever is available rather than
+    requiring all fields to be present.
+    """
+
+    def parse(self, soup: BeautifulSoup, url: str) -> dict:
+        """Parse job posting using multiple fallback strategies."""
+        result = {
+            "source": "generic",
+            "url": url,
+            "title": None,
+            "company": None,
+            "location": None,
+            "description": None,
+            "requirements": None,
+            "contact_email": None,
+            "posted_date": None,
+            "application_deadline": None,
+            "employment_type": None,
+            "salary": None,
+            "extraction_methods": [],  # Track which methods succeeded
+        }
+
+        # Strategy 1: JSON-LD Schema.org
+        json_ld_data = self._extract_json_ld(soup)
+        if json_ld_data:
+            result = self._parse_json_ld(json_ld_data, result)
+            if any(result.get(k) for k in ["title", "company", "description"]):
+                result["extraction_methods"].append("json-ld")
+                logger.debug("GenericJobParser: Extracted data via JSON-LD")
+
+        # Strategy 2: OpenGraph meta tags
+        result = self._extract_opengraph(soup, result)
+
+        # Strategy 3: Standard meta tags
+        result = self._extract_meta_tags(soup, result)
+
+        # Strategy 4: Title tag parsing
+        result = self._extract_from_title_tag(soup, result)
+
+        # Strategy 5: Common HTML patterns
+        result = self._extract_html_patterns(soup, result, url)
+
+        # Strategy 6: Heuristics
+        result = self._apply_heuristics(soup, result, url)
+
+        # Clean up extraction_methods for logging
+        if result["extraction_methods"]:
+            logger.info(
+                f"GenericJobParser: Extracted data for {url} using methods: "
+                f"{', '.join(result['extraction_methods'])}"
+            )
+        else:
+            logger.warning(f"GenericJobParser: No structured data found for {url}")
+
+        # Remove internal tracking field from final result
+        del result["extraction_methods"]
+
+        return result
+
+    def _extract_json_ld(self, soup: BeautifulSoup) -> dict | None:
+        """Extract JSON-LD structured data with @type JobPosting."""
+        scripts = soup.find_all("script", type="application/ld+json")
+        for script in scripts:
+            try:
+                if not script.string:
+                    continue
+                data = json.loads(script.string)
+
+                # Handle array of objects
+                if isinstance(data, list):
+                    for item in data:
+                        if isinstance(item, dict) and item.get("@type") == "JobPosting":
+                            return item
+                        # Check for nested @graph
+                        if isinstance(item, dict) and "@graph" in item:
+                            for graph_item in item["@graph"]:
+                                if isinstance(graph_item, dict) and graph_item.get("@type") == "JobPosting":
+                                    return graph_item
+
+                # Handle single object
+                elif isinstance(data, dict):
+                    if data.get("@type") == "JobPosting":
+                        return data
+                    # Check for @graph array
+                    if "@graph" in data:
+                        for graph_item in data["@graph"]:
+                            if isinstance(graph_item, dict) and graph_item.get("@type") == "JobPosting":
+                                return graph_item
+
+            except (json.JSONDecodeError, TypeError, KeyError):
+                continue
+        return None
+
+    def _parse_json_ld(self, data: dict, result: dict) -> dict:
+        """Parse JSON-LD JobPosting schema into result dict."""
+        # Title
+        if not result["title"] and data.get("title"):
+            result["title"] = self._clean_text(data["title"])
+
+        # Description
+        if not result["description"] and data.get("description"):
+            result["description"] = self._clean_text(data["description"])
+
+        # Company (hiringOrganization)
+        if not result["company"]:
+            hiring_org = data.get("hiringOrganization", {})
+            if isinstance(hiring_org, dict):
+                result["company"] = hiring_org.get("name")
+            elif isinstance(hiring_org, str):
+                result["company"] = hiring_org
+
+        # Location (jobLocation)
+        if not result["location"]:
+            job_location = data.get("jobLocation")
+            result["location"] = self._parse_json_ld_location(job_location)
+
+        # Dates
+        if not result["posted_date"] and data.get("datePosted"):
+            result["posted_date"] = self._parse_date(data["datePosted"])
+
+        if not result["application_deadline"] and data.get("validThrough"):
+            result["application_deadline"] = self._parse_date(data["validThrough"])
+
+        # Employment type
+        if not result["employment_type"]:
+            emp_type = data.get("employmentType")
+            if emp_type:
+                if isinstance(emp_type, list):
+                    result["employment_type"] = ", ".join(emp_type)
+                else:
+                    result["employment_type"] = emp_type
+
+        # Salary (baseSalary)
+        if not result["salary"]:
+            salary = data.get("baseSalary", {})
+            if isinstance(salary, dict):
+                value = salary.get("value", {})
+                currency = salary.get("currency", "EUR")
+                if isinstance(value, dict):
+                    min_val = value.get("minValue")
+                    max_val = value.get("maxValue")
+                    if min_val and max_val:
+                        result["salary"] = f"{min_val}-{max_val} {currency}"
+                    elif min_val:
+                        result["salary"] = f"ab {min_val} {currency}"
+                    elif max_val:
+                        result["salary"] = f"bis {max_val} {currency}"
+                elif isinstance(value, (int, float)):
+                    result["salary"] = f"{value} {currency}"
+
+        return result
+
+    def _parse_json_ld_location(self, job_location: Any) -> str | None:
+        """Parse jobLocation from JSON-LD which can be dict, list, or string."""
+        if not job_location:
+            return None
+
+        if isinstance(job_location, str):
+            return job_location
+
+        if isinstance(job_location, dict):
+            address = job_location.get("address", {})
+            if isinstance(address, str):
+                return address
+            if isinstance(address, dict):
+                parts = []
+                for field in ["streetAddress", "postalCode", "addressLocality",
+                              "addressRegion", "addressCountry"]:
+                    val = address.get(field)
+                    if val:
+                        if isinstance(val, dict):
+                            val = val.get("name", "")
+                        if val and val not in parts:
+                            parts.append(str(val))
+                return ", ".join(parts) if parts else None
+
+        if isinstance(job_location, list):
+            locations = []
+            for loc in job_location:
+                parsed = self._parse_json_ld_location(loc)
+                if parsed:
+                    locations.append(parsed)
+            return ", ".join(locations) if locations else None
+
+        return None
+
+    def _extract_opengraph(self, soup: BeautifulSoup, result: dict) -> dict:
+        """Extract data from OpenGraph meta tags."""
+        og_extracted = False
+
+        # og:title -> title
+        if not result["title"]:
+            og_title = soup.find("meta", property="og:title")
+            if isinstance(og_title, Tag):
+                content = og_title.get("content")
+                if content:
+                    result["title"] = self._clean_text(str(content))
+                    og_extracted = True
+
+        # og:description -> description
+        if not result["description"]:
+            og_desc = soup.find("meta", property="og:description")
+            if isinstance(og_desc, Tag):
+                content = og_desc.get("content")
+                if content:
+                    result["description"] = self._clean_text(str(content))
+                    og_extracted = True
+
+        # og:site_name -> company (as hint)
+        if not result["company"]:
+            og_site = soup.find("meta", property="og:site_name")
+            if isinstance(og_site, Tag):
+                content = og_site.get("content")
+                if content:
+                    result["company"] = self._clean_text(str(content))
+                    og_extracted = True
+
+        if og_extracted:
+            result["extraction_methods"].append("opengraph")
+            logger.debug("GenericJobParser: Extracted data via OpenGraph")
+
+        return result
+
+    def _extract_meta_tags(self, soup: BeautifulSoup, result: dict) -> dict:
+        """Extract data from standard meta tags."""
+        meta_extracted = False
+
+        # <meta name="title">
+        if not result["title"]:
+            meta_title = soup.find("meta", attrs={"name": "title"})
+            if isinstance(meta_title, Tag):
+                content = meta_title.get("content")
+                if content:
+                    result["title"] = self._clean_text(str(content))
+                    meta_extracted = True
+
+        # <meta name="description">
+        if not result["description"]:
+            meta_desc = soup.find("meta", attrs={"name": "description"})
+            if isinstance(meta_desc, Tag):
+                content = meta_desc.get("content")
+                if content:
+                    result["description"] = self._clean_text(str(content))
+                    meta_extracted = True
+
+        # <meta name="author"> -> company hint
+        if not result["company"]:
+            meta_author = soup.find("meta", attrs={"name": "author"})
+            if isinstance(meta_author, Tag):
+                content = meta_author.get("content")
+                if content:
+                    result["company"] = self._clean_text(str(content))
+                    meta_extracted = True
+
+        if meta_extracted:
+            result["extraction_methods"].append("meta-tags")
+            logger.debug("GenericJobParser: Extracted data via meta tags")
+
+        return result
+
+    def _extract_from_title_tag(self, soup: BeautifulSoup, result: dict) -> dict:
+        """Extract job title and company from <title> tag.
+
+        Common patterns:
+        - "Job Title - Company Name"
+        - "Job Title | Company Name"
+        - "Job Title at Company Name"
+        - "Job Title bei Company Name" (German)
+        """
+        if result["title"] and result["company"]:
+            return result  # Already have both
+
+        title_tag = soup.find("title")
+        if not title_tag:
+            return result
+
+        title_text = title_tag.get_text(strip=True)
+        if not title_text:
+            return result
+
+        title_extracted = False
+
+        # Try splitting by common separators
+        separators = [" - ", " | ", " – ", " — ", " · "]
+        for sep in separators:
+            if sep in title_text:
+                parts = title_text.split(sep)
+                if len(parts) >= 2:
+                    # First part is usually the job title
+                    if not result["title"]:
+                        result["title"] = self._clean_text(parts[0])
+                        title_extracted = True
+                    # Last part (or second) is often the company
+                    if not result["company"]:
+                        company_part = parts[-1] if len(parts) > 2 else parts[1]
+                        # Clean common suffixes
+                        company_part = re.sub(
+                            r"\s*[-–|]\s*(Jobs?|Karriere|Career|Stellenangebote?).*$",
+                            "", company_part, flags=re.I
+                        )
+                        if company_part:
+                            result["company"] = self._clean_text(company_part)
+                            title_extracted = True
+                    break
+
+        # Try "at" / "bei" pattern
+        if not result["title"] or not result["company"]:
+            at_match = re.match(
+                r"^(.+?)\s+(?:at|bei|@)\s+(.+?)(?:\s*[-|–].*)?$",
+                title_text, re.I
+            )
+            if at_match:
+                if not result["title"]:
+                    result["title"] = self._clean_text(at_match.group(1))
+                    title_extracted = True
+                if not result["company"]:
+                    result["company"] = self._clean_text(at_match.group(2))
+                    title_extracted = True
+
+        # Fallback: use entire title if nothing else worked
+        if not result["title"] and title_text:
+            # Clean common suffixes from title
+            clean_title = re.sub(
+                r"\s*[-–|]\s*(Jobs?|Karriere|Career|Stellenangebote?|Apply|Bewerben).*$",
+                "", title_text, flags=re.I
+            )
+            if clean_title:
+                result["title"] = self._clean_text(clean_title)
+                title_extracted = True
+
+        if title_extracted:
+            result["extraction_methods"].append("title-tag")
+            logger.debug("GenericJobParser: Extracted data via title tag")
+
+        return result
+
+    def _extract_html_patterns(self, soup: BeautifulSoup, result: dict, url: str) -> dict:
+        """Extract data using common HTML patterns and selectors."""
+        html_extracted = False
+
+        # Job title selectors (in priority order)
+        if not result["title"]:
+            title_selectors = [
+                {"attrs": {"data-testid": re.compile(r"job[-_]?title", re.I)}},
+                {"class_": re.compile(r"job[-_]?title|position[-_]?title|posting[-_]?title", re.I)},
+                {"attrs": {"itemprop": "title"}},
+                {"attrs": {"data-qa": re.compile(r"job[-_]?title", re.I)}},
+            ]
+            for selector in title_selectors:
+                elem = soup.find(**selector)
+                if elem:
+                    result["title"] = self._clean_text(elem.get_text())
+                    html_extracted = True
+                    break
+
+        # Company name selectors
+        if not result["company"]:
+            company_selectors = [
+                {"attrs": {"data-testid": re.compile(r"company[-_]?name|employer", re.I)}},
+                {"class_": re.compile(r"company[-_]?name|employer[-_]?name|hiring[-_]?company", re.I)},
+                {"attrs": {"itemprop": "hiringOrganization"}},
+                {"attrs": {"data-company": True}},
+                {"attrs": {"data-qa": re.compile(r"company", re.I)}},
+            ]
+            for selector in company_selectors:
+                elem = soup.find(**selector)
+                if elem:
+                    # May be nested, look for name attribute or direct text
+                    name_elem = elem.find(attrs={"itemprop": "name"})
+                    if name_elem:
+                        result["company"] = self._clean_text(name_elem.get_text())
+                    else:
+                        result["company"] = self._clean_text(elem.get_text())
+                    html_extracted = True
+                    break
+
+        # Location selectors
+        if not result["location"]:
+            location_selectors = [
+                {"attrs": {"data-testid": re.compile(r"job[-_]?location|location", re.I)}},
+                {"class_": re.compile(r"job[-_]?location|location|arbeitsort|standort", re.I)},
+                {"attrs": {"itemprop": "jobLocation"}},
+                {"attrs": {"data-location": True}},
+            ]
+            for selector in location_selectors:
+                elem = soup.find(**selector)
+                if elem:
+                    # Handle nested address
+                    addr_elem = elem.find(attrs={"itemprop": "address"})
+                    if addr_elem:
+                        result["location"] = self._clean_text(addr_elem.get_text())
+                    else:
+                        result["location"] = self._clean_text(elem.get_text())
+                    html_extracted = True
+                    break
+
+        # Job description selectors
+        if not result["description"]:
+            desc_selectors = [
+                {"attrs": {"data-testid": re.compile(r"job[-_]?description|description", re.I)}},
+                {"class_": re.compile(r"job[-_]?description|description[-_]?content|posting[-_]?description", re.I)},
+                {"attrs": {"itemprop": "description"}},
+                {"attrs": {"id": re.compile(r"job[-_]?description", re.I)}},
+            ]
+            for selector in desc_selectors:
+                elem = soup.find(**selector)
+                if elem:
+                    result["description"] = self._clean_text(elem.get_text(separator="\n"))
+                    html_extracted = True
+                    break
+
+            # Fallback: try article or main content
+            if not result["description"]:
+                for tag in ["article", "main"]:
+                    elem = soup.find(tag)
+                    if elem:
+                        text = elem.get_text(separator="\n", strip=True)
+                        if len(text) > 200:  # Minimum content threshold
+                            result["description"] = self._clean_text(text)
+                            html_extracted = True
+                            break
+
+        # Employment type - look for keywords in tagged elements
+        if not result["employment_type"]:
+            emp_keywords = {
+                "vollzeit": "Vollzeit", "full-time": "Full-time", "full time": "Full-time",
+                "teilzeit": "Teilzeit", "part-time": "Part-time", "part time": "Part-time",
+                "festanstellung": "Festanstellung", "permanent": "Permanent",
+                "befristet": "Befristet", "temporary": "Temporary",
+                "remote": "Remote", "homeoffice": "Homeoffice",
+                "hybrid": "Hybrid", "freelance": "Freelance",
+                "praktikum": "Praktikum", "internship": "Internship",
+                "werkstudent": "Werkstudent", "minijob": "Minijob",
+            }
+            for elem in soup.find_all(class_=re.compile(r"type|tag|badge|chip|label|employment", re.I)):
+                text = elem.get_text(strip=True).lower()
+                for keyword, label in emp_keywords.items():
+                    if keyword in text:
+                        result["employment_type"] = label
+                        html_extracted = True
+                        break
+                if result["employment_type"]:
+                    break
+
+        # Contact email - search page text
+        if not result["contact_email"]:
+            page_text = soup.get_text()
+            email_pattern = re.compile(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}")
+            emails = email_pattern.findall(page_text)
+            # Filter out common non-contact emails
+            blocked_patterns = [
+                "noreply", "no-reply", "newsletter", "support@", "info@",
+                "privacy", "datenschutz", "tracking", "analytics",
+                "example.com", "test.com"
+            ]
+            contact_emails = [
+                e for e in emails
+                if not any(bp in e.lower() for bp in blocked_patterns)
+            ]
+            if contact_emails:
+                result["contact_email"] = contact_emails[0]
+                html_extracted = True
+
+        if html_extracted:
+            result["extraction_methods"].append("html-patterns")
+            logger.debug("GenericJobParser: Extracted data via HTML patterns")
+
+        return result
+
+    def _apply_heuristics(self, soup: BeautifulSoup, result: dict, url: str) -> dict:
+        """Apply heuristic extraction as last resort."""
+        heuristic_used = False
+
+        # First h1 as job title
+        if not result["title"]:
+            h1 = soup.find("h1")
+            if h1:
+                title_text = h1.get_text(strip=True)
+                # Avoid generic headings
+                generic_headings = ["jobs", "karriere", "career", "stellenangebote", "home"]
+                if title_text.lower() not in generic_headings and len(title_text) > 3:
+                    result["title"] = self._clean_text(title_text)
+                    heuristic_used = True
+
+        # Company from domain name
+        if not result["company"]:
+            parsed = urlparse(url)
+            hostname = parsed.netloc.lower().replace("www.", "")
+            # Extract base domain (before TLD)
+            domain_parts = hostname.split(".")
+            if len(domain_parts) >= 2:
+                # Skip common job board domains
+                job_board_domains = [
+                    "indeed", "stepstone", "xing", "linkedin", "glassdoor",
+                    "monster", "lever", "greenhouse", "workday", "smartrecruiters",
+                    "softgarden", "arbeitsagentur", "jobs", "careers"
+                ]
+                base_domain = domain_parts[0]
+                if base_domain not in job_board_domains:
+                    # Convert to title case, replace hyphens with spaces
+                    company_name = base_domain.replace("-", " ").replace("_", " ").title()
+                    result["company"] = company_name
+                    heuristic_used = True
+
+        # Look for salary patterns in page text
+        if not result["salary"]:
+            page_text = soup.get_text()
+            # German salary patterns
+            salary_patterns = [
+                # Range: 50.000 - 70.000 € or 50,000-70,000 EUR
+                r"(\d{1,3}(?:[.,]\d{3})*)\s*[-–bis]+\s*(\d{1,3}(?:[.,]\d{3})*)\s*(?:€|EUR|Euro)",
+                # Single value: ab 50.000 €
+                r"(?:ab|from|starting)\s+(\d{1,3}(?:[.,]\d{3})*)\s*(?:€|EUR|Euro)",
+                # Hourly: 15-20 €/h
+                r"(\d{1,3})\s*[-–]\s*(\d{1,3})\s*(?:€|EUR)/\s*(?:h|Stunde|hour)",
+            ]
+            for pattern in salary_patterns:
+                match = re.search(pattern, page_text, re.I)
+                if match:
+                    result["salary"] = match.group(0).strip()
+                    heuristic_used = True
+                    break
+
+        if heuristic_used:
+            result["extraction_methods"].append("heuristics")
+            logger.debug("GenericJobParser: Applied heuristic extraction")
+
+        return result
+
+    def _clean_text(self, text: str | None) -> str | None:
+        """Clean extracted text: strip whitespace, normalize spaces, decode entities."""
+        if not text:
+            return None
+
+        # Strip leading/trailing whitespace
+        text = text.strip()
+
+        # Normalize whitespace (multiple spaces/newlines to single space)
+        text = re.sub(r"\s+", " ", text)
+
+        # Remove zero-width characters
+        text = re.sub(r"[\u200b\u200c\u200d\ufeff]", "", text)
+
+        # Limit length for certain fields
+        if len(text) > 10000:
+            text = text[:10000] + "..."
+
+        return text if text else None
+
+    def _parse_date(self, date_str: str | None) -> str | None:
+        """Parse date string to YYYY-MM-DD format."""
+        if not date_str:
+            return None
+
+        try:
+            # Try ISO format first (2024-01-15, 2024-01-15T10:00:00Z)
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except (ValueError, AttributeError):
+            pass
+
+        # Try German format (15.01.2024)
+        try:
+            match = re.match(r"(\d{1,2})\.(\d{1,2})\.(\d{4})", date_str)
+            if match:
+                day, month, year = match.groups()
+                return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        except (ValueError, AttributeError):
+            pass
+
+        # Try US format (01/15/2024)
+        try:
+            match = re.match(r"(\d{1,2})/(\d{1,2})/(\d{4})", date_str)
+            if match:
+                month, day, year = match.groups()
+                return f"{year}-{month.zfill(2)}-{day.zfill(2)}"
+        except (ValueError, AttributeError):
+            pass
+
+        # Return original if parsing fails
+        return date_str
+
+
 # Registry of available job board parsers
 JOB_BOARD_PARSERS: list[type[JobBoardParser]] = [
     IndeedParser,
@@ -1655,6 +2252,11 @@ class WebScraper:
                     parser = parser_class()
                     structured_data = parser.parse(soup_for_parsing, url)
                     break
+
+            # Fallback to generic parser if no specific parser matched
+            if not structured_data:
+                generic_parser = GenericJobParser()
+                structured_data = generic_parser.parse(soup_for_parsing, url)
 
             # Create clean soup for text extraction (removes scripts etc.)
             soup_for_text = BeautifulSoup(response.text, "html.parser")
