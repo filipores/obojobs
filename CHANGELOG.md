@@ -1,3 +1,13 @@
+## [1.7.9](https://github.com/filipores/obojobs/compare/v1.7.8...v1.7.9) (2026-01-31)
+
+
+### Bug Fixes
+
+* **applications:** fix web scraping and generation bugs ([ebb7309](https://github.com/filipores/obojobs/commit/ebb73093536dda710cb0270655cb23d48162869e))
+* **pdf-wizard:** fix variable name mapping and auto-advance to review (ob-a7o) ([70b5765](https://github.com/filipores/obojobs/commit/70b576502fe6c6efb1a757b8e840e71008bfe97c))
+* **templates:** fix PDF template upload feature bugs ([53ed74f](https://github.com/filipores/obojobs/commit/53ed74fa60be84f3d4d0b0e7746ce984e3c77d06))
+* **tests:** update test to match new missing_fields logic (ob-a7o) ([313913b](https://github.com/filipores/obojobs/commit/313913b90116ba0d768baac70a38434ee6f28277))
+
 ## [1.7.8](https://github.com/filipores/obojobs/compare/v1.7.7...v1.7.8) (2026-01-31)
 
 
