@@ -210,6 +210,8 @@ export async function setupAuthWithMocks(page: Page, targetUrl: string) {
   // Navigate to target URL - this will trigger a full page load with auth token in place
   await page.goto(targetUrl);
 
-  // Wait for the page to be fully loaded
-  await page.waitForLoadState('domcontentloaded');
+  // Wait for the page to be fully loaded and network idle
+  // Using 'networkidle' instead of 'domcontentloaded' to ensure all async
+  // mock XHR responses have triggered Vue re-renders before interacting
+  await page.waitForLoadState('networkidle');
 }
