@@ -1,3 +1,10 @@
+## [1.7.8](https://github.com/filipores/obojobs/compare/v1.7.7...v1.7.8) (2026-01-31)
+
+
+### Bug Fixes
+
+* **e2e:** use networkidle instead of domcontentloaded in auth utility ([647e96d](https://github.com/filipores/obojobs/commit/647e96df034c171af1c13963ea36d3000ac1d140))
+
 ## [1.7.7](https://github.com/filipores/obojobs/compare/v1.7.6...v1.7.7) (2026-01-30)
 
 
