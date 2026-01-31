@@ -1,7 +1,7 @@
 <template>
   <div class="template-editor-wrapper">
     <!-- Variable insert panel -->
-    <VariablePanel @insert="handleInsertVariable" />
+    <VariablePanel @insert="insertVariable" />
 
     <!-- Suggestions banner -->
     <Transition name="banner">
@@ -23,22 +23,73 @@
       </div>
     </Transition>
 
+    <!-- Formatting toolbar -->
+    <div class="editor-toolbar" v-if="editor" :class="{ 'has-suggestions': hasSuggestions }">
+      <button
+        type="button"
+        class="toolbar-btn"
+        :class="{ active: editor.isActive('bold') }"
+        @click="editor.chain().focus().toggleBold().run()"
+        title="Fett (Strg+B)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M6 4h8a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+          <path d="M6 12h9a4 4 0 0 1 4 4 4 4 0 0 1-4 4H6z"/>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="toolbar-btn"
+        :class="{ active: editor.isActive('italic') }"
+        @click="editor.chain().focus().toggleItalic().run()"
+        title="Kursiv (Strg+I)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="19" y1="4" x2="10" y2="4"/>
+          <line x1="14" y1="20" x2="5" y2="20"/>
+          <line x1="15" y1="4" x2="9" y2="20"/>
+        </svg>
+      </button>
+      <div class="toolbar-divider"></div>
+      <button
+        type="button"
+        class="toolbar-btn"
+        @click="editor.chain().focus().undo().run()"
+        :disabled="!editor.can().undo()"
+        title="Rückgängig (Strg+Z)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M3 10h10a5 5 0 0 1 5 5v2"/>
+          <polyline points="3 10 7 6 3 10 7 14"/>
+        </svg>
+      </button>
+      <button
+        type="button"
+        class="toolbar-btn"
+        @click="editor.chain().focus().redo().run()"
+        :disabled="!editor.can().redo()"
+        title="Wiederholen (Strg+Y)"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 10H11a5 5 0 0 0-5 5v2"/>
+          <polyline points="21 10 17 6 21 10 17 14"/>
+        </svg>
+      </button>
+    </div>
+
     <!-- Main editor -->
-    <div
-      ref="editorRef"
+    <editor-content
+      :editor="editor"
       class="template-editor"
-      :class="{ 'has-suggestions': hasSuggestions, 'drag-over': isDragOver }"
-      contenteditable="true"
-      :placeholder="placeholder"
-      @input="handleInput"
-      @mouseup="handleMouseUp"
-      @keyup="handleKeyUp"
-      @paste="handlePaste"
-      @blur="handleBlur"
+      :class="{
+        'has-suggestions': hasSuggestions,
+        'has-toolbar': !!editor,
+        'drag-over': isDragOver
+      }"
       @dragover="handleDragOver"
       @dragleave="handleDragLeave"
       @drop="handleDrop"
-    ></div>
+    />
 
     <!-- Character count -->
     <div class="editor-footer">
@@ -47,31 +98,17 @@
         Klicke auf markierte Passagen, um Vorschläge anzunehmen oder abzulehnen
       </span>
     </div>
-
-    <!-- Variable dropdown -->
-    <VariableDropdown
-      :show="showDropdown"
-      :position="dropdownPosition"
-      :selected-text="selectedText"
-      @select="handleVariableSelect"
-      @close="closeDropdown"
-    />
   </div>
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, nextTick } from 'vue'
-// VariableChip and SuggestionChip are created dynamically in createVariableChipElement/createSuggestionChipElement
-import _VariableChip from './VariableChip.vue'
-import _SuggestionChip from './SuggestionChip.vue'
-import VariableDropdown from './VariableDropdown.vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
+import { Editor, EditorContent } from '@tiptap/vue-3'
+import StarterKit from '@tiptap/starter-kit'
+import Placeholder from '@tiptap/extension-placeholder'
+import { Node, mergeAttributes } from '@tiptap/core'
 import VariablePanel from './VariablePanel.vue'
-import {
-  useTemplateParser,
-  parseTemplate as _parseTemplate,
-  serializeTemplate as _serializeTemplate,
-  VARIABLE_TYPES
-} from '../../composables/useTemplateParser'
+import { VARIABLE_TYPES } from '../../composables/useTemplateParser'
 
 const props = defineProps({
   modelValue: {
@@ -90,479 +127,396 @@ const props = defineProps({
 
 const emit = defineEmits(['update:modelValue', 'suggestion-accepted', 'suggestion-rejected'])
 
-// Template parser state
-const {
-  segments,
-  plainText,
-  hasSuggestions,
-  pendingSuggestions,
-  setContent,
-  applySuggestionsToContent,
-  acceptSuggestionById,
-  rejectSuggestionById,
-  acceptAllSuggestions,
-  rejectAllSuggestions
-} = useTemplateParser(props.modelValue)
-
 // Local state
-const editorRef = ref(null)
-const showDropdown = ref(false)
-const dropdownPosition = ref({ top: 0, left: 0 })
-const selectedText = ref('')
-const selectedRange = ref(null)
-const isRendering = ref(false)
-const lastEmittedValue = ref('')
-const isInternalUpdate = ref(false)
+const editor = ref(null)
+const isUpdating = ref(false)
 const isDragOver = ref(false)
+const processedSuggestions = ref([])
 
-const charCount = computed(() => plainText.value.length)
+// Custom extension for variable chips
+const VariableChip = Node.create({
+  name: 'variableChip',
+  group: 'inline',
+  inline: true,
+  atom: true,
 
-// Watch for external changes (from parent component)
-watch(() => props.modelValue, (newValue) => {
-  // Skip if this is our own emit or during rendering
-  if (isRendering.value || newValue === lastEmittedValue.value) {
-    return
-  }
-
-  // Only update if value actually changed from external source
-  if (newValue !== plainText.value) {
-    isInternalUpdate.value = true
-    setContent(newValue)
-    renderEditor()
-    isInternalUpdate.value = false
-  }
-})
-
-// Watch for suggestions
-watch(() => props.suggestions, (newSuggestions) => {
-  if (newSuggestions && newSuggestions.length > 0) {
-    applySuggestionsToContent(newSuggestions)
-    renderEditor()
-  }
-}, { immediate: true })
-
-// Emit changes when segments change (from user input)
-watch(plainText, (newValue) => {
-  // Only emit if this is a user-driven change, not from external prop update
-  if (!isInternalUpdate.value && newValue !== props.modelValue) {
-    lastEmittedValue.value = newValue
-    emit('update:modelValue', newValue)
-  }
-})
-
-// Render the editor content from segments
-function renderEditor() {
-  if (!editorRef.value) return
-
-  isRendering.value = true
-
-  // Save cursor position
-  const savedSelection = saveSelection()
-
-  // Clear and rebuild content
-  editorRef.value.innerHTML = ''
-
-  for (const segment of segments.value) {
-    if (segment.type === 'text') {
-      // Create text node
-      const textNode = document.createTextNode(segment.content)
-      editorRef.value.appendChild(textNode)
-    } else if (segment.type === 'variable') {
-      // Create variable chip
-      const chip = createVariableChipElement(segment)
-      editorRef.value.appendChild(chip)
-    } else if (segment.type === 'suggestion') {
-      // Create suggestion chip
-      const chip = createSuggestionChipElement(segment)
-      editorRef.value.appendChild(chip)
+  addAttributes() {
+    return {
+      type: {
+        default: 'FIRMA'
+      }
     }
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'span[data-variable-chip]',
+        getAttrs: (dom) => ({
+          type: dom.getAttribute('data-type')
+        })
+      }
+    ]
+  },
+
+  renderHTML({ node, HTMLAttributes }) {
+    const variableType = node.attrs.type
+    const label = VARIABLE_TYPES[variableType]?.label || variableType
+
+    return ['span', mergeAttributes(HTMLAttributes, {
+      'data-variable-chip': '',
+      'data-type': variableType,
+      class: `variable-chip variable-chip-${variableType.toLowerCase()}`,
+      contenteditable: 'false'
+    }), label]
+  }
+})
+
+// Custom extension for suggestion chips (AI suggestions that can be accepted/rejected)
+const SuggestionChip = Node.create({
+  name: 'suggestionChip',
+  group: 'inline',
+  inline: true,
+  atom: true,
+
+  addAttributes() {
+    return {
+      id: { default: '' },
+      text: { default: '' },
+      suggestedVariable: { default: 'FIRMA' },
+      reason: { default: '' }
+    }
+  },
+
+  parseHTML() {
+    return [
+      {
+        tag: 'span[data-suggestion-chip]',
+        getAttrs: (dom) => ({
+          id: dom.getAttribute('data-id'),
+          text: dom.getAttribute('data-text'),
+          suggestedVariable: dom.getAttribute('data-suggested-variable'),
+          reason: dom.getAttribute('data-reason')
+        })
+      }
+    ]
+  },
+
+  renderHTML({ node, HTMLAttributes }) {
+    const varLabel = VARIABLE_TYPES[node.attrs.suggestedVariable]?.label || node.attrs.suggestedVariable
+
+    return ['span', mergeAttributes(HTMLAttributes, {
+      'data-suggestion-chip': '',
+      'data-id': node.attrs.id,
+      'data-text': node.attrs.text,
+      'data-suggested-variable': node.attrs.suggestedVariable,
+      'data-reason': node.attrs.reason,
+      class: 'suggestion-chip',
+      contenteditable: 'false'
+    }), [
+      ['span', { class: 'suggestion-icon' }, '\u2728'],
+      ['span', { class: 'suggestion-content' }, node.attrs.text],
+      ['span', { class: 'suggestion-badge' }, varLabel],
+      ['span', { class: 'suggestion-actions' }, [
+        ['button', {
+          class: 'action-btn accept-btn',
+          title: 'Als Variable annehmen',
+          'data-action': 'accept'
+        }, '\u2713'],
+        ['button', {
+          class: 'action-btn reject-btn',
+          title: 'Vorschlag ablehnen',
+          'data-action': 'reject'
+        }, '\u2717']
+      ]]
+    ]]
+  }
+})
+
+// Convert plain text with {{VARIABLE}} to HTML
+function textToHtml(text) {
+  if (!text) return '<p></p>'
+
+  // Escape HTML entities first
+  let html = text
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+
+  // Convert {{VARIABLE}} to chip HTML
+  html = html.replace(/\{\{(\w+)\}\}/g, (match, varType) => {
+    if (VARIABLE_TYPES[varType]) {
+      return `<span data-variable-chip data-type="${varType}" class="variable-chip variable-chip-${varType.toLowerCase()}">${VARIABLE_TYPES[varType].label}</span>`
+    }
+    return match
+  })
+
+  // Convert line breaks to HTML
+  // Double line breaks become paragraph breaks
+  const paragraphs = html.split(/\n\n+/)
+  if (paragraphs.length > 1) {
+    html = paragraphs.map(p => {
+      const content = p.replace(/\n/g, '<br>').trim()
+      return content ? `<p>${content}</p>` : '<p></p>'
+    }).join('')
+  } else {
+    // Single paragraph with possible line breaks
+    const content = html.replace(/\n/g, '<br>').trim()
+    html = content ? `<p>${content}</p>` : '<p></p>'
   }
 
-  // Restore cursor position
-  nextTick(() => {
-    restoreSelection(savedSelection)
-    isRendering.value = false
+  return html
+}
+
+// Convert HTML back to plain text with {{VARIABLE}}
+function htmlToText(html) {
+  if (!html) return ''
+
+  // Create a temporary div to parse HTML
+  const div = document.createElement('div')
+  div.innerHTML = html
+
+  // Replace variable chips with {{VARIABLE}}
+  div.querySelectorAll('[data-variable-chip]').forEach(chip => {
+    const varType = chip.getAttribute('data-type')
+    const placeholder = document.createTextNode(`{{${varType}}}`)
+    chip.parentNode.replaceChild(placeholder, chip)
+  })
+
+  // Replace suggestion chips with their text content
+  div.querySelectorAll('[data-suggestion-chip]').forEach(chip => {
+    const text = chip.getAttribute('data-text')
+    const placeholder = document.createTextNode(text)
+    chip.parentNode.replaceChild(placeholder, chip)
+  })
+
+  // Convert paragraphs and line breaks
+  const paragraphs = div.querySelectorAll('p')
+  if (paragraphs.length > 0) {
+    const texts = []
+    paragraphs.forEach(p => {
+      // Get inner HTML, convert <br> to \n, then strip remaining tags
+      let pText = p.innerHTML
+        .replace(/<br\s*\/?>/gi, '\n')
+        .replace(/<[^>]+>/g, '')
+      texts.push(decodeHtmlEntities(pText))
+    })
+    return texts.join('\n\n').trim()
+  }
+
+  // If no paragraphs, just get text content
+  let text = div.innerHTML
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+  return decodeHtmlEntities(text).trim()
+}
+
+function decodeHtmlEntities(text) {
+  const textarea = document.createElement('textarea')
+  textarea.innerHTML = text
+  return textarea.value
+}
+
+// Character count
+const charCount = computed(() => {
+  if (!editor.value) return 0
+  return editor.value.getText().length
+})
+
+// Suggestions state
+const hasSuggestions = computed(() => processedSuggestions.value.length > 0)
+const pendingSuggestions = computed(() => processedSuggestions.value)
+
+// Initialize editor
+onMounted(() => {
+  editor.value = new Editor({
+    extensions: [
+      StarterKit.configure({
+        heading: false,
+        bulletList: false,
+        orderedList: false,
+        blockquote: false,
+        codeBlock: false,
+        code: false,
+        horizontalRule: false
+      }),
+      Placeholder.configure({
+        placeholder: props.placeholder,
+        emptyEditorClass: 'is-editor-empty'
+      }),
+      VariableChip,
+      SuggestionChip
+    ],
+    content: textToHtml(props.modelValue),
+    onUpdate: ({ editor: ed }) => {
+      if (isUpdating.value) return
+      const plainText = htmlToText(ed.getHTML())
+      emit('update:modelValue', plainText)
+    }
+  })
+
+  // Handle suggestion chip clicks
+  editor.value.view.dom.addEventListener('click', handleEditorClick)
+})
+
+onBeforeUnmount(() => {
+  if (editor.value) {
+    editor.value.view.dom.removeEventListener('click', handleEditorClick)
+    editor.value.destroy()
+  }
+})
+
+// Handle clicks on suggestion chips
+function handleEditorClick(event) {
+  const actionBtn = event.target.closest('[data-action]')
+  if (!actionBtn) return
+
+  const chip = actionBtn.closest('[data-suggestion-chip]')
+  if (!chip) return
+
+  const action = actionBtn.getAttribute('data-action')
+  const suggestionId = chip.getAttribute('data-id')
+  const suggestedVariable = chip.getAttribute('data-suggested-variable')
+  const text = chip.getAttribute('data-text')
+
+  if (action === 'accept') {
+    // Replace suggestion with variable
+    acceptSuggestion(suggestionId, suggestedVariable)
+    emit('suggestion-accepted', suggestionId)
+  } else if (action === 'reject') {
+    // Replace suggestion with plain text
+    rejectSuggestion(suggestionId, text)
+    emit('suggestion-rejected', suggestionId)
+  }
+}
+
+// Accept suggestion - convert to variable chip
+function acceptSuggestion(suggestionId, variableType) {
+  if (!editor.value) return
+
+  const html = editor.value.getHTML()
+  const regex = new RegExp(`<span[^>]*data-suggestion-chip[^>]*data-id="${suggestionId}"[^>]*>[^]*?<\\/span>`, 'g')
+  const newHtml = html.replace(regex, `<span data-variable-chip data-type="${variableType}" class="variable-chip variable-chip-${variableType.toLowerCase()}">${VARIABLE_TYPES[variableType]?.label || variableType}</span>`)
+
+  isUpdating.value = true
+  editor.value.commands.setContent(newHtml, false)
+  isUpdating.value = false
+
+  // Remove from processed suggestions
+  processedSuggestions.value = processedSuggestions.value.filter(s => s.id !== suggestionId)
+
+  // Emit the change
+  const plainText = htmlToText(editor.value.getHTML())
+  emit('update:modelValue', plainText)
+}
+
+// Reject suggestion - convert to plain text
+function rejectSuggestion(suggestionId, text) {
+  if (!editor.value) return
+
+  const html = editor.value.getHTML()
+  const escapedText = text.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]))
+  const regex = new RegExp(`<span[^>]*data-suggestion-chip[^>]*data-id="${suggestionId}"[^>]*>[^]*?<\\/span>`, 'g')
+  const newHtml = html.replace(regex, escapedText)
+
+  isUpdating.value = true
+  editor.value.commands.setContent(newHtml, false)
+  isUpdating.value = false
+
+  // Remove from processed suggestions
+  processedSuggestions.value = processedSuggestions.value.filter(s => s.id !== suggestionId)
+
+  // Emit the change
+  const plainText = htmlToText(editor.value.getHTML())
+  emit('update:modelValue', plainText)
+}
+
+// Accept all suggestions
+function handleAcceptAll() {
+  const suggestions = [...processedSuggestions.value]
+  suggestions.forEach(s => {
+    acceptSuggestion(s.id, s.suggestedVariable)
+    emit('suggestion-accepted', s.id)
   })
 }
 
-function createVariableChipElement(segment) {
-  const chip = document.createElement('span')
-  chip.className = 'variable-chip'
-  chip.setAttribute('data-type', segment.variableType)
-  chip.setAttribute('data-segment-id', segment.id)
-  chip.setAttribute('contenteditable', 'false')
-  chip.setAttribute('title', VARIABLE_TYPES[segment.variableType]?.description || '')
-
-  const label = document.createElement('span')
-  label.className = 'chip-label'
-  label.textContent = VARIABLE_TYPES[segment.variableType]?.label || segment.variableType
-  chip.appendChild(label)
-
-  const removeBtn = document.createElement('button')
-  removeBtn.className = 'chip-remove'
-  removeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
-  removeBtn.title = 'Variable entfernen'
-  removeBtn.onclick = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    removeVariable(segment.id)
-  }
-  chip.appendChild(removeBtn)
-
-  return chip
-}
-
-function createSuggestionChipElement(segment) {
-  const chip = document.createElement('span')
-  chip.className = 'suggestion-chip'
-  chip.setAttribute('data-type', segment.suggestedVariable)
-  chip.setAttribute('data-segment-id', segment.id)
-  chip.setAttribute('contenteditable', 'false')
-
-  const icon = document.createElement('span')
-  icon.className = 'suggestion-icon'
-  icon.innerHTML = '&#10024;'
-  chip.appendChild(icon)
-
-  const content = document.createElement('span')
-  content.className = 'suggestion-content'
-  content.textContent = segment.content
-  chip.appendChild(content)
-
-  const badge = document.createElement('span')
-  badge.className = 'suggestion-badge'
-  badge.textContent = VARIABLE_TYPES[segment.suggestedVariable]?.label || segment.suggestedVariable
-  chip.appendChild(badge)
-
-  const actions = document.createElement('span')
-  actions.className = 'suggestion-actions'
-
-  const acceptBtn = document.createElement('button')
-  acceptBtn.className = 'action-btn accept-btn'
-  acceptBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"></polyline></svg>'
-  acceptBtn.title = 'Als Variable annehmen'
-  acceptBtn.onclick = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    handleAcceptSuggestion(segment.id)
-  }
-  actions.appendChild(acceptBtn)
-
-  const rejectBtn = document.createElement('button')
-  rejectBtn.className = 'action-btn reject-btn'
-  rejectBtn.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
-  rejectBtn.title = 'Vorschlag ablehnen'
-  rejectBtn.onclick = (e) => {
-    e.preventDefault()
-    e.stopPropagation()
-    handleRejectSuggestion(segment.id)
-  }
-  actions.appendChild(rejectBtn)
-
-  chip.appendChild(actions)
-
-  return chip
-}
-
-function removeVariable(segmentId) {
-  // Block input events during removal to prevent capturing orphaned label text
-  isRendering.value = true
-
-  const newSegments = segments.value.filter(s => s.id !== segmentId)
-  // Merge adjacent text segments
-  const merged = []
-  for (const seg of newSegments) {
-    const last = merged[merged.length - 1]
-    if (last && last.type === 'text' && seg.type === 'text') {
-      last.content += seg.content
-    } else {
-      merged.push({ ...seg })
-    }
-  }
-  segments.value = merged
-  renderEditor()
-}
-
-function handleAcceptSuggestion(segmentId) {
-  acceptSuggestionById(segmentId)
-  emit('suggestion-accepted', segmentId)
-  renderEditor()
-}
-
-function handleRejectSuggestion(segmentId) {
-  rejectSuggestionById(segmentId)
-  emit('suggestion-rejected', segmentId)
-  renderEditor()
-}
-
-function handleAcceptAll() {
-  acceptAllSuggestions()
-  renderEditor()
-}
-
+// Reject all suggestions
 function handleRejectAll() {
-  rejectAllSuggestions()
-  renderEditor()
+  const suggestions = [...processedSuggestions.value]
+  suggestions.forEach(s => {
+    rejectSuggestion(s.id, s.text)
+    emit('suggestion-rejected', s.id)
+  })
 }
 
-// Handle text input
-function handleInput(_event) {
-  if (isRendering.value) return
+// Watch for external value changes
+watch(() => props.modelValue, (newValue) => {
+  if (!editor.value || isUpdating.value) return
 
-  // Parse the current content back to segments
-  const newPlainText = getPlainTextFromEditor()
-  setContent(newPlainText)
-}
+  const currentText = htmlToText(editor.value.getHTML())
+  if (newValue !== currentText) {
+    isUpdating.value = true
+    editor.value.commands.setContent(textToHtml(newValue), false)
+    isUpdating.value = false
+  }
+})
 
-function getPlainTextFromEditor() {
-  if (!editorRef.value) return ''
+// Watch for suggestions changes
+watch(() => props.suggestions, (newSuggestions) => {
+  if (!editor.value || !newSuggestions || newSuggestions.length === 0) {
+    processedSuggestions.value = []
+    return
+  }
 
-  let text = ''
-  const walker = document.createTreeWalker(
-    editorRef.value,
-    NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT,
-    null,
-    false
-  )
+  // Apply suggestions to the content
+  let html = editor.value.getHTML()
+  const appliedSuggestions = []
 
-  let node
-  while ((node = walker.nextNode()) !== null) {
-    if (node.nodeType === Node.TEXT_NODE) {
-      // Skip text nodes inside chips (already handled by the chip element handlers)
-      if (node.parentElement?.closest('.variable-chip') ||
-          node.parentElement?.closest('.suggestion-chip')) {
-        continue
-      }
-      text += node.textContent
-    } else if (node.nodeType === Node.ELEMENT_NODE) {
-      if (node.classList?.contains('variable-chip')) {
-        const type = node.getAttribute('data-type')
-        text += `{{${type}}}`
-      } else if (node.classList?.contains('suggestion-chip')) {
-        // For suggestions, include the original text
-        const contentEl = node.querySelector('.suggestion-content')
-        if (contentEl) {
-          text += contentEl.textContent
-        }
-      }
+  for (const suggestion of newSuggestions) {
+    const text = suggestion.text || suggestion.suggestedText
+    const variable = suggestion.suggestedVariable || suggestion.variable
+    const id = suggestion.id || `sug_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+
+    if (!text || !html.includes(text)) continue
+
+    // Escape text for regex
+    const escapedText = text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const regex = new RegExp(`(?<!data-text=")${escapedText}(?![^<]*<\\/span>)`, 'g')
+
+    const replacement = `<span data-suggestion-chip data-id="${id}" data-text="${text.replace(/"/g, '&quot;')}" data-suggested-variable="${variable}" data-reason="${(suggestion.reason || '').replace(/"/g, '&quot;')}" class="suggestion-chip" contenteditable="false"><span class="suggestion-icon">\u2728</span><span class="suggestion-content">${text}</span><span class="suggestion-badge">${VARIABLE_TYPES[variable]?.label || variable}</span><span class="suggestion-actions"><button class="action-btn accept-btn" title="Als Variable annehmen" data-action="accept">\u2713</button><button class="action-btn reject-btn" title="Vorschlag ablehnen" data-action="reject">\u2717</button></span></span>`
+
+    if (regex.test(html)) {
+      html = html.replace(regex, replacement)
+      appliedSuggestions.push({
+        id,
+        text,
+        suggestedVariable: variable,
+        reason: suggestion.reason
+      })
     }
   }
 
-  return text
-}
-
-// Handle text selection for variable creation
-function handleMouseUp(event) {
-  // Don't show dropdown if clicking on chips
-  if (event.target.closest('.variable-chip') || event.target.closest('.suggestion-chip')) {
-    return
+  if (appliedSuggestions.length > 0) {
+    isUpdating.value = true
+    editor.value.commands.setContent(html, false)
+    isUpdating.value = false
+    processedSuggestions.value = appliedSuggestions
   }
+}, { immediate: true })
 
-  checkSelection()
-}
+// Insert variable at cursor
+function insertVariable(variableType) {
+  if (!editor.value) return
 
-function handleKeyUp(event) {
-  // Check selection on shift+arrow keys
-  if (event.shiftKey && ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) {
-    checkSelection()
-  }
-}
-
-function checkSelection() {
-  const selection = window.getSelection()
-
-  if (!selection || selection.isCollapsed || selection.toString().trim().length === 0) {
-    closeDropdown()
-    return
-  }
-
-  const range = selection.getRangeAt(0)
-
-  // Check if selection is within our editor
-  if (!editorRef.value.contains(range.commonAncestorContainer)) {
-    closeDropdown()
-    return
-  }
-
-  // Check if selection spans multiple segments (we only support single text node selection)
-  if (range.startContainer !== range.endContainer) {
-    // Selection spans multiple nodes - could be complex, skip for now
-    closeDropdown()
-    return
-  }
-
-  // Check if selection is within a text node
-  if (range.startContainer.nodeType !== Node.TEXT_NODE) {
-    closeDropdown()
-    return
-  }
-
-  const text = selection.toString().trim()
-  if (text.length === 0) {
-    closeDropdown()
-    return
-  }
-
-  selectedText.value = text
-  selectedRange.value = range.cloneRange()
-
-  // Position dropdown near selection
-  const rect = range.getBoundingClientRect()
-  dropdownPosition.value = {
-    top: rect.bottom + window.scrollY + 8,
-    left: rect.left + window.scrollX
-  }
-
-  showDropdown.value = true
-}
-
-function closeDropdown() {
-  showDropdown.value = false
-  selectedText.value = ''
-  selectedRange.value = null
-}
-
-function handleVariableSelect(variableType) {
-  if (!selectedRange.value) {
-    closeDropdown()
-    return
-  }
-
-  // Insert variable at selection
-  const chip = document.createElement('span')
-  chip.className = 'variable-chip'
-  chip.setAttribute('data-type', variableType)
-  chip.setAttribute('data-segment-id', `seg_new_${Date.now()}`)
-  chip.setAttribute('contenteditable', 'false')
-  chip.setAttribute('title', VARIABLE_TYPES[variableType]?.description || '')
-
-  const label = document.createElement('span')
-  label.className = 'chip-label'
-  label.textContent = VARIABLE_TYPES[variableType]?.label || variableType
-  chip.appendChild(label)
-
-  const removeBtn = document.createElement('button')
-  removeBtn.className = 'chip-remove'
-  removeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
-  removeBtn.title = 'Variable entfernen'
-  chip.appendChild(removeBtn)
-
-  // Replace selection with chip
-  selectedRange.value.deleteContents()
-  selectedRange.value.insertNode(chip)
-
-  // Update segments from editor
-  const newPlainText = getPlainTextFromEditor()
-  setContent(newPlainText)
-
-  closeDropdown()
-
-  // Re-render to ensure proper structure
-  renderEditor()
-}
-
-// Handle inserting variable from panel at cursor position
-function handleInsertVariable(variableType) {
-  if (!editorRef.value) return
-
-  // Focus the editor first
-  editorRef.value.focus()
-
-  const selection = window.getSelection()
-
-  // If no selection or selection is outside editor, append at end
-  if (!selection || selection.rangeCount === 0 ||
-      !editorRef.value.contains(selection.anchorNode)) {
-    // Append variable at end
-    const variableText = `{{${variableType}}}`
-    const currentContent = getPlainTextFromEditor()
-    setContent(currentContent + variableText)
-    renderEditor()
-
-    // Place cursor after the inserted variable
-    nextTick(() => {
-      const sel = window.getSelection()
-      const range = document.createRange()
-      range.selectNodeContents(editorRef.value)
-      range.collapse(false) // collapse to end
-      sel.removeAllRanges()
-      sel.addRange(range)
+  editor.value
+    .chain()
+    .focus()
+    .insertContent({
+      type: 'variableChip',
+      attrs: { type: variableType }
     })
-    return
-  }
-
-  const range = selection.getRangeAt(0)
-
-  // Create variable chip element
-  const chip = document.createElement('span')
-  chip.className = 'variable-chip'
-  chip.setAttribute('data-type', variableType)
-  chip.setAttribute('data-segment-id', `seg_new_${Date.now()}`)
-  chip.setAttribute('contenteditable', 'false')
-  chip.setAttribute('title', VARIABLE_TYPES[variableType]?.description || '')
-
-  const label = document.createElement('span')
-  label.className = 'chip-label'
-  label.textContent = VARIABLE_TYPES[variableType]?.label || variableType
-  chip.appendChild(label)
-
-  const removeBtn = document.createElement('button')
-  removeBtn.className = 'chip-remove'
-  removeBtn.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>'
-  removeBtn.title = 'Variable entfernen'
-  chip.appendChild(removeBtn)
-
-  // If there's selected text, replace it
-  if (!range.collapsed) {
-    range.deleteContents()
-  }
-
-  // Insert chip at cursor position
-  range.insertNode(chip)
-
-  // Move cursor after the chip
-  range.setStartAfter(chip)
-  range.setEndAfter(chip)
-  selection.removeAllRanges()
-  selection.addRange(range)
-
-  // Update segments from editor
-  const newPlainText = getPlainTextFromEditor()
-  setContent(newPlainText)
-
-  // Re-render to ensure proper structure
-  renderEditor()
-}
-
-// Handle paste - strip formatting and use modern API
-function handlePaste(event) {
-  event.preventDefault()
-
-  const text = event.clipboardData.getData('text/plain')
-  const selection = window.getSelection()
-
-  if (!selection || selection.rangeCount === 0) return
-
-  // Delete selected content and insert plain text
-  selection.deleteFromDocument()
-  const textNode = document.createTextNode(text)
-  selection.getRangeAt(0).insertNode(textNode)
-
-  // Move cursor to end of inserted text
-  selection.collapseToEnd()
-
-  // Update segments from editor content
-  const newPlainText = getPlainTextFromEditor()
-  setContent(newPlainText)
-}
-
-function handleBlur() {
-  // Small delay to allow clicking on dropdown
-  setTimeout(() => {
-    if (!showDropdown.value) {
-      // Could save state here if needed
-    }
-  }, 200)
+    .run()
 }
 
 // Drag and drop handlers
@@ -573,8 +527,7 @@ function handleDragOver(event) {
 }
 
 function handleDragLeave(event) {
-  // Only set to false if we're leaving the editor entirely
-  if (!editorRef.value.contains(event.relatedTarget)) {
+  if (!event.currentTarget.contains(event.relatedTarget)) {
     isDragOver.value = false
   }
 }
@@ -583,110 +536,11 @@ function handleDrop(event) {
   event.preventDefault()
   isDragOver.value = false
 
-  // Check if this is a template variable
   const variableType = event.dataTransfer.getData('application/x-template-variable')
   if (variableType) {
-    // Insert variable at drop position
-    handleInsertVariable(variableType)
-  } else {
-    // Fallback: insert plain text
-    const text = event.dataTransfer.getData('text/plain')
-    if (text) {
-      const selection = window.getSelection()
-      if (selection && selection.rangeCount > 0) {
-        selection.deleteFromDocument()
-        const textNode = document.createTextNode(text)
-        selection.getRangeAt(0).insertNode(textNode)
-        selection.collapseToEnd()
-        const newPlainText = getPlainTextFromEditor()
-        setContent(newPlainText)
-      }
-    }
+    insertVariable(variableType)
   }
 }
-
-// Selection save/restore helpers
-function saveSelection() {
-  const selection = window.getSelection()
-  if (!selection || selection.rangeCount === 0) return null
-
-  const range = selection.getRangeAt(0)
-  if (!editorRef.value.contains(range.commonAncestorContainer)) return null
-
-  return {
-    startOffset: getAbsoluteOffset(range.startContainer, range.startOffset),
-    endOffset: getAbsoluteOffset(range.endContainer, range.endOffset)
-  }
-}
-
-function restoreSelection(savedSelection) {
-  if (!savedSelection || !editorRef.value) return
-
-  try {
-    const { node: startNode, offset: startOffset } = getNodeAtOffset(savedSelection.startOffset)
-    const { node: endNode, offset: endOffset } = getNodeAtOffset(savedSelection.endOffset)
-
-    if (startNode && endNode) {
-      const range = document.createRange()
-      range.setStart(startNode, startOffset)
-      range.setEnd(endNode, endOffset)
-
-      const selection = window.getSelection()
-      selection.removeAllRanges()
-      selection.addRange(range)
-    }
-  } catch (_e) {
-    // Ignore selection restore errors
-  }
-}
-
-function getAbsoluteOffset(node, offset) {
-  let absoluteOffset = 0
-  const walker = document.createTreeWalker(
-    editorRef.value,
-    NodeFilter.SHOW_TEXT,
-    null,
-    false
-  )
-
-  let currentNode
-  while ((currentNode = walker.nextNode()) !== null) {
-    if (currentNode === node) {
-      return absoluteOffset + offset
-    }
-    absoluteOffset += currentNode.textContent.length
-  }
-
-  return absoluteOffset
-}
-
-function getNodeAtOffset(targetOffset) {
-  let currentOffset = 0
-  const walker = document.createTreeWalker(
-    editorRef.value,
-    NodeFilter.SHOW_TEXT,
-    null,
-    false
-  )
-
-  let node
-  while ((node = walker.nextNode()) !== null) {
-    const nodeLength = node.textContent.length
-    if (currentOffset + nodeLength >= targetOffset) {
-      return { node, offset: targetOffset - currentOffset }
-    }
-    currentOffset += nodeLength
-  }
-
-  // Return last position if not found
-  const lastNode = walker.currentNode
-  return { node: lastNode, offset: lastNode?.textContent?.length || 0 }
-}
-
-// Initialize
-onMounted(() => {
-  renderEditor()
-})
 </script>
 
 <style scoped>
@@ -745,7 +599,6 @@ onMounted(() => {
 }
 
 .banner-btn.accept-all:hover {
-  background: var(--color-koke, #7A8B6E);
   filter: brightness(0.9);
 }
 
@@ -759,29 +612,79 @@ onMounted(() => {
   background: var(--color-washi-aged, #E8E2D5);
 }
 
+/* Toolbar */
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-washi-warm, #F2EDE3);
+  border: 1.5px solid var(--color-border, #D4C9BA);
+  border-bottom: none;
+  border-radius: var(--radius-md, 0.5rem) var(--radius-md, 0.5rem) 0 0;
+}
+
+.editor-toolbar.has-suggestions {
+  border-radius: 0;
+  border-top: none;
+}
+
+.toolbar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm, 0.25rem);
+  color: var(--color-text-secondary, #4A4A4A);
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.toolbar-btn:hover:not(:disabled) {
+  background: var(--color-washi-aged, #E8E2D5);
+  color: var(--color-text-primary, #2C2C2C);
+}
+
+.toolbar-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.toolbar-btn.active {
+  background: var(--color-ai-subtle, rgba(61, 90, 108, 0.12));
+  color: var(--color-ai, #3D5A6C);
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border, #D4C9BA);
+  margin: 0 0.25rem;
+}
+
 /* Main editor */
 .template-editor {
   background: var(--color-washi-cream, #FAF8F3);
   border: 1.5px solid var(--color-border, #D4C9BA);
   border-radius: var(--radius-md, 0.5rem);
-  padding: var(--space-lg, 1.5rem);
   min-height: 300px;
-  font-family: var(--font-body, 'Karla', sans-serif);
-  font-size: 1rem;
-  line-height: var(--leading-relaxed, 1.85);
-  color: var(--color-text-primary, #2C2C2C);
-  outline: none;
   transition: border-color var(--transition-base, 350ms ease);
-  white-space: pre-wrap;
-  word-wrap: break-word;
 }
 
-.template-editor.has-suggestions {
-  border-top-left-radius: 0;
-  border-top-right-radius: 0;
+.template-editor.has-toolbar {
+  border-top: none;
+  border-radius: 0 0 var(--radius-md, 0.5rem) var(--radius-md, 0.5rem);
 }
 
-.template-editor:focus {
+.template-editor.has-suggestions.has-toolbar {
+  border-top: none;
+}
+
+.template-editor:has(.ProseMirror-focused) {
   border-color: var(--color-ai, #3D5A6C);
   box-shadow: 0 0 0 3px var(--color-ai-subtle, rgba(61, 90, 108, 0.08));
 }
@@ -792,10 +695,31 @@ onMounted(() => {
   background: var(--color-ai-subtle, rgba(61, 90, 108, 0.04));
 }
 
-.template-editor:empty::before {
-  content: attr(placeholder);
+.template-editor :deep(.ProseMirror) {
+  padding: var(--space-lg, 1.5rem);
+  min-height: 300px;
+  font-family: var(--font-body, 'Karla', sans-serif);
+  font-size: 1rem;
+  line-height: var(--leading-relaxed, 1.85);
+  color: var(--color-text-primary, #2C2C2C);
+  outline: none;
+}
+
+.template-editor :deep(.ProseMirror p) {
+  margin: 0 0 1em 0;
+}
+
+.template-editor :deep(.ProseMirror p:last-child) {
+  margin-bottom: 0;
+}
+
+.template-editor :deep(.ProseMirror.is-editor-empty:first-child::before),
+.template-editor :deep(.ProseMirror > p.is-editor-empty:first-child::before) {
+  content: attr(data-placeholder);
+  float: left;
   color: var(--color-text-ghost, #8A8A8A);
   pointer-events: none;
+  height: 0;
 }
 
 /* Editor footer */
@@ -812,87 +736,50 @@ onMounted(() => {
   font-style: italic;
 }
 
-/* Variable chip styles (inline in editor) */
+/* Variable chip styles */
 .template-editor :deep(.variable-chip) {
   display: inline-flex;
   align-items: center;
-  gap: 0.25rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.15rem 0.5rem;
   margin: 0 0.125rem;
   border-radius: var(--radius-full, 9999px);
   font-size: 0.8125rem;
   font-weight: 500;
   cursor: default;
   user-select: none;
-  transition: all var(--transition-subtle, 200ms ease);
   vertical-align: baseline;
   line-height: 1.4;
   white-space: nowrap;
 }
 
-.template-editor :deep(.variable-chip[data-type="FIRMA"]) {
+.template-editor :deep(.variable-chip-firma) {
   background: var(--color-ai-subtle, rgba(61, 90, 108, 0.12));
   color: var(--color-ai, #3D5A6C);
   border: 1px solid var(--color-ai, #3D5A6C);
 }
 
-.template-editor :deep(.variable-chip[data-type="POSITION"]) {
+.template-editor :deep(.variable-chip-position) {
   background: var(--color-success-light, rgba(122, 139, 110, 0.15));
   color: var(--color-success, #7A8B6E);
   border: 1px solid var(--color-success, #7A8B6E);
 }
 
-.template-editor :deep(.variable-chip[data-type="ANSPRECHPARTNER"]) {
+.template-editor :deep(.variable-chip-ansprechpartner) {
   background: var(--color-warning-light, rgba(196, 163, 90, 0.15));
   color: var(--color-warning, #C4A35A);
   border: 1px solid var(--color-warning, #C4A35A);
 }
 
-.template-editor :deep(.variable-chip[data-type="QUELLE"]) {
+.template-editor :deep(.variable-chip-quelle) {
   background: rgba(184, 122, 94, 0.12);
   color: var(--color-terra, #B87A5E);
   border: 1px solid var(--color-terra, #B87A5E);
 }
 
-.template-editor :deep(.variable-chip[data-type="EINLEITUNG"]) {
+.template-editor :deep(.variable-chip-einleitung) {
   background: rgba(139, 154, 107, 0.12);
   color: var(--color-bamboo, #8B9A6B);
   border: 1px solid var(--color-bamboo, #8B9A6B);
-}
-
-.template-editor :deep(.variable-chip:hover) {
-  transform: scale(1.02);
-  box-shadow: var(--shadow-paper, 0 2px 8px rgba(44, 44, 44, 0.08));
-}
-
-.template-editor :deep(.chip-label) {
-  pointer-events: none;
-}
-
-.template-editor :deep(.chip-remove) {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 16px;
-  height: 16px;
-  padding: 0;
-  margin-left: 0.125rem;
-  background: transparent;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  opacity: 0;
-  transition: all var(--transition-subtle, 200ms ease);
-  color: inherit;
-}
-
-.template-editor :deep(.variable-chip:hover .chip-remove) {
-  opacity: 0.6;
-}
-
-.template-editor :deep(.chip-remove:hover) {
-  opacity: 1 !important;
-  background: rgba(0, 0, 0, 0.1);
 }
 
 /* Suggestion chip styles */
@@ -965,6 +852,7 @@ onMounted(() => {
   border-radius: 50%;
   cursor: pointer;
   transition: all var(--transition-subtle, 200ms ease);
+  font-size: 0.75rem;
 }
 
 .template-editor :deep(.action-btn:hover) {
