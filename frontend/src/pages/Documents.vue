@@ -267,11 +267,14 @@
               </div>
               <div class="document-title-group">
                 <h3>Arbeitszeugnis</h3>
-                <span class="badge badge-required">Pflichtfeld</span>
+                <span class="badge badge-optional">Optional</span>
               </div>
             </div>
 
-            <p class="document-description">Ihr aktuellstes Arbeitszeugnis</p>
+            <p class="document-description">
+              Ihr aktuellstes Arbeitszeugnis
+              <span v-if="!documents.arbeitszeugnis" class="quality-hint">(verbessert Bewerbungsqualität)</span>
+            </p>
 
             <div
               class="upload-zone"
@@ -409,17 +412,14 @@ const messageClass = ref({
 const dragActive = ref(null)
 
 const isComplete = computed(() => {
-  return documents.value.lebenslauf && documents.value.arbeitszeugnis
+  return !!documents.value.lebenslauf
 })
 
 const uploadedCount = computed(() => {
-  let count = 0
-  if (documents.value.lebenslauf) count++
-  if (documents.value.arbeitszeugnis) count++
-  return count
+  return documents.value.lebenslauf ? 1 : 0
 })
 
-const requiredCount = 2
+const requiredCount = 1
 
 const uploadProgress = computed(() => {
   return (uploadedCount.value / requiredCount) * 100
@@ -805,6 +805,14 @@ onMounted(async () => {
   color: var(--color-text-tertiary);
   margin-bottom: var(--space-lg);
   line-height: var(--leading-relaxed);
+}
+
+.quality-hint {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--color-ai);
+  font-style: italic;
+  margin-top: var(--space-xs);
 }
 
 /* ========================================

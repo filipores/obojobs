@@ -34,13 +34,14 @@ class BewerbungsGenerator:
         else:
             raise ValueError("Lebenslauf nicht gefunden. Bitte lade deinen Lebenslauf hoch.")
 
-        # Load Arbeitszeugnis (Pflicht)
+        # Load Arbeitszeugnis (Optional)
         zeugnis_doc = Document.query.filter_by(user_id=self.user_id, doc_type="arbeitszeugnis").first()
         if zeugnis_doc and os.path.exists(zeugnis_doc.file_path):
             self.zeugnis_text = read_document(zeugnis_doc.file_path)
             print("✓ Arbeitszeugnis geladen")
         else:
-            raise ValueError("Arbeitszeugnis nicht gefunden. Bitte lade dein letztes Arbeitszeugnis hoch.")
+            self.zeugnis_text = None
+            print("ℹ Arbeitszeugnis nicht vorhanden (optional)")
 
         # Load Anschreiben-Template
         if self.template_id:
