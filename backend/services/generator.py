@@ -8,6 +8,7 @@ from .api_client import ClaudeAPIClient
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
 from .pdf_template_modifier import PDFTemplateModifier
 from .requirement_analyzer import RequirementAnalyzer
+from .template_generator import get_or_create_default_template
 
 
 class BewerbungsGenerator:
@@ -64,19 +65,16 @@ class BewerbungsGenerator:
                 print("✓ Anschreiben-Vorlage aus Upload geladen")
             else:
                 # Falls kein Anschreiben hochgeladen, nutze Template aus DB
-                template = Template.query.filter_by(user_id=self.user_id, is_default=True).first()
-                if not template:
-                    template = Template.query.filter_by(user_id=self.user_id).first()
-                if template:
-                    self.template = template
-                    self.anschreiben_template = template.content
-                    print("✓ Template geladen")
-                    if template.is_pdf_template:
-                        print(f"  → PDF-Template erkannt: {template.pdf_path}")
+                # Auto-create default template if none exists
+                template = get_or_create_default_template(self.user_id)
+                self.template = template
+                self.anschreiben_template = template.content
+                if template.name == "Standard-Vorlage (automatisch erstellt)":
+                    print("✓ Standard-Template automatisch erstellt")
                 else:
-                    raise ValueError(
-                        "Kein Template gefunden. Bitte erstelle ein Template oder lade ein Anschreiben hoch."
-                    )
+                    print("✓ Template geladen")
+                if template.is_pdf_template:
+                    print(f"  → PDF-Template erkannt: {template.pdf_path}")
 
         print("✓ Dokumente geladen")
 
