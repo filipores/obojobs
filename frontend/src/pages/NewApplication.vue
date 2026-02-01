@@ -71,6 +71,16 @@
         </div>
       </section>
 
+      <!-- Usage Indicator - Show prominently before form -->
+      <section v-if="usage" class="usage-section animate-fade-up" style="animation-delay: 150ms;">
+        <UsageIndicator
+          :used="usage.used"
+          :limit="usage.limit"
+          :unlimited="usage.unlimited"
+          :plan="usage.plan"
+        />
+      </section>
+
       <!-- Form Section -->
       <section class="form-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="form-card zen-card">
@@ -544,16 +554,23 @@
               @click="generateApplication"
               :disabled="!canGenerate || generating"
               class="zen-btn zen-btn-ai zen-btn-lg"
+              :class="{ 'btn-disabled-limit': isAtUsageLimit }"
             >
               <span v-if="generating" class="btn-loading">
                 <span class="loading-spinner"></span>
                 Generiere Bewerbung...
               </span>
+              <span v-else-if="isAtUsageLimit">
+                Limit erreicht
+              </span>
               <span v-else>
                 Bewerbung generieren
               </span>
             </button>
-            <p class="usage-info">
+            <p v-if="isAtUsageLimit" class="usage-info usage-info-limit">
+              <router-link to="/subscription">Upgrade dein Abo</router-link> um weitere Bewerbungen zu generieren
+            </p>
+            <p v-else class="usage-info">
               <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
               <span v-else>Noch {{ usage?.remaining || 0 }} von {{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
             </p>
@@ -706,6 +723,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
+import UsageIndicator from '../components/UsageIndicator.vue'
 
 const router = useRouter()
 
@@ -859,9 +877,15 @@ const templateVariables = computed(() => ({
   QUELLE: previewData.value?.portal || ''
 }))
 
+// Check if at usage limit
+const isAtUsageLimit = computed(() => {
+  if (!usage.value || usage.value.unlimited) return false
+  return usage.value.used >= usage.value.limit
+})
+
 // Can generate check
 const canGenerate = computed(() => {
-  return editableData.value.company && editableData.value.title
+  return editableData.value.company && editableData.value.title && !isAtUsageLimit.value
 })
 
 // Check if error is about missing documents (CV/resume/Lebenslauf)
@@ -2087,6 +2111,29 @@ onMounted(() => {
   margin-top: var(--space-md);
   font-size: 0.875rem;
   color: var(--color-text-tertiary);
+}
+
+.usage-info-limit {
+  color: var(--color-error);
+}
+
+.usage-info-limit a {
+  color: var(--color-ai);
+  font-weight: 500;
+  text-decoration: none;
+}
+
+.usage-info-limit a:hover {
+  text-decoration: underline;
+}
+
+.usage-section {
+  margin-bottom: var(--space-lg);
+}
+
+.btn-disabled-limit {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 /* ========================================
