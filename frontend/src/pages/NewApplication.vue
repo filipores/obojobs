@@ -123,8 +123,8 @@
             </div>
           </div>
 
-          <!-- Preview Button (only show if no preview yet) -->
-          <div v-if="!previewData" class="form-actions preview-actions">
+          <!-- Preview Button (only show if no quick confirm or preview yet) -->
+          <div v-if="!quickConfirmData && !previewData" class="form-actions preview-actions">
             <button
               @click="loadPreview"
               :disabled="!url || loading || urlValidation.isValid !== true"
@@ -244,8 +244,107 @@
         </div>
       </section>
 
-      <!-- Preview Section (shown after loading) -->
-      <section v-if="previewData" class="preview-section animate-fade-up" style="animation-delay: 150ms;">
+      <!-- Minimal Confirmation Section (quick flow) -->
+      <section v-if="quickConfirmData && !showFullPreview" class="quick-confirm-section animate-fade-up" style="animation-delay: 150ms;">
+        <div class="quick-confirm-card zen-card">
+          <div class="quick-confirm-header">
+            <span :class="['portal-tag', `portal-${quickConfirmData.portal_id}`]">
+              {{ quickConfirmData.portal }}
+            </span>
+            <button @click="resetPreview" class="reset-btn">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="quick-confirm-content">
+            <h2 class="quick-confirm-title">Bewerbung erstellen?</h2>
+            <p class="quick-confirm-job">
+              <strong>{{ quickConfirmData.title || 'Position' }}</strong>
+              <span class="quick-confirm-at">bei</span>
+              <strong>{{ quickConfirmData.company || 'Unbekannt' }}</strong>
+            </p>
+          </div>
+
+          <!-- Template Selection -->
+          <div class="form-group template-selection">
+            <label class="form-label">Anschreiben-Template</label>
+            <select v-model="selectedTemplateId" class="form-select" :disabled="generating || loadingTemplates">
+              <option :value="null">Standard-Template verwenden</option>
+              <option v-for="template in templates" :key="template.id" :value="template.id">
+                {{ template.name }}{{ template.is_default ? ' (Standard)' : '' }}
+              </option>
+            </select>
+          </div>
+
+          <!-- Quick Actions -->
+          <div class="quick-confirm-actions">
+            <button
+              @click="generateApplication"
+              :disabled="!canGenerate || generating"
+              class="zen-btn zen-btn-ai zen-btn-lg"
+            >
+              <span v-if="generating" class="btn-loading">
+                <span class="loading-spinner"></span>
+                Generiere Bewerbung...
+              </span>
+              <span v-else>
+                Bewerbung generieren
+              </span>
+            </button>
+
+            <button
+              @click="loadFullPreview"
+              :disabled="loading"
+              class="zen-btn zen-btn-secondary"
+            >
+              <span v-if="loading" class="btn-loading">
+                <span class="loading-spinner"></span>
+                Lade Details...
+              </span>
+              <span v-else>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+                Details bearbeiten
+              </span>
+            </button>
+          </div>
+
+          <p class="usage-info">
+            <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
+            <span v-else>Noch {{ usage?.remaining || 0 }} von {{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
+          </p>
+
+          <!-- Error Message -->
+          <div v-if="error" class="error-box" :class="{ 'error-with-action': isDocumentMissingError || isSubscriptionLimitError }">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+            <div class="error-content">
+              <span>{{ error }}</span>
+              <div v-if="isDocumentMissingError" class="error-actions">
+                <router-link to="/documents" class="zen-btn zen-btn-sm">
+                  Zu den Dokumenten
+                </router-link>
+              </div>
+              <div v-if="isSubscriptionLimitError" class="error-actions">
+                <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
+                  Abo upgraden
+                </router-link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Preview Section (shown after loading full details) -->
+      <section v-if="previewData && showFullPreview" class="preview-section animate-fade-up" style="animation-delay: 150ms;">
         <div class="preview-card zen-card">
           <div class="preview-header">
             <div class="preview-title-row">
@@ -605,8 +704,8 @@
         </div>
       </section>
 
-      <!-- Info Box (show when no preview) -->
-      <section v-if="!previewData" class="info-section animate-fade-up" style="animation-delay: 200ms;">
+      <!-- Info Box (show when no quick confirm or preview) -->
+      <section v-if="!quickConfirmData && !previewData" class="info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-box zen-card">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -751,7 +850,11 @@ const error = ref('')
 const usage = ref(null)
 const generatedApp = ref(null)
 
-// Preview state
+// Quick confirmation state (minimal flow)
+const quickConfirmData = ref(null)
+const showFullPreview = ref(false)
+
+// Preview state (full preview for power users)
 const previewData = ref(null)
 const editableData = ref({
   company: '',
@@ -945,12 +1048,15 @@ const onUrlEnterPressed = (event) => {
   }
 }
 
-// Load preview data from URL
+// Load quick confirmation data from URL (minimal flow)
 const loadPreview = async () => {
   if (!url.value) return
 
   error.value = ''
   loading.value = true
+  quickConfirmData.value = null
+  showFullPreview.value = false
+  previewData.value = null
   tempApplicationId.value = null
   jobFitScore.value = null
   showLowScoreWarning.value = false
@@ -959,12 +1065,65 @@ const loadPreview = async () => {
   requirementsCount.value = 0
 
   try {
+    // Use quick-extract for minimal confirmation flow
+    const { data } = await api.post('/applications/quick-extract', {
+      url: url.value
+    })
+
+    if (data.success) {
+      quickConfirmData.value = data.data
+
+      // Pre-populate editable data with minimal info
+      editableData.value = {
+        company: data.data.company || '',
+        title: data.data.title || '',
+        location: '',
+        employment_type: '',
+        contact_person: '',
+        contact_email: '',
+        salary: '',
+        description: ''
+      }
+
+      loading.value = false
+
+      if (window.$toast) {
+        window.$toast('Stellenanzeige erkannt!', 'success')
+      }
+    } else {
+      error.value = data.error || 'Unbekannter Fehler'
+      loading.value = false
+    }
+  } catch (e) {
+    // Handle different HTTP status codes appropriately
+    if (e.response?.status === 400 && e.response?.data?.error) {
+      error.value = e.response.data.error
+    } else if (e.response?.status === 500 && e.response?.data?.error) {
+      error.value = e.response.data.error
+    } else if (e.response?.data?.error) {
+      error.value = e.response.data.error
+    } else {
+      error.value = 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.'
+    }
+    loading.value = false
+  }
+}
+
+// Load full preview data for power users who want to edit details
+const loadFullPreview = async () => {
+  if (!url.value) return
+
+  error.value = ''
+  loading.value = true
+
+  try {
     const { data } = await api.post('/applications/preview-job', {
       url: url.value
     })
 
     if (data.success) {
       previewData.value = data.data
+      showFullPreview.value = true
 
       // Populate editable data from preview
       editableData.value = {
@@ -978,14 +1137,13 @@ const loadPreview = async () => {
         description: data.data.description || ''
       }
 
-      // Stop main loading, start requirements analysis
       loading.value = false
 
       if (window.$toast) {
-        window.$toast('Stellenanzeige geladen!', 'success')
+        window.$toast('Details geladen!', 'success')
       }
 
-      // Auto-analyze requirements for job-fit score (NEW-003)
+      // Auto-analyze requirements for job-fit score
       if (data.data.description) {
         await analyzeRequirementsForJobFit(
           data.data.description,
@@ -999,19 +1157,14 @@ const loadPreview = async () => {
       loading.value = false
     }
   } catch (e) {
-    // Handle different HTTP status codes appropriately
     if (e.response?.status === 400 && e.response?.data?.error) {
-      // Client errors (403, 404, 429, etc.) from WebScraper - show original error message
       error.value = e.response.data.error
     } else if (e.response?.status === 500 && e.response?.data?.error) {
-      // Server errors - show user-friendly message from backend
       error.value = e.response.data.error
     } else if (e.response?.data?.error) {
-      // Generic case - use provided error message
       error.value = e.response.data.error
     } else {
-      // Network or unknown errors
-      error.value = 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.'
+      error.value = 'Fehler beim Laden der Details. Bitte versuche es erneut.'
     }
     loading.value = false
   }
@@ -1139,6 +1292,8 @@ const scrollToGenerateButton = () => {
 
 // Reset preview and start fresh
 const resetPreview = () => {
+  quickConfirmData.value = null
+  showFullPreview.value = false
   previewData.value = null
   editableData.value = {
     company: '',
@@ -1157,6 +1312,9 @@ const resetPreview = () => {
   manualCompany.value = ''
   manualTitle.value = ''
   urlTouched.value = false
+  tempApplicationId.value = null
+  jobFitScore.value = null
+  showLowScoreWarning.value = false
 }
 
 // Analyze manually pasted job text
@@ -1290,6 +1448,8 @@ const generateApplication = async () => {
       // Reset form
       url.value = ''
       urlTouched.value = false
+      quickConfirmData.value = null
+      showFullPreview.value = false
       previewData.value = null
       editableData.value = {
         company: '',
@@ -1306,6 +1466,9 @@ const generateApplication = async () => {
       manualJobText.value = ''
       manualCompany.value = ''
       manualTitle.value = ''
+      tempApplicationId.value = null
+      jobFitScore.value = null
+      showLowScoreWarning.value = false
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
@@ -1772,6 +1935,91 @@ onMounted(() => {
 .portal-badge.portal-generic {
   background: var(--color-washi-aged);
   color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   QUICK CONFIRMATION SECTION (Minimal Flow)
+   ======================================== */
+.quick-confirm-section {
+  max-width: 560px;
+}
+
+.quick-confirm-card {
+  padding: var(--space-xl);
+  text-align: center;
+}
+
+.quick-confirm-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.quick-confirm-content {
+  margin-bottom: var(--space-xl);
+}
+
+.quick-confirm-title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-text-primary);
+}
+
+.quick-confirm-job {
+  font-size: 1.125rem;
+  margin: 0;
+  line-height: 1.6;
+}
+
+.quick-confirm-job strong {
+  color: var(--color-ai);
+}
+
+.quick-confirm-at {
+  color: var(--color-text-secondary);
+  margin: 0 var(--space-xs);
+}
+
+.quick-confirm-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.quick-confirm-actions .zen-btn-ai {
+  width: 100%;
+}
+
+.quick-confirm-actions .zen-btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.quick-confirm-actions .zen-btn-secondary:hover {
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.quick-confirm-card .template-selection {
+  text-align: left;
+  margin-bottom: var(--space-lg);
+}
+
+.quick-confirm-card .usage-info {
+  text-align: center;
+}
+
+.quick-confirm-card .error-box {
+  text-align: left;
+  margin-top: var(--space-md);
 }
 
 /* ========================================

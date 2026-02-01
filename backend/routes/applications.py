@@ -167,6 +167,79 @@ def generate_application(current_user):
         return jsonify({"success": False, "error": str(e)}), 500
 
 
+@applications_bp.route("/quick-extract", methods=["POST"])
+@jwt_required_custom
+def quick_extract(current_user):
+    """Quick extraction of company and title from job URL for minimal confirmation flow.
+
+    Returns only the essential fields needed for a quick confirmation dialog:
+    - company: The company name
+    - title: The job position title
+
+    This is faster than the full preview-job endpoint since it doesn't extract
+    the full description and other optional fields.
+    """
+    data = request.json
+    url = data.get("url", "").strip()
+
+    if not url:
+        return jsonify({"success": False, "error": "URL ist erforderlich"}), 400
+
+    if not url.startswith(("http://", "https://")):
+        return jsonify({"success": False, "error": "Ungültige URL. Bitte mit http:// oder https:// beginnen."}), 400
+
+    try:
+        scraper = WebScraper()
+
+        # Detect job board for display
+        job_board = scraper.detect_job_board(url)
+
+        # Fetch structured job data (uses same scraper but we only return essential fields)
+        job_data = scraper.fetch_structured_job_posting(url)
+
+        # Extract only company and title
+        company = job_data.get("company", "").strip() if job_data.get("company") else ""
+        title = job_data.get("title", "").strip() if job_data.get("title") else ""
+
+        # If both are missing, extraction failed
+        if not company and not title:
+            return jsonify({
+                "success": False,
+                "error": "Konnte keine Stellendaten extrahieren. Bitte verwenden Sie die manuelle Eingabe.",
+                "use_manual_input": True
+            }), 400
+
+        # Map job board to display name
+        portal_names = {
+            "stepstone": "StepStone",
+            "indeed": "Indeed",
+            "xing": "XING",
+        }
+
+        return jsonify({
+            "success": True,
+            "data": {
+                "company": company,
+                "title": title,
+                "portal": portal_names.get(job_board, "Sonstige"),
+                "portal_id": job_board or "generic",
+                "url": url,
+            }
+        }), 200
+
+    except Exception as e:
+        error_message = str(e)
+
+        # HTTP errors should be treated as client errors
+        if any(code in error_message for code in ["403", "404", "429", "400", "401", "502", "503"]):
+            return jsonify({"success": False, "error": error_message}), 400
+
+        return jsonify({
+            "success": False,
+            "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe."
+        }), 500
+
+
 @applications_bp.route("/preview-job", methods=["POST"])
 @jwt_required_custom
 def preview_job(current_user):
