@@ -232,6 +232,11 @@
                 </svg>
                 {{ formatDate(app.datum) }}
               </span>
+              <span v-if="app.job_fit_score !== null" class="meta-item">
+                <span :class="['job-fit-badge', getJobFitClass(app.job_fit_score)]">
+                  {{ app.job_fit_score }}%
+                </span>
+              </span>
               <span v-if="app.quelle" class="meta-item">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -299,6 +304,7 @@
                   Status
                   <span v-if="sortBy === 'status'" class="sort-indicator">●</span>
                 </th>
+                <th>Job-Fit</th>
                 <th>Quelle</th>
                 <th class="actions-header">Aktionen</th>
               </tr>
@@ -317,6 +323,12 @@
                   <span :class="['status-badge status-badge-sm', `status-${app.status}`]">
                     {{ getStatusLabel(app.status) }}
                   </span>
+                </td>
+                <td class="cell-job-fit">
+                  <span v-if="app.job_fit_score !== null" :class="['job-fit-badge', getJobFitClass(app.job_fit_score)]">
+                    {{ app.job_fit_score }}%
+                  </span>
+                  <span v-else class="text-muted">–</span>
                 </td>
                 <td class="cell-quelle">
                   <a v-if="app.quelle" :href="app.quelle" target="_blank" @click.stop class="table-link">
@@ -1102,6 +1114,13 @@ const getStatusLabel = (status) => {
     'zusage': 'Zusage'
   }
   return labels[status] || status
+}
+
+const getJobFitClass = (score) => {
+  if (score >= 80) return 'job-fit-excellent'
+  if (score >= 60) return 'job-fit-good'
+  if (score >= 40) return 'job-fit-medium'
+  return 'job-fit-low'
 }
 
 const getSentViaLabel = (provider) => {
@@ -2456,6 +2475,38 @@ watch(viewMode, (newMode) => {
 .status-badge-sm {
   font-size: 0.625rem;
   padding: 2px var(--space-sm);
+}
+
+.cell-job-fit {
+  white-space: nowrap;
+}
+
+.job-fit-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.job-fit-excellent {
+  background-color: var(--color-success-muted, #dcfce7);
+  color: var(--color-success, #16a34a);
+}
+
+.job-fit-good {
+  background-color: var(--color-ai-muted, #dbeafe);
+  color: var(--color-ai, #2563eb);
+}
+
+.job-fit-medium {
+  background-color: var(--color-warning-muted, #fef3c7);
+  color: var(--color-warning, #d97706);
+}
+
+.job-fit-low {
+  background-color: var(--color-error-muted, #fee2e2);
+  color: var(--color-error, #dc2626);
 }
 
 .cell-quelle {

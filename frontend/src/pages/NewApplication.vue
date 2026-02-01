@@ -527,105 +527,6 @@
             </div>
           </div>
 
-          <!-- Requirements Analysis Status (NEW-003) -->
-          <div v-if="analyzingRequirements" class="requirements-analyzing">
-            <div class="analyzing-content">
-              <div class="loading-spinner"></div>
-              <div class="analyzing-text">
-                <strong>Analysiere Anforderungen...</strong>
-                <p>KI extrahiert Must-Have und Nice-to-Have Anforderungen aus der Stellenanzeige.</p>
-              </div>
-            </div>
-          </div>
-
-          <!-- Requirements Error - nur zeigen wenn kein tempApplicationId und kein allgemeiner error -->
-          <div v-else-if="requirementsError.message && !tempApplicationId && !error" class="requirements-error" :class="{ 'error-temporary': requirementsError.isTemporary }">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-            <div class="requirements-error-content">
-              <strong>{{ requirementsError.message }}</strong>
-              <p v-if="requirementsError.hint">{{ requirementsError.hint }}</p>
-
-              <!-- Alternative Aktionen - klar strukturiert -->
-              <div class="requirements-alternatives">
-                <p class="alternatives-header">Was Sie jetzt tun koennen:</p>
-                <ul class="alternatives-list">
-                  <li>
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                    <span>Bewerbung ohne Job-Fit Score generieren</span>
-                  </li>
-                  <li v-if="requirementsError.isTemporary">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                      <path d="M21 3v5h-5"/>
-                    </svg>
-                    <span>Analyse erneut versuchen</span>
-                  </li>
-                  <li v-if="!hasSkills">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                      <polyline points="17 8 12 3 7 8"/>
-                      <line x1="12" y1="3" x2="12" y2="15"/>
-                    </svg>
-                    <span>Lebenslauf hochladen fuer bessere Analyse</span>
-                  </li>
-                </ul>
-              </div>
-
-              <div class="requirements-error-actions">
-                <!-- Retry Button for temporary errors -->
-                <button
-                  v-if="requirementsError.isTemporary"
-                  @click="retryRequirementsAnalysis"
-                  class="zen-btn zen-btn-sm requirements-retry-btn"
-                  :disabled="analyzingRequirements"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                    <path d="M21 3v5h-5"/>
-                    <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                    <path d="M8 16H3v5"/>
-                  </svg>
-                  Erneut versuchen
-                </button>
-                <!-- Continue without score button -->
-                <button
-                  @click="scrollToGenerateButton"
-                  class="zen-btn zen-btn-sm requirements-continue-btn"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="9 18 15 12 9 6"/>
-                  </svg>
-                  Ohne Score fortfahren
-                </button>
-                <!-- Contact link for persistent errors -->
-                <router-link
-                  v-if="requirementsError.showContactLink"
-                  to="/support"
-                  class="requirements-contact-link"
-                >
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                    <polyline points="22,6 12,13 2,6"/>
-                  </svg>
-                  Support kontaktieren
-                </router-link>
-              </div>
-            </div>
-          </div>
-
-          <!-- Job-Fit Score -->
-          <JobFitScore
-            v-if="tempApplicationId"
-            :application-id="tempApplicationId"
-            @score-loaded="onJobFitScoreLoaded"
-          />
-
           <!-- Template Selection -->
           <div class="form-group template-selection">
             <label class="form-label">Anschreiben-Template</label>
@@ -635,16 +536,6 @@
                 {{ template.name }}{{ template.is_default ? ' (Standard)' : '' }}
               </option>
             </select>
-          </div>
-
-          <!-- Low Score Warning on Generate Button -->
-          <div v-if="showLowScoreWarning" class="low-score-generate-warning">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            <span>Der Job-Fit Score ist niedrig ({{ jobFitScore?.overall_score }}%). Moeglicherweise passt diese Stelle nicht optimal zu Ihrem Profil.</span>
           </div>
 
           <!-- Generate Button -->
@@ -815,7 +706,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
-import JobFitScore from '../components/JobFitScore.vue'
 
 const router = useRouter()
 
@@ -881,21 +771,6 @@ const isManualEntry = ref(false)
 const canAnalyzeManualText = computed(() => {
   return manualJobText.value.trim().length >= 100
 })
-
-// Job-Fit Score state
-const tempApplicationId = ref(null)
-const jobFitScore = ref(null)
-const showLowScoreWarning = ref(false)
-
-// Requirements analysis state
-const analyzingRequirements = ref(false)
-const requirementsError = ref({
-  message: '',
-  hint: '',
-  isTemporary: false,
-  showContactLink: false
-})
-const requirementsCount = ref(0)
 
 // URL validation
 const urlValidation = computed(() => {
@@ -1142,16 +1017,6 @@ const loadFullPreview = async () => {
       if (window.$toast) {
         window.$toast('Details geladen!', 'success')
       }
-
-      // Auto-analyze requirements for job-fit score
-      if (data.data.description) {
-        await analyzeRequirementsForJobFit(
-          data.data.description,
-          data.data.company,
-          data.data.title,
-          url.value
-        )
-      }
     } else {
       error.value = data.error || 'Unbekannter Fehler'
       loading.value = false
@@ -1167,126 +1032,6 @@ const loadFullPreview = async () => {
       error.value = 'Fehler beim Laden der Details. Bitte versuche es erneut.'
     }
     loading.value = false
-  }
-}
-
-/**
- * Parse HTTP error for requirements analysis and return user-friendly error state
- */
-const parseRequirementsError = (e) => {
-  const status = e.response?.status
-  const serverError = e.response?.data?.error
-
-  // 5xx Server errors - temporary, can retry
-  if (status >= 500) {
-    return {
-      message: 'Voruebergehender Serverfehler',
-      hint: 'Die Anforderungsanalyse ist momentan nicht verfuegbar. Bitte versuchen Sie es spaeter erneut.',
-      isTemporary: true,
-      showContactLink: false
-    }
-  }
-
-  // 429 - Rate limit exceeded
-  if (status === 429) {
-    return {
-      message: 'Zu viele Anfragen',
-      hint: 'Bitte warten Sie einen Moment und versuchen Sie es dann erneut.',
-      isTemporary: true,
-      showContactLink: false
-    }
-  }
-
-  // 404 - Endpoint not found or no requirements
-  if (status === 404) {
-    return {
-      message: 'Anforderungsanalyse nicht verfuegbar',
-      hint: 'Die Stelle enthaelt keine analysierbaren Anforderungen.',
-      isTemporary: false,
-      showContactLink: false
-    }
-  }
-
-  // Network error (no response)
-  if (!e.response) {
-    return {
-      message: 'Netzwerkfehler',
-      hint: 'Bitte pruefen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
-      isTemporary: true,
-      showContactLink: false
-    }
-  }
-
-  // Other/unknown errors
-  return {
-    message: serverError || 'Anforderungsanalyse nicht moeglich',
-    hint: 'Falls das Problem weiterhin besteht, kontaktieren Sie bitte den Support.',
-    isTemporary: false,
-    showContactLink: true
-  }
-}
-
-// Store description/company/title for retry functionality
-const lastAnalysisParams = ref({ description: '', company: '', title: '', jobUrl: null })
-
-// Analyze requirements for job-fit score (separate function for clear state management)
-const analyzeRequirementsForJobFit = async (description, company, title, jobUrl = null) => {
-  analyzingRequirements.value = true
-  requirementsError.value = { message: '', hint: '', isTemporary: false, showContactLink: false }
-  requirementsCount.value = 0
-
-  // Store params for potential retry
-  lastAnalysisParams.value = { description, company, title, jobUrl }
-
-  try {
-    const analyzeResponse = await api.post('/applications/analyze-job-fit', {
-      url: jobUrl,
-      description: description,
-      company: company,
-      title: title
-    })
-
-    if (analyzeResponse.data.success) {
-      tempApplicationId.value = analyzeResponse.data.application_id
-      requirementsCount.value = analyzeResponse.data.requirements_count || 0
-
-      if (requirementsCount.value > 0 && window.$toast) {
-        window.$toast(`${requirementsCount.value} Anforderungen analysiert`, 'success')
-      }
-    } else {
-      requirementsError.value = {
-        message: analyzeResponse.data.error || 'Anforderungsanalyse fehlgeschlagen',
-        hint: '',
-        isTemporary: false,
-        showContactLink: true
-      }
-    }
-  } catch (analyzeError) {
-    requirementsError.value = parseRequirementsError(analyzeError)
-  } finally {
-    analyzingRequirements.value = false
-  }
-}
-
-// Retry requirements analysis
-const retryRequirementsAnalysis = () => {
-  const { description, company, title, jobUrl } = lastAnalysisParams.value
-  if (description) {
-    analyzeRequirementsForJobFit(description, company, title, jobUrl)
-  }
-}
-
-// Handle job-fit score loaded event
-const onJobFitScoreLoaded = (score) => {
-  jobFitScore.value = score
-  showLowScoreWarning.value = score.overall_score < 40
-}
-
-// Scroll to generate button for "continue without score" action
-const scrollToGenerateButton = () => {
-  const generateSection = document.querySelector('.form-actions')
-  if (generateSection) {
-    generateSection.scrollIntoView({ behavior: 'smooth', block: 'center' })
   }
 }
 
@@ -1323,9 +1068,6 @@ const analyzeManualText = async () => {
 
   analyzingManualText.value = true
   manualTextError.value = ''
-  analyzingRequirements.value = false
-  requirementsError.value = { message: '', hint: '', isTemporary: false, showContactLink: false }
-  requirementsCount.value = 0
 
   try {
     const { data } = await api.post('/applications/analyze-manual-text', {
@@ -1356,16 +1098,6 @@ const analyzeManualText = async () => {
 
       if (window.$toast) {
         window.$toast('Stellentext analysiert!', 'success')
-      }
-
-      // Auto-analyze requirements for job-fit score (NEW-003)
-      if (editableData.value.description) {
-        await analyzeRequirementsForJobFit(
-          editableData.value.description,
-          editableData.value.company,
-          editableData.value.title,
-          null
-        )
       }
     } else {
       manualTextError.value = data.error || 'Analyse fehlgeschlagen'

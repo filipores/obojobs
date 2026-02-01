@@ -31,6 +31,9 @@ class Application(db.Model):
     interview_feedback = db.Column(db.Text, nullable=True)  # Eigenes Feedback nach Interview
     interview_result = db.Column(db.String(50), nullable=True)  # scheduled, completed, passed, rejected, offer_received
 
+    # Job-Fit Score (calculated after generation)
+    job_fit_score = db.Column(db.Integer, nullable=True)  # 0-100
+
     # Relationships
     user = db.relationship("User", back_populates="applications")
     template = db.relationship("Template", back_populates="applications")
@@ -60,6 +63,7 @@ class Application(db.Model):
             "interview_date": self.interview_date.isoformat() if self.interview_date else None,
             "interview_feedback": self.interview_feedback,
             "interview_result": self.interview_result,
+            "job_fit_score": self.job_fit_score,
         }
 
     def get_status_history(self):

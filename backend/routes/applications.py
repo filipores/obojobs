@@ -32,6 +32,48 @@ from services.web_scraper import WebScraper
 applications_bp = Blueprint("applications", __name__)
 
 
+def calculate_and_store_job_fit(app, job_description, user_id):
+    """Calculate job-fit score after generation and store it in the application.
+
+    This runs in the background and doesn't block the generation response.
+    If it fails, the application is still created - job-fit is just unavailable.
+    """
+    try:
+        # Analyze requirements from job description
+        analyzer = RequirementAnalyzer()
+        extracted_requirements = analyzer.analyze_requirements(job_description)
+
+        if not extracted_requirements:
+            return  # No requirements found, can't calculate job-fit
+
+        # Clear any existing requirements (shouldn't exist for new app, but be safe)
+        JobRequirement.query.filter_by(application_id=app.id).delete()
+
+        # Save requirements
+        for req_data in extracted_requirements:
+            requirement = JobRequirement(
+                application_id=app.id,
+                requirement_text=req_data["requirement_text"],
+                requirement_type=req_data["requirement_type"],
+                skill_category=req_data.get("skill_category"),
+            )
+            db.session.add(requirement)
+        db.session.commit()
+
+        # Calculate job-fit score
+        calculator = JobFitCalculator()
+        result = calculator.calculate_job_fit(user_id, app.id)
+
+        # Store the overall score in the application
+        app.job_fit_score = result.overall_score
+        db.session.commit()
+
+    except Exception as e:
+        # Log but don't fail - job-fit is optional
+        import logging
+        logging.warning(f"Failed to calculate job-fit for app {app.id}: {e}")
+
+
 @applications_bp.route("", methods=["GET"])
 @jwt_required_custom
 def list_applications(current_user):
@@ -486,6 +528,10 @@ def generate_from_url(current_user):
         # Get the newly created application
         latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
 
+        # Calculate and store job-fit score (non-blocking)
+        if latest and job_text:
+            calculate_and_store_job_fit(latest, job_text, current_user.id)
+
         # Increment subscription usage counter
         increment_application_count(current_user)
 
@@ -574,6 +620,9 @@ def generate_from_text(current_user):
                 if description:
                     latest.notizen = description
                 db.session.commit()
+
+                # Calculate and store job-fit score (non-blocking)
+                calculate_and_store_job_fit(latest, job_text, current_user.id)
 
             # Increment subscription usage counter
             increment_application_count(current_user)
