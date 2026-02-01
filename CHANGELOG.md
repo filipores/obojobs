@@ -1,3 +1,10 @@
+## [1.9.1](https://github.com/filipores/obojobs/compare/v1.9.0...v1.9.1) (2026-02-01)
+
+
+### Bug Fixes
+
+* **e2e:** add explicit waits for h1 in Settings tests (ob-s7r) ([ac18d61](https://github.com/filipores/obojobs/commit/ac18d61c8b04fb350d19ff5849f0c6ff34a8daf3))
+
 # [1.9.0](https://github.com/filipores/obojobs/compare/v1.8.0...v1.9.0) (2026-01-31)
 
 
