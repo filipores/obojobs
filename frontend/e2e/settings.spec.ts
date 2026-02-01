@@ -13,6 +13,8 @@ test.describe('Settings Page', () => {
 
   test('should display page header', async ({ page }) => {
     const h1 = page.locator('h1');
+    // Wait for h1 to be visible before asserting content (fixes CI flakiness)
+    await expect(h1).toBeVisible({ timeout: 10000 });
     await expect(h1).toContainText('Einstellungen');
   });
 
@@ -128,6 +130,8 @@ test.describe('Settings Page - Accessibility', () => {
 
   test('should have proper heading hierarchy', async ({ page }) => {
     const h1 = page.locator('h1');
+    // Wait for h1 to be visible before asserting count (fixes CI flakiness)
+    await expect(h1).toBeVisible({ timeout: 10000 });
     await expect(h1).toHaveCount(1);
   });
 
