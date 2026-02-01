@@ -38,7 +38,7 @@ class ClaudeAPIClient:
     def _parse_extracted_details(self, text: str, firma_name: str) -> dict[str, str]:
         details = {
             "firma": firma_name,
-            "ansprechpartner": f"Moin Moin liebes {firma_name} Team",
+            "ansprechpartner": "Sehr geehrte Damen und Herren",
             "position": "Softwareentwickler",
             "quelle": "eure Website",
             "email": "",
@@ -69,7 +69,7 @@ class ClaudeAPIClient:
     def _get_default_details(self, firma_name: str) -> dict[str, str]:
         return {
             "firma": firma_name,
-            "ansprechpartner": f"Moin Moin liebes {firma_name} Team",
+            "ansprechpartner": "Sehr geehrte Damen und Herren",
             "position": "Softwareentwickler",
             "quelle": "eure Website",
             "email": "",
@@ -145,7 +145,7 @@ STELLENANZEIGE:
 
 Extrahiere präzise folgende Informationen:
 
-1. ANSPRECHPARTNER: Wenn ein konkreter Name genannt wird (z.B. "Frau Schmidt", "Herr Müller"), gib "Sehr geehrte/r [Name]" zurück. Wenn kein Name vorhanden ist, gib "Moin Moin liebes {firma_name} Team" zurück.
+1. ANSPRECHPARTNER: Wenn ein konkreter Name genannt wird (z.B. "Frau Schmidt", "Herr Müller"), gib "Sehr geehrte/r [Name]" zurück. Wenn kein Name vorhanden ist, gib "Sehr geehrte Damen und Herren" zurück.
 
 2. POSITION: Die Stellenbezeichnung/Position (z.B. "Fullstack Developer", "Frontend Engineer"). Falls keine konkrete Position genannt wird, gib "Softwareentwickler" zurück.
 

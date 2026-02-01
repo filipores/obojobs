@@ -78,35 +78,77 @@ class BewerbungsGenerator:
 
         print("✓ Dokumente geladen")
 
-    def generate_bewerbung(self, stellenanzeige_path: str, firma_name: str, output_filename: str | None = None) -> str:
+    def generate_bewerbung(
+        self,
+        stellenanzeige_path: str,
+        firma_name: str,
+        output_filename: str | None = None,
+        user_details: dict | None = None,
+    ) -> str:
+        """Generate a job application.
+
+        Args:
+            stellenanzeige_path: URL or file path to job posting
+            firma_name: Company name
+            output_filename: Optional custom output filename
+            user_details: Optional dict with user-edited data from preview step:
+                - position: Job title
+                - contact_person: Contact person for salutation
+                - contact_email: Contact email
+                - location: Job location
+                - description: Job description text (used instead of re-scraping)
+                - quelle: Source/portal name
+        """
         print(f"\n{'=' * 60}")
         print(f"Generiere Bewerbung für: {firma_name}")
         print(f"{'=' * 60}")
 
-        print("1/5 Lese Stellenanzeige...")
+        # Check if user provided pre-edited data with description
+        use_user_data = user_details and user_details.get("description")
 
-        if is_url(stellenanzeige_path):
-            print(f"  → Lade von URL: {stellenanzeige_path}")
-            doc_result = read_document(stellenanzeige_path, return_links=True)
-            stellenanzeige_text = doc_result["text"]
-
-            # Zeige gefundene Links
-            if doc_result.get("email_links"):
-                print(f"  → {len(doc_result['email_links'])} E-Mail-Link(s) gefunden")
-            if doc_result.get("application_links"):
-                print(f"  → {len(doc_result['application_links'])} Bewerbungs-Link(s) gefunden")
-
-            # Speichere Links für spätere Verwendung
-            self.extracted_links = doc_result
-        else:
-            stellenanzeige_text = read_document(stellenanzeige_path)
+        if use_user_data:
+            print("1/5 Verwende Benutzerdaten aus Vorschau...")
+            stellenanzeige_text = user_details["description"]
             self.extracted_links = None
+            print("✓ Benutzerdaten geladen")
+        else:
+            print("1/5 Lese Stellenanzeige...")
 
-        print("✓ Stellenanzeige geladen")
+            if is_url(stellenanzeige_path):
+                print(f"  → Lade von URL: {stellenanzeige_path}")
+                doc_result = read_document(stellenanzeige_path, return_links=True)
+                stellenanzeige_text = doc_result["text"]
 
-        print("2/5 Extrahiere Details (Position, Ansprechpartner, Quelle)...")
-        details = self.api_client.extract_bewerbung_details(stellenanzeige_text, firma_name)
-        print("✓ Details extrahiert:")
+                # Zeige gefundene Links
+                if doc_result.get("email_links"):
+                    print(f"  → {len(doc_result['email_links'])} E-Mail-Link(s) gefunden")
+                if doc_result.get("application_links"):
+                    print(f"  → {len(doc_result['application_links'])} Bewerbungs-Link(s) gefunden")
+
+                # Speichere Links für spätere Verwendung
+                self.extracted_links = doc_result
+            else:
+                stellenanzeige_text = read_document(stellenanzeige_path)
+                self.extracted_links = None
+
+            print("✓ Stellenanzeige geladen")
+
+        # Use user-provided details or extract via Claude API
+        if use_user_data:
+            print("2/5 Verwende bearbeitete Details...")
+            details = {
+                "firma": firma_name,
+                "position": user_details.get("position") or "Softwareentwickler",
+                "ansprechpartner": user_details.get("contact_person") or "Sehr geehrte Damen und Herren",
+                "quelle": user_details.get("quelle") or "eure Website",
+                "email": user_details.get("contact_email") or "",
+                "stellenanzeige_kompakt": stellenanzeige_text[:500] if stellenanzeige_text else "",
+            }
+            print("✓ Details aus Vorschau verwendet:")
+        else:
+            print("2/5 Extrahiere Details (Position, Ansprechpartner, Quelle)...")
+            details = self.api_client.extract_bewerbung_details(stellenanzeige_text, firma_name)
+            print("✓ Details extrahiert:")
         print(f"  - Position: {details['position']}")
         print(f"  - Ansprechpartner: {details['ansprechpartner']}")
         print(f"  - Quelle: {details['quelle']}")

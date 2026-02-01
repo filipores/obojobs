@@ -521,9 +521,21 @@ def generate_from_url(current_user):
             if not template:
                 return jsonify({"success": False, "error": "Template nicht gefunden"}), 404
 
+        # Build user_details dict if user provided edited data
+        user_details = None
+        if user_company or user_description:
+            user_details = {
+                "position": user_title,
+                "contact_person": user_contact_person,
+                "contact_email": user_contact_email,
+                "location": user_location,
+                "description": user_description,
+                "quelle": data.get("quelle", "").strip() or None,
+            }
+
         # Generate application using existing generator
         generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
-        pdf_path = generator.generate_bewerbung(url, company)
+        pdf_path = generator.generate_bewerbung(url, company, user_details=user_details)
 
         # Get the newly created application
         latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
