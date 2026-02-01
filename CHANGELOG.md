@@ -1,3 +1,10 @@
+## [1.9.2](https://github.com/filipores/obojobs/compare/v1.9.1...v1.9.2) (2026-02-01)
+
+
+### Bug Fixes
+
+* **web_scraper:** expand austrian job portals ([e04efad](https://github.com/filipores/obojobs/commit/e04efad21e8537dd40f4944c44c850e403e00eba))
+
 ## [1.9.1](https://github.com/filipores/obojobs/compare/v1.9.0...v1.9.1) (2026-02-01)
 
 
