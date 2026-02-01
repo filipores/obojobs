@@ -931,7 +931,21 @@ const goToPage = (page) => {
 
 const downloadPDF = async (id) => {
   try {
-    window.open(`/api/applications/${id}/pdf`, '_blank')
+    // Use authenticated request to fetch PDF blob
+    const response = await api.get(`/applications/${id}/pdf`, {
+      responseType: 'blob'
+    })
+
+    // Create download link from blob
+    const blob = new Blob([response.data], { type: 'application/pdf' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `bewerbung_${id}.pdf`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
   } catch (_e) {
     alert('Fehler beim PDF-Download')
   }
