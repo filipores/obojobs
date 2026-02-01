@@ -488,6 +488,172 @@ class TestGenericJobParserDateParsing:
         assert result["posted_date"] == "2026-01-15"
 
 
+class TestGenericJobParserTitleCleanup:
+    """Test title cleanup patterns for Austrian/German job boards."""
+
+    @pytest.fixture
+    def parser(self):
+        return GenericJobParser()
+
+    def test_removes_karriere_at_suffix(self, parser):
+        """Should remove | karriere.at suffix from title."""
+        html = """
+        <html>
+        <head><title>Entwicklungsingenieur | aktuell 9 offen | karriere.at</title></head>
+        <body></body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://karriere.at/jobs/6866915")
+
+        assert "karriere.at" not in result["title"]
+        assert "aktuell" not in result["title"]
+        assert "offen" not in result["title"]
+        assert "Entwicklungsingenieur" in result["title"]
+
+    def test_removes_jobs_in_location_pattern(self, parser):
+        """Should remove 'Jobs in [Location]' from title."""
+        html = """
+        <html>
+        <head><title>Software Entwickler Jobs in Wien</title></head>
+        <body></body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://example.com/jobs")
+
+        assert "Jobs in" not in result["title"]
+        assert "Software Entwickler" in result["title"]
+
+    def test_removes_stepstone_suffix(self, parser):
+        """Should remove | stepstone.at/de suffix from title."""
+        html = """
+        <html>
+        <head><title>Project Manager | stepstone.de</title></head>
+        <body></body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://stepstone.de/job/123")
+
+        assert "stepstone" not in result["title"].lower()
+        assert "Project Manager" in result["title"]
+
+
+class TestGenericJobParserJobBoardDomains:
+    """Test job board domain filtering for company extraction."""
+
+    @pytest.fixture
+    def parser(self):
+        return GenericJobParser()
+
+    def test_skips_karriere_domain_for_company(self, parser):
+        """Should not use karriere as company name."""
+        html = """
+        <html>
+        <body><h1>Job Opening</h1></body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.karriere.at/jobs/6866915")
+
+        # Should not set company to "Karriere"
+        assert result["company"] != "Karriere"
+
+    def test_skips_jobware_domain_for_company(self, parser):
+        """Should not use jobware as company name."""
+        html = """
+        <html>
+        <body><h1>Developer Position</h1></body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.jobware.de/jobs/12345")
+
+        assert result["company"] != "Jobware"
+
+    def test_skips_hokify_domain_for_company(self, parser):
+        """Should not use hokify as company name."""
+        html = """
+        <html>
+        <body><h1>Service Position</h1></body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://hokify.at/job/12345")
+
+        assert result["company"] != "Hokify"
+
+
+class TestGenericJobParserSearchResultsDetection:
+    """Test search results page detection."""
+
+    @pytest.fixture
+    def parser(self):
+        return GenericJobParser()
+
+    def test_detects_search_results_by_url_and_text(self, parser):
+        """Should detect search results page with multiple indicators."""
+        html = """
+        <html>
+        <head><title>Entwickler Jobs - Suche</title></head>
+        <body>
+            <p>aktuell 15 offen</p>
+            <div class="job-card">Job 1</div>
+            <div class="job-card">Job 2</div>
+            <div class="job-card">Job 3</div>
+            <div class="job-card">Job 4</div>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://karriere.at/jobs/search?q=entwickler")
+
+        assert result.get("is_search_results_page") is True
+
+    def test_detects_german_results_pattern(self, parser):
+        """Should detect German job count patterns."""
+        html = """
+        <html>
+        <body>
+            <p>25 Jobs gefunden</p>
+            <div data-job-id="1">Job 1</div>
+            <div data-job-id="2">Job 2</div>
+            <div data-job-id="3">Job 3</div>
+            <div data-job-id="4">Job 4</div>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://example.com/suche")
+
+        assert result.get("is_search_results_page") is True
+
+    def test_single_job_page_not_flagged(self, parser):
+        """Should not flag single job posting as search results."""
+        html = """
+        <html>
+        <head>
+            <script type="application/ld+json">
+            {
+                "@type": "JobPosting",
+                "title": "Software Engineer",
+                "hiringOrganization": {"name": "Acme Corp"}
+            }
+            </script>
+        </head>
+        <body>
+            <h1>Software Engineer</h1>
+            <p>Join our team as a Software Engineer...</p>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://acme.com/careers/123")
+
+        assert result.get("is_search_results_page") is None or result.get("is_search_results_page") is False
+
+
 class TestWebScraperGenericFallback:
     """Test that WebScraper uses GenericJobParser as fallback."""
 

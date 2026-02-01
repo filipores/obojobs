@@ -33,7 +33,7 @@ class IndeedParser(JobBoardParser):
     # Anti-bot headers for Indeed
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
         "Accept-Encoding": "gzip, deflate, br",
@@ -213,7 +213,9 @@ class IndeedParser(JobBoardParser):
                     result["salary"] = salary_text
             # Fallback: look for salary patterns in meta or specific divs
             if not result["salary"]:
-                salary_pattern = re.compile(r"(\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s*[-–]\s*\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s*€)", re.IGNORECASE)
+                salary_pattern = re.compile(
+                    r"(\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s*[-–]\s*\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s*€)", re.IGNORECASE
+                )
                 for elem in soup.find_all(class_=re.compile(r"salary|gehalt", re.I)):
                     text = elem.get_text(strip=True)
                     match = salary_pattern.search(text)
@@ -275,9 +277,13 @@ class IndeedParser(JobBoardParser):
             page_text = soup.get_text()
             emails = email_pattern.findall(page_text)
             # Filter out common non-contact emails
-            contact_emails = [e for e in emails if not any(
-                x in e.lower() for x in ["noreply", "no-reply", "newsletter", "support@indeed", "info@indeed"]
-            )]
+            contact_emails = [
+                e
+                for e in emails
+                if not any(
+                    x in e.lower() for x in ["noreply", "no-reply", "newsletter", "support@indeed", "info@indeed"]
+                )
+            ]
             if contact_emails:
                 result["contact_email"] = contact_emails[0]
 
@@ -466,9 +472,11 @@ class StepStoneParser(JobBoardParser):
             page_text = soup.get_text()
             emails = email_pattern.findall(page_text)
             # Filter out common non-contact emails
-            contact_emails = [e for e in emails if not any(
-                x in e.lower() for x in ["noreply", "no-reply", "newsletter", "support@stepstone"]
-            )]
+            contact_emails = [
+                e
+                for e in emails
+                if not any(x in e.lower() for x in ["noreply", "no-reply", "newsletter", "support@stepstone"])
+            ]
             if contact_emails:
                 result["contact_email"] = contact_emails[0]
 
@@ -492,7 +500,7 @@ class XingParser(JobBoardParser):
     # XING-specific headers
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
         "Accept-Encoding": "gzip, deflate, br",
@@ -663,7 +671,11 @@ class XingParser(JobBoardParser):
                 for elem in soup.find_all(class_=re.compile(r"meta|info", re.I)):
                     text = elem.get_text(strip=True)
                     # German cities pattern
-                    if re.search(r"\b(Berlin|Hamburg|München|Köln|Frankfurt|Stuttgart|Düsseldorf|Leipzig|Dresden|Hannover)\b", text, re.I):
+                    if re.search(
+                        r"\b(Berlin|Hamburg|München|Köln|Frankfurt|Stuttgart|Düsseldorf|Leipzig|Dresden|Hannover)\b",
+                        text,
+                        re.I,
+                    ):
                         result["location"] = text
                         break
             if location_elem:
@@ -696,7 +708,9 @@ class XingParser(JobBoardParser):
             if contact_elem:
                 contact_text = contact_elem.get_text(strip=True)
                 # Clean up contact name (remove "Recruiter:", "Ansprechpartner:", etc.)
-                contact_text = re.sub(r"^(Recruiter|Ansprechpartner|Contact|Kontakt)[:\s]*", "", contact_text, flags=re.I)
+                contact_text = re.sub(
+                    r"^(Recruiter|Ansprechpartner|Contact|Kontakt)[:\s]*", "", contact_text, flags=re.I
+                )
                 if contact_text and len(contact_text) > 2:
                     result["contact_person"] = contact_text
 
@@ -757,10 +771,22 @@ class XingParser(JobBoardParser):
             page_text = soup.get_text()
             emails = email_pattern.findall(page_text)
             # Filter out common non-contact emails
-            contact_emails = [e for e in emails if not any(
-                x in e.lower() for x in ["noreply", "no-reply", "newsletter", "support@xing",
-                                         "info@xing", "kundenservice@xing", "werbung@xing"]
-            )]
+            contact_emails = [
+                e
+                for e in emails
+                if not any(
+                    x in e.lower()
+                    for x in [
+                        "noreply",
+                        "no-reply",
+                        "newsletter",
+                        "support@xing",
+                        "info@xing",
+                        "kundenservice@xing",
+                        "werbung@xing",
+                    ]
+                )
+            ]
             if contact_emails:
                 result["contact_email"] = contact_emails[0]
 
@@ -787,7 +813,7 @@ class SoftgardenParser(JobBoardParser):
     # Anti-bot headers for Softgarden
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
         "Accept-Encoding": "gzip, deflate, br",
@@ -967,7 +993,8 @@ class SoftgardenParser(JobBoardParser):
                     city_match = re.search(
                         r"\b(Berlin|Hamburg|München|Köln|Frankfurt|Stuttgart|Düsseldorf|"
                         r"Leipzig|Dresden|Hannover|Bremen|Nürnberg|Essen|Dortmund)\b",
-                        text, re.I
+                        text,
+                        re.I,
                     )
                     if city_match:
                         result["location"] = text
@@ -980,7 +1007,9 @@ class SoftgardenParser(JobBoardParser):
             # Softgarden often shows contact person
             contact_elem = soup.find(class_=re.compile(r"contact|ansprechpartner|recruiter", re.I))
             if not contact_elem:
-                ansprech_label = soup.find(string=re.compile(r"Ansprechpartner\s*:?|Kontakt\s*:?|Ihr Ansprechpartner", re.I))
+                ansprech_label = soup.find(
+                    string=re.compile(r"Ansprechpartner\s*:?|Kontakt\s*:?|Ihr Ansprechpartner", re.I)
+                )
                 if ansprech_label:
                     parent = ansprech_label.find_parent(["div", "p", "span", "section"])
                     if parent:
@@ -988,8 +1017,7 @@ class SoftgardenParser(JobBoardParser):
                         contact_text = parent.get_text(strip=True)
                         # Remove label prefix
                         contact_text = re.sub(
-                            r"^(Ansprechpartner|Kontakt|Ihr Ansprechpartner)[:\s]*",
-                            "", contact_text, flags=re.I
+                            r"^(Ansprechpartner|Kontakt|Ihr Ansprechpartner)[:\s]*", "", contact_text, flags=re.I
                         )
                         if contact_text and len(contact_text) > 2 and len(contact_text) < 100:
                             result["contact_person"] = contact_text
@@ -1005,16 +1033,17 @@ class SoftgardenParser(JobBoardParser):
                 desc_elem = soup.find(attrs={"data-testid": "job-description"})
             if not desc_elem:
                 # Try finding main content area
-                desc_elem = soup.find("article") or soup.find("main") or soup.find(class_=re.compile(r"content|body", re.I))
+                desc_elem = (
+                    soup.find("article") or soup.find("main") or soup.find(class_=re.compile(r"content|body", re.I))
+                )
             if desc_elem:
                 result["description"] = desc_elem.get_text(separator="\n", strip=True)
 
         # Requirements - often in a separate section
         if not result["requirements"]:
-            req_section = soup.find(string=re.compile(
-                r"(Anforderungen|Requirements|Ihr Profil|Qualifikation|Was Sie mitbringen)",
-                re.I
-            ))
+            req_section = soup.find(
+                string=re.compile(r"(Anforderungen|Requirements|Ihr Profil|Qualifikation|Was Sie mitbringen)", re.I)
+            )
             if req_section:
                 parent = req_section.find_parent(["div", "section", "li", "h2", "h3"])
                 if parent:
@@ -1063,7 +1092,7 @@ class SoftgardenParser(JobBoardParser):
             salary_pattern = re.compile(
                 r"(\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s*[-–bis]\s*\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s*(?:€|EUR|Euro))"
                 r"|(?:ab\s+)?(\d{1,3}(?:\.\d{3})*(?:,\d{2})?\s*(?:€|EUR|Euro))",
-                re.I
+                re.I,
             )
             salary_match = salary_pattern.search(page_text)
             if salary_match:
@@ -1071,10 +1100,7 @@ class SoftgardenParser(JobBoardParser):
 
         # Posted date - look for German date formats
         if not result["posted_date"]:
-            date_label = soup.find(string=re.compile(
-                r"(Online seit|Eingestellt am|Veröffentlicht|Datum|Posted)",
-                re.I
-            ))
+            date_label = soup.find(string=re.compile(r"(Online seit|Eingestellt am|Veröffentlicht|Datum|Posted)", re.I))
             if date_label:
                 parent = date_label.find_parent(["div", "p", "span", "dt", "li"])
                 if parent:
@@ -1092,11 +1118,23 @@ class SoftgardenParser(JobBoardParser):
             page_text = soup.get_text()
             emails = email_pattern.findall(page_text)
             # Filter out common non-contact emails
-            contact_emails = [e for e in emails if not any(
-                x in e.lower() for x in ["noreply", "no-reply", "newsletter",
-                                         "support@softgarden", "info@softgarden",
-                                         "datenschutz", "privacy", "tracking"]
-            )]
+            contact_emails = [
+                e
+                for e in emails
+                if not any(
+                    x in e.lower()
+                    for x in [
+                        "noreply",
+                        "no-reply",
+                        "newsletter",
+                        "support@softgarden",
+                        "info@softgarden",
+                        "datenschutz",
+                        "privacy",
+                        "tracking",
+                    ]
+                )
+            ]
             if contact_emails:
                 result["contact_email"] = contact_emails[0]
 
@@ -1128,7 +1166,7 @@ class ArbeitsagenturParser(JobBoardParser):
     # Anti-bot headers for Arbeitsagentur
     HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
-                      "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
         "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
         "Accept-Encoding": "gzip, deflate, br",
@@ -1151,9 +1189,8 @@ class ArbeitsagenturParser(JobBoardParser):
         # - arbeitsagentur.de/jobsuche/suche?...
         # - arbeitsagentur.de/jobsuche/jobdetail/...
         # - con.arbeitsagentur.de/prod/jobboerse/...
-        is_arbeitsagentur = (
-            hostname in ["arbeitsagentur.de", "con.arbeitsagentur.de"]
-            or hostname.endswith(".arbeitsagentur.de")
+        is_arbeitsagentur = hostname in ["arbeitsagentur.de", "con.arbeitsagentur.de"] or hostname.endswith(
+            ".arbeitsagentur.de"
         )
         is_job_page = (
             "/jobsuche/" in parsed.path
@@ -1407,7 +1444,9 @@ class ArbeitsagenturParser(JobBoardParser):
             if not result["contact_phone"]:
                 page_text = soup.get_text()
                 # German phone patterns: +49, 0xxx, (0xxx)
-                phone_pattern = re.compile(r"(?:Tel(?:efon)?\.?\s*:?\s*)?((?:\+49|0)[\s\-/]*(?:\(\d+\)|\d+)[\s\-/]*[\d\s\-/]{6,})", re.I)
+                phone_pattern = re.compile(
+                    r"(?:Tel(?:efon)?\.?\s*:?\s*)?((?:\+49|0)[\s\-/]*(?:\(\d+\)|\d+)[\s\-/]*[\d\s\-/]{6,})", re.I
+                )
                 phone_match = phone_pattern.search(page_text)
                 if phone_match:
                     phone = phone_match.group(1).strip()
@@ -1487,10 +1526,21 @@ class ArbeitsagenturParser(JobBoardParser):
             page_text = soup.get_text()
             emails = email_pattern.findall(page_text)
             # Filter out common non-contact emails
-            contact_emails = [e for e in emails if not any(
-                x in e.lower() for x in ["noreply", "no-reply", "newsletter",
-                                         "@arbeitsagentur.de", "support@", "info@arbeitsagentur"]
-            )]
+            contact_emails = [
+                e
+                for e in emails
+                if not any(
+                    x in e.lower()
+                    for x in [
+                        "noreply",
+                        "no-reply",
+                        "newsletter",
+                        "@arbeitsagentur.de",
+                        "support@",
+                        "info@arbeitsagentur",
+                    ]
+                )
+            ]
             if contact_emails:
                 result["contact_email"] = contact_emails[0]
 
@@ -1563,11 +1613,17 @@ class GenericJobParser:
         # Strategy 6: Heuristics
         result = self._apply_heuristics(soup, result, url)
 
+        # Check if this appears to be a search results page
+        if self._is_search_results_page(soup, url):
+            result["is_search_results_page"] = True
+            logger.warning(
+                f"GenericJobParser: URL appears to be a search results page, not a single job posting: {url}"
+            )
+
         # Clean up extraction_methods for logging
         if result["extraction_methods"]:
             logger.info(
-                f"GenericJobParser: Extracted data for {url} using methods: "
-                f"{', '.join(result['extraction_methods'])}"
+                f"GenericJobParser: Extracted data for {url} using methods: {', '.join(result['extraction_methods'])}"
             )
         else:
             logger.warning(f"GenericJobParser: No structured data found for {url}")
@@ -1684,8 +1740,7 @@ class GenericJobParser:
                 return address
             if isinstance(address, dict):
                 parts = []
-                for field in ["streetAddress", "postalCode", "addressLocality",
-                              "addressRegion", "addressCountry"]:
+                for field in ["streetAddress", "postalCode", "addressLocality", "addressRegion", "addressCountry"]:
                     val = address.get(field)
                     if val:
                         if isinstance(val, dict):
@@ -1815,8 +1870,7 @@ class GenericJobParser:
                         company_part = parts[-1] if len(parts) > 2 else parts[1]
                         # Clean common suffixes
                         company_part = re.sub(
-                            r"\s*[-–|]\s*(Jobs?|Karriere|Career|Stellenangebote?).*$",
-                            "", company_part, flags=re.I
+                            r"\s*[-–|]\s*(Jobs?|Karriere|Career|Stellenangebote?).*$", "", company_part, flags=re.I
                         )
                         if company_part:
                             result["company"] = self._clean_text(company_part)
@@ -1825,10 +1879,7 @@ class GenericJobParser:
 
         # Try "at" / "bei" pattern
         if not result["title"] or not result["company"]:
-            at_match = re.match(
-                r"^(.+?)\s+(?:at|bei|@)\s+(.+?)(?:\s*[-|–].*)?$",
-                title_text, re.I
-            )
+            at_match = re.match(r"^(.+?)\s+(?:at|bei|@)\s+(.+?)(?:\s*[-|–].*)?$", title_text, re.I)
             if at_match:
                 if not result["title"]:
                     result["title"] = self._clean_text(at_match.group(1))
@@ -1839,11 +1890,21 @@ class GenericJobParser:
 
         # Fallback: use entire title if nothing else worked
         if not result["title"] and title_text:
-            # Clean common suffixes from title
-            clean_title = re.sub(
+            # Clean common suffixes from title (order matters - more specific first)
+            cleanup_patterns = [
+                # Austrian/German job board patterns
+                r"\s*\|\s*aktuell\s+\d+\s+offen",  # | aktuell 9 offen
+                r"\s*\|\s*karriere\.at",  # | karriere.at
+                r"\s*\|\s*stepstone\.at",  # | stepstone.at
+                r"\s*\|\s*stepstone\.de",  # | stepstone.de
+                r"\s+Jobs?\s+in\s+[\wäöüÄÖÜß]+(?:\s|$)",  # Jobs in Oberösterreich
+                # Generic patterns
                 r"\s*[-–|]\s*(Jobs?|Karriere|Career|Stellenangebote?|Apply|Bewerben).*$",
-                "", title_text, flags=re.I
-            )
+            ]
+            clean_title = title_text
+            for pattern in cleanup_patterns:
+                clean_title = re.sub(pattern, "", clean_title, flags=re.I)
+            clean_title = clean_title.strip()
             if clean_title:
                 result["title"] = self._clean_text(clean_title)
                 title_extracted = True
@@ -1943,14 +2004,24 @@ class GenericJobParser:
         # Employment type - look for keywords in tagged elements
         if not result["employment_type"]:
             emp_keywords = {
-                "vollzeit": "Vollzeit", "full-time": "Full-time", "full time": "Full-time",
-                "teilzeit": "Teilzeit", "part-time": "Part-time", "part time": "Part-time",
-                "festanstellung": "Festanstellung", "permanent": "Permanent",
-                "befristet": "Befristet", "temporary": "Temporary",
-                "remote": "Remote", "homeoffice": "Homeoffice",
-                "hybrid": "Hybrid", "freelance": "Freelance",
-                "praktikum": "Praktikum", "internship": "Internship",
-                "werkstudent": "Werkstudent", "minijob": "Minijob",
+                "vollzeit": "Vollzeit",
+                "full-time": "Full-time",
+                "full time": "Full-time",
+                "teilzeit": "Teilzeit",
+                "part-time": "Part-time",
+                "part time": "Part-time",
+                "festanstellung": "Festanstellung",
+                "permanent": "Permanent",
+                "befristet": "Befristet",
+                "temporary": "Temporary",
+                "remote": "Remote",
+                "homeoffice": "Homeoffice",
+                "hybrid": "Hybrid",
+                "freelance": "Freelance",
+                "praktikum": "Praktikum",
+                "internship": "Internship",
+                "werkstudent": "Werkstudent",
+                "minijob": "Minijob",
             }
             for elem in soup.find_all(class_=re.compile(r"type|tag|badge|chip|label|employment", re.I)):
                 text = elem.get_text(strip=True).lower()
@@ -1969,14 +2040,19 @@ class GenericJobParser:
             emails = email_pattern.findall(page_text)
             # Filter out common non-contact emails
             blocked_patterns = [
-                "noreply", "no-reply", "newsletter", "support@", "info@",
-                "privacy", "datenschutz", "tracking", "analytics",
-                "example.com", "test.com"
+                "noreply",
+                "no-reply",
+                "newsletter",
+                "support@",
+                "info@",
+                "privacy",
+                "datenschutz",
+                "tracking",
+                "analytics",
+                "example.com",
+                "test.com",
             ]
-            contact_emails = [
-                e for e in emails
-                if not any(bp in e.lower() for bp in blocked_patterns)
-            ]
+            contact_emails = [e for e in emails if not any(bp in e.lower() for bp in blocked_patterns)]
             if contact_emails:
                 result["contact_email"] = contact_emails[0]
                 html_extracted = True
@@ -2011,9 +2087,26 @@ class GenericJobParser:
             if len(domain_parts) >= 2:
                 # Skip common job board domains
                 job_board_domains = [
-                    "indeed", "stepstone", "xing", "linkedin", "glassdoor",
-                    "monster", "lever", "greenhouse", "workday", "smartrecruiters",
-                    "softgarden", "arbeitsagentur", "jobs", "careers"
+                    "indeed",
+                    "stepstone",
+                    "xing",
+                    "linkedin",
+                    "glassdoor",
+                    "monster",
+                    "lever",
+                    "greenhouse",
+                    "workday",
+                    "smartrecruiters",
+                    "softgarden",
+                    "arbeitsagentur",
+                    "jobs",
+                    "careers",
+                    # Austrian/German job boards
+                    "karriere",
+                    "jobware",
+                    "stellenanzeigen",
+                    "hokify",
+                    "willhaben",
                 ]
                 base_domain = domain_parts[0]
                 if base_domain not in job_board_domains:
@@ -2046,6 +2139,50 @@ class GenericJobParser:
             logger.debug("GenericJobParser: Applied heuristic extraction")
 
         return result
+
+    def _is_search_results_page(self, soup: BeautifulSoup, url: str) -> bool:
+        """Detect if URL is a search results page rather than a single job posting.
+
+        Returns True if multiple indicators suggest this is a listing page.
+        """
+        indicators = 0
+
+        # URL pattern indicators
+        url_lower = url.lower()
+        if any(pattern in url_lower for pattern in ["/search", "/jobs?", "/suche", "?q=", "&q=", "/results"]):
+            indicators += 1
+
+        # Multiple job cards/listings on page
+        job_card_selectors = [
+            "[data-job-id]",
+            ".job-card",
+            ".job-listing",
+            ".job-item",
+            "[data-testid*='job-card']",
+            ".search-result",
+            ".stellenangebot",  # German
+        ]
+        for selector in job_card_selectors:
+            cards = soup.select(selector)
+            if len(cards) > 3:
+                indicators += 1
+                break
+
+        # Text patterns indicating search results
+        page_text = soup.get_text()
+        search_patterns = [
+            r"aktuell\s+\d+\s+offen",  # "aktuell 9 offen"
+            r"\d+\s+jobs?\s+gefunden",  # "15 Jobs gefunden"
+            r"\d+\s+ergebnisse",  # "25 Ergebnisse"
+            r"showing\s+\d+\s+of\s+\d+",  # "Showing 10 of 50"
+            r"\d+\s+results?\s+found",  # "10 results found"
+        ]
+        for pattern in search_patterns:
+            if re.search(pattern, page_text, re.I):
+                indicators += 1
+                break
+
+        return indicators >= 2
 
     def _clean_text(self, text: str | None) -> str | None:
         """Clean extracted text: strip whitespace, normalize spaces, decode entities."""
@@ -2187,13 +2324,19 @@ class WebScraper:
 
         except requests.HTTPError as e:
             if e.response.status_code == 403:
-                raise Exception("Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe.") from e
+                raise Exception(
+                    "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
+                ) from e
             elif e.response.status_code == 404:
                 raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
             elif e.response.status_code == 429:
-                raise Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.") from e
+                raise Exception(
+                    "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
+                ) from e
             else:
-                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}") from e
+                raise Exception(
+                    f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}"
+                ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
@@ -2313,9 +2456,18 @@ class WebScraper:
 
             # Merge structured data if available
             if structured_data:
-                for key in ["title", "company", "location", "description", "requirements",
-                           "contact_email", "posted_date", "application_deadline",
-                           "employment_type", "salary"]:
+                for key in [
+                    "title",
+                    "company",
+                    "location",
+                    "description",
+                    "requirements",
+                    "contact_email",
+                    "posted_date",
+                    "application_deadline",
+                    "employment_type",
+                    "salary",
+                ]:
                     if structured_data.get(key):
                         result[key] = structured_data[key]
 
@@ -2327,13 +2479,19 @@ class WebScraper:
 
         except requests.HTTPError as e:
             if e.response.status_code == 403:
-                raise Exception("Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe.") from e
+                raise Exception(
+                    "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
+                ) from e
             elif e.response.status_code == 404:
                 raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
             elif e.response.status_code == 429:
-                raise Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.") from e
+                raise Exception(
+                    "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
+                ) from e
             else:
-                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}") from e
+                raise Exception(
+                    f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}"
+                ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
