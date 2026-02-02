@@ -1,3 +1,24 @@
+# [1.16.0](https://github.com/filipores/obojobs/compare/v1.15.0...v1.16.0) (2026-02-02)
+
+
+### Bug Fixes
+
+* **lint:** sort imports in template_generator.py (pre-existing failure) ([9f85403](https://github.com/filipores/obojobs/commit/9f854030dea2198f0499873e8a3234962267a834))
+
+
+### Features
+
+* **ci:** add auto-fix workflow for lint-only failures (ob--qby7.5) ([368e0d1](https://github.com/filipores/obojobs/commit/368e0d13e6231c56cce482176d6d440cf19f15de))
+* **ci:** add JSON test artifacts to all CI jobs (ob--qby7.1) ([4eb82ba](https://github.com/filipores/obojobs/commit/4eb82ba549c2e38116239574b4f69f905107c5c7))
+* **ci:** add local CI mirror script (ob--qby7.4) ([13d8a70](https://github.com/filipores/obojobs/commit/13d8a701ea0be8100b42985762458f675dc95a64))
+* **ci:** add PR comment with CI results (ob--qby7.3) ([c02e2ea](https://github.com/filipores/obojobs/commit/c02e2ea1c0aee3ee0437dc6b2bac2b7732a0150f))
+* **ci:** add unified CI summary job (ob--qby7.2) ([6044272](https://github.com/filipores/obojobs/commit/6044272d5c26de96b01f6441948f617580f71681))
+* **frontend:** add auto-paste detection with enso animation (ob--beyz.2) ([7c2c7f2](https://github.com/filipores/obojobs/commit/7c2c7f2d17a1aae93ff51953e9e4d22bfb26c3fd))
+* **ui:** add crafting overlay with cinematic generation phases (ob--beyz.3) ([66bca1d](https://github.com/filipores/obojobs/commit/66bca1ddc3e1e7824bc24d79ddea5dea552f933a))
+* **ui:** add enso animation components with wa-fuu design (ob--beyz.1) ([968ddb9](https://github.com/filipores/obojobs/commit/968ddb98e4ffebf17f6dcc65f38e1cdbec62f50d))
+* **ui:** add premium reveal modal with einleitung preview (ob--beyz.4) ([b4f6c53](https://github.com/filipores/obojobs/commit/b4f6c53c2d99805b5f0b9fb88529bd335bd7f9e5))
+* **ui:** transform CV-missing into inviting zero-state experience (ob--beyz.5) ([d0380f4](https://github.com/filipores/obojobs/commit/d0380f4f0266b854a1bbc6743e6998d1f5ba1831))
+
 # [1.15.0](https://github.com/filipores/obojobs/compare/v1.14.2...v1.15.0) (2026-02-02)
 
 
