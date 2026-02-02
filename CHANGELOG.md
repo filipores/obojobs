@@ -1,3 +1,10 @@
+# [1.11.0](https://github.com/filipores/obojobs/compare/v1.10.0...v1.11.0) (2026-02-02)
+
+
+### Features
+
+* move Job-Fit Score from preview to post-generation (ob--cg5) ([8c229f6](https://github.com/filipores/obojobs/commit/8c229f6df5cdb774af65458e8d6a291a82b14445))
+
 # [1.10.0](https://github.com/filipores/obojobs/compare/v1.9.2...v1.10.0) (2026-02-02)
 
 
