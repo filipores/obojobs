@@ -1,3 +1,10 @@
+# [1.10.0](https://github.com/filipores/obojobs/compare/v1.9.2...v1.10.0) (2026-02-02)
+
+
+### Features
+
+* **applications:** implement minimal confirmation flow for job applications ([1abd18c](https://github.com/filipores/obojobs/commit/1abd18c03e7d5c66c0d66675c1a69a3d622d49c5))
+
 ## [1.9.2](https://github.com/filipores/obojobs/compare/v1.9.1...v1.9.2) (2026-02-01)
 
 
