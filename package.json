@@ -15,7 +15,9 @@
   "scripts": {
     "prepare": "husky",
     "release": "semantic-release",
-    "release:dry": "semantic-release --dry-run"
+    "release:dry": "semantic-release --dry-run",
+    "ci:local": "./scripts/ci-local.sh",
+    "ci:local:quick": "./scripts/ci-local.sh --skip-e2e"
   },
   "lint-staged": {
     "frontend/**/*.{js,ts,vue}": [
