@@ -1,3 +1,10 @@
+## [1.14.1](https://github.com/filipores/obojobs/compare/v1.14.0...v1.14.1) (2026-02-02)
+
+
+### Bug Fixes
+
+* **applications:** preserve user-edited data and fix PDF download (ob-339) ([861945f](https://github.com/filipores/obojobs/commit/861945f2c2663f21ddbb3026018d45bd3af58aa6))
+
 # [1.14.0](https://github.com/filipores/obojobs/compare/v1.13.0...v1.14.0) (2026-02-02)
 
 
