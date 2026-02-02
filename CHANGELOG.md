@@ -1,3 +1,10 @@
+# [1.13.0](https://github.com/filipores/obojobs/compare/v1.12.0...v1.13.0) (2026-02-02)
+
+
+### Features
+
+* **frontend:** add usage indicator to NewApplication page ([bf10a9a](https://github.com/filipores/obojobs/commit/bf10a9a9c8a7e5c34a52d0c64fd8a57f1f8318a7)), closes [#45](https://github.com/filipores/obojobs/issues/45)
+
 # [1.12.0](https://github.com/filipores/obojobs/compare/v1.11.0...v1.12.0) (2026-02-02)
 
 
