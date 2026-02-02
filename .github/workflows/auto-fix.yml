@@ -1,0 +1,222 @@
+name: Auto-Fix Lint
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main, ralph/*]
+
+jobs:
+  auto-fix:
+    runs-on: ubuntu-latest
+    # Only run on failures, not on success or cancelled
+    if: github.event.workflow_run.conclusion == 'failure'
+    permissions:
+      contents: write
+      actions: read
+
+    steps:
+      - name: Download CI summary artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-summary
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+        continue-on-error: true
+
+      - name: Download backend test results
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-test-results
+          path: backend-results
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+        continue-on-error: true
+
+      - name: Download frontend test results
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-test-results
+          path: frontend-results
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+        continue-on-error: true
+
+      - name: Analyze failure type
+        id: analyze
+        run: |
+          echo "Analyzing CI failure..."
+
+          # Initialize flags
+          LINT_FAILURE=false
+          TEST_FAILURE=false
+          BACKEND_LINT_FAILED=false
+          FRONTEND_LINT_FAILED=false
+
+          # Check ci-summary.json if available
+          if [ -f "ci-summary.json" ]; then
+            echo "=== CI Summary ==="
+            cat ci-summary.json | jq .
+
+            BACKEND_RESULT=$(jq -r '.jobs["backend-tests"].result // "unknown"' ci-summary.json)
+            FRONTEND_RESULT=$(jq -r '.jobs["frontend-tests"].result // "unknown"' ci-summary.json)
+            E2E_RESULT=$(jq -r '.jobs["e2e-tests"].result // "unknown"' ci-summary.json)
+
+            echo "Backend: $BACKEND_RESULT, Frontend: $FRONTEND_RESULT, E2E: $E2E_RESULT"
+
+            # E2E failure means test failure (not lint)
+            if [ "$E2E_RESULT" = "failure" ]; then
+              TEST_FAILURE=true
+              echo "E2E tests failed - not a lint-only failure"
+            fi
+          fi
+
+          # Check backend lint results
+          if [ -f "backend-results/ruff-results.json" ]; then
+            RUFF_ERRORS=$(jq 'length' backend-results/ruff-results.json 2>/dev/null || echo "0")
+            if [ "$RUFF_ERRORS" -gt 0 ]; then
+              BACKEND_LINT_FAILED=true
+              LINT_FAILURE=true
+              echo "Backend ruff found $RUFF_ERRORS issues"
+            fi
+          fi
+
+          # Check backend test results (pytest)
+          if [ -f "backend-results/test-results.json" ]; then
+            PYTEST_FAILED=$(jq '.summary.failed // 0' backend-results/test-results.json 2>/dev/null || echo "0")
+            if [ "$PYTEST_FAILED" -gt 0 ]; then
+              TEST_FAILURE=true
+              echo "Backend pytest has $PYTEST_FAILED failed tests"
+            fi
+          fi
+
+          # Check frontend lint results
+          if [ -f "frontend-results/eslint-results.json" ]; then
+            ESLINT_ERRORS=$(jq '[.[] | .errorCount] | add // 0' frontend-results/eslint-results.json 2>/dev/null || echo "0")
+            if [ "$ESLINT_ERRORS" -gt 0 ]; then
+              FRONTEND_LINT_FAILED=true
+              LINT_FAILURE=true
+              echo "Frontend ESLint found $ESLINT_ERRORS errors"
+            fi
+          fi
+
+          # Check frontend test results
+          if [ -f "frontend-results/test-results.json" ]; then
+            VITEST_FAILED=$(jq '.numFailedTests // 0' frontend-results/test-results.json 2>/dev/null || echo "0")
+            if [ "$VITEST_FAILED" -gt 0 ]; then
+              TEST_FAILURE=true
+              echo "Frontend vitest has $VITEST_FAILED failed tests"
+            fi
+          fi
+
+          # Determine if we should auto-fix
+          # Only auto-fix if:
+          # 1. There was a lint failure
+          # 2. There was NO test failure
+          if [ "$LINT_FAILURE" = "true" ] && [ "$TEST_FAILURE" = "false" ]; then
+            echo "should_fix=true" >> $GITHUB_OUTPUT
+            echo "backend_lint=$BACKEND_LINT_FAILED" >> $GITHUB_OUTPUT
+            echo "frontend_lint=$FRONTEND_LINT_FAILED" >> $GITHUB_OUTPUT
+            echo "Auto-fix eligible: lint-only failure detected"
+          else
+            echo "should_fix=false" >> $GITHUB_OUTPUT
+            if [ "$TEST_FAILURE" = "true" ]; then
+              echo "Skipping auto-fix: test failures present (requires manual intervention)"
+            elif [ "$LINT_FAILURE" = "false" ]; then
+              echo "Skipping auto-fix: no lint failures detected"
+            fi
+          fi
+
+      - name: Checkout repository
+        if: steps.analyze.outputs.should_fix == 'true'
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+          fetch-depth: 0
+
+      - name: Set up Python
+        if: steps.analyze.outputs.should_fix == 'true' && steps.analyze.outputs.backend_lint == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ruff
+        if: steps.analyze.outputs.should_fix == 'true' && steps.analyze.outputs.backend_lint == 'true'
+        run: pip install ruff
+
+      - name: Auto-fix backend lint
+        if: steps.analyze.outputs.should_fix == 'true' && steps.analyze.outputs.backend_lint == 'true'
+        working-directory: ./backend
+        run: |
+          echo "Running ruff auto-fix..."
+          ruff check . --fix || true
+          ruff format . || true
+
+      - name: Set up Node.js
+        if: steps.analyze.outputs.should_fix == 'true' && steps.analyze.outputs.frontend_lint == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install frontend dependencies
+        if: steps.analyze.outputs.should_fix == 'true' && steps.analyze.outputs.frontend_lint == 'true'
+        working-directory: ./frontend
+        run: npm ci
+
+      - name: Auto-fix frontend lint
+        if: steps.analyze.outputs.should_fix == 'true' && steps.analyze.outputs.frontend_lint == 'true'
+        working-directory: ./frontend
+        run: |
+          echo "Running ESLint auto-fix..."
+          npm run lint:fix || true
+
+      - name: Check for changes
+        if: steps.analyze.outputs.should_fix == 'true'
+        id: changes
+        run: |
+          if git diff --quiet; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No changes to commit"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "Changes detected:"
+            git diff --stat
+          fi
+
+      - name: Commit and push fixes
+        if: steps.analyze.outputs.should_fix == 'true' && steps.changes.outputs.has_changes == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          git commit -m "fix(lint): auto-fix lint errors [skip ci]
+
+          Automatically fixed lint errors from CI run #${{ github.event.workflow_run.run_number }}
+
+          Co-Authored-By: github-actions[bot] <github-actions[bot]@users.noreply.github.com>"
+
+          git push origin ${{ github.event.workflow_run.head_branch }}
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "## Auto-Fix Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          if [ "${{ steps.analyze.outputs.should_fix }}" = "true" ]; then
+            if [ "${{ steps.changes.outputs.has_changes }}" = "true" ]; then
+              echo "Lint issues were automatically fixed and committed." >> $GITHUB_STEP_SUMMARY
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "- Backend lint fixed: ${{ steps.analyze.outputs.backend_lint }}" >> $GITHUB_STEP_SUMMARY
+              echo "- Frontend lint fixed: ${{ steps.analyze.outputs.frontend_lint }}" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "Auto-fix ran but no changes were needed." >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "Auto-fix was skipped." >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "Reason: Either test failures were present (requires manual fix) or no lint failures were detected." >> $GITHUB_STEP_SUMMARY
+          fi
