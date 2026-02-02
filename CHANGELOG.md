@@ -1,3 +1,10 @@
+## [1.14.2](https://github.com/filipores/obojobs/compare/v1.14.1...v1.14.2) (2026-02-02)
+
+
+### Bug Fixes
+
+* **applications:** remove Job-Fit preview code from NewApplication (ob--cg5) ([6bf29b4](https://github.com/filipores/obojobs/commit/6bf29b4abd4f9eef855f42408f4aecb774567edc))
+
 ## [1.14.1](https://github.com/filipores/obojobs/compare/v1.14.0...v1.14.1) (2026-02-02)
 
 
