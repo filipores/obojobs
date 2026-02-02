@@ -1,3 +1,10 @@
+# [1.14.0](https://github.com/filipores/obojobs/compare/v1.13.0...v1.14.0) (2026-02-02)
+
+
+### Features
+
+* **templates:** auto-create default German template on first application ([4811b48](https://github.com/filipores/obojobs/commit/4811b48f42e6376cc42926cdbaf0dfe4a95a5fd5))
+
 # [1.13.0](https://github.com/filipores/obojobs/compare/v1.12.0...v1.13.0) (2026-02-02)
 
 
