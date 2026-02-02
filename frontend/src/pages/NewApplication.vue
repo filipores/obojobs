@@ -7,36 +7,26 @@
         <p class="page-subtitle">Generiere ein Anschreiben aus einer Stellenanzeigen-URL</p>
       </section>
 
-      <!-- Resume/CV Missing Warning Banner - vor dem Formular (höhere Priorität) -->
-      <section v-if="!checkingResume && !hasResume" class="resume-warning-section animate-fade-up" style="animation-delay: 100ms;">
-        <div class="resume-warning zen-card">
-          <div class="resume-warning-icon-box">
-            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14,2 14,8 20,8"/>
-              <line x1="16" y1="13" x2="8" y2="13"/>
-              <line x1="16" y1="17" x2="8" y2="17"/>
-              <line x1="10" y1="9" x2="8" y2="9"/>
+      <!-- Zero-State: CV Invitation - transforms CV-missing from blocker to invitation -->
+      <section v-if="!checkingResume && !hasResume" class="cv-invitation-section animate-fade-up" style="animation-delay: 100ms;">
+        <div class="cv-invitation-card zen-card">
+          <div class="cv-invitation-enso">
+            <EnsoCircle state="breathing" size="lg" color="var(--color-ai)" :duration="5000" />
+          </div>
+          <h2 class="cv-invitation-title">Dein Lebenslauf bringt dein Anschreiben zum Leben</h2>
+          <p class="cv-invitation-text">
+            Lade deinen Lebenslauf hoch und wir erstellen personalisierte Bewerbungen,
+            die deine Erfahrungen und Fähigkeiten perfekt zur Geltung bringen.
+          </p>
+          <router-link to="/documents?from=new-application&upload=lebenslauf" class="zen-btn zen-btn-ai zen-btn-lg cv-invitation-cta">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
-          </div>
-          <div class="resume-warning-text-content">
-            <h3>Lebenslauf erforderlich</h3>
-            <p>
-              Um eine <strong>personalisierte Bewerbung</strong> zu generieren, benötigen wir deinen Lebenslauf.
-              Dieser wird für die Erstellung des Anschreibens und den Job-Fit Score verwendet.
-            </p>
-            <div class="resume-warning-actions">
-              <router-link to="/documents?from=new-application&upload=lebenslauf" class="zen-btn zen-btn-ai">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                  <polyline points="17 8 12 3 7 8"/>
-                  <line x1="12" y1="3" x2="12" y2="15"/>
-                </svg>
-                Lebenslauf hochladen
-              </router-link>
-              <span class="resume-warning-hint">PDF-Format, max. 10 MB</span>
-            </div>
-          </div>
+            Lebenslauf hochladen
+          </router-link>
+          <span class="cv-invitation-hint">PDF-Format, max. 10 MB</span>
         </div>
       </section>
 
@@ -81,8 +71,8 @@
         />
       </section>
 
-      <!-- Form Section -->
-      <section class="form-section animate-fade-up" style="animation-delay: 100ms;">
+      <!-- Form Section - subtly faded when no CV (anticipation) -->
+      <section class="form-section animate-fade-up" :class="{ 'form-section--anticipation': !checkingResume && !hasResume }" style="animation-delay: 100ms;">
         <div class="form-card zen-card">
           <!-- URL Input with Portal Detection -->
           <div class="form-group">
@@ -724,6 +714,7 @@ import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import UsageIndicator from '../components/UsageIndicator.vue'
+import EnsoCircle from '../components/application/EnsoCircle.vue'
 
 const router = useRouter()
 
@@ -1359,85 +1350,86 @@ onMounted(() => {
 }
 
 /* ========================================
-   RESUME/CV MISSING WARNING BANNER
+   CV INVITATION - ZERO STATE EXPERIENCE
    ======================================== */
-.resume-warning-section {
-  max-width: 640px;
-  margin-bottom: var(--space-lg);
+.cv-invitation-section {
+  max-width: 520px;
+  margin-bottom: var(--space-xl);
 }
 
-.resume-warning {
+.cv-invitation-card {
   display: flex;
-  gap: var(--space-lg);
-  padding: var(--space-xl);
-  border: 2px solid #b45050;
-  background: rgba(180, 80, 80, 0.08);
-}
-
-.resume-warning-icon-box {
-  flex-shrink: 0;
-  width: 56px;
-  height: 56px;
-  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  background: #b45050;
-  border-radius: var(--radius-md);
-  color: white;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-xl);
+  background: linear-gradient(180deg, var(--color-washi) 0%, var(--color-washi-warm) 100%);
+  border: 1px solid var(--color-border-light);
 }
 
-.resume-warning-text-content h3 {
-  font-size: 1.125rem;
-  font-weight: 500;
-  margin: 0 0 var(--space-sm) 0;
-  color: #8a3a3a;
+.cv-invitation-enso {
+  margin-bottom: var(--space-xl);
 }
 
-.resume-warning-text-content p {
-  font-size: 0.9375rem;
+.cv-invitation-title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  color: var(--color-sumi);
+  margin: 0 0 var(--space-md) 0;
+  line-height: var(--leading-snug);
+}
+
+.cv-invitation-text {
+  font-size: 1rem;
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
-  margin: 0 0 var(--space-lg) 0;
+  margin: 0 0 var(--space-xl) 0;
+  max-width: 380px;
 }
 
-.resume-warning-text-content p strong {
-  color: #b45050;
-}
-
-.resume-warning-actions {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-}
-
-.resume-warning-actions .zen-btn {
+.cv-invitation-cta {
   display: inline-flex;
   align-items: center;
   gap: var(--space-sm);
   text-decoration: none;
+  margin-bottom: var(--space-md);
 }
 
-.resume-warning-hint {
+.cv-invitation-hint {
   font-size: 0.8125rem;
   color: var(--color-text-tertiary);
-  font-style: italic;
+}
+
+/* Anticipation state for form when no CV */
+.form-section--anticipation {
+  opacity: 0.5;
+  pointer-events: none;
+  position: relative;
+}
+
+.form-section--anticipation::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(180deg, transparent 0%, var(--color-washi) 80%);
+  pointer-events: none;
 }
 
 @media (max-width: 768px) {
-  .resume-warning {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
+  .cv-invitation-card {
+    padding: var(--space-xl) var(--space-lg);
   }
 
-  .resume-warning-text-content {
-    text-align: center;
+  .cv-invitation-title {
+    font-size: 1.25rem;
   }
 
-  .resume-warning-actions {
-    flex-direction: column;
-    align-items: center;
+  .cv-invitation-text {
+    font-size: 0.9375rem;
   }
 }
 
