@@ -1098,6 +1098,87 @@ tbody tr:hover {
 }
 
 /* ========================================
+   ENSO ANIMATIONS - 円相 Circle Dynamics
+   ======================================== */
+
+/* Draw ink effect - hand-drawn progress reveal */
+@keyframes drawInk {
+  0% {
+    stroke-dashoffset: 0;
+  }
+  100% {
+    stroke-dashoffset: -200;
+  }
+}
+
+/* Complete enso - circle closes with contemplative timing */
+@keyframes completeEnso {
+  0% {
+    stroke-dashoffset: calc(var(--enso-circumference, 264) * 0.15);
+    opacity: 0.7;
+  }
+  60% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  80% {
+    transform: scale(1.02);
+  }
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Zen rotation - slow, meditative spin */
+@keyframes rotateZen {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* Breathing enso - meditative pulse */
+@keyframes breatheEnso {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+}
+
+/* ========================================
+   ENSO STATE VARIANTS - 円相の状態
+   ======================================== */
+
+/* Broken enso - incomplete, open to breath */
+.enso-broken {
+  clip-path: polygon(0 0, 100% 0, 100% 85%, 80% 100%, 0 100%);
+  opacity: 0.7;
+}
+
+/* Complete enso - wholeness achieved */
+.enso-complete {
+  animation: completeEnso 4s var(--ease-zen) forwards;
+}
+
+/* Breathing enso - meditative state */
+.enso-breathing {
+  animation: breatheEnso 4s var(--ease-zen) infinite;
+}
+
+/* Rotating enso - continuous contemplation */
+.enso-rotating {
+  animation: rotateZen 4s linear infinite;
+}
+
+/* ========================================
    UTILITY CLASSES
    ======================================== */
 .text-center { text-align: center; }
