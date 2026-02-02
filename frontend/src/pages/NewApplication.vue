@@ -147,105 +147,102 @@
             </div>
           </div>
 
-          <!-- Error Message with Fallback Option -->
-          <div v-if="error && !previewData && !showManualFallback" class="error-box error-with-fallback">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/>
-              <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
-            <div class="error-content">
-              <span>{{ error }}</span>
-              <p class="fallback-hint">
-                Einige Job-Portale blockieren automatisches Laden.
-                Sie können den Stellentext auch manuell einfügen.
-              </p>
-              <button @click="showManualFallback = true" class="zen-btn zen-btn-sm fallback-btn">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                Stellentext manuell einfügen
-              </button>
+          <!-- Error State with Broken Enso - Graceful Fallback -->
+          <div v-if="error && !previewData && !showManualFallback" class="scrape-error-state">
+            <div class="scrape-error-enso">
+              <EnsoCircle state="broken" size="lg" color="var(--color-stone)" :duration="3000" />
             </div>
+            <p class="scrape-error-message">Diese Seite spricht nicht mit uns.</p>
+            <p class="scrape-error-reassurance">Kein Problem.</p>
+            <button @click="showManualFallback = true" class="zen-btn zen-btn-ai scrape-error-action">
+              Stellentext selbst einfügen
+            </button>
           </div>
 
-          <!-- Manual Text Fallback Section -->
-          <div v-if="showManualFallback && !previewData" class="manual-fallback-section">
-            <div class="fallback-header">
-              <h3>Stellentext manuell einfügen</h3>
-              <button @click="showManualFallback = false" class="close-fallback-btn">
+          <!-- Manual Text Fallback Section - Expanding Flow -->
+          <div v-if="showManualFallback && !previewData" class="manual-fallback-section manual-fallback-expanding">
+            <div class="manual-fallback-header">
+              <div class="manual-fallback-enso">
+                <EnsoCircle state="breathing" size="md" color="var(--color-ai)" :duration="4000" />
+              </div>
+              <div class="manual-fallback-intro">
+                <h3>Füge den Stellentext ein</h3>
+                <p>Wir analysieren ihn und erstellen dein Anschreiben.</p>
+              </div>
+              <button @click="resetManualFallback" class="close-fallback-btn" aria-label="Schließen">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <line x1="18" y1="6" x2="6" y2="18"/>
                   <line x1="6" y1="6" x2="18" y2="18"/>
                 </svg>
               </button>
             </div>
-            <p class="fallback-description">
-              Kopieren Sie den vollständigen Text der Stellenanzeige und fügen Sie ihn hier ein.
-              Die Daten werden automatisch analysiert.
-            </p>
 
-            <div class="form-group">
-              <label class="form-label">Firmenname</label>
-              <input
-                v-model="manualCompany"
-                type="text"
-                class="form-input"
-                placeholder="z.B. Beispiel GmbH"
-                :disabled="analyzingManualText"
-              />
-            </div>
+            <div class="manual-fallback-fields">
+              <div class="form-row manual-compact-row">
+                <div class="form-group">
+                  <label class="form-label">Firmenname</label>
+                  <input
+                    v-model="manualCompany"
+                    type="text"
+                    class="form-input"
+                    placeholder="z.B. Beispiel GmbH"
+                    :disabled="analyzingManualText"
+                  />
+                </div>
 
-            <div class="form-group">
-              <label class="form-label">Position (optional)</label>
-              <input
-                v-model="manualTitle"
-                type="text"
-                class="form-input"
-                placeholder="z.B. Software Entwickler (m/w/d)"
-                :disabled="analyzingManualText"
-              />
-            </div>
+                <div class="form-group">
+                  <label class="form-label">Position (optional)</label>
+                  <input
+                    v-model="manualTitle"
+                    type="text"
+                    class="form-input"
+                    placeholder="z.B. Software Entwickler (m/w/d)"
+                    :disabled="analyzingManualText"
+                  />
+                </div>
+              </div>
 
-            <div class="form-group">
-              <label class="form-label required" for="manual-job-text">Stellentext</label>
-              <textarea
-                id="manual-job-text"
-                v-model="manualJobText"
-                class="form-textarea manual-text-area"
-                rows="12"
-                placeholder="Fügen Sie hier den vollständigen Text der Stellenanzeige ein..."
-                :disabled="analyzingManualText"
-                required
-                aria-required="true"
-              ></textarea>
-              <p class="form-hint">Mindestens 100 Zeichen erforderlich</p>
-            </div>
+              <div class="form-group manual-text-group">
+                <label class="form-label required" for="manual-job-text">Stellentext</label>
+                <textarea
+                  id="manual-job-text"
+                  ref="manualTextareaRef"
+                  v-model="manualJobText"
+                  class="form-textarea manual-text-area"
+                  rows="10"
+                  placeholder="Kopiere den vollständigen Text der Stellenanzeige hierher..."
+                  :disabled="analyzingManualText"
+                  required
+                  aria-required="true"
+                  @focus="onManualTextareaFocus"
+                ></textarea>
+                <p class="form-hint">
+                  <span v-if="manualJobText.length > 0" class="char-count" :class="{ 'char-count--valid': canAnalyzeManualText }">
+                    {{ manualJobText.length }} / 100 Zeichen
+                  </span>
+                  <span v-else>Mindestens 100 Zeichen erforderlich</span>
+                </p>
+              </div>
 
-            <div v-if="manualTextError" class="error-box">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="15" y1="9" x2="9" y2="15"/>
-                <line x1="9" y1="9" x2="15" y2="15"/>
-              </svg>
-              <span>{{ manualTextError }}</span>
-            </div>
+              <div v-if="manualTextError" class="manual-error-hint">
+                {{ manualTextError }}
+              </div>
 
-            <div class="form-actions">
-              <button
-                @click="analyzeManualText"
-                :disabled="!canAnalyzeManualText || analyzingManualText"
-                class="zen-btn zen-btn-ai"
-              >
-                <span v-if="analyzingManualText" class="btn-loading">
-                  <span class="loading-spinner"></span>
-                  Analysiere...
-                </span>
-                <span v-else>
-                  Stellentext analysieren
-                </span>
-              </button>
+              <div class="form-actions manual-actions">
+                <button
+                  @click="analyzeManualText"
+                  :disabled="!canAnalyzeManualText || analyzingManualText"
+                  class="zen-btn zen-btn-ai zen-btn-lg"
+                >
+                  <span v-if="analyzingManualText" class="btn-loading">
+                    <EnsoCircle state="rotating" size="sm" color="currentColor" :duration="1500" />
+                    <span>Analysiere...</span>
+                  </span>
+                  <span v-else>
+                    Bewerbung erstellen
+                  </span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -638,6 +635,14 @@
         </div>
       </section>
 
+      <!-- Crafting Overlay - Cinematic generation experience -->
+      <CraftingOverlay
+        :is-active="showCraftingOverlay"
+        :company-name="editableData.company"
+        :job-title="editableData.title"
+        @complete="onCraftingComplete"
+      />
+
       <!-- Premium Reveal Success Modal -->
       <Teleport to="body">
         <div v-if="generatedApp" class="premium-reveal-overlay" @click="closeModal">
@@ -743,6 +748,7 @@ import { useRouter } from 'vue-router'
 import api from '../api/client'
 import UsageIndicator from '../components/UsageIndicator.vue'
 import EnsoCircle from '../components/application/EnsoCircle.vue'
+import CraftingOverlay from '../components/application/CraftingOverlay.vue'
 
 const router = useRouter()
 
@@ -780,6 +786,7 @@ const generating = ref(false)
 const error = ref('')
 const usage = ref(null)
 const generatedApp = ref(null)
+const showCraftingOverlay = ref(false)
 
 // Premium reveal animation state
 const revealPhase = ref(0) // 0: hidden, 1: enso, 2: content, 3: actions
@@ -826,6 +833,7 @@ const manualTitle = ref('')
 const manualTextError = ref('')
 const analyzingManualText = ref(false)
 const isManualEntry = ref(false)
+const manualTextareaRef = ref(null)
 
 // Can analyze manual text check
 const canAnalyzeManualText = computed(() => {
@@ -1167,6 +1175,20 @@ const resetPreview = () => {
   }
 }
 
+// Reset manual fallback to go back to error state
+const resetManualFallback = () => {
+  showManualFallback.value = false
+  manualJobText.value = ''
+  manualCompany.value = ''
+  manualTitle.value = ''
+  manualTextError.value = ''
+}
+
+// Focus handler for manual textarea - auto-expand effect
+const onManualTextareaFocus = () => {
+  // Focus is handled by CSS :focus-within
+}
+
 // Analyze manually pasted job text
 const analyzeManualText = async () => {
   if (!canAnalyzeManualText.value) return
@@ -1242,12 +1264,18 @@ const getPlanLabel = () => {
   return plan.charAt(0).toUpperCase() + plan.slice(1)
 }
 
+// Handle crafting overlay completion
+const onCraftingComplete = () => {
+  showCraftingOverlay.value = false
+}
+
 // Generate application
 const generateApplication = async () => {
   if (!canGenerate.value) return
 
   error.value = ''
   generating.value = true
+  showCraftingOverlay.value = true
 
   try {
     let response
@@ -1280,6 +1308,7 @@ const generateApplication = async () => {
 
     if (data.success) {
       generatedApp.value = data.application
+      showCraftingOverlay.value = false
       // Trigger premium reveal animation
       startPremiumReveal()
       // Reload usage after generation
@@ -1310,9 +1339,11 @@ const generateApplication = async () => {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
       }
     } else {
+      showCraftingOverlay.value = false
       error.value = data.error || 'Unbekannter Fehler'
     }
   } catch (e) {
+    showCraftingOverlay.value = false
     if (e.response?.status === 403 && e.response?.data?.error_code === 'SUBSCRIPTION_LIMIT_REACHED') {
       error.value = e.response.data.error
     } else if (e.response?.data?.error) {
@@ -2345,6 +2376,90 @@ onMounted(() => {
 }
 
 /* ========================================
+   SCRAPE ERROR STATE - BROKEN ENSO FALLBACK
+   ======================================== */
+.scrape-error-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: var(--space-2xl) var(--space-lg);
+  margin-top: var(--space-lg);
+  animation: scrape-error-fade-in 0.6s var(--ease-zen) forwards;
+}
+
+.scrape-error-enso {
+  margin-bottom: var(--space-xl);
+  opacity: 0;
+  animation: scrape-error-enso-appear 0.8s var(--ease-zen) 0.2s forwards;
+}
+
+.scrape-error-message {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--color-sumi);
+  margin: 0 0 var(--space-xs) 0;
+  opacity: 0;
+  animation: scrape-error-text-appear 0.6s var(--ease-zen) 0.5s forwards;
+}
+
+.scrape-error-reassurance {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-xl) 0;
+  font-style: italic;
+  opacity: 0;
+  animation: scrape-error-text-appear 0.6s var(--ease-zen) 0.7s forwards;
+}
+
+.scrape-error-action {
+  opacity: 0;
+  animation: scrape-error-action-appear 0.5s var(--ease-zen) 1s forwards;
+}
+
+@keyframes scrape-error-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scrape-error-enso-appear {
+  from {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes scrape-error-text-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scrape-error-action-appear {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ========================================
    MANUAL FALLBACK SECTION
    ======================================== */
 .manual-fallback-section {
@@ -2391,6 +2506,131 @@ onMounted(() => {
 .manual-text-area {
   min-height: 200px;
   resize: vertical;
+}
+
+/* ========================================
+   MANUAL FALLBACK - EXPANDING FLOW STYLES
+   ======================================== */
+.manual-fallback-expanding {
+  animation: manual-expand-in 0.5s var(--ease-zen) forwards;
+  background: linear-gradient(180deg, var(--color-washi) 0%, var(--color-washi-warm) 100%);
+  border: 1px solid var(--color-border-light);
+}
+
+.manual-fallback-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-xl);
+}
+
+.manual-fallback-enso {
+  flex-shrink: 0;
+}
+
+.manual-fallback-intro {
+  flex: 1;
+}
+
+.manual-fallback-intro h3 {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: var(--color-sumi);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.manual-fallback-intro p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.manual-fallback-fields {
+  animation: manual-fields-appear 0.4s var(--ease-zen) 0.2s forwards;
+  opacity: 0;
+}
+
+.manual-compact-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-md);
+}
+
+.manual-text-group {
+  margin-top: var(--space-md);
+}
+
+.manual-text-group .form-textarea {
+  transition: min-height 0.3s var(--ease-zen), box-shadow 0.2s var(--ease-zen);
+}
+
+.manual-text-group .form-textarea:focus {
+  min-height: 280px;
+  box-shadow: 0 0 0 3px var(--color-ai-subtle);
+}
+
+.char-count {
+  color: var(--color-text-tertiary);
+  font-variant-numeric: tabular-nums;
+}
+
+.char-count--valid {
+  color: var(--color-koke);
+}
+
+.manual-error-hint {
+  font-size: 0.875rem;
+  color: #b45050;
+  padding: var(--space-sm) var(--space-md);
+  background: rgba(180, 80, 80, 0.08);
+  border-radius: var(--radius-sm);
+  margin-bottom: var(--space-md);
+}
+
+.manual-actions {
+  margin-top: var(--space-lg);
+}
+
+.manual-actions .btn-loading {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+@keyframes manual-expand-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    max-height: 1000px;
+  }
+}
+
+@keyframes manual-fields-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .manual-compact-row {
+    grid-template-columns: 1fr;
+  }
+
+  .manual-fallback-header {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
 }
 
 /* ========================================
