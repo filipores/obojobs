@@ -210,8 +210,12 @@ class BewerbungsGenerator:
 
         # Email-Daten generieren mit verbesserter Personalisierung
         betreff = self.api_client.generate_betreff(details["position"], firma_name, style="professional")
+        # Build attachments list dynamically - Arbeitszeugnis only if available
+        attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis"]
+        if self.zeugnis_text:
+            attachments.append("Arbeitszeugnis")
         email_text = self.api_client.generate_email_text(
-            position=details["position"], ansprechperson=details["ansprechpartner"], firma_name=firma_name
+            position=details["position"], ansprechperson=details["ansprechpartner"], firma_name=firma_name, attachments=attachments
         )
 
         # Sammle alle extrahierten Informationen

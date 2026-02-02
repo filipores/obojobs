@@ -230,7 +230,8 @@ Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil 
     ) -> str:
         """Generate personalized email text for job application"""
         if attachments is None:
-            attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis", "Arbeitszeugnis"]
+            # Note: Arbeitszeugnis is optional - caller should pass it explicitly if available
+            attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis"]
 
         # Add company context if available
         position_text = f"die Position als {position}"

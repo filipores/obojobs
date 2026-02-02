@@ -889,13 +889,13 @@ const canGenerate = computed(() => {
 })
 
 // Check if error is about missing documents (CV/resume/Lebenslauf)
+// Note: Arbeitszeugnis is optional and should not trigger this error
 const isDocumentMissingError = computed(() => {
   if (!error.value) return false
   const errorLower = error.value.toLowerCase()
   return errorLower.includes('lebenslauf') ||
          errorLower.includes('resume') ||
-         errorLower.includes('cv') ||
-         errorLower.includes('arbeitszeugnis')
+         errorLower.includes('cv')
 })
 
 // Check if error is about subscription limit (CORE-016-BUG-001)
