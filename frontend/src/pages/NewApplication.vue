@@ -93,6 +93,7 @@
                 }"
                 :disabled="loading || generating"
                 @input="onUrlInput"
+                @paste="onUrlPaste"
                 @keydown.enter="onUrlEnterPressed"
               />
               <!-- Validation Icon -->
@@ -123,21 +124,27 @@
             </div>
           </div>
 
-          <!-- Preview Button (only show if no quick confirm or preview yet) -->
-          <div v-if="!quickConfirmData && !previewData" class="form-actions preview-actions">
-            <button
-              @click="loadPreview"
-              :disabled="!url || loading || urlValidation.isValid !== true"
-              class="zen-btn zen-btn-lg"
-            >
-              <span v-if="loading" class="btn-loading">
-                <span class="loading-spinner"></span>
-                Lade Stellenanzeige...
-              </span>
-              <span v-else>
-                Stellenanzeige laden
-              </span>
-            </button>
+          <!-- Enso Recognition Animation (shown during paste detection) -->
+          <div v-if="loading && !quickConfirmData && !previewData" class="enso-recognition-container">
+            <div class="enso-recognition" :class="{ 'enso-complete': recognitionComplete }">
+              <svg class="enso-circle" viewBox="0 0 100 100">
+                <circle
+                  class="enso-path"
+                  cx="50"
+                  cy="50"
+                  r="45"
+                  fill="none"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+              </svg>
+              <div v-if="recognitionComplete && recognizedCompany" class="enso-company-name">
+                {{ recognizedCompany }}
+              </div>
+              <div v-else class="enso-status">
+                Erkenne Stellenanzeige...
+              </div>
+            </div>
           </div>
 
           <!-- Error Message with Fallback Option -->
@@ -727,6 +734,10 @@ const handleKeydown = (e) => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
+  // Clean up paste debounce timeout
+  if (pasteDebounceTimeout) {
+    clearTimeout(pasteDebounceTimeout)
+  }
 })
 
 // Skills check state
@@ -752,6 +763,11 @@ const generatedApp = ref(null)
 // Quick confirmation state (minimal flow)
 const quickConfirmData = ref(null)
 const showFullPreview = ref(false)
+
+// Auto-paste recognition state
+const recognitionComplete = ref(false)
+const recognizedCompany = ref('')
+let pasteDebounceTimeout = null
 
 // Preview state (full preview for power users)
 const previewData = ref(null)
@@ -929,6 +945,47 @@ const onUrlInput = () => {
   }
 }
 
+// Handle paste event for auto-detection
+const onUrlPaste = () => {
+  // Mark as touched immediately for visual feedback
+  urlTouched.value = true
+
+  // Clear any existing debounce timeout
+  if (pasteDebounceTimeout) {
+    clearTimeout(pasteDebounceTimeout)
+  }
+
+  // Use nextTick to ensure v-model has updated with pasted value
+  // then debounce 500ms before triggering extraction
+  setTimeout(() => {
+    // Validate URL after paste
+    if (url.value && urlValidation.value.isValid === true && !loading.value && !generating.value && !quickConfirmData.value && !previewData.value) {
+      pasteDebounceTimeout = setTimeout(() => {
+        loadPreviewWithAnimation()
+      }, 500)
+    }
+  }, 0)
+}
+
+// Load preview with enso recognition animation
+const loadPreviewWithAnimation = async () => {
+  // Reset recognition state
+  recognitionComplete.value = false
+  recognizedCompany.value = ''
+
+  // Call regular loadPreview - animation shows during loading state
+  await loadPreview()
+
+  // After successful load, trigger completion animation
+  if (quickConfirmData.value) {
+    recognizedCompany.value = quickConfirmData.value.company || ''
+    recognitionComplete.value = true
+
+    // Small delay to show completion animation before transitioning to quick confirm
+    await new Promise(resolve => setTimeout(resolve, 800))
+  }
+}
+
 // Handle Enter key press in URL input
 const onUrlEnterPressed = (event) => {
   // Only proceed if URL is valid and not already loading
@@ -1066,6 +1123,13 @@ const resetPreview = () => {
   manualCompany.value = ''
   manualTitle.value = ''
   urlTouched.value = false
+  // Reset recognition animation state
+  recognitionComplete.value = false
+  recognizedCompany.value = ''
+  if (pasteDebounceTimeout) {
+    clearTimeout(pasteDebounceTimeout)
+    pasteDebounceTimeout = null
+  }
 }
 
 // Analyze manually pasted job text
@@ -2447,6 +2511,130 @@ onMounted(() => {
   .url-input-wrapper {
     display: flex;
     flex-direction: column;
+  }
+}
+
+/* ========================================
+   ENSO RECOGNITION ANIMATION
+   ======================================== */
+.enso-recognition-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-xl) 0;
+  margin-top: var(--space-lg);
+}
+
+.enso-recognition {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.enso-circle {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.enso-path {
+  stroke: var(--color-ai);
+  stroke-dasharray: 283;
+  stroke-dashoffset: 283;
+  animation: enso-draw 1.5s ease-in-out forwards, enso-pulse 2s ease-in-out 1.5s infinite;
+  opacity: 0.8;
+}
+
+.enso-complete .enso-path {
+  stroke-dashoffset: 0;
+  animation: enso-complete-glow 0.6s ease-out forwards;
+}
+
+.enso-status {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  text-align: center;
+  margin-top: var(--space-sm);
+  animation: enso-status-fade 1.5s ease-in-out infinite;
+}
+
+.enso-company-name {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-ai);
+  text-align: center;
+  max-width: 100px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  animation: enso-materialize 0.6s ease-out forwards;
+  opacity: 0;
+  transform: scale(0.8);
+}
+
+@keyframes enso-draw {
+  0% {
+    stroke-dashoffset: 283;
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+  100% {
+    stroke-dashoffset: 20;
+    opacity: 0.8;
+  }
+}
+
+@keyframes enso-pulse {
+  0%, 100% {
+    stroke-dashoffset: 20;
+    opacity: 0.6;
+  }
+  50% {
+    stroke-dashoffset: 40;
+    opacity: 1;
+  }
+}
+
+@keyframes enso-complete-glow {
+  0% {
+    stroke: var(--color-ai);
+    filter: none;
+  }
+  50% {
+    stroke: var(--color-koke);
+    filter: drop-shadow(0 0 8px var(--color-koke));
+  }
+  100% {
+    stroke: var(--color-koke);
+    filter: none;
+    opacity: 1;
+  }
+}
+
+@keyframes enso-status-fade {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@keyframes enso-materialize {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
   }
 }
 </style>
