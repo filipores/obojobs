@@ -1,3 +1,10 @@
+## [1.17.1](https://github.com/filipores/obojobs/compare/v1.17.0...v1.17.1) (2026-02-02)
+
+
+### Bug Fixes
+
+* **migrations:** resolve duplicate revision id conflict ([082cd7c](https://github.com/filipores/obojobs/commit/082cd7c732d35236eb2ebf453ba578a801049117))
+
 # [1.17.0](https://github.com/filipores/obojobs/compare/v1.16.0...v1.17.0) (2026-02-02)
 
 
