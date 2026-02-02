@@ -140,3 +140,79 @@ jobs:
             frontend/playwright-report/
             frontend/test-results.json
           retention-days: 7
+
+  ci-summary:
+    runs-on: ubuntu-latest
+    needs: [backend-tests, frontend-tests, e2e-tests]
+    if: always()
+    steps:
+      - name: Download all test artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: Create CI summary
+        run: |
+          # Determine job results from workflow context
+          BACKEND_RESULT="${{ needs.backend-tests.result }}"
+          FRONTEND_RESULT="${{ needs.frontend-tests.result }}"
+          E2E_RESULT="${{ needs.e2e-tests.result }}"
+
+          # Determine overall status
+          if [ "$BACKEND_RESULT" = "success" ] && [ "$FRONTEND_RESULT" = "success" ] && [ "$E2E_RESULT" = "success" ]; then
+            OVERALL="passed"
+          else
+            OVERALL="failed"
+          fi
+
+          # Create ci-summary.json using jq for proper JSON formatting
+          jq -n \
+            --arg sha "${{ github.sha }}" \
+            --arg overall "$OVERALL" \
+            --arg backend "$BACKEND_RESULT" \
+            --arg frontend "$FRONTEND_RESULT" \
+            --arg e2e "$E2E_RESULT" \
+            --arg run_id "${{ github.run_id }}" \
+            --arg run_number "${{ github.run_number }}" \
+            --arg ref "${{ github.ref }}" \
+            --arg event "${{ github.event_name }}" \
+            '{
+              sha: $sha,
+              overall: $overall,
+              jobs: {
+                "backend-tests": {
+                  result: $backend,
+                  artifacts: ["backend-test-results"]
+                },
+                "frontend-tests": {
+                  result: $frontend,
+                  artifacts: ["frontend-test-results"]
+                },
+                "e2e-tests": {
+                  result: $e2e,
+                  artifacts: ["playwright-report"]
+                }
+              },
+              workflow: {
+                run_id: $run_id,
+                run_number: $run_number,
+                ref: $ref,
+                event: $event
+              }
+            }' > ci-summary.json
+
+          # Pretty print for logs
+          echo "=== CI Summary ==="
+          cat ci-summary.json | jq .
+
+          # List downloaded artifacts
+          echo ""
+          echo "=== Downloaded Artifacts ==="
+          find artifacts -type f -name "*.json" | head -20
+
+      - name: Upload CI summary
+        uses: actions/upload-artifact@v6
+        with:
+          name: ci-summary
+          path: ci-summary.json
+          retention-days: 30

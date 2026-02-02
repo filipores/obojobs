@@ -2,7 +2,6 @@
 
 from models import Template, db
 
-
 DEFAULT_GERMAN_TEMPLATE = """{{ANSPRECHPARTNER}}
 
 Ihre Stellenausschreibung als {{POSITION}} hat mich sofort angesprochen.
