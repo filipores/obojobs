@@ -1,3 +1,10 @@
+# [1.12.0](https://github.com/filipores/obojobs/compare/v1.11.0...v1.12.0) (2026-02-02)
+
+
+### Features
+
+* make Arbeitszeugnis optional for application generation (ob--nkl) ([5e70c03](https://github.com/filipores/obojobs/commit/5e70c03886e024df6a54440747b09c4ffb53e1e5))
+
 # [1.11.0](https://github.com/filipores/obojobs/compare/v1.10.0...v1.11.0) (2026-02-02)
 
 
