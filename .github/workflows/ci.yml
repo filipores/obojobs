@@ -216,3 +216,59 @@ jobs:
           name: ci-summary
           path: ci-summary.json
           retention-days: 30
+
+      - name: Post PR comment with results
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Get job results
+          BACKEND_RESULT="${{ needs.backend-tests.result }}"
+          FRONTEND_RESULT="${{ needs.frontend-tests.result }}"
+          E2E_RESULT="${{ needs.e2e-tests.result }}"
+
+          # Determine overall status
+          if [ "$BACKEND_RESULT" = "success" ] && [ "$FRONTEND_RESULT" = "success" ] && [ "$E2E_RESULT" = "success" ]; then
+            OVERALL="✅ CI Results: All checks passed"
+          else
+            OVERALL="❌ CI Results: Some checks failed"
+          fi
+
+          # Convert result to emoji
+          emoji() {
+            case "$1" in
+              success) echo "✅" ;;
+              failure) echo "❌" ;;
+              cancelled) echo "⚪" ;;
+              skipped) echo "⏭️" ;;
+              *) echo "❓" ;;
+            esac
+          }
+
+          # Build comment body to a file to preserve formatting
+          {
+            echo "## $OVERALL"
+            echo ""
+            echo "| Job | Status | Result |"
+            echo "|-----|--------|--------|"
+            echo "| Backend Tests | $(emoji "$BACKEND_RESULT") | $BACKEND_RESULT |"
+            echo "| Frontend Tests | $(emoji "$FRONTEND_RESULT") | $FRONTEND_RESULT |"
+            echo "| E2E Tests | $(emoji "$E2E_RESULT") | $E2E_RESULT |"
+            echo ""
+            echo "**Commit:** \`${{ github.sha }}\`"
+            echo "**Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"
+            echo ""
+            echo "<details>"
+            echo "<summary>📊 Machine-readable results (JSON)</summary>"
+            echo ""
+            echo "\`\`\`json"
+            cat ci-summary.json
+            echo "\`\`\`"
+            echo ""
+            echo "</details>"
+          } > comment.md
+
+          # Post the comment
+          gh pr comment "${{ github.event.pull_request.number }}" \
+            --body-file comment.md \
+            --repo "${{ github.repository }}"
