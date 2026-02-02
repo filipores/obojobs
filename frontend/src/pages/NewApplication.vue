@@ -956,12 +956,6 @@ const loadPreview = async () => {
   quickConfirmData.value = null
   showFullPreview.value = false
   previewData.value = null
-  tempApplicationId.value = null
-  jobFitScore.value = null
-  showLowScoreWarning.value = false
-  analyzingRequirements.value = false
-  requirementsError.value = { message: '', hint: '', isTemporary: false, showContactLink: false }
-  requirementsCount.value = 0
 
   try {
     // Use quick-extract for minimal confirmation flow
@@ -1081,9 +1075,6 @@ const resetPreview = () => {
   manualCompany.value = ''
   manualTitle.value = ''
   urlTouched.value = false
-  tempApplicationId.value = null
-  jobFitScore.value = null
-  showLowScoreWarning.value = false
 }
 
 // Analyze manually pasted job text
@@ -1222,9 +1213,6 @@ const generateApplication = async () => {
       manualJobText.value = ''
       manualCompany.value = ''
       manualTitle.value = ''
-      tempApplicationId.value = null
-      jobFitScore.value = null
-      showLowScoreWarning.value = false
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
@@ -2134,204 +2122,6 @@ onMounted(() => {
 .btn-disabled-limit {
   opacity: 0.6;
   cursor: not-allowed;
-}
-
-/* ========================================
-   REQUIREMENTS ANALYSIS (NEW-003)
-   ======================================== */
-.requirements-analyzing {
-  background: var(--color-ai-subtle);
-  border: 1px solid var(--color-ai-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  margin-top: var(--space-lg);
-}
-
-.analyzing-content {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.requirements-analyzing .loading-spinner {
-  width: 24px;
-  height: 24px;
-  border: 2px solid var(--color-ai-light);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-  flex-shrink: 0;
-}
-
-.analyzing-text strong {
-  display: block;
-  color: var(--color-ai);
-  margin-bottom: var(--space-xs);
-}
-
-.analyzing-text p {
-  margin: 0;
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-.requirements-error {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-lg);
-  background: var(--color-error-light);
-  border: 1px solid rgba(180, 80, 80, 0.3);
-  border-radius: var(--radius-lg);
-  margin-top: var(--space-lg);
-}
-
-.requirements-error.error-temporary {
-  background: var(--color-warning-light);
-  border: 1px solid var(--color-warning);
-}
-
-.requirements-error > svg {
-  flex-shrink: 0;
-  color: var(--color-error);
-  margin-top: 2px;
-}
-
-.requirements-error.error-temporary > svg {
-  color: var(--color-warning);
-}
-
-.requirements-error-content {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.requirements-error strong {
-  display: block;
-  color: var(--color-sumi);
-  margin-bottom: var(--space-xs);
-}
-
-.requirements-error p {
-  margin: 0 0 var(--space-xs) 0;
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-/* Requirements Alternatives List */
-.requirements-alternatives {
-  margin-top: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-washi);
-  border-radius: var(--radius-md);
-}
-
-.requirements-alternatives .alternatives-header {
-  font-size: 0.8125rem;
-  font-weight: 500;
-  color: var(--color-sumi);
-  margin: 0 0 var(--space-sm) 0;
-}
-
-.requirements-alternatives .alternatives-list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.requirements-alternatives .alternatives-list li {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-}
-
-.requirements-alternatives .alternatives-list li svg {
-  flex-shrink: 0;
-  color: var(--color-koke);
-}
-
-.requirements-error-actions {
-  display: flex;
-  gap: var(--space-md);
-  flex-wrap: wrap;
-  margin-top: var(--space-sm);
-}
-
-.requirements-retry-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  background: transparent;
-  border: 1px solid #8a6d17;
-  color: #8a6d17;
-  font-size: 0.8125rem;
-  padding: var(--space-xs) var(--space-sm);
-}
-
-.requirements-retry-btn:hover {
-  background: rgba(201, 162, 39, 0.15);
-}
-
-.requirements-retry-btn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.requirements-continue-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  background: var(--color-koke);
-  border: 1px solid var(--color-koke);
-  color: white;
-  font-size: 0.8125rem;
-  padding: var(--space-xs) var(--space-sm);
-}
-
-.requirements-continue-btn:hover {
-  background: var(--color-koke-dark, #5a6b4e);
-}
-
-.requirements-contact-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-ai);
-  text-decoration: none;
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-
-.requirements-contact-link:hover {
-  text-decoration: underline;
-}
-
-/* ========================================
-   LOW SCORE WARNING
-   ======================================== */
-.low-score-generate-warning {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: rgba(201, 162, 39, 0.1);
-  border: 1px solid rgba(201, 162, 39, 0.3);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-lg);
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-}
-
-.low-score-generate-warning svg {
-  flex-shrink: 0;
-  color: #c9a227;
-  margin-top: 2px;
 }
 
 /* ========================================
