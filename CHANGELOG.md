@@ -1,3 +1,10 @@
+# [1.17.0](https://github.com/filipores/obojobs/compare/v1.16.0...v1.17.0) (2026-02-02)
+
+
+### Features
+
+* **ui:** add graceful error handling with broken enso fallback (ob--beyz.6) ([9acc71b](https://github.com/filipores/obojobs/commit/9acc71b8b7996778db3a5fd0bacf6ca0d84f3513))
+
 # [1.16.0](https://github.com/filipores/obojobs/compare/v1.15.0...v1.16.0) (2026-02-02)
 
 
