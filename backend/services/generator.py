@@ -243,6 +243,7 @@ class BewerbungsGenerator:
             pdf_path=output_path,
             betreff=betreff,
             email_text=email_text,
+            einleitung=einleitung,
             links_json=json.dumps(extracted_info),
         )
         # Initialize status history with 'erstellt'

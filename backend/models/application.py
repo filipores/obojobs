@@ -20,6 +20,7 @@ class Application(db.Model):
     pdf_path = db.Column(db.String(500))
     betreff = db.Column(db.Text)
     email_text = db.Column(db.Text)
+    einleitung = db.Column(db.Text)  # Generated intro paragraph for "holy shit" moment
     notizen = db.Column(db.Text)
     links_json = db.Column(db.Text)  # JSON stored as text
     sent_at = db.Column(db.DateTime, nullable=True)
@@ -55,6 +56,7 @@ class Application(db.Model):
             "pdf_path": self.pdf_path,
             "betreff": self.betreff,
             "email_text": self.email_text,
+            "einleitung": self.einleitung,
             "notizen": self.notizen,
             "links_json": self.links_json,
             "sent_at": self.sent_at.isoformat() if self.sent_at else None,
