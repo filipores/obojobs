@@ -1,3 +1,10 @@
+# [1.27.0](https://github.com/filipores/obojobs/compare/v1.26.0...v1.27.0) (2026-02-03)
+
+
+### Features
+
+* **auth:** add Google OAuth integration (ob-ffhfl) ([29820bf](https://github.com/filipores/obojobs/commit/29820bf5a9d4b7745f6e40175e84a8f1d190d649))
+
 # [1.26.0](https://github.com/filipores/obojobs/compare/v1.25.0...v1.26.0) (2026-02-03)
 
 
