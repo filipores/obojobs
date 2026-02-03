@@ -1,3 +1,10 @@
+# [1.26.0](https://github.com/filipores/obojobs/compare/v1.25.0...v1.26.0) (2026-02-03)
+
+
+### Features
+
+* **demo:** add anonymous demo generation endpoint (ob-r3qgz) ([c842eb5](https://github.com/filipores/obojobs/commit/c842eb53c68d7d3137ca2b1f46d7de508f30d492))
+
 # [1.25.0](https://github.com/filipores/obojobs/compare/v1.24.0...v1.25.0) (2026-02-03)
 
 
