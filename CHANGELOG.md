@@ -1,3 +1,10 @@
+# [1.23.0](https://github.com/filipores/obojobs/compare/v1.22.0...v1.23.0) (2026-02-03)
+
+
+### Features
+
+* **templates:** add contextual tooltips to variable chips (ob-7t3k) ([e646fd6](https://github.com/filipores/obojobs/commit/e646fd6c6a563fcee998d6a6c917016201cc5457))
+
 # [1.22.0](https://github.com/filipores/obojobs/compare/v1.21.0...v1.22.0) (2026-02-03)
 
 
