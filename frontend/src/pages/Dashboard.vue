@@ -1,45 +1,24 @@
 <template>
   <div class="dashboard">
-    <!-- Email Verification Banner - Full version -->
-    <div v-if="showFullBanner" class="verification-banner">
+    <!-- Email Verification Reminder - Subtle banner for notifications -->
+    <div v-if="needsVerification && !verificationBannerDismissed" class="verification-reminder">
       <div class="container">
-        <div class="banner-content">
-          <div class="banner-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-          </div>
-          <div class="banner-text">
-            <strong>E-Mail-Adresse nicht verifiziert</strong>
-            <span>Bitte verifizieren Sie Ihre E-Mail-Adresse, um alle Funktionen nutzen zu können.</span>
-          </div>
-          <router-link to="/email-verification" class="zen-btn zen-btn-sm">
-            Jetzt verifizieren
-          </router-link>
-          <button @click="dismissBanner" class="banner-dismiss" aria-label="Banner schließen">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
-    <!-- Email Verification Banner - Compact version (after dismissing full banner) -->
-    <div v-else-if="showCompactBanner" class="verification-banner-compact">
-      <div class="container">
-        <router-link to="/email-verification" class="compact-banner-link">
+        <router-link to="/email-verification" class="reminder-link">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
             <polyline points="22,6 12,13 2,6"/>
           </svg>
-          <span>E-Mail noch nicht verifiziert</span>
+          <span>Verifiziere deine E-Mail für Benachrichtigungen</span>
           <svg class="arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </router-link>
+        <button @click="dismissVerificationBanner" class="reminder-dismiss" aria-label="Hinweis schließen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
       </div>
     </div>
 
@@ -383,37 +362,21 @@ import { getFullLocale } from '../i18n'
 
 const stats = ref(null)
 const usage = ref(null)
-const bannerDismissedThisSession = ref(false)
+const verificationBannerDismissed = ref(localStorage.getItem('verificationBannerDismissed') === 'true')
 const loadError = ref(false)
 const skills = ref([])
 const skillsLoaded = ref(false)
 const interviewStats = ref(null)
 
-// Check if user needs to see the verification banner
+// Check if user needs to see the verification reminder
 const needsVerification = computed(() => {
   if (!authStore.user) return false
   return authStore.user.email_verified === false
 })
 
-// Show full banner if not dismissed this session and never dismissed before
-const showFullBanner = computed(() => {
-  if (!needsVerification.value) return false
-  if (bannerDismissedThisSession.value) return false
-  // Show full banner if never dismissed before (no localStorage entry)
-  return !localStorage.getItem('verificationBannerDismissedOnce')
-})
-
-// Show compact banner if full banner was dismissed (either this session or before)
-const showCompactBanner = computed(() => {
-  if (!needsVerification.value) return false
-  // Show compact if full banner is not shown and user has dismissed before
-  return !showFullBanner.value && (bannerDismissedThisSession.value || localStorage.getItem('verificationBannerDismissedOnce'))
-})
-
-const dismissBanner = () => {
-  bannerDismissedThisSession.value = true
-  // Store that user has dismissed the banner at least once (persists across browser sessions)
-  localStorage.setItem('verificationBannerDismissedOnce', 'true')
+const dismissVerificationBanner = () => {
+  verificationBannerDismissed.value = true
+  localStorage.setItem('verificationBannerDismissed', 'true')
 }
 
 const getPlanLabel = () => {
@@ -546,43 +509,47 @@ onMounted(async () => {
 }
 
 /* ========================================
-   VERIFICATION BANNER
+   VERIFICATION REMINDER - Subtle banner
    ======================================== */
-.verification-banner {
-  background: var(--color-warning-subtle, #fff3e0);
-  border-bottom: 1px solid var(--color-warning, #f57c00);
-  padding: var(--space-md) 0;
+.verification-reminder {
+  background: var(--color-bg-subtle, #f8f9fa);
+  border-bottom: 1px solid var(--color-border-light);
+  padding: var(--space-sm) 0;
 }
 
-.banner-content {
+.verification-reminder .container {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: var(--space-md);
 }
 
-.banner-icon {
-  color: var(--color-warning, #f57c00);
-  flex-shrink: 0;
-}
-
-.banner-text {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.banner-text strong {
-  color: var(--color-sumi);
-  font-size: 0.9375rem;
-}
-
-.banner-text span {
+.reminder-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
   color: var(--color-text-secondary);
-  font-size: 0.875rem;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: all var(--transition-base);
 }
 
-.banner-dismiss {
+.reminder-link:hover {
+  color: var(--color-ai);
+}
+
+.reminder-link .arrow-icon {
+  opacity: 0;
+  transform: translateX(-4px);
+  transition: all var(--transition-base);
+}
+
+.reminder-link:hover .arrow-icon {
+  opacity: 1;
+  transform: translateX(0);
+}
+
+.reminder-dismiss {
   padding: var(--space-xs);
   background: transparent;
   border: none;
@@ -593,57 +560,9 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 
-.banner-dismiss:hover {
+.reminder-dismiss:hover {
   background: rgba(0, 0, 0, 0.05);
   color: var(--color-sumi);
-}
-
-/* Compact Banner (after first dismissal) */
-.verification-banner-compact {
-  background: var(--color-warning-subtle, #fff3e0);
-  border-bottom: 1px solid var(--color-warning, #f57c00);
-  padding: var(--space-sm) 0;
-}
-
-.compact-banner-link {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  color: var(--color-warning-dark, #e65100);
-  text-decoration: none;
-  font-size: 0.875rem;
-  font-weight: 500;
-  transition: all var(--transition-base);
-}
-
-.compact-banner-link:hover {
-  color: var(--color-warning, #f57c00);
-}
-
-.compact-banner-link .arrow-icon {
-  opacity: 0;
-  transform: translateX(-4px);
-  transition: all var(--transition-base);
-}
-
-.compact-banner-link:hover .arrow-icon {
-  opacity: 1;
-  transform: translateX(0);
-}
-
-@media (max-width: 768px) {
-  .banner-content {
-    flex-wrap: wrap;
-  }
-
-  .banner-text {
-    flex-basis: calc(100% - 60px);
-  }
-
-  .verification-banner .zen-btn {
-    width: 100%;
-    margin-top: var(--space-sm);
-  }
 }
 
 /* ========================================
