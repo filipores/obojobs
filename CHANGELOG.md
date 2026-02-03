@@ -1,3 +1,10 @@
+# [1.28.0](https://github.com/filipores/obojobs/compare/v1.27.0...v1.28.0) (2026-02-03)
+
+
+### Features
+
+* **landing:** add post-registration CV upload & auto-regeneration (ob-g9kfi) ([3d5db59](https://github.com/filipores/obojobs/commit/3d5db59bcff8bc71811f6a6246fb4d5c8c5fbfd7))
+
 # [1.27.0](https://github.com/filipores/obojobs/compare/v1.26.0...v1.27.0) (2026-02-03)
 
 
