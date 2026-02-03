@@ -1,3 +1,10 @@
+# [1.29.0](https://github.com/filipores/obojobs/compare/v1.28.2...v1.29.0) (2026-02-03)
+
+
+### Features
+
+* **demo:** add progressive reveal crafting experience with zen pdf ([b36d828](https://github.com/filipores/obojobs/commit/b36d828890c4d35c5e8d22e50c76341e538f1273))
+
 ## [1.28.2](https://github.com/filipores/obojobs/compare/v1.28.1...v1.28.2) (2026-02-03)
 
 
