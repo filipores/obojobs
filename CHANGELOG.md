@@ -1,3 +1,10 @@
+## [1.28.2](https://github.com/filipores/obojobs/compare/v1.28.1...v1.28.2) (2026-02-03)
+
+
+### Bug Fixes
+
+* **lint:** auto-fix lint errors [skip ci] ([4f8ad9c](https://github.com/filipores/obojobs/commit/4f8ad9c0dfec4f2cb3eb3f0142e847f8f1efa311)), closes [#276](https://github.com/filipores/obojobs/issues/276)
+
 ## [1.28.1](https://github.com/filipores/obojobs/compare/v1.28.0...v1.28.1) (2026-02-03)
 
 
