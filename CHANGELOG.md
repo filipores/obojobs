@@ -1,3 +1,10 @@
+# [1.21.0](https://github.com/filipores/obojobs/compare/v1.20.0...v1.21.0) (2026-02-03)
+
+
+### Features
+
+* **pdf-wizard:** simplify to 2-step flow with QuickReview (ob-ltge) ([852a745](https://github.com/filipores/obojobs/commit/852a745bdf4111ba41f639d8f160aa50fd295895))
+
 # [1.20.0](https://github.com/filipores/obojobs/compare/v1.19.0...v1.20.0) (2026-02-03)
 
 
