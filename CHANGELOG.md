@@ -1,3 +1,10 @@
+# [1.24.0](https://github.com/filipores/obojobs/compare/v1.23.1...v1.24.0) (2026-02-03)
+
+
+### Features
+
+* **landing:** add landing page with demo input for unauthenticated users (ob-p8w2e) ([ce31822](https://github.com/filipores/obojobs/commit/ce318223b3d81d7d45ad1825a36c29db44ea7d9d))
+
 ## [1.23.1](https://github.com/filipores/obojobs/compare/v1.23.0...v1.23.1) (2026-02-03)
 
 
