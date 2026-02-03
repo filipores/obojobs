@@ -1,3 +1,10 @@
+# [1.22.0](https://github.com/filipores/obojobs/compare/v1.21.0...v1.22.0) (2026-02-03)
+
+
+### Features
+
+* **templates:** add search, filter, and sort functionality (ob-3f6d) ([f494848](https://github.com/filipores/obojobs/commit/f494848148d791168209599fc9b5d7c0fa2acb12))
+
 # [1.21.0](https://github.com/filipores/obojobs/compare/v1.20.0...v1.21.0) (2026-02-03)
 
 
