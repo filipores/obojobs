@@ -33,6 +33,15 @@ export const authStore = reactive({
     return data
   },
 
+  async loginWithGoogle(credential) {
+    const { data } = await api.silent.post('/auth/google', { credential })
+    this.token = data.access_token
+    this.user = data.user
+    localStorage.setItem('token', data.access_token)
+    localStorage.setItem('user', JSON.stringify(data.user))
+    return data
+  },
+
   async sendVerificationEmail() {
     await api.post('/auth/send-verification')
   },

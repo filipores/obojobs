@@ -10,7 +10,7 @@ class User(db.Model):  # type: ignore[name-defined]
 
     id = db.Column(db.Integer, primary_key=True)
     email = db.Column(db.String(255), unique=True, nullable=False, index=True)
-    password_hash = db.Column(db.String(255), nullable=False)
+    password_hash = db.Column(db.String(255), nullable=True)  # Nullable for OAuth users
     full_name = db.Column(db.String(255))
     display_name = db.Column(db.String(100))  # Optional display name for UI
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
@@ -31,6 +31,9 @@ class User(db.Model):  # type: ignore[name-defined]
 
     # Stripe fields
     stripe_customer_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
+
+    # OAuth fields
+    google_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
 
     # Language preference (de = German, en = English)
     language = db.Column(db.String(5), nullable=False, default='de')
@@ -56,6 +59,8 @@ class User(db.Model):  # type: ignore[name-defined]
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
+        if not self.password_hash:
+            return False  # OAuth-only users cannot login with password
         return check_password_hash(self.password_hash, password)
 
     def to_dict(self):

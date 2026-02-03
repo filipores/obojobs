@@ -1,10 +1,12 @@
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jwt_identity, jwt_required
+from google.oauth2 import id_token
+from google.auth.transport import requests as google_requests
 
 from config import Config
-from models import TokenBlacklist
+from models import TokenBlacklist, User, db
 from services.auth_service import AuthService
 from services.email_verification_service import EmailVerificationService
 from services.password_reset_service import PasswordResetService
@@ -52,6 +54,99 @@ def login():
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
+
+
+@auth_bp.route("/google", methods=["POST"])
+def google_auth():
+    """
+    Authenticate with Google OAuth.
+
+    Accepts a Google ID token from the frontend and:
+    - Verifies the token with Google
+    - Creates a new user if email doesn't exist
+    - Links Google account if email exists without Google ID
+    - Returns JWT tokens for authentication
+    """
+    data = request.json or {}
+    credential = data.get("credential")
+
+    if not credential:
+        return jsonify({"error": "Google credential ist erforderlich"}), 400
+
+    # Verify Google Client ID is configured
+    if not Config.GOOGLE_CLIENT_ID:
+        return jsonify({"error": "Google OAuth ist nicht konfiguriert"}), 500
+
+    try:
+        # Verify the Google ID token
+        idinfo = id_token.verify_oauth2_token(
+            credential,
+            google_requests.Request(),
+            Config.GOOGLE_CLIENT_ID
+        )
+
+        # Get user info from token
+        google_id = idinfo["sub"]
+        email = idinfo.get("email")
+        email_verified = idinfo.get("email_verified", False)
+        full_name = idinfo.get("name")
+
+        if not email:
+            return jsonify({"error": "Keine E-Mail-Adresse von Google erhalten"}), 400
+
+        email = email.lower()
+
+        # Check if user exists by Google ID
+        user = User.query.filter_by(google_id=google_id).first()
+
+        if not user:
+            # Check if user exists by email
+            user = User.query.filter_by(email=email).first()
+
+            if user:
+                # Link Google account to existing user
+                user.google_id = google_id
+                # Mark email as verified if Google says it's verified
+                if email_verified and not user.email_verified:
+                    user.email_verified = True
+                db.session.commit()
+            else:
+                # Check if registration is enabled
+                if not Config.REGISTRATION_ENABLED:
+                    return jsonify({
+                        "error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."
+                    }), 403
+
+                # Create new user
+                user = User(
+                    email=email,
+                    google_id=google_id,
+                    full_name=full_name,
+                    email_verified=email_verified  # Google-verified emails are trusted
+                )
+                db.session.add(user)
+                db.session.commit()
+
+        # Check if user is active
+        if not user.is_active:
+            return jsonify({"error": "Konto ist deaktiviert"}), 401
+
+        # Create JWT tokens
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
+
+        return jsonify({
+            "access_token": access_token,
+            "refresh_token": refresh_token,
+            "user": user.to_dict()
+        }), 200
+
+    except ValueError as e:
+        # Token verification failed
+        return jsonify({"error": "Ungültiges Google-Token"}), 401
+    except Exception as e:
+        print(f"Google auth error: {e}")
+        return jsonify({"error": "Google-Authentifizierung fehlgeschlagen"}), 500
 
 
 @auth_bp.route("/refresh", methods=["POST"])

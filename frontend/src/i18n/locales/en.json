@@ -65,7 +65,11 @@
     "displayNameTooLong": "Display name cannot exceed 100 characters",
     "profileUpdated": "Profile updated successfully",
     "accountDeleted": "Your account and all associated data have been deleted successfully.",
-    "accountDeleteError": "Error deleting account. Please contact support."
+    "accountDeleteError": "Error deleting account. Please contact support.",
+    "or": "or",
+    "continueWithGoogle": "Continue with Google",
+    "loading": "Loading...",
+    "googleLoginFailed": "Google login failed. Please try again."
   },
   "jwt": {
     "tokenRevoked": "Token has been revoked",

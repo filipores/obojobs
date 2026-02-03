@@ -65,7 +65,11 @@
     "displayNameTooLong": "Anzeigename darf maximal 100 Zeichen haben",
     "profileUpdated": "Profil erfolgreich aktualisiert",
     "accountDeleted": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht.",
-    "accountDeleteError": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."
+    "accountDeleteError": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support.",
+    "or": "oder",
+    "continueWithGoogle": "Mit Google fortfahren",
+    "loading": "Wird geladen...",
+    "googleLoginFailed": "Google-Anmeldung fehlgeschlagen. Bitte versuchen Sie es erneut."
   },
   "jwt": {
     "tokenRevoked": "Token wurde widerrufen",
