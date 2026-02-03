@@ -11,7 +11,7 @@
         </button>
 
         <!-- Brand - Minimal mark -->
-        <router-link to="/" class="nav-brand" title="Zur Startseite">
+        <router-link to="/dashboard" class="nav-brand" title="Zur Startseite">
           <div class="brand-mark">
             <div class="enso-mark"></div>
           </div>
@@ -20,7 +20,7 @@
 
         <!-- Center Navigation - Horizontal links -->
         <div class="nav-center">
-          <router-link to="/" class="nav-link" exact-active-class="active" title="Dashboard">
+          <router-link to="/dashboard" class="nav-link" exact-active-class="active" title="Dashboard">
             <span class="nav-text">Dashboard</span>
           </router-link>
           <router-link to="/documents" class="nav-link" active-class="active" title="Dokumente verwalten">
@@ -131,7 +131,7 @@
 
         <!-- Sidebar Navigation -->
         <nav class="sidebar-nav">
-          <router-link to="/" class="sidebar-link" exact-active-class="active" @click="closeMobileSidebar">
+          <router-link to="/dashboard" class="sidebar-link" exact-active-class="active" @click="closeMobileSidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
               <polyline points="9 22 9 12 15 12 15 22"/>
@@ -236,7 +236,7 @@
 
     <!-- Bottom Navigation - Mobile Only -->
     <nav v-if="authStore.isAuthenticated()" class="bottom-nav" aria-label="Mobile Navigation">
-      <router-link to="/" class="bottom-nav-item" exact-active-class="active" title="Dashboard">
+      <router-link to="/dashboard" class="bottom-nav-item" exact-active-class="active" title="Dashboard">
         <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
@@ -278,8 +278,8 @@
       </router-link>
     </nav>
 
-    <!-- Footer -->
-    <footer class="zen-footer">
+    <!-- Footer - hidden on landing page which has its own -->
+    <footer v-if="!isLandingPage" class="zen-footer">
       <div class="footer-container">
         <div class="footer-brand">
           <div class="footer-enso"></div>
@@ -304,15 +304,17 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { authStore } from './store/auth'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import Toast from './components/Toast.vue'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'
 
 const router = useRouter()
+const route = useRoute()
 const toastRef = ref(null)
 const isDarkMode = ref(false)
 const isSidebarOpen = ref(false)
 const currentYear = computed(() => new Date().getFullYear())
+const isLandingPage = computed(() => route.meta?.landing === true)
 
 const THEME_KEY = 'obojobs-theme'
 

@@ -14,8 +14,11 @@ const routes = [
   { path: '/impressum', component: () => import('../pages/Impressum.vue'), meta: { title: 'Impressum', public: true } },
   { path: '/datenschutz', component: () => import('../pages/Datenschutz.vue'), meta: { title: 'Datenschutz', public: true } },
 
-  // Protected routes
-  { path: '/', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true, title: 'Dashboard' } },
+  // Landing page - shows for unauthenticated users, redirects authenticated users to dashboard
+  { path: '/', component: () => import('../pages/Landing.vue'), meta: { title: 'obo - Bewerbungen, die sich selbst schreiben', public: true, landing: true } },
+
+  // Dashboard - protected route for authenticated users
+  { path: '/dashboard', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true, title: 'Dashboard' } },
   { path: '/documents', component: () => import('../pages/Documents.vue'), meta: { requiresAuth: true, title: 'Dokumente' } },
   { path: '/templates', component: () => import('../pages/Templates.vue'), meta: { requiresAuth: true, title: 'Vorlagen' } },
   { path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true, title: 'Bewerbungen' } },
@@ -39,6 +42,12 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
+  // Landing page: redirect authenticated users to dashboard
+  if (to.meta.landing && authStore.isAuthenticated()) {
+    next('/dashboard')
+    return
+  }
+
   // Public routes: skip all auth checks to prevent side effects
   if (to.meta.public) {
     next()
