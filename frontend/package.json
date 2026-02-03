@@ -15,20 +15,20 @@
     "lint:fix": "eslint src/ --fix"
   },
   "dependencies": {
-    "@stripe/stripe-js": "^8.6.4",
-    "@tiptap/extension-placeholder": "^3.18.0",
+    "@stripe/stripe-js": "^8.7.0",
+    "@tiptap/extension-placeholder": "^3.19.0",
     "@tiptap/pm": "^3.18.0",
-    "@tiptap/starter-kit": "^3.18.0",
-    "@tiptap/vue-3": "^3.18.0",
-    "axios": "^1.6.2",
-    "pdfjs-dist": "^5.4.530",
+    "@tiptap/starter-kit": "^3.19.0",
+    "@tiptap/vue-3": "^3.19.0",
+    "axios": "^1.13.4",
+    "pdfjs-dist": "^5.4.624",
     "vue": "^3.5.27",
     "vue-i18n": "^11.2.8",
     "vue-router": "^4.2.5"
   },
   "devDependencies": {
-    "@playwright/test": "^1.40.0",
-    "@vitejs/plugin-vue": "^6.0.3",
+    "@playwright/test": "^1.58.1",
+    "@vitejs/plugin-vue": "^6.0.4",
     "@vitest/coverage-v8": "^4.0.18",
     "@vue/test-utils": "^2.4.3",
     "eslint": "^9.39.2",
