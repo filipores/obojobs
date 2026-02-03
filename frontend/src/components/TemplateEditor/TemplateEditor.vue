@@ -1,5 +1,7 @@
 <template>
-  <div class="template-editor-wrapper">
+  <div class="template-editor-wrapper" :class="{ 'with-preview': showPreview }">
+    <!-- Editor Column -->
+    <div class="editor-column">
     <!-- Variable insert panel -->
     <VariablePanel @insert="insertVariable" />
 
@@ -98,6 +100,42 @@
         Klicke auf markierte Passagen, um Vorschläge anzunehmen oder abzulehnen
       </span>
     </div>
+    </div>
+
+    <!-- Live Preview Panel -->
+    <div v-if="showPreview" class="preview-panel">
+      <div class="preview-header">
+        <h3 class="preview-title">Live-Vorschau</h3>
+        <span class="preview-badge">Mit Beispieldaten</span>
+      </div>
+      <div class="preview-content">
+        <div v-if="previewText" class="preview-text">{{ previewText }}</div>
+        <div v-else class="preview-empty">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+            <polyline points="14 2 14 8 20 8"/>
+            <line x1="16" y1="13" x2="8" y2="13"/>
+            <line x1="16" y1="17" x2="8" y2="17"/>
+            <polyline points="10 9 9 9 8 9"/>
+          </svg>
+          <p>Beginnen Sie mit dem Schreiben, um eine Vorschau zu sehen</p>
+        </div>
+      </div>
+      <div v-if="variableLegend.length > 0" class="preview-legend">
+        <span class="legend-title">Beispieldaten:</span>
+        <div class="legend-items">
+          <div
+            v-for="variable in variableLegend"
+            :key="variable.name"
+            class="legend-item"
+            :class="`legend-item--${variable.color}`"
+          >
+            <span class="legend-label">{{ variable.label }}:</span>
+            <span class="legend-value">{{ variable.value }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -109,6 +147,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { Node, mergeAttributes } from '@tiptap/core'
 import VariablePanel from './VariablePanel.vue'
 import { VARIABLE_TYPES } from '../../composables/useTemplateParser'
+import { useTemplatePreview } from '../../composables/useTemplatePreview'
 
 const props = defineProps({
   modelValue: {
@@ -122,6 +161,14 @@ const props = defineProps({
   placeholder: {
     type: String,
     default: 'Schreibe dein Anschreiben hier...'
+  },
+  showPreview: {
+    type: Boolean,
+    default: true
+  },
+  previewData: {
+    type: Object,
+    default: null
   }
 })
 
@@ -132,6 +179,10 @@ const editor = ref(null)
 const isUpdating = ref(false)
 const isDragOver = ref(false)
 const processedSuggestions = ref([])
+
+// Template preview - uses modelValue as reactive source
+const modelValueRef = computed(() => props.modelValue)
+const { previewText, variableLegend } = useTemplatePreview(modelValueRef, props.previewData)
 
 // Custom extension for variable chips
 const VariableChip = Node.create({
@@ -887,5 +938,203 @@ function handleDrop(event) {
 .banner-leave-to {
   opacity: 0;
   transform: translateY(-10px);
+}
+
+/* ========================================
+   SPLIT-PANE LAYOUT WITH PREVIEW
+   ======================================== */
+.template-editor-wrapper.with-preview {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-lg, 1.5rem);
+  align-items: start;
+}
+
+/* Editor Column */
+.editor-column {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* Preview Panel */
+.preview-panel {
+  background: var(--color-washi-cream, #FAF8F3);
+  border: 1.5px solid var(--color-border, #D4C9BA);
+  border-radius: var(--radius-md, 0.5rem);
+  padding: var(--space-lg, 1.5rem);
+  position: sticky;
+  top: var(--space-lg, 1.5rem);
+  max-height: calc(100vh - 200px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.preview-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-md, 1rem);
+  padding-bottom: var(--space-md, 1rem);
+  border-bottom: 1px solid var(--color-border, #D4C9BA);
+  flex-shrink: 0;
+}
+
+.preview-title {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-text-primary, #2C2C2C);
+  margin: 0;
+}
+
+.preview-badge {
+  font-size: 0.6875rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.25rem 0.5rem;
+  background: var(--color-ai-subtle, rgba(61, 90, 108, 0.1));
+  color: var(--color-ai, #3D5A6C);
+  border-radius: var(--radius-sm, 0.25rem);
+}
+
+.preview-content {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: var(--space-md, 1rem);
+  min-height: 200px;
+}
+
+.preview-text {
+  font-family: var(--font-body, 'Karla', sans-serif);
+  font-size: 0.9375rem;
+  line-height: var(--leading-relaxed, 1.85);
+  color: var(--color-text-primary, #2C2C2C);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.preview-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-xl, 2rem);
+  text-align: center;
+  color: var(--color-text-ghost, #8A8A8A);
+  height: 100%;
+}
+
+.preview-empty svg {
+  margin-bottom: var(--space-md, 1rem);
+  opacity: 0.5;
+}
+
+.preview-empty p {
+  font-size: 0.875rem;
+  margin: 0;
+  max-width: 200px;
+}
+
+/* Preview Legend */
+.preview-legend {
+  padding-top: var(--space-md, 1rem);
+  border-top: 1px solid var(--color-border, #D4C9BA);
+  flex-shrink: 0;
+}
+
+.legend-title {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary, #6B6B6B);
+  margin-bottom: var(--space-sm, 0.5rem);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.legend-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs, 0.375rem);
+}
+
+.legend-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs, 0.375rem);
+  font-size: 0.8125rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm, 0.25rem);
+  background: var(--color-washi-warm, #F2EDE3);
+}
+
+.legend-label {
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.legend-value {
+  color: var(--color-text-secondary, #4A4A4A);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Legend color variants */
+.legend-item--ai {
+  border-left: 3px solid var(--color-ai, #3D5A6C);
+}
+
+.legend-item--ai .legend-label {
+  color: var(--color-ai, #3D5A6C);
+}
+
+.legend-item--success {
+  border-left: 3px solid var(--color-success, #7A8B6E);
+}
+
+.legend-item--success .legend-label {
+  color: var(--color-success, #7A8B6E);
+}
+
+.legend-item--warning {
+  border-left: 3px solid var(--color-warning, #C4A35A);
+}
+
+.legend-item--warning .legend-label {
+  color: var(--color-warning, #C4A35A);
+}
+
+.legend-item--terra {
+  border-left: 3px solid var(--color-terra, #B87A5E);
+}
+
+.legend-item--terra .legend-label {
+  color: var(--color-terra, #B87A5E);
+}
+
+.legend-item--bamboo {
+  border-left: 3px solid var(--color-bamboo, #8B9A6B);
+}
+
+.legend-item--bamboo .legend-label {
+  color: var(--color-bamboo, #8B9A6B);
+}
+
+/* Responsive - stack on smaller screens */
+@media (max-width: 1024px) {
+  .template-editor-wrapper.with-preview {
+    grid-template-columns: 1fr;
+  }
+
+  .template-editor-wrapper.with-preview > .preview-panel {
+    grid-column: 1;
+    grid-row: auto;
+    position: static;
+    max-height: 400px;
+    margin-top: var(--space-lg, 1.5rem);
+  }
 }
 </style>
