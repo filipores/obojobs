@@ -20,7 +20,7 @@
     "@tiptap/pm": "^3.18.0",
     "@tiptap/starter-kit": "^3.18.0",
     "@tiptap/vue-3": "^3.18.0",
-    "axios": "^1.6.2",
+    "axios": "^1.13.4",
     "pdfjs-dist": "^5.4.530",
     "vue": "^3.5.27",
     "vue-i18n": "^11.2.8",
