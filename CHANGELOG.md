@@ -1,3 +1,10 @@
+## [1.28.1](https://github.com/filipores/obojobs/compare/v1.28.0...v1.28.1) (2026-02-03)
+
+
+### Bug Fixes
+
+* **routes/workflows:** rm ralph ([b98771f](https://github.com/filipores/obojobs/commit/b98771f2ae2f882646240cdbad8b30b0dd7c73ab))
+
 # [1.28.0](https://github.com/filipores/obojobs/compare/v1.27.0...v1.28.0) (2026-02-03)
 
 
