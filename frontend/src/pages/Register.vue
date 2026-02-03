@@ -244,11 +244,13 @@
 
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
-import { useRouter } from 'vue-router'
+import { useRouter, useRoute } from 'vue-router'
 import { authStore } from '../store/auth'
+import { demoStore } from '../stores/demo'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 
 const router = useRouter()
+const route = useRoute()
 
 const full_name = ref('')
 const email = ref('')
@@ -353,8 +355,14 @@ const handleRegister = async () => {
     } catch {
       // Ignore errors - verification email will be sent
     }
-    // Redirect to email verification page
-    router.push({ path: '/email-verification', query: { email: email.value } })
+
+    // Check if user came from demo flow - redirect to Landing for CV upload
+    if (demoStore.isInDemoFlow() || route.query.demo === 'complete') {
+      router.push({ path: '/', query: { demo: 'complete' } })
+    } else {
+      // Redirect to email verification page
+      router.push({ path: '/email-verification', query: { email: email.value } })
+    }
   } catch (e) {
     error.value = e.response?.data?.error || 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.'
   } finally {

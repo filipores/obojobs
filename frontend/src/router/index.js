@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { authStore } from '../store/auth'
+import { demoStore } from '../stores/demo'
 
 const DEFAULT_TITLE = 'obo'
 
@@ -43,7 +44,13 @@ const router = createRouter({
 
 router.beforeEach((to, from, next) => {
   // Landing page: redirect authenticated users to dashboard
+  // UNLESS they are in the demo flow (post-registration CV upload)
   if (to.meta.landing && authStore.isAuthenticated()) {
+    // Allow staying on Landing if in demo flow or coming from registration with demo
+    if (demoStore.isInDemoFlow() || to.query.demo === 'complete') {
+      next()
+      return
+    }
     next('/dashboard')
     return
   }
