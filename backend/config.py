@@ -57,6 +57,9 @@ class Config:
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
 
+    # Rate Limit Whitelist (comma-separated IPs that bypass rate limiting)
+    RATE_LIMIT_WHITELIST = os.getenv("RATE_LIMIT_WHITELIST", "127.0.0.1").split(",")
+
     @staticmethod
     def validate_config():
         """Validate required configuration"""

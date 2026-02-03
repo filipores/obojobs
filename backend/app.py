@@ -111,10 +111,18 @@ def create_app():
 
         return response
 
+    # Custom key function that exempts whitelisted IPs
+    def get_rate_limit_key():
+        remote_addr = get_remote_address()
+        # Return None to exempt whitelisted IPs from rate limiting
+        if remote_addr in config.RATE_LIMIT_WHITELIST:
+            return None
+        return remote_addr
+
     # Initialize rate limiter
     limiter = Limiter(
         app=app,
-        key_func=get_remote_address,
+        key_func=get_rate_limit_key,
         default_limits=["200 per hour", "50 per minute"],
         storage_uri="memory://",
         strategy="fixed-window",
