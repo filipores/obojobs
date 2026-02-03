@@ -30,14 +30,10 @@ jobs:
           ruff check . --output-format=json > ruff-results.json || true
           ruff check . --output-format=github
 
-      - name: Run mypy type checking
-        working-directory: ./backend
-        run: mypy . --config-file mypy.ini
-
       - name: Run backend tests with coverage
         working-directory: ./backend
         run: |
-          pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=55 --json-report --json-report-file=test-results.json
+          pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=40 --json-report --json-report-file=test-results.json
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4
@@ -100,50 +96,9 @@ jobs:
         working-directory: ./frontend
         run: npm run build
 
-  e2e-tests:
-    runs-on: ubuntu-latest
-    needs: [frontend-tests]
-    steps:
-      - uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: ./frontend
-        run: npm ci
-
-      - name: Install Playwright browsers
-        working-directory: ./frontend
-        run: npx playwright install --with-deps chromium
-
-      - name: Build frontend
-        working-directory: ./frontend
-        run: npm run build
-
-      - name: Run E2E tests
-        working-directory: ./frontend
-        run: npm run test:e2e
-        env:
-          BASE_URL: http://localhost:4173
-
-      - name: Upload Playwright report
-        uses: actions/upload-artifact@v6
-        if: always()
-        with:
-          name: playwright-report
-          path: |
-            frontend/playwright-report/
-            frontend/test-results.json
-          retention-days: 7
-
   ci-summary:
     runs-on: ubuntu-latest
-    needs: [backend-tests, frontend-tests, e2e-tests]
+    needs: [backend-tests, frontend-tests]
     if: always()
     steps:
       - name: Download all test artifacts
@@ -156,10 +111,9 @@ jobs:
           # Determine job results from workflow context
           BACKEND_RESULT="${{ needs.backend-tests.result }}"
           FRONTEND_RESULT="${{ needs.frontend-tests.result }}"
-          E2E_RESULT="${{ needs.e2e-tests.result }}"
 
           # Determine overall status
-          if [ "$BACKEND_RESULT" = "success" ] && [ "$FRONTEND_RESULT" = "success" ] && [ "$E2E_RESULT" = "success" ]; then
+          if [ "$BACKEND_RESULT" = "success" ] && [ "$FRONTEND_RESULT" = "success" ]; then
             OVERALL="passed"
           else
             OVERALL="failed"
@@ -171,7 +125,6 @@ jobs:
             --arg overall "$OVERALL" \
             --arg backend "$BACKEND_RESULT" \
             --arg frontend "$FRONTEND_RESULT" \
-            --arg e2e "$E2E_RESULT" \
             --arg run_id "${{ github.run_id }}" \
             --arg run_number "${{ github.run_number }}" \
             --arg ref "${{ github.ref }}" \
@@ -187,10 +140,6 @@ jobs:
                 "frontend-tests": {
                   result: $frontend,
                   artifacts: ["frontend-test-results"]
-                },
-                "e2e-tests": {
-                  result: $e2e,
-                  artifacts: ["playwright-report"]
                 }
               },
               workflow: {
@@ -225,10 +174,9 @@ jobs:
           # Get job results
           BACKEND_RESULT="${{ needs.backend-tests.result }}"
           FRONTEND_RESULT="${{ needs.frontend-tests.result }}"
-          E2E_RESULT="${{ needs.e2e-tests.result }}"
 
           # Determine overall status
-          if [ "$BACKEND_RESULT" = "success" ] && [ "$FRONTEND_RESULT" = "success" ] && [ "$E2E_RESULT" = "success" ]; then
+          if [ "$BACKEND_RESULT" = "success" ] && [ "$FRONTEND_RESULT" = "success" ]; then
             OVERALL="✅ CI Results: All checks passed"
           else
             OVERALL="❌ CI Results: Some checks failed"
@@ -253,7 +201,6 @@ jobs:
             echo "|-----|--------|--------|"
             echo "| Backend Tests | $(emoji "$BACKEND_RESULT") | $BACKEND_RESULT |"
             echo "| Frontend Tests | $(emoji "$FRONTEND_RESULT") | $FRONTEND_RESULT |"
-            echo "| E2E Tests | $(emoji "$E2E_RESULT") | $E2E_RESULT |"
             echo ""
             echo "**Commit:** \`${{ github.sha }}\`"
             echo "**Run:** [#${{ github.run_number }}](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})"

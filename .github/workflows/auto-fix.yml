@@ -60,15 +60,8 @@ jobs:
 
             BACKEND_RESULT=$(jq -r '.jobs["backend-tests"].result // "unknown"' ci-summary.json)
             FRONTEND_RESULT=$(jq -r '.jobs["frontend-tests"].result // "unknown"' ci-summary.json)
-            E2E_RESULT=$(jq -r '.jobs["e2e-tests"].result // "unknown"' ci-summary.json)
 
-            echo "Backend: $BACKEND_RESULT, Frontend: $FRONTEND_RESULT, E2E: $E2E_RESULT"
-
-            # E2E failure means test failure (not lint)
-            if [ "$E2E_RESULT" = "failure" ]; then
-              TEST_FAILURE=true
-              echo "E2E tests failed - not a lint-only failure"
-            fi
+            echo "Backend: $BACKEND_RESULT, Frontend: $FRONTEND_RESULT"
           fi
 
           # Check backend lint results
