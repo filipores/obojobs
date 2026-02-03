@@ -1,3 +1,10 @@
+# [1.18.0](https://github.com/filipores/obojobs/compare/v1.17.1...v1.18.0) (2026-02-03)
+
+
+### Features
+
+* **templates:** replace 3-button entry with single CTA overlay (ob-bu7s) ([99a3f0c](https://github.com/filipores/obojobs/commit/99a3f0cbb720d22896b813fff3f51fd455725bff))
+
 ## [1.17.1](https://github.com/filipores/obojobs/compare/v1.17.0...v1.17.1) (2026-02-02)
 
 
