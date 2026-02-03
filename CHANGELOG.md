@@ -1,3 +1,10 @@
+# [1.20.0](https://github.com/filipores/obojobs/compare/v1.19.0...v1.20.0) (2026-02-03)
+
+
+### Features
+
+* **templates:** add live preview panel to template editor (ob-g5w4) ([e8d837b](https://github.com/filipores/obojobs/commit/e8d837bc5f07bebd8b0bf562f903f58c508ebfd8))
+
 # [1.19.0](https://github.com/filipores/obojobs/compare/v1.18.0...v1.19.0) (2026-02-03)
 
 
