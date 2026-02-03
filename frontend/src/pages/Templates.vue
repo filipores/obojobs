@@ -109,6 +109,15 @@
         @submit="handleCreationSubmit"
       />
 
+      <!-- Template Variant Picker -->
+      <TemplateVariantPicker
+        :is-active="showVariantPicker"
+        :variants="generatedVariants"
+        :loading="generatingVariants"
+        @close="closeVariantPicker"
+        @select="handleVariantSelect"
+      />
+
       <!-- AI Wizard -->
       <section v-if="showWizard" class="wizard-section animate-fade-up">
         <div class="wizard zen-card">
@@ -386,6 +395,7 @@ import api from '../api/client'
 import { TemplateEditor } from '../components/TemplateEditor'
 import { PdfTemplateWizard } from '../components/PdfTemplateWizard'
 import TemplateCreationOverlay from '../components/TemplateCreationOverlay.vue'
+import TemplateVariantPicker from '../components/TemplateVariantPicker.vue'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
 
@@ -395,6 +405,9 @@ const showWizard = ref(false)
 const showPdfWizard = ref(false)
 const showManualForm = ref(false)
 const showCreationOverlay = ref(false)
+const showVariantPicker = ref(false)
+const generatedVariants = ref([])
+const generatingVariants = ref(false)
 const editingTemplate = ref(null)
 const generating = ref(false)
 const message = ref('')
@@ -552,42 +565,23 @@ const closeCreationOverlay = () => {
 const handleCreationSubmit = async ({ description, category }) => {
   showCreationOverlay.value = false
 
-  // If user has a CV and provided description, use AI wizard flow
+  // If user has a CV and provided description, use 3-variant generation flow
   if (hasLebenslauf.value && description) {
-    wizardData.value = {
-      sektor: category === 'tech' ? 'Tech / IT' :
-              category === 'sales' ? 'Vertrieb' :
-              category === 'marketing' ? 'Marketing' : '',
-      projekte: '',
-      leidenschaften: description,
-      hobbys: '',
-      tonalitaet: 'modern'
-    }
-    // Skip to generation with prefilled data
-    generating.value = true
+    // Open variant picker with loading state
+    showVariantPicker.value = true
+    generatingVariants.value = true
+    generatedVariants.value = []
     message.value = ''
+
     try {
-      const { data } = await api.post('/templates/generate', wizardData.value)
-      form.value = {
-        name: data.template.name,
-        content: data.template.content,
-        is_default: true
-      }
-      editingTemplate.value = data.template
-      if (data.template.suggestions && data.template.suggestions.length > 0) {
-        suggestions.value = data.template.suggestions
-      } else {
-        suggestions.value = []
-      }
-      showManualForm.value = true
-      message.value = 'Template erfolgreich generiert! Sie können es jetzt anpassen.'
-      messageClass.value = 'success'
-      await loadTemplates()
+      const { data } = await api.post('/templates/generate-variants', { description })
+      generatedVariants.value = data.variants || []
     } catch (e) {
-      message.value = e.response?.data?.error || 'Fehler beim Generieren des Templates'
+      showVariantPicker.value = false
+      message.value = e.response?.data?.error || 'Fehler beim Generieren der Varianten'
       messageClass.value = 'error'
     } finally {
-      generating.value = false
+      generatingVariants.value = false
     }
   } else {
     // Fallback to manual form with prefilled content
@@ -595,6 +589,43 @@ const handleCreationSubmit = async ({ description, category }) => {
     if (description) {
       form.value.name = category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Template` : 'Neues Template'
     }
+  }
+}
+
+const closeVariantPicker = () => {
+  showVariantPicker.value = false
+  generatedVariants.value = []
+  generatingVariants.value = false
+}
+
+const handleVariantSelect = async (variant) => {
+  // Save the selected variant as a new template
+  try {
+    const templateData = {
+      name: `${variant.name} Vorlage`,
+      content: variant.content,
+      is_default: true
+    }
+
+    const { data } = await api.post('/templates', templateData)
+
+    // Open in editor for fine-tuning
+    form.value = {
+      name: data.template.name,
+      content: data.template.content,
+      is_default: true
+    }
+    editingTemplate.value = data.template
+    suggestions.value = []
+    showManualForm.value = true
+
+    message.value = 'Vorlage erstellt! Sie können sie jetzt anpassen.'
+    messageClass.value = 'success'
+
+    await loadTemplates()
+  } catch (e) {
+    message.value = e.response?.data?.error || 'Fehler beim Speichern der Vorlage'
+    messageClass.value = 'error'
   }
 }
 

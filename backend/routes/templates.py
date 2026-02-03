@@ -626,6 +626,155 @@ WICHTIG:
         return jsonify({"error": f"Fehler bei der Analyse: {str(e)}"}), 500
 
 
+@templates_bp.route("/generate-variants", methods=["POST"])
+@jwt_required_custom
+def generate_template_variants(current_user):
+    """Generate 3 template variants (Professional, Modern, Kreativ) from a user description."""
+    data = request.json
+
+    description = sanitize_prompt_input(data.get("description", ""), MAX_PROMPT_INPUT_LENGTH)
+
+    if not description:
+        return jsonify({"error": "Beschreibung ist erforderlich"}), 400
+
+    # Load CV for personalization
+    cv_doc = Document.query.filter_by(user_id=current_user.id, doc_type="lebenslauf").first()
+    cv_text = ""
+    if cv_doc and os.path.exists(cv_doc.file_path):
+        try:
+            cv_text = read_document(cv_doc.file_path)
+            cv_text = sanitize_prompt_input(cv_text, MAX_CV_LENGTH)
+        except Exception:
+            cv_text = ""
+
+    try:
+        api_client = ClaudeAPIClient()
+
+        # Define the 3 tones
+        tones = [
+            {
+                "key": "professional",
+                "name": "Professionell",
+                "description": 'sehr professionell, höflich und klassisch. Verwende Formulierungen wie "Sehr geehrte Damen und Herren" und "Mit freundlichen Grüßen". Formell und respektvoll.',
+                "hint": "Ideal für Konzerne, Banken, Behörden",
+            },
+            {
+                "key": "modern",
+                "name": "Modern",
+                "description": "professionell aber etwas lockerer und zeitgemäß. Verwende moderne Formulierungen, bleibe aber respektvoll. Dynamisch und selbstbewusst.",
+                "hint": "Perfekt für Startups, Tech-Unternehmen",
+            },
+            {
+                "key": "creative",
+                "name": "Kreativ",
+                "description": "persönlich und authentisch. Zeige Persönlichkeit und Kreativität, aber bleibe professionell. Einzigartig und einprägsam.",
+                "hint": "Für Kreativagenturen, Design, Marketing",
+            },
+        ]
+
+        variants = []
+
+        # Example data for preview (replacing placeholders with real text)
+        example_data = {
+            "FIRMA": "Muster GmbH",
+            "POSITION": "Software-Entwickler",
+            "ANSPRECHPARTNER": "Sehr geehrte Frau Müller",
+            "QUELLE": "auf LinkedIn",
+            "EINLEITUNG": "",
+        }
+
+        for tone in tones:
+            prompt = f"""Erstelle ein Anschreiben-Template basierend auf den folgenden Informationen:
+
+**Bewerber-Beschreibung:**
+{description}
+
+{f"**Lebenslauf-Auszug:**{chr(10)}{cv_text[:2000]}" if cv_text else ""}
+
+**Gewünschte Tonalität: {tone['name']}**
+Das Anschreiben soll {tone['description']}
+
+**WICHTIG - AUSGABEFORMAT:**
+1. Schreibe ein VOLLSTÄNDIGES Anschreiben (200-300 Wörter)
+2. Verwende BEISPIELDATEN statt Platzhalter für die Vorschau:
+   - Firma: "Muster GmbH"
+   - Position: "Software-Entwickler"
+   - Ansprechpartner: "Sehr geehrte Frau Müller"
+   - Quelle: "auf LinkedIn"
+3. Das Anschreiben soll authentisch und ansprechend sein
+
+**DANN** füge eine JSON-Sektion hinzu mit den Positionen der Beispieldaten:
+
+---VARIABLES_JSON---
+[
+  {{"text": "exakter Text der ersetzt werden soll", "variable": "FIRMA"}},
+  {{"text": "weiterer Text", "variable": "POSITION"}}
+]
+---END_VARIABLES---
+
+**VERFÜGBARE VARIABLEN:**
+- FIRMA: Firmenname
+- POSITION: Stellenbezeichnung
+- ANSPRECHPARTNER: Komplette Anrede
+- QUELLE: Wo die Stelle gefunden wurde
+- EINLEITUNG: Personalisierbarer Einleitungsabsatz (2-4 Sätze)
+
+Generiere jetzt das Anschreiben:"""
+
+            response = api_client.client.messages.create(
+                model="claude-3-5-haiku-20241022",
+                max_tokens=1500,
+                temperature=0.9,  # Higher temperature for more variety
+                messages=[{"role": "user", "content": prompt}],
+            )
+
+            raw_response = response.content[0].text.strip()
+
+            # Parse response
+            preview_text = raw_response
+            template_content = raw_response
+            variable_positions = []
+
+            if "---VARIABLES_JSON---" in raw_response:
+                parts = raw_response.split("---VARIABLES_JSON---")
+                preview_text = parts[0].strip()
+                template_content = preview_text
+
+                if len(parts) > 1 and "---END_VARIABLES---" in parts[1]:
+                    json_part = parts[1].split("---END_VARIABLES---")[0].strip()
+                    try:
+                        variable_positions = json.loads(json_part)
+
+                        # Convert preview text to template with placeholders
+                        for var_pos in variable_positions:
+                            text = var_pos.get("text", "")
+                            variable = var_pos.get("variable", "")
+                            if text and variable and text in template_content:
+                                placeholder = "{{" + variable + "}}"
+                                template_content = template_content.replace(text, placeholder, 1)
+                    except json.JSONDecodeError:
+                        pass
+
+            variants.append({
+                "key": tone["key"],
+                "name": tone["name"],
+                "hint": tone["hint"],
+                "preview": preview_text,  # With example data for display
+                "content": template_content,  # With {{VARIABLE}} placeholders
+                "variables": variable_positions,
+            })
+
+        return jsonify({
+            "success": True,
+            "variants": variants,
+            "example_data": example_data,
+        }), 200
+
+    except Exception as e:
+        print(f"Fehler bei Varianten-Generierung: {str(e)}")
+        return jsonify({"error": f"Fehler beim Generieren: {str(e)}"}), 500
+
+
 @templates_bp.route("/<int:template_id>/variable-positions", methods=["PUT"])
 @jwt_required_custom
 def save_variable_positions(template_id, current_user):
