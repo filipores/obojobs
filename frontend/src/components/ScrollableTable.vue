@@ -83,7 +83,7 @@ onMounted(() => {
     updateScrollState()
 
     // Observe resize events
-    // eslint-disable-next-line no-undef
+     
     if (typeof ResizeObserver !== 'undefined' && scrollContainer.value) {
       // eslint-disable-next-line no-undef
       resizeObserver = new ResizeObserver(() => {
