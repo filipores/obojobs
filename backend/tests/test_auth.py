@@ -258,9 +258,7 @@ class TestSendVerification:
 
         assert response.status_code == 401
 
-    def test_send_verification_returns_200_for_unverified_user(
-        self, client, test_user, auth_headers
-    ):
+    def test_send_verification_returns_200_for_unverified_user(self, client, test_user, auth_headers):
         """Test successful verification email request."""
         response = client.post(
             "/api/auth/send-verification",
@@ -272,9 +270,7 @@ class TestSendVerification:
         assert "message" in data
         assert data["email"] == test_user["email"]
 
-    def test_send_verification_returns_400_for_already_verified_user(
-        self, app, client, test_user, auth_headers
-    ):
+    def test_send_verification_returns_400_for_already_verified_user(self, app, client, test_user, auth_headers):
         """Test that already verified users get 400."""
         # Mark user as verified
         with app.app_context():
@@ -291,9 +287,7 @@ class TestSendVerification:
         data = response.get_json()
         assert "bereits bestätigt" in data["error"]
 
-    def test_send_verification_rate_limited_after_max_requests(
-        self, client, test_user, auth_headers
-    ):
+    def test_send_verification_rate_limited_after_max_requests(self, client, test_user, auth_headers):
         """Test that rate limiting kicks in after max requests."""
         # Send max allowed requests
         for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR):
@@ -339,7 +333,6 @@ class TestVerifyEmail:
             user = User(
                 email="toverify@example.com",
                 full_name="To Verify",
-
             )
             user.set_password("TestPass123")
             db.session.add(user)
@@ -385,7 +378,6 @@ class TestVerifyEmail:
             user = User(
                 email="expired@example.com",
                 full_name="Expired Token",
-
             )
             user.set_password("TestPass123")
             user.email_verification_token = "expired-token"
@@ -408,7 +400,6 @@ class TestVerifyEmail:
             user = User(
                 email="alreadyverified@example.com",
                 full_name="Already Verified",
-
                 email_verified=True,
             )
             user.set_password("TestPass123")
@@ -430,9 +421,7 @@ class TestVerifyEmail:
 class TestMeEndpointEmailVerified:
     """Tests for GET /api/auth/me returning email_verified"""
 
-    def test_me_returns_email_verified_false_for_new_user(
-        self, client, test_user, auth_headers
-    ):
+    def test_me_returns_email_verified_false_for_new_user(self, client, test_user, auth_headers):
         """Test that /me returns email_verified: false for new users."""
         response = client.get(
             "/api/auth/me",
@@ -444,9 +433,7 @@ class TestMeEndpointEmailVerified:
         assert "email_verified" in data
         assert data["email_verified"] is False
 
-    def test_me_returns_email_verified_true_after_verification(
-        self, app, client, test_user, auth_headers
-    ):
+    def test_me_returns_email_verified_true_after_verification(self, app, client, test_user, auth_headers):
         """Test that /me returns email_verified: true after verification."""
         # Mark user as verified
         with app.app_context():
@@ -488,8 +475,7 @@ class TestVerificationRateLimiting:
         # Record requests with old timestamps
         key = str(user_id)
         _verification_rate_limits[key] = [
-            datetime.utcnow() - timedelta(hours=2)
-            for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR)
+            datetime.utcnow() - timedelta(hours=2) for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR)
         ]
 
         # Should allow new requests since old ones expired
@@ -568,17 +554,13 @@ class TestAccountLockout:
             assert user.locked_until is not None
             assert user.failed_login_attempts == MAX_FAILED_ATTEMPTS
 
-    def test_locked_account_cannot_login_even_with_correct_password(
-        self, app, client, test_user
-    ):
+    def test_locked_account_cannot_login_even_with_correct_password(self, app, client, test_user):
         """Test that locked account cannot login with correct password."""
         # Lock the account
         with app.app_context():
             user = User.query.filter_by(email=test_user["email"]).first()
             user.failed_login_attempts = MAX_FAILED_ATTEMPTS
-            user.locked_until = datetime.utcnow() + timedelta(
-                minutes=LOCKOUT_DURATION_MINUTES
-            )
+            user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_DURATION_MINUTES)
             db.session.commit()
 
         # Try to login with correct password
@@ -740,9 +722,7 @@ class TestChangePassword:
         assert data["success"] is True
         assert "erfolgreich" in data["message"]
 
-    def test_change_password_can_login_with_new_password(
-        self, client, test_user, auth_headers
-    ):
+    def test_change_password_can_login_with_new_password(self, client, test_user, auth_headers):
         """Test that user can login with new password after change."""
         new_password = "ChangedPass789"
 
@@ -782,9 +762,7 @@ class TestChangePassword:
         data = response.get_json()
         assert "Aktuelles Passwort ist falsch" in data["error"]
 
-    def test_change_password_weak_new_password(
-        self, client, test_user, auth_headers
-    ):
+    def test_change_password_weak_new_password(self, client, test_user, auth_headers):
         """Test that weak new password is rejected."""
         response = client.put(
             "/api/auth/change-password",
@@ -828,9 +806,7 @@ class TestChangePassword:
         data = response.get_json()
         assert "Aktuelles Passwort ist erforderlich" in data["error"]
 
-    def test_change_password_missing_new_password(
-        self, client, test_user, auth_headers
-    ):
+    def test_change_password_missing_new_password(self, client, test_user, auth_headers):
         """Test that missing new password returns 400."""
         response = client.put(
             "/api/auth/change-password",
@@ -856,9 +832,7 @@ class TestChangePassword:
 
         assert response.status_code == 401
 
-    def test_change_password_old_password_cannot_login(
-        self, client, test_user, auth_headers
-    ):
+    def test_change_password_old_password_cannot_login(self, client, test_user, auth_headers):
         """Test that old password no longer works after change."""
         new_password = "ChangedPass789"
 
@@ -924,9 +898,7 @@ class TestLogout:
         data = response.get_json()
         assert "widerrufen" in data["error"]
 
-    def test_logout_token_cannot_be_used_for_other_endpoints(
-        self, client, auth_headers
-    ):
+    def test_logout_token_cannot_be_used_for_other_endpoints(self, client, auth_headers):
         """Test that logged out token cannot be used for any authenticated endpoint."""
         # First logout
         client.post(
@@ -1047,6 +1019,7 @@ class TestDeleteAccount:
         # Verify user no longer exists in database
         with app.app_context():
             from models import User
+
             deleted_user = User.query.get(user_id)
             assert deleted_user is None
 
@@ -1075,20 +1048,12 @@ class TestDeleteAccount:
             user = User.query.get(test_user["id"])
 
             # Create an API key
-            api_key = APIKey(
-                user_id=user.id,
-                key_hash="test_hash",
-                key_prefix="test_prefix",
-                name="Test Key"
-            )
+            api_key = APIKey(user_id=user.id, key_hash="test_hash", key_prefix="test_prefix", name="Test Key")
             db.session.add(api_key)
 
             # Create a document
             document = Document(
-                user_id=user.id,
-                original_filename="test.pdf",
-                file_path="/test/path",
-                doc_type="cv_pdf"
+                user_id=user.id, original_filename="test.pdf", file_path="/test/path", doc_type="cv_pdf"
             )
             db.session.add(document)
             db.session.commit()
@@ -1136,12 +1101,14 @@ class TestDeleteAccount:
 
     def test_delete_account_handles_database_errors_gracefully(self, app, client, test_user, auth_headers, monkeypatch):
         """Test that database errors are handled gracefully during deletion."""
+
         # Mock db.session.commit to raise an exception
         def mock_commit():
             raise Exception("Database error")
 
         with app.app_context():
             from models import db
+
             monkeypatch.setattr(db.session, "commit", mock_commit)
 
             response = client.delete(
@@ -1156,6 +1123,7 @@ class TestDeleteAccount:
         # Verify user still exists after failed deletion
         with app.app_context():
             from models import User
+
             user = User.query.get(test_user["id"])
             assert user is not None
 

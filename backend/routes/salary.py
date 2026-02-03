@@ -73,19 +73,23 @@ def research_salary(current_user):
             industry=industry,
         )
 
-        return jsonify({
-            "success": True,
-            "research": research.to_dict(),
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "research": research.to_dict(),
+            }
+        ), 200
 
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         print(f"Error in salary research: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Fehler bei der Gehaltsrecherche. Bitte versuchen Sie es erneut.",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "Fehler bei der Gehaltsrecherche. Bitte versuchen Sie es erneut.",
+            }
+        ), 500
 
 
 @salary_bp.route("/negotiation-tips", methods=["POST"])
@@ -170,19 +174,23 @@ def get_negotiation_tips(current_user):
             job_offer_details=job_offer_details,
         )
 
-        return jsonify({
-            "success": True,
-            "strategy": strategy.to_dict(),
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "strategy": strategy.to_dict(),
+            }
+        ), 200
 
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
         print(f"Error in negotiation tips: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Fehler bei der Strategieentwicklung. Bitte versuchen Sie es erneut.",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "Fehler bei der Strategieentwicklung. Bitte versuchen Sie es erneut.",
+            }
+        ), 500
 
 
 @salary_bp.route("/data", methods=["GET"])
@@ -205,15 +213,19 @@ def get_salary_data(current_user):
     salary_data = SalaryCoachData.query.filter_by(user_id=current_user.id).first()
 
     if not salary_data:
-        return jsonify({
-            "success": True,
-            "data": None,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "data": None,
+            }
+        ), 200
 
-    return jsonify({
-        "success": True,
-        "data": salary_data.to_dict(),
-    }), 200
+    return jsonify(
+        {
+            "success": True,
+            "data": salary_data.to_dict(),
+        }
+    ), 200
 
 
 @salary_bp.route("/data", methods=["POST"])
@@ -279,17 +291,21 @@ def save_salary_data(current_user):
 
     try:
         db.session.commit()
-        return jsonify({
-            "success": True,
-            "message": "Daten gespeichert",
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "message": "Daten gespeichert",
+            }
+        ), 200
     except Exception as e:
         db.session.rollback()
         print(f"Error saving salary data: {str(e)}")
-        return jsonify({
-            "success": False,
-            "error": "Fehler beim Speichern der Daten",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "Fehler beim Speichern der Daten",
+            }
+        ), 500
 
 
 @salary_bp.route("/data", methods=["DELETE"])
@@ -313,12 +329,16 @@ def delete_salary_data(current_user):
         except Exception as e:
             db.session.rollback()
             print(f"Error deleting salary data: {str(e)}")
-            return jsonify({
-                "success": False,
-                "error": "Fehler beim Löschen der Daten",
-            }), 500
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Fehler beim Löschen der Daten",
+                }
+            ), 500
 
-    return jsonify({
-        "success": True,
-        "message": "Daten gelöscht",
-    }), 200
+    return jsonify(
+        {
+            "success": True,
+            "message": "Daten gelöscht",
+        }
+    ), 200

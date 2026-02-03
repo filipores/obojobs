@@ -3,11 +3,12 @@
 Database initialization script.
 Creates all tables and optionally seeds test data.
 """
+
 import os
 import sys
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 # Import all models to ensure all tables are created
 from models import (
@@ -20,9 +21,9 @@ def init_database(app):
     """Initialize database tables"""
     with app.app_context():
         # Ensure database directory exists (important for Docker volumes)
-        db_uri = app.config['SQLALCHEMY_DATABASE_URI']
-        if db_uri.startswith('sqlite:///'):
-            db_path = db_uri.replace('sqlite:///', '').lstrip('/')
+        db_uri = app.config["SQLALCHEMY_DATABASE_URI"]
+        if db_uri.startswith("sqlite:///"):
+            db_path = db_uri.replace("sqlite:///", "").lstrip("/")
             db_dir = os.path.dirname(db_path)
             if db_dir and not os.path.exists(db_dir):
                 os.makedirs(db_dir, exist_ok=True)
@@ -45,19 +46,14 @@ def seed_test_data(app):
     """Seed database with test user"""
     with app.app_context():
         # Check if test user exists
-        existing_user = User.query.filter_by(email='test@example.com').first()
+        existing_user = User.query.filter_by(email="test@example.com").first()
         if existing_user:
             print("✓ Test user already exists")
             return existing_user
 
         # Create test user
-        test_user = User(
-            email='test@example.com',
-            full_name='Test User',
-            credits_remaining=50,
-            credits_max=50
-        )
-        test_user.set_password('test123')
+        test_user = User(email="test@example.com", full_name="Test User", credits_remaining=50, credits_max=50)
+        test_user.set_password("test123")
 
         db.session.add(test_user)
         db.session.commit()
@@ -69,6 +65,6 @@ def seed_test_data(app):
         return test_user
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     # This will be called from app.py context
     print("Use this script by importing: from migrations.init_db import init_database, seed_test_data")

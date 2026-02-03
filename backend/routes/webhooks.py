@@ -103,12 +103,8 @@ def _handle_checkout_completed(session: dict) -> None:
         subscription.stripe_customer_id = customer_id
         subscription.plan = plan
         subscription.status = _map_stripe_status(stripe_subscription.get("status", "active"))
-        subscription.current_period_start = datetime.fromtimestamp(
-            stripe_subscription.get("current_period_start", 0)
-        )
-        subscription.current_period_end = datetime.fromtimestamp(
-            stripe_subscription.get("current_period_end", 0)
-        )
+        subscription.current_period_start = datetime.fromtimestamp(stripe_subscription.get("current_period_start", 0))
+        subscription.current_period_end = datetime.fromtimestamp(stripe_subscription.get("current_period_end", 0))
         logger.info(f"Updated subscription for user {user.id} to plan {plan.value}")
     else:
         # Create new subscription
@@ -118,12 +114,8 @@ def _handle_checkout_completed(session: dict) -> None:
             stripe_subscription_id=subscription_id,
             plan=plan,
             status=_map_stripe_status(stripe_subscription.get("status", "active")),
-            current_period_start=datetime.fromtimestamp(
-                stripe_subscription.get("current_period_start", 0)
-            ),
-            current_period_end=datetime.fromtimestamp(
-                stripe_subscription.get("current_period_end", 0)
-            ),
+            current_period_start=datetime.fromtimestamp(stripe_subscription.get("current_period_start", 0)),
+            current_period_end=datetime.fromtimestamp(stripe_subscription.get("current_period_end", 0)),
         )
         db.session.add(subscription)
         logger.info(f"Created subscription for user {user.id} with plan {plan.value}")
@@ -164,12 +156,8 @@ def _handle_subscription_created(subscription_data: dict) -> None:
         subscription.stripe_subscription_id = subscription_id
         subscription.plan = plan
         subscription.status = _map_stripe_status(subscription_data.get("status", "active"))
-        subscription.current_period_start = datetime.fromtimestamp(
-            subscription_data.get("current_period_start", 0)
-        )
-        subscription.current_period_end = datetime.fromtimestamp(
-            subscription_data.get("current_period_end", 0)
-        )
+        subscription.current_period_start = datetime.fromtimestamp(subscription_data.get("current_period_start", 0))
+        subscription.current_period_end = datetime.fromtimestamp(subscription_data.get("current_period_end", 0))
     else:
         subscription = Subscription(
             user_id=user.id,
@@ -177,12 +165,8 @@ def _handle_subscription_created(subscription_data: dict) -> None:
             stripe_subscription_id=subscription_id,
             plan=plan,
             status=_map_stripe_status(subscription_data.get("status", "active")),
-            current_period_start=datetime.fromtimestamp(
-                subscription_data.get("current_period_start", 0)
-            ),
-            current_period_end=datetime.fromtimestamp(
-                subscription_data.get("current_period_end", 0)
-            ),
+            current_period_start=datetime.fromtimestamp(subscription_data.get("current_period_start", 0)),
+            current_period_end=datetime.fromtimestamp(subscription_data.get("current_period_end", 0)),
         )
         db.session.add(subscription)
 
@@ -229,17 +213,12 @@ def _handle_subscription_updated(subscription_data: dict) -> None:
         subscription.plan = _get_plan_from_price_id(price_id)
 
     subscription.status = _map_stripe_status(subscription_data.get("status", "active"))
-    subscription.current_period_start = datetime.fromtimestamp(
-        subscription_data.get("current_period_start", 0)
-    )
-    subscription.current_period_end = datetime.fromtimestamp(
-        subscription_data.get("current_period_end", 0)
-    )
+    subscription.current_period_start = datetime.fromtimestamp(subscription_data.get("current_period_start", 0))
+    subscription.current_period_end = datetime.fromtimestamp(subscription_data.get("current_period_end", 0))
 
     db.session.commit()
     logger.info(
-        f"Subscription {subscription_id} updated: status={subscription.status.value}, "
-        f"plan={subscription.plan.value}"
+        f"Subscription {subscription_id} updated: status={subscription.status.value}, plan={subscription.plan.value}"
     )
 
 

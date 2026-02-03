@@ -3,6 +3,7 @@
 Migration: Add subscription usage tracking fields to users table.
 Adds applications_this_month and month_reset_at for tracking monthly limits.
 """
+
 import os
 import sys
 
@@ -33,9 +34,7 @@ def upgrade(app):
 
         # Add month_reset_at column
         if "month_reset_at" not in columns:
-            connection.execute(
-                db.text("ALTER TABLE users ADD COLUMN month_reset_at DATETIME")
-            )
+            connection.execute(db.text("ALTER TABLE users ADD COLUMN month_reset_at DATETIME"))
             print("✓ Added month_reset_at to users table")
         else:
             print("✓ month_reset_at already exists in users table")

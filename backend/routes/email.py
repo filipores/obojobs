@@ -27,31 +27,31 @@ def integration_status():
     Returns:
         JSON with configuration status for Gmail and Outlook
     """
-    gmail_configured = all([
-        os.environ.get("GOOGLE_CLIENT_ID"),
-        os.environ.get("GOOGLE_CLIENT_SECRET"),
-        os.environ.get("GOOGLE_REDIRECT_URI")
-    ])
+    gmail_configured = all(
+        [
+            os.environ.get("GOOGLE_CLIENT_ID"),
+            os.environ.get("GOOGLE_CLIENT_SECRET"),
+            os.environ.get("GOOGLE_REDIRECT_URI"),
+        ]
+    )
 
-    outlook_configured = all([
-        os.environ.get("MICROSOFT_CLIENT_ID"),
-        os.environ.get("MICROSOFT_CLIENT_SECRET"),
-        os.environ.get("MICROSOFT_REDIRECT_URI")
-    ])
+    outlook_configured = all(
+        [
+            os.environ.get("MICROSOFT_CLIENT_ID"),
+            os.environ.get("MICROSOFT_CLIENT_SECRET"),
+            os.environ.get("MICROSOFT_REDIRECT_URI"),
+        ]
+    )
 
-    return jsonify({
-        "success": True,
-        "data": {
-            "gmail": {
-                "configured": gmail_configured,
-                "provider": "gmail"
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "gmail": {"configured": gmail_configured, "provider": "gmail"},
+                "outlook": {"configured": outlook_configured, "provider": "outlook"},
             },
-            "outlook": {
-                "configured": outlook_configured,
-                "provider": "outlook"
-            }
         }
-    }), 200
+    ), 200
 
 
 @email_bp.route("/accounts", methods=["GET"])
@@ -67,10 +67,12 @@ def list_email_accounts():
 
     accounts = EmailAccount.query.filter_by(user_id=int(user_id)).all()
 
-    return jsonify({
-        "success": True,
-        "data": [account.to_dict() for account in accounts],
-    }), 200
+    return jsonify(
+        {
+            "success": True,
+            "data": [account.to_dict() for account in accounts],
+        }
+    ), 200
 
 
 @email_bp.route("/accounts/<int:account_id>", methods=["DELETE"])
@@ -87,24 +89,25 @@ def delete_email_account(account_id):
     """
     user_id = get_jwt_identity()
 
-    account = EmailAccount.query.filter_by(
-        id=account_id,
-        user_id=int(user_id)
-    ).first()
+    account = EmailAccount.query.filter_by(id=account_id, user_id=int(user_id)).first()
 
     if not account:
-        return jsonify({
-            "success": False,
-            "error": "E-Mail-Konto nicht gefunden",
-        }), 404
+        return jsonify(
+            {
+                "success": False,
+                "error": "E-Mail-Konto nicht gefunden",
+            }
+        ), 404
 
     db.session.delete(account)
     db.session.commit()
 
-    return jsonify({
-        "success": True,
-        "message": "E-Mail-Konto erfolgreich getrennt",
-    }), 200
+    return jsonify(
+        {
+            "success": True,
+            "message": "E-Mail-Konto erfolgreich getrennt",
+        }
+    ), 200
 
 
 @email_bp.route("/gmail/auth-url", methods=["GET"])
@@ -123,15 +126,17 @@ def gmail_auth_url():
         redirect_uri = os.environ.get("GOOGLE_REDIRECT_URI")
 
         if not client_id or not client_secret or not redirect_uri:
-            return jsonify({
-                "success": False,
-                "error": "Gmail-Integration ist derzeit nicht konfiguriert.",
-                "config_status": {
-                    "client_id": bool(client_id),
-                    "client_secret": bool(client_secret),
-                    "redirect_uri": bool(redirect_uri)
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Gmail-Integration ist derzeit nicht konfiguriert.",
+                    "config_status": {
+                        "client_id": bool(client_id),
+                        "client_secret": bool(client_secret),
+                        "redirect_uri": bool(redirect_uri),
+                    },
                 }
-            }), 400
+            ), 400
 
         # Generate a random state for CSRF protection
         state = secrets.token_urlsafe(32)
@@ -142,21 +147,27 @@ def gmail_auth_url():
 
         authorization_url, _ = GmailService.get_authorization_url(state=state)
 
-        return jsonify({
-            "success": True,
-            "authorization_url": authorization_url,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "authorization_url": authorization_url,
+            }
+        ), 200
 
     except ValueError as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": str(e),
+            }
+        ), 400
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler beim Erstellen der Autorisierungs-URL: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Fehler beim Erstellen der Autorisierungs-URL: {str(e)}",
+            }
+        ), 500
 
 
 @email_bp.route("/gmail/callback", methods=["GET"])
@@ -177,29 +188,35 @@ def gmail_callback():
     error = request.args.get("error")
     if error:
         error_description = request.args.get("error_description", "Unbekannter Fehler")
-        return jsonify({
-            "success": False,
-            "error": f"OAuth-Fehler: {error} - {error_description}",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": f"OAuth-Fehler: {error} - {error_description}",
+            }
+        ), 400
 
     code = request.args.get("code")
     state = request.args.get("state")
 
     if not code:
-        return jsonify({
-            "success": False,
-            "error": "Autorisierungscode ist erforderlich",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Autorisierungscode ist erforderlich",
+            }
+        ), 400
 
     user_id = get_jwt_identity()
 
     # Verify state for CSRF protection
     stored_state = session.get(f"gmail_oauth_state_{user_id}")
     if stored_state and state != stored_state:
-        return jsonify({
-            "success": False,
-            "error": "Ungültiger State-Parameter",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Ungültiger State-Parameter",
+            }
+        ), 400
 
     # Clear the stored state
     session.pop(f"gmail_oauth_state_{user_id}", None)
@@ -218,22 +235,28 @@ def gmail_callback():
             token_data=token_data,
         )
 
-        return jsonify({
-            "success": True,
-            "message": "Gmail-Konto erfolgreich verbunden",
-            "data": email_account.to_dict(),
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "message": "Gmail-Konto erfolgreich verbunden",
+                "data": email_account.to_dict(),
+            }
+        ), 200
 
     except ValueError as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": str(e),
+            }
+        ), 400
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler beim Abschluss des OAuth-Prozesses: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Fehler beim Abschluss des OAuth-Prozesses: {str(e)}",
+            }
+        ), 500
 
 
 @email_bp.route("/outlook/auth-url", methods=["GET"])
@@ -252,15 +275,17 @@ def outlook_auth_url():
         redirect_uri = os.environ.get("MICROSOFT_REDIRECT_URI")
 
         if not client_id or not client_secret or not redirect_uri:
-            return jsonify({
-                "success": False,
-                "error": "Outlook-Integration ist derzeit nicht konfiguriert.",
-                "config_status": {
-                    "client_id": bool(client_id),
-                    "client_secret": bool(client_secret),
-                    "redirect_uri": bool(redirect_uri)
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Outlook-Integration ist derzeit nicht konfiguriert.",
+                    "config_status": {
+                        "client_id": bool(client_id),
+                        "client_secret": bool(client_secret),
+                        "redirect_uri": bool(redirect_uri),
+                    },
                 }
-            }), 400
+            ), 400
 
         # Generate a random state for CSRF protection
         state = secrets.token_urlsafe(32)
@@ -271,21 +296,27 @@ def outlook_auth_url():
 
         authorization_url, _ = OutlookService.get_authorization_url(state=state)
 
-        return jsonify({
-            "success": True,
-            "authorization_url": authorization_url,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "authorization_url": authorization_url,
+            }
+        ), 200
 
     except ValueError as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": str(e),
+            }
+        ), 400
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler beim Erstellen der Autorisierungs-URL: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Fehler beim Erstellen der Autorisierungs-URL: {str(e)}",
+            }
+        ), 500
 
 
 @email_bp.route("/outlook/callback", methods=["GET"])
@@ -306,29 +337,35 @@ def outlook_callback():
     error = request.args.get("error")
     if error:
         error_description = request.args.get("error_description", "Unbekannter Fehler")
-        return jsonify({
-            "success": False,
-            "error": f"OAuth-Fehler: {error} - {error_description}",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": f"OAuth-Fehler: {error} - {error_description}",
+            }
+        ), 400
 
     code = request.args.get("code")
     state = request.args.get("state")
 
     if not code:
-        return jsonify({
-            "success": False,
-            "error": "Autorisierungscode ist erforderlich",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Autorisierungscode ist erforderlich",
+            }
+        ), 400
 
     user_id = get_jwt_identity()
 
     # Verify state for CSRF protection
     stored_state = session.get(f"outlook_oauth_state_{user_id}")
     if stored_state and state != stored_state:
-        return jsonify({
-            "success": False,
-            "error": "Ungültiger State-Parameter",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Ungültiger State-Parameter",
+            }
+        ), 400
 
     # Clear the stored state
     session.pop(f"outlook_oauth_state_{user_id}", None)
@@ -347,22 +384,28 @@ def outlook_callback():
             token_data=token_data,
         )
 
-        return jsonify({
-            "success": True,
-            "message": "Outlook-Konto erfolgreich verbunden",
-            "data": email_account.to_dict(),
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "message": "Outlook-Konto erfolgreich verbunden",
+                "data": email_account.to_dict(),
+            }
+        ), 200
 
     except ValueError as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": str(e),
+            }
+        ), 400
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler beim Abschluss des OAuth-Prozesses: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Fehler beim Abschluss des OAuth-Prozesses: {str(e)}",
+            }
+        ), 500
 
 
 @email_bp.route("/send", methods=["POST"])
@@ -393,34 +436,44 @@ def send_email():
     attachment_types = data.get("attachments", ["anschreiben", "lebenslauf"])
 
     if not application_id:
-        return jsonify({
-            "success": False,
-            "error": "Bewerbungs-ID ist erforderlich",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Bewerbungs-ID ist erforderlich",
+            }
+        ), 400
 
     if not email_account_id:
-        return jsonify({
-            "success": False,
-            "error": "E-Mail-Konto-ID ist erforderlich",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "E-Mail-Konto-ID ist erforderlich",
+            }
+        ), 400
 
     if not subject:
-        return jsonify({
-            "success": False,
-            "error": "Betreff ist erforderlich",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Betreff ist erforderlich",
+            }
+        ), 400
 
     if not body:
-        return jsonify({
-            "success": False,
-            "error": "Nachrichtentext ist erforderlich",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Nachrichtentext ist erforderlich",
+            }
+        ), 400
 
     if not to_email:
-        return jsonify({
-            "success": False,
-            "error": "Empfänger-E-Mail ist erforderlich",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Empfänger-E-Mail ist erforderlich",
+            }
+        ), 400
 
     # Get the application
     application = Application.query.filter_by(
@@ -429,10 +482,12 @@ def send_email():
     ).first()
 
     if not application:
-        return jsonify({
-            "success": False,
-            "error": "Bewerbung nicht gefunden",
-        }), 404
+        return jsonify(
+            {
+                "success": False,
+                "error": "Bewerbung nicht gefunden",
+            }
+        ), 404
 
     # Get the email account
     email_account = EmailAccount.query.filter_by(
@@ -441,10 +496,12 @@ def send_email():
     ).first()
 
     if not email_account:
-        return jsonify({
-            "success": False,
-            "error": "E-Mail-Konto nicht gefunden",
-        }), 404
+        return jsonify(
+            {
+                "success": False,
+                "error": "E-Mail-Konto nicht gefunden",
+            }
+        ), 404
 
     # Build attachments list
     attachments = []
@@ -457,33 +514,43 @@ def send_email():
             file_size = os.path.getsize(pdf_path)
             total_size += file_size
             filename = f"Anschreiben_{application.firma}.pdf"
-            attachments.append({
-                "path": pdf_path,
-                "filename": filename,
-            })
+            attachments.append(
+                {
+                    "path": pdf_path,
+                    "filename": filename,
+                }
+            )
 
     # Add Lebenslauf if requested
     if "lebenslauf" in attachment_types:
-        cv_doc = Document.query.filter_by(
-            user_id=int(user_id),
-            doc_type="cv_pdf",
-        ).order_by(Document.uploaded_at.desc()).first()
+        cv_doc = (
+            Document.query.filter_by(
+                user_id=int(user_id),
+                doc_type="cv_pdf",
+            )
+            .order_by(Document.uploaded_at.desc())
+            .first()
+        )
 
         if cv_doc and os.path.exists(cv_doc.file_path):
             file_size = os.path.getsize(cv_doc.file_path)
             total_size += file_size
             filename = cv_doc.original_filename or "Lebenslauf.pdf"
-            attachments.append({
-                "path": cv_doc.file_path,
-                "filename": filename,
-            })
+            attachments.append(
+                {
+                    "path": cv_doc.file_path,
+                    "filename": filename,
+                }
+            )
 
     # Check total attachment size
     if total_size > MAX_ATTACHMENT_SIZE:
-        return jsonify({
-            "success": False,
-            "error": f"Gesamtgröße der Anhänge überschreitet 10MB Limit ({total_size / 1024 / 1024:.1f}MB)",
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Gesamtgröße der Anhänge überschreitet 10MB Limit ({total_size / 1024 / 1024:.1f}MB)",
+            }
+        ), 400
 
     try:
         # Send email based on provider
@@ -504,10 +571,12 @@ def send_email():
                 attachments=attachments if attachments else None,
             )
         else:
-            return jsonify({
-                "success": False,
-                "error": f"Unbekannter Anbieter: {email_account.provider}",
-            }), 400
+            return jsonify(
+                {
+                    "success": False,
+                    "error": f"Unbekannter Anbieter: {email_account.provider}",
+                }
+            ), 400
 
         # Update application: set sent_at, sent_via, and status
         application.sent_at = datetime.utcnow()
@@ -515,25 +584,31 @@ def send_email():
         application.status = "versendet"
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "E-Mail erfolgreich gesendet",
-            "data": {
-                "result": result,
-                "attachments_count": len(attachments),
-                "provider": email_account.provider,
-                "sent_at": application.sent_at.isoformat(),
-                "sent_via": application.sent_via,
-            },
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "message": "E-Mail erfolgreich gesendet",
+                "data": {
+                    "result": result,
+                    "attachments_count": len(attachments),
+                    "provider": email_account.provider,
+                    "sent_at": application.sent_at.isoformat(),
+                    "sent_via": application.sent_via,
+                },
+            }
+        ), 200
 
     except ValueError as e:
-        return jsonify({
-            "success": False,
-            "error": str(e),
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": str(e),
+            }
+        ), 400
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler beim Senden der E-Mail: {str(e)}",
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": f"Fehler beim Senden der E-Mail: {str(e)}",
+            }
+        ), 500

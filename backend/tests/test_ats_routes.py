@@ -88,9 +88,7 @@ class TestATSAnalyze:
             "score": 75,
             "matched_keywords": ["Python", "Entwickler"],
             "missing_keywords": ["Docker"],
-            "suggestions": [
-                {"content": "Docker Erfahrung hinzufügen", "priority": "high"}
-            ],
+            "suggestions": [{"content": "Docker Erfahrung hinzufügen", "priority": "high"}],
             "categories": {
                 "hard_skills": {
                     "matched": ["Python"],
@@ -624,13 +622,15 @@ class TestATSHistory:
     def test_history_returns_user_analyses(self, app, client, test_user, auth_headers):
         """Test that history returns user's analyses."""
         with app.app_context():
-            result_json = json.dumps({
-                "score": 75,
-                "matched_keywords": ["Python", "Django"],
-                "missing_keywords": ["Docker"],
-                "suggestions": [],
-                "categories": {},
-            })
+            result_json = json.dumps(
+                {
+                    "score": 75,
+                    "matched_keywords": ["Python", "Django"],
+                    "missing_keywords": ["Docker"],
+                    "suggestions": [],
+                    "categories": {},
+                }
+            )
 
             analysis1 = ATSAnalysis(
                 user_id=test_user["id"],

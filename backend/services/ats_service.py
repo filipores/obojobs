@@ -40,9 +40,7 @@ class ATSService:
         self.client = Anthropic(api_key=self.api_key)
         self.model = config.CLAUDE_MODEL
 
-    def analyze_cv_against_job(
-        self, cv_text: str, job_description: str, retry_count: int = 3
-    ) -> dict:
+    def analyze_cv_against_job(self, cv_text: str, job_description: str, retry_count: int = 3) -> dict:
         """
         Analyze a CV against a job description.
 
@@ -86,9 +84,7 @@ class ATSService:
             except Exception as e:
                 if attempt < retry_count - 1:
                     continue
-                raise Exception(
-                    f"ATS analysis failed after {retry_count} attempts: {str(e)}"
-                ) from e
+                raise Exception(f"ATS analysis failed after {retry_count} attempts: {str(e)}") from e
 
     def _create_analysis_prompt(self, cv_text: str, job_description: str) -> str:
         """Create the prompt for ATS analysis."""
@@ -247,9 +243,7 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
             "score": 0,
             "matched_keywords": [],
             "missing_keywords": [],
-            "suggestions": [
-                {"content": "Analyse konnte nicht durchgeführt werden", "priority": "high"}
-            ],
+            "suggestions": [{"content": "Analyse konnte nicht durchgeführt werden", "priority": "high"}],
             "categories": {
                 "hard_skills": {"matched": [], "missing": []},
                 "soft_skills": {"matched": [], "missing": []},
@@ -259,9 +253,7 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         }
 
 
-def analyze_cv_against_job(
-    cv_text: str, job_description: str, api_key: str | None = None
-) -> dict:
+def analyze_cv_against_job(cv_text: str, job_description: str, api_key: str | None = None) -> dict:
     """
     Convenience function to analyze a CV against a job description.
 

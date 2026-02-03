@@ -36,7 +36,7 @@ class User(db.Model):  # type: ignore[name-defined]
     google_id = db.Column(db.String(255), nullable=True, unique=True, index=True)
 
     # Language preference (de = German, en = English)
-    language = db.Column(db.String(5), nullable=False, default='de')
+    language = db.Column(db.String(5), nullable=False, default="de")
 
     # Subscription usage tracking
     applications_this_month = db.Column(db.Integer, default=0, nullable=False)

@@ -15,6 +15,7 @@ from models import JobRequirement, UserSkill
 @dataclass
 class LearningRecommendation:
     """Learning recommendation for a missing skill."""
+
     skill_name: str
     category: str  # online_course, certification, project_idea, book
     title: str
@@ -26,6 +27,7 @@ class LearningRecommendation:
 @dataclass
 class SkillMatch:
     """Represents a matched skill between user and job requirement."""
+
     requirement_text: str
     requirement_type: str  # must_have or nice_to_have
     skill_category: str | None
@@ -39,6 +41,7 @@ class SkillMatch:
 @dataclass
 class JobFitResult:
     """Result of job-fit calculation."""
+
     overall_score: int  # 0-100
     score_category: str  # sehr_gut, gut, mittel, niedrig
     must_have_score: int  # 0-100
@@ -68,7 +71,7 @@ class JobFitResult:
                 "matched_must_have": self.matched_must_have,
                 "total_nice_to_have": self.total_nice_to_have,
                 "matched_nice_to_have": self.matched_nice_to_have,
-            }
+            },
         }
 
     def _get_score_label(self) -> str:
@@ -201,10 +204,7 @@ class JobFitCalculator:
             overall_score = must_have_score
         else:
             # Both types exist, use weighted calculation
-            overall_score = int(
-                must_have_score * self.MUST_HAVE_WEIGHT +
-                nice_to_have_score * self.NICE_TO_HAVE_WEIGHT
-            )
+            overall_score = int(must_have_score * self.MUST_HAVE_WEIGHT + nice_to_have_score * self.NICE_TO_HAVE_WEIGHT)
 
         # Determine score category
         score_category = self._get_score_category(overall_score)
@@ -239,7 +239,9 @@ class JobFitCalculator:
             skill_name_lower = skill.skill_name.lower()
 
             # Check if skill matches requirement
-            match_score = self._calculate_match_score(req_text, skill_name_lower, requirement.skill_category, skill.skill_category)
+            match_score = self._calculate_match_score(
+                req_text, skill_name_lower, requirement.skill_category, skill.skill_category
+            )
 
             if match_score > best_match_score:
                 best_match_score = match_score
@@ -297,11 +299,7 @@ class JobFitCalculator:
         )
 
     def _calculate_match_score(
-        self,
-        req_text: str,
-        skill_name: str,
-        req_category: str | None,
-        skill_category: str | None
+        self, req_text: str, skill_name: str, req_category: str | None, skill_category: str | None
     ) -> float:
         """
         Calculate how well a user skill matches a requirement.
@@ -382,22 +380,26 @@ class JobFitCalculator:
         skills_to_learn = []
 
         for skill in missing_skills:
-            skills_to_learn.append({
-                "skill": skill.requirement_text,
-                "priority": "high" if skill.requirement_type == "must_have" else "medium",
-                "type": "missing",
-                "category": skill.skill_category,
-            })
+            skills_to_learn.append(
+                {
+                    "skill": skill.requirement_text,
+                    "priority": "high" if skill.requirement_type == "must_have" else "medium",
+                    "type": "missing",
+                    "category": skill.skill_category,
+                }
+            )
 
         for skill in partial_matches:
-            skills_to_learn.append({
-                "skill": skill.requirement_text,
-                "priority": "medium" if skill.requirement_type == "must_have" else "low",
-                "type": "improve",
-                "current_years": skill.user_experience_years,
-                "required_years": skill.required_experience_years,
-                "category": skill.skill_category,
-            })
+            skills_to_learn.append(
+                {
+                    "skill": skill.requirement_text,
+                    "priority": "medium" if skill.requirement_type == "must_have" else "low",
+                    "type": "improve",
+                    "current_years": skill.user_experience_years,
+                    "required_years": skill.required_experience_years,
+                    "category": skill.skill_category,
+                }
+            )
 
         if not skills_to_learn:
             return []
@@ -471,23 +473,23 @@ Antworte NUR mit dem JSON."""
 
             recommendations = []
             for rec in recommendations_data:
-                recommendations.append(LearningRecommendation(
-                    skill_name=rec.get("skill_name", ""),
-                    category=rec.get("category", "online_course"),
-                    title=rec.get("title", ""),
-                    description=rec.get("description", ""),
-                    resource_url=rec.get("resource_url"),
-                    priority=rec.get("priority", "medium"),
-                ))
+                recommendations.append(
+                    LearningRecommendation(
+                        skill_name=rec.get("skill_name", ""),
+                        category=rec.get("category", "online_course"),
+                        title=rec.get("title", ""),
+                        description=rec.get("description", ""),
+                        resource_url=rec.get("resource_url"),
+                        priority=rec.get("priority", "medium"),
+                    )
+                )
 
             return recommendations
 
         except Exception:
             return self._generate_fallback_recommendations(skills_to_learn)
 
-    def _generate_fallback_recommendations(
-        self, skills_to_learn: list[dict]
-    ) -> list[LearningRecommendation]:
+    def _generate_fallback_recommendations(self, skills_to_learn: list[dict]) -> list[LearningRecommendation]:
         """Generate basic recommendations without API call."""
         recommendations = []
 
@@ -522,24 +524,28 @@ Antworte NUR mit dem JSON."""
             category = skill_data.get("category") or "technical"
 
             # Add online course recommendation
-            recommendations.append(LearningRecommendation(
-                skill_name=skill_name,
-                category="online_course",
-                title=f"Online-Kurs: {skill_name}",
-                description=f"Suche nach einem passenden Online-Kurs zu '{skill_name}' auf gängigen Lernplattformen.",
-                resource_url=resource_urls.get(category, {}).get("online_course", "https://www.coursera.org"),
-                priority=priority,
-            ))
+            recommendations.append(
+                LearningRecommendation(
+                    skill_name=skill_name,
+                    category="online_course",
+                    title=f"Online-Kurs: {skill_name}",
+                    description=f"Suche nach einem passenden Online-Kurs zu '{skill_name}' auf gängigen Lernplattformen.",
+                    resource_url=resource_urls.get(category, {}).get("online_course", "https://www.coursera.org"),
+                    priority=priority,
+                )
+            )
 
             # Add project idea for technical skills
             if category in ["technical", "tools"]:
-                recommendations.append(LearningRecommendation(
-                    skill_name=skill_name,
-                    category="project_idea",
-                    title=f"Praxis-Projekt: {skill_name}",
-                    description=f"Erstelle ein kleines Projekt, das '{skill_name}' praktisch anwendet. Dokumentiere es auf GitHub.",
-                    resource_url="https://github.com",
-                    priority=priority,
-                ))
+                recommendations.append(
+                    LearningRecommendation(
+                        skill_name=skill_name,
+                        category="project_idea",
+                        title=f"Praxis-Projekt: {skill_name}",
+                        description=f"Erstelle ein kleines Projekt, das '{skill_name}' praktisch anwendet. Dokumentiere es auf GitHub.",
+                        resource_url="https://github.com",
+                        priority=priority,
+                    )
+                )
 
         return recommendations

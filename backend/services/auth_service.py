@@ -70,9 +70,7 @@ class AuthService:
             if datetime.utcnow() < user.locked_until:
                 remaining = user.locked_until - datetime.utcnow()
                 remaining_minutes = max(1, int(remaining.total_seconds() / 60))
-                raise ValueError(
-                    f"Konto vorübergehend gesperrt. Versuche es in {remaining_minutes} Minuten erneut."
-                )
+                raise ValueError(f"Konto vorübergehend gesperrt. Versuche es in {remaining_minutes} Minuten erneut.")
             else:
                 # Lock expired, reset lockout
                 user.locked_until = None
@@ -85,9 +83,7 @@ class AuthService:
                 user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
 
                 if user.failed_login_attempts >= MAX_FAILED_ATTEMPTS:
-                    user.locked_until = datetime.utcnow() + timedelta(
-                        minutes=LOCKOUT_DURATION_MINUTES
-                    )
+                    user.locked_until = datetime.utcnow() + timedelta(minutes=LOCKOUT_DURATION_MINUTES)
                     db.session.commit()
                     raise ValueError(
                         f"Konto wegen zu vieler fehlgeschlagener Anmeldeversuche gesperrt. "

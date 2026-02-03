@@ -153,9 +153,7 @@ class TestATSService:
             "suggestions": [{"content": "Learn Go", "priority": "high"}],
         }
         mock_response.content = [
-            MagicMock(
-                text=f'Here is the analysis:\n{json.dumps(response_data)}\nThat\'s my analysis.'
-            )
+            MagicMock(text=f"Here is the analysis:\n{json.dumps(response_data)}\nThat's my analysis.")
         ]
 
         with patch("services.ats_service.Anthropic") as mock_anthropic:
@@ -497,9 +495,7 @@ class TestATSService:
             mock_client.messages.create.return_value = mock_response
             mock_anthropic.return_value = mock_client
 
-            result = analyze_cv_against_job(
-                "CV with SQL", "Need SQL developer", api_key="test-key"
-            )
+            result = analyze_cv_against_job("CV with SQL", "Need SQL developer", api_key="test-key")
 
             assert "SQL" in result["matched_keywords"]
             assert "categories" in result

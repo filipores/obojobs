@@ -480,14 +480,16 @@ def upload_pdf_template(current_user):
         db.session.add(template)
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "PDF-Template erfolgreich hochgeladen",
-            "template": template.to_dict(),
-            "text_blocks": text_blocks,
-            "extraction_source": extraction_result.get("source", "unknown"),
-            "total_blocks": extraction_result.get("total_blocks", 0),
-        }), 201
+        return jsonify(
+            {
+                "success": True,
+                "message": "PDF-Template erfolgreich hochgeladen",
+                "template": template.to_dict(),
+                "text_blocks": text_blocks,
+                "extraction_source": extraction_result.get("source", "unknown"),
+                "total_blocks": extraction_result.get("total_blocks", 0),
+            }
+        ), 201
 
     except Exception as e:
         # Cleanup on error
@@ -572,7 +574,7 @@ WICHTIG:
                 suggestions = json.loads(response_text)
             else:
                 # Try to find JSON array in response
-                json_match = re.search(r'\[[\s\S]*\]', response_text)
+                json_match = re.search(r"\[[\s\S]*\]", response_text)
                 if json_match:
                     suggestions = json.loads(json_match.group())
         except json.JSONDecodeError as e:
@@ -638,21 +640,25 @@ WICHTIG:
                     }
                     break
 
-            enriched_suggestions.append({
-                "id": f"var_{i}_{hash(suggestion_text) % 10000}",
-                "text": suggestion_text,
-                "variable": variable,
-                "confidence": confidence,
-                "reason": reason,
-                "position": position_data,
-            })
+            enriched_suggestions.append(
+                {
+                    "id": f"var_{i}_{hash(suggestion_text) % 10000}",
+                    "text": suggestion_text,
+                    "variable": variable,
+                    "confidence": confidence,
+                    "reason": reason,
+                    "position": position_data,
+                }
+            )
 
-        return jsonify({
-            "success": True,
-            "template_id": template.id,
-            "suggestions": enriched_suggestions,
-            "total_suggestions": len(enriched_suggestions),
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "template_id": template.id,
+                "suggestions": enriched_suggestions,
+                "total_suggestions": len(enriched_suggestions),
+            }
+        ), 200
 
     except Exception as e:
         print(f"Fehler bei der Variablen-Analyse: {str(e)}")
@@ -724,8 +730,8 @@ def generate_template_variants(current_user):
 
 {f"**Lebenslauf-Auszug:**{chr(10)}{cv_text[:2000]}" if cv_text else ""}
 
-**Gewünschte Tonalität: {tone['name']}**
-Das Anschreiben soll {tone['description']}
+**Gewünschte Tonalität: {tone["name"]}**
+Das Anschreiben soll {tone["description"]}
 
 **WICHTIG - AUSGABEFORMAT:**
 1. Schreibe ein VOLLSTÄNDIGES Anschreiben (200-300 Wörter)
@@ -788,20 +794,24 @@ Generiere jetzt das Anschreiben:"""
                     except json.JSONDecodeError:
                         pass
 
-            variants.append({
-                "key": tone["key"],
-                "name": tone["name"],
-                "hint": tone["hint"],
-                "preview": preview_text,  # With example data for display
-                "content": template_content,  # With {{VARIABLE}} placeholders
-                "variables": variable_positions,
-            })
+            variants.append(
+                {
+                    "key": tone["key"],
+                    "name": tone["name"],
+                    "hint": tone["hint"],
+                    "preview": preview_text,  # With example data for display
+                    "content": template_content,  # With {{VARIABLE}} placeholders
+                    "variables": variable_positions,
+                }
+            )
 
-        return jsonify({
-            "success": True,
-            "variants": variants,
-            "example_data": example_data,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "variants": variants,
+                "example_data": example_data,
+            }
+        ), 200
 
     except Exception as e:
         print(f"Fehler bei Varianten-Generierung: {str(e)}")
@@ -842,17 +852,15 @@ def save_variable_positions(template_id, current_user):
 
             variable = item.get("variable_name") or item.get("variable")
             if variable and variable not in allowed_variables:
-                return jsonify({
-                    "error": f"Unbekannte Variable: {variable}. Erlaubt: {', '.join(allowed_variables)}"
-                }), 400
+                return jsonify(
+                    {"error": f"Unbekannte Variable: {variable}. Erlaubt: {', '.join(allowed_variables)}"}
+                ), 400
 
     # Validate structure if it's a dict (variable name -> positions)
     elif isinstance(variable_positions, dict):
         for key in variable_positions.keys():
             if key not in allowed_variables:
-                return jsonify({
-                    "error": f"Unbekannte Variable: {key}. Erlaubt: {', '.join(allowed_variables)}"
-                }), 400
+                return jsonify({"error": f"Unbekannte Variable: {key}. Erlaubt: {', '.join(allowed_variables)}"}), 400
 
     try:
         # Update template content by replacing matched text with {{VARIABLE}} placeholders
@@ -862,9 +870,7 @@ def save_variable_positions(template_id, current_user):
             # Sort by text length descending to replace longer matches first
             # This prevents partial replacements (e.g., "XXX Hamburg" before "XXX")
             sorted_positions = sorted(
-                variable_positions,
-                key=lambda x: len(x.get("suggested_text", "") or x.get("text", "")),
-                reverse=True
+                variable_positions, key=lambda x: len(x.get("suggested_text", "") or x.get("text", "")), reverse=True
             )
 
             for item in sorted_positions:
@@ -880,12 +886,14 @@ def save_variable_positions(template_id, current_user):
         template.content = updated_content
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "message": "Variablen-Positionen erfolgreich gespeichert",
-            "template": template.to_dict(),
-            "variables_replaced": len(variable_positions) if isinstance(variable_positions, list) else 0,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "message": "Variablen-Positionen erfolgreich gespeichert",
+                "template": template.to_dict(),
+                "variables_replaced": len(variable_positions) if isinstance(variable_positions, list) else 0,
+            }
+        ), 200
 
     except Exception as e:
         db.session.rollback()

@@ -3,6 +3,7 @@
 Migration: Create job_requirements table for extracted job posting requirements.
 Stores requirements extracted from job postings with type (must_have/nice_to_have) and skill category.
 """
+
 import os
 import sys
 
@@ -37,7 +38,9 @@ def upgrade(app):
                 )
             """)
             )
-            connection.execute(db.text("CREATE INDEX idx_job_requirements_application_id ON job_requirements(application_id)"))
+            connection.execute(
+                db.text("CREATE INDEX idx_job_requirements_application_id ON job_requirements(application_id)")
+            )
             print("Created job_requirements table")
         else:
             print("job_requirements table already exists")

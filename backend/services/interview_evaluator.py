@@ -28,7 +28,7 @@ class InterviewEvaluator:
         answer_text: str,
         position: str | None = None,
         firma: str | None = None,
-        retry_count: int = 3
+        retry_count: int = 3,
     ) -> dict:
         """
         Evaluate an interview answer and provide structured feedback.
@@ -52,9 +52,7 @@ class InterviewEvaluator:
             - length_assessment: Feedback on answer length
             - structure_assessment: Feedback on answer structure
         """
-        prompt = self._create_evaluation_prompt(
-            question_text, question_type, answer_text, position, firma
-        )
+        prompt = self._create_evaluation_prompt(question_text, question_type, answer_text, position, firma)
 
         for attempt in range(retry_count):
             try:
@@ -79,12 +77,7 @@ class InterviewEvaluator:
         return self._get_fallback_evaluation(question_type)
 
     def _create_evaluation_prompt(
-        self,
-        question_text: str,
-        question_type: str,
-        answer_text: str,
-        position: str | None,
-        firma: str | None
+        self, question_text: str, question_type: str, answer_text: str, position: str | None, firma: str | None
     ) -> str:
         """Create the prompt for answer evaluation."""
 
@@ -92,8 +85,8 @@ class InterviewEvaluator:
         if position or firma:
             context_section = f"""
 KONTEXT:
-- Position: {position or 'Nicht angegeben'}
-- Unternehmen: {firma or 'Nicht angegeben'}
+- Position: {position or "Nicht angegeben"}
+- Unternehmen: {firma or "Nicht angegeben"}
 """
 
         star_section = ""
@@ -154,16 +147,20 @@ Antworte NUR mit einem JSON-Objekt im folgenden Format:
   "structure_assessment": {{
     "rating": "<well_structured|partially_structured|unstructured>",
     "feedback": "Feedback zur Struktur..."
-  }}{', "star_analysis": {...}' if question_type == 'behavioral' else ''}
+  }}{', "star_analysis": {...}' if question_type == "behavioral" else ""}
 }}
 
-{'''Für die STAR-Analyse (nur bei behavioral Fragen), füge hinzu:
+{
+            '''Für die STAR-Analyse (nur bei behavioral Fragen), füge hinzu:
 "star_analysis": {
   "situation": {"present": true/false, "quality": "strong|adequate|weak|missing", "feedback": "..."},
   "task": {"present": true/false, "quality": "strong|adequate|weak|missing", "feedback": "..."},
   "action": {"present": true/false, "quality": "strong|adequate|weak|missing", "feedback": "..."},
   "result": {"present": true/false, "quality": "strong|adequate|weak|missing", "feedback": "..."}
-}''' if question_type == 'behavioral' else ''}
+}'''
+            if question_type == "behavioral"
+            else ""
+        }
 
 Gib jetzt das JSON-Objekt aus:"""
 
@@ -179,7 +176,7 @@ Gib jetzt das JSON-Objekt aus:"""
             print("Keine JSON-Struktur in der Antwort gefunden")
             return self._get_fallback_evaluation(question_type)
 
-        json_text = text[start_idx:end_idx + 1]
+        json_text = text[start_idx : end_idx + 1]
 
         try:
             evaluation = json.loads(json_text)
@@ -191,14 +188,13 @@ Gib jetzt das JSON-Objekt aus:"""
                 "strengths": evaluation.get("strengths", [])[:5],
                 "improvements": evaluation.get("improvements", [])[:5],
                 "suggestion": evaluation.get("suggestion", ""),
-                "length_assessment": evaluation.get("length_assessment", {
-                    "rating": "adequate",
-                    "feedback": "Keine spezifische Bewertung verfügbar."
-                }),
-                "structure_assessment": evaluation.get("structure_assessment", {
-                    "rating": "partially_structured",
-                    "feedback": "Keine spezifische Bewertung verfügbar."
-                }),
+                "length_assessment": evaluation.get(
+                    "length_assessment", {"rating": "adequate", "feedback": "Keine spezifische Bewertung verfügbar."}
+                ),
+                "structure_assessment": evaluation.get(
+                    "structure_assessment",
+                    {"rating": "partially_structured", "feedback": "Keine spezifische Bewertung verfügbar."},
+                ),
             }
 
             # Validate overall_rating
@@ -230,11 +226,7 @@ Gib jetzt das JSON-Objekt aus:"""
     def _validate_star_analysis(self, star_data: dict) -> dict:
         """Validate and clean STAR analysis data."""
         valid_qualities = ["strong", "adequate", "weak", "missing"]
-        default_component = {
-            "present": False,
-            "quality": "missing",
-            "feedback": "Keine Analyse verfügbar."
-        }
+        default_component = {"present": False, "quality": "missing", "feedback": "Keine Analyse verfügbar."}
 
         result = {}
         for component in ["situation", "task", "action", "result"]:
@@ -249,7 +241,7 @@ Gib jetzt das JSON-Objekt aus:"""
             result[component] = {
                 "present": bool(comp_data.get("present", False)),
                 "quality": quality,
-                "feedback": str(comp_data.get("feedback", ""))[:500]
+                "feedback": str(comp_data.get("feedback", ""))[:500],
             }
 
         return result
@@ -275,13 +267,10 @@ Gib jetzt das JSON-Objekt aus:"""
                 "Detailliertere Analyse nicht verfügbar aufgrund eines technischen Problems",
             ],
             "suggestion": "Bitte versuchen Sie es erneut für eine detaillierte Bewertung.",
-            "length_assessment": {
-                "rating": "adequate",
-                "feedback": "Automatische Bewertung nicht verfügbar."
-            },
+            "length_assessment": {"rating": "adequate", "feedback": "Automatische Bewertung nicht verfügbar."},
             "structure_assessment": {
                 "rating": "partially_structured",
-                "feedback": "Automatische Bewertung nicht verfügbar."
+                "feedback": "Automatische Bewertung nicht verfügbar.",
             },
         }
 
@@ -291,11 +280,7 @@ Gib jetzt das JSON-Objekt aus:"""
         return result
 
     def generate_interview_summary(
-        self,
-        answers: list[dict],
-        position: str | None = None,
-        firma: str | None = None,
-        retry_count: int = 3
+        self, answers: list[dict], position: str | None = None, firma: str | None = None, retry_count: int = 3
     ) -> dict:
         """
         Generate a summary of all interview answers.
@@ -322,7 +307,7 @@ Gib jetzt das JSON-Objekt aus:"""
                 "category_scores": {},
                 "top_strengths": [],
                 "priority_improvements": [],
-                "next_steps": ["Beginnen Sie mit dem Mock-Interview um Feedback zu erhalten."]
+                "next_steps": ["Beginnen Sie mit dem Mock-Interview um Feedback zu erhalten."],
             }
 
         # Calculate category scores
@@ -347,7 +332,9 @@ Gib jetzt das JSON-Objekt aus:"""
         if overall_score >= 80:
             assessment = "Ausgezeichnet! Sie haben das Mock-Interview sehr gut gemeistert."
         elif overall_score >= 60:
-            assessment = "Gut gemacht! Ihre Antworten zeigen eine solide Vorbereitung mit einigen Verbesserungsmöglichkeiten."
+            assessment = (
+                "Gut gemacht! Ihre Antworten zeigen eine solide Vorbereitung mit einigen Verbesserungsmöglichkeiten."
+            )
         elif overall_score >= 40:
             assessment = "Ordentliche Leistung. Mit etwas mehr Vorbereitung können Sie sich deutlich verbessern."
         else:

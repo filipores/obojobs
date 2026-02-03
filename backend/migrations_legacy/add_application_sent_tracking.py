@@ -3,6 +3,7 @@
 Migration: Add sent_at and sent_via fields to applications table.
 Tracks when and via which provider an application email was sent.
 """
+
 import os
 import sys
 
@@ -24,18 +25,14 @@ def upgrade(app):
 
         # Add sent_at column if it doesn't exist
         if "sent_at" not in columns:
-            connection.execute(
-                db.text("ALTER TABLE applications ADD COLUMN sent_at DATETIME")
-            )
+            connection.execute(db.text("ALTER TABLE applications ADD COLUMN sent_at DATETIME"))
             print("✓ Added sent_at column to applications table")
         else:
             print("✓ sent_at column already exists")
 
         # Add sent_via column if it doesn't exist
         if "sent_via" not in columns:
-            connection.execute(
-                db.text("ALTER TABLE applications ADD COLUMN sent_via VARCHAR(50)")
-            )
+            connection.execute(db.text("ALTER TABLE applications ADD COLUMN sent_via VARCHAR(50)"))
             print("✓ Added sent_via column to applications table")
         else:
             print("✓ sent_via column already exists")

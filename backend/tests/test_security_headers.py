@@ -144,9 +144,7 @@ def production_client(production_app):
 class TestSecurityHeadersIntegration:
     """Integration tests for security headers in Flask app."""
 
-    def test_health_endpoint_has_security_headers_in_production(
-        self, production_client
-    ):
+    def test_health_endpoint_has_security_headers_in_production(self, production_client):
         """Health endpoint should include security headers in production."""
         response = production_client.get("/api/health")
 

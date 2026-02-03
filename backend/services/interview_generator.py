@@ -39,7 +39,7 @@ class InterviewGenerator:
         position: str,
         user_skills: list[dict] | None = None,
         question_count: int = 12,
-        retry_count: int = 3
+        retry_count: int = 3,
     ) -> list[dict]:
         """
         Generate interview questions based on job posting and user profile.
@@ -82,7 +82,9 @@ class InterviewGenerator:
 
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Interview-Fragen Generierung fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    print(
+                        f"Interview-Fragen Generierung fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}"
+                    )
                     time.sleep(2)
                 else:
                     print(f"Interview-Fragen Generierung fehlgeschlagen nach {retry_count} Versuchen: {str(e)}")
@@ -92,12 +94,7 @@ class InterviewGenerator:
         return self._get_fallback_questions(firma, position)
 
     def _create_generation_prompt(
-        self,
-        job_text: str,
-        firma: str,
-        position: str,
-        user_skills: list[dict] | None,
-        question_count: int
+        self, job_text: str, firma: str, position: str, user_skills: list[dict] | None, question_count: int
     ) -> str:
         """Create the prompt for interview question generation."""
 
@@ -224,12 +221,15 @@ Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
                 if difficulty not in self.VALID_DIFFICULTIES:
                     difficulty = "medium"
 
-                valid_questions.append({
-                    "question_text": question_text,
-                    "question_type": question_type,
-                    "difficulty": difficulty,
-                    "sample_answer": sample_answer or "Bereiten Sie eine konkrete Antwort mit Beispielen aus Ihrer Berufserfahrung vor.",
-                })
+                valid_questions.append(
+                    {
+                        "question_text": question_text,
+                        "question_type": question_type,
+                        "difficulty": difficulty,
+                        "sample_answer": sample_answer
+                        or "Bereiten Sie eine konkrete Antwort mit Beispielen aus Ihrer Berufserfahrung vor.",
+                    }
+                )
 
             return valid_questions
 
@@ -244,72 +244,72 @@ Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
                 "question_text": "Erzählen Sie uns etwas über sich.",
                 "question_type": "behavioral",
                 "difficulty": "easy",
-                "sample_answer": "Fassen Sie Ihren Werdegang in 2-3 Minuten zusammen. Fokussieren Sie auf relevante Erfahrungen für diese Position."
+                "sample_answer": "Fassen Sie Ihren Werdegang in 2-3 Minuten zusammen. Fokussieren Sie auf relevante Erfahrungen für diese Position.",
             },
             {
                 "question_text": f"Warum möchten Sie bei {firma} arbeiten?",
                 "question_type": "company_specific",
                 "difficulty": "medium",
-                "sample_answer": "Zeigen Sie, dass Sie sich über das Unternehmen informiert haben. Verknüpfen Sie Ihre Ziele mit der Unternehmenskultur und Mission."
+                "sample_answer": "Zeigen Sie, dass Sie sich über das Unternehmen informiert haben. Verknüpfen Sie Ihre Ziele mit der Unternehmenskultur und Mission.",
             },
             {
                 "question_text": "Was sind Ihre größten Stärken?",
                 "question_type": "behavioral",
                 "difficulty": "easy",
-                "sample_answer": "Nennen Sie 2-3 Stärken mit konkreten Beispielen. Wählen Sie Stärken, die für die Position relevant sind."
+                "sample_answer": "Nennen Sie 2-3 Stärken mit konkreten Beispielen. Wählen Sie Stärken, die für die Position relevant sind.",
             },
             {
                 "question_text": "Was ist Ihre größte Schwäche?",
                 "question_type": "behavioral",
                 "difficulty": "medium",
-                "sample_answer": "Nennen Sie eine echte Schwäche, die Sie aktiv verbessern. Zeigen Sie Selbstreflexion und Entwicklungsbereitschaft."
+                "sample_answer": "Nennen Sie eine echte Schwäche, die Sie aktiv verbessern. Zeigen Sie Selbstreflexion und Entwicklungsbereitschaft.",
             },
             {
                 "question_text": "Wo sehen Sie sich in fünf Jahren?",
                 "question_type": "behavioral",
                 "difficulty": "medium",
-                "sample_answer": "Zeigen Sie Ambition und langfristiges Engagement. Verknüpfen Sie Ihre Karriereziele mit dem Unternehmen."
+                "sample_answer": "Zeigen Sie Ambition und langfristiges Engagement. Verknüpfen Sie Ihre Karriereziele mit dem Unternehmen.",
             },
             {
                 "question_text": f"Welche Erfahrungen qualifizieren Sie für die Position als {position}?",
                 "question_type": "technical",
                 "difficulty": "medium",
-                "sample_answer": "Nennen Sie 2-3 konkrete Erfahrungen und Erfolge aus bisherigen Positionen, die direkt auf die neue Rolle übertragbar sind."
+                "sample_answer": "Nennen Sie 2-3 konkrete Erfahrungen und Erfolge aus bisherigen Positionen, die direkt auf die neue Rolle übertragbar sind.",
             },
             {
                 "question_text": "Erzählen Sie von einer herausfordernden Situation im Beruf und wie Sie diese gemeistert haben.",
                 "question_type": "behavioral",
                 "difficulty": "hard",
-                "sample_answer": "Nutzen Sie die STAR-Methode: Situation, Task, Action, Result. Wählen Sie ein Beispiel mit positivem Ausgang."
+                "sample_answer": "Nutzen Sie die STAR-Methode: Situation, Task, Action, Result. Wählen Sie ein Beispiel mit positivem Ausgang.",
             },
             {
                 "question_text": "Wie gehen Sie mit Konflikten im Team um?",
                 "question_type": "situational",
                 "difficulty": "medium",
-                "sample_answer": "Beschreiben Sie Ihren konstruktiven Ansatz zur Konfliktlösung. Betonen Sie Kommunikation und Kompromissbereitschaft."
+                "sample_answer": "Beschreiben Sie Ihren konstruktiven Ansatz zur Konfliktlösung. Betonen Sie Kommunikation und Kompromissbereitschaft.",
             },
             {
                 "question_text": "Was wissen Sie über unser Unternehmen?",
                 "question_type": "company_specific",
                 "difficulty": "easy",
-                "sample_answer": "Zeigen Sie, dass Sie recherchiert haben: Branche, Produkte, aktuelle Entwicklungen, Unternehmenskultur."
+                "sample_answer": "Zeigen Sie, dass Sie recherchiert haben: Branche, Produkte, aktuelle Entwicklungen, Unternehmenskultur.",
             },
             {
                 "question_text": "Was sind Ihre Gehaltsvorstellungen?",
                 "question_type": "salary_negotiation",
                 "difficulty": "hard",
-                "sample_answer": "Nennen Sie eine recherchierte Gehaltsspanne. Begründen Sie mit Ihrer Erfahrung und Qualifikation. Zeigen Sie Verhandlungsbereitschaft."
+                "sample_answer": "Nennen Sie eine recherchierte Gehaltsspanne. Begründen Sie mit Ihrer Erfahrung und Qualifikation. Zeigen Sie Verhandlungsbereitschaft.",
             },
             {
                 "question_text": "Haben Sie Fragen an uns?",
                 "question_type": "company_specific",
                 "difficulty": "easy",
-                "sample_answer": "Stellen Sie 2-3 vorbereitete Fragen zur Rolle, zum Team oder zur Unternehmenskultur. Zeigen Sie echtes Interesse."
+                "sample_answer": "Stellen Sie 2-3 vorbereitete Fragen zur Rolle, zum Team oder zur Unternehmenskultur. Zeigen Sie echtes Interesse.",
             },
             {
                 "question_text": "Wann könnten Sie bei uns anfangen?",
                 "question_type": "salary_negotiation",
                 "difficulty": "easy",
-                "sample_answer": "Seien Sie ehrlich bezüglich Kündigungsfristen. Zeigen Sie Flexibilität wenn möglich."
+                "sample_answer": "Seien Sie ehrlich bezüglich Kündigungsfristen. Zeigen Sie Flexibilität wenn möglich.",
             },
         ]

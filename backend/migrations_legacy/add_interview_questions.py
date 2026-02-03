@@ -3,6 +3,7 @@
 Migration: Create interview_questions table for generated interview questions.
 Stores interview questions with type, difficulty, and sample answers.
 """
+
 import os
 import sys
 
@@ -38,7 +39,9 @@ def upgrade(app):
                 )
             """)
             )
-            connection.execute(db.text("CREATE INDEX idx_interview_questions_application_id ON interview_questions(application_id)"))
+            connection.execute(
+                db.text("CREATE INDEX idx_interview_questions_application_id ON interview_questions(application_id)")
+            )
             print("Created interview_questions table")
         else:
             print("interview_questions table already exists")

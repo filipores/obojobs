@@ -24,15 +24,15 @@ def get_recommendations(current_user):
 
     recommender = JobRecommender()
     recommendations = recommender.get_recommendations(
-        user_id=current_user.id,
-        include_dismissed=include_dismissed,
-        limit=limit
+        user_id=current_user.id, include_dismissed=include_dismissed, limit=limit
     )
 
-    return jsonify({
-        "recommendations": [r.to_dict() for r in recommendations],
-        "total": len(recommendations),
-    })
+    return jsonify(
+        {
+            "recommendations": [r.to_dict() for r in recommendations],
+            "total": len(recommendations),
+        }
+    )
 
 
 @bp.route("/recommendations/analyze", methods=["POST"])
@@ -56,24 +56,21 @@ def analyze_job(current_user):
 
     # Check for duplicate
     if recommender.check_duplicate(current_user.id, job_url):
-        existing = JobRecommendation.query.filter_by(
-            user_id=current_user.id,
-            job_url=job_url
-        ).first()
+        existing = JobRecommendation.query.filter_by(user_id=current_user.id, job_url=job_url).first()
         if existing:
-            return jsonify({
-                "message": "Diese Stelle wurde bereits analysiert",
-                "recommendation": existing.to_dict(),
-                "is_duplicate": True,
-            })
+            return jsonify(
+                {
+                    "message": "Diese Stelle wurde bereits analysiert",
+                    "recommendation": existing.to_dict(),
+                    "is_duplicate": True,
+                }
+            )
 
     # Analyze the job
     result = recommender.analyze_job_for_user(current_user.id, job_url)
 
     if not result:
-        return jsonify({
-            "error": "Job konnte nicht analysiert werden"
-        }), 400
+        return jsonify({"error": "Job konnte nicht analysiert werden"}), 400
 
     if result.get("error"):
         return jsonify(result), 400
@@ -90,7 +87,9 @@ def analyze_job(current_user):
         result["saved"] = True
     else:
         result["saved"] = False
-        result["message"] = f"Job-Fit Score ({result.get('fit_score')}%) liegt unter der Empfehlungsgrenze von {JobRecommender.MIN_FIT_SCORE}%"
+        result["message"] = (
+            f"Job-Fit Score ({result.get('fit_score')}%) liegt unter der Empfehlungsgrenze von {JobRecommender.MIN_FIT_SCORE}%"
+        )
 
     return jsonify(result)
 
@@ -118,24 +117,15 @@ def analyze_manual_job(current_user):
     title = data.get("title", "").strip()
 
     if len(job_text) < 100:
-        return jsonify({
-            "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."
-        }), 400
+        return jsonify({"error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."}), 400
 
     recommender = JobRecommender()
 
     # Analyze the manually entered job text
-    result = recommender.analyze_manual_job_for_user(
-        current_user.id,
-        job_text,
-        company=company,
-        title=title
-    )
+    result = recommender.analyze_manual_job_for_user(current_user.id, job_text, company=company, title=title)
 
     if not result:
-        return jsonify({
-            "error": "Job konnte nicht analysiert werden"
-        }), 400
+        return jsonify({"error": "Job konnte nicht analysiert werden"}), 400
 
     if result.get("error"):
         return jsonify(result), 400
@@ -164,10 +154,7 @@ def analyze_manual_job(current_user):
 @jwt_required_custom
 def get_recommendation(current_user, recommendation_id):
     """Get a specific recommendation by ID."""
-    recommendation = JobRecommendation.query.filter_by(
-        id=recommendation_id,
-        user_id=current_user.id
-    ).first()
+    recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=current_user.id).first()
 
     if not recommendation:
         return jsonify({"error": "Empfehlung nicht gefunden"}), 404
@@ -196,11 +183,7 @@ def mark_applied(current_user, recommendation_id):
     application_id = data.get("application_id")
 
     recommender = JobRecommender()
-    success = recommender.mark_as_applied(
-        recommendation_id,
-        current_user.id,
-        application_id
-    )
+    success = recommender.mark_as_applied(recommendation_id, current_user.id, application_id)
 
     if not success:
         return jsonify({"error": "Empfehlung nicht gefunden"}), 404
@@ -212,10 +195,7 @@ def mark_applied(current_user, recommendation_id):
 @jwt_required_custom
 def delete_recommendation(current_user, recommendation_id):
     """Delete a job recommendation."""
-    recommendation = JobRecommendation.query.filter_by(
-        id=recommendation_id,
-        user_id=current_user.id
-    ).first()
+    recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=current_user.id).first()
 
     if not recommendation:
         return jsonify({"error": "Empfehlung nicht gefunden"}), 404
@@ -253,10 +233,12 @@ def save_recommendation(current_user):
 
     # Check for duplicate
     if job_url and recommender.check_duplicate(current_user.id, job_url):
-        return jsonify({
-            "error": "Diese Stelle ist bereits gespeichert",
-            "is_duplicate": True,
-        }), 400
+        return jsonify(
+            {
+                "error": "Diese Stelle ist bereits gespeichert",
+                "is_duplicate": True,
+            }
+        ), 400
 
     # If no job data provided, analyze the URL
     if not job_data and job_url:
@@ -293,10 +275,12 @@ def save_recommendation(current_user):
         fit_category=fit_category,
     )
 
-    return jsonify({
-        "message": "Job-Empfehlung gespeichert",
-        "recommendation": recommendation.to_dict(),
-    }), 201
+    return jsonify(
+        {
+            "message": "Job-Empfehlung gespeichert",
+            "recommendation": recommendation.to_dict(),
+        }
+    ), 201
 
 
 @bp.route("/recommendations/stats", methods=["GET"])
@@ -304,53 +288,57 @@ def save_recommendation(current_user):
 def get_recommendation_stats(current_user):
     """Get recommendation statistics for the current user."""
     # Combine 6 separate count queries into a single query using conditional aggregation
-    stats = db.session.query(
-        func.count(JobRecommendation.id).label("total"),
-        func.sum(case((JobRecommendation.dismissed == True, 1), else_=0)).label(  # noqa: E712
-            "dismissed"
-        ),
-        func.sum(case((JobRecommendation.applied == True, 1), else_=0)).label(  # noqa: E712
-            "applied"
-        ),
-        func.sum(
-            case(
-                (
-                    (JobRecommendation.dismissed == False)  # noqa: E712
-                    & (JobRecommendation.applied == False),  # noqa: E712
-                    1,
-                ),
-                else_=0,
-            )
-        ).label("active"),
-        func.sum(
-            case(
-                (
-                    (JobRecommendation.fit_category == "sehr_gut")
-                    & (JobRecommendation.dismissed == False),  # noqa: E712
-                    1,
-                ),
-                else_=0,
-            )
-        ).label("sehr_gut"),
-        func.sum(
-            case(
-                (
-                    (JobRecommendation.fit_category == "gut")
-                    & (JobRecommendation.dismissed == False),  # noqa: E712
-                    1,
-                ),
-                else_=0,
-            )
-        ).label("gut"),
-    ).filter(JobRecommendation.user_id == current_user.id).first()
+    stats = (
+        db.session.query(
+            func.count(JobRecommendation.id).label("total"),
+            func.sum(case((JobRecommendation.dismissed == True, 1), else_=0)).label(  # noqa: E712
+                "dismissed"
+            ),
+            func.sum(case((JobRecommendation.applied == True, 1), else_=0)).label(  # noqa: E712
+                "applied"
+            ),
+            func.sum(
+                case(
+                    (
+                        (JobRecommendation.dismissed == False)  # noqa: E712
+                        & (JobRecommendation.applied == False),  # noqa: E712
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("active"),
+            func.sum(
+                case(
+                    (
+                        (JobRecommendation.fit_category == "sehr_gut") & (JobRecommendation.dismissed == False),  # noqa: E712
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("sehr_gut"),
+            func.sum(
+                case(
+                    (
+                        (JobRecommendation.fit_category == "gut") & (JobRecommendation.dismissed == False),  # noqa: E712
+                        1,
+                    ),
+                    else_=0,
+                )
+            ).label("gut"),
+        )
+        .filter(JobRecommendation.user_id == current_user.id)
+        .first()
+    )
 
-    return jsonify({
-        "total": stats.total or 0,
-        "active": stats.active or 0,
-        "dismissed": stats.dismissed or 0,
-        "applied": stats.applied or 0,
-        "by_score": {
-            "sehr_gut": stats.sehr_gut or 0,
-            "gut": stats.gut or 0,
+    return jsonify(
+        {
+            "total": stats.total or 0,
+            "active": stats.active or 0,
+            "dismissed": stats.dismissed or 0,
+            "applied": stats.applied or 0,
+            "by_score": {
+                "sehr_gut": stats.sehr_gut or 0,
+                "gut": stats.gut or 0,
+            },
         }
-    })
+    )

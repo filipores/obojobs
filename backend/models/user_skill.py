@@ -9,7 +9,9 @@ class UserSkill(db.Model):  # type: ignore[name-defined]
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
     skill_name = db.Column(db.String(255), nullable=False)
-    skill_category = db.Column(db.String(50), nullable=False)  # technical, soft_skills, languages, tools, certifications
+    skill_category = db.Column(
+        db.String(50), nullable=False
+    )  # technical, soft_skills, languages, tools, certifications
     experience_years = db.Column(db.Float, nullable=True)  # Jahre Erfahrung, kann null sein
     source_document_id = db.Column(db.Integer, db.ForeignKey("documents.id"), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

@@ -15,6 +15,7 @@ from config import config
 @dataclass
 class SalaryResearch:
     """Result of salary research for a position."""
+
     position: str
     region: str
     experience_years: int
@@ -44,6 +45,7 @@ class SalaryResearch:
 @dataclass
 class NegotiationTip:
     """A salary negotiation tip."""
+
     category: str  # preparation, opening, counter, closing, timing
     title: str
     description: str
@@ -63,6 +65,7 @@ class NegotiationTip:
 @dataclass
 class NegotiationStrategy:
     """Complete negotiation strategy with tips and scripts."""
+
     target_salary: int
     current_salary: int | None
     recommended_range: tuple[int, int]
@@ -179,9 +182,7 @@ class SalaryCoach:
         Returns:
             SalaryResearch with min/max/median salary and sources
         """
-        prompt = self._create_salary_research_prompt(
-            position, region, experience_years, industry
-        )
+        prompt = self._create_salary_research_prompt(position, region, experience_years, industry)
 
         for attempt in range(retry_count):
             try:
@@ -193,9 +194,7 @@ class SalaryCoach:
                 )
 
                 response_text = response.content[0].text.strip()
-                return self._parse_salary_research(
-                    response_text, position, region, experience_years
-                )
+                return self._parse_salary_research(response_text, position, region, experience_years)
 
             except Exception as e:
                 if attempt < retry_count - 1:
@@ -203,13 +202,9 @@ class SalaryCoach:
                     time.sleep(2)
                 else:
                     print(f"Salary research failed after {retry_count} attempts: {str(e)}")
-                    return self._get_fallback_salary_research(
-                        position, region, experience_years, industry
-                    )
+                    return self._get_fallback_salary_research(position, region, experience_years, industry)
 
-        return self._get_fallback_salary_research(
-            position, region, experience_years, industry
-        )
+        return self._get_fallback_salary_research(position, region, experience_years, industry)
 
     def generate_negotiation_tips(
         self,
@@ -255,9 +250,7 @@ class SalaryCoach:
                 )
 
                 response_text = response.content[0].text.strip()
-                return self._parse_negotiation_strategy(
-                    response_text, target_salary, current_salary
-                )
+                return self._parse_negotiation_strategy(response_text, target_salary, current_salary)
 
             except Exception as e:
                 if attempt < retry_count - 1:
@@ -265,13 +258,9 @@ class SalaryCoach:
                     time.sleep(2)
                 else:
                     print(f"Negotiation tips generation failed after {retry_count} attempts: {str(e)}")
-                    return self._get_fallback_negotiation_strategy(
-                        target_salary, current_salary, position
-                    )
+                    return self._get_fallback_negotiation_strategy(target_salary, current_salary, position)
 
-        return self._get_fallback_negotiation_strategy(
-            target_salary, current_salary, position
-        )
+        return self._get_fallback_negotiation_strategy(target_salary, current_salary, position)
 
     def _create_salary_research_prompt(
         self,
@@ -399,9 +388,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
 
         if start_idx == -1 or end_idx == -1:
             print("No JSON structure found in salary research response")
-            return self._get_fallback_salary_research(
-                position, region, experience_years, None
-            )
+            return self._get_fallback_salary_research(position, region, experience_years, None)
 
         json_text = text[start_idx : end_idx + 1]
 
@@ -423,9 +410,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
 
         except json.JSONDecodeError as e:
             print(f"JSON Parse Error in salary research: {str(e)}")
-            return self._get_fallback_salary_research(
-                position, region, experience_years, None
-            )
+            return self._get_fallback_salary_research(position, region, experience_years, None)
 
     def _parse_negotiation_strategy(
         self,
@@ -442,9 +427,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
 
         if start_idx == -1 or end_idx == -1:
             print("No JSON structure found in negotiation strategy response")
-            return self._get_fallback_negotiation_strategy(
-                target_salary, current_salary, ""
-            )
+            return self._get_fallback_negotiation_strategy(target_salary, current_salary, "")
 
         json_text = text[start_idx : end_idx + 1]
 
@@ -458,13 +441,15 @@ Erstelle jetzt die Verhandlungsstrategie:"""
                 if category not in self.VALID_CATEGORIES:
                     category = "preparation"
 
-                tips.append(NegotiationTip(
-                    category=category,
-                    title=tip_data.get("title", ""),
-                    description=tip_data.get("description", ""),
-                    example_script=tip_data.get("example_script", ""),
-                    priority=tip_data.get("priority", "medium"),
-                ))
+                tips.append(
+                    NegotiationTip(
+                        category=category,
+                        title=tip_data.get("title", ""),
+                        description=tip_data.get("description", ""),
+                        example_script=tip_data.get("example_script", ""),
+                        priority=tip_data.get("priority", "medium"),
+                    )
+                )
 
             # Parse recommended range
             range_data = data.get("recommended_range", {})
@@ -485,9 +470,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
 
         except json.JSONDecodeError as e:
             print(f"JSON Parse Error in negotiation strategy: {str(e)}")
-            return self._get_fallback_negotiation_strategy(
-                target_salary, current_salary, ""
-            )
+            return self._get_fallback_negotiation_strategy(target_salary, current_salary, "")
 
     def _get_fallback_salary_research(
         self,
@@ -535,9 +518,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
 
         # Apply regional adjustment
         region_lower = region.lower().replace(" ", "")
-        adjustment = self.REGIONAL_ADJUSTMENTS.get(
-            region_lower, self.REGIONAL_ADJUSTMENTS["default"]
-        )
+        adjustment = self.REGIONAL_ADJUSTMENTS.get(region_lower, self.REGIONAL_ADJUSTMENTS["default"])
 
         min_salary = int(base_min * adjustment)
         max_salary = int(base_max * adjustment)
@@ -596,7 +577,9 @@ Erstelle jetzt die Verhandlungsstrategie:"""
                 category="opening",
                 title="Gehaltsspanne nennen",
                 description="Nennen Sie eine Gehaltsspanne statt einer fixen Zahl. Setzen Sie die untere Grenze bei Ihrem Wunschgehalt.",
-                example_script=f"Basierend auf meiner Erfahrung und den Marktdaten liegt meine Gehaltsvorstellung bei {target_formatted}€ bis {int(target_salary * 1.1):,}€.".replace(",", "."),
+                example_script=f"Basierend auf meiner Erfahrung und den Marktdaten liegt meine Gehaltsvorstellung bei {target_formatted}€ bis {int(target_salary * 1.1):,}€.".replace(
+                    ",", "."
+                ),
                 priority="high",
             ),
             NegotiationTip(

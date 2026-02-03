@@ -54,19 +54,20 @@ def analyze_cv(current_user):
 
         # Validate: at least one of job_url or job_text required
         if not job_url and not job_text:
-            return jsonify({
-                "success": False,
-                "error": "job_url oder job_text ist erforderlich"
-            }), 400
+            return jsonify({"success": False, "error": "job_url oder job_text ist erforderlich"}), 400
 
         # Check cache first (only for job_url, within 24 hours)
         if job_url:
             cache_cutoff = datetime.utcnow() - timedelta(hours=CACHE_DURATION_HOURS)
-            cached_result = ATSAnalysis.query.filter(
-                ATSAnalysis.user_id == current_user.id,
-                ATSAnalysis.job_url == job_url,
-                ATSAnalysis.created_at >= cache_cutoff
-            ).order_by(ATSAnalysis.created_at.desc()).first()
+            cached_result = (
+                ATSAnalysis.query.filter(
+                    ATSAnalysis.user_id == current_user.id,
+                    ATSAnalysis.job_url == job_url,
+                    ATSAnalysis.created_at >= cache_cutoff,
+                )
+                .order_by(ATSAnalysis.created_at.desc())
+                .first()
+            )
 
             if cached_result:
                 try:
@@ -74,40 +75,30 @@ def analyze_cv(current_user):
                     result_data["job_url"] = job_url
                     result_data["cached"] = True
                     result_data["analysis_id"] = cached_result.id
-                    return jsonify({
-                        "success": True,
-                        "data": result_data
-                    }), 200
+                    return jsonify({"success": True, "data": result_data}), 200
                 except json.JSONDecodeError:
                     pass  # Continue with fresh analysis
 
         # Get user's CV
-        cv_document = Document.query.filter_by(
-            user_id=current_user.id,
-            doc_type="lebenslauf"
-        ).first()
+        cv_document = Document.query.filter_by(user_id=current_user.id, doc_type="lebenslauf").first()
 
         if not cv_document:
-            return jsonify({
-                "success": False,
-                "error": "Kein Lebenslauf hochgeladen. Bitte laden Sie zuerst Ihren Lebenslauf hoch."
-            }), 400
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Kein Lebenslauf hochgeladen. Bitte laden Sie zuerst Ihren Lebenslauf hoch.",
+                }
+            ), 400
 
         # Read CV text from file
         if not os.path.exists(cv_document.file_path):
-            return jsonify({
-                "success": False,
-                "error": "Lebenslauf-Datei nicht gefunden"
-            }), 400
+            return jsonify({"success": False, "error": "Lebenslauf-Datei nicht gefunden"}), 400
 
         with open(cv_document.file_path, encoding="utf-8") as f:
             cv_text = f.read()
 
         if not cv_text.strip():
-            return jsonify({
-                "success": False,
-                "error": "Lebenslauf ist leer"
-            }), 400
+            return jsonify({"success": False, "error": "Lebenslauf ist leer"}), 400
 
         # Get job description text
         job_description = job_text
@@ -121,15 +112,9 @@ def analyze_cv(current_user):
                 scraped_url = job_url
 
                 if not job_description.strip():
-                    return jsonify({
-                        "success": False,
-                        "error": "Konnte keinen Text von der URL extrahieren"
-                    }), 400
+                    return jsonify({"success": False, "error": "Konnte keinen Text von der URL extrahieren"}), 400
             except Exception as e:
-                return jsonify({
-                    "success": False,
-                    "error": f"Fehler beim Laden der Job-URL: {str(e)}"
-                }), 400
+                return jsonify({"success": False, "error": f"Fehler beim Laden der Job-URL: {str(e)}"}), 400
 
         # Perform ATS analysis
         try:
@@ -141,7 +126,7 @@ def analyze_cv(current_user):
                 "matched_keywords": result.get("matched_keywords", []),
                 "missing_keywords": result.get("missing_keywords", []),
                 "suggestions": result.get("suggestions", []),
-                "categories": result.get("categories", {})
+                "categories": result.get("categories", {}),
             }
 
             # Save analysis to database
@@ -151,21 +136,22 @@ def analyze_cv(current_user):
             if job_text and not job_url:
                 job_text_hash = ATSAnalysis.hash_job_text(job_text)
                 # Extract title from first non-empty line of job text
-                lines = job_text.strip().split('\n')
+                lines = job_text.strip().split("\n")
                 for line in lines:
                     stripped = line.strip()
                     if stripped:
                         # Truncate to 100 chars for display
-                        analysis_title = stripped[:100] + ('...' if len(stripped) > 100 else '')
+                        analysis_title = stripped[:100] + ("..." if len(stripped) > 100 else "")
                         break
                 if not analysis_title:
-                    analysis_title = 'Manuelle Analyse'
+                    analysis_title = "Manuelle Analyse"
             elif scraped_url:
                 # Extract hostname as title for URL analyses
                 try:
                     from urllib.parse import urlparse
+
                     parsed = urlparse(scraped_url)
-                    analysis_title = parsed.netloc.replace('www.', '')
+                    analysis_title = parsed.netloc.replace("www.", "")
                 except Exception:
                     analysis_title = scraped_url[:100]
 
@@ -175,7 +161,7 @@ def analyze_cv(current_user):
                 job_text_hash=job_text_hash,
                 title=analysis_title,
                 score=response_data["score"],
-                result_json=json.dumps(response_data)
+                result_json=json.dumps(response_data),
             )
             db.session.add(ats_analysis)
             db.session.commit()
@@ -186,22 +172,13 @@ def analyze_cv(current_user):
             if scraped_url:
                 response_data["job_url"] = scraped_url
 
-            return jsonify({
-                "success": True,
-                "data": response_data
-            }), 200
+            return jsonify({"success": True, "data": response_data}), 200
 
         except ValueError as e:
-            return jsonify({
-                "success": False,
-                "error": str(e)
-            }), 400
+            return jsonify({"success": False, "error": str(e)}), 400
         except Exception as e:
             db.session.rollback()
-            return jsonify({
-                "success": False,
-                "error": f"Analyse fehlgeschlagen: {str(e)}"
-            }), 500
+            return jsonify({"success": False, "error": f"Analyse fehlgeschlagen: {str(e)}"}), 500
 
     return rate_limited_analyze()
 
@@ -217,18 +194,11 @@ def get_history(current_user):
     Returns:
         200: { success: true, data: { analyses: [...] } }
     """
-    analyses = ATSAnalysis.query.filter_by(
-        user_id=current_user.id
-    ).order_by(
-        ATSAnalysis.created_at.desc()
-    ).limit(20).all()
+    analyses = (
+        ATSAnalysis.query.filter_by(user_id=current_user.id).order_by(ATSAnalysis.created_at.desc()).limit(20).all()
+    )
 
-    return jsonify({
-        "success": True,
-        "data": {
-            "analyses": [a.to_summary_dict() for a in analyses]
-        }
-    }), 200
+    return jsonify({"success": True, "data": {"analyses": [a.to_summary_dict() for a in analyses]}}), 200
 
 
 @ats_bp.route("/history/<int:analysis_id>", methods=["GET"])
@@ -241,21 +211,12 @@ def get_analysis(current_user, analysis_id):
         200: { success: true, data: { ... full analysis result ... } }
         404: Analysis not found
     """
-    analysis = ATSAnalysis.query.filter_by(
-        id=analysis_id,
-        user_id=current_user.id
-    ).first()
+    analysis = ATSAnalysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
 
     if not analysis:
-        return jsonify({
-            "success": False,
-            "error": "Analyse nicht gefunden"
-        }), 404
+        return jsonify({"success": False, "error": "Analyse nicht gefunden"}), 404
 
-    return jsonify({
-        "success": True,
-        "data": analysis.to_dict()
-    }), 200
+    return jsonify({"success": True, "data": analysis.to_dict()}), 200
 
 
 @ats_bp.route("/history/<int:analysis_id>", methods=["DELETE"])
@@ -268,21 +229,12 @@ def delete_analysis(current_user, analysis_id):
         200: { success: true, message: "..." }
         404: Analysis not found
     """
-    analysis = ATSAnalysis.query.filter_by(
-        id=analysis_id,
-        user_id=current_user.id
-    ).first()
+    analysis = ATSAnalysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
 
     if not analysis:
-        return jsonify({
-            "success": False,
-            "error": "Analyse nicht gefunden"
-        }), 404
+        return jsonify({"success": False, "error": "Analyse nicht gefunden"}), 404
 
     db.session.delete(analysis)
     db.session.commit()
 
-    return jsonify({
-        "success": True,
-        "message": "Analyse gelöscht"
-    }), 200
+    return jsonify({"success": True, "message": "Analyse gelöscht"}), 200

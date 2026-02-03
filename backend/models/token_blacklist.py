@@ -9,6 +9,7 @@ class TokenBlacklist(db.Model):
     Used for implementing logout functionality.
     Tokens are stored with their JTI (JWT ID) for efficient lookup.
     """
+
     __tablename__ = "token_blacklist"
 
     id = db.Column(db.Integer, primary_key=True)
@@ -29,12 +30,7 @@ class TokenBlacklist(db.Model):
     @classmethod
     def add_token(cls, jti: str, token_type: str, user_id: int, expires_at: datetime) -> "TokenBlacklist":
         """Add a token to the blacklist."""
-        blacklisted = cls(
-            jti=jti,
-            token_type=token_type,
-            user_id=user_id,
-            expires_at=expires_at
-        )
+        blacklisted = cls(jti=jti, token_type=token_type, user_id=user_id, expires_at=expires_at)
         db.session.add(blacklisted)
         db.session.commit()
         return blacklisted

@@ -2,6 +2,7 @@
 Email Verification Service
 Handles token generation and verification for email confirmation.
 """
+
 import secrets
 from datetime import datetime, timedelta
 
@@ -55,9 +56,7 @@ class EmailVerificationService:
         if not user.email_verification_sent_at:
             return True
 
-        expiry_time = user.email_verification_sent_at + timedelta(
-            hours=EmailVerificationService.TOKEN_EXPIRY_HOURS
-        )
+        expiry_time = user.email_verification_sent_at + timedelta(hours=EmailVerificationService.TOKEN_EXPIRY_HOURS)
         return datetime.utcnow() > expiry_time
 
     @staticmethod
@@ -107,6 +106,4 @@ class EmailVerificationService:
         if not user.email_verification_sent_at:
             return None
 
-        return user.email_verification_sent_at + timedelta(
-            hours=EmailVerificationService.TOKEN_EXPIRY_HOURS
-        )
+        return user.email_verification_sent_at + timedelta(hours=EmailVerificationService.TOKEN_EXPIRY_HOURS)

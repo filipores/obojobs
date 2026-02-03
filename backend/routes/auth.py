@@ -2,8 +2,8 @@ from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jwt_identity, jwt_required
-from google.oauth2 import id_token
 from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token
 
 from config import Config
 from models import TokenBlacklist, User, db
@@ -20,7 +20,9 @@ def register():
     """Register a new user"""
     # Check if registration is enabled
     if not Config.REGISTRATION_ENABLED:
-        return jsonify({"error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."}), 403
+        return jsonify(
+            {"error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."}
+        ), 403
 
     data = request.json
 
@@ -79,11 +81,7 @@ def google_auth():
 
     try:
         # Verify the Google ID token
-        idinfo = id_token.verify_oauth2_token(
-            credential,
-            google_requests.Request(),
-            Config.GOOGLE_CLIENT_ID
-        )
+        idinfo = id_token.verify_oauth2_token(credential, google_requests.Request(), Config.GOOGLE_CLIENT_ID)
 
         # Get user info from token
         google_id = idinfo["sub"]
@@ -113,16 +111,16 @@ def google_auth():
             else:
                 # Check if registration is enabled
                 if not Config.REGISTRATION_ENABLED:
-                    return jsonify({
-                        "error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."
-                    }), 403
+                    return jsonify(
+                        {"error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."}
+                    ), 403
 
                 # Create new user
                 user = User(
                     email=email,
                     google_id=google_id,
                     full_name=full_name,
-                    email_verified=email_verified  # Google-verified emails are trusted
+                    email_verified=email_verified,  # Google-verified emails are trusted
                 )
                 db.session.add(user)
                 db.session.commit()
@@ -135,13 +133,9 @@ def google_auth():
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
 
-        return jsonify({
-            "access_token": access_token,
-            "refresh_token": refresh_token,
-            "user": user.to_dict()
-        }), 200
+        return jsonify({"access_token": access_token, "refresh_token": refresh_token, "user": user.to_dict()}), 200
 
-    except ValueError as e:
+    except ValueError:
         # Token verification failed
         return jsonify({"error": "Ungültiges Google-Token"}), 401
     except Exception as e:
@@ -213,9 +207,7 @@ def _check_verification_rate_limit(user_id: int) -> bool:
 
     # Clean up old entries and get recent requests
     if key in _verification_rate_limits:
-        _verification_rate_limits[key] = [
-            ts for ts in _verification_rate_limits[key] if ts > one_hour_ago
-        ]
+        _verification_rate_limits[key] = [ts for ts in _verification_rate_limits[key] if ts > one_hour_ago]
     else:
         _verification_rate_limits[key] = []
 
@@ -252,10 +244,9 @@ def send_verification():
 
     # Check rate limit
     if not _check_verification_rate_limit(user.id):
-        return jsonify({
-            "error": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.",
-            "retry_after_minutes": 60
-        }), 429
+        return jsonify(
+            {"error": "Zu viele Bestätigungsanfragen. Bitte später erneut versuchen.", "retry_after_minutes": 60}
+        ), 429
 
     # Generate and store token
     token = EmailVerificationService.create_verification_token(user)
@@ -267,10 +258,7 @@ def send_verification():
     # TODO: Integrate actual email sending service
     print(f"[DEV] Verification token for {user.email}: {token}")
 
-    return jsonify({
-        "message": "Bestätigungs-E-Mail gesendet",
-        "email": user.email
-    }), 200
+    return jsonify({"message": "Bestätigungs-E-Mail gesendet", "email": user.email}), 200
 
 
 @auth_bp.route("/verify-email", methods=["POST"])
@@ -292,10 +280,7 @@ def verify_email():
         return jsonify({"error": result["message"]}), 400
 
     user = result["user"]
-    return jsonify({
-        "message": "E-Mail erfolgreich bestätigt",
-        "user": user.to_dict()
-    }), 200
+    return jsonify({"message": "E-Mail erfolgreich bestätigt", "user": user.to_dict()}), 200
 
 
 def _check_password_reset_rate_limit(email: str) -> bool:
@@ -314,9 +299,7 @@ def _check_password_reset_rate_limit(email: str) -> bool:
 
     # Clean up old entries and get recent requests
     if key in _password_reset_rate_limits:
-        _password_reset_rate_limits[key] = [
-            ts for ts in _password_reset_rate_limits[key] if ts > one_hour_ago
-        ]
+        _password_reset_rate_limits[key] = [ts for ts in _password_reset_rate_limits[key] if ts > one_hour_ago]
     else:
         _password_reset_rate_limits[key] = []
 
@@ -346,16 +329,12 @@ def forgot_password():
 
     if not email:
         # Still return 200 to prevent enumeration
-        return jsonify({
-            "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
-        }), 200
+        return jsonify({"message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."}), 200
 
     # Check rate limit (even for non-existent emails to prevent timing attacks)
     if not _check_password_reset_rate_limit(email):
         # Still return 200 to prevent enumeration, but don't process
-        return jsonify({
-            "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
-        }), 200
+        return jsonify({"message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."}), 200
 
     # Record the request for rate limiting
     _record_password_reset_request(email)
@@ -372,9 +351,7 @@ def forgot_password():
         print(f"[DEV] Password reset token for {user.email}: {token}")
 
     # Always return same response to prevent email enumeration
-    return jsonify({
-        "message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."
-    }), 200
+    return jsonify({"message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."}), 200
 
 
 @auth_bp.route("/reset-password", methods=["POST"])
@@ -397,10 +374,7 @@ def reset_password():
     # Validate password strength
     validation = PasswordValidator.validate(new_password)
     if not validation["valid"]:
-        return jsonify({
-            "error": "Passwort erfüllt nicht die Anforderungen",
-            "failed_rules": validation["errors"]
-        }), 400
+        return jsonify({"error": "Passwort erfüllt nicht die Anforderungen", "failed_rules": validation["errors"]}), 400
 
     # Reset the password
     result = PasswordResetService.reset_password(token, new_password)
@@ -432,9 +406,7 @@ def change_password():
         return jsonify({"error": "Neues Passwort ist erforderlich"}), 400
 
     try:
-        result = AuthService.change_password(
-            int(current_user_id), current_password, new_password
-        )
+        result = AuthService.change_password(int(current_user_id), current_password, new_password)
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400
@@ -459,12 +431,7 @@ def logout():
     expires_at = datetime.utcfromtimestamp(exp_timestamp)
 
     # Add token to blacklist
-    TokenBlacklist.add_token(
-        jti=jti,
-        token_type=token_type,
-        user_id=user_id,
-        expires_at=expires_at
-    )
+    TokenBlacklist.add_token(jti=jti, token_type=token_type, user_id=user_id, expires_at=expires_at)
 
     return jsonify({"message": "Erfolgreich abgemeldet"}), 200
 
@@ -491,12 +458,10 @@ def update_language():
     user.language = language
 
     from models import db
+
     db.session.commit()
 
-    return jsonify({
-        "message": "Spracheinstellung aktualisiert",
-        "language": user.language
-    }), 200
+    return jsonify({"message": "Spracheinstellung aktualisiert", "language": user.language}), 200
 
 
 @auth_bp.route("/profile", methods=["PUT"])
@@ -528,12 +493,10 @@ def update_profile():
         user.display_name = display_name.strip() if display_name else None
 
     from models import db
+
     db.session.commit()
 
-    return jsonify({
-        "message": "Profil erfolgreich aktualisiert",
-        "user": user.to_dict()
-    }), 200
+    return jsonify({"message": "Profil erfolgreich aktualisiert", "user": user.to_dict()}), 200
 
 
 @auth_bp.route("/delete-account", methods=["DELETE"])
@@ -588,14 +551,11 @@ def delete_account():
         # Log successful deletion (for compliance purposes)
         print(f"[GDPR] Account deleted for user {user_email} (ID: {current_user_id})")
 
-        return jsonify({
-            "message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."
-        }), 200
+        return jsonify({"message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}), 200
 
     except Exception as e:
         from models import db
+
         db.session.rollback()
         print(f"Error deleting account for user {current_user_id}: {e}")
-        return jsonify({
-            "error": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."
-        }), 500
+        return jsonify({"error": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."}), 500

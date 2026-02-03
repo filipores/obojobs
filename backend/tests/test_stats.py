@@ -24,9 +24,7 @@ class TestGetStats:
         assert "stats" in data
         assert "usage" in data
 
-    def test_get_stats_counts_applications_by_status(
-        self, app, client, test_user, auth_headers
-    ):
+    def test_get_stats_counts_applications_by_status(self, app, client, test_user, auth_headers):
         """Test that stats count applications by status."""
         with app.app_context():
             # Create test applications with different statuses
@@ -56,9 +54,7 @@ class TestGetExtendedStats:
         response = client.get("/api/stats/extended")
         assert response.status_code == 401
 
-    def test_extended_stats_returns_200_for_authenticated_user(
-        self, client, auth_headers
-    ):
+    def test_extended_stats_returns_200_for_authenticated_user(self, client, auth_headers):
         """Test that authenticated user gets extended stats."""
         response = client.get("/api/stats/extended", headers=auth_headers)
         assert response.status_code == 200
@@ -94,36 +90,18 @@ class TestGetExtendedStats:
         assert "zusage_rate" in erfolgsquote
         assert "gesamt_erfolgsrate" in erfolgsquote
 
-    def test_extended_stats_calculates_erfolgsquote_correctly(
-        self, app, client, test_user, auth_headers
-    ):
+    def test_extended_stats_calculates_erfolgsquote_correctly(self, app, client, test_user, auth_headers):
         """Test that erfolgsquote is calculated correctly."""
         with app.app_context():
             # Create a funnel: 10 versendet, 5 antworten, 2 interviews, 1 zusage
             for _ in range(4):
-                db.session.add(
-                    Application(
-                        user_id=test_user["id"], firma="Firma", status="versendet"
-                    )
-                )
+                db.session.add(Application(user_id=test_user["id"], firma="Firma", status="versendet"))
             for _ in range(2):
-                db.session.add(
-                    Application(
-                        user_id=test_user["id"], firma="Firma", status="antwort_erhalten"
-                    )
-                )
+                db.session.add(Application(user_id=test_user["id"], firma="Firma", status="antwort_erhalten"))
             for _ in range(1):
-                db.session.add(
-                    Application(
-                        user_id=test_user["id"], firma="Firma", status="interview"
-                    )
-                )
-            db.session.add(
-                Application(user_id=test_user["id"], firma="Firma", status="zusage")
-            )
-            db.session.add(
-                Application(user_id=test_user["id"], firma="Firma", status="absage")
-            )
+                db.session.add(Application(user_id=test_user["id"], firma="Firma", status="interview"))
+            db.session.add(Application(user_id=test_user["id"], firma="Firma", status="zusage"))
+            db.session.add(Application(user_id=test_user["id"], firma="Firma", status="absage"))
             db.session.commit()
 
         response = client.get("/api/stats/extended", headers=auth_headers)
@@ -152,11 +130,7 @@ class TestGetExtendedStats:
             ]
             for firma, count in companies:
                 for _ in range(count):
-                    db.session.add(
-                        Application(
-                            user_id=test_user["id"], firma=firma, status="erstellt"
-                        )
-                    )
+                    db.session.add(Application(user_id=test_user["id"], firma=firma, status="erstellt"))
             db.session.commit()
 
         response = client.get("/api/stats/extended", headers=auth_headers)
@@ -191,9 +165,7 @@ class TestGetExtendedStats:
             assert "monat_kurz" in month
             assert "anzahl" in month
 
-    def test_extended_stats_antwortzeiten(
-        self, app, client, test_user, auth_headers
-    ):
+    def test_extended_stats_antwortzeiten(self, app, client, test_user, auth_headers):
         """Test that antwortzeiten calculates average response time."""
         with app.app_context():
             now = datetime.utcnow()
@@ -216,18 +188,12 @@ class TestGetExtendedStats:
         assert "erstellt_zu_versendet" in antwortzeiten
         assert antwortzeiten["erstellt_zu_versendet"] == 2.0
 
-    def test_extended_stats_status_verteilung(
-        self, app, client, test_user, auth_headers
-    ):
+    def test_extended_stats_status_verteilung(self, app, client, test_user, auth_headers):
         """Test that status_verteilung contains all status counts."""
         with app.app_context():
             statuses = ["erstellt", "versendet", "antwort_erhalten", "absage", "zusage"]
             for status in statuses:
-                db.session.add(
-                    Application(
-                        user_id=test_user["id"], firma="Firma", status=status
-                    )
-                )
+                db.session.add(Application(user_id=test_user["id"], firma="Firma", status=status))
             db.session.commit()
 
         response = client.get("/api/stats/extended", headers=auth_headers)

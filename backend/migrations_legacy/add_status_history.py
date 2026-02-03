@@ -3,6 +3,7 @@
 Migration: Add status_history field to applications table.
 Tracks all status changes with timestamps for timeline view.
 """
+
 import os
 import sys
 
@@ -24,9 +25,7 @@ def upgrade(app):
 
         # Add status_history column if it doesn't exist
         if "status_history" not in columns:
-            connection.execute(
-                db.text("ALTER TABLE applications ADD COLUMN status_history TEXT")
-            )
+            connection.execute(db.text("ALTER TABLE applications ADD COLUMN status_history TEXT"))
             print("✓ Added status_history column to applications table")
         else:
             print("✓ status_history column already exists")

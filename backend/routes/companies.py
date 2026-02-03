@@ -38,10 +38,7 @@ def research_company(company_name, current_user):
         - cached_at: When this data was cached
     """
     if not company_name or len(company_name.strip()) < 2:
-        return jsonify({
-            "success": False,
-            "error": "Firmenname ist erforderlich (mindestens 2 Zeichen)"
-        }), 400
+        return jsonify({"success": False, "error": "Firmenname ist erforderlich (mindestens 2 Zeichen)"}), 400
 
     company_name = company_name.strip()
 
@@ -57,6 +54,7 @@ def research_company(company_name, current_user):
         if force_refresh:
             cache_path = researcher._get_cache_path(company_name)
             import os
+
             if os.path.exists(cache_path):
                 os.remove(cache_path)
 
@@ -66,16 +64,10 @@ def research_company(company_name, current_user):
         else:
             result = researcher.research_company(company_name, website_url)
 
-        return jsonify({
-            "success": True,
-            "data": result.to_dict()
-        }), 200
+        return jsonify({"success": True, "data": result.to_dict()}), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Firmenrecherche: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Firmenrecherche: {str(e)}"}), 500
 
 
 @companies_bp.route("/<path:company_name>/cache-status", methods=["GET"])
@@ -95,56 +87,39 @@ def get_cache_status(company_name, current_user):
     from datetime import datetime, timedelta
 
     if not company_name:
-        return jsonify({
-            "success": False,
-            "error": "Firmenname ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "Firmenname ist erforderlich"}), 400
 
     try:
         researcher = CompanyResearcher()
         cache_path = researcher._get_cache_path(company_name.strip())
 
         if not os.path.exists(cache_path):
-            return jsonify({
-                "success": True,
-                "data": {
-                    "is_cached": False,
-                    "cached_at": None,
-                    "expires_at": None
-                }
-            }), 200
+            return jsonify({"success": True, "data": {"is_cached": False, "cached_at": None, "expires_at": None}}), 200
 
         # Load cache to get timestamp
         import json
+
         with open(cache_path, encoding="utf-8") as f:
             cached_data = json.load(f)
 
         cached_at = cached_data.get("cached_at")
         if not cached_at:
-            return jsonify({
-                "success": True,
-                "data": {
-                    "is_cached": False,
-                    "cached_at": None,
-                    "expires_at": None
-                }
-            }), 200
+            return jsonify({"success": True, "data": {"is_cached": False, "cached_at": None, "expires_at": None}}), 200
 
         cached_time = datetime.fromisoformat(cached_at)
         expires_at = cached_time + timedelta(hours=researcher.CACHE_DURATION_HOURS)
         is_valid = datetime.now() < expires_at
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "is_cached": is_valid,
-                "cached_at": cached_at,
-                "expires_at": expires_at.isoformat() if is_valid else None
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "is_cached": is_valid,
+                    "cached_at": cached_at,
+                    "expires_at": expires_at.isoformat() if is_valid else None,
+                },
             }
-        }), 200
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler beim Abrufen des Cache-Status: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler beim Abrufen des Cache-Status: {str(e)}"}), 500

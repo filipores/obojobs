@@ -27,7 +27,8 @@ def migrate():
             return
 
         # Create the table
-        db.session.execute(text("""
+        db.session.execute(
+            text("""
             CREATE TABLE job_recommendations (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
                 user_id INTEGER NOT NULL,
@@ -46,12 +47,13 @@ def migrate():
                 FOREIGN KEY (user_id) REFERENCES users(id),
                 FOREIGN KEY (application_id) REFERENCES applications(id)
             )
-        """))
+        """)
+        )
 
         # Create index on user_id
-        db.session.execute(text(
-            "CREATE INDEX IF NOT EXISTS idx_job_recommendations_user_id ON job_recommendations(user_id)"
-        ))
+        db.session.execute(
+            text("CREATE INDEX IF NOT EXISTS idx_job_recommendations_user_id ON job_recommendations(user_id)")
+        )
 
         db.session.commit()
         print("Migration completed: job_recommendations table created.")

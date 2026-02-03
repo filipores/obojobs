@@ -184,9 +184,7 @@ def delete_document(doc_id, current_user):
 
     if delete_skills and document.doc_type == "lebenslauf":
         # Delete all skills associated with this document
-        skills_deleted = UserSkill.query.filter_by(
-            user_id=current_user.id, source_document_id=document.id
-        ).delete()
+        skills_deleted = UserSkill.query.filter_by(user_id=current_user.id, source_document_id=document.id).delete()
         db.session.flush()
 
     # Delete file

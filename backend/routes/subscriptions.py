@@ -144,10 +144,12 @@ def create_checkout():
 
     # Check if using mock/development price IDs
     if price_id.startswith("price_dev_"):
-        return jsonify({
-            "success": False,
-            "error": "Stripe ist im Development-Modus nicht konfiguriert. Upgrade-Funktionen sind nur in der Produktionsumgebung verfügbar."
-        }), 503  # Service Unavailable
+        return jsonify(
+            {
+                "success": False,
+                "error": "Stripe ist im Development-Modus nicht konfiguriert. Upgrade-Funktionen sind nur in der Produktionsumgebung verfügbar.",
+            }
+        ), 503  # Service Unavailable
 
     # Get current user
     user_id = get_jwt_identity()
@@ -160,10 +162,7 @@ def create_checkout():
 
         # Create Stripe Customer if not exists
         if not user.stripe_customer_id:
-            customer_id = stripe_service.create_customer(
-                email=user.email,
-                name=user.full_name
-            )
+            customer_id = stripe_service.create_customer(email=user.email, name=user.full_name)
             user.stripe_customer_id = customer_id
             db.session.commit()
             logger.info(f"Created Stripe customer {customer_id} for user {user.id}")
@@ -172,21 +171,12 @@ def create_checkout():
 
         # Create Checkout Session
         session = stripe_service.create_checkout_session(
-            customer_id=customer_id,
-            price_id=price_id,
-            success_url=success_url,
-            cancel_url=cancel_url
+            customer_id=customer_id, price_id=price_id, success_url=success_url, cancel_url=cancel_url
         )
 
         logger.info(f"Created checkout session {session.id} for user {user.id}, plan {plan}")
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "checkout_url": session.url,
-                "session_id": session.id
-            }
-        }), 200
+        return jsonify({"success": True, "data": {"checkout_url": session.url, "session_id": session.id}}), 200
 
     except Exception as e:
         logger.error(f"Failed to create checkout session: {e}")
@@ -219,27 +209,16 @@ def create_portal_session():
 
     # User must have a Stripe customer ID to access portal
     if not user.stripe_customer_id:
-        return jsonify({
-            "success": False,
-            "error": "Kein aktives Abonnement. Bitte abonniere zuerst einen Plan."
-        }), 400
+        return jsonify({"success": False, "error": "Kein aktives Abonnement. Bitte abonniere zuerst einen Plan."}), 400
 
     try:
         stripe_service = StripeService()
 
-        session = stripe_service.create_portal_session(
-            customer_id=user.stripe_customer_id,
-            return_url=return_url
-        )
+        session = stripe_service.create_portal_session(customer_id=user.stripe_customer_id, return_url=return_url)
 
         logger.info(f"Created portal session for user {user.id}")
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "portal_url": session.url
-            }
-        }), 200
+        return jsonify({"success": True, "data": {"portal_url": session.url}}), 200
 
     except Exception as e:
         logger.error(f"Failed to create portal session: {e}")
@@ -276,10 +255,10 @@ def get_current_subscription():
             "used": usage["used"],
             "limit": usage["limit"],
             "remaining": usage["remaining"],
-            "unlimited": usage["unlimited"]
+            "unlimited": usage["unlimited"],
         },
         "plan_details": SUBSCRIPTION_PLANS.get(usage["plan"], SUBSCRIPTION_PLANS["free"]),
-        "has_stripe_customer": bool(user.stripe_customer_id)
+        "has_stripe_customer": bool(user.stripe_customer_id),
     }
 
     # If user has a subscription record, get additional details

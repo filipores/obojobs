@@ -55,29 +55,17 @@ def add_security_headers(response, config):
 
     # Permissions-Policy: Restricts browser features
     permissions_policy = (
-        "accelerometer=(), "
-        "camera=(), "
-        "geolocation=(), "
-        "gyroscope=(), "
-        "magnetometer=(), "
-        "microphone=(), "
-        "payment=(), "
-        "usb=()"
+        "accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=()"
     )
     response.headers["Permissions-Policy"] = permissions_policy
 
     # HSTS: Only add if request was over HTTPS
     # Check common headers that indicate HTTPS
-    is_https = (
-        getattr(config, "FORCE_HTTPS", False)
-        or response.headers.get("X-Forwarded-Proto") == "https"
-    )
+    is_https = getattr(config, "FORCE_HTTPS", False) or response.headers.get("X-Forwarded-Proto") == "https"
 
     if is_https:
         # max-age=31536000 (1 year), includeSubDomains, preload
-        response.headers["Strict-Transport-Security"] = (
-            "max-age=31536000; includeSubDomains; preload"
-        )
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains; preload"
 
     return response
 

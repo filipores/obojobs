@@ -63,15 +63,17 @@ class TestATSOptimizer:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": ["Docker", "Kubernetes"],
-                    "keyword_suggestions": [
-                        {"keyword": "Docker", "suggestion": "Mention Docker in your project experience"},
-                        {"keyword": "Kubernetes", "suggestion": "Add Kubernetes deployment knowledge"}
-                    ],
-                    "format_issues": [],
-                    "found_keywords": ["Python", "Java", "Teamwork"]
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": ["Docker", "Kubernetes"],
+                        "keyword_suggestions": [
+                            {"keyword": "Docker", "suggestion": "Mention Docker in your project experience"},
+                            {"keyword": "Kubernetes", "suggestion": "Add Kubernetes deployment knowledge"},
+                        ],
+                        "format_issues": [],
+                        "found_keywords": ["Python", "Java", "Teamwork"],
+                    }
+                )
             )
         ]
 
@@ -83,7 +85,7 @@ class TestATSOptimizer:
             optimizer = ATSOptimizer(api_key="test-key")
             result = optimizer.analyze_cover_letter(
                 "I am an experienced Python and Java developer with strong teamwork skills.",
-                "Looking for Python developer with Docker and Kubernetes experience."
+                "Looking for Python developer with Docker and Kubernetes experience.",
             )
 
             assert "ats_score" in result
@@ -100,12 +102,14 @@ class TestATSOptimizer:
         # Expected: 60 * 0.7 + 100 * 0.3 = 42 + 30 = 72
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": ["Docker", "Kubernetes"],
-                    "keyword_suggestions": [],
-                    "format_issues": [],
-                    "found_keywords": ["Python", "Java", "Teamwork"]
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": ["Docker", "Kubernetes"],
+                        "keyword_suggestions": [],
+                        "format_issues": [],
+                        "found_keywords": ["Python", "Java", "Teamwork"],
+                    }
+                )
             )
         ]
 
@@ -127,12 +131,14 @@ class TestATSOptimizer:
         # Expected: 100 * 0.7 + 80 * 0.3 = 70 + 24 = 94
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": [],
-                    "keyword_suggestions": [],
-                    "format_issues": ["Issue 1", "Issue 2"],
-                    "found_keywords": ["A", "B", "C", "D", "E"]
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": [],
+                        "keyword_suggestions": [],
+                        "format_issues": ["Issue 1", "Issue 2"],
+                        "found_keywords": ["A", "B", "C", "D", "E"],
+                    }
+                )
             )
         ]
 
@@ -151,12 +157,14 @@ class TestATSOptimizer:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": ["Docker"],
-                    "keyword_suggestions": [],
-                    "format_issues": [],
-                    "found_keywords": ["Python"]
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": ["Docker"],
+                        "keyword_suggestions": [],
+                        "format_issues": [],
+                        "found_keywords": ["Python"],
+                    }
+                )
             )
         ]
 
@@ -167,8 +175,7 @@ class TestATSOptimizer:
 
             optimizer = ATSOptimizer(api_key="test-key")
             result = optimizer.analyze_cover_letter(
-                "I love Python. Python is great. More Python!",
-                "Need Python and Docker skills"
+                "I love Python. Python is great. More Python!", "Need Python and Docker skills"
             )
 
             assert result["keyword_density"]["Python"] == 3
@@ -201,12 +208,14 @@ class TestATSOptimizer:
                 MagicMock(
                     content=[
                         MagicMock(
-                            text=json.dumps({
-                                "missing_keywords": [],
-                                "keyword_suggestions": [],
-                                "format_issues": [],
-                                "found_keywords": ["Python"]
-                            })
+                            text=json.dumps(
+                                {
+                                    "missing_keywords": [],
+                                    "keyword_suggestions": [],
+                                    "format_issues": [],
+                                    "found_keywords": ["Python"],
+                                }
+                            )
                         )
                     ]
                 ),
@@ -238,12 +247,9 @@ class TestATSOptimizer:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": [],
-                    "keyword_suggestions": [],
-                    "format_issues": [],
-                    "found_keywords": ["SQL"]
-                })
+                text=json.dumps(
+                    {"missing_keywords": [], "keyword_suggestions": [], "format_issues": [], "found_keywords": ["SQL"]}
+                )
             )
         ]
 
@@ -252,11 +258,7 @@ class TestATSOptimizer:
             mock_client.messages.create.return_value = mock_response
             mock_anthropic.return_value = mock_client
 
-            result = analyze_cover_letter_ats(
-                "Cover letter with SQL",
-                "Need SQL developer",
-                api_key="test-key"
-            )
+            result = analyze_cover_letter_ats("Cover letter with SQL", "Need SQL developer", api_key="test-key")
 
             assert "SQL" in result["found_keywords"]
 
@@ -265,12 +267,14 @@ class TestATSOptimizer:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": [f"Keyword{i}" for i in range(15)],
-                    "keyword_suggestions": [],
-                    "format_issues": [],
-                    "found_keywords": []
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": [f"Keyword{i}" for i in range(15)],
+                        "keyword_suggestions": [],
+                        "format_issues": [],
+                        "found_keywords": [],
+                    }
+                )
             )
         ]
 
@@ -289,15 +293,14 @@ class TestATSOptimizer:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": [],
-                    "keyword_suggestions": [
-                        {"keyword": f"K{i}", "suggestion": f"S{i}"}
-                        for i in range(10)
-                    ],
-                    "format_issues": [],
-                    "found_keywords": []
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": [],
+                        "keyword_suggestions": [{"keyword": f"K{i}", "suggestion": f"S{i}"} for i in range(10)],
+                        "format_issues": [],
+                        "found_keywords": [],
+                    }
+                )
             )
         ]
 
@@ -319,12 +322,14 @@ class TestATSOptimizer:
         # Expected: max(0, 0 * 0.7 + 70 * 0.3) = max(0, 21) = 21
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": [f"K{i}" for i in range(10)],
-                    "keyword_suggestions": [],
-                    "format_issues": ["I1", "I2", "I3", "I4"],
-                    "found_keywords": []
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": [f"K{i}" for i in range(10)],
+                        "keyword_suggestions": [],
+                        "format_issues": ["I1", "I2", "I3", "I4"],
+                        "found_keywords": [],
+                    }
+                )
             )
         ]
 
@@ -344,12 +349,14 @@ class TestATSOptimizer:
         mock_response = MagicMock()
         mock_response.content = [
             MagicMock(
-                text=json.dumps({
-                    "missing_keywords": [],
-                    "keyword_suggestions": [],
-                    "format_issues": [],
-                    "found_keywords": ["A", "B", "C"]
-                })
+                text=json.dumps(
+                    {
+                        "missing_keywords": [],
+                        "keyword_suggestions": [],
+                        "format_issues": [],
+                        "found_keywords": ["A", "B", "C"],
+                    }
+                )
             )
         ]
 

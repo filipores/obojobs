@@ -60,7 +60,7 @@ class STARAnalyzer:
         answer_text: str,
         position: str | None = None,
         firma: str | None = None,
-        retry_count: int = 3
+        retry_count: int = 3,
     ) -> dict:
         """
         Perform detailed STAR method analysis on a behavioral interview answer.
@@ -105,19 +105,15 @@ class STARAnalyzer:
         return self._get_fallback_analysis()
 
     def _create_analysis_prompt(
-        self,
-        question_text: str,
-        answer_text: str,
-        position: str | None,
-        firma: str | None
+        self, question_text: str, answer_text: str, position: str | None, firma: str | None
     ) -> str:
         """Create the prompt for STAR analysis."""
         context_section = ""
         if position or firma:
             context_section = f"""
 KONTEXT:
-- Position: {position or 'Nicht angegeben'}
-- Unternehmen: {firma or 'Nicht angegeben'}
+- Position: {position or "Nicht angegeben"}
+- Unternehmen: {firma or "Nicht angegeben"}
 """
 
         return f"""Du bist ein erfahrener Interview-Coach, spezialisiert auf die STAR-Methode für Verhaltens-Interviews.
@@ -199,7 +195,7 @@ Gib jetzt das JSON-Objekt aus:"""
             print("Keine JSON-Struktur in der STAR-Analyse gefunden")
             return self._get_fallback_analysis()
 
-        json_text = text[start_idx:end_idx + 1]
+        json_text = text[start_idx : end_idx + 1]
 
         try:
             analysis = json.loads(json_text)

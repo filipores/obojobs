@@ -2,6 +2,7 @@
 Password Reset Service
 Handles token generation and verification for password reset functionality.
 """
+
 import secrets
 from datetime import datetime, timedelta
 
@@ -55,9 +56,7 @@ class PasswordResetService:
         if not user.password_reset_sent_at:
             return True
 
-        expiry_time = user.password_reset_sent_at + timedelta(
-            hours=PasswordResetService.TOKEN_EXPIRY_HOURS
-        )
+        expiry_time = user.password_reset_sent_at + timedelta(hours=PasswordResetService.TOKEN_EXPIRY_HOURS)
         return datetime.utcnow() > expiry_time
 
     @staticmethod
@@ -126,9 +125,7 @@ class PasswordResetService:
         if not user.password_reset_sent_at:
             return None
 
-        return user.password_reset_sent_at + timedelta(
-            hours=PasswordResetService.TOKEN_EXPIRY_HOURS
-        )
+        return user.password_reset_sent_at + timedelta(hours=PasswordResetService.TOKEN_EXPIRY_HOURS)
 
     @staticmethod
     def clear_reset_token(user: User) -> None:

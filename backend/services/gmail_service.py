@@ -29,9 +29,7 @@ class GmailService:
         redirect_uri = os.environ.get("GOOGLE_REDIRECT_URI")
 
         if not client_id or not client_secret:
-            raise ValueError(
-                "GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set"
-            )
+            raise ValueError("GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set")
 
         if not redirect_uri:
             raise ValueError("GOOGLE_REDIRECT_URI must be set")
@@ -162,9 +160,7 @@ class GmailService:
 
         # Update the email account with new token
         email_account.set_access_token(token_data["access_token"])
-        email_account.token_expires_at = datetime.utcnow() + timedelta(
-            seconds=token_data.get("expires_in", 3600)
-        )
+        email_account.token_expires_at = datetime.utcnow() + timedelta(seconds=token_data.get("expires_in", 3600))
         db.session.commit()
 
         return token_data["access_token"]

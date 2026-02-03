@@ -39,7 +39,9 @@ class Application(db.Model):
     user = db.relationship("User", back_populates="applications")
     template = db.relationship("Template", back_populates="applications")
     requirements = db.relationship("JobRequirement", back_populates="application", cascade="all, delete-orphan")
-    interview_questions = db.relationship("InterviewQuestion", back_populates="application", cascade="all, delete-orphan")
+    interview_questions = db.relationship(
+        "InterviewQuestion", back_populates="application", cascade="all, delete-orphan"
+    )
 
     def to_dict(self):
         return {
@@ -82,8 +84,5 @@ class Application(db.Model):
         history = self.get_status_history()
         if timestamp is None:
             timestamp = datetime.utcnow()
-        history.append({
-            "status": new_status,
-            "timestamp": timestamp.isoformat()
-        })
+        history.append({"status": new_status, "timestamp": timestamp.isoformat()})
         self.status_history = json.dumps(history)

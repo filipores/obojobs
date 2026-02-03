@@ -16,6 +16,7 @@ from services.web_scraper import WebScraper
 @dataclass
 class JobSearchResult:
     """Result of a job search from a job board."""
+
     title: str
     company: str
     location: str | None
@@ -63,11 +64,7 @@ class JobRecommender:
         for category in priority_categories:
             category_skills = [s for s in skills if s.skill_category == category]
             # Take top 3 skills per category (by experience years or alphabetically)
-            sorted_skills = sorted(
-                category_skills,
-                key=lambda s: s.experience_years or 0,
-                reverse=True
-            )
+            sorted_skills = sorted(category_skills, key=lambda s: s.experience_years or 0, reverse=True)
             for skill in sorted_skills[:3]:
                 if skill.skill_name not in keywords:
                     keywords.append(skill.skill_name)
@@ -75,17 +72,12 @@ class JobRecommender:
         # Add remaining skills if we don't have enough
         if len(keywords) < 5:
             remaining = [s for s in skills if s.skill_name not in keywords]
-            for skill in remaining[:(5 - len(keywords))]:
+            for skill in remaining[: (5 - len(keywords))]:
                 keywords.append(skill.skill_name)
 
         return keywords[:5]  # Limit to 5 keywords
 
-    def find_jobs_for_user(
-        self,
-        user_id: int,
-        location: str = "Deutschland",
-        max_results: int = 20
-    ) -> list[dict]:
+    def find_jobs_for_user(self, user_id: int, location: str = "Deutschland", max_results: int = 20) -> list[dict]:
         """
         Search for jobs matching user's skill profile.
 
@@ -142,9 +134,7 @@ class JobRecommender:
                 }
 
             # Analyze requirements from job posting
-            requirements = self.requirement_analyzer.analyze_requirements(
-                job_text=job_data.get("description", "")
-            )
+            requirements = self.requirement_analyzer.analyze_requirements(job_text=job_data.get("description", ""))
 
             if not requirements:
                 # If no requirements could be extracted, provide basic analysis
@@ -174,11 +164,7 @@ class JobRecommender:
             }
 
     def analyze_manual_job_for_user(
-        self,
-        user_id: int,
-        job_text: str,
-        company: str = "",
-        title: str = ""
+        self, user_id: int, job_text: str, company: str = "", title: str = ""
     ) -> dict | None:
         """
         Analyze manually pasted job text and calculate fit score.
@@ -216,9 +202,7 @@ class JobRecommender:
                 }
 
             # Analyze requirements from job posting
-            requirements = self.requirement_analyzer.analyze_requirements(
-                job_text=job_text
-            )
+            requirements = self.requirement_analyzer.analyze_requirements(job_text=job_text)
 
             if not requirements:
                 # If no requirements could be extracted, provide basic analysis
@@ -247,11 +231,7 @@ class JobRecommender:
                 "fit_category": "niedrig",
             }
 
-    def _calculate_fit_from_requirements(
-        self,
-        user_skills: list[UserSkill],
-        requirements: list[dict]
-    ) -> dict:
+    def _calculate_fit_from_requirements(self, user_skills: list[UserSkill], requirements: list[dict]) -> dict:
         """
         Calculate fit score from requirements and user skills.
 
@@ -277,19 +257,23 @@ class JobRecommender:
                 skill_name = skill.skill_name.lower()
                 # Simple matching: check if skill name appears in requirement
                 if skill_name in req_text or self._fuzzy_match(skill_name, req_text):
-                    matched.append({
-                        "requirement": req.get("requirement_text"),
-                        "skill": skill.skill_name,
-                        "type": req.get("requirement_type"),
-                    })
+                    matched.append(
+                        {
+                            "requirement": req.get("requirement_text"),
+                            "skill": skill.skill_name,
+                            "type": req.get("requirement_type"),
+                        }
+                    )
                     found = True
                     break
 
             if not found:
-                missing.append({
-                    "requirement": req.get("requirement_text"),
-                    "type": req.get("requirement_type"),
-                })
+                missing.append(
+                    {
+                        "requirement": req.get("requirement_text"),
+                        "type": req.get("requirement_type"),
+                    }
+                )
 
         # Calculate scores
         must_have_matched = len([m for m in matched if m["type"] == "must_have"])
@@ -358,11 +342,7 @@ class JobRecommender:
         return False
 
     def create_recommendation(
-        self,
-        user_id: int,
-        job_data: dict,
-        fit_score: int,
-        fit_category: str
+        self, user_id: int, job_data: dict, fit_score: int, fit_category: str
     ) -> JobRecommendation:
         """
         Create a job recommendation for the user.
@@ -389,10 +369,7 @@ class JobRecommender:
         return recommendation
 
     def get_recommendations(
-        self,
-        user_id: int,
-        include_dismissed: bool = False,
-        limit: int = 20
+        self, user_id: int, include_dismissed: bool = False, limit: int = 20
     ) -> list[JobRecommendation]:
         """
         Get job recommendations for a user.
@@ -410,10 +387,11 @@ class JobRecommender:
         if not include_dismissed:
             query = query.filter_by(dismissed=False)
 
-        return query.order_by(
-            JobRecommendation.fit_score.desc(),
-            JobRecommendation.recommended_at.desc()
-        ).limit(limit).all()
+        return (
+            query.order_by(JobRecommendation.fit_score.desc(), JobRecommendation.recommended_at.desc())
+            .limit(limit)
+            .all()
+        )
 
     def dismiss_recommendation(self, recommendation_id: int, user_id: int) -> bool:
         """
@@ -426,10 +404,7 @@ class JobRecommender:
         Returns:
             True if dismissed successfully, False otherwise
         """
-        recommendation = JobRecommendation.query.filter_by(
-            id=recommendation_id,
-            user_id=user_id
-        ).first()
+        recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=user_id).first()
 
         if not recommendation:
             return False
@@ -438,12 +413,7 @@ class JobRecommender:
         db.session.commit()
         return True
 
-    def mark_as_applied(
-        self,
-        recommendation_id: int,
-        user_id: int,
-        application_id: int | None = None
-    ) -> bool:
+    def mark_as_applied(self, recommendation_id: int, user_id: int, application_id: int | None = None) -> bool:
         """
         Mark a recommendation as applied.
 
@@ -455,10 +425,7 @@ class JobRecommender:
         Returns:
             True if updated successfully, False otherwise
         """
-        recommendation = JobRecommendation.query.filter_by(
-            id=recommendation_id,
-            user_id=user_id
-        ).first()
+        recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=user_id).first()
 
         if not recommendation:
             return False
@@ -480,10 +447,7 @@ class JobRecommender:
         Returns:
             True if duplicate exists, False otherwise
         """
-        existing = JobRecommendation.query.filter_by(
-            user_id=user_id,
-            job_url=job_url
-        ).first()
+        existing = JobRecommendation.query.filter_by(user_id=user_id, job_url=job_url).first()
         return existing is not None
 
     def cleanup_old_recommendations(self, days: int = 30) -> int:
@@ -500,7 +464,7 @@ class JobRecommender:
 
         deleted = JobRecommendation.query.filter(
             JobRecommendation.recommended_at < cutoff_date,
-            JobRecommendation.applied == False  # noqa: E712
+            JobRecommendation.applied == False,  # noqa: E712
         ).delete()
 
         db.session.commit()

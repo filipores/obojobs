@@ -3,6 +3,7 @@
 Migration: Create email_accounts table for OAuth email integration.
 Stores encrypted OAuth tokens for Gmail and Outlook email sending.
 """
+
 import os
 import sys
 
@@ -39,9 +40,7 @@ def upgrade(app):
                 )
             """)
             )
-            connection.execute(
-                db.text("CREATE INDEX idx_email_accounts_user_id ON email_accounts(user_id)")
-            )
+            connection.execute(db.text("CREATE INDEX idx_email_accounts_user_id ON email_accounts(user_id)"))
             print("✓ Created email_accounts table")
         else:
             print("✓ email_accounts table already exists")

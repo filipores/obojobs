@@ -156,11 +156,13 @@ Extrahiere jetzt alle Anforderungen als JSON-Array:"""
                         }
                         skill_category = category_mapping.get(skill_category)
 
-                valid_requirements.append({
-                    "requirement_text": requirement_text,
-                    "requirement_type": requirement_type,
-                    "skill_category": skill_category,
-                })
+                valid_requirements.append(
+                    {
+                        "requirement_text": requirement_text,
+                        "requirement_type": requirement_type,
+                        "skill_category": skill_category,
+                    }
+                )
 
             return valid_requirements
 

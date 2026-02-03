@@ -224,9 +224,7 @@ class TestPDFTemplateExtractor:
             "blocks": [
                 {
                     "type": 0,
-                    "lines": [
-                        {"spans": [{"text": "Bottom", "bbox": (10, 100, 50, 110), "font": "Arial", "size": 12}]}
-                    ],
+                    "lines": [{"spans": [{"text": "Bottom", "bbox": (10, 100, 50, 110), "font": "Arial", "size": 12}]}],
                 },
                 {
                     "type": 0,
@@ -438,12 +436,18 @@ class TestPDFTemplateExtractor:
 
         mock_page1.get_text.return_value = {
             "blocks": [
-                {"type": 0, "lines": [{"spans": [{"text": "Page 1", "bbox": (0, 0, 50, 10), "font": "Arial", "size": 12}]}]}
+                {
+                    "type": 0,
+                    "lines": [{"spans": [{"text": "Page 1", "bbox": (0, 0, 50, 10), "font": "Arial", "size": 12}]}],
+                }
             ]
         }
         mock_page2.get_text.return_value = {
             "blocks": [
-                {"type": 0, "lines": [{"spans": [{"text": "Page 2", "bbox": (0, 0, 50, 10), "font": "Arial", "size": 12}]}]}
+                {
+                    "type": 0,
+                    "lines": [{"spans": [{"text": "Page 2", "bbox": (0, 0, 50, 10), "font": "Arial", "size": 12}]}],
+                }
             ]
         }
 

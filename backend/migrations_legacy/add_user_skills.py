@@ -3,6 +3,7 @@
 Migration: Create user_skills table for extracted CV skills.
 Stores skills extracted from user's CV documents with categories and experience years.
 """
+
 import os
 import sys
 

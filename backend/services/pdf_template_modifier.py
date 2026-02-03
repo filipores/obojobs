@@ -71,8 +71,7 @@ class PDFTemplateModifier:
         """Initialize the PDF Template Modifier."""
         if fitz is None:
             raise ImportError(
-                "PyMuPDF (fitz) is required for PDF template modification. "
-                "Install it with: pip install PyMuPDF"
+                "PyMuPDF (fitz) is required for PDF template modification. Install it with: pip install PyMuPDF"
             )
 
     def generate_from_template(

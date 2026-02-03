@@ -27,9 +27,7 @@ class ATSOptimizer:
         self.client = Anthropic(api_key=self.api_key)
         self.model = config.CLAUDE_MODEL
 
-    def analyze_cover_letter(
-        self, cover_letter_text: str, job_description: str, retry_count: int = 3
-    ) -> dict:
+    def analyze_cover_letter(self, cover_letter_text: str, job_description: str, retry_count: int = 3) -> dict:
         """
         Analyze a generated cover letter against a job description for ATS compatibility.
 
@@ -68,9 +66,7 @@ class ATSOptimizer:
             except Exception as e:
                 if attempt < retry_count - 1:
                     continue
-                raise Exception(
-                    f"ATS optimization analysis failed after {retry_count} attempts: {str(e)}"
-                ) from e
+                raise Exception(f"ATS optimization analysis failed after {retry_count} attempts: {str(e)}") from e
 
     def _create_analysis_prompt(self, cover_letter: str, job_description: str) -> str:
         """Create the prompt for ATS optimization analysis."""
@@ -149,7 +145,7 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
             ats_score = self._calculate_ats_score(
                 found_count=len(found_keywords),
                 missing_count=len(missing_keywords),
-                format_issues_count=len(format_issues)
+                format_issues_count=len(format_issues),
             )
 
             return {
@@ -187,15 +183,13 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         for keyword in keywords:
             keyword_lower = keyword.lower()
             # Count occurrences (word boundary aware)
-            pattern = rf'\b{re.escape(keyword_lower)}\b'
+            pattern = rf"\b{re.escape(keyword_lower)}\b"
             count = len(re.findall(pattern, text_lower))
             density[keyword] = count
 
         return density
 
-    def _calculate_ats_score(
-        self, found_count: int, missing_count: int, format_issues_count: int
-    ) -> int:
+    def _calculate_ats_score(self, found_count: int, missing_count: int, format_issues_count: int) -> int:
         """
         Calculate the ATS compatibility score.
 
@@ -224,18 +218,14 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         return {
             "ats_score": 0,
             "missing_keywords": [],
-            "keyword_suggestions": [
-                {"keyword": "Analyse", "suggestion": "Analyse konnte nicht durchgeführt werden"}
-            ],
+            "keyword_suggestions": [{"keyword": "Analyse", "suggestion": "Analyse konnte nicht durchgeführt werden"}],
             "format_issues": ["Analyse konnte nicht durchgeführt werden"],
             "keyword_density": {},
             "found_keywords": [],
         }
 
 
-def analyze_cover_letter_ats(
-    cover_letter_text: str, job_description: str, api_key: str | None = None
-) -> dict:
+def analyze_cover_letter_ats(cover_letter_text: str, job_description: str, api_key: str | None = None) -> dict:
     """
     Convenience function to analyze a cover letter for ATS compatibility.
 

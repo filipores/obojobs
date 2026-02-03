@@ -100,16 +100,18 @@ def check_subscription_limit(fn):
         # Check if limit reached
         if current_user.applications_this_month >= limit:
             plan_name = plan.value.capitalize()
-            return jsonify({
-                "success": False,
-                "error": f"Monatliches Limit erreicht. Dein {plan_name}-Plan erlaubt {limit} Bewerbungen pro Monat. Upgrade für mehr Bewerbungen.",
-                "error_code": "SUBSCRIPTION_LIMIT_REACHED",
-                "usage": {
-                    "plan": plan.value,
-                    "limit": limit,
-                    "used": current_user.applications_this_month,
+            return jsonify(
+                {
+                    "success": False,
+                    "error": f"Monatliches Limit erreicht. Dein {plan_name}-Plan erlaubt {limit} Bewerbungen pro Monat. Upgrade für mehr Bewerbungen.",
+                    "error_code": "SUBSCRIPTION_LIMIT_REACHED",
+                    "usage": {
+                        "plan": plan.value,
+                        "limit": limit,
+                        "used": current_user.applications_this_month,
+                    },
                 }
-            }), 403
+            ), 403
 
         return fn(*args, **kwargs)
 

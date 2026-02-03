@@ -25,9 +25,7 @@ class OutlookService:
         redirect_uri = os.environ.get("MICROSOFT_REDIRECT_URI")
 
         if not client_id or not client_secret:
-            raise ValueError(
-                "MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET must be set"
-            )
+            raise ValueError("MICROSOFT_CLIENT_ID and MICROSOFT_CLIENT_SECRET must be set")
 
         if not redirect_uri:
             raise ValueError("MICROSOFT_REDIRECT_URI must be set")
@@ -158,9 +156,7 @@ class OutlookService:
         if result.get("refresh_token"):
             email_account.set_refresh_token(result["refresh_token"])
         expires_in = result.get("expires_in", 3600)
-        email_account.token_expires_at = datetime.utcnow() + timedelta(
-            seconds=expires_in
-        )
+        email_account.token_expires_at = datetime.utcnow() + timedelta(seconds=expires_in)
         db.session.commit()
 
         return result["access_token"]
@@ -277,11 +273,13 @@ class OutlookService:
                 with open(file_path, "rb") as f:
                     content = base64.b64encode(f.read()).decode()
 
-                attachment_list.append({
-                    "@odata.type": "#microsoft.graph.fileAttachment",
-                    "name": filename,
-                    "contentBytes": content,
-                })
+                attachment_list.append(
+                    {
+                        "@odata.type": "#microsoft.graph.fileAttachment",
+                        "name": filename,
+                        "contentBytes": content,
+                    }
+                )
 
             message_payload["message"]["attachments"] = attachment_list
 

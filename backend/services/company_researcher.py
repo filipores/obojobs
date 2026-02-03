@@ -229,8 +229,7 @@ class CompanyResearcher:
             # Check if href or link text matches about page patterns
             for pattern in self.ABOUT_PAGE_PATTERNS:
                 if pattern in href or any(
-                    keyword in link_text
-                    for keyword in ["über uns", "about", "unternehmen", "wir sind"]
+                    keyword in link_text for keyword in ["über uns", "about", "unternehmen", "wir sind"]
                 ):
                     link_href = link.get("href")
                     if isinstance(link_href, str):
@@ -273,9 +272,7 @@ class CompanyResearcher:
             about_text = clean_text[:2000]  # Limit to 2000 chars
 
         # Try to extract founded year
-        year_pattern = re.compile(
-            r"(?:gegründet|founded|seit|since)[:\s]*(\d{4})", re.I
-        )
+        year_pattern = re.compile(r"(?:gegründet|founded|seit|since)[:\s]*(\d{4})", re.I)
         year_match = year_pattern.search(text)
         if year_match:
             founded_year = year_match.group(1)
@@ -317,9 +314,7 @@ class CompanyResearcher:
         mission_keywords = ["mission", "vision", "werte", "values", "philosophie", "leitbild"]
         for keyword in mission_keywords:
             # Find headers or sections with these keywords
-            mission_elem = soup.find(
-                ["h2", "h3", "h4", "section"], string=re.compile(keyword, re.I)
-            )
+            mission_elem = soup.find(["h2", "h3", "h4", "section"], string=re.compile(keyword, re.I))
             if mission_elem:
                 # Get the next sibling content
                 next_content = mission_elem.find_next(["p", "div", "ul"])
@@ -418,8 +413,8 @@ class CompanyResearcher:
 
         # Tip about company knowledge
         tips.append(
-            f'Zeigen Sie, dass Sie sich über {result.company_name} informiert haben - '
-            'erwähnen Sie spezifische Fakten aus Ihrer Recherche.'
+            f"Zeigen Sie, dass Sie sich über {result.company_name} informiert haben - "
+            "erwähnen Sie spezifische Fakten aus Ihrer Recherche."
         )
 
         # Industry-specific tip
@@ -478,15 +473,11 @@ class CompanyResearcher:
                 pass
 
         # Generic tips
-        tips.append(
-            "Bereiten Sie eigene Fragen zum Unternehmen vor - das zeigt echtes Interesse."
-        )
+        tips.append("Bereiten Sie eigene Fragen zum Unternehmen vor - das zeigt echtes Interesse.")
 
         return tips[:6]  # Limit to 6 tips
 
-    def research_company(
-        self, company_name: str, website_url: str | None = None
-    ) -> CompanyResearchResult:
+    def research_company(self, company_name: str, website_url: str | None = None) -> CompanyResearchResult:
         """
         Research a company and gather public information.
 
@@ -524,10 +515,10 @@ class CompanyResearcher:
                 response.raise_for_status()
 
                 # Fix encoding - prefer UTF-8, fallback to apparent_encoding
-                if response.apparent_encoding and response.apparent_encoding.lower() not in ['ascii', 'none']:
+                if response.apparent_encoding and response.apparent_encoding.lower() not in ["ascii", "none"]:
                     response.encoding = response.apparent_encoding
                 else:
-                    response.encoding = 'utf-8'
+                    response.encoding = "utf-8"
 
                 soup = BeautifulSoup(response.text, "html.parser")
 
@@ -547,10 +538,13 @@ class CompanyResearcher:
                     about_response = self.session.get(about_url, timeout=self.timeout)
                     if about_response.status_code < 400:
                         # Fix encoding - prefer UTF-8, fallback to apparent_encoding
-                        if about_response.apparent_encoding and about_response.apparent_encoding.lower() not in ['ascii', 'none']:
+                        if about_response.apparent_encoding and about_response.apparent_encoding.lower() not in [
+                            "ascii",
+                            "none",
+                        ]:
                             about_response.encoding = about_response.apparent_encoding
                         else:
-                            about_response.encoding = 'utf-8'
+                            about_response.encoding = "utf-8"
 
                         about_soup = BeautifulSoup(about_response.text, "html.parser")
 
@@ -573,9 +567,7 @@ class CompanyResearcher:
 
                         # Re-determine industry with about text
                         if not result.industry and result.about_text:
-                            result.industry = self._determine_industry(
-                                homepage_text, result.about_text
-                            )
+                            result.industry = self._determine_industry(homepage_text, result.about_text)
 
             except requests.RequestException:
                 # Website fetch failed - continue with limited data
@@ -590,9 +582,7 @@ class CompanyResearcher:
 
         return result
 
-    def research_from_job_posting(
-        self, company_name: str, job_url: str | None = None
-    ) -> CompanyResearchResult:
+    def research_from_job_posting(self, company_name: str, job_url: str | None = None) -> CompanyResearchResult:
         """
         Research a company from a job posting URL.
 
@@ -614,10 +604,10 @@ class CompanyResearcher:
                 response = self.session.get(job_url, timeout=self.timeout)
                 if response.status_code < 400:
                     # Fix encoding - prefer UTF-8, fallback to apparent_encoding
-                    if response.apparent_encoding and response.apparent_encoding.lower() not in ['ascii', 'none']:
+                    if response.apparent_encoding and response.apparent_encoding.lower() not in ["ascii", "none"]:
                         response.encoding = response.apparent_encoding
                     else:
-                        response.encoding = 'utf-8'
+                        response.encoding = "utf-8"
 
                     soup = BeautifulSoup(response.text, "html.parser")
 
@@ -636,13 +626,9 @@ class CompanyResearcher:
                                 break
 
                         # Check if href contains company name
-                        if (
-                            company_name.lower().replace(" ", "").replace("-", "")
-                            in href.lower().replace("-", "")
-                        ):
+                        if company_name.lower().replace(" ", "").replace("-", "") in href.lower().replace("-", ""):
                             if href.startswith("http") and not any(
-                                portal in href
-                                for portal in ["indeed", "stepstone", "xing", "linkedin"]
+                                portal in href for portal in ["indeed", "stepstone", "xing", "linkedin"]
                             ):
                                 website_url = href
                                 break

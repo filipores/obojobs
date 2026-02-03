@@ -47,17 +47,19 @@ def get_weekly_goal(current_user):
     progress = min(round((completed / goal) * 100) if goal > 0 else 100, 100)
     is_achieved = completed >= goal
 
-    return jsonify({
-        "success": True,
-        "data": {
-            "goal": goal,
-            "completed": completed,
-            "progress": progress,
-            "is_achieved": is_achieved,
-            "week_start": week_start.strftime("%Y-%m-%d"),
-            "week_end": (week_end - timedelta(days=1)).strftime("%Y-%m-%d"),
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "goal": goal,
+                "completed": completed,
+                "progress": progress,
+                "is_achieved": is_achieved,
+                "week_start": week_start.strftime("%Y-%m-%d"),
+                "week_end": (week_end - timedelta(days=1)).strftime("%Y-%m-%d"),
+            },
         }
-    }), 200
+    ), 200
 
 
 @stats_bp.route("/stats/weekly-goal", methods=["PUT"])
@@ -75,24 +77,15 @@ def update_weekly_goal(current_user):
     new_goal = data.get("goal")
 
     if new_goal is None:
-        return jsonify({
-            "success": False,
-            "error": "goal ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "goal ist erforderlich"}), 400
 
     try:
         new_goal = int(new_goal)
     except (ValueError, TypeError):
-        return jsonify({
-            "success": False,
-            "error": "goal muss eine Zahl sein"
-        }), 400
+        return jsonify({"success": False, "error": "goal muss eine Zahl sein"}), 400
 
     if new_goal < 1 or new_goal > 50:
-        return jsonify({
-            "success": False,
-            "error": "goal muss zwischen 1 und 50 liegen"
-        }), 400
+        return jsonify({"success": False, "error": "goal muss zwischen 1 und 50 liegen"}), 400
 
     current_user.weekly_goal = new_goal
     db.session.commit()
@@ -108,16 +101,18 @@ def update_weekly_goal(current_user):
     progress = min(round((completed / new_goal) * 100) if new_goal > 0 else 100, 100)
     is_achieved = completed >= new_goal
 
-    return jsonify({
-        "success": True,
-        "data": {
-            "goal": new_goal,
-            "completed": completed,
-            "progress": progress,
-            "is_achieved": is_achieved,
-        },
-        "message": f"Wöchentliches Ziel auf {new_goal} Bewerbungen gesetzt"
-    }), 200
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "goal": new_goal,
+                "completed": completed,
+                "progress": progress,
+                "is_achieved": is_achieved,
+            },
+            "message": f"Wöchentliches Ziel auf {new_goal} Bewerbungen gesetzt",
+        }
+    ), 200
 
 
 @stats_bp.route("/stats", methods=["GET"])
@@ -136,8 +131,7 @@ def get_stats(current_user):
 
     # Count today's sent applications (sent_at is today)
     versendet_heute = Application.query.filter(
-        Application.user_id == user_id,
-        Application.sent_at >= today_start
+        Application.user_id == user_id, Application.sent_at >= today_start
     ).count()
 
     # Count today's responses and interviews by checking status_history
@@ -147,8 +141,7 @@ def get_stats(current_user):
     today_str = today_start.strftime("%Y-%m-%d")
 
     apps_with_history = Application.query.filter(
-        Application.user_id == user_id,
-        Application.status.in_(["antwort_erhalten", "interview"])
+        Application.user_id == user_id, Application.status.in_(["antwort_erhalten", "interview"])
     ).all()
 
     for app in apps_with_history:
@@ -226,31 +219,23 @@ def get_extended_stats(current_user):
 
     # Calculate percentages
     if erfolgsquote["versendet"] > 0:
-        erfolgsquote["antwort_rate"] = round(
-            (erfolgsquote["antworten"] / erfolgsquote["versendet"]) * 100, 1
-        )
+        erfolgsquote["antwort_rate"] = round((erfolgsquote["antworten"] / erfolgsquote["versendet"]) * 100, 1)
     else:
         erfolgsquote["antwort_rate"] = 0
 
     if erfolgsquote["antworten"] > 0:
-        erfolgsquote["interview_rate"] = round(
-            (erfolgsquote["interviews"] / erfolgsquote["antworten"]) * 100, 1
-        )
+        erfolgsquote["interview_rate"] = round((erfolgsquote["interviews"] / erfolgsquote["antworten"]) * 100, 1)
     else:
         erfolgsquote["interview_rate"] = 0
 
     if erfolgsquote["interviews"] > 0:
-        erfolgsquote["zusage_rate"] = round(
-            (erfolgsquote["zusagen"] / erfolgsquote["interviews"]) * 100, 1
-        )
+        erfolgsquote["zusage_rate"] = round((erfolgsquote["zusagen"] / erfolgsquote["interviews"]) * 100, 1)
     else:
         erfolgsquote["zusage_rate"] = 0
 
     # Overall success rate (zusagen / versendet)
     if erfolgsquote["versendet"] > 0:
-        erfolgsquote["gesamt_erfolgsrate"] = round(
-            (erfolgsquote["zusagen"] / erfolgsquote["versendet"]) * 100, 1
-        )
+        erfolgsquote["gesamt_erfolgsrate"] = round((erfolgsquote["zusagen"] / erfolgsquote["versendet"]) * 100, 1)
     else:
         erfolgsquote["gesamt_erfolgsrate"] = 0
 
@@ -260,9 +245,7 @@ def get_extended_stats(current_user):
     # For erstellt -> versendet, use sent_at if available
     sent_apps = [a for a in applications if a.sent_at and a.datum]
     if sent_apps:
-        total_days = sum(
-            (a.sent_at - a.datum).total_seconds() / 86400 for a in sent_apps
-        )
+        total_days = sum((a.sent_at - a.datum).total_seconds() / 86400 for a in sent_apps)
         antwortzeiten["erstellt_zu_versendet"] = round(total_days / len(sent_apps), 1)
 
     # Applications per week (last 12 weeks)
@@ -410,9 +393,7 @@ def get_company_stats(current_user):
 
         avg_antwortzeit = None
         if data["antwortzeiten"]:
-            avg_antwortzeit = round(
-                sum(data["antwortzeiten"]) / len(data["antwortzeiten"]), 1
-            )
+            avg_antwortzeit = round(sum(data["antwortzeiten"]) / len(data["antwortzeiten"]), 1)
 
         company_list.append(
             {

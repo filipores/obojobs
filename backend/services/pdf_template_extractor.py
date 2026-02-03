@@ -59,8 +59,7 @@ class PDFTemplateExtractor:
         """
         if fitz is None:
             raise ImportError(
-                "PyMuPDF (fitz) is required for PDF template extraction. "
-                "Install it with: pip install PyMuPDF"
+                "PyMuPDF (fitz) is required for PDF template extraction. Install it with: pip install PyMuPDF"
             )
         self.ocr_language = ocr_language
 
@@ -153,9 +152,7 @@ class PDFTemplateExtractor:
 
             for page_num, image in enumerate(images):
                 # Use pytesseract with detailed output for position data
-                ocr_data = pytesseract.image_to_data(
-                    image, lang=self.ocr_language, output_type=pytesseract.Output.DICT
-                )
+                ocr_data = pytesseract.image_to_data(image, lang=self.ocr_language, output_type=pytesseract.Output.DICT)
 
                 n_boxes = len(ocr_data["text"])
                 for i in range(n_boxes):

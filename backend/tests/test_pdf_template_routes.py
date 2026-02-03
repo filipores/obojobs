@@ -23,9 +23,7 @@ class TestUploadPdfTemplate:
         pdf_content = b"%PDF-1.4 fake pdf content"
 
         mock_extraction = {
-            "text_blocks": [
-                {"text": "Hello World", "x": 100, "y": 50, "width": 100, "height": 20, "page": 0}
-            ],
+            "text_blocks": [{"text": "Hello World", "x": 100, "y": 50, "width": 100, "height": 20, "page": 0}],
             "total_blocks": 1,
             "source": "native",
         }
@@ -216,10 +214,12 @@ class TestAnalyzeVariables:
         mock_ai_response = MagicMock()
         mock_ai_response.content = [
             MagicMock(
-                text=json.dumps([
-                    {"text": "Muster GmbH", "variable": "FIRMA", "confidence": 0.95, "reason": "Company name"},
-                    {"text": "Entwickler", "variable": "POSITION", "confidence": 0.90, "reason": "Job title"},
-                ])
+                text=json.dumps(
+                    [
+                        {"text": "Muster GmbH", "variable": "FIRMA", "confidence": 0.95, "reason": "Company name"},
+                        {"text": "Entwickler", "variable": "POSITION", "confidence": 0.90, "reason": "Job title"},
+                    ]
+                )
             )
         ]
 
@@ -230,9 +230,7 @@ class TestAnalyzeVariables:
         ):
             mock_extractor = MagicMock()
             mock_extractor.extract_text_with_positions.return_value = {
-                "text_blocks": [
-                    {"text": "Muster GmbH", "x": 100, "y": 50, "width": 80, "height": 15, "page": 0}
-                ]
+                "text_blocks": [{"text": "Muster GmbH", "x": 100, "y": 50, "width": 80, "height": 15, "page": 0}]
             }
             mock_extractor_class.return_value = mock_extractor
 

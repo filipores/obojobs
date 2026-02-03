@@ -3,11 +3,12 @@
 Migration: Add password reset fields to users table.
 Fields: password_reset_token, password_reset_sent_at
 """
+
 import os
 import sys
 
 # Add parent directory to path
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 
 def upgrade(app):
@@ -19,21 +20,18 @@ def upgrade(app):
 
         # Check if columns already exist (for idempotency)
         from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        existing_columns = [col['name'] for col in inspector.get_columns('users')]
 
-        if 'password_reset_token' not in existing_columns:
-            connection.execute(
-                db.text("ALTER TABLE users ADD COLUMN password_reset_token VARCHAR(255)")
-            )
+        inspector = inspect(db.engine)
+        existing_columns = [col["name"] for col in inspector.get_columns("users")]
+
+        if "password_reset_token" not in existing_columns:
+            connection.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_token VARCHAR(255)"))
             print("✓ Added password_reset_token column")
         else:
             print("✓ password_reset_token column already exists")
 
-        if 'password_reset_sent_at' not in existing_columns:
-            connection.execute(
-                db.text("ALTER TABLE users ADD COLUMN password_reset_sent_at DATETIME")
-            )
+        if "password_reset_sent_at" not in existing_columns:
+            connection.execute(db.text("ALTER TABLE users ADD COLUMN password_reset_sent_at DATETIME"))
             print("✓ Added password_reset_sent_at column")
         else:
             print("✓ password_reset_sent_at column already exists")
@@ -52,8 +50,8 @@ def downgrade(app):
 
         # SQLite doesn't support DROP COLUMN directly, so we skip for SQLite
         # For production with PostgreSQL, this would work
-        db_uri = app.config.get('SQLALCHEMY_DATABASE_URI', '')
-        if 'sqlite' in db_uri:
+        db_uri = app.config.get("SQLALCHEMY_DATABASE_URI", "")
+        if "sqlite" in db_uri:
             print("⚠ SQLite does not support DROP COLUMN. Skipping downgrade.")
             return
 
@@ -64,5 +62,5 @@ def downgrade(app):
         print("✓ Password reset columns removed")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     print("Use this script by importing: from migrations.add_password_reset import upgrade")

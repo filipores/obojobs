@@ -17,7 +17,11 @@ skills_bp = Blueprint("skills", __name__)
 @jwt_required_custom
 def get_user_skills(current_user):
     """Get all skills for the current user."""
-    skills = UserSkill.query.filter_by(user_id=current_user.id).order_by(UserSkill.skill_category, UserSkill.skill_name).all()
+    skills = (
+        UserSkill.query.filter_by(user_id=current_user.id)
+        .order_by(UserSkill.skill_category, UserSkill.skill_name)
+        .all()
+    )
 
     # Group by category for easier frontend consumption
     skills_by_category = {}

@@ -3,6 +3,7 @@
 Migration: Create subscriptions table and add stripe_customer_id to users.
 Implements Stripe subscription system for SaaS model.
 """
+
 import os
 import sys
 
@@ -40,14 +41,14 @@ def upgrade(app):
                 )
             """)
             )
-            connection.execute(
-                db.text("CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id)")
-            )
+            connection.execute(db.text("CREATE INDEX idx_subscriptions_user_id ON subscriptions(user_id)"))
             connection.execute(
                 db.text("CREATE INDEX idx_subscriptions_stripe_customer_id ON subscriptions(stripe_customer_id)")
             )
             connection.execute(
-                db.text("CREATE UNIQUE INDEX idx_subscriptions_stripe_subscription_id ON subscriptions(stripe_subscription_id)")
+                db.text(
+                    "CREATE UNIQUE INDEX idx_subscriptions_stripe_subscription_id ON subscriptions(stripe_subscription_id)"
+                )
             )
             print("✓ Created subscriptions table")
         else:
@@ -58,12 +59,8 @@ def upgrade(app):
         # and create a unique index instead
         columns = [col["name"] for col in inspector.get_columns("users")]
         if "stripe_customer_id" not in columns:
-            connection.execute(
-                db.text("ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255)")
-            )
-            connection.execute(
-                db.text("CREATE UNIQUE INDEX idx_users_stripe_customer_id ON users(stripe_customer_id)")
-            )
+            connection.execute(db.text("ALTER TABLE users ADD COLUMN stripe_customer_id VARCHAR(255)"))
+            connection.execute(db.text("CREATE UNIQUE INDEX idx_users_stripe_customer_id ON users(stripe_customer_id)"))
             print("✓ Added stripe_customer_id to users table")
         else:
             print("✓ stripe_customer_id already exists in users table")

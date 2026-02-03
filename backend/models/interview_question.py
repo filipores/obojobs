@@ -9,7 +9,9 @@ class InterviewQuestion(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     application_id = db.Column(db.Integer, db.ForeignKey("applications.id"), nullable=False, index=True)
     question_text = db.Column(db.Text, nullable=False)
-    question_type = db.Column(db.String(30), nullable=False)  # behavioral, technical, situational, company_specific, salary_negotiation
+    question_type = db.Column(
+        db.String(30), nullable=False
+    )  # behavioral, technical, situational, company_specific, salary_negotiation
     difficulty = db.Column(db.String(20), default="medium")  # easy, medium, hard
     sample_answer = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
