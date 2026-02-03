@@ -1,3 +1,10 @@
+## [1.23.1](https://github.com/filipores/obojobs/compare/v1.23.0...v1.23.1) (2026-02-03)
+
+
+### Bug Fixes
+
+* **pdf:** sanitize filenames and handle variable positions format ([5eadd6e](https://github.com/filipores/obojobs/commit/5eadd6e5177e87550de0ed99d6876a97905a9ed5))
+
 # [1.23.0](https://github.com/filipores/obojobs/compare/v1.22.0...v1.23.0) (2026-02-03)
 
 
