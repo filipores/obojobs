@@ -32,6 +32,42 @@ from services.web_scraper import WebScraper
 applications_bp = Blueprint("applications", __name__)
 
 
+def sanitize_filename(name: str) -> str:
+    """Sanitize a string for use as a filename.
+
+    Removes or replaces characters that are invalid in filenames.
+    """
+    if not name:
+        return "Anschreiben"
+
+    import re
+
+    # Replace German umlauts and special characters FIRST (before any normalization)
+    replacements = {
+        "ä": "ae",
+        "ö": "oe",
+        "ü": "ue",
+        "ß": "ss",
+        "Ä": "Ae",
+        "Ö": "Oe",
+        "Ü": "Ue",
+    }
+    for old, new in replacements.items():
+        name = name.replace(old, new)
+
+    # Remove any remaining non-ASCII characters
+    name = name.encode("ascii", "ignore").decode("ascii")
+
+    # Replace spaces and invalid filename characters with underscores
+    name = re.sub(r'[<>:"/\\|?*\s]+', "_", name)
+
+    # Remove leading/trailing underscores and dots
+    name = name.strip("_.")
+
+    # Ensure we have something left
+    return name if name else "Anschreiben"
+
+
 def calculate_and_store_job_fit(app, job_description, user_id):
     """Calculate job-fit score after generation and store it in the application.
 
@@ -71,6 +107,7 @@ def calculate_and_store_job_fit(app, job_description, user_id):
     except Exception as e:
         # Log but don't fail - job-fit is optional
         import logging
+
         logging.warning(f"Failed to calculate job-fit for app {app.id}: {e}")
 
 
@@ -128,9 +165,7 @@ def get_timeline(current_user):
         # Add a timeline-specific format if no history exists
         if not app_dict.get("status_history"):
             # Create initial history from datum if none exists
-            app_dict["status_history"] = [
-                {"status": "erstellt", "timestamp": app_dict["datum"]}
-            ]
+            app_dict["status_history"] = [{"status": "erstellt", "timestamp": app_dict["datum"]}]
         timeline_data.append(app_dict)
 
     return jsonify(
@@ -245,11 +280,13 @@ def quick_extract(current_user):
 
         # If both are missing, extraction failed
         if not company and not title:
-            return jsonify({
-                "success": False,
-                "error": "Konnte keine Stellendaten extrahieren. Bitte verwenden Sie die manuelle Eingabe.",
-                "use_manual_input": True
-            }), 400
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Konnte keine Stellendaten extrahieren. Bitte verwenden Sie die manuelle Eingabe.",
+                    "use_manual_input": True,
+                }
+            ), 400
 
         # Map job board to display name
         portal_names = {
@@ -258,16 +295,18 @@ def quick_extract(current_user):
             "xing": "XING",
         }
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "company": company,
-                "title": title,
-                "portal": portal_names.get(job_board, "Sonstige"),
-                "portal_id": job_board or "generic",
-                "url": url,
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "company": company,
+                    "title": title,
+                    "portal": portal_names.get(job_board, "Sonstige"),
+                    "portal_id": job_board or "generic",
+                    "url": url,
+                },
             }
-        }), 200
+        ), 200
 
     except Exception as e:
         error_message = str(e)
@@ -276,10 +315,12 @@ def quick_extract(current_user):
         if any(code in error_message for code in ["403", "404", "429", "400", "401", "502", "503"]):
             return jsonify({"success": False, "error": error_message}), 400
 
-        return jsonify({
-            "success": False,
-            "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe."
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe.",
+            }
+        ), 500
 
 
 @applications_bp.route("/preview-job", methods=["POST"])
@@ -321,16 +362,18 @@ def preview_job(current_user):
         has_title = bool(job_data.get("title") and job_data.get("title").strip())
         has_company = bool(job_data.get("company") and job_data.get("company").strip())
         has_description = bool(
-            (job_data.get("description") and job_data.get("description").strip()) or
-            (job_data.get("text") and job_data.get("text").strip())
+            (job_data.get("description") and job_data.get("description").strip())
+            or (job_data.get("text") and job_data.get("text").strip())
         )
 
         if not has_title and not has_company and not has_description:
-            return jsonify({
-                "success": False,
-                "error": "Konnte keine Stellenanzeige von der URL laden. Die Seite scheint keine Stellenanzeige zu enthalten oder ist nicht zugänglich. Bitte verwenden Sie die manuelle Eingabe.",
-                "use_manual_input": True
-            }), 400
+            return jsonify(
+                {
+                    "success": False,
+                    "error": "Konnte keine Stellenanzeige von der URL laden. Die Seite scheint keine Stellenanzeige zu enthalten oder ist nicht zugänglich. Bitte verwenden Sie die manuelle Eingabe.",
+                    "use_manual_input": True,
+                }
+            ), 400
 
         # Map job board to display name
         portal_names = {
@@ -339,27 +382,29 @@ def preview_job(current_user):
             "xing": "XING",
         }
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "portal": portal_names.get(job_board, "Sonstige"),
-                "portal_id": job_board or "generic",
-                "url": url,
-                "title": job_data.get("title"),
-                "company": job_data.get("company"),
-                "location": job_data.get("location"),
-                "description": job_data.get("description"),
-                "requirements": job_data.get("requirements"),
-                "contact_email": job_data.get("contact_email"),
-                "contact_person": job_data.get("contact_person"),
-                "posted_date": job_data.get("posted_date"),
-                "application_deadline": job_data.get("application_deadline"),
-                "employment_type": job_data.get("employment_type"),
-                "salary": job_data.get("salary"),
-                "company_profile_url": job_data.get("company_profile_url"),
-                "missing_fields": missing_fields,
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "portal": portal_names.get(job_board, "Sonstige"),
+                    "portal_id": job_board or "generic",
+                    "url": url,
+                    "title": job_data.get("title"),
+                    "company": job_data.get("company"),
+                    "location": job_data.get("location"),
+                    "description": job_data.get("description"),
+                    "requirements": job_data.get("requirements"),
+                    "contact_email": job_data.get("contact_email"),
+                    "contact_person": job_data.get("contact_person"),
+                    "posted_date": job_data.get("posted_date"),
+                    "application_deadline": job_data.get("application_deadline"),
+                    "employment_type": job_data.get("employment_type"),
+                    "salary": job_data.get("salary"),
+                    "company_profile_url": job_data.get("company_profile_url"),
+                    "missing_fields": missing_fields,
+                },
             }
-        }), 200
+        ), 200
 
     except Exception as e:
         error_message = str(e)
@@ -372,10 +417,12 @@ def preview_job(current_user):
         # Server errors (connection, parsing, etc.) are legitimate 500 errors
         # but should be logged and have user-friendly messages
         print(f"preview-job server error for {url}: {error_message}")
-        return jsonify({
-            "success": False,
-            "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe."
-        }), 500
+        return jsonify(
+            {
+                "success": False,
+                "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe.",
+            }
+        ), 500
 
 
 @applications_bp.route("/analyze-manual-text", methods=["POST"])
@@ -394,16 +441,15 @@ def analyze_manual_text(current_user):
     title = data.get("title", "").strip()
 
     if not job_text:
-        return jsonify({
-            "success": False,
-            "error": "Stellentext ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "Stellentext ist erforderlich"}), 400
 
     if len(job_text) < 100:
-        return jsonify({
-            "success": False,
-            "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text der Stellenanzeige ein."
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text der Stellenanzeige ein.",
+            }
+        ), 400
 
     try:
         # Use ContactExtractor for NLP-based extraction (UX-004)
@@ -416,17 +462,29 @@ def analyze_manual_text(current_user):
 
         if not extracted_company or not extracted_title:
             # Simple extraction from beginning of text
-            lines = job_text.split('\n')[:10]
+            lines = job_text.split("\n")[:10]
             for line in lines:
                 line = line.strip()
                 if not extracted_title and len(line) > 5 and len(line) < 100:
                     # First short line might be the title
-                    if any(keyword in line.lower() for keyword in
-                           ['entwickler', 'engineer', 'manager', 'consultant', 'analyst',
-                            'designer', 'spezialist', 'berater', 'leiter', 'm/w/d', '(m/w/d)']):
+                    if any(
+                        keyword in line.lower()
+                        for keyword in [
+                            "entwickler",
+                            "engineer",
+                            "manager",
+                            "consultant",
+                            "analyst",
+                            "designer",
+                            "spezialist",
+                            "berater",
+                            "leiter",
+                            "m/w/d",
+                            "(m/w/d)",
+                        ]
+                    ):
                         extracted_title = line
-                if not extracted_company and ('gmbh' in line.lower() or 'ag' in line.lower()
-                                               or 'se' in line.lower()):
+                if not extracted_company and ("gmbh" in line.lower() or "ag" in line.lower() or "se" in line.lower()):
                     extracted_company = line
 
         # Check for missing important fields
@@ -436,34 +494,33 @@ def analyze_manual_text(current_user):
         if not extracted_company:
             missing_fields.append("Firma")
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "portal": "Manuell eingegeben",
-                "portal_id": "manual",
-                "url": None,
-                "title": extracted_title,
-                "company": extracted_company,
-                "location": contact_data.get("location"),
-                "description": job_text,
-                "requirements": None,
-                "contact_email": contact_data.get("contact_email"),
-                "contact_person": contact_data.get("contact_person"),
-                "posted_date": None,
-                "application_deadline": None,
-                "employment_type": contact_data.get("employment_type"),
-                "salary": None,
-                "company_profile_url": None,
-                "missing_fields": missing_fields,
-                "is_manual": True
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "portal": "Manuell eingegeben",
+                    "portal_id": "manual",
+                    "url": None,
+                    "title": extracted_title,
+                    "company": extracted_company,
+                    "location": contact_data.get("location"),
+                    "description": job_text,
+                    "requirements": None,
+                    "contact_email": contact_data.get("contact_email"),
+                    "contact_person": contact_data.get("contact_person"),
+                    "posted_date": None,
+                    "application_deadline": None,
+                    "employment_type": contact_data.get("employment_type"),
+                    "salary": None,
+                    "company_profile_url": None,
+                    "missing_fields": missing_fields,
+                    "is_manual": True,
+                },
             }
-        }), 200
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Textanalyse: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Textanalyse: {str(e)}"}), 500
 
 
 @applications_bp.route("/generate-from-url", methods=["POST"])
@@ -584,22 +641,15 @@ def generate_from_text(current_user):
     description = data.get("description", "").strip()  # Structured description for interview prep
 
     if not job_text:
-        return jsonify({
-            "success": False,
-            "error": "Stellentext ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "Stellentext ist erforderlich"}), 400
 
     if len(job_text) < 100:
-        return jsonify({
-            "success": False,
-            "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."
-        }), 400
+        return jsonify(
+            {"success": False, "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."}
+        ), 400
 
     if not company:
-        return jsonify({
-            "success": False,
-            "error": "Firmenname ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "Firmenname ist erforderlich"}), 400
 
     try:
         # Validate template if provided
@@ -620,9 +670,7 @@ def generate_from_text(current_user):
             pdf_path = generator.generate_bewerbung(temp_file, company)
 
             # Get the newly created application
-            latest = Application.query.filter_by(
-                user_id=current_user.id
-            ).order_by(Application.datum.desc()).first()
+            latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
 
             # Update application with title and description if provided
             if latest:
@@ -642,13 +690,15 @@ def generate_from_text(current_user):
             # Get updated usage info
             usage = get_subscription_usage(current_user)
 
-            return jsonify({
-                "success": True,
-                "application": latest.to_dict() if latest else None,
-                "pdf_path": pdf_path,
-                "usage": usage,
-                "message": f"Bewerbung für {company} erstellt",
-            }), 200
+            return jsonify(
+                {
+                    "success": True,
+                    "application": latest.to_dict() if latest else None,
+                    "pdf_path": pdf_path,
+                    "usage": usage,
+                    "message": f"Bewerbung für {company} erstellt",
+                }
+            ), 200
 
         finally:
             # Cleanup temp file
@@ -731,7 +781,9 @@ def download_pdf(app_id, current_user):
     if not app.pdf_path or not os.path.exists(app.pdf_path):
         return jsonify({"error": "PDF not found"}), 404
 
-    return send_file(app.pdf_path, as_attachment=True, download_name=f"Anschreiben_{app.firma}.pdf")
+    # Sanitize company name for use in filename
+    safe_firma = sanitize_filename(app.firma)
+    return send_file(app.pdf_path, as_attachment=True, download_name=f"Anschreiben_{safe_firma}.pdf")
 
 
 @applications_bp.route("/export", methods=["GET"])
@@ -757,10 +809,7 @@ def export_applications(current_user):
     if search_query:
         search_pattern = f"%{search_query}%"
         query = query.filter(
-            db.or_(
-                Application.firma.ilike(search_pattern),
-                Application.position.ilike(search_pattern)
-            )
+            db.or_(Application.firma.ilike(search_pattern), Application.position.ilike(search_pattern))
         )
 
     # Apply status filter
@@ -791,14 +840,16 @@ def _export_as_csv(applications, date_str):
     # Data rows
     for app in applications:
         datum_str = app.datum.strftime("%d.%m.%Y") if app.datum else ""
-        writer.writerow([
-            app.firma or "",
-            app.position or "",
-            _get_status_label(app.status),
-            datum_str,
-            app.ansprechpartner or "",
-            app.email or "",
-        ])
+        writer.writerow(
+            [
+                app.firma or "",
+                app.position or "",
+                _get_status_label(app.status),
+                datum_str,
+                app.ansprechpartner or "",
+                app.email or "",
+            ]
+        )
 
     # Create response with CSV
     output.seek(0)
@@ -856,43 +907,45 @@ def _export_as_pdf(applications, date_str):
 
     for app in applications:
         datum_str = app.datum.strftime("%d.%m.%Y") if app.datum else ""
-        table_data.append([
-            Paragraph(app.firma or "", cell_style),
-            Paragraph(app.position or "", cell_style),
-            _get_status_label(app.status),
-            datum_str,
-            Paragraph(app.ansprechpartner or "", cell_style),
-            Paragraph(app.email or "", cell_style),
-        ])
+        table_data.append(
+            [
+                Paragraph(app.firma or "", cell_style),
+                Paragraph(app.position or "", cell_style),
+                _get_status_label(app.status),
+                datum_str,
+                Paragraph(app.ansprechpartner or "", cell_style),
+                Paragraph(app.email or "", cell_style),
+            ]
+        )
 
     # Create table with styling
     col_widths = [3 * cm, 4 * cm, 2.5 * cm, 2.2 * cm, 3 * cm, 3.5 * cm]
     table = Table(table_data, colWidths=col_widths, repeatRows=1)
 
-    table.setStyle(TableStyle([
-        # Header styling
-        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#3D5A6C")),
-        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-        ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
-        ("FONTSIZE", (0, 0), (-1, 0), 9),
-        ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
-        ("TOPPADDING", (0, 0), (-1, 0), 8),
-
-        # Data rows
-        ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
-        ("FONTSIZE", (0, 1), (-1, -1), 8),
-        ("TOPPADDING", (0, 1), (-1, -1), 6),
-        ("BOTTOMPADDING", (0, 1), (-1, -1), 6),
-
-        # Alternating row colors
-        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#F7F5F0"), colors.white]),
-
-        # Grid
-        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D4C9BA")),
-
-        # Alignment
-        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-    ]))
+    table.setStyle(
+        TableStyle(
+            [
+                # Header styling
+                ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#3D5A6C")),
+                ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+                ("FONTSIZE", (0, 0), (-1, 0), 9),
+                ("BOTTOMPADDING", (0, 0), (-1, 0), 8),
+                ("TOPPADDING", (0, 0), (-1, 0), 8),
+                # Data rows
+                ("FONTNAME", (0, 1), (-1, -1), "Helvetica"),
+                ("FONTSIZE", (0, 1), (-1, -1), 8),
+                ("TOPPADDING", (0, 1), (-1, -1), 6),
+                ("BOTTOMPADDING", (0, 1), (-1, -1), 6),
+                # Alternating row colors
+                ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.HexColor("#F7F5F0"), colors.white]),
+                # Grid
+                ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#D4C9BA")),
+                # Alignment
+                ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+            ]
+        )
+    )
 
     story.append(table)
 
@@ -943,15 +996,17 @@ def get_requirements(app_id, current_user):
     must_have = [r.to_dict() for r in requirements if r.requirement_type == "must_have"]
     nice_to_have = [r.to_dict() for r in requirements if r.requirement_type == "nice_to_have"]
 
-    return jsonify({
-        "success": True,
-        "data": {
-            "application_id": app_id,
-            "must_have": must_have,
-            "nice_to_have": nice_to_have,
-            "total": len(requirements),
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "application_id": app_id,
+                "must_have": must_have,
+                "nice_to_have": nice_to_have,
+                "total": len(requirements),
+            },
         }
-    }), 200
+    ), 200
 
 
 @applications_bp.route("/<int:app_id>/analyze-requirements", methods=["POST"])
@@ -985,10 +1040,7 @@ def analyze_requirements(app_id, current_user):
                 pass
 
     if not job_text:
-        return jsonify({
-            "success": False,
-            "error": "Kein Stellentext vorhanden. Bitte gib den Stellentext an."
-        }), 400
+        return jsonify({"success": False, "error": "Kein Stellentext vorhanden. Bitte gib den Stellentext an."}), 400
 
     try:
         # Analyze requirements using Claude
@@ -996,10 +1048,9 @@ def analyze_requirements(app_id, current_user):
         extracted_requirements = analyzer.analyze_requirements(job_text)
 
         if not extracted_requirements:
-            return jsonify({
-                "success": False,
-                "error": "Keine Anforderungen gefunden. Bitte überprüfe den Stellentext."
-            }), 400
+            return jsonify(
+                {"success": False, "error": "Keine Anforderungen gefunden. Bitte überprüfe den Stellentext."}
+            ), 400
 
         # Delete existing requirements for this application
         JobRequirement.query.filter_by(application_id=app_id).delete()
@@ -1021,22 +1072,21 @@ def analyze_requirements(app_id, current_user):
         must_have = [r.to_dict() for r in requirements if r.requirement_type == "must_have"]
         nice_to_have = [r.to_dict() for r in requirements if r.requirement_type == "nice_to_have"]
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "application_id": app_id,
-                "must_have": must_have,
-                "nice_to_have": nice_to_have,
-                "total": len(requirements),
-            },
-            "message": f"{len(requirements)} Anforderungen extrahiert"
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "application_id": app_id,
+                    "must_have": must_have,
+                    "nice_to_have": nice_to_have,
+                    "total": len(requirements),
+                },
+                "message": f"{len(requirements)} Anforderungen extrahiert",
+            }
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Anforderungs-Analyse: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Anforderungs-Analyse: {str(e)}"}), 500
 
 
 @applications_bp.route("/<int:app_id>/job-fit", methods=["GET"])
@@ -1063,10 +1113,12 @@ def get_job_fit(app_id, current_user):
     # Check if requirements exist
     requirements = JobRequirement.query.filter_by(application_id=app_id).all()
     if not requirements:
-        return jsonify({
-            "success": False,
-            "error": "Keine Anforderungen für diese Bewerbung vorhanden. Bitte zuerst Anforderungen analysieren."
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Keine Anforderungen für diese Bewerbung vorhanden. Bitte zuerst Anforderungen analysieren.",
+            }
+        ), 400
 
     include_recommendations = request.args.get("include_recommendations", "true").lower() == "true"
 
@@ -1077,21 +1129,14 @@ def get_job_fit(app_id, current_user):
         # Generate learning recommendations if there are missing/partial skills
         if include_recommendations and (result.missing_skills or result.partial_matches):
             recommendations = calculator.generate_learning_recommendations(
-                result.missing_skills,
-                result.partial_matches
+                result.missing_skills, result.partial_matches
             )
             result.learning_recommendations = recommendations
 
-        return jsonify({
-            "success": True,
-            "job_fit": result.to_dict()
-        }), 200
+        return jsonify({"success": True, "job_fit": result.to_dict()}), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Job-Fit Berechnung: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Job-Fit Berechnung: {str(e)}"}), 500
 
 
 @applications_bp.route("/analyze-job-fit", methods=["POST"])
@@ -1114,10 +1159,7 @@ def analyze_job_fit_preview(current_user):
     title = data.get("title", "")
 
     if not description:
-        return jsonify({
-            "success": False,
-            "error": "Stellenbeschreibung ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "Stellenbeschreibung ist erforderlich"}), 400
 
     try:
         # Create a temporary application for analysis
@@ -1148,17 +1190,16 @@ def analyze_job_fit_preview(current_user):
                 db.session.add(requirement)
             db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "application_id": app.id,
-            "requirements_count": len(extracted_requirements) if extracted_requirements else 0,
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "application_id": app.id,
+                "requirements_count": len(extracted_requirements) if extracted_requirements else 0,
+            }
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Job-Fit Analyse: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Job-Fit Analyse: {str(e)}"}), 500
 
 
 @applications_bp.route("/<int:app_id>/ats-check", methods=["POST"])
@@ -1209,10 +1250,12 @@ def check_ats_compatibility(app_id, current_user):
                 pass
 
     if not cover_letter_text:
-        return jsonify({
-            "success": False,
-            "error": "Kein Bewerbungstext vorhanden. Bitte gib den Text an oder stelle sicher, dass eine Bewerbung generiert wurde."
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Kein Bewerbungstext vorhanden. Bitte gib den Text an oder stelle sicher, dass eine Bewerbung generiert wurde.",
+            }
+        ), 400
 
     # Try to get job description if not provided
     if not job_description:
@@ -1229,37 +1272,32 @@ def check_ats_compatibility(app_id, current_user):
                 pass
 
     if not job_description:
-        return jsonify({
-            "success": False,
-            "error": "Keine Stellenbeschreibung vorhanden. Bitte gib den Stellentext an."
-        }), 400
+        return jsonify(
+            {"success": False, "error": "Keine Stellenbeschreibung vorhanden. Bitte gib den Stellentext an."}
+        ), 400
 
     try:
         optimizer = ATSOptimizer()
         result = optimizer.analyze_cover_letter(cover_letter_text, job_description)
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "ats_score": result["ats_score"],
-                "missing_keywords": result["missing_keywords"],
-                "keyword_suggestions": result["keyword_suggestions"],
-                "format_issues": result["format_issues"],
-                "keyword_density": result["keyword_density"],
-                "found_keywords": result.get("found_keywords", []),
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "ats_score": result["ats_score"],
+                    "missing_keywords": result["missing_keywords"],
+                    "keyword_suggestions": result["keyword_suggestions"],
+                    "format_issues": result["format_issues"],
+                    "keyword_density": result["keyword_density"],
+                    "found_keywords": result.get("found_keywords", []),
+                },
             }
-        }), 200
+        ), 200
 
     except ValueError as e:
-        return jsonify({
-            "success": False,
-            "error": str(e)
-        }), 400
+        return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der ATS-Analyse: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der ATS-Analyse: {str(e)}"}), 500
 
 
 @applications_bp.route("/<int:app_id>/ats-optimize", methods=["POST"])
@@ -1313,10 +1351,7 @@ def optimize_cover_letter_for_ats(app_id, current_user):
                 pass
 
     if not cover_letter_text:
-        return jsonify({
-            "success": False,
-            "error": "Kein Bewerbungstext vorhanden. Bitte gib den Text an."
-        }), 400
+        return jsonify({"success": False, "error": "Kein Bewerbungstext vorhanden. Bitte gib den Text an."}), 400
 
     # Try to get job description if not provided
     if not job_description:
@@ -1331,10 +1366,9 @@ def optimize_cover_letter_for_ats(app_id, current_user):
                 pass
 
     if not job_description:
-        return jsonify({
-            "success": False,
-            "error": "Keine Stellenbeschreibung vorhanden. Bitte gib den Stellentext an."
-        }), 400
+        return jsonify(
+            {"success": False, "error": "Keine Stellenbeschreibung vorhanden. Bitte gib den Stellentext an."}
+        ), 400
 
     # If no missing keywords provided, perform ATS analysis first
     if not missing_keywords:
@@ -1346,15 +1380,17 @@ def optimize_cover_letter_for_ats(app_id, current_user):
             pass
 
     if not missing_keywords:
-        return jsonify({
-            "success": True,
-            "data": {
-                "original_text": cover_letter_text,
-                "optimized_text": cover_letter_text,
-                "changes_made": [],
-                "message": "Keine fehlenden Keywords - Bewerbung ist bereits gut optimiert."
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "original_text": cover_letter_text,
+                    "optimized_text": cover_letter_text,
+                    "changes_made": [],
+                    "message": "Keine fehlenden Keywords - Bewerbung ist bereits gut optimiert.",
+                },
             }
-        }), 200
+        ), 200
 
     # Use Claude to optimize the cover letter
     try:
@@ -1375,7 +1411,7 @@ AKTUELLES ANSCHREIBEN:
 {cover_letter_text}
 
 FEHLENDE KEYWORDS (diese natürlich einbauen):
-{', '.join(missing_keywords[:10])}
+{", ".join(missing_keywords[:10])}
 
 AUFGABE:
 1. Baue die fehlenden Keywords natürlich in den Text ein
@@ -1408,10 +1444,7 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
 
         json_match = re.search(r"\{[\s\S]*\}", response_text)
         if not json_match:
-            return jsonify({
-                "success": False,
-                "error": "Fehler bei der KI-Optimierung: Ungültiges Antwortformat"
-            }), 500
+            return jsonify({"success": False, "error": "Fehler bei der KI-Optimierung: Ungültiges Antwortformat"}), 500
 
         result = json.loads(json_match.group())
         optimized_text = result.get("optimized_text", cover_letter_text)
@@ -1421,25 +1454,21 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         app.email_text = optimized_text
         db.session.commit()
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "original_text": cover_letter_text,
-                "optimized_text": optimized_text,
-                "changes_made": changes_made,
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "original_text": cover_letter_text,
+                    "optimized_text": optimized_text,
+                    "changes_made": changes_made,
+                },
             }
-        }), 200
+        ), 200
 
     except json.JSONDecodeError:
-        return jsonify({
-            "success": False,
-            "error": "Fehler bei der KI-Optimierung: JSON-Parsing fehlgeschlagen"
-        }), 500
+        return jsonify({"success": False, "error": "Fehler bei der KI-Optimierung: JSON-Parsing fehlgeschlagen"}), 500
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der KI-Optimierung: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der KI-Optimierung: {str(e)}"}), 500
 
 
 @applications_bp.route("/<int:app_id>/generate-questions", methods=["POST"])
@@ -1483,10 +1512,12 @@ def generate_interview_questions(app_id, current_user):
             pass
 
     if not job_text:
-        return jsonify({
-            "success": False,
-            "error": "Keine Stellenbeschreibung vorhanden. Bitte stelle sicher, dass die Bewerbung eine Stellenanzeige-URL oder Beschreibung hat."
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Keine Stellenbeschreibung vorhanden. Bitte stelle sicher, dass die Bewerbung eine Stellenanzeige-URL oder Beschreibung hat.",
+            }
+        ), 400
 
     # Get user skills for personalized questions
     user_skills = UserSkill.query.filter_by(user_id=current_user.id).all()
@@ -1503,10 +1534,9 @@ def generate_interview_questions(app_id, current_user):
         )
 
         if not questions:
-            return jsonify({
-                "success": False,
-                "error": "Keine Interview-Fragen generiert. Bitte versuche es erneut."
-            }), 500
+            return jsonify(
+                {"success": False, "error": "Keine Interview-Fragen generiert. Bitte versuche es erneut."}
+            ), 500
 
         # Delete existing questions for this application
         InterviewQuestion.query.filter_by(application_id=app_id).delete()
@@ -1527,21 +1557,20 @@ def generate_interview_questions(app_id, current_user):
         # Get saved questions
         saved_questions = InterviewQuestion.query.filter_by(application_id=app_id).all()
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "application_id": app_id,
-                "questions": [q.to_dict() for q in saved_questions],
-                "total": len(saved_questions),
-            },
-            "message": f"{len(saved_questions)} Interview-Fragen generiert"
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "application_id": app_id,
+                    "questions": [q.to_dict() for q in saved_questions],
+                    "total": len(saved_questions),
+                },
+                "message": f"{len(saved_questions)} Interview-Fragen generiert",
+            }
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Fragen-Generierung: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Fragen-Generierung: {str(e)}"}), 500
 
 
 @applications_bp.route("/<int:app_id>/interview-questions", methods=["GET"])
@@ -1581,15 +1610,17 @@ def get_interview_questions(app_id, current_user):
         if q.question_type in grouped:
             grouped[q.question_type].append(q.to_dict())
 
-    return jsonify({
-        "success": True,
-        "data": {
-            "application_id": app_id,
-            "questions": grouped,
-            "all_questions": [q.to_dict() for q in questions],
-            "total": len(questions),
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "application_id": app_id,
+                "questions": grouped,
+                "all_questions": [q.to_dict() for q in questions],
+                "total": len(questions),
+            },
         }
-    }), 200
+    ), 200
 
 
 @applications_bp.route("/interview/evaluate-answer", methods=["POST"])
@@ -1620,10 +1651,9 @@ def evaluate_interview_answer(current_user):
         return jsonify({"success": False, "error": "answer_text ist erforderlich"}), 400
 
     if len(answer_text) < 10:
-        return jsonify({
-            "success": False,
-            "error": "Die Antwort ist zu kurz. Bitte geben Sie eine ausführlichere Antwort."
-        }), 400
+        return jsonify(
+            {"success": False, "error": "Die Antwort ist zu kurz. Bitte geben Sie eine ausführlichere Antwort."}
+        ), 400
 
     # Get the question
     question = InterviewQuestion.query.get(question_id)
@@ -1631,10 +1661,7 @@ def evaluate_interview_answer(current_user):
         return jsonify({"success": False, "error": "Frage nicht gefunden"}), 404
 
     # Verify user has access to this question's application
-    app = Application.query.filter_by(
-        id=question.application_id,
-        user_id=current_user.id
-    ).first()
+    app = Application.query.filter_by(id=question.application_id, user_id=current_user.id).first()
 
     if not app:
         return jsonify({"success": False, "error": "Keine Berechtigung"}), 403
@@ -1649,21 +1676,20 @@ def evaluate_interview_answer(current_user):
             firma=app.firma,
         )
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "question_id": question_id,
-                "question_type": question.question_type,
-                "evaluation": evaluation,
-            },
-            "message": "Antwort erfolgreich bewertet"
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "question_id": question_id,
+                    "question_type": question.question_type,
+                    "evaluation": evaluation,
+                },
+                "message": "Antwort erfolgreich bewertet",
+            }
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Bewertung: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Bewertung: {str(e)}"}), 500
 
 
 @applications_bp.route("/interview/summary", methods=["POST"])
@@ -1689,10 +1715,7 @@ def get_interview_summary(current_user):
         return jsonify({"success": False, "error": "application_id ist erforderlich"}), 400
 
     # Verify user has access to this application
-    app = Application.query.filter_by(
-        id=application_id,
-        user_id=current_user.id
-    ).first()
+    app = Application.query.filter_by(id=application_id, user_id=current_user.id).first()
 
     if not app:
         return jsonify({"success": False, "error": "Bewerbung nicht gefunden"}), 404
@@ -1705,20 +1728,19 @@ def get_interview_summary(current_user):
             firma=app.firma,
         )
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "application_id": application_id,
-                "summary": summary,
-            },
-            "message": "Zusammenfassung erstellt"
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "application_id": application_id,
+                    "summary": summary,
+                },
+                "message": "Zusammenfassung erstellt",
+            }
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der Zusammenfassung: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der Zusammenfassung: {str(e)}"}), 500
 
 
 @applications_bp.route("/interview/analyze-star", methods=["POST"])
@@ -1760,31 +1782,24 @@ def analyze_star_method(current_user):
                 application_id = question.application_id
 
     if not question_text:
-        return jsonify({
-            "success": False,
-            "error": "question_text oder question_id ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "question_text oder question_id ist erforderlich"}), 400
 
     if not answer_text:
-        return jsonify({
-            "success": False,
-            "error": "answer_text ist erforderlich"
-        }), 400
+        return jsonify({"success": False, "error": "answer_text ist erforderlich"}), 400
 
     if len(answer_text) < 20:
-        return jsonify({
-            "success": False,
-            "error": "Die Antwort ist zu kurz für eine STAR-Analyse. Bitte geben Sie eine ausführlichere Antwort."
-        }), 400
+        return jsonify(
+            {
+                "success": False,
+                "error": "Die Antwort ist zu kurz für eine STAR-Analyse. Bitte geben Sie eine ausführlichere Antwort.",
+            }
+        ), 400
 
     # Get context from application if available
     position = None
     firma = None
     if application_id:
-        app = Application.query.filter_by(
-            id=application_id,
-            user_id=current_user.id
-        ).first()
+        app = Application.query.filter_by(id=application_id, user_id=current_user.id).first()
         if app:
             position = app.position
             firma = app.firma
@@ -1798,21 +1813,20 @@ def analyze_star_method(current_user):
             firma=firma,
         )
 
-        return jsonify({
-            "success": True,
-            "data": {
-                "question_id": question_id,
-                "question_text": question_text,
-                "star_analysis": analysis,
-            },
-            "message": "STAR-Analyse erfolgreich"
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "question_id": question_id,
+                    "question_text": question_text,
+                    "star_analysis": analysis,
+                },
+                "message": "STAR-Analyse erfolgreich",
+            }
+        ), 200
 
     except Exception as e:
-        return jsonify({
-            "success": False,
-            "error": f"Fehler bei der STAR-Analyse: {str(e)}"
-        }), 500
+        return jsonify({"success": False, "error": f"Fehler bei der STAR-Analyse: {str(e)}"}), 500
 
 
 @applications_bp.route("/interview/star-components", methods=["GET"])
@@ -1823,12 +1837,14 @@ def get_star_components(current_user):
     Returns detailed information about each STAR component for help/reference.
     """
     analyzer = STARAnalyzer()
-    return jsonify({
-        "success": True,
-        "data": {
-            "components": analyzer.get_component_descriptions(),
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "components": analyzer.get_component_descriptions(),
+            },
         }
-    }), 200
+    ), 200
 
 
 # ==================== Interview Result Tracking ====================
@@ -1872,10 +1888,12 @@ def update_interview_result(app_id, current_user):
                 else:
                     app.interview_date = None
             except ValueError:
-                return jsonify({
-                    "success": False,
-                    "error": "Ungültiges Datumsformat. Bitte ISO-Format verwenden (YYYY-MM-DD oder YYYY-MM-DDTHH:MM:SS)"
-                }), 400
+                return jsonify(
+                    {
+                        "success": False,
+                        "error": "Ungültiges Datumsformat. Bitte ISO-Format verwenden (YYYY-MM-DD oder YYYY-MM-DDTHH:MM:SS)",
+                    }
+                ), 400
         else:
             app.interview_date = None
 
@@ -1884,10 +1902,9 @@ def update_interview_result(app_id, current_user):
         result_value = data["interview_result"]
         if result_value:
             if result_value not in VALID_INTERVIEW_RESULTS:
-                return jsonify({
-                    "success": False,
-                    "error": f"Ungültiges Ergebnis. Erlaubt: {', '.join(VALID_INTERVIEW_RESULTS)}"
-                }), 400
+                return jsonify(
+                    {"success": False, "error": f"Ungültiges Ergebnis. Erlaubt: {', '.join(VALID_INTERVIEW_RESULTS)}"}
+                ), 400
             app.interview_result = result_value
         else:
             app.interview_result = None
@@ -1898,11 +1915,7 @@ def update_interview_result(app_id, current_user):
 
     db.session.commit()
 
-    return jsonify({
-        "success": True,
-        "application": app.to_dict(),
-        "message": "Interview-Ergebnis aktualisiert"
-    }), 200
+    return jsonify({"success": True, "application": app.to_dict(), "message": "Interview-Ergebnis aktualisiert"}), 200
 
 
 @applications_bp.route("/interview-stats", methods=["GET"])
@@ -1940,7 +1953,11 @@ def get_interview_statistics(current_user):
             result_breakdown[result] = count
 
     # Calculate success rate (passed + offer_received out of all completed outcomes)
-    completed_outcomes = result_breakdown.get("passed", 0) + result_breakdown.get("rejected", 0) + result_breakdown.get("offer_received", 0)
+    completed_outcomes = (
+        result_breakdown.get("passed", 0)
+        + result_breakdown.get("rejected", 0)
+        + result_breakdown.get("offer_received", 0)
+    )
     successful_outcomes = result_breakdown.get("passed", 0) + result_breakdown.get("offer_received", 0)
     success_rate = round((successful_outcomes / completed_outcomes * 100) if completed_outcomes > 0 else 0, 1)
 
@@ -1958,39 +1975,39 @@ def get_interview_statistics(current_user):
 
     # Recent results (last 10 completed interviews)
     recent_results = (
-        base_query.filter(
-            Application.interview_result.in_(["completed", "passed", "rejected", "offer_received"])
-        )
+        base_query.filter(Application.interview_result.in_(["completed", "passed", "rejected", "offer_received"]))
         .order_by(Application.interview_date.desc().nulls_last())
         .limit(10)
         .all()
     )
 
-    return jsonify({
-        "success": True,
-        "data": {
-            "total_interviews": total_with_results,
-            "success_rate": success_rate,
-            "result_breakdown": result_breakdown,
-            "upcoming_interviews": [
-                {
-                    "id": app.id,
-                    "firma": app.firma,
-                    "position": app.position,
-                    "interview_date": app.interview_date.isoformat() if app.interview_date else None,
-                }
-                for app in upcoming
-            ],
-            "recent_results": [
-                {
-                    "id": app.id,
-                    "firma": app.firma,
-                    "position": app.position,
-                    "interview_date": app.interview_date.isoformat() if app.interview_date else None,
-                    "interview_result": app.interview_result,
-                    "interview_feedback": app.interview_feedback,
-                }
-                for app in recent_results
-            ],
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "total_interviews": total_with_results,
+                "success_rate": success_rate,
+                "result_breakdown": result_breakdown,
+                "upcoming_interviews": [
+                    {
+                        "id": app.id,
+                        "firma": app.firma,
+                        "position": app.position,
+                        "interview_date": app.interview_date.isoformat() if app.interview_date else None,
+                    }
+                    for app in upcoming
+                ],
+                "recent_results": [
+                    {
+                        "id": app.id,
+                        "firma": app.firma,
+                        "position": app.position,
+                        "interview_date": app.interview_date.isoformat() if app.interview_date else None,
+                        "interview_result": app.interview_result,
+                        "interview_feedback": app.interview_feedback,
+                    }
+                    for app in recent_results
+                ],
+            },
         }
-    }), 200
+    ), 200

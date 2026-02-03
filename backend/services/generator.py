@@ -11,6 +11,40 @@ from .requirement_analyzer import RequirementAnalyzer
 from .template_generator import get_or_create_default_template
 
 
+def _convert_variable_positions_to_dict(variable_positions) -> dict:
+    """
+    Convert variable_positions from list format to dict format.
+
+    The PDFTemplateModifier expects a dict like:
+        {"FIRMA": {"x": 100, "y": 200, "width": 150, ...}, ...}
+
+    But the frontend may send a list like:
+        [{"variable_name": "FIRMA", "x": 100, "y": 200, ...}, ...]
+    """
+    if variable_positions is None:
+        return {}
+
+    if isinstance(variable_positions, dict):
+        return variable_positions
+
+    if isinstance(variable_positions, list):
+        result = {}
+        for item in variable_positions:
+            if not isinstance(item, dict):
+                continue
+            var_name = item.get("variable_name") or item.get("variable")
+            if not var_name:
+                continue
+            # Extract position data, excluding the variable name key
+            position_data = {
+                k: v for k, v in item.items() if k not in ("variable_name", "variable", "suggested_text", "text")
+            }
+            result[var_name] = position_data
+        return result
+
+    return {}
+
+
 class BewerbungsGenerator:
     def __init__(self, user_id: int, template_id: int | None = None):
         self.user_id = user_id
@@ -187,9 +221,11 @@ class BewerbungsGenerator:
 
             # Use PDFTemplateModifier to generate PDF from template
             modifier = PDFTemplateModifier()
+            # Convert variable_positions to dict format if it's a list
+            positions_dict = _convert_variable_positions_to_dict(self.template.variable_positions)
             pdf_bytes = modifier.generate_from_template(
                 pdf_path=self.template.pdf_path,
-                variable_positions=self.template.variable_positions or {},
+                variable_positions=positions_dict,
                 replacements=replacements,
             )
 
@@ -215,7 +251,10 @@ class BewerbungsGenerator:
         if self.zeugnis_text:
             attachments.append("Arbeitszeugnis")
         email_text = self.api_client.generate_email_text(
-            position=details["position"], ansprechperson=details["ansprechpartner"], firma_name=firma_name, attachments=attachments
+            position=details["position"],
+            ansprechperson=details["ansprechpartner"],
+            firma_name=firma_name,
+            attachments=attachments,
         )
 
         # Sammle alle extrahierten Informationen
@@ -319,7 +358,9 @@ class BewerbungsGenerator:
 
             must_have_count = sum(1 for r in requirements if r["requirement_type"] == "must_have")
             nice_to_have_count = len(requirements) - must_have_count
-            print(f"✓ {len(requirements)} Anforderungen extrahiert ({must_have_count} Pflicht, {nice_to_have_count} Optional)")
+            print(
+                f"✓ {len(requirements)} Anforderungen extrahiert ({must_have_count} Pflicht, {nice_to_have_count} Optional)"
+            )
 
         except Exception as e:
             print(f"⚠ Anforderungs-Extraktion fehlgeschlagen: {str(e)}")
