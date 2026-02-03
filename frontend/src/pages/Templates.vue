@@ -91,58 +91,23 @@
       <!-- Ink Stroke Divider -->
       <div class="ink-stroke"></div>
 
-      <!-- Create New Template -->
+      <!-- Create New Template - Single CTA -->
       <section v-if="!showWizard && !showPdfWizard && !showManualForm" class="create-section animate-fade-up">
-        <h2 class="section-title">Neues Template erstellen</h2>
-        <div class="create-options">
-          <div class="option-card zen-card" @click="startManual">
-            <div class="option-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </div>
-            <h3>Selbst schreiben</h3>
-            <p>Erstellen Sie Ihr eigenes Template von Grund auf mit Platzhaltern</p>
-            <span class="zen-btn zen-btn-ai zen-btn-sm">Jetzt erstellen</span>
-          </div>
-
-          <div
-            class="option-card zen-card"
-            :class="{ disabled: !hasLebenslauf }"
-            @click="startWizard"
-          >
-            <div class="option-icon option-icon-ai">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="12" cy="12" r="3"/>
-                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-              </svg>
-            </div>
-            <h3>Mit KI erstellen</h3>
-            <p>Beantworten Sie ein paar Fragen und lassen Sie Claude ein Template generieren</p>
-            <span
-              class="zen-btn zen-btn-ai zen-btn-sm"
-              :class="{ disabled: !hasLebenslauf }"
-            >
-              {{ hasLebenslauf ? 'Wizard starten' : 'Lebenslauf erforderlich' }}
-            </span>
-          </div>
-
-          <div class="option-card zen-card" @click="startPdfWizard">
-            <div class="option-icon option-icon-pdf">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="12" y1="18" x2="12" y2="12"/>
-                <line x1="9" y1="15" x2="15" y2="15"/>
-              </svg>
-            </div>
-            <h3>PDF hochladen</h3>
-            <p>Laden Sie ein bestehendes Anschreiben hoch und lassen Sie Variablen automatisch erkennen</p>
-            <span class="zen-btn zen-btn-ai zen-btn-sm">PDF analysieren</span>
-          </div>
+        <div class="create-cta">
+          <button class="create-cta__button zen-btn zen-btn-filled zen-btn-lg" @click="openCreationOverlay">
+            <span class="create-cta__icon">✨</span>
+            Neue Vorlage erstellen
+          </button>
+          <p class="create-cta__hint">In 60 Sekunden zur perfekten Bewerbungsvorlage</p>
         </div>
       </section>
+
+      <!-- Template Creation Overlay -->
+      <TemplateCreationOverlay
+        :is-active="showCreationOverlay"
+        @close="closeCreationOverlay"
+        @submit="handleCreationSubmit"
+      />
 
       <!-- AI Wizard -->
       <section v-if="showWizard" class="wizard-section animate-fade-up">
@@ -420,6 +385,7 @@ import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import api from '../api/client'
 import { TemplateEditor } from '../components/TemplateEditor'
 import { PdfTemplateWizard } from '../components/PdfTemplateWizard'
+import TemplateCreationOverlay from '../components/TemplateCreationOverlay.vue'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
 
@@ -428,6 +394,7 @@ const hasLebenslauf = ref(false)
 const showWizard = ref(false)
 const showPdfWizard = ref(false)
 const showManualForm = ref(false)
+const showCreationOverlay = ref(false)
 const editingTemplate = ref(null)
 const generating = ref(false)
 const message = ref('')
@@ -572,6 +539,63 @@ const startManual = () => {
   showPdfWizard.value = false
   editingTemplate.value = null
   form.value = { name: '', content: '', is_default: false }
+}
+
+const openCreationOverlay = () => {
+  showCreationOverlay.value = true
+}
+
+const closeCreationOverlay = () => {
+  showCreationOverlay.value = false
+}
+
+const handleCreationSubmit = async ({ description, category }) => {
+  showCreationOverlay.value = false
+
+  // If user has a CV and provided description, use AI wizard flow
+  if (hasLebenslauf.value && description) {
+    wizardData.value = {
+      sektor: category === 'tech' ? 'Tech / IT' :
+              category === 'sales' ? 'Vertrieb' :
+              category === 'marketing' ? 'Marketing' : '',
+      projekte: '',
+      leidenschaften: description,
+      hobbys: '',
+      tonalitaet: 'modern'
+    }
+    // Skip to generation with prefilled data
+    generating.value = true
+    message.value = ''
+    try {
+      const { data } = await api.post('/templates/generate', wizardData.value)
+      form.value = {
+        name: data.template.name,
+        content: data.template.content,
+        is_default: true
+      }
+      editingTemplate.value = data.template
+      if (data.template.suggestions && data.template.suggestions.length > 0) {
+        suggestions.value = data.template.suggestions
+      } else {
+        suggestions.value = []
+      }
+      showManualForm.value = true
+      message.value = 'Template erfolgreich generiert! Sie können es jetzt anpassen.'
+      messageClass.value = 'success'
+      await loadTemplates()
+    } catch (e) {
+      message.value = e.response?.data?.error || 'Fehler beim Generieren des Templates'
+      messageClass.value = 'error'
+    } finally {
+      generating.value = false
+    }
+  } else {
+    // Fallback to manual form with prefilled content
+    startManual()
+    if (description) {
+      form.value.name = category ? `${category.charAt(0).toUpperCase() + category.slice(1)} Template` : 'Neues Template'
+    }
+  }
 }
 
 const cancelWizard = () => {
@@ -905,63 +929,32 @@ onUnmounted(() => {
   margin-top: var(--space-ma);
 }
 
-.create-options {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: var(--space-lg);
-}
-
-.option-card {
-  padding: var(--space-xl);
-  text-align: center;
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.option-card:hover:not(.disabled) {
-  border-color: var(--color-ai);
-  transform: translateY(-2px);
-}
-
-.option-card.disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.option-icon {
-  width: 64px;
-  height: 64px;
-  margin: 0 auto var(--space-md);
+/* Single CTA Style */
+.create-cta {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: var(--color-washi-warm);
-  border-radius: var(--radius-md);
-  color: var(--color-stone);
+  padding: var(--space-ma-lg) 0;
 }
 
-.option-icon-ai {
-  background: var(--color-ai-subtle);
-  color: var(--color-ai);
-}
-
-.option-icon-pdf {
-  background: rgba(220, 38, 38, 0.1);
-  color: #dc2626;
-}
-
-.option-card h3 {
-  font-size: 1.25rem;
+.create-cta__button {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-lg) var(--space-xl);
+  font-size: 1.125rem;
   font-weight: 500;
-  color: var(--color-sumi);
-  margin-bottom: var(--space-sm);
 }
 
-.option-card p {
+.create-cta__icon {
+  font-size: 1.25rem;
+}
+
+.create-cta__hint {
+  margin-top: var(--space-md);
   font-size: 0.9375rem;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-lg);
-  line-height: var(--leading-relaxed);
+  color: var(--color-text-tertiary);
 }
 
 /* ========================================
