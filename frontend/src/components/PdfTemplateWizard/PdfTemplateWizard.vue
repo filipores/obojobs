@@ -12,7 +12,7 @@
         <div class="wizard-progress">
           <div class="progress-steps">
             <div
-              v-for="stepNum in 3"
+              v-for="stepNum in 2"
               :key="stepNum"
               class="progress-step"
               :class="{
@@ -30,7 +30,7 @@
             </div>
           </div>
           <div class="progress-bar">
-            <div class="progress-fill" :style="{ width: `${((step - 1) / 2) * 100}%` }"></div>
+            <div class="progress-fill" :style="{ width: `${(step - 1) * 100}%` }"></div>
           </div>
         </div>
       </div>
@@ -43,7 +43,7 @@
             <PdfUploadStep @file-selected="handleFileSelected" />
           </div>
 
-          <!-- Step 2: AI Analysis -->
+          <!-- Step 2: AI Analysis + Quick Review -->
           <div v-else-if="step === 2" key="step2" class="wizard-step">
             <div class="analysis-step">
               <!-- Loading State -->
@@ -72,78 +72,34 @@
                 </div>
               </div>
 
-              <!-- Analysis Result -->
-              <div v-else class="analysis-result">
-                <div class="result-layout">
-                  <!-- PDF Preview -->
-                  <div class="preview-column">
-                    <PdfPreview
-                      :pdf-file="selectedFile"
-                      :highlights="suggestions"
-                    />
-                  </div>
-
-                  <!-- Suggestions Summary -->
-                  <div class="summary-column">
-                    <div class="summary-card zen-card">
-                      <div class="summary-header">
-                        <div class="summary-icon">
-                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                            <circle cx="12" cy="12" r="3"/>
-                            <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
-                          </svg>
-                        </div>
-                        <div>
-                          <h4>Analyse abgeschlossen</h4>
-                          <p>{{ suggestions.length }} Variablen erkannt</p>
-                        </div>
-                      </div>
-
-                      <div class="suggestions-preview">
-                        <div
-                          v-for="suggestion in suggestions.slice(0, 5)"
-                          :key="suggestion.id"
-                          class="suggestion-preview-item"
-                        >
-                          <span class="var-badge" :class="getVariableClass(suggestion.variable_name)">
-                            {{ suggestion.variable_name }}
-                          </span>
-                          <span class="var-text">"{{ truncateText(suggestion.suggested_text, 30) }}"</span>
-                        </div>
-                        <div v-if="suggestions.length > 5" class="more-suggestions">
-                          +{{ suggestions.length - 5 }} weitere Variablen
-                        </div>
-                      </div>
-
-                      <p class="summary-hint">
-                        Im naechsten Schritt koennen Sie die erkannten Variablen ueberpruefen und anpassen.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Step 3: Review Variables -->
-          <div v-else-if="step === 3" key="step3" class="wizard-step">
-            <div class="review-layout">
-              <!-- PDF Preview -->
-              <div class="preview-column">
-                <PdfPreview
-                  :pdf-file="selectedFile"
-                  :highlights="acceptedSuggestions"
-                />
-              </div>
-
-              <!-- Variable Review -->
-              <div class="review-column">
-                <VariableReviewStep
+              <!-- Quick Review (default after analysis) -->
+              <div v-else-if="!showDetailedReview" class="quick-review-wrapper">
+                <QuickReview
                   :suggestions="suggestions"
-                  @accept="handleAcceptSuggestion"
-                  @reject="handleRejectSuggestion"
-                  @save="handleSave"
+                  @confirm="handleQuickConfirm"
+                  @adjust="handleShowDetailedReview"
                 />
+              </div>
+
+              <!-- Detailed Review (when user clicks "Nein, anpassen") -->
+              <div v-else class="review-layout">
+                <!-- PDF Preview -->
+                <div class="preview-column">
+                  <PdfPreview
+                    :pdf-file="selectedFile"
+                    :highlights="acceptedSuggestions"
+                  />
+                </div>
+
+                <!-- Variable Review -->
+                <div class="review-column">
+                  <VariableReviewStep
+                    :suggestions="suggestions"
+                    @accept="handleAcceptSuggestion"
+                    @reject="handleRejectSuggestion"
+                    @save="handleSave"
+                  />
+                </div>
               </div>
             </div>
           </div>
@@ -153,7 +109,14 @@
       <!-- Wizard Navigation -->
       <div class="wizard-nav">
         <button
-          v-if="step > 1 && !analyzing"
+          v-if="step > 1 && !analyzing && showDetailedReview"
+          class="zen-btn"
+          @click="handleBackToQuickReview"
+        >
+          Zurueck
+        </button>
+        <button
+          v-else-if="step > 1 && !analyzing"
           class="zen-btn"
           @click="prevStep"
         >
@@ -170,13 +133,6 @@
           @click="startAnalysis"
         >
           PDF analysieren
-        </button>
-        <button
-          v-if="step === 2 && !analyzing"
-          class="zen-btn zen-btn-ai"
-          @click="nextStep"
-        >
-          Variablen ueberpruefen
         </button>
       </div>
     </div>
@@ -207,12 +163,16 @@ import api from '@/api/client'
 import PdfUploadStep from './PdfUploadStep.vue'
 import VariableReviewStep from './VariableReviewStep.vue'
 import PdfPreview from './PdfPreview.vue'
+import QuickReview from './QuickReview.vue'
 
 const emit = defineEmits(['template-created', 'cancel'])
 
 // Step state
 const step = ref(1)
-const stepLabels = ['PDF hochladen', 'KI-Analyse', 'Variablen pruefen']
+const stepLabels = ['PDF hochladen', 'Variablen pruefen']
+
+// Quick review state
+const showDetailedReview = ref(false)
 
 // File state
 const selectedFile = ref(null)
@@ -247,13 +207,26 @@ function handleFileSelected(file) {
 function prevStep() {
   if (step.value > 1) {
     step.value--
+    showDetailedReview.value = false
   }
 }
 
-function nextStep() {
-  if (step.value < 3) {
-    step.value++
-  }
+function handleBackToQuickReview() {
+  showDetailedReview.value = false
+}
+
+function handleShowDetailedReview() {
+  showDetailedReview.value = true
+}
+
+// Quick confirm - accept all and save
+async function handleQuickConfirm() {
+  // Accept all suggestions
+  suggestions.value.forEach(s => {
+    s.status = 'accepted'
+  })
+  // Then save
+  await handleSave()
 }
 
 // Start AI analysis
@@ -318,11 +291,8 @@ async function startAnalysis() {
     analysisStatus.value = 'Analyse abgeschlossen!'
     await delay(400)
 
-    // Automatically advance to review step if variables were found
-    if (suggestions.value.length > 0) {
-      await delay(800)  // Brief pause to show the summary
-      step.value = 3
-    }
+    // Stay on step 2 to show QuickReview
+    // showDetailedReview is false by default, so QuickReview will be shown
 
   } catch (err) {
     console.error('Analysis error:', err)
@@ -390,23 +360,6 @@ function handleCancel() {
 // Helpers
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms))
-}
-
-function getVariableClass(variableName) {
-  const classMap = {
-    'FIRMA': 'var-firma',
-    'POSITION': 'var-position',
-    'ANSPRECHPARTNER': 'var-ansprechpartner',
-    'QUELLE': 'var-quelle',
-    'EINLEITUNG': 'var-einleitung'
-  }
-  return classMap[variableName?.toUpperCase()] || 'var-default'
-}
-
-function truncateText(text, maxLength) {
-  if (!text) return ''
-  if (text.length <= maxLength) return text
-  return text.substring(0, maxLength) + '...'
 }
 </script>
 
@@ -637,8 +590,7 @@ function truncateText(text, maxLength) {
   font-weight: 500;
 }
 
-/* Analysis Result / Review Layout */
-.result-layout,
+/* Review Layout */
 .review-layout {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -650,130 +602,17 @@ function truncateText(text, maxLength) {
   min-height: 400px;
 }
 
-.summary-column,
 .review-column {
   display: flex;
   flex-direction: column;
 }
 
-/* Summary Card */
-.summary-card {
-  padding: var(--space-lg, 1.5rem);
-  flex: 1;
-}
-
-.summary-header {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-md, 1rem);
-  margin-bottom: var(--space-lg, 1.5rem);
-  padding-bottom: var(--space-md, 1rem);
-  border-bottom: 1px solid var(--color-border-light, #E5DFD4);
-}
-
-.summary-icon {
-  width: 48px;
-  height: 48px;
-  background: var(--color-success-light, rgba(122, 139, 110, 0.15));
-  border-radius: var(--radius-md, 0.5rem);
+/* Quick Review Wrapper */
+.quick-review-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-success, #7A8B6E);
-  flex-shrink: 0;
-}
-
-.summary-header h4 {
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: var(--color-sumi, #2C2C2C);
-  margin-bottom: var(--space-xs, 0.25rem);
-}
-
-.summary-header p {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary, #4A4A4A);
-  margin: 0;
-}
-
-/* Suggestions Preview */
-.suggestions-preview {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm, 0.5rem);
-  margin-bottom: var(--space-lg, 1.5rem);
-}
-
-.suggestion-preview-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm, 0.5rem);
-  padding: var(--space-sm, 0.5rem);
-  background: var(--color-washi, #FAF8F3);
-  border-radius: var(--radius-sm, 0.25rem);
-}
-
-.var-badge {
-  display: inline-flex;
-  padding: var(--space-xs, 0.25rem) var(--space-sm, 0.5rem);
-  border-radius: var(--radius-sm, 0.25rem);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  white-space: nowrap;
-}
-
-.var-firma {
-  background: var(--color-ai-subtle, rgba(61, 90, 108, 0.12));
-  color: var(--color-ai, #3D5A6C);
-}
-
-.var-position {
-  background: var(--color-success-light, rgba(122, 139, 110, 0.15));
-  color: var(--color-success, #7A8B6E);
-}
-
-.var-ansprechpartner {
-  background: var(--color-warning-light, rgba(196, 163, 90, 0.15));
-  color: var(--color-warning, #C4A35A);
-}
-
-.var-quelle {
-  background: rgba(184, 122, 94, 0.12);
-  color: var(--color-terra, #B87A5E);
-}
-
-.var-einleitung {
-  background: rgba(139, 154, 107, 0.12);
-  color: var(--color-bamboo, #8B9A6B);
-}
-
-.var-default {
-  background: var(--color-washi-aged, #E8E2D5);
-  color: var(--color-stone, #9B958F);
-}
-
-.var-text {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary, #4A4A4A);
-  font-style: italic;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.more-suggestions {
-  font-size: 0.8125rem;
-  color: var(--color-text-tertiary, #6B6B6B);
-  text-align: center;
-  padding: var(--space-sm, 0.5rem);
-}
-
-.summary-hint {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary, #4A4A4A);
-  line-height: var(--leading-relaxed, 1.85);
+  min-height: 400px;
 }
 
 /* Wizard Navigation */
@@ -854,7 +693,6 @@ function truncateText(text, maxLength) {
 
 /* Responsive */
 @media (max-width: 968px) {
-  .result-layout,
   .review-layout {
     grid-template-columns: 1fr;
   }
@@ -863,7 +701,6 @@ function truncateText(text, maxLength) {
     order: 2;
   }
 
-  .summary-column,
   .review-column {
     order: 1;
   }
