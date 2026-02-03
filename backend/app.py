@@ -134,6 +134,7 @@ def create_app():
     from routes.ats import ats_bp
     from routes.auth import auth_bp
     from routes.companies import companies_bp
+    from routes.demo import demo_bp
     from routes.documents import documents_bp
     from routes.email import email_bp
     from routes.recommendations import bp as recommendations_bp
@@ -145,6 +146,7 @@ def create_app():
     from routes.webhooks import webhooks_bp
 
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
+    app.register_blueprint(demo_bp, url_prefix="/api/demo")
     app.register_blueprint(documents_bp, url_prefix="/api/documents")
     app.register_blueprint(templates_bp, url_prefix="/api/templates")
     app.register_blueprint(applications_bp, url_prefix="/api/applications")
