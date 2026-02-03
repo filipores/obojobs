@@ -1,3 +1,10 @@
+# [1.25.0](https://github.com/filipores/obojobs/compare/v1.24.0...v1.25.0) (2026-02-03)
+
+
+### Features
+
+* **dashboard:** make email verification banner a subtle reminder ([5d17bf9](https://github.com/filipores/obojobs/commit/5d17bf93c7d7604943f45cf835bd5bc9d5120264))
+
 # [1.24.0](https://github.com/filipores/obojobs/compare/v1.23.1...v1.24.0) (2026-02-03)
 
 
