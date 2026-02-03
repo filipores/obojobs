@@ -165,8 +165,23 @@
       </div>
     </section>
 
+    <!-- NEW: Crafting Screen (shows animation while API runs) -->
+    <DemoCraftingScreen
+      :isActive="showCraftingScreen"
+      :data="craftingData"
+      :pdfBlob="pdfBlob"
+      @register="onCraftingRegister"
+    />
+
     <!-- Normal Landing Page (when not in CV upload flow) -->
-    <template v-else>
+    <template v-if="!showCvUploadFlow">
+      <!-- CV Upload Modal -->
+      <CVUploadModal
+        :visible="showCvModal"
+        @close="showCvModal = false"
+        @submit="onCvSubmitted"
+      />
+
       <!-- Hero Section - The product IS the hero -->
       <section class="hero-section">
         <div class="hero-container">
@@ -186,7 +201,12 @@
 
           <!-- Demo Generator - The core experience -->
           <div class="demo-input-section animate-fade-up" style="animation-delay: 200ms;">
-            <DemoGenerator @demo-started="onDemoStarted" @demo-complete="onDemoComplete" />
+            <DemoGenerator
+              ref="demoGeneratorRef"
+              @demo-started="onDemoStarted"
+              @demo-complete="onDemoComplete"
+              @request-cv="onRequestCv"
+            />
 
             <!-- Supported Sites -->
             <div class="supported-sites">
@@ -407,6 +427,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import DemoGenerator from '../components/landing/DemoGenerator.vue'
+import CVUploadModal from '../components/landing/CVUploadModal.vue'
+import DemoCraftingScreen from '../components/landing/DemoCraftingScreen.vue'
 import { demoStore } from '../stores/demo'
 import { authStore } from '../store/auth'
 import api from '../api/client'
@@ -415,7 +437,10 @@ const router = useRouter()
 const route = useRoute()
 const currentYear = computed(() => new Date().getFullYear())
 
-// CV Upload Flow State
+// Demo Generator ref
+const demoGeneratorRef = ref(null)
+
+// CV Upload Flow State (post-registration)
 const flowState = ref('upload') // 'upload' | 'crafting' | 'result'
 const selectedFile = ref(null)
 const isDragging = ref(false)
@@ -426,6 +451,17 @@ const craftingText = ref('Analysiere deinen Lebenslauf...')
 const regeneratedResult = ref(null)
 const usageInfo = ref(null)
 const createdApplicationId = ref(null)
+
+// NEW: Demo flow state (pre-registration)
+const showCvModal = ref(false)
+const pendingJobUrl = ref('')
+const previewData = ref(null)
+const isGenerating = ref(false)
+
+// NEW: Crafting screen state
+const showCraftingScreen = ref(false)
+const craftingData = ref(null)
+const pdfBlob = ref(null)
 
 // Show CV upload flow when user is authenticated and in demo flow
 const showCvUploadFlow = computed(() => {
@@ -578,20 +614,83 @@ const downloadPdf = async () => {
   }
 }
 
+// NEW: Handle CV upload request from DemoGenerator
+const onRequestCv = (url) => {
+  pendingJobUrl.value = url
+  showCvModal.value = true
+}
+
+// NEW: Handle CV file submission from modal
+const onCvSubmitted = async (cvFile) => {
+  showCvModal.value = false
+  showCraftingScreen.value = true  // Show immediately
+  isGenerating.value = true
+
+  // Prepare crafting data from demoStore or default
+  craftingData.value = {
+    ansprechpartner: demoStore.previewData?.ansprechpartner || 'Personalabteilung',
+    firma: demoStore.previewData?.firma || 'Unternehmen',
+    position: demoStore.previewData?.position || 'Position',
+    einleitung: ''  // Will be filled by API
+  }
+
+  // API call runs parallel to animation
+  if (demoGeneratorRef.value) {
+    demoGeneratorRef.value.generateWithCV(cvFile)
+  }
+}
+
 // Demo flow handlers
 const onDemoStarted = () => {
   // Track demo start for analytics
+  isGenerating.value = true
 }
 
 const onDemoComplete = (result) => {
-  // Store demo data before redirecting to register
-  demoStore.setDemoComplete(result.url, result)
+  isGenerating.value = false
 
-  // Redirect to register
-  router.push({
-    path: '/register',
-    query: { demo: 'complete' }
-  })
+  // If we have valid result data, update crafting data with real results
+  if (result.result?.data) {
+    // Update crafting data with real results
+    craftingData.value = {
+      ...craftingData.value,
+      ansprechpartner: result.result.data.ansprechpartner,
+      firma: result.result.data.firma,
+      position: result.result.data.position,
+      einleitung: result.result.data.einleitung
+    }
+
+    // Store preview data for later use
+    previewData.value = result.result.data
+
+    // Store CV text for post-registration use
+    if (result.result.data.cv_text) {
+      demoStore.setCvData(result.result.data.cv_text, null)
+    }
+    demoStore.setPreviewData(result.result.data)
+
+    // If crafting screen is not shown, show it now (fallback for non-CV flow)
+    if (!showCraftingScreen.value) {
+      showCraftingScreen.value = true
+    }
+  } else {
+    // Fallback: redirect to register directly
+    showCraftingScreen.value = false
+    demoStore.setDemoComplete(result.url, result)
+    router.push({
+      path: '/register',
+      query: { demo: 'complete' }
+    })
+  }
+}
+
+// NEW: Handle register click from crafting screen
+const onCraftingRegister = () => {
+  showCraftingScreen.value = false
+  // Store demo data before redirecting
+  demoStore.setDemoComplete(pendingJobUrl.value, { data: previewData.value })
+  // Navigate to registration
+  router.push('/register')
 }
 
 const scrollToTop = () => {

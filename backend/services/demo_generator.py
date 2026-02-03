@@ -49,7 +49,7 @@ class DemoGenerator:
         with open(template_path, encoding="utf-8") as f:
             return f.read()
 
-    def generate_demo(self, job_url: str) -> dict:
+    def generate_demo(self, job_url: str, cv_text: str = None) -> dict:
         """Generate a demo application from a job URL.
 
         Uses the same 5-phase generation process as real applications,
@@ -57,6 +57,8 @@ class DemoGenerator:
 
         Args:
             job_url: URL of the job posting to analyze
+            cv_text: Optional CV text from uploaded PDF. If not provided,
+                     uses the sample CV.
 
         Returns:
             dict with:
@@ -68,6 +70,9 @@ class DemoGenerator:
                 - betreff: Email subject line
                 - email_text: Email body text
         """
+        # Use provided CV text or fallback to sample
+        cv_to_use = cv_text if cv_text else self.cv_text
+
         # Phase 1: Read job posting from URL
         doc_result = read_document(job_url, return_links=True)
         stellenanzeige_text = doc_result["text"]
@@ -86,7 +91,7 @@ class DemoGenerator:
 
         # Phase 3: Generate personalized introduction
         einleitung = self.api_client.generate_einleitung(
-            cv_text=self.cv_text,
+            cv_text=cv_to_use,
             stellenanzeige_text=stellenanzeige_text,
             firma_name=firma_name,
             zeugnis_text=None,  # Demo doesn't use certificate

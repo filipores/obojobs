@@ -69,7 +69,7 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '../../api/client'
 
-const emit = defineEmits(['demo-started', 'demo-complete'])
+const emit = defineEmits(['demo-started', 'demo-complete', 'request-cv'])
 
 const inputRef = ref(null)
 const url = ref('')
@@ -99,9 +99,17 @@ const onPaste = async () => {
   }
 }
 
-// Start the demo generation
+// Start the demo - request CV upload first
 const startDemo = async () => {
   if (!isValidUrl.value || loading.value) return
+
+  // Emit event to parent to show CV upload modal
+  emit('request-cv', url.value)
+}
+
+// Generate demo with CV file (called by parent after CV upload)
+const generateWithCV = async (cvFile) => {
+  if (!isValidUrl.value) return
 
   loading.value = true
   error.value = ''
@@ -110,20 +118,24 @@ const startDemo = async () => {
   // Animate loading text
   const loadingTexts = [
     'Analysiere Stellenanzeige...',
+    'Lese deinen Lebenslauf...',
     'Extrahiere Anforderungen...',
-    'Erstelle Anschreiben...'
+    'Erstelle personalisiertes Anschreiben...'
   ]
   let textIndex = 0
   const textInterval = setInterval(() => {
     textIndex = (textIndex + 1) % loadingTexts.length
     loadingText.value = loadingTexts[textIndex]
-  }, 2000)
+  }, 2500)
 
   try {
-    // Call the demo generation API
-    const response = await api.post('/demo/generate', {
-      url: url.value
-    })
+    // Create FormData for file upload
+    const formData = new FormData()
+    formData.append('url', url.value)
+    formData.append('cv_file', cvFile)
+
+    // Call the demo generation API with CV
+    const response = await api.post('/demo/generate', formData)
 
     if (response.data.success) {
       emit('demo-complete', {
@@ -149,6 +161,15 @@ const startDemo = async () => {
     loading.value = false
   }
 }
+
+// Reset the generator state
+const reset = () => {
+  loading.value = false
+  error.value = ''
+}
+
+// Expose methods to parent
+defineExpose({ generateWithCV, reset })
 
 const clearError = () => {
   error.value = ''

@@ -46,6 +46,21 @@ export const demoStore = reactive({
   // The regenerated result after CV upload
   regeneratedResult: initialState?.regeneratedResult || null,
 
+  // CV text extracted from uploaded PDF (for post-registration direct generation)
+  cvText: initialState?.cvText || null,
+
+  // Original CV filename for UI display
+  cvFileName: initialState?.cvFileName || null,
+
+  // Preview data from demo generation
+  previewData: initialState?.previewData || null,
+
+  // PDF blob from demo generation (not persisted to session)
+  pdfBlob: null,
+
+  // Current crafting phase (0-4)
+  craftingPhase: 0,
+
   /**
    * Store demo completion data before redirecting to register
    */
@@ -54,11 +69,53 @@ export const demoStore = reactive({
     this.demoResult = result
     this.postRegistrationFlow = true
     this.regeneratedResult = null
+    this._saveToSession()
+  },
+
+  /**
+   * Store CV data for post-registration direct generation
+   */
+  setCvData(cvText, fileName) {
+    this.cvText = cvText
+    this.cvFileName = fileName
+    this._saveToSession()
+  },
+
+  /**
+   * Store preview data from demo generation
+   */
+  setPreviewData(data) {
+    this.previewData = data
+    this._saveToSession()
+  },
+
+  /**
+   * Store PDF blob from demo generation
+   */
+  setPdfBlob(blob) {
+    this.pdfBlob = blob
+    this._saveToSession()
+  },
+
+  /**
+   * Set current crafting phase
+   */
+  setCraftingPhase(phase) {
+    this.craftingPhase = phase
+  },
+
+  /**
+   * Internal method to save all state to session
+   */
+  _saveToSession() {
     saveState({
       jobUrl: this.jobUrl,
       demoResult: this.demoResult,
-      postRegistrationFlow: true,
-      regeneratedResult: null
+      postRegistrationFlow: this.postRegistrationFlow,
+      regeneratedResult: this.regeneratedResult,
+      cvText: this.cvText,
+      cvFileName: this.cvFileName,
+      previewData: this.previewData
     })
   },
 
@@ -67,12 +124,7 @@ export const demoStore = reactive({
    */
   setRegeneratedResult(result) {
     this.regeneratedResult = result
-    saveState({
-      jobUrl: this.jobUrl,
-      demoResult: this.demoResult,
-      postRegistrationFlow: this.postRegistrationFlow,
-      regeneratedResult: result
-    })
+    this._saveToSession()
   },
 
   /**
@@ -83,6 +135,13 @@ export const demoStore = reactive({
   },
 
   /**
+   * Check if we have CV data stored
+   */
+  hasCvData() {
+    return !!this.cvText
+  },
+
+  /**
    * Clear all demo state (after completing the flow or abandoning it)
    */
   clear() {
@@ -90,6 +149,11 @@ export const demoStore = reactive({
     this.demoResult = null
     this.postRegistrationFlow = false
     this.regeneratedResult = null
+    this.cvText = null
+    this.cvFileName = null
+    this.previewData = null
+    this.pdfBlob = null
+    this.craftingPhase = 0
     sessionStorage.removeItem(STORAGE_KEY)
   }
 })
