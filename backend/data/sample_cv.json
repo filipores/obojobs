@@ -1,0 +1,54 @@
+{
+  "name": "Max Mustermann",
+  "email": "max.mustermann@example.com",
+  "phone": "+49 123 4567890",
+  "location": "Berlin, Deutschland",
+  "summary": "Erfahrener Softwareentwickler mit 5+ Jahren Erfahrung in der Full-Stack-Entwicklung. Spezialisiert auf moderne Web-Technologien und agile Entwicklungsmethoden. Leidenschaft für sauberen Code und kontinuierliche Verbesserung.",
+  "experience": [
+    {
+      "title": "Senior Software Developer",
+      "company": "TechCorp GmbH",
+      "location": "Berlin",
+      "start_date": "2021-01",
+      "end_date": "heute",
+      "description": "Entwicklung und Wartung von Web-Anwendungen mit React und Node.js. Leitung eines 4-köpfigen Entwicklerteams. Einführung von CI/CD-Pipelines und automatisierten Tests."
+    },
+    {
+      "title": "Software Developer",
+      "company": "Digital Solutions AG",
+      "location": "München",
+      "start_date": "2018-06",
+      "end_date": "2020-12",
+      "description": "Full-Stack-Entwicklung mit Python/Django und Vue.js. Implementierung von REST-APIs und Datenbankoptimierung. Mitarbeit an der Architektur von Microservices."
+    },
+    {
+      "title": "Junior Developer",
+      "company": "StartUp XYZ",
+      "location": "Hamburg",
+      "start_date": "2016-09",
+      "end_date": "2018-05",
+      "description": "Entwicklung von Web-Anwendungen mit JavaScript und PHP. Erste Erfahrungen mit agilen Methoden (Scrum). Kundensupport und Bug-Fixing."
+    }
+  ],
+  "education": [
+    {
+      "degree": "Bachelor of Science Informatik",
+      "institution": "Technische Universität Berlin",
+      "location": "Berlin",
+      "graduation_date": "2016",
+      "grade": "1.8"
+    }
+  ],
+  "skills": {
+    "programming_languages": ["Python", "JavaScript", "TypeScript", "Java"],
+    "frameworks": ["React", "Node.js", "Django", "Vue.js", "Flask"],
+    "databases": ["PostgreSQL", "MongoDB", "Redis"],
+    "tools": ["Git", "Docker", "Kubernetes", "AWS", "Jenkins"],
+    "methods": ["Agile/Scrum", "Test-Driven Development", "CI/CD"]
+  },
+  "languages": [
+    {"language": "Deutsch", "level": "Muttersprache"},
+    {"language": "Englisch", "level": "Fließend (C1)"}
+  ],
+  "cv_text": "LEBENSLAUF\n\nMax Mustermann\nmax.mustermann@example.com | +49 123 4567890 | Berlin, Deutschland\n\nPROFIL\nErfahrener Softwareentwickler mit 5+ Jahren Erfahrung in der Full-Stack-Entwicklung. Spezialisiert auf moderne Web-Technologien und agile Entwicklungsmethoden. Leidenschaft für sauberen Code und kontinuierliche Verbesserung.\n\nBERUFSERFAHRUNG\n\nSenior Software Developer | TechCorp GmbH, Berlin | 01/2021 - heute\n- Entwicklung und Wartung von Web-Anwendungen mit React und Node.js\n- Leitung eines 4-köpfigen Entwicklerteams\n- Einführung von CI/CD-Pipelines und automatisierten Tests\n\nSoftware Developer | Digital Solutions AG, München | 06/2018 - 12/2020\n- Full-Stack-Entwicklung mit Python/Django und Vue.js\n- Implementierung von REST-APIs und Datenbankoptimierung\n- Mitarbeit an der Architektur von Microservices\n\nJunior Developer | StartUp XYZ, Hamburg | 09/2016 - 05/2018\n- Entwicklung von Web-Anwendungen mit JavaScript und PHP\n- Erste Erfahrungen mit agilen Methoden (Scrum)\n- Kundensupport und Bug-Fixing\n\nAUSBILDUNG\n\nBachelor of Science Informatik | Technische Universität Berlin | 2016\nAbschlussnote: 1.8\n\nKENNTNISSE\n\nProgrammiersprachen: Python, JavaScript, TypeScript, Java\nFrameworks: React, Node.js, Django, Vue.js, Flask\nDatenbanken: PostgreSQL, MongoDB, Redis\nTools: Git, Docker, Kubernetes, AWS, Jenkins\nMethoden: Agile/Scrum, Test-Driven Development, CI/CD\n\nSPRACHEN\n\nDeutsch: Muttersprache\nEnglisch: Fließend (C1)"
+}
