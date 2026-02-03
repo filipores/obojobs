@@ -1,3 +1,15 @@
+# [1.19.0](https://github.com/filipores/obojobs/compare/v1.18.0...v1.19.0) (2026-02-03)
+
+
+### Bug Fixes
+
+* **lint:** auto-fix lint errors [skip ci] ([b5f13a5](https://github.com/filipores/obojobs/commit/b5f13a5f10b6de694e09d62017694dd31d99db7a)), closes [#263](https://github.com/filipores/obojobs/issues/263)
+
+
+### Features
+
+* **templates:** add 3-variant generation from single sentence input (ob-awkt) ([516b896](https://github.com/filipores/obojobs/commit/516b896951e78ee72eb11fa8b0ec9d61331e6708))
+
 # [1.18.0](https://github.com/filipores/obojobs/compare/v1.17.1...v1.18.0) (2026-02-03)
 
 
