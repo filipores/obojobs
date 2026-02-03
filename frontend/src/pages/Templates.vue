@@ -22,10 +22,72 @@
 
       <!-- Existing Templates -->
       <section v-if="templates.length > 0" class="templates-section animate-fade-up" style="animation-delay: 150ms;">
-        <h2 class="section-title">Ihre Templates</h2>
-        <div class="templates-grid">
+        <div class="section-header">
+          <h2 class="section-title">Ihre Templates</h2>
+
+          <!-- Search, Filter, Sort Controls -->
+          <div class="templates-controls">
+            <!-- Search Input -->
+            <div class="search-box">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="m21 21-4.35-4.35"/>
+              </svg>
+              <input
+                v-model="searchQuery"
+                type="text"
+                placeholder="Suchen..."
+                class="search-input"
+              />
+              <button v-if="searchQuery" @click="searchQuery = ''" class="search-clear" aria-label="Suche löschen">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M18 6 6 18M6 6l12 12"/>
+                </svg>
+              </button>
+            </div>
+
+            <!-- Filter Chips -->
+            <div class="filter-chips">
+              <button
+                :class="['filter-chip', { active: typeFilter === 'all' }]"
+                @click="typeFilter = 'all'"
+              >
+                Alle
+              </button>
+              <button
+                :class="['filter-chip', { active: typeFilter === 'text' }]"
+                @click="typeFilter = 'text'"
+              >
+                Text
+              </button>
+              <button
+                :class="['filter-chip', { active: typeFilter === 'pdf' }]"
+                @click="typeFilter = 'pdf'"
+              >
+                PDF
+              </button>
+            </div>
+
+            <!-- Sort Dropdown -->
+            <div class="sort-dropdown">
+              <select v-model="sortBy" class="sort-select">
+                <option value="updated_at">Zuletzt verwendet</option>
+                <option value="created_at">Erstellungsdatum</option>
+                <option value="name">Name</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- No Results Message -->
+        <div v-if="filteredTemplates.length === 0" class="no-results">
+          <p v-if="searchQuery">Keine Templates gefunden für "{{ searchQuery }}"</p>
+          <p v-else>Keine {{ typeFilter === 'pdf' ? 'PDF-' : typeFilter === 'text' ? 'Text-' : '' }}Templates vorhanden</p>
+        </div>
+
+        <div v-else class="templates-grid">
           <div
-            v-for="template in templates"
+            v-for="template in filteredTemplates"
             :key="template.id"
             class="template-card zen-card stagger-item"
           >
@@ -47,7 +109,12 @@
               <div class="template-title-group">
                 <h3>{{ template.name }}</h3>
                 <span v-if="template.is_pdf_template" class="badge badge-pdf">PDF</span>
-                <span v-if="template.is_default" class="badge badge-success">Standard</span>
+                <span v-if="template.is_default" class="badge badge-default">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+                    <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                  </svg>
+                  Standard
+                </span>
               </div>
             </div>
 
@@ -372,6 +439,11 @@ import { getFullLocale } from '../i18n'
 const templates = ref([])
 const hasLebenslauf = ref(false)
 const showWizard = ref(false)
+
+// Search, filter, sort state
+const searchQuery = ref('')
+const typeFilter = ref('all')
+const sortBy = ref('updated_at')
 const showPdfWizard = ref(false)
 const showManualForm = ref(false)
 const showCreationOverlay = ref(false)
@@ -429,6 +501,42 @@ const isStepValid = computed(() => {
   }
 })
 
+// Filtered and sorted templates
+const filteredTemplates = computed(() => {
+  let result = [...templates.value]
+
+  // Apply type filter
+  if (typeFilter.value === 'text') {
+    result = result.filter(t => !t.is_pdf_template)
+  } else if (typeFilter.value === 'pdf') {
+    result = result.filter(t => t.is_pdf_template)
+  }
+
+  // Apply search filter (fuzzy search on name and content)
+  if (searchQuery.value.trim()) {
+    const query = searchQuery.value.toLowerCase().trim()
+    result = result.filter(t => {
+      const nameMatch = t.name.toLowerCase().includes(query)
+      const contentMatch = t.content && t.content.toLowerCase().includes(query)
+      return nameMatch || contentMatch
+    })
+  }
+
+  // Apply sorting
+  result.sort((a, b) => {
+    if (sortBy.value === 'name') {
+      return a.name.localeCompare(b.name)
+    } else if (sortBy.value === 'created_at') {
+      return new Date(b.created_at) - new Date(a.created_at)
+    } else {
+      // Default: updated_at (last used)
+      return new Date(b.updated_at) - new Date(a.updated_at)
+    }
+  })
+
+  return result
+})
+
 // Auto-save function
 const autoSave = async () => {
   if (!editingTemplate.value || !form.value.name || !form.value.content) return
@@ -474,7 +582,7 @@ watch(showManualForm, (newVal) => {
   }
 })
 
-const startWizard = () => {
+const _startWizard = () => {
   if (!hasLebenslauf.value) return
   showWizard.value = true
   showPdfWizard.value = false
@@ -489,7 +597,7 @@ const startWizard = () => {
   }
 }
 
-const startPdfWizard = () => {
+const _startPdfWizard = () => {
   showPdfWizard.value = true
   showWizard.value = false
   showManualForm.value = false
@@ -819,14 +927,152 @@ onUnmounted(() => {
 /* ========================================
    SECTION STYLES
    ======================================== */
+.section-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
 .section-title {
   font-size: 1.5rem;
   font-weight: 500;
-  margin-bottom: var(--space-lg);
+  margin-bottom: 0;
 }
 
 .templates-section {
   margin-bottom: var(--space-ma);
+}
+
+/* ========================================
+   SEARCH, FILTER, SORT CONTROLS
+   ======================================== */
+.templates-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.search-box {
+  position: relative;
+  flex: 1;
+  min-width: 200px;
+  max-width: 300px;
+}
+
+.search-icon {
+  position: absolute;
+  left: var(--space-sm);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--color-text-tertiary);
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: var(--space-sm) var(--space-sm) var(--space-sm) calc(var(--space-sm) + 24px);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-washi);
+  font-size: 0.875rem;
+  transition: border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+.search-input:focus {
+  outline: none;
+  border-color: var(--color-ai);
+  box-shadow: 0 0 0 3px var(--color-ai-subtle);
+}
+
+.search-input::placeholder {
+  color: var(--color-text-ghost);
+}
+
+.search-clear {
+  position: absolute;
+  right: var(--space-xs);
+  top: 50%;
+  transform: translateY(-50%);
+  padding: var(--space-xs);
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.search-clear:hover {
+  color: var(--color-text-primary);
+  background: var(--color-sand);
+}
+
+.filter-chips {
+  display: flex;
+  gap: var(--space-xs);
+}
+
+.filter-chip {
+  padding: var(--space-xs) var(--space-md);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-full);
+  background: var(--color-washi);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.filter-chip:hover {
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.filter-chip.active {
+  background: var(--color-ai);
+  border-color: var(--color-ai);
+  color: var(--color-text-inverse);
+}
+
+.sort-dropdown {
+  position: relative;
+}
+
+.sort-select {
+  padding: var(--space-sm) var(--space-lg) var(--space-sm) var(--space-sm);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  background: var(--color-washi);
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right var(--space-sm) center;
+  min-width: 160px;
+}
+
+.sort-select:focus {
+  outline: none;
+  border-color: var(--color-ai);
+  box-shadow: 0 0 0 3px var(--color-ai-subtle);
+}
+
+.no-results {
+  text-align: center;
+  padding: var(--space-xl);
+  color: var(--color-text-tertiary);
+}
+
+.no-results p {
+  margin: 0;
+  font-size: 0.9375rem;
 }
 
 /* ========================================
@@ -1215,6 +1461,14 @@ onUnmounted(() => {
   color: var(--color-washi);
 }
 
+.badge-default {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: linear-gradient(135deg, var(--color-ai) 0%, var(--color-koke) 100%);
+  color: var(--color-washi);
+}
+
 .badge-pdf {
   background: rgba(220, 38, 38, 0.12);
   color: #dc2626;
@@ -1271,6 +1525,23 @@ onUnmounted(() => {
 
   .form-actions {
     flex-direction: column;
+  }
+
+  .templates-controls {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .search-box {
+    max-width: none;
+  }
+
+  .filter-chips {
+    justify-content: center;
+  }
+
+  .sort-select {
+    width: 100%;
   }
 }
 

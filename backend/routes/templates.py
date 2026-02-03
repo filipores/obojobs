@@ -113,8 +113,41 @@ templates_bp = Blueprint("templates", __name__)
 @templates_bp.route("", methods=["GET"])
 @jwt_required_custom
 def list_templates(current_user):
-    """List user's templates"""
-    templates = Template.query.filter_by(user_id=current_user.id).all()
+    """List user's templates with optional search, filter, and sort"""
+    # Get query parameters
+    search = request.args.get("search", "").strip().lower()
+    type_filter = request.args.get("type", "all")  # all, text, pdf
+    sort_by = request.args.get("sort", "updated_at")  # updated_at, created_at, name
+
+    # Base query
+    query = Template.query.filter_by(user_id=current_user.id)
+
+    # Apply type filter
+    if type_filter == "text":
+        query = query.filter_by(is_pdf_template=False)
+    elif type_filter == "pdf":
+        query = query.filter_by(is_pdf_template=True)
+
+    # Apply sorting
+    if sort_by == "name":
+        query = query.order_by(Template.name.asc())
+    elif sort_by == "created_at":
+        query = query.order_by(Template.created_at.desc())
+    else:  # default: updated_at (last used)
+        query = query.order_by(Template.updated_at.desc())
+
+    templates = query.all()
+
+    # Apply search filter (fuzzy search on name and content)
+    if search:
+        filtered_templates = []
+        for t in templates:
+            name_match = search in t.name.lower()
+            content_match = search in t.content.lower() if t.content else False
+            if name_match or content_match:
+                filtered_templates.append(t)
+        templates = filtered_templates
+
     return jsonify({"success": True, "templates": [t.to_dict() for t in templates]}), 200
 
 
