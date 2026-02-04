@@ -1,3 +1,10 @@
+## [1.29.2](https://github.com/filipores/obojobs/compare/v1.29.1...v1.29.2) (2026-02-04)
+
+
+### Bug Fixes
+
+* **docs:** correct tech stack - javascript not typescript ([91a6f76](https://github.com/filipores/obojobs/commit/91a6f7640fa41d64e7eb27dd95113e4865ad5821))
+
 ## [1.29.1](https://github.com/filipores/obojobs/compare/v1.29.0...v1.29.1) (2026-02-04)
 
 
