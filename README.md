@@ -10,7 +10,7 @@ obojobs automates the tedious parts of job applications. Users upload their CV, 
 
 | Layer | Technologies |
 |-------|--------------|
-| **Frontend** | Vue.js 3, TypeScript, Vite, Vue Router |
+| **Frontend** | Vue.js 3, Vite, Vue Router |
 | **Backend** | Python, Flask, SQLAlchemy, JWT Auth |
 | **AI** | Anthropic Claude API |
 | **Payments** | Stripe (subscriptions + webhooks) |
