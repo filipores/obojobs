@@ -1,3 +1,10 @@
+## [1.29.1](https://github.com/filipores/obojobs/compare/v1.29.0...v1.29.1) (2026-02-04)
+
+
+### Bug Fixes
+
+* **frontend:** improve mobile responsiveness and update legal pages ([d2424c1](https://github.com/filipores/obojobs/commit/d2424c171f793516f7fb76c70bb05a0825ef176a))
+
 # [1.29.0](https://github.com/filipores/obojobs/compare/v1.28.2...v1.29.0) (2026-02-03)
 
 
