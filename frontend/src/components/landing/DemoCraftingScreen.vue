@@ -16,7 +16,7 @@
         <div class="demo-crafting-overlay__content">
           <!-- Brand -->
           <div class="crafting-brand" :class="{ 'visible': currentPhase >= 0 }">
-            <div class="brand-enso">
+            <div class="brand-enso" :class="{ 'enso-complete': currentPhase >= 6 }">
               <EnsoCircle :state="ensoState" size="xl" :duration="4000" />
             </div>
             <span class="brand-text">obo</span>
@@ -25,7 +25,11 @@
           <!-- Phase Title -->
           <div class="phase-title-container">
             <Transition name="phase-text" mode="out-in">
-              <h2 :key="currentPhase" class="phase-title">
+              <h2
+                :key="currentPhase"
+                class="phase-title"
+                :class="{ 'phase-title-complete': currentPhase === 6 }"
+              >
                 {{ phases[currentPhase].title }}
               </h2>
             </Transition>
@@ -54,23 +58,36 @@
             </Transition>
           </div>
 
-          <!-- Einleitung Typewriter -->
-          <Transition name="einleitung">
-            <div v-if="currentPhase >= 4" class="einleitung-card" :class="{ 'visible': currentPhase >= 4 }">
-              <TypewriterText
-                v-if="currentPhase >= 4"
-                :text="data.einleitung"
-                :speed="40"
-                variant="default"
-                :showCursor="true"
-              />
-            </div>
-          </Transition>
+          <!-- PDF Card with Hover Preview (replaces einleitung typewriter and pdf preview) -->
+          <Transition name="pdf-card">
+            <div v-if="currentPhase >= 4" class="pdf-card-container">
+              <div
+                class="data-card pdf-card"
+                :class="{ 'visible': currentPhase >= 4 }"
+                @mouseenter="handlePdfCardHover(true)"
+                @mouseleave="handlePdfCardHover(false)"
+                @click="togglePdfPreview"
+              >
+                <span class="data-label">Anschreiben</span>
+                <div class="pdf-card-content">
+                  <svg class="pdf-card-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  <span class="data-value">Dein personalisiertes Anschreiben</span>
+                </div>
+                <span v-if="pdfBlob" class="pdf-card-hint">{{ isMobile ? 'Tippen fur Vorschau' : 'Hover fur Vorschau' }}</span>
+                <span v-else class="pdf-card-hint pdf-card-loading">Wird erstellt...</span>
+              </div>
 
-          <!-- PDF Preview -->
-          <Transition name="pdf-preview">
-            <div v-if="currentPhase >= 5 && pdfBlob" class="pdf-preview-container" :class="{ 'visible': currentPhase >= 5 }">
-              <DemoPdfPreview :pdfBlob="pdfBlob" />
+              <Transition name="pdf-preview-float">
+                <div v-if="showPdfPreview && pdfBlob" class="pdf-preview-floating">
+                  <DemoPdfPreview :pdfBlob="pdfBlob" :floating="true" />
+                </div>
+              </Transition>
             </div>
           </Transition>
 
@@ -99,7 +116,6 @@
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted } from 'vue'
 import EnsoCircle from '@/components/application/EnsoCircle.vue'
-import TypewriterText from '@/components/application/TypewriterText.vue'
 import InkProgress from '@/components/application/InkProgress.vue'
 import DemoPdfPreview from './DemoPdfPreview.vue'
 
@@ -125,15 +141,21 @@ const props = defineProps({
 
 const emit = defineEmits(['register', 'complete'])
 
-// Phase definitions with timing (in ms)
-// Phase 0: 0-2s, Phase 1: 2-5s, Phase 2: 5-9s, Phase 3: 9-13s, Phase 4: 13-17s, Phase 5: 17-21s, Phase 6: 21-24s
+// Phase definitions with timing (in ms) - staggered for momentum
+// Phase 0: 2000ms (preparation)
+// Phase 1: 2500ms (slower start)
+// Phase 2: 2000ms (faster)
+// Phase 3: 1500ms (even faster)
+// Phase 4: 4000ms (PDF card with loading)
+// Phase 5: 2000ms (quick transition)
+// Phase 6: 3000ms (celebration)
 const phases = [
   { title: 'Bereite vor...', duration: 2000 },
-  { title: 'Empfanger gefunden', duration: 3000 },
-  { title: 'Unternehmen analysiert', duration: 4000 },
-  { title: 'Position verstanden', duration: 4000 },
-  { title: 'Schreibe Einleitung...', duration: 4000 },
-  { title: 'Erstelle PDF...', duration: 4000 },
+  { title: 'Empfanger gefunden', duration: 2500 },
+  { title: 'Unternehmen analysiert', duration: 2000 },
+  { title: 'Position verstanden', duration: 1500 },
+  { title: 'Erstelle Anschreiben...', duration: 4000 },
+  { title: 'Fast fertig...', duration: 2000 },
   { title: 'Fertig!', duration: 3000 }
 ]
 
@@ -143,11 +165,13 @@ const phaseStartTime = ref(0)
 const elapsedTime = ref(0)
 const phaseTimer = ref(null)
 const progressTimer = ref(null)
+const showPdfPreview = ref(false)
+const isMobile = ref(false)
 
 // Computed
 const ensoState = computed(() => {
-  if (currentPhase.value <= 4) return 'breathing'
-  if (currentPhase.value === 5) return 'rotating'
+  if (currentPhase.value <= 3) return 'breathing'
+  if (currentPhase.value <= 5) return 'rotating'
   return 'complete'
 })
 
@@ -197,10 +221,28 @@ const handleRegister = () => {
   emit('register')
 }
 
+const handlePdfCardHover = (isHovering) => {
+  if (!isMobile.value) {
+    showPdfPreview.value = isHovering
+  }
+}
+
+const togglePdfPreview = () => {
+  if (isMobile.value) {
+    showPdfPreview.value = !showPdfPreview.value
+  }
+}
+
+const checkMobile = () => {
+  isMobile.value = window.matchMedia('(max-width: 768px)').matches ||
+                   'ontouchstart' in window
+}
+
 const reset = () => {
   currentPhase.value = 0
   elapsedTime.value = 0
   phaseStartTime.value = 0
+  showPdfPreview.value = false
   clearTimeout(phaseTimer.value)
   clearInterval(progressTimer.value)
 }
@@ -218,12 +260,15 @@ watch(() => props.isActive, (active) => {
 
 // Lifecycle
 onMounted(() => {
+  checkMobile()
+  window.addEventListener('resize', checkMobile)
   if (props.isActive) {
     setTimeout(startPhaseSequence, 500)
   }
 })
 
 onUnmounted(() => {
+  window.removeEventListener('resize', checkMobile)
   clearTimeout(phaseTimer.value)
   clearInterval(progressTimer.value)
 })
@@ -241,6 +286,8 @@ defineExpose({ reset })
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  /* Safe area support for notched phones */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 .demo-crafting-overlay__backdrop {
@@ -266,6 +313,10 @@ defineExpose({ reset })
   max-width: 600px;
   width: 100%;
   text-align: center;
+  /* Responsive fixes */
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow-y: auto;
 }
 
 /* Brand */
@@ -284,6 +335,26 @@ defineExpose({ reset })
 
 .brand-enso {
   margin-bottom: var(--space-sm);
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1),
+              filter 0.4s var(--ease-zen);
+}
+
+/* Enso completion emphasis - scale pulse and glow */
+.brand-enso.enso-complete {
+  animation: ensoCompletePulse 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+  filter: drop-shadow(0 0 12px var(--color-ai-subtle));
+}
+
+@keyframes ensoCompletePulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .brand-text {
@@ -317,6 +388,26 @@ defineExpose({ reset })
   color: var(--color-text-secondary);
   letter-spacing: var(--tracking-tight);
   margin: 0;
+}
+
+/* Celebration animation for "Fertig!" */
+.phase-title-complete {
+  animation: celebrateTitle 0.8s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes celebrateTitle {
+  0% {
+    transform: scale(1);
+    color: var(--color-text-secondary);
+  }
+  40% {
+    transform: scale(1.15);
+    color: var(--color-ai);
+  }
+  100% {
+    transform: scale(1);
+    color: var(--color-koke);
+  }
 }
 
 /* Data Cards */
@@ -394,30 +485,68 @@ defineExpose({ reset })
   }
 }
 
-/* Einleitung Card */
-.einleitung-card {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-lg);
-  padding: var(--space-lg);
-  text-align: left;
-  box-shadow: var(--shadow-paper);
-  max-width: 480px;
+/* PDF Card Container */
+.pdf-card-container {
+  position: relative;
   width: 100%;
-  min-height: 100px;
+  max-width: 400px;
 }
 
-.einleitung-card :deep(.typewriter) {
-  font-size: 0.9375rem;
-  line-height: var(--leading-relaxed);
-  color: var(--color-text-secondary);
+/* PDF Card */
+.pdf-card {
+  cursor: pointer;
+  transition: all 0.2s var(--ease-zen);
+  border: 1px solid var(--color-ai-subtle);
 }
 
-/* PDF Preview */
-.pdf-preview-container {
-  width: 100%;
+.pdf-card:hover {
+  border-color: var(--color-ai);
+  box-shadow: var(--shadow-lifted);
+}
+
+.pdf-card-content {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.pdf-card-icon {
+  color: var(--color-ai);
+  flex-shrink: 0;
+}
+
+.pdf-card .data-value {
+  color: var(--color-ai);
+  font-weight: 500;
+}
+
+.pdf-card-hint {
+  font-size: 0.75rem;
+  color: var(--color-text-ghost);
+  margin-top: var(--space-xs);
+}
+
+.pdf-card-loading {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 0.5;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Floating PDF Preview */
+.pdf-preview-floating {
+  position: absolute;
+  bottom: calc(100% + var(--space-md));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  pointer-events: none;
 }
 
 /* CTA Button */
@@ -483,23 +612,26 @@ defineExpose({ reset })
   transform: translateY(-10px);
 }
 
-/* Data card transitions */
+/* Data card transitions with bounce easing */
 .data-card-enter-active {
-  animation: dataCardFadeUp 0.6s var(--ease-zen);
+  animation: dataCardFadeUpBounce 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .data-card-leave-active {
   animation: dataCardFadeOut 0.3s var(--ease-zen);
 }
 
-@keyframes dataCardFadeUp {
+@keyframes dataCardFadeUpBounce {
   0% {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(20px) scale(0.95);
+  }
+  70% {
+    transform: translateY(-4px) scale(1.02);
   }
   100% {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) scale(1);
   }
 }
 
@@ -512,104 +644,19 @@ defineExpose({ reset })
   }
 }
 
-/* Firma card scale + brush transition */
+/* Firma card scale + brush transition - faster */
 .data-card-firma-enter-active {
-  animation: firmaEnter 0.7s var(--ease-zen);
+  animation: firmaEnterBounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
 .data-card-firma-leave-active {
   animation: dataCardFadeOut 0.3s var(--ease-zen);
 }
 
-@keyframes firmaEnter {
+@keyframes firmaEnterBounce {
   0% {
     opacity: 0;
-    transform: scale(0.9);
-  }
-  60% {
-    transform: scale(1.02);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* Position slide from right */
-.data-card-slide-enter-active {
-  animation: slideFromRight 0.6s var(--ease-zen);
-}
-
-.data-card-slide-leave-active {
-  animation: dataCardFadeOut 0.3s var(--ease-zen);
-}
-
-@keyframes slideFromRight {
-  0% {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-/* Einleitung transition */
-.einleitung-enter-active {
-  animation: einleitungEnter 0.6s var(--ease-zen);
-}
-
-.einleitung-leave-active {
-  animation: dataCardFadeOut 0.3s var(--ease-zen);
-}
-
-@keyframes einleitungEnter {
-  0% {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* PDF preview slide up + shadow lift */
-.pdf-preview-enter-active {
-  animation: pdfSlideUp 0.8s var(--ease-zen);
-}
-
-.pdf-preview-leave-active {
-  animation: dataCardFadeOut 0.3s var(--ease-zen);
-}
-
-@keyframes pdfSlideUp {
-  0% {
-    opacity: 0;
-    transform: translateY(40px);
-    filter: drop-shadow(0 0 0 transparent);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(0);
-    filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.1));
-  }
-}
-
-/* CTA fade in + pulse */
-.cta-enter-active {
-  animation: ctaEnter 0.6s var(--ease-zen);
-}
-
-.cta-leave-active {
-  animation: dataCardFadeOut 0.3s var(--ease-zen);
-}
-
-@keyframes ctaEnter {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.85);
   }
   70% {
     transform: scale(1.05);
@@ -620,10 +667,103 @@ defineExpose({ reset })
   }
 }
 
+/* Position slide from right - fastest */
+.data-card-slide-enter-active {
+  animation: slideFromRightBounce 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.data-card-slide-leave-active {
+  animation: dataCardFadeOut 0.3s var(--ease-zen);
+}
+
+@keyframes slideFromRightBounce {
+  0% {
+    opacity: 0;
+    transform: translateX(30px) scale(0.95);
+  }
+  70% {
+    transform: translateX(-4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* PDF Card transition */
+.pdf-card-enter-active {
+  animation: pdfCardEnter 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pdf-card-leave-active {
+  animation: dataCardFadeOut 0.3s var(--ease-zen);
+}
+
+@keyframes pdfCardEnter {
+  0% {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  70% {
+    transform: translateY(-4px) scale(1.02);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Floating PDF preview transition */
+.pdf-preview-float-enter-active {
+  transition: opacity 0.2s ease, transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.pdf-preview-float-leave-active {
+  transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.pdf-preview-float-enter-from {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.9) translateY(8px);
+}
+
+.pdf-preview-float-leave-to {
+  opacity: 0;
+  transform: translateX(-50%) scale(0.95) translateY(4px);
+}
+
+/* CTA fade in + dramatic bounce */
+.cta-enter-active {
+  animation: ctaEnterDramatic 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cta-leave-active {
+  animation: dataCardFadeOut 0.3s var(--ease-zen);
+}
+
+@keyframes ctaEnterDramatic {
+  0% {
+    opacity: 0;
+    transform: scale(0.8) translateY(10px);
+  }
+  60% {
+    transform: scale(1.1) translateY(-4px);
+  }
+  80% {
+    transform: scale(0.98) translateY(2px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 /* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
   .crafting-brand,
-  .cta-pulse {
+  .cta-pulse,
+  .phase-title-complete,
+  .brand-enso.enso-complete {
     animation: none;
     opacity: 1;
   }
@@ -644,10 +784,10 @@ defineExpose({ reset })
   .data-card-firma-leave-active,
   .data-card-slide-enter-active,
   .data-card-slide-leave-active,
-  .einleitung-enter-active,
-  .einleitung-leave-active,
-  .pdf-preview-enter-active,
-  .pdf-preview-leave-active,
+  .pdf-card-enter-active,
+  .pdf-card-leave-active,
+  .pdf-preview-float-enter-active,
+  .pdf-preview-float-leave-active,
   .cta-enter-active,
   .cta-leave-active {
     animation: none;
@@ -666,8 +806,124 @@ defineExpose({ reset })
     max-width: 100%;
   }
 
-  .einleitung-card {
+  /* Position floating preview better on mobile */
+  .pdf-preview-floating {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    bottom: auto;
+    pointer-events: auto;
+    z-index: 100;
+  }
+
+  .pdf-preview-float-enter-from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+
+  .pdf-preview-float-leave-to {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.95);
+  }
+}
+
+/* Very small screens (320-375px) */
+@media (max-width: 375px) {
+  .demo-crafting-overlay__content {
     padding: var(--space-md);
+    gap: var(--space-sm);
+    justify-content: flex-start;
+    padding-top: var(--space-lg);
+  }
+
+  .crafting-brand {
+    gap: var(--space-sm);
+  }
+
+  .brand-enso {
+    margin-bottom: 0;
+    transform: scale(0.85);
+  }
+
+  .brand-text {
+    font-size: 1.5rem;
+  }
+
+  .phase-title-container {
+    min-height: 2.5rem;
+  }
+
+  .phase-title {
+    font-size: 1rem;
+  }
+
+  .data-cards {
+    gap: var(--space-sm);
+  }
+
+  .data-card {
+    padding: var(--space-sm);
+  }
+
+  .data-label {
+    font-size: 0.6875rem;
+  }
+
+  .data-value {
+    font-size: 0.875rem;
+  }
+
+  .pdf-card-container {
+    max-width: 100%;
+  }
+
+  .pdf-card-content {
+    gap: var(--space-xs);
+  }
+
+  .pdf-card-icon {
+    width: 20px;
+    height: 20px;
+  }
+
+  .demo-crafting-overlay__progress {
+    margin-top: var(--space-md);
+    position: sticky;
+    bottom: var(--space-sm);
+    background: var(--color-washi);
+    padding: var(--space-sm);
+    border-radius: var(--radius-md);
+    width: 100%;
+  }
+
+  .zen-btn {
+    padding: var(--space-sm) var(--space-md);
+    font-size: 0.875rem;
+  }
+}
+
+/* Extra small screens (< 320px) */
+@media (max-width: 320px) {
+  .demo-crafting-overlay__content {
+    padding: var(--space-sm);
+    gap: var(--space-xs);
+  }
+
+  .brand-enso {
+    transform: scale(0.7);
+  }
+
+  .brand-text {
+    font-size: 1.25rem;
+  }
+
+  .data-card {
+    padding: var(--space-xs);
+  }
+
+  .pdf-card-hint {
+    font-size: 0.6875rem;
   }
 }
 </style>

@@ -17,9 +17,8 @@
         <div class="legal-section">
           <h2>Angaben gemäß § 5 TMG</h2>
           <p>
-            <strong>obo - Bewerbungsautomation</strong><br>
-            Musterstraße 42<br>
-            10115 Berlin<br>
+            <strong>Filip Ores</strong><br>
+            Hamburg<br>
             Deutschland
           </p>
         </div>
@@ -27,15 +26,16 @@
         <div class="legal-section">
           <h2>Kontakt</h2>
           <p>
-            E-Mail: <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>
+            E-Mail: <a href="mailto:filip.ores@hotmail.com">filip.ores@hotmail.com</a><br>
+            Website: <a href="https://filipores.com" target="_blank" rel="noopener">filipores.com</a>
           </p>
         </div>
 
         <div class="legal-section">
           <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
           <p>
-            obo - Bewerbungsautomation<br>
-            Musterstraße 42, 10115 Berlin
+            Filip Ores<br>
+            Hamburg
           </p>
         </div>
 

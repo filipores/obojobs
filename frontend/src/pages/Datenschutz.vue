@@ -75,9 +75,9 @@
           <h3>Hinweis zur verantwortlichen Stelle</h3>
           <p>
             Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:<br><br>
-            obo - Bewerbungsautomation<br>
-            Musterstraße 42, 10115 Berlin<br>
-            E-Mail: kontakt@obojobs.de
+            Filip Ores<br>
+            Hamburg<br>
+            E-Mail: filip.ores@hotmail.com
           </p>
 
           <h3>Speicherdauer</h3>

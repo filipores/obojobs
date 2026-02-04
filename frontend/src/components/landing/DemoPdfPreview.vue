@@ -1,5 +1,5 @@
 <template>
-  <div class="demo-pdf-preview zen-card">
+  <div class="demo-pdf-preview zen-card" :class="{ 'floating-mode': floating }">
     <div class="pdf-header">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -32,6 +32,10 @@ const props = defineProps({
     type: Object,
     required: false,
     default: null
+  },
+  floating: {
+    type: Boolean,
+    default: false
   }
 })
 
@@ -127,6 +131,23 @@ async function renderPdf() {
   box-shadow: var(--shadow-lifted);
 }
 
+/* Floating mode for hover preview */
+.demo-pdf-preview.floating-mode {
+  box-shadow: var(--shadow-modal);
+  animation: pdfPreviewScaleIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes pdfPreviewScaleIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
 .pdf-header {
   display: flex;
   align-items: center;
@@ -159,5 +180,13 @@ async function renderPdf() {
   height: 80px;
   background: linear-gradient(to bottom, transparent, var(--color-bg-elevated));
   pointer-events: none;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .demo-pdf-preview.floating-mode {
+    animation: none;
+    opacity: 1;
+  }
 }
 </style>

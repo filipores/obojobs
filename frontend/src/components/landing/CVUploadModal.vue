@@ -237,6 +237,13 @@ onUnmounted(() => {
   justify-content: center;
   z-index: var(--z-modal);
   padding: var(--space-lg);
+  /* Responsive overflow handling */
+  overflow-y: auto;
+  /* Safe area support for notched phones */
+  padding-top: max(var(--space-lg), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-lg), env(safe-area-inset-bottom));
+  padding-left: max(var(--space-lg), env(safe-area-inset-left));
+  padding-right: max(var(--space-lg), env(safe-area-inset-right));
 }
 
 .cv-modal {
@@ -244,6 +251,9 @@ onUnmounted(() => {
   max-width: 480px;
   padding: var(--space-xl);
   text-align: center;
+  /* Ensure modal doesn't overflow viewport */
+  max-height: calc(100vh - var(--space-xl) * 2);
+  overflow-y: auto;
 }
 
 .cv-modal-header {
@@ -471,6 +481,75 @@ onUnmounted(() => {
 
   .file-name {
     max-width: 180px;
+  }
+}
+
+/* Very small screens (320-375px) */
+@media (max-width: 375px) {
+  .cv-modal-overlay {
+    padding: var(--space-sm);
+    padding-top: max(var(--space-sm), env(safe-area-inset-top));
+    padding-bottom: max(var(--space-sm), env(safe-area-inset-bottom));
+  }
+
+  .cv-modal {
+    padding: var(--space-md);
+    margin: var(--space-xs);
+    max-height: calc(100vh - var(--space-md) * 2);
+  }
+
+  .cv-modal-header {
+    margin-bottom: var(--space-md);
+  }
+
+  .cv-modal-icon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: var(--space-sm);
+  }
+
+  .cv-modal-icon svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .cv-modal-header h2 {
+    font-size: 1.125rem;
+  }
+
+  .cv-modal-subtitle {
+    font-size: 0.875rem;
+  }
+
+  .cv-drop-zone {
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+
+  .drop-zone-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+
+  .drop-zone-text {
+    font-size: 0.875rem;
+  }
+
+  .drop-zone-hint {
+    font-size: 0.75rem;
+  }
+
+  .file-name {
+    max-width: 140px;
+    font-size: 0.875rem;
+  }
+
+  .cv-modal-actions {
+    margin-bottom: var(--space-md);
+  }
+
+  .cv-modal-info {
+    font-size: 0.75rem;
   }
 }
 </style>
