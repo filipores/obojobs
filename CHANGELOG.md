@@ -1,3 +1,12 @@
+## [1.29.4](https://github.com/filipores/obojobs/compare/v1.29.3...v1.29.4) (2026-02-05)
+
+
+### Bug Fixes
+
+* **auth:** add full_name assertions to registration and Google OAuth tests ([f319297](https://github.com/filipores/obojobs/commit/f31929702c9a143d5a9ac2f9b74d6c0770c044ab))
+* **dev:** align vite proxy port with backend (5001) ([eb26d64](https://github.com/filipores/obojobs/commit/eb26d64e8a87dd81b67def4f11a0a589463af704))
+* **i18n:** complete i18n coverage for remaining hardcoded strings ([2f02728](https://github.com/filipores/obojobs/commit/2f02728b232fb5dc8b41d7d6ad737974bd2f0a6f))
+
 ## [1.29.3](https://github.com/filipores/obojobs/compare/v1.29.2...v1.29.3) (2026-02-05)
 
 
