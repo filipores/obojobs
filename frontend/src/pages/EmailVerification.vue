@@ -54,7 +54,11 @@
           </div>
 
           <h3>{{ $t('emailVerification.cardTitle') }}</h3>
-          <p class="email-info">{{ $t('emailVerification.emailInfoBefore') }} <strong>{{ userEmail }}</strong> {{ $t('emailVerification.emailInfoAfter') }}</p>
+          <i18n-t keypath="emailVerification.emailInfo" tag="p" class="email-info">
+            <template #email>
+              <strong>{{ userEmail }}</strong>
+            </template>
+          </i18n-t>
           <p class="instructions">
             {{ $t('emailVerification.instructions') }}
           </p>

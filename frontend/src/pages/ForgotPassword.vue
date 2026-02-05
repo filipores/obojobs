@@ -53,7 +53,11 @@
             </svg>
           </div>
           <h3>{{ $t('forgotPassword.successTitle') }}</h3>
-          <p class="success-message">{{ $t('forgotPassword.successMessageBefore') }} <strong>{{ email }}</strong> {{ $t('forgotPassword.successMessageAfter') }}</p>
+          <i18n-t keypath="forgotPassword.successMessage" tag="p" class="success-message">
+            <template #email>
+              <strong>{{ email }}</strong>
+            </template>
+          </i18n-t>
           <p class="instructions">
             {{ $t('forgotPassword.successInstructions') }}
           </p>

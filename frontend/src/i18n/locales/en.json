@@ -162,8 +162,7 @@
     "submit": "Request Link",
     "submitting": "Sending...",
     "successTitle": "Email Sent",
-    "successMessageBefore": "If an account with the email address",
-    "successMessageAfter": "exists, a password reset link has been sent.",
+    "successMessage": "If an account with the email address {email} exists, a password reset link has been sent.",
     "successInstructions": "Please check your inbox and spam folder. The link is valid for 1 hour.",
     "backToLogin": "Back to Login",
     "rememberPassword": "Remember your password?",
@@ -180,8 +179,7 @@
     "title": "Verify Email",
     "subtitle": "Verify your email address",
     "cardTitle": "Verification Email Sent",
-    "emailInfoBefore": "We have sent a verification email to",
-    "emailInfoAfter": ".",
+    "emailInfo": "We have sent a verification email to {email}.",
     "instructions": "Click the link in the email to verify your account. If you cannot find the email, please also check your spam folder.",
     "resend": "Resend",
     "resending": "Sending...",
@@ -266,9 +264,5 @@
     "interviewPrep": "Interview Preparation",
     "mockInterview": "Mock Interview",
     "notFound": "Page Not Found"
-  },
-  "footer": {
-    "impressum": "Legal Notice",
-    "datenschutz": "Privacy Policy"
   }
 }

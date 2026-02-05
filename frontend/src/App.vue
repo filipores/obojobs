@@ -286,9 +286,9 @@
           <span>obo</span>
         </div>
         <div class="footer-links">
-          <router-link to="/impressum">{{ $t('footer.impressum') }}</router-link>
+          <router-link to="/impressum">{{ $t('pages.impressum') }}</router-link>
           <span class="footer-divider">|</span>
-          <router-link to="/datenschutz">{{ $t('footer.datenschutz') }}</router-link>
+          <router-link to="/datenschutz">{{ $t('pages.datenschutz') }}</router-link>
         </div>
         <div class="footer-copyright">
           &copy; {{ currentYear }} obo

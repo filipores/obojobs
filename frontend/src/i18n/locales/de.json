@@ -162,8 +162,7 @@
     "submit": "Link anfordern",
     "submitting": "Wird gesendet...",
     "successTitle": "E-Mail gesendet",
-    "successMessageBefore": "Falls ein Konto mit der E-Mail-Adresse",
-    "successMessageAfter": "existiert, wurde ein Link zum Zurücksetzen des Passworts gesendet.",
+    "successMessage": "Falls ein Konto mit der E-Mail-Adresse {email} existiert, wurde ein Link zum Zurücksetzen des Passworts gesendet.",
     "successInstructions": "Bitte prüfen Sie Ihr Postfach und Ihren Spam-Ordner. Der Link ist 1 Stunde gültig.",
     "backToLogin": "Zurück zum Login",
     "rememberPassword": "Passwort wieder eingefallen?",
@@ -180,8 +179,7 @@
     "title": "E-Mail bestätigen",
     "subtitle": "Verifizieren Sie Ihre E-Mail-Adresse",
     "cardTitle": "Verifizierungs-E-Mail gesendet",
-    "emailInfoBefore": "Wir haben eine Bestätigungs-E-Mail an",
-    "emailInfoAfter": "gesendet.",
+    "emailInfo": "Wir haben eine Bestätigungs-E-Mail an {email} gesendet.",
     "instructions": "Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu verifizieren. Falls Sie die E-Mail nicht finden, prüfen Sie bitte auch Ihren Spam-Ordner.",
     "resend": "Erneut senden",
     "resending": "Wird gesendet...",
@@ -266,9 +264,5 @@
     "interviewPrep": "Interview-Vorbereitung",
     "mockInterview": "Mock-Interview",
     "notFound": "Seite nicht gefunden"
-  },
-  "footer": {
-    "impressum": "Impressum",
-    "datenschutz": "Datenschutz"
   }
 }
