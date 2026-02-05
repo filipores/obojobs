@@ -40,8 +40,8 @@
 
         <!-- Header -->
         <div class="auth-header">
-          <h1>Konto erstellen</h1>
-          <p>Starten Sie mit KI-gestützten Bewerbungen</p>
+          <h1>{{ $t('register.title') }}</h1>
+          <p>{{ $t('register.subtitle') }}</p>
         </div>
 
         <!-- Success Message -->
@@ -52,24 +52,24 @@
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
           </div>
-          <h3>Registrierung erfolgreich</h3>
-          <p>Ihr Konto wurde erstellt. Sie können sich jetzt anmelden.</p>
+          <h3>{{ $t('register.successTitle') }}</h3>
+          <p>{{ $t('register.successMessage') }}</p>
           <router-link to="/login" class="zen-btn zen-btn-filled">
-            Zum Login
+            {{ $t('register.goToLogin') }}
           </router-link>
         </div>
 
         <!-- Form -->
         <form v-else @submit.prevent="handleRegister" class="auth-form">
           <div class="form-group">
-            <label class="form-label required" for="full_name">Vollständiger Name</label>
+            <label class="form-label required" for="full_name">{{ $t('register.fullName') }}</label>
             <input
               id="full_name"
               v-model="full_name"
               type="text"
               class="form-input"
               :class="{ 'input-error': nameError, 'input-valid': nameTouched && !nameError && full_name }"
-              placeholder="Max Mustermann"
+              :placeholder="$t('register.namePlaceholder')"
               required
               aria-required="true"
               aria-invalid="nameError ? 'true' : 'false'"
@@ -84,14 +84,14 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label required" for="email">E-Mail</label>
+            <label class="form-label required" for="email">{{ $t('auth.email') }}</label>
             <input
               id="email"
               v-model="email"
               type="email"
               class="form-input"
               :class="{ 'input-error': emailError, 'input-valid': emailTouched && !emailError && email }"
-              placeholder="ihre@email.de"
+              :placeholder="$t('register.emailPlaceholder')"
               required
               aria-required="true"
               aria-invalid="emailError ? 'true' : 'false'"
@@ -106,14 +106,14 @@
           </div>
 
           <div class="form-group">
-            <label class="form-label required" for="password">Passwort</label>
+            <label class="form-label required" for="password">{{ $t('auth.password') }}</label>
             <div class="password-input-wrapper">
               <input
                 id="password"
                 v-model="password"
                 :type="showPassword ? 'text' : 'password'"
                 class="form-input"
-                placeholder="Sicheres Passwort"
+                :placeholder="$t('register.passwordPlaceholder')"
                 required
                 aria-required="true"
                 autocomplete="new-password"
@@ -123,7 +123,7 @@
                 type="button"
                 class="password-toggle"
                 @click="showPassword = !showPassword"
-                :title="showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'"
+                :title="showPassword ? $t('auth.hidePassword') : $t('auth.showPassword')"
               >
                 <svg v-if="showPassword" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"/>
@@ -136,23 +136,23 @@
               </button>
             </div>
             <div class="password-requirements" aria-live="polite" aria-atomic="false">
-              <p class="requirements-label" id="password-requirements-label">Passwort-Anforderungen:</p>
+              <p class="requirements-label" id="password-requirements-label">{{ $t('register.passwordRequirements') }}</p>
               <ul class="requirements-list" aria-labelledby="password-requirements-label">
-                <li :class="{ 'requirement-met': passwordChecks.min_length }" :aria-label="passwordChecks.min_length ? 'Erfüllt: Mindestens 8 Zeichen' : 'Nicht erfüllt: Mindestens 8 Zeichen'">
+                <li :class="{ 'requirement-met': passwordChecks.min_length }" :aria-label="passwordChecks.min_length ? $t('register.minLengthMet') : $t('register.minLengthNotMet')">
                   <span class="check-icon" aria-hidden="true">{{ passwordChecks.min_length ? '✓' : '○' }}</span>
-                  Mindestens 8 Zeichen
+                  {{ $t('register.minLength') }}
                 </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_uppercase }" :aria-label="passwordChecks.has_uppercase ? 'Erfüllt: Mindestens ein Großbuchstabe' : 'Nicht erfüllt: Mindestens ein Großbuchstabe'">
+                <li :class="{ 'requirement-met': passwordChecks.has_uppercase }" :aria-label="passwordChecks.has_uppercase ? $t('register.hasUppercaseMet') : $t('register.hasUppercaseNotMet')">
                   <span class="check-icon" aria-hidden="true">{{ passwordChecks.has_uppercase ? '✓' : '○' }}</span>
-                  Mindestens ein Großbuchstabe (A-Z)
+                  {{ $t('register.hasUppercase') }}
                 </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_lowercase }" :aria-label="passwordChecks.has_lowercase ? 'Erfüllt: Mindestens ein Kleinbuchstabe' : 'Nicht erfüllt: Mindestens ein Kleinbuchstabe'">
+                <li :class="{ 'requirement-met': passwordChecks.has_lowercase }" :aria-label="passwordChecks.has_lowercase ? $t('register.hasLowercaseMet') : $t('register.hasLowercaseNotMet')">
                   <span class="check-icon" aria-hidden="true">{{ passwordChecks.has_lowercase ? '✓' : '○' }}</span>
-                  Mindestens ein Kleinbuchstabe (a-z)
+                  {{ $t('register.hasLowercase') }}
                 </li>
-                <li :class="{ 'requirement-met': passwordChecks.has_number }" :aria-label="passwordChecks.has_number ? 'Erfüllt: Mindestens eine Zahl' : 'Nicht erfüllt: Mindestens eine Zahl'">
+                <li :class="{ 'requirement-met': passwordChecks.has_number }" :aria-label="passwordChecks.has_number ? $t('register.hasNumberMet') : $t('register.hasNumberNotMet')">
                   <span class="check-icon" aria-hidden="true">{{ passwordChecks.has_number ? '✓' : '○' }}</span>
-                  Mindestens eine Zahl (0-9)
+                  {{ $t('register.hasNumber') }}
                 </li>
               </ul>
             </div>
@@ -165,13 +165,13 @@
 
           <!-- Submit Button -->
           <button type="submit" class="zen-btn zen-btn-filled zen-btn-lg" :disabled="loading">
-            <span v-if="!loading">Kostenlos registrieren</span>
-            <span v-else>Wird registriert...</span>
+            <span v-if="!loading">{{ $t('register.submit') }}</span>
+            <span v-else>{{ $t('register.submitting') }}</span>
           </button>
 
           <!-- OAuth Divider -->
           <div class="oauth-divider">
-            <span>oder</span>
+            <span>{{ $t('auth.or') }}</span>
           </div>
 
           <!-- Google Sign In Button -->
@@ -187,14 +187,12 @@
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
             </svg>
-            <span v-if="!googleLoading">Mit Google fortfahren</span>
-            <span v-else>Wird geladen...</span>
+            <span v-if="!googleLoading">{{ $t('register.continueWithGoogle') }}</span>
+            <span v-else>{{ $t('auth.loading') }}</span>
           </button>
 
           <!-- Info -->
-          <p class="credits-info">
-            Sie erhalten <strong>5 kostenlose Credits</strong> bei der Registrierung
-          </p>
+          <p class="credits-info" v-html="$t('register.creditsInfo')"></p>
         </form>
 
         <!-- Divider -->
@@ -202,35 +200,34 @@
 
         <!-- Footer -->
         <div class="auth-footer">
-          <p>Bereits ein Konto? <router-link to="/login">Anmelden</router-link></p>
+          <p>{{ $t('register.alreadyHaveAccount') }} <router-link to="/login">{{ $t('auth.login') }}</router-link></p>
         </div>
       </div>
 
       <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2>Starten Sie<br/>in Minuten</h2>
+          <h2 v-html="$t('register.infoTitle')"></h2>
           <p class="info-description">
-            Alles was Sie brauchen, um professionelle Bewerbungen zu
-            erstellen - kostenlos starten mit 5 Credits.
+            {{ $t('register.infoDescription') }}
           </p>
 
           <ul class="feature-list">
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>5 kostenlose Credits zum Start</span>
+              <span>{{ $t('register.featureFreeCredits') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>KI-gestützte Anschreiben-Generierung</span>
+              <span>{{ $t('register.featureAiGeneration') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Sichere Datenverwaltung</span>
+              <span>{{ $t('register.featureSecureData') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Chrome Extension inklusive</span>
+              <span>{{ $t('register.featureChromeExtension') }}</span>
             </li>
           </ul>
         </div>
@@ -245,9 +242,12 @@
 <script setup>
 import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import { authStore } from '../store/auth'
 import { demoStore } from '../stores/demo'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+
+const { t } = useI18n()
 
 const router = useRouter()
 const route = useRoute()
@@ -274,15 +274,15 @@ const isValidEmail = (emailStr) => {
 
 const nameError = computed(() => {
   if (!nameTouched.value) return ''
-  if (!full_name.value.trim()) return 'Name ist erforderlich'
-  if (full_name.value.trim().length < 2) return 'Name muss mindestens 2 Zeichen lang sein'
+  if (!full_name.value.trim()) return t('register.nameRequired')
+  if (full_name.value.trim().length < 2) return t('register.nameMinLength')
   return ''
 })
 
 const emailError = computed(() => {
   if (!emailTouched.value) return ''
-  if (!email.value) return 'E-Mail ist erforderlich'
-  if (!isValidEmail(email.value)) return 'Bitte geben Sie eine gültige E-Mail-Adresse ein'
+  if (!email.value) return t('auth.emailRequired')
+  if (!isValidEmail(email.value)) return t('auth.emailInvalid')
   return ''
 })
 
@@ -338,7 +338,7 @@ const toggleTheme = () => {
 const handleRegister = async () => {
   // Frontend validation
   if (!isPasswordValid()) {
-    error.value = 'Bitte erfüllen Sie alle Passwort-Anforderungen.'
+    error.value = t('register.passwordRequirementsError')
     return
   }
 
@@ -364,7 +364,7 @@ const handleRegister = async () => {
       router.push({ path: '/email-verification', query: { email: email.value } })
     }
   } catch (e) {
-    error.value = e.response?.data?.error || 'Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.'
+    error.value = e.response?.data?.error || t('register.registrationFailed')
   } finally {
     loading.value = false
   }
@@ -396,7 +396,7 @@ const handleGoogleRegister = async () => {
     })
   } catch (e) {
     console.error('Google register error:', e)
-    error.value = 'Google-Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.'
+    error.value = t('register.googleRegistrationFailed')
     googleLoading.value = false
   }
 }
@@ -407,7 +407,7 @@ const handleGoogleCallback = async (response) => {
     // Google OAuth users have verified email, go directly to dashboard
     router.push('/')
   } catch (e) {
-    error.value = e.response?.data?.error || 'Google-Registrierung fehlgeschlagen. Bitte versuchen Sie es erneut.'
+    error.value = e.response?.data?.error || t('register.googleRegistrationFailed')
   } finally {
     googleLoading.value = false
   }
@@ -650,7 +650,7 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-.credits-info strong {
+.credits-info :deep(strong) {
   color: var(--color-ai);
 }
 

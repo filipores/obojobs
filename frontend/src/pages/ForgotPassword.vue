@@ -1,22 +1,25 @@
 <template>
   <div class="auth-page">
-    <!-- Theme Toggle - Floating -->
-    <button @click="toggleTheme" class="theme-toggle-float" :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
-      <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/>
-        <line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/>
-        <line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-      <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-    </button>
+    <!-- Floating Controls - Theme Toggle & Language Switcher -->
+    <div class="floating-controls">
+      <button @click="toggleTheme" class="theme-toggle-float" :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
+        <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <LanguageSwitcher />
+    </div>
 
     <!-- Decorative Elements -->
     <div class="auth-decoration">
@@ -37,8 +40,8 @@
 
         <!-- Header -->
         <div class="auth-header">
-          <h1>Passwort vergessen</h1>
-          <p>Setzen Sie Ihr Passwort zurück</p>
+          <h1>{{ $t('forgotPassword.title') }}</h1>
+          <p>{{ $t('forgotPassword.subtitle') }}</p>
         </div>
 
         <!-- Success Card -->
@@ -49,30 +52,26 @@
               <polyline points="22,6 12,13 2,6"/>
             </svg>
           </div>
-          <h3>E-Mail gesendet</h3>
-          <p class="success-message">
-            Falls ein Konto mit der E-Mail-Adresse <strong>{{ email }}</strong> existiert,
-            wurde ein Link zum Zurücksetzen des Passworts gesendet.
-          </p>
+          <h3>{{ $t('forgotPassword.successTitle') }}</h3>
+          <p class="success-message" v-html="$t('forgotPassword.successMessage', { email: email })"></p>
           <p class="instructions">
-            Bitte prüfen Sie Ihr Postfach und Ihren Spam-Ordner.
-            Der Link ist 1 Stunde gültig.
+            {{ $t('forgotPassword.successInstructions') }}
           </p>
           <router-link to="/login" class="zen-btn zen-btn-filled">
-            Zurück zum Login
+            {{ $t('forgotPassword.backToLogin') }}
           </router-link>
         </div>
 
         <!-- Form -->
         <form v-else @submit.prevent="handleSubmit" class="auth-form">
           <div class="form-group">
-            <label class="form-label" for="email">E-Mail</label>
+            <label class="form-label" for="email">{{ $t('forgotPassword.emailLabel') }}</label>
             <input
               id="email"
               v-model="email"
               type="email"
               class="form-input"
-              placeholder="ihre@email.de"
+              :placeholder="$t('forgotPassword.emailPlaceholder')"
               required
               autocomplete="email"
             />
@@ -86,7 +85,7 @@
           <!-- Submit Button -->
           <button type="submit" class="zen-btn zen-btn-filled zen-btn-lg" :disabled="loading">
             <span v-if="loading" class="btn-spinner"></span>
-            {{ loading ? 'Wird gesendet...' : 'Link anfordern' }}
+            {{ loading ? $t('forgotPassword.submitting') : $t('forgotPassword.submit') }}
           </button>
         </form>
 
@@ -95,31 +94,30 @@
 
         <!-- Footer -->
         <div class="auth-footer">
-          <p>Passwort wieder eingefallen? <router-link to="/login">Anmelden</router-link></p>
+          <p>{{ $t('forgotPassword.rememberPassword') }} <router-link to="/login">{{ $t('auth.login') }}</router-link></p>
         </div>
       </div>
 
       <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2>Passwort<br/>zurücksetzen</h2>
+          <h2 v-html="$t('forgotPassword.infoTitle')"></h2>
           <p class="info-description">
-            Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen
-            Link zum Zurücksetzen Ihres Passworts.
+            {{ $t('forgotPassword.infoDescription') }}
           </p>
 
           <ul class="feature-list">
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Sicherer Reset-Link per E-Mail</span>
+              <span>{{ $t('forgotPassword.featureSecureLink') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Link ist 1 Stunde gültig</span>
+              <span>{{ $t('forgotPassword.featureLinkValidity') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Neues sicheres Passwort wählen</span>
+              <span>{{ $t('forgotPassword.featureNewPassword') }}</span>
             </li>
           </ul>
         </div>
@@ -133,7 +131,11 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+
+const { t } = useI18n()
 
 const email = ref('')
 const error = ref('')
@@ -176,11 +178,11 @@ const handleSubmit = async () => {
   } catch (e) {
     // Only show error for non-200 responses that aren't rate limiting
     if (e.response?.status === 429) {
-      error.value = 'Zu viele Anfragen. Bitte warten Sie einen Moment.'
+      error.value = t('forgotPassword.tooManyRequests')
     } else {
       // Backend always returns 200 to prevent email enumeration
       // so this case should rarely happen
-      error.value = e.response?.data?.error || 'Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
+      error.value = e.response?.data?.error || t('forgotPassword.genericError')
     }
   } finally {
     loading.value = false
@@ -201,13 +203,19 @@ onMounted(() => {
 }
 
 /* ========================================
-   FLOATING THEME TOGGLE
+   FLOATING CONTROLS
    ======================================== */
-.theme-toggle-float {
+.floating-controls {
   position: fixed;
   top: var(--space-lg);
   right: var(--space-lg);
   z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.theme-toggle-float {
   width: 44px;
   height: 44px;
   display: flex;
@@ -382,7 +390,7 @@ onMounted(() => {
   margin-bottom: var(--space-sm);
 }
 
-.success-message strong {
+.success-message :deep(strong) {
   color: var(--color-sumi);
 }
 
