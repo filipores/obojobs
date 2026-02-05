@@ -3,8 +3,9 @@ Tests for authentication endpoints.
 """
 
 from datetime import datetime, timedelta
+from unittest.mock import patch
 
-from models import User, db
+from models import TokenBlacklist, User, db
 from routes.auth import (
     MAX_VERIFICATION_EMAILS_PER_HOUR,
     _check_verification_rate_limit,
@@ -1140,3 +1141,506 @@ class TestDeleteAccount:
         assert "[GDPR]" in captured.out
         assert test_user["email"] in captured.out
         assert "Account deleted" in captured.out
+
+
+class TestRefreshToken:
+    """Tests for POST /api/auth/refresh"""
+
+    def test_refresh_returns_new_access_token(self, client, test_user):
+        """Test that refresh endpoint returns a new access token."""
+        # Login to get a refresh token
+        login_resp = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        refresh_token = login_resp.get_json()["refresh_token"]
+
+        # Use refresh token to get a new access token
+        response = client.post(
+            "/api/auth/refresh",
+            headers={"Authorization": f"Bearer {refresh_token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "access_token" in data
+
+    def test_refresh_new_token_works_for_authenticated_endpoints(self, client, test_user):
+        """Test that the new access token from refresh can be used for authenticated endpoints."""
+        # Login to get a refresh token
+        login_resp = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        refresh_token = login_resp.get_json()["refresh_token"]
+
+        # Get a new access token
+        refresh_resp = client.post(
+            "/api/auth/refresh",
+            headers={"Authorization": f"Bearer {refresh_token}"},
+        )
+        new_access_token = refresh_resp.get_json()["access_token"]
+
+        # Use new access token for /me
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {new_access_token}"},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["email"] == test_user["email"]
+
+    def test_refresh_with_access_token_fails(self, client, test_user):
+        """Test that using an access token for refresh endpoint fails."""
+        login_resp = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        access_token = login_resp.get_json()["access_token"]
+
+        # Try to use access token for refresh (should fail)
+        response = client.post(
+            "/api/auth/refresh",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        # Flask-JWT-Extended returns 422 by default, but custom error handlers may return 401
+        assert response.status_code in (401, 422)
+
+    def test_refresh_without_token_returns_401(self, client):
+        """Test that refresh without a token returns 401."""
+        response = client.post("/api/auth/refresh")
+
+        assert response.status_code == 401
+
+    def test_refresh_with_invalid_token_returns_error(self, client):
+        """Test that refresh with an invalid token returns error."""
+        response = client.post(
+            "/api/auth/refresh",
+            headers={"Authorization": "Bearer invalid-token-12345"},
+        )
+
+        # Flask-JWT-Extended returns 422 by default, but custom error handlers may return 401
+        assert response.status_code in (401, 422)
+
+
+class TestGoogleOAuth:
+    """Tests for POST /api/auth/google"""
+
+    def test_google_login_missing_credential_returns_400(self, client):
+        """Test that missing Google credential returns 400."""
+        response = client.post(
+            "/api/auth/google",
+            json={},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Google credential ist erforderlich" in data["error"]
+
+    @patch("routes.auth.Config")
+    def test_google_login_unconfigured_returns_500(self, mock_config, client):
+        """Test that unconfigured Google OAuth returns 500."""
+        mock_config.GOOGLE_CLIENT_ID = None
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "some-token"},
+        )
+
+        assert response.status_code == 500
+        data = response.get_json()
+        assert "nicht konfiguriert" in data["error"]
+
+    @patch("routes.auth.id_token")
+    @patch("routes.auth.Config")
+    def test_google_login_creates_new_user(self, mock_config, mock_id_token, app, client):
+        """Test that Google login creates a new user if email doesn't exist."""
+        mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
+        mock_config.REGISTRATION_ENABLED = True
+        mock_id_token.verify_oauth2_token.return_value = {
+            "sub": "google-id-12345",
+            "email": "googleuser@example.com",
+            "email_verified": True,
+            "name": "Google User",
+        }
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "valid-google-token"},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "access_token" in data
+        assert "refresh_token" in data
+        assert data["user"]["email"] == "googleuser@example.com"
+
+        # Verify user was created in database
+        with app.app_context():
+            user = User.query.filter_by(email="googleuser@example.com").first()
+            assert user is not None
+            assert user.google_id == "google-id-12345"
+            assert user.email_verified is True
+
+    @patch("routes.auth.id_token")
+    @patch("routes.auth.Config")
+    def test_google_login_links_existing_user(self, mock_config, mock_id_token, app, client, test_user):
+        """Test that Google login links Google account to existing user."""
+        mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
+        mock_id_token.verify_oauth2_token.return_value = {
+            "sub": "google-id-99999",
+            "email": test_user["email"],
+            "email_verified": True,
+            "name": test_user["full_name"],
+        }
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "valid-google-token"},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "access_token" in data
+        assert data["user"]["email"] == test_user["email"]
+
+        # Verify Google ID was linked
+        with app.app_context():
+            user = User.query.filter_by(email=test_user["email"]).first()
+            assert user.google_id == "google-id-99999"
+            assert user.email_verified is True
+
+    @patch("routes.auth.id_token")
+    @patch("routes.auth.Config")
+    def test_google_login_invalid_token_returns_401(self, mock_config, mock_id_token, client):
+        """Test that invalid Google token returns 401."""
+        mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
+        mock_id_token.verify_oauth2_token.side_effect = ValueError("Invalid token")
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "invalid-google-token"},
+        )
+
+        assert response.status_code == 401
+        data = response.get_json()
+        assert "Ungültiges Google-Token" in data["error"]
+
+    @patch("routes.auth.id_token")
+    @patch("routes.auth.Config")
+    def test_google_login_existing_google_user_returns_tokens(self, mock_config, mock_id_token, app, client):
+        """Test that existing Google user can login and get tokens."""
+        mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
+        google_id = "google-id-existing"
+
+        # Create user with Google ID
+        with app.app_context():
+            user = User(
+                email="existing-google@example.com",
+                google_id=google_id,
+                full_name="Existing Google User",
+                email_verified=True,
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        mock_id_token.verify_oauth2_token.return_value = {
+            "sub": google_id,
+            "email": "existing-google@example.com",
+            "email_verified": True,
+            "name": "Existing Google User",
+        }
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "valid-google-token"},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "access_token" in data
+        assert "refresh_token" in data
+
+    @patch("routes.auth.id_token")
+    @patch("routes.auth.Config")
+    def test_google_login_inactive_user_returns_401(self, mock_config, mock_id_token, app, client):
+        """Test that inactive user cannot login via Google."""
+        mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
+        google_id = "google-id-inactive"
+
+        # Create inactive user
+        with app.app_context():
+            user = User(
+                email="inactive-google@example.com",
+                google_id=google_id,
+                full_name="Inactive User",
+                is_active=False,
+            )
+            db.session.add(user)
+            db.session.commit()
+
+        mock_id_token.verify_oauth2_token.return_value = {
+            "sub": google_id,
+            "email": "inactive-google@example.com",
+            "email_verified": True,
+            "name": "Inactive User",
+        }
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "valid-google-token"},
+        )
+
+        assert response.status_code == 401
+        data = response.get_json()
+        assert "deaktiviert" in data["error"]
+
+    @patch("routes.auth.id_token")
+    @patch("routes.auth.Config")
+    def test_google_login_no_email_returns_400(self, mock_config, mock_id_token, client):
+        """Test that Google token without email returns 400."""
+        mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
+        mock_id_token.verify_oauth2_token.return_value = {
+            "sub": "google-id-noemail",
+            "email_verified": False,
+            "name": "No Email User",
+        }
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "valid-google-token"},
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Keine E-Mail-Adresse" in data["error"]
+
+    @patch("routes.auth.id_token")
+    @patch("routes.auth.Config")
+    def test_google_login_registration_disabled_returns_403(self, mock_config, mock_id_token, client):
+        """Test that new user registration via Google is blocked when registration is disabled."""
+        mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
+        mock_config.REGISTRATION_ENABLED = False
+        mock_id_token.verify_oauth2_token.return_value = {
+            "sub": "google-id-new-disabled",
+            "email": "new-disabled@example.com",
+            "email_verified": True,
+            "name": "New Disabled User",
+        }
+
+        response = client.post(
+            "/api/auth/google",
+            json={"credential": "valid-google-token"},
+        )
+
+        assert response.status_code == 403
+        data = response.get_json()
+        assert "deaktiviert" in data["error"]
+
+
+class TestTokenBlacklisting:
+    """Tests for token blacklisting mechanism"""
+
+    def test_logout_creates_blacklist_entry(self, app, client, test_user):
+        """Test that logout creates an entry in the TokenBlacklist table."""
+        # Login
+        login_resp = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        access_token = login_resp.get_json()["access_token"]
+
+        # Logout
+        response = client.post(
+            "/api/auth/logout",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        assert response.status_code == 200
+
+        # Verify TokenBlacklist entry was created
+        with app.app_context():
+            blacklisted = TokenBlacklist.query.filter_by(user_id=test_user["id"]).first()
+            assert blacklisted is not None
+            assert blacklisted.token_type == "access"
+            assert blacklisted.jti is not None
+            assert blacklisted.expires_at is not None
+
+    def test_blacklisted_token_is_detected(self, app, client, test_user):
+        """Test that TokenBlacklist.is_token_blacklisted works correctly."""
+        # Login
+        login_resp = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        access_token = login_resp.get_json()["access_token"]
+
+        # Logout (blacklists the token)
+        client.post(
+            "/api/auth/logout",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        # Verify the token is blacklisted via the model method
+        with app.app_context():
+            entry = TokenBlacklist.query.filter_by(user_id=test_user["id"]).first()
+            assert TokenBlacklist.is_token_blacklisted(entry.jti) is True
+
+    def test_non_blacklisted_token_not_detected(self, app):
+        """Test that a random JTI is not detected as blacklisted."""
+        with app.app_context():
+            assert TokenBlacklist.is_token_blacklisted("non-existent-jti") is False
+
+    def test_blacklisted_token_returns_revoked_error(self, client, test_user):
+        """Test that using a blacklisted token returns the correct error message."""
+        # Login
+        login_resp = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+        access_token = login_resp.get_json()["access_token"]
+
+        # Logout
+        client.post(
+            "/api/auth/logout",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        # Try to use blacklisted token
+        response = client.get(
+            "/api/auth/me",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+
+        assert response.status_code == 401
+        data = response.get_json()
+        assert "widerrufen" in data["error"]
+
+
+class TestUpdateLanguage:
+    """Tests for PUT /api/auth/language"""
+
+    def test_update_language_to_en(self, client, auth_headers):
+        """Test updating language preference to English."""
+        response = client.put(
+            "/api/auth/language",
+            json={"language": "en"},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["language"] == "en"
+
+    def test_update_language_to_de(self, client, auth_headers):
+        """Test updating language preference to German."""
+        response = client.put(
+            "/api/auth/language",
+            json={"language": "de"},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["language"] == "de"
+
+    def test_update_language_invalid_returns_400(self, client, auth_headers):
+        """Test that invalid language code returns 400."""
+        response = client.put(
+            "/api/auth/language",
+            json={"language": "fr"},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "Ungültige Sprache" in data["error"]
+
+    def test_update_language_requires_authentication(self, client):
+        """Test that language update requires authentication."""
+        response = client.put(
+            "/api/auth/language",
+            json={"language": "en"},
+        )
+
+        assert response.status_code == 401
+
+
+class TestUpdateProfile:
+    """Tests for PUT /api/auth/profile"""
+
+    def test_update_full_name(self, client, auth_headers):
+        """Test updating full name."""
+        response = client.put(
+            "/api/auth/profile",
+            json={"full_name": "Updated Name"},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["user"]["full_name"] == "Updated Name"
+
+    def test_update_display_name(self, client, auth_headers):
+        """Test updating display name."""
+        response = client.put(
+            "/api/auth/profile",
+            json={"display_name": "MyDisplayName"},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["user"]["display_name"] == "MyDisplayName"
+
+    def test_update_profile_full_name_too_long_returns_400(self, client, auth_headers):
+        """Test that full_name over 255 chars returns 400."""
+        response = client.put(
+            "/api/auth/profile",
+            json={"full_name": "A" * 256},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "255 Zeichen" in data["error"]
+
+    def test_update_profile_display_name_too_long_returns_400(self, client, auth_headers):
+        """Test that display_name over 100 chars returns 400."""
+        response = client.put(
+            "/api/auth/profile",
+            json={"display_name": "A" * 101},
+            headers=auth_headers,
+        )
+
+        assert response.status_code == 400
+        data = response.get_json()
+        assert "100 Zeichen" in data["error"]
+
+    def test_update_profile_requires_authentication(self, client):
+        """Test that profile update requires authentication."""
+        response = client.put(
+            "/api/auth/profile",
+            json={"full_name": "Unauthenticated"},
+        )
+
+        assert response.status_code == 401
