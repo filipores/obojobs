@@ -93,6 +93,7 @@ class TestRegister:
         data = response.get_json()
         assert "user" in data
         assert data["user"]["email"] == "newuser@example.com"
+        assert data["user"]["full_name"] == "New User"
 
     def test_register_with_weak_password_returns_400(self, client):
         """Test registration fails with weak password."""
@@ -1285,6 +1286,7 @@ class TestGoogleOAuth:
         assert "access_token" in data
         assert "refresh_token" in data
         assert data["user"]["email"] == "googleuser@example.com"
+        assert data["user"]["full_name"] == "Google User"
 
         # Verify user was created in database
         with app.app_context():
@@ -1292,6 +1294,7 @@ class TestGoogleOAuth:
             assert user is not None
             assert user.google_id == "google-id-12345"
             assert user.email_verified is True
+            assert user.full_name == "Google User"
 
     @patch("routes.auth.id_token")
     @patch("routes.auth.Config")
