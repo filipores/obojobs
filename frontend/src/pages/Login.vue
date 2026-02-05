@@ -155,7 +155,7 @@
       <!-- Info Section - Offset for asymmetry -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2 v-html="$t('login.aiPoweredTitle')"></h2>
+          <h2>{{ $t('login.aiPoweredTitleLine1') }}<br>{{ $t('login.aiPoweredTitleLine2') }}</h2>
           <p class="info-description">
             {{ $t('login.aiPoweredDescription') }}
           </p>

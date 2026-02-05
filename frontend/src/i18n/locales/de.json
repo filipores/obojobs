@@ -105,7 +105,8 @@
   "login": {
     "title": "Willkommen",
     "subtitle": "Melden Sie sich an, um fortzufahren",
-    "aiPoweredTitle": "KI-gestützte<br/>Bewerbungen",
+    "aiPoweredTitleLine1": "KI-gestützte",
+    "aiPoweredTitleLine2": "Bewerbungen",
     "aiPoweredDescription": "Erstellen Sie professionelle, personalisierte Anschreiben in Sekunden mit Künstlicher Intelligenz.",
     "featureAutoGeneration": "Automatische Anschreiben-Generierung",
     "featureChromeExtension": "Chrome Extension für 1-Klick Bewerbungen",
