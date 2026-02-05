@@ -1,3 +1,17 @@
+## [1.29.3](https://github.com/filipores/obojobs/compare/v1.29.2...v1.29.3) (2026-02-05)
+
+
+### Bug Fixes
+
+* **apps:** improve empty state CTA and fix timeline route ([b52b52e](https://github.com/filipores/obojobs/commit/b52b52e6ee3a92e1422b0aad52e5886884bb1e84))
+* **apps:** merge applications empty state improvements ([f29e0df](https://github.com/filipores/obojobs/commit/f29e0df2537e8e36a657d5cea225696b47e3fd8c))
+* **auth:** add i18n to register, forgot-password, email-verification pages ([6a46d56](https://github.com/filipores/obojobs/commit/6a46d5638c0cd2f86d4da5f5286556aa644caa98))
+* **auth:** merge auth pages i18n and ux improvements ([66a75db](https://github.com/filipores/obojobs/commit/66a75db032d0808138de54f3208b7c7e06d86ef1))
+* **i18n:** merge translation html warning fixes ([92e300a](https://github.com/filipores/obojobs/commit/92e300a363713f139c1113654972518236463e4c))
+* **i18n:** remove HTML from translation strings to fix intlify warnings ([9f7d97d](https://github.com/filipores/obojobs/commit/9f7d97da7f58ddd976911e45c7ac8a368571a1eb))
+* **subscription:** merge subscription page fix ([89d7cf5](https://github.com/filipores/obojobs/commit/89d7cf5ba3171ba51c41657aebe9dc8b9b89af43))
+* **subscription:** remove parentheses from computed property call ([93150e7](https://github.com/filipores/obojobs/commit/93150e7ef8a6072f0ddd2046ec097774042f781a))
+
 ## [1.29.2](https://github.com/filipores/obojobs/compare/v1.29.1...v1.29.2) (2026-02-04)
 
 
