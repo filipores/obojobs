@@ -418,8 +418,11 @@
           Keine Bewerbungen gefunden. Versuchen Sie andere Suchbegriffe.
         </p>
         <p v-else>
-          Generieren Sie Ihre erste Bewerbung über die Chrome Extension.
+          Erstellen Sie Ihre erste Bewerbung direkt hier oder über die Chrome Extension.
         </p>
+        <router-link v-if="!(searchQuery || filterStatus || filterFirma)" to="/new-application" class="zen-btn zen-btn-ai" data-testid="new-application-btn">
+          Neue Bewerbung erstellen
+        </router-link>
         <button v-if="searchQuery || filterStatus || filterFirma" @click="clearFilters" class="zen-btn" data-testid="clear-filters-btn">
           Filter zurücksetzen
         </button>
