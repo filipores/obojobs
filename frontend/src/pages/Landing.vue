@@ -408,10 +408,10 @@
               <span>obo</span>
             </div>
             <div class="footer-links">
-              <router-link to="/login">Anmelden</router-link>
-              <router-link to="/register">Registrieren</router-link>
-              <router-link to="/impressum">Impressum</router-link>
-              <router-link to="/datenschutz">Datenschutz</router-link>
+              <router-link to="/login">{{ $t('auth.login') }}</router-link>
+              <router-link to="/register">{{ $t('auth.register') }}</router-link>
+              <router-link to="/impressum">{{ $t('footer.impressum') }}</router-link>
+              <router-link to="/datenschutz">{{ $t('footer.datenschutz') }}</router-link>
             </div>
             <div class="footer-copyright">
               &copy; {{ currentYear }} obo

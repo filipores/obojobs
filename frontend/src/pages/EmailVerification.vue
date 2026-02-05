@@ -54,7 +54,7 @@
           </div>
 
           <h3>{{ $t('emailVerification.cardTitle') }}</h3>
-          <p class="email-info" v-html="$t('emailVerification.emailInfo', { email: userEmail })"></p>
+          <p class="email-info">{{ $t('emailVerification.emailInfoBefore') }} <strong>{{ userEmail }}</strong> {{ $t('emailVerification.emailInfoAfter') }}</p>
           <p class="instructions">
             {{ $t('emailVerification.instructions') }}
           </p>
@@ -100,7 +100,7 @@
       <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2 v-html="$t('emailVerification.infoTitle')"></h2>
+          <h2>{{ $t('emailVerification.infoTitleLine1') }}<br/>{{ $t('emailVerification.infoTitleLine2') }}</h2>
           <p class="info-description">
             {{ $t('emailVerification.infoDescription') }}
           </p>

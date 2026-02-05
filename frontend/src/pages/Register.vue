@@ -192,7 +192,11 @@
           </button>
 
           <!-- Info -->
-          <p class="credits-info" v-html="$t('register.creditsInfo')"></p>
+          <i18n-t keypath="register.creditsInfo" tag="p" class="credits-info">
+            <template #credits>
+              <strong>{{ $t('register.creditsInfoHighlight') }}</strong>
+            </template>
+          </i18n-t>
         </form>
 
         <!-- Divider -->
@@ -207,7 +211,7 @@
       <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2 v-html="$t('register.infoTitle')"></h2>
+          <h2>{{ $t('register.infoTitleLine1') }}<br/>{{ $t('register.infoTitleLine2') }}</h2>
           <p class="info-description">
             {{ $t('register.infoDescription') }}
           </p>

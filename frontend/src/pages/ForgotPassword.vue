@@ -53,7 +53,7 @@
             </svg>
           </div>
           <h3>{{ $t('forgotPassword.successTitle') }}</h3>
-          <p class="success-message" v-html="$t('forgotPassword.successMessage', { email: email })"></p>
+          <p class="success-message">{{ $t('forgotPassword.successMessageBefore') }} <strong>{{ email }}</strong> {{ $t('forgotPassword.successMessageAfter') }}</p>
           <p class="instructions">
             {{ $t('forgotPassword.successInstructions') }}
           </p>
@@ -101,7 +101,7 @@
       <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2 v-html="$t('forgotPassword.infoTitle')"></h2>
+          <h2>{{ $t('forgotPassword.infoTitleLine1') }}<br/>{{ $t('forgotPassword.infoTitleLine2') }}</h2>
           <p class="info-description">
             {{ $t('forgotPassword.infoDescription') }}
           </p>
