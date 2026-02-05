@@ -55,6 +55,12 @@ router.beforeEach((to, from, next) => {
     return
   }
 
+  // Redirect authenticated users away from login/register to dashboard
+  if ((to.path === '/login' || to.path === '/register') && authStore.isAuthenticated()) {
+    next('/dashboard')
+    return
+  }
+
   // Public routes: skip all auth checks to prevent side effects
   if (to.meta.public) {
     next()
