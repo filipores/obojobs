@@ -105,7 +105,8 @@
   "login": {
     "title": "Welcome",
     "subtitle": "Sign in to continue",
-    "aiPoweredTitle": "AI-Powered<br/>Applications",
+    "aiPoweredTitleLine1": "AI-Powered",
+    "aiPoweredTitleLine2": "Applications",
     "aiPoweredDescription": "Create professional, personalized cover letters in seconds with Artificial Intelligence.",
     "featureAutoGeneration": "Automatic cover letter generation",
     "featureChromeExtension": "Chrome Extension for 1-click applications",
