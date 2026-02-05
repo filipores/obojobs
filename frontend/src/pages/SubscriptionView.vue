@@ -52,7 +52,7 @@
           <div class="plan-features">
             <h4>Enthaltene Features</h4>
             <ul class="features-list">
-              <li v-for="feature in getCurrentPlanFeatures()" :key="feature">
+              <li v-for="feature in getCurrentPlanFeatures" :key="feature">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <polyline points="20 6 9 17 4 12"/>
                 </svg>
