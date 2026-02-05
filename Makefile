@@ -101,7 +101,7 @@ dev:
 	@echo ""
 	@trap 'kill 0' SIGINT; \
 	(cd $(FRONTEND_DIR) && npm run dev) & \
-	($(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug) & \
+	($(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug --port 5001) & \
 	wait
 
 dev-frontend:
@@ -110,7 +110,7 @@ dev-frontend:
 
 dev-backend:
 	@echo "$(CYAN)Starte Backend (Flask)...$(NC)"
-	$(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug
+	$(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug --port 5001
 
 # ===========================================
 # Build & Test
