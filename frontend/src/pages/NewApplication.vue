@@ -1219,6 +1219,7 @@ const analyzeManualText = async () => {
         description: data.data.description || manualJobText.value
       }
 
+      showFullPreview.value = true
       showManualFallback.value = false
       analyzingManualText.value = false
       error.value = '' // Clear any previous error from URL loading
