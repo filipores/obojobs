@@ -8,6 +8,7 @@ from google.oauth2 import id_token
 from config import Config
 from models import TokenBlacklist, User, db
 from services.auth_service import AuthService
+from services.email_service import send_password_reset_email, send_verification_email
 from services.email_verification_service import EmailVerificationService
 from services.password_reset_service import PasswordResetService
 from services.password_validator import PasswordValidator
@@ -254,9 +255,7 @@ def send_verification():
     # Record the request for rate limiting
     _record_verification_request(user.id)
 
-    # In development, log the token (in production, send email)
-    # TODO: Integrate actual email sending service
-    print(f"[DEV] Verification token for {user.email}: {token}")
+    send_verification_email(user.email, token)
 
     return jsonify({"message": "Bestätigungs-E-Mail gesendet", "email": user.email}), 200
 
@@ -346,9 +345,7 @@ def forgot_password():
         # Generate and store token
         token = PasswordResetService.create_reset_token(user)
 
-        # In development, log the token (in production, send email)
-        # TODO: Integrate actual email sending service
-        print(f"[DEV] Password reset token for {user.email}: {token}")
+        send_password_reset_email(user.email, token)
 
     # Always return same response to prevent email enumeration
     return jsonify({"message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."}), 200
