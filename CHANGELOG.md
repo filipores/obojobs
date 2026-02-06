@@ -1,3 +1,10 @@
+## [1.30.1](https://github.com/filipores/obojobs/compare/v1.30.0...v1.30.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **db:** correct migration down_revision to actual head ([994fee3](https://github.com/filipores/obojobs/commit/994fee32ae9d88f22b54a5a5f64c68333b9072fa))
+
 # [1.30.0](https://github.com/filipores/obojobs/compare/v1.29.7...v1.30.0) (2026-02-06)
 
 
