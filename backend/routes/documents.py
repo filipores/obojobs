@@ -166,7 +166,7 @@ def get_document(doc_id, current_user):
 
     # Download als .txt (extrahierter Text)
     txt_filename = f"{document.doc_type}.txt"
-    return send_file(document.file_path, as_attachment=True, download_name=txt_filename)
+    return send_file(os.path.abspath(document.file_path), as_attachment=True, download_name=txt_filename)
 
 
 @documents_bp.route("/<int:doc_id>", methods=["DELETE"])

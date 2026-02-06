@@ -783,7 +783,7 @@ def download_pdf(app_id, current_user):
 
     # Sanitize company name for use in filename
     safe_firma = sanitize_filename(app.firma)
-    return send_file(app.pdf_path, as_attachment=True, download_name=f"Anschreiben_{safe_firma}.pdf")
+    return send_file(os.path.abspath(app.pdf_path), as_attachment=True, download_name=f"Anschreiben_{safe_firma}.pdf")
 
 
 @applications_bp.route("/export", methods=["GET"])
