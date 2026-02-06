@@ -1,3 +1,12 @@
+# [1.33.0](https://github.com/filipores/obojobs/compare/v1.32.2...v1.33.0) (2026-02-06)
+
+
+### Features
+
+* **auth:** block login for unverified email accounts ([52f0880](https://github.com/filipores/obojobs/commit/52f08801b7f72e5df7a0ceca43702a72d765331e))
+* **documents:** store cv pdfs and attach to email drafts ([94e75f9](https://github.com/filipores/obojobs/commit/94e75f9bbb865f7e846da3368b9dea4250113b8c))
+* **legal:** add real impressum and datenschutz content ([08ac85f](https://github.com/filipores/obojobs/commit/08ac85f34e26894b951974a0a99526332a01aecc))
+
 ## [1.32.2](https://github.com/filipores/obojobs/compare/v1.32.1...v1.32.2) (2026-02-06)
 
 
