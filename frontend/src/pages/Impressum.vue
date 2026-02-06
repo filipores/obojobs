@@ -17,8 +17,10 @@
         <div class="legal-section">
           <h2>Angaben gemäß § 5 TMG</h2>
           <p>
-            <strong>Filip Ores</strong><br>
-            Hamburg<br>
+            <strong>obo - Filip Ores</strong><br>
+            <!-- TODO: Echte Adresse eintragen -->
+            Teststraße 1<br>
+            80331 München<br>
             Deutschland
           </p>
         </div>
@@ -26,8 +28,8 @@
         <div class="legal-section">
           <h2>Kontakt</h2>
           <p>
-            E-Mail: <a href="mailto:filip.ores@hotmail.com">filip.ores@hotmail.com</a><br>
-            Website: <a href="https://filipores.com" target="_blank" rel="noopener">filipores.com</a>
+            E-Mail: <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a><br>
+            Website: <a href="https://obojobs.de" target="_blank" rel="noopener">obojobs.de</a>
           </p>
         </div>
 
@@ -35,7 +37,9 @@
           <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
           <p>
             Filip Ores<br>
-            Hamburg
+            <!-- TODO: Echte Adresse eintragen -->
+            Teststraße 1<br>
+            80331 München
           </p>
         </div>
 
@@ -91,7 +95,7 @@
         </div>
 
         <div class="legal-footer">
-          <p class="last-updated">Stand: Januar 2026</p>
+          <p class="last-updated">Stand: Februar 2026</p>
         </div>
       </section>
     </div>

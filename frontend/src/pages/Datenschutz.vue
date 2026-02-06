@@ -75,9 +75,11 @@
           <h3>Hinweis zur verantwortlichen Stelle</h3>
           <p>
             Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:<br><br>
-            Filip Ores<br>
-            Hamburg<br>
-            E-Mail: filip.ores@hotmail.com
+            obo - Filip Ores<br>
+            <!-- TODO: Echte Adresse eintragen -->
+            Teststraße 1<br>
+            80331 München<br>
+            E-Mail: <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>
           </p>
 
           <h3>Speicherdauer</h3>
@@ -90,15 +92,36 @@
             die Speicherung Ihrer personenbezogenen Daten haben.
           </p>
 
+          <h3>Rechtsgrundlagen der Verarbeitung</h3>
+          <p>Wir verarbeiten Ihre Daten auf folgenden Rechtsgrundlagen:</p>
+          <ul>
+            <li><strong>Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)</strong> - Google OAuth, E-Mail-Kontoverknüpfung</li>
+            <li><strong>Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung)</strong> - Kontoverwaltung, KI-gestützte Bewerbungserstellung, Zahlungsabwicklung</li>
+            <li><strong>Art. 6 Abs. 1 lit. f DSGVO (Berechtigtes Interesse)</strong> - Technische Nutzungsdaten, Sicherheitsmaßnahmen, Fehlerbehebung</li>
+          </ul>
+
           <h3>Ihre Rechte</h3>
           <p>Sie haben jederzeit das Recht:</p>
           <ul>
-            <li>Auskunft über Ihre bei uns gespeicherten Daten zu erhalten</li>
-            <li>Diese Daten berichtigen oder löschen zu lassen</li>
-            <li>Die Verarbeitung einzuschränken</li>
-            <li>Der Verarbeitung zu widersprechen</li>
-            <li>Ihre Daten in einem gängigen Format zu erhalten (Datenportabilität)</li>
+            <li><strong>Auskunft</strong> (Art. 15 DSGVO) - über Ihre bei uns gespeicherten Daten zu erhalten</li>
+            <li><strong>Berichtigung</strong> (Art. 16 DSGVO) - unrichtige Daten korrigieren zu lassen</li>
+            <li><strong>Löschung</strong> (Art. 17 DSGVO) - Ihre Daten löschen zu lassen</li>
+            <li><strong>Einschränkung</strong> (Art. 18 DSGVO) - die Verarbeitung einzuschränken</li>
+            <li><strong>Widerspruch</strong> (Art. 21 DSGVO) - der Verarbeitung zu widersprechen</li>
+            <li><strong>Datenportabilität</strong> (Art. 20 DSGVO) - Ihre Daten in einem gängigen Format zu erhalten</li>
           </ul>
+          <p>
+            Zur Ausübung Ihrer Rechte kontaktieren Sie uns bitte unter
+            <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>.
+          </p>
+
+          <h3>Beschwerderecht bei einer Aufsichtsbehörde</h3>
+          <p>
+            Wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer personenbezogenen Daten
+            gegen die DSGVO verstößt, haben Sie das Recht, sich bei einer Datenschutz-Aufsichtsbehörde
+            zu beschweren. Sie können sich insbesondere an die Aufsichtsbehörde Ihres
+            üblichen Aufenthaltsortes, Ihres Arbeitsplatzes oder unseres Firmensitzes wenden.
+          </p>
         </div>
 
         <div class="ink-stroke"></div>
@@ -114,10 +137,29 @@
             <li>E-Mail-Adresse</li>
             <li>Passwort (verschlüsselt gespeichert)</li>
             <li>Vollständiger Name</li>
+            <li>Telefonnummer (optional)</li>
+            <li>Adresse (optional, für Bewerbungsschreiben)</li>
           </ul>
           <p>
             Diese Daten werden zur Bereitstellung unseres Dienstes benötigt und auf Grundlage
             von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung) verarbeitet.
+          </p>
+
+          <h3>Erstellte Bewerbungen</h3>
+          <p>
+            Die über unsere Plattform generierten Bewerbungen (Anschreiben, ATS-Analysen,
+            Interviewfragen) werden in Ihrem Benutzerkonto gespeichert, bis Sie diese
+            eigenständig löschen oder Ihr Konto löschen lassen. Die Verarbeitung erfolgt
+            auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung).
+          </p>
+
+          <h3>Nutzungsdaten</h3>
+          <p>
+            Bei der Nutzung unserer Plattform erfassen wir automatisch technische Daten
+            wie IP-Adresse, Browsertyp, Betriebssystem und Zeitpunkt des Zugriffs.
+            Diese Daten werden auf Grundlage von Art. 6 Abs. 1 lit. f DSGVO
+            (berechtigtes Interesse) zur Sicherstellung des Betriebs und zur
+            Fehlerbehebung verarbeitet.
           </p>
 
           <h3>Hochgeladene Dokumente</h3>
@@ -130,9 +172,17 @@
 
           <h3>Cookies und Local Storage</h3>
           <p>
-            Wir verwenden keine Tracking-Cookies. Für die Authentifizierung speichern wir
-            einen JWT-Token im Local Storage Ihres Browsers. Dieser Token enthält keine
-            persönlichen Daten und dient ausschließlich der Identifizierung Ihrer Session.
+            Wir verwenden keine Tracking-Cookies. Wir speichern ausschließlich folgende
+            Daten im Local Storage Ihres Browsers:
+          </p>
+          <ul>
+            <li>Authentifizierungs-Token (JWT) zur Identifizierung Ihrer Session</li>
+            <li>Spracheinstellung (Deutsch/Englisch)</li>
+            <li>Theme-Einstellung (Hell-/Dunkelmodus)</li>
+          </ul>
+          <p>
+            Diese Daten enthalten keine personenbezogenen Informationen und dienen
+            ausschließlich der Funktionalität der Website.
           </p>
         </div>
 
@@ -166,6 +216,8 @@
             Für Zahlungen nutzen wir Stripe, Inc. (USA). Bei der Zahlung werden Ihre
             Zahlungsdaten direkt an Stripe übermittelt und dort verarbeitet. Wir
             speichern keine vollständigen Kreditkartendaten auf unseren Servern.
+            Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO
+            (Vertragserfüllung).
           </p>
           <p>
             Datenschutzerklärung von Stripe:
@@ -173,25 +225,55 @@
               https://stripe.com/privacy
             </a>
           </p>
+
+          <h3>Google OAuth</h3>
+          <p>
+            Sie können sich optional über Ihr Google-Konto bei uns anmelden. Dabei
+            werden Ihr Name und Ihre E-Mail-Adresse von Google an uns übermittelt.
+            Wir speichern keine Google-Passwörter. Die Verarbeitung erfolgt auf
+            Grundlage von Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).
+          </p>
+          <p>
+            Datenschutzerklärung von Google:
+            <a href="https://policies.google.com/privacy" target="_blank" rel="noopener">
+              https://policies.google.com/privacy
+            </a>
+          </p>
+
+          <h3>Gmail und Outlook (E-Mail-Versand)</h3>
+          <p>
+            Sie können optional Ihr Gmail- oder Outlook-Konto verbinden, um Bewerbungen
+            direkt per E-Mail zu versenden. Dabei werden OAuth-Zugangstokens verschlüsselt
+            auf unserem Server gespeichert. Wir greifen ausschließlich zum Versenden Ihrer
+            Bewerbungen auf Ihr E-Mail-Konto zu. Die Verarbeitung erfolgt auf Grundlage
+            von Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Sie können die Verbindung
+            jederzeit in Ihren Kontoeinstellungen widerrufen.
+          </p>
         </div>
 
         <div class="ink-stroke"></div>
 
         <div class="legal-section">
-          <h2>6. Datenlöschung</h2>
+          <h2>6. Speicherdauer und Datenlöschung</h2>
           <p>
-            Sie können Ihr Konto jederzeit löschen lassen. Kontaktieren Sie uns dazu per
-            E-Mail. Bei der Kontolöschung werden alle Ihre personenbezogenen Daten,
+            Ihre Kontodaten (Name, E-Mail, Passwort) werden gespeichert, bis Sie Ihr
+            Konto löschen lassen. Ihre Bewerbungen und hochgeladenen Dokumente werden
+            gespeichert, bis Sie diese eigenständig löschen oder Ihr Konto löschen lassen.
+          </p>
+          <p>
+            Sie können Ihr Konto jederzeit löschen lassen. Kontaktieren Sie uns dazu
+            per E-Mail an <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>.
+            Bei der Kontolöschung werden alle Ihre personenbezogenen Daten,
             hochgeladenen Dokumente und erstellten Bewerbungen unwiderruflich gelöscht.
           </p>
           <p>
             Ausgenommen sind Daten, die wir aus gesetzlichen Gründen aufbewahren müssen
-            (z.B. Rechnungsdaten für steuerliche Zwecke - 10 Jahre).
+            (z.B. Rechnungsdaten für steuerliche Zwecke - 10 Jahre gemäß § 147 AO).
           </p>
         </div>
 
         <div class="legal-footer">
-          <p class="last-updated">Stand: Januar 2026</p>
+          <p class="last-updated">Stand: Februar 2026</p>
         </div>
       </section>
     </div>
