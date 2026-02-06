@@ -1,3 +1,10 @@
+## [1.29.7](https://github.com/filipores/obojobs/compare/v1.29.6...v1.29.7) (2026-02-06)
+
+
+### Bug Fixes
+
+* **config:** consolidate .env files into single root .env ([52e7944](https://github.com/filipores/obojobs/commit/52e7944100e785652257493860baf93a071b4aa1))
+
 ## [1.29.6](https://github.com/filipores/obojobs/compare/v1.29.5...v1.29.6) (2026-02-06)
 
 
