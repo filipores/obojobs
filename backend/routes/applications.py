@@ -1262,6 +1262,9 @@ def check_ats_compatibility(app_id, current_user):
         # Try from notizen (might contain job description)
         if app.notizen and "[Draft - Job-Fit Analyse]" in app.notizen:
             job_description = app.notizen.replace("[Draft - Job-Fit Analyse]", "").strip()
+        elif app.notizen and len(app.notizen.strip()) >= 100:
+            # Manual text flow stores job description in notizen
+            job_description = app.notizen.strip()
         # Try to scrape from quelle URL
         elif app.quelle and app.quelle.startswith(("http://", "https://")):
             try:
@@ -1275,6 +1278,12 @@ def check_ats_compatibility(app_id, current_user):
         return jsonify(
             {"success": False, "error": "Keine Stellenbeschreibung vorhanden. Bitte gib den Stellentext an."}
         ), 400
+
+    # Ensure both are strings (not dicts from JSON fields)
+    if not isinstance(cover_letter_text, str):
+        cover_letter_text = str(cover_letter_text)
+    if not isinstance(job_description, str):
+        job_description = str(job_description)
 
     try:
         optimizer = ATSOptimizer()
