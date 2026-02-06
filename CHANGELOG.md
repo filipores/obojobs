@@ -1,3 +1,17 @@
+## [1.29.5](https://github.com/filipores/obojobs/compare/v1.29.4...v1.29.5) (2026-02-06)
+
+
+### Bug Fixes
+
+* **applications:** merge manual text flow fix ([d578bc3](https://github.com/filipores/obojobs/commit/d578bc391213111bcf5dca95709b19052795eb59))
+* **applications:** show preview form after manual text analysis ([5c2cf31](https://github.com/filipores/obojobs/commit/5c2cf3111d7b8053244f46345d43a70572a1f2da))
+* **layout:** merge viewport resize navigation fix ([c31ca83](https://github.com/filipores/obojobs/commit/c31ca8312313f1fc655f451c282f4d353b506e03))
+* **layout:** prevent viewport resize from triggering navigation ([55c88ac](https://github.com/filipores/obojobs/commit/55c88ac44101804906a17390e39e28dd3d7e853a))
+* **templates:** add pdf wizard access and improve error handling ([701efdb](https://github.com/filipores/obojobs/commit/701efdbb7777c1ec03cb508b0d8cfb03a32f620c))
+* **templates:** merge pdf wizard access and error handling ([b43230e](https://github.com/filipores/obojobs/commit/b43230e59d62e246f1780ce49de5c654b6172282))
+* **ui:** fix company insights heading, umlauts, and skills banner ([6d65603](https://github.com/filipores/obojobs/commit/6d65603bc1e0d33ea5dff1e7f22d8aee5f75bba7))
+* **ui:** merge umlaut, i18n, and skills banner fixes ([24abb1d](https://github.com/filipores/obojobs/commit/24abb1d6287f4dc9657d5f09449548d4e75f4d8d))
+
 ## [1.29.4](https://github.com/filipores/obojobs/compare/v1.29.3...v1.29.4) (2026-02-05)
 
 
