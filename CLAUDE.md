@@ -73,10 +73,10 @@ obojobs/
 make install        # Install all deps (frontend npm + backend venv/pip)
 make dev            # Start both frontend + backend in parallel
 make dev-frontend   # Vite dev server on port 3000
-make dev-backend    # Flask dev server on port 5001
+make dev-backend    # Flask dev server on port 5002
 ```
 
-Frontend proxies `/api` requests to `http://127.0.0.1:5001` via Vite config.
+Frontend proxies `/api` requests to `http://127.0.0.1:5002` via Vite config.
 
 **Environment files**: Copy `.env.example` in root and `backend/` and `frontend/` directories. Key vars:
 - `ANTHROPIC_API_KEY` (required for AI features)
@@ -223,6 +223,6 @@ All routes under `/api/`. Key blueprints:
 
 ## Deployment
 
-- **Dev**: Vite (port 3000) + Flask (port 5001), SQLite, Vite proxy for `/api`
+- **Dev**: Vite (port 3000) + Flask (port 5002), SQLite, Vite proxy for `/api`
 - **Prod**: Docker Compose with Caddy (auto HTTPS) -> Nginx (Vue SPA) + Gunicorn (Flask) + PostgreSQL
 - **Backend deps**: tesseract-ocr (German), poppler-utils (PDF processing)

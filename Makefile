@@ -97,11 +97,11 @@ install-backend:
 dev:
 	@echo "$(CYAN)Starte Frontend und Backend...$(NC)"
 	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
-	@echo "$(YELLOW)Backend:  http://localhost:5001$(NC)"
+	@echo "$(YELLOW)Backend:  http://localhost:5002$(NC)"
 	@echo ""
 	@trap 'kill 0' SIGINT; \
 	(cd $(FRONTEND_DIR) && npm run dev) & \
-	($(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug --port 5001) & \
+	($(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug --port 5002) & \
 	wait
 
 dev-frontend:
@@ -110,7 +110,7 @@ dev-frontend:
 
 dev-backend:
 	@echo "$(CYAN)Starte Backend (Flask)...$(NC)"
-	$(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug --port 5001
+	$(PYTHON) -m flask --app $(BACKEND_DIR)/app run --debug --port 5002
 
 # ===========================================
 # Build & Test
@@ -219,7 +219,7 @@ docker-up:
 	docker-compose up -d
 	@echo "$(GREEN)Container gestartet$(NC)"
 	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
-	@echo "$(YELLOW)Backend:  http://localhost:5001$(NC)"
+	@echo "$(YELLOW)Backend:  http://localhost:5002$(NC)"
 
 docker-down:
 	@echo "$(CYAN)Docker Container stoppen...$(NC)"

@@ -21,13 +21,13 @@ if [ ! -d "venv" ]; then
 fi
 
 source venv/bin/activate
-echo "🚀 Starting Flask development server on http://localhost:5001"
-flask run --port 5001 --debug
+echo "🚀 Starting Flask development server on http://localhost:5002"
+flask run --port 5002 --debug
 
 echo ""
 echo "✅ Setup complete!"
 echo ""
 echo "To start the server, run:"
-echo "  source venv/bin/activate && flask run --port 5001 --debug"
+echo "  source venv/bin/activate && flask run --port 5002 --debug"
 echo ""
 echo "Or for debugging in VSCode: Press F5"

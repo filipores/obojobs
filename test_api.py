@@ -3,7 +3,7 @@
 import requests
 import json
 
-BASE_URL = "http://localhost:5001/api"
+BASE_URL = "http://localhost:5002/api"
 
 def test_health():
     """Test health endpoint"""
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         print(f"\n✗ Test failed: {e}")
         exit(1)
     except requests.exceptions.ConnectionError:
-        print("\n✗ Cannot connect to backend. Is it running on port 5001?")
+        print("\n✗ Cannot connect to backend. Is it running on port 5002?")
         exit(1)
     except Exception as e:
         print(f"\n✗ Unexpected error: {e}")

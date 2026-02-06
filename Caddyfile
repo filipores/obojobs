@@ -4,7 +4,7 @@
 {$DOMAIN} {
     # API Proxy - route /api/* to backend (must be before catch-all)
     handle /api/* {
-        reverse_proxy backend:5001
+        reverse_proxy backend:5002
     }
 
     # Frontend - serve Vue.js SPA (catch-all)

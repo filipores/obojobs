@@ -205,7 +205,7 @@ if __name__ == "__main__":
     print("\n" + "=" * 60)
     print("obojobs API Server")
     print("=" * 60)
-    print("Server running on http://localhost:5001")
+    print("Server running on http://localhost:5002")
     print("=" * 60 + "\n")
 
-    app.run(host="0.0.0.0", port=5001, debug=config.DEBUG)
+    app.run(host="0.0.0.0", port=5002, debug=config.DEBUG)

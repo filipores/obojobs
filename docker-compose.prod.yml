@@ -48,7 +48,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     expose:
-      - "5001"
+      - "5002"
     environment:
       - FLASK_ENV=production
       - DATABASE_URL=postgresql://obojobs:${DB_PASSWORD}@db:5432/obojobs
@@ -73,7 +73,7 @@ services:
     networks:
       - obojobs-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5002/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3
