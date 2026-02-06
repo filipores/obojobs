@@ -45,6 +45,13 @@ class User(db.Model):  # type: ignore[name-defined]
     # Weekly goal tracking
     weekly_goal = db.Column(db.Integer, default=5, nullable=False)
 
+    # Personal contact details (for templates/PDFs)
+    phone = db.Column(db.String(50), nullable=True)
+    address = db.Column(db.String(255), nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    postal_code = db.Column(db.String(20), nullable=True)
+    website = db.Column(db.String(255), nullable=True)
+
     # Relationships
     documents = db.relationship("Document", back_populates="user", cascade="all, delete-orphan")
     templates = db.relationship("Template", back_populates="user", cascade="all, delete-orphan")
@@ -78,4 +85,9 @@ class User(db.Model):  # type: ignore[name-defined]
             "subscription": self.subscription.to_dict() if self.subscription else None,
             "weekly_goal": self.weekly_goal,
             "language": self.language,
+            "phone": self.phone,
+            "address": self.address,
+            "city": self.city,
+            "postal_code": self.postal_code,
+            "website": self.website,
         }

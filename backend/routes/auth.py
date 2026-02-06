@@ -456,9 +456,6 @@ def update_language():
         return jsonify({"error": "Ungültige Sprache. Muss 'de' oder 'en' sein."}), 400
 
     user.language = language
-
-    from models import db
-
     db.session.commit()
 
     return jsonify({"message": "Spracheinstellung aktualisiert", "language": user.language}), 200
@@ -479,20 +476,24 @@ def update_profile():
     if not user:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
-    # Update allowed fields
-    if "full_name" in data:
-        full_name = data["full_name"]
-        if full_name and len(full_name) > 255:
-            return jsonify({"error": "Name darf maximal 255 Zeichen haben"}), 400
-        user.full_name = full_name.strip() if full_name else None
+    # Profile field definitions: (json_key, model_attr, max_length, label)
+    profile_fields = [
+        ("full_name", "full_name", 255, "Name"),
+        ("display_name", "display_name", 100, "Anzeigename"),
+        ("phone", "phone", 50, "Telefonnummer"),
+        ("address", "address", 255, "Adresse"),
+        ("city", "city", 100, "Stadt"),
+        ("postal_code", "postal_code", 20, "PLZ"),
+        ("website", "website", 255, "Website"),
+    ]
 
-    if "display_name" in data:
-        display_name = data["display_name"]
-        if display_name and len(display_name) > 100:
-            return jsonify({"error": "Anzeigename darf maximal 100 Zeichen haben"}), 400
-        user.display_name = display_name.strip() if display_name else None
-
-    from models import db
+    for json_key, attr, max_length, label in profile_fields:
+        if json_key not in data:
+            continue
+        value = data[json_key]
+        if value and len(value) > max_length:
+            return jsonify({"error": f"{label} darf maximal {max_length} Zeichen haben"}), 400
+        setattr(user, attr, value.strip() if value else None)
 
     db.session.commit()
 
@@ -531,8 +532,6 @@ def delete_account():
                 # Log the error but don't fail the deletion
                 print(f"Warning: Could not cancel Stripe subscription for user {user.id}: {e}")
 
-        from models import TokenBlacklist, db
-
         # Store info for logging before deletion
         user_email = user.email
         user_id = user.id
@@ -554,8 +553,6 @@ def delete_account():
         return jsonify({"message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}), 200
 
     except Exception as e:
-        from models import db
-
         db.session.rollback()
         print(f"Error deleting account for user {current_user_id}: {e}")
         return jsonify({"error": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."}), 500

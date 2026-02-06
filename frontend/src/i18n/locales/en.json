@@ -209,7 +209,15 @@
     "account": "Account",
     "profile": "Profile",
     "security": "Security",
-    "notifications": "Notifications"
+    "notifications": "Notifications",
+    "phone": "Phone number",
+    "phoneHint": "Used in letter header and email signatures",
+    "address": "Street and house number",
+    "city": "City",
+    "postalCode": "Postal code",
+    "website": "Website",
+    "websiteHint": "Personal website or portfolio",
+    "contactDataSection": "Contact details for applications"
   },
   "language": {
     "de": "Deutsch",

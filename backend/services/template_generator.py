@@ -2,9 +2,19 @@
 
 from models import Template, db
 
-DEFAULT_GERMAN_TEMPLATE = """{{ANSPRECHPARTNER}}
+DEFAULT_GERMAN_TEMPLATE = """{{NAME}}
+{{ADRESSE}}
+{{PLZ_ORT}}
+{{TELEFON}} | {{EMAIL}}
 
-Ihre Stellenausschreibung als {{POSITION}} hat mich sofort angesprochen.
+{{FIRMA}}
+z.Hd. {{ANSPRECHPARTNER}}
+
+{{STADT}}, {{DATUM}}
+
+Bewerbung als {{POSITION}}
+
+{{ANSPRECHPARTNER}},
 
 {{EINLEITUNG}}
 
@@ -12,7 +22,8 @@ Ich bin überzeugt, dass ich mit meiner Erfahrung und meinem Engagement einen we
 
 Über eine Einladung zu einem Vorstellungsgespräch würde ich mich sehr freuen.
 
-Mit freundlichen Grüßen"""
+Mit freundlichen Grüßen
+{{NAME}}"""
 
 
 def create_default_template(user_id: int) -> Template:

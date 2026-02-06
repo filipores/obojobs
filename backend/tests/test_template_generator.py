@@ -45,6 +45,13 @@ class TestCreateDefaultTemplate:
             assert "{{POSITION}}" in template.content
             assert "{{EINLEITUNG}}" in template.content
             assert "{{FIRMA}}" in template.content
+            assert "{{NAME}}" in template.content
+            assert "{{ADRESSE}}" in template.content
+            assert "{{PLZ_ORT}}" in template.content
+            assert "{{TELEFON}}" in template.content
+            assert "{{EMAIL}}" in template.content
+            assert "{{DATUM}}" in template.content
+            assert "{{STADT}}" in template.content
 
 
 class TestGetOrCreateDefaultTemplate:
@@ -124,8 +131,15 @@ class TestDefaultTemplateContent:
         """Test that the template has a logical structure."""
         lines = DEFAULT_GERMAN_TEMPLATE.strip().split("\n")
 
-        # Should start with salutation placeholder
-        assert "{{ANSPRECHPARTNER}}" in lines[0]
+        # Should start with sender name placeholder (letterhead)
+        assert "{{NAME}}" in lines[0]
 
-        # Should end with closing
-        assert "Mit freundlichen Grüßen" in lines[-1]
+        # Should end with sender name (signature)
+        assert "{{NAME}}" in lines[-1]
+
+        # Should contain closing
+        assert "Mit freundlichen Grüßen" in DEFAULT_GERMAN_TEMPLATE
+
+        # Should contain date and city
+        assert "{{DATUM}}" in DEFAULT_GERMAN_TEMPLATE
+        assert "{{STADT}}" in DEFAULT_GERMAN_TEMPLATE

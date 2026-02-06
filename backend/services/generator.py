@@ -1,8 +1,9 @@
 import json
 import os
+from datetime import datetime
 
 from config import config
-from models import Application, Document, JobRequirement, Template, db
+from models import Application, Document, JobRequirement, Template, User, db
 
 from .api_client import ClaudeAPIClient
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
@@ -55,6 +56,7 @@ class BewerbungsGenerator:
         self.template = None  # Store template object for PDF template support
         self.zeugnis_text = None
         self.extracted_links = None
+        self.user = User.query.get(user_id)
         self.load_user_documents()
 
     def load_user_documents(self):
@@ -199,6 +201,24 @@ class BewerbungsGenerator:
         print(f"✓ Einleitung generiert ({len(einleitung)} Zeichen)")
         print(f"\nGenerierte Einleitung:\n{'-' * 60}\n{einleitung}\n{'-' * 60}\n")
 
+        # Format current date in German
+        german_months = [
+            "Januar",
+            "Februar",
+            "März",
+            "April",
+            "Mai",
+            "Juni",
+            "Juli",
+            "August",
+            "September",
+            "Oktober",
+            "November",
+            "Dezember",
+        ]
+        now = datetime.now()
+        datum_formatiert = f"{now.day:02d}. {german_months[now.month - 1]} {now.year}"
+
         # Prepare variable replacements
         replacements = {
             "FIRMA": firma_name,
@@ -206,6 +226,14 @@ class BewerbungsGenerator:
             "POSITION": details["position"],
             "QUELLE": details["quelle"],
             "EINLEITUNG": einleitung,
+            "NAME": self.user.full_name or "",
+            "EMAIL": self.user.email or "",
+            "TELEFON": self.user.phone or "",
+            "ADRESSE": self.user.address or "",
+            "PLZ_ORT": f"{self.user.postal_code or ''} {self.user.city or ''}".strip(),
+            "WEBSEITE": self.user.website or "",
+            "DATUM": datum_formatiert,
+            "STADT": self.user.city or "",
         }
 
         # Create user-specific PDF directory
@@ -245,7 +273,9 @@ class BewerbungsGenerator:
         print(f"✓ Bewerbung erstellt: {output_path}")
 
         # Email-Daten generieren mit verbesserter Personalisierung
-        betreff = self.api_client.generate_betreff(details["position"], firma_name, style="professional")
+        betreff = self.api_client.generate_betreff(
+            details["position"], firma_name, style="professional", user_name=self.user.full_name
+        )
         # Build attachments list dynamically - Arbeitszeugnis only if available
         attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis"]
         if self.zeugnis_text:
@@ -255,6 +285,11 @@ class BewerbungsGenerator:
             ansprechperson=details["ansprechpartner"],
             firma_name=firma_name,
             attachments=attachments,
+            user_name=self.user.full_name,
+            user_email=self.user.email,
+            user_phone=self.user.phone,
+            user_city=self.user.city,
+            user_website=self.user.website,
         )
 
         # Sammle alle extrahierten Informationen

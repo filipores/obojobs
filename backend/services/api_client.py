@@ -226,7 +226,16 @@ Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil 
         return system_blocks
 
     def generate_email_text(
-        self, position: str, ansprechperson: str, firma_name: str = None, attachments: list = None
+        self,
+        position: str,
+        ansprechperson: str,
+        firma_name: str | None = None,
+        attachments: list[str] | None = None,
+        user_name: str | None = None,
+        user_email: str | None = None,
+        user_phone: str | None = None,
+        user_city: str | None = None,
+        user_website: str | None = None,
     ) -> str:
         """Generate personalized email text for job application"""
         if attachments is None:
@@ -238,6 +247,18 @@ Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil 
         if firma_name:
             position_text = f"die Position als {position} bei {firma_name}"
 
+        name = user_name or "Ihr Name"
+        signature_parts = [name]
+        contact_line = " | ".join(filter(None, [user_city, user_phone]))
+        if contact_line:
+            signature_parts.append(contact_line)
+        if user_email:
+            signature_parts.append(user_email)
+        if user_website:
+            signature_parts.append(user_website)
+
+        signature = "\n".join(signature_parts)
+
         return f"""{ansprechperson},
 
 anbei finden Sie meine Bewerbungsunterlagen für {position_text}.
@@ -245,16 +266,15 @@ anbei finden Sie meine Bewerbungsunterlagen für {position_text}.
 Ich freue mich auf Ihre Rückmeldung.
 
 Mit freundlichen Grüßen
-Filip Ores
+{signature}"""
 
-Hamburg | +49 15254112096
-filip.ores@hotmail.com
-filipores.com"""
-
-    def generate_betreff(self, position: str, firma_name: str = None, style: str = "professional") -> str:
+    def generate_betreff(
+        self, position: str, firma_name: str | None = None, style: str = "professional", user_name: str | None = None
+    ) -> str:
         """Generate professional email subject line"""
+        name = user_name or "Bewerber"
         if style == "professional":
-            return f"Bewerbung als {position} - Filip Ores" if firma_name else f"Bewerbung als {position}"
+            return f"Bewerbung als {position} - {name}" if firma_name else f"Bewerbung als {position}"
         if style == "informal":
             return f"Bewerbung: {position}"
         # formal style

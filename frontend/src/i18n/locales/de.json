@@ -209,7 +209,15 @@
     "account": "Konto",
     "profile": "Profil",
     "security": "Sicherheit",
-    "notifications": "Benachrichtigungen"
+    "notifications": "Benachrichtigungen",
+    "phone": "Telefonnummer",
+    "phoneHint": "Wird im Briefkopf und in E-Mail-Signaturen verwendet",
+    "address": "Straße und Hausnummer",
+    "city": "Stadt",
+    "postalCode": "PLZ",
+    "website": "Website",
+    "websiteHint": "Persönliche Website oder Portfolio",
+    "contactDataSection": "Kontaktdaten für Bewerbungen"
   },
   "language": {
     "de": "Deutsch",
