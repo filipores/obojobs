@@ -1,3 +1,10 @@
+# [1.32.0](https://github.com/filipores/obojobs/compare/v1.31.1...v1.32.0) (2026-02-06)
+
+
+### Features
+
+* **email:** generate downloadable .eml draft with pdf attachment ([bb8e28e](https://github.com/filipores/obojobs/commit/bb8e28eb41eec6712ef3ae3171f1ec6385f761c4))
+
 ## [1.31.1](https://github.com/filipores/obojobs/compare/v1.31.0...v1.31.1) (2026-02-06)
 
 
