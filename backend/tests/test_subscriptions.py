@@ -53,13 +53,38 @@ class TestCreateCheckout:
         assert response.status_code == 400
 
     def test_dev_price_ids_rejected(self, client, auth_headers):
-        """Default config has price_dev_* IDs which should return 503"""
-        response = client.post(
-            "/api/subscriptions/create-checkout",
-            json={"plan": "basic", "success_url": "http://x", "cancel_url": "http://x"},
-            headers=auth_headers,
-        )
-        assert response.status_code == 503
+        """Dev price IDs (price_dev_*) should return 503"""
+        from unittest.mock import patch
+
+        with patch(
+            "routes.subscriptions.SUBSCRIPTION_PLANS",
+            {
+                "basic": {
+                    "plan_id": "basic",
+                    "name": "Basic",
+                    "price": 999,
+                    "price_formatted": "€9,99/Monat",
+                    "features": [],
+                    "limits": {},
+                    "stripe_price_id": "price_dev_basic_mock",
+                },
+                "pro": {
+                    "plan_id": "pro",
+                    "name": "Pro",
+                    "price": 1999,
+                    "price_formatted": "€19,99/Monat",
+                    "features": [],
+                    "limits": {},
+                    "stripe_price_id": "price_dev_pro_mock",
+                },
+            },
+        ):
+            response = client.post(
+                "/api/subscriptions/create-checkout",
+                json={"plan": "basic", "success_url": "http://x", "cancel_url": "http://x"},
+                headers=auth_headers,
+            )
+            assert response.status_code == 503
 
     def test_missing_urls(self, client, auth_headers):
         response = client.post(

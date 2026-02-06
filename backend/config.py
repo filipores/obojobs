@@ -22,8 +22,14 @@ class Config:
     JWT_ACCESS_TOKEN_EXPIRES = 3600  # 1 hour
     JWT_REFRESH_TOKEN_EXPIRES = 604800  # 7 days
 
-    # File uploads
-    UPLOAD_FOLDER = os.getenv("UPLOAD_FOLDER", "uploads")
+    # File uploads - resolve relative paths against project root (parent of backend/)
+    _upload_folder_env = os.getenv("UPLOAD_FOLDER", "uploads")
+    _backend_dir = os.path.dirname(os.path.abspath(__file__))
+    UPLOAD_FOLDER = (
+        _upload_folder_env
+        if os.path.isabs(_upload_folder_env)
+        else os.path.join(os.path.dirname(_backend_dir), _upload_folder_env)
+    )
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 10 * 1024 * 1024))  # 10MB
     ALLOWED_EXTENSIONS = {"pdf"}  # Nur PDFs erlaubt
 
