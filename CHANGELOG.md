@@ -1,3 +1,10 @@
+## [1.32.2](https://github.com/filipores/obojobs/compare/v1.32.1...v1.32.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* **settings:** sync profile data with localstorage and fetch fresh on mount ([a557b4e](https://github.com/filipores/obojobs/commit/a557b4e19bd74b3ca08828a1b65987493fbb8071))
+
 ## [1.32.1](https://github.com/filipores/obojobs/compare/v1.32.0...v1.32.1) (2026-02-06)
 
 
