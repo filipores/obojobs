@@ -642,6 +642,7 @@ const updateProfile = async () => {
     const { data } = await api.put('/auth/profile', payload)
 
     authStore.user = data.user
+    localStorage.setItem('user', JSON.stringify(data.user))
 
     for (const key of profileFieldKeys) {
       originalProfile[key] = profileForm[key]
@@ -947,10 +948,11 @@ const requestAccountDeletion = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadKeys()
   loadEmailAccounts()
   loadIntegrationStatus()
+  await authStore.fetchUser()
   initProfileForm()
 })
 
