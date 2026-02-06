@@ -1034,6 +1034,8 @@ const downloadEmailDraft = async (app) => {
   } catch (_e) {
     if (window.$toast) {
       window.$toast('Fehler beim Erstellen des E-Mail-Entwurfs', 'error')
+    } else {
+      alert('Fehler beim Erstellen des E-Mail-Entwurfs')
     }
   }
 }
