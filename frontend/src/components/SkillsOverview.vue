@@ -8,9 +8,9 @@
             <line x1="12" y1="5" x2="12" y2="19"/>
             <line x1="5" y1="12" x2="19" y2="12"/>
           </svg>
-          Skill hinzufugen
+          Skill hinzufügen
         </button>
-        <button @click="showBulkModal = true" class="zen-btn zen-btn-sm" title="Mehrere Skills auf einmal hinzufuegen">
+        <button @click="showBulkModal = true" class="zen-btn zen-btn-sm" title="Mehrere Skills auf einmal hinzufügen">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="8" y1="6" x2="21" y2="6"/>
             <line x1="8" y1="12" x2="21" y2="12"/>
@@ -84,7 +84,7 @@
         </svg>
       </div>
       <h4>Noch keine Skills</h4>
-      <p>Laden Sie einen Lebenslauf hoch, um Skills automatisch zu extrahieren, oder fugen Sie Skills manuell hinzu.</p>
+      <p>Laden Sie einen Lebenslauf hoch, um Skills automatisch zu extrahieren, oder fügen Sie Skills manuell hinzu.</p>
       <router-link to="/documents" class="zen-btn zen-btn-ai">
         Lebenslauf hochladen
       </router-link>
@@ -155,9 +155,9 @@
             <span class="field-hint">Jeder Skill muss mindestens 2 Zeichen haben</span>
           </div>
           <div class="form-group">
-            <label for="bulk-category">Kategorie fuer alle *</label>
+            <label for="bulk-category">Kategorie für alle *</label>
             <select id="bulk-category" v-model="bulkFormData.skill_category" required>
-              <option value="">Kategorie wahlen...</option>
+              <option value="">Kategorie wählen...</option>
               <option value="technical">Technisch</option>
               <option value="soft_skills">Soft Skills</option>
               <option value="languages">Sprachen</option>
@@ -179,7 +179,7 @@
     <div v-if="showAddModal || editingSkill" class="modal-overlay" @click.self="closeModal">
       <div class="modal zen-card" role="dialog" aria-modal="true">
         <div class="modal-header">
-          <h3>{{ editingSkill ? 'Skill bearbeiten' : 'Skill hinzufugen' }}</h3>
+          <h3>{{ editingSkill ? 'Skill bearbeiten' : 'Skill hinzufügen' }}</h3>
           <button @click="closeModal" class="modal-close">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18"/>
@@ -217,7 +217,7 @@
           <div class="form-group">
             <label for="skill-category">Kategorie *</label>
             <select id="skill-category" v-model="formData.skill_category" required>
-              <option value="">Kategorie wahlen...</option>
+              <option value="">Kategorie wählen...</option>
               <option value="technical">Technisch</option>
               <option value="soft_skills">Soft Skills</option>
               <option value="languages">Sprachen</option>
@@ -239,7 +239,7 @@
           <div class="modal-actions">
             <button type="button" @click="closeModal" class="zen-btn">Abbrechen</button>
             <button type="submit" class="zen-btn zen-btn-ai" :disabled="saving">
-              {{ saving ? 'Speichert...' : (editingSkill ? 'Aktualisieren' : 'Hinzufugen') }}
+              {{ saving ? 'Speichert...' : (editingSkill ? 'Aktualisieren' : 'Hinzufügen') }}
             </button>
           </div>
         </form>
@@ -449,7 +449,7 @@ const deleteSkill = async (skill) => {
     await api.delete(`/users/me/skills/${skill.id}`)
     skills.value = skills.value.filter(s => s.id !== skill.id)
     if (window.$toast) {
-      window.$toast('Skill geloscht', 'success')
+      window.$toast('Skill gelöscht', 'success')
     }
   } catch (error) {
     console.error('Failed to delete skill:', error)
@@ -478,7 +478,7 @@ const saveSkill = async () => {
     }
 
     if (window.$toast) {
-      window.$toast(editingSkill.value ? 'Skill aktualisiert' : 'Skill hinzugefugt', 'success')
+      window.$toast(editingSkill.value ? 'Skill aktualisiert' : 'Skill hinzugefügt', 'success')
     }
     closeModal()
   } catch (error) {
@@ -594,10 +594,10 @@ const saveBulkSkills = async () => {
 
   if (window.$toast) {
     if (successCount > 0) {
-      window.$toast(`${successCount} Skills hinzugefuegt`, 'success')
+      window.$toast(`${successCount} Skills hinzugefügt`, 'success')
     }
     if (errorCount > 0) {
-      window.$toast(`${errorCount} Skills uebersprungen (bereits vorhanden)`, 'warning')
+      window.$toast(`${errorCount} Skills übersprungen (bereits vorhanden)`, 'warning')
     }
   }
 
