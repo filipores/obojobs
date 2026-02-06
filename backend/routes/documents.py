@@ -72,8 +72,9 @@ def upload_document(current_user):
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(extracted_text)
 
-        # PDF löschen (nur Text behalten)
-        os.remove(pdf_path)
+        # Original-PDF behalten (umbenennen statt löschen)
+        permanent_pdf_path = os.path.join(user_dir, f"{doc_type}.pdf")
+        os.replace(pdf_path, permanent_pdf_path)
 
         # Prüfen ob bereits ein Dokument dieses Typs existiert
         existing_doc = Document.query.filter_by(user_id=current_user.id, doc_type=doc_type).first()
@@ -81,13 +82,18 @@ def upload_document(current_user):
         if existing_doc:
             # Altes Dokument aktualisieren
             existing_doc.file_path = txt_path
+            existing_doc.pdf_path = permanent_pdf_path
             existing_doc.original_filename = filename
             db.session.commit()
             document = existing_doc
         else:
             # Neues Dokument erstellen
             document = Document(
-                user_id=current_user.id, doc_type=doc_type, file_path=txt_path, original_filename=filename
+                user_id=current_user.id,
+                doc_type=doc_type,
+                file_path=txt_path,
+                pdf_path=permanent_pdf_path,
+                original_filename=filename,
             )
             db.session.add(document)
             db.session.commit()
@@ -187,9 +193,11 @@ def delete_document(doc_id, current_user):
         skills_deleted = UserSkill.query.filter_by(user_id=current_user.id, source_document_id=document.id).delete()
         db.session.flush()
 
-    # Delete file
+    # Delete files
     if os.path.exists(document.file_path):
         os.remove(document.file_path)
+    if document.pdf_path and os.path.exists(document.pdf_path):
+        os.remove(document.pdf_path)
 
     # Delete record
     db.session.delete(document)

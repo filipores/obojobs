@@ -1,6 +1,9 @@
 import csv
 import io
+import json
+import logging
 import os
+import re
 import tempfile
 from datetime import datetime, timedelta
 from email import encoders
@@ -22,7 +25,7 @@ from middleware.subscription_limit import (
     get_subscription_usage,
     increment_application_count,
 )
-from models import Application, InterviewQuestion, JobRequirement, Template, UserSkill, db
+from models import Application, Document, InterviewQuestion, JobRequirement, Template, UserSkill, db
 from services.ats_optimizer import ATSOptimizer
 from services.contact_extractor import ContactExtractor
 from services.generator import BewerbungsGenerator
@@ -35,6 +38,21 @@ from services.web_scraper import WebScraper
 
 applications_bp = Blueprint("applications", __name__)
 
+# Display names for job portal identifiers returned by WebScraper
+PORTAL_DISPLAY_NAMES = {
+    "stepstone": "StepStone",
+    "indeed": "Indeed",
+    "xing": "XING",
+}
+
+# HTTP status codes that indicate a client-side scraping error (not a server bug)
+_SCRAPER_CLIENT_ERROR_CODES = ("403", "404", "429", "400", "401", "502", "503")
+
+
+def _is_scraper_client_error(error_message: str) -> bool:
+    """Check if a scraper error message indicates a client-side HTTP error."""
+    return any(code in error_message for code in _SCRAPER_CLIENT_ERROR_CODES)
+
 
 def sanitize_filename(name: str) -> str:
     """Sanitize a string for use as a filename.
@@ -43,8 +61,6 @@ def sanitize_filename(name: str) -> str:
     """
     if not name:
         return "Anschreiben"
-
-    import re
 
     # Replace German umlauts and special characters FIRST (before any normalization)
     replacements = {
@@ -110,8 +126,6 @@ def calculate_and_store_job_fit(app, job_description, user_id):
 
     except Exception as e:
         # Log but don't fail - job-fit is optional
-        import logging
-
         logging.warning(f"Failed to calculate job-fit for app {app.id}: {e}")
 
 
@@ -292,20 +306,13 @@ def quick_extract(current_user):
                 }
             ), 400
 
-        # Map job board to display name
-        portal_names = {
-            "stepstone": "StepStone",
-            "indeed": "Indeed",
-            "xing": "XING",
-        }
-
         return jsonify(
             {
                 "success": True,
                 "data": {
                     "company": company,
                     "title": title,
-                    "portal": portal_names.get(job_board, "Sonstige"),
+                    "portal": PORTAL_DISPLAY_NAMES.get(job_board, "Sonstige"),
                     "portal_id": job_board or "generic",
                     "url": url,
                 },
@@ -315,8 +322,7 @@ def quick_extract(current_user):
     except Exception as e:
         error_message = str(e)
 
-        # HTTP errors should be treated as client errors
-        if any(code in error_message for code in ["403", "404", "429", "400", "401", "502", "503"]):
+        if _is_scraper_client_error(error_message):
             return jsonify({"success": False, "error": error_message}), 400
 
         return jsonify(
@@ -379,18 +385,11 @@ def preview_job(current_user):
                 }
             ), 400
 
-        # Map job board to display name
-        portal_names = {
-            "stepstone": "StepStone",
-            "indeed": "Indeed",
-            "xing": "XING",
-        }
-
         return jsonify(
             {
                 "success": True,
                 "data": {
-                    "portal": portal_names.get(job_board, "Sonstige"),
+                    "portal": PORTAL_DISPLAY_NAMES.get(job_board, "Sonstige"),
                     "portal_id": job_board or "generic",
                     "url": url,
                     "title": job_data.get("title"),
@@ -413,14 +412,10 @@ def preview_job(current_user):
     except Exception as e:
         error_message = str(e)
 
-        # HTTP errors from WebScraper should be treated as client errors (400)
-        # not server errors (500) to provide consistent error handling
-        if any(code in error_message for code in ["403", "404", "429", "400", "401", "502", "503"]):
+        if _is_scraper_client_error(error_message):
             return jsonify({"success": False, "error": error_message}), 400
 
-        # Server errors (connection, parsing, etc.) are legitimate 500 errors
-        # but should be logged and have user-friendly messages
-        print(f"preview-job server error for {url}: {error_message}")
+        logging.warning(f"preview-job server error for {url}: {error_message}")
         return jsonify(
             {
                 "success": False,
@@ -826,13 +821,25 @@ def download_email_draft(app_id, current_user):
     body = _replace_template_vars(app.email_text, app)
     msg.attach(MIMEText(body, "plain", "utf-8"))
 
-    # Attach PDF
+    # Attach Anschreiben PDF
     with open(app.pdf_path, "rb") as f:
         pdf_part = MIMEBase("application", "pdf")
         pdf_part.set_payload(f.read())
     encoders.encode_base64(pdf_part)
     pdf_part.add_header("Content-Disposition", "attachment", filename=f"Anschreiben_{safe_firma}.pdf")
     msg.attach(pdf_part)
+
+    # Attach CV and Arbeitszeugnis if available
+    for doc_type, default_name in [("lebenslauf", "Lebenslauf.pdf"), ("arbeitszeugnis", "Arbeitszeugnis.pdf")]:
+        doc = Document.query.filter_by(user_id=current_user.id, doc_type=doc_type).first()
+        if doc and doc.pdf_path and os.path.exists(doc.pdf_path):
+            with open(doc.pdf_path, "rb") as f:
+                doc_part = MIMEBase("application", "pdf")
+                doc_part.set_payload(f.read())
+            encoders.encode_base64(doc_part)
+            attach_name = doc.original_filename or default_name
+            doc_part.add_header("Content-Disposition", "attachment", filename=attach_name)
+            msg.attach(doc_part)
 
     # Return as .eml download
     eml_bytes = msg.as_bytes()
@@ -1504,9 +1511,6 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         response_text = response.content[0].text.strip()
 
         # Parse JSON response
-        import json
-        import re
-
         json_match = re.search(r"\{[\s\S]*\}", response_text)
         if not json_match:
             return jsonify({"success": False, "error": "Fehler bei der KI-Optimierung: Ungültiges Antwortformat"}), 500
