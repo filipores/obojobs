@@ -1,3 +1,10 @@
+## [1.30.2](https://github.com/filipores/obojobs/compare/v1.30.1...v1.30.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* **config:** resolve upload_folder path relative to project root ([0b0fc91](https://github.com/filipores/obojobs/commit/0b0fc91d2a7df86ebfc49660d9b038d06b659c84))
+
 ## [1.30.1](https://github.com/filipores/obojobs/compare/v1.30.0...v1.30.1) (2026-02-06)
 
 
