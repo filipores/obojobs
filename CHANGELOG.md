@@ -1,3 +1,10 @@
+## [1.31.1](https://github.com/filipores/obojobs/compare/v1.31.0...v1.31.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **config:** change backend port from 5001 to 5002 ([2589e9d](https://github.com/filipores/obojobs/commit/2589e9d176ce238e7bd7bd25f755722ce63e2cab))
+
 # [1.31.0](https://github.com/filipores/obojobs/compare/v1.30.2...v1.31.0) (2026-02-06)
 
 
