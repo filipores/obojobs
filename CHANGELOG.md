@@ -1,3 +1,10 @@
+## [1.29.6](https://github.com/filipores/obojobs/compare/v1.29.5...v1.29.6) (2026-02-06)
+
+
+### Bug Fixes
+
+* **api:** use absolute paths in send_file for pdf and document downloads ([e7e2abc](https://github.com/filipores/obojobs/commit/e7e2abc86f277ba6eb3e8b8ccd75892478f6c1a4))
+
 ## [1.29.5](https://github.com/filipores/obojobs/compare/v1.29.4...v1.29.5) (2026-02-06)
 
 
