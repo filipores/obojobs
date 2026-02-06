@@ -19,7 +19,7 @@
         </router-link>
 
         <!-- Center Navigation - Horizontal links -->
-        <div class="nav-center">
+        <div class="nav-center" :class="{ 'nav-resizing': isResizing }">
           <router-link to="/dashboard" class="nav-link" exact-active-class="active" title="Dashboard">
             <span class="nav-text">Dashboard</span>
           </router-link>
@@ -313,6 +313,7 @@ const route = useRoute()
 const toastRef = ref(null)
 const isDarkMode = ref(false)
 const isSidebarOpen = ref(false)
+const isResizing = ref(false)
 const currentYear = computed(() => new Date().getFullYear())
 const isLandingPage = computed(() => route.meta?.landing === true)
 
@@ -395,6 +396,28 @@ const handleRouteChange = () => {
   }
 }
 
+// Prevent viewport resize from triggering accidental navigation
+// When browser crosses the 1024px breakpoint, nav links suddenly appear/disappear
+// and the mouseup from a window drag-resize can trigger a click on the newly-visible link
+let resizeTimer = null
+const MOBILE_BREAKPOINT = 1024
+
+const handleResize = () => {
+  // Temporarily disable pointer events on nav links during resize
+  isResizing.value = true
+
+  // Close mobile sidebar when resizing to desktop
+  if (window.innerWidth > MOBILE_BREAKPOINT && isSidebarOpen.value) {
+    closeMobileSidebar()
+  }
+
+  // Re-enable pointer events after resize settles
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    isResizing.value = false
+  }, 150)
+}
+
 // Watch for system preference changes
 const watchSystemTheme = () => {
   const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
@@ -421,6 +444,9 @@ onMounted(() => {
   // Add keyboard listener for escape key
   document.addEventListener('keydown', handleEscapeKey)
 
+  // Add resize listener to prevent accidental navigation during viewport resize
+  window.addEventListener('resize', handleResize)
+
   // Watch for route changes to close sidebar
   router.afterEach(handleRouteChange)
 })
@@ -428,6 +454,8 @@ onMounted(() => {
 onUnmounted(() => {
   // Clean up event listeners
   document.removeEventListener('keydown', handleEscapeKey)
+  window.removeEventListener('resize', handleResize)
+  clearTimeout(resizeTimer)
   document.body.classList.remove('sidebar-open')
 })
 </script>
@@ -441,6 +469,7 @@ onUnmounted(() => {
   top: 0;
   z-index: var(--z-nav);
   background: var(--color-washi);
+  overflow: hidden;
 }
 
 /* ========================================
@@ -472,22 +501,22 @@ onUnmounted(() => {
   background: var(--color-ai);
 }
 
-/* Show hamburger only on mobile */
-@media (max-width: 768px) {
+/* Show hamburger on mobile and tablet (until desktop nav fits) */
+@media (max-width: 1024px) {
   .mobile-hamburger {
     display: flex;
   }
 }
 
 .nav-container {
-  max-width: var(--container-xl);
   margin: 0 auto;
   padding: 0 var(--space-ma);
   height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-ma);
+  gap: var(--space-md);
+  overflow: hidden;
 }
 
 /* Brand */
@@ -497,6 +526,7 @@ onUnmounted(() => {
   gap: var(--space-sm);
   text-decoration: none;
   color: var(--color-sumi);
+  flex-shrink: 0;
 }
 
 .brand-mark {
@@ -532,6 +562,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  min-width: 0;
+  overflow: hidden;
+  flex: 1 1 auto;
+}
+
+/* Disable pointer events during viewport resize to prevent accidental navigation */
+.nav-center.nav-resizing {
+  pointer-events: none;
 }
 
 .nav-link {
@@ -543,6 +581,8 @@ onUnmounted(() => {
   font-weight: 400;
   letter-spacing: var(--tracking-normal);
   transition: color var(--transition-base);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-link-cta {
@@ -618,6 +658,7 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  flex-shrink: 0;
 }
 
 .subscription-display {
@@ -733,13 +774,13 @@ onUnmounted(() => {
 /* ========================================
    RESPONSIVE
    ======================================== */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .nav-container {
     padding: 0 var(--space-md);
     gap: var(--space-md);
   }
 
-  /* Hide center nav on mobile - users use sidebar or bottom nav instead */
+  /* Hide center nav on mobile/tablet - users use sidebar or bottom nav instead */
   .nav-center {
     display: none;
   }
@@ -764,7 +805,9 @@ onUnmounted(() => {
   .nav-link-cta {
     padding: var(--space-xs) var(--space-sm);
   }
+}
 
+@media (max-width: 768px) {
   .brand-text {
     display: none;
   }
@@ -886,6 +929,17 @@ onUnmounted(() => {
   color: var(--color-text-ghost);
 }
 
+/* Add padding for bottom nav (visible up to 1024px) */
+@media (max-width: 1024px) {
+  .main-content.with-nav {
+    padding-bottom: 72px;
+  }
+
+  .zen-footer {
+    padding-bottom: calc(var(--space-lg) + 72px);
+  }
+}
+
 @media (max-width: 768px) {
   .footer-container {
     flex-direction: column;
@@ -903,15 +957,6 @@ onUnmounted(() => {
 
   .footer-copyright {
     order: 3;
-  }
-
-  /* Add padding for bottom nav */
-  .main-content.with-nav {
-    padding-bottom: 72px;
-  }
-
-  .zen-footer {
-    padding-bottom: calc(var(--space-lg) + 72px);
   }
 }
 
@@ -932,7 +977,7 @@ onUnmounted(() => {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .bottom-nav {
     display: flex;
     justify-content: space-around;
@@ -1211,8 +1256,8 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* Show sidebar only on mobile */
-@media (min-width: 769px) {
+/* Show sidebar only on mobile/tablet - hidden when desktop nav is visible */
+@media (min-width: 1025px) {
   .mobile-sidebar {
     display: none !important;
   }
