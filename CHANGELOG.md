@@ -1,3 +1,10 @@
+# [1.31.0](https://github.com/filipores/obojobs/compare/v1.30.2...v1.31.0) (2026-02-06)
+
+
+### Features
+
+* **email:** add transactional email service via gmail smtp ([961f825](https://github.com/filipores/obojobs/commit/961f825b3dabb2349ba23a87819d5bf013c8142c))
+
 ## [1.30.2](https://github.com/filipores/obojobs/compare/v1.30.1...v1.30.2) (2026-02-06)
 
 
