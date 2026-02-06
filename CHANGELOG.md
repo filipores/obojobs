@@ -1,3 +1,10 @@
+# [1.30.0](https://github.com/filipores/obojobs/compare/v1.29.7...v1.30.0) (2026-02-06)
+
+
+### Features
+
+* **templates:** add personal data variables to templates and pdfs ([d5392ca](https://github.com/filipores/obojobs/commit/d5392ca390e41a517e6961335a4dfb673e5db066))
+
 ## [1.29.7](https://github.com/filipores/obojobs/compare/v1.29.6...v1.29.7) (2026-02-06)
 
 
