@@ -52,6 +52,7 @@ def test_user(app):
         user = User(
             email="test@example.com",
             full_name="Test User",
+            email_verified=True,
         )
         user.set_password("TestPass123")  # Meets new password requirements
         db.session.add(user)

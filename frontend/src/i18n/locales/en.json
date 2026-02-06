@@ -110,7 +110,9 @@
     "aiPoweredDescription": "Create professional, personalized cover letters in seconds with Artificial Intelligence.",
     "featureAutoGeneration": "Automatic cover letter generation",
     "featureChromeExtension": "Chrome Extension for 1-click applications",
-    "featureTemplateManagement": "Template management"
+    "featureTemplateManagement": "Template management",
+    "emailNotVerified": "Please verify your email address first. Check your inbox (and spam folder).",
+    "resendVerification": "Resend verification email"
   },
   "register": {
     "title": "Create Account",

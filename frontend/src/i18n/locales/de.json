@@ -110,7 +110,9 @@
     "aiPoweredDescription": "Erstellen Sie professionelle, personalisierte Anschreiben in Sekunden mit Künstlicher Intelligenz.",
     "featureAutoGeneration": "Automatische Anschreiben-Generierung",
     "featureChromeExtension": "Chrome Extension für 1-Klick Bewerbungen",
-    "featureTemplateManagement": "Template-Verwaltung"
+    "featureTemplateManagement": "Template-Verwaltung",
+    "emailNotVerified": "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse. Prüfen Sie Ihren Posteingang (auch Spam-Ordner).",
+    "resendVerification": "Bestätigungsmail erneut senden"
   },
   "register": {
     "title": "Konto erstellen",

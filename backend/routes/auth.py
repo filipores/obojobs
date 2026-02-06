@@ -54,6 +54,22 @@ def login():
 
     try:
         result = AuthService.login_user(email, password)
+
+        # Block login for users who haven't verified their email.
+        # Google OAuth users are excluded (they have no email verification flow).
+        # We check AFTER login_user succeeds to avoid revealing verification status
+        # for invalid passwords (security: prevents email enumeration).
+        user_data = result["user"]
+        if not user_data["email_verified"]:
+            user = User.query.filter_by(email=email).first()
+            if user and not user.google_id:
+                return jsonify(
+                    {
+                        "error": "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+                        "email_not_verified": True,
+                    }
+                ), 403
+
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
@@ -222,6 +238,43 @@ def _record_verification_request(user_id: int) -> None:
     if key not in _verification_rate_limits:
         _verification_rate_limits[key] = []
     _verification_rate_limits[key].append(datetime.utcnow())
+
+
+_RESEND_VERIFICATION_RESPONSE = "Falls ein Konto mit dieser E-Mail existiert, wurde eine Bestätigungs-E-Mail gesendet."
+
+
+@auth_bp.route("/resend-verification", methods=["POST"])
+def resend_verification():
+    """
+    Resend email verification for unverified users who cannot log in.
+
+    Public endpoint - does not require authentication.
+    Accepts email in the request body. Rate limited to 3 requests per hour.
+    Always returns 200 to prevent email enumeration.
+    """
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
+
+    user = AuthService.get_user_by_email(email)
+
+    if not user or user.email_verified:
+        return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
+
+    if not _check_verification_rate_limit(user.id):
+        return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
+
+    # Generate and store token
+    token = EmailVerificationService.create_verification_token(user)
+
+    # Record the request for rate limiting
+    _record_verification_request(user.id)
+
+    send_verification_email(user.email, token)
+
+    return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
 
 
 @auth_bp.route("/send-verification", methods=["POST"])

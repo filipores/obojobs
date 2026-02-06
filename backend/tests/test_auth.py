@@ -205,6 +205,70 @@ class TestLogin:
         data = response.get_json()
         assert "error" in data
 
+    def test_login_blocked_for_unverified_email(self, app, client):
+        """Test that login returns 403 for users with unverified email."""
+        with app.app_context():
+            user = User(
+                email="unverified@example.com",
+                full_name="Unverified User",
+                email_verified=False,
+            )
+            user.set_password("TestPass123")
+            db.session.add(user)
+            db.session.commit()
+
+        response = client.post(
+            "/api/auth/login",
+            json={
+                "email": "unverified@example.com",
+                "password": "TestPass123",
+            },
+        )
+
+        assert response.status_code == 403
+        data = response.get_json()
+        assert "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse" in data["error"]
+        assert data["email_not_verified"] is True
+
+    def test_login_allowed_for_verified_email(self, client, test_user):
+        """Test that login succeeds for users with verified email."""
+        response = client.post(
+            "/api/auth/login",
+            json={
+                "email": test_user["email"],
+                "password": test_user["password"],
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "access_token" in data
+
+    def test_login_allowed_for_google_user_without_email_verified(self, app, client):
+        """Test that Google OAuth users can login even without email_verified."""
+        with app.app_context():
+            user = User(
+                email="googleonly@example.com",
+                full_name="Google User",
+                email_verified=False,
+                google_id="google-id-123",
+            )
+            user.set_password("TestPass123")
+            db.session.add(user)
+            db.session.commit()
+
+        response = client.post(
+            "/api/auth/login",
+            json={
+                "email": "googleonly@example.com",
+                "password": "TestPass123",
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "access_token" in data
+
 
 class TestPasswordRequirements:
     """Tests for GET /api/auth/password-requirements"""
@@ -260,8 +324,14 @@ class TestSendVerification:
 
         assert response.status_code == 401
 
-    def test_send_verification_returns_200_for_unverified_user(self, client, test_user, auth_headers):
+    def test_send_verification_returns_200_for_unverified_user(self, app, client, test_user, auth_headers):
         """Test successful verification email request."""
+        # Mark user as unverified for this test
+        with app.app_context():
+            user = User.query.filter_by(email=test_user["email"]).first()
+            user.email_verified = False
+            db.session.commit()
+
         response = client.post(
             "/api/auth/send-verification",
             headers=auth_headers,
@@ -272,14 +342,8 @@ class TestSendVerification:
         assert "message" in data
         assert data["email"] == test_user["email"]
 
-    def test_send_verification_returns_400_for_already_verified_user(self, app, client, test_user, auth_headers):
+    def test_send_verification_returns_400_for_already_verified_user(self, client, test_user, auth_headers):
         """Test that already verified users get 400."""
-        # Mark user as verified
-        with app.app_context():
-            user = User.query.filter_by(email=test_user["email"]).first()
-            user.email_verified = True
-            db.session.commit()
-
         response = client.post(
             "/api/auth/send-verification",
             headers=auth_headers,
@@ -289,8 +353,14 @@ class TestSendVerification:
         data = response.get_json()
         assert "bereits bestätigt" in data["error"]
 
-    def test_send_verification_rate_limited_after_max_requests(self, client, test_user, auth_headers):
+    def test_send_verification_rate_limited_after_max_requests(self, app, client, test_user, auth_headers):
         """Test that rate limiting kicks in after max requests."""
+        # Mark user as unverified for this test
+        with app.app_context():
+            user = User.query.filter_by(email=test_user["email"]).first()
+            user.email_verified = False
+            db.session.commit()
+
         # Send max allowed requests
         for _ in range(MAX_VERIFICATION_EMAILS_PER_HOUR):
             response = client.post(
@@ -312,6 +382,12 @@ class TestSendVerification:
 
     def test_send_verification_creates_token(self, app, client, test_user, auth_headers):
         """Test that send-verification creates a token for the user."""
+        # Mark user as unverified for this test
+        with app.app_context():
+            user = User.query.filter_by(email=test_user["email"]).first()
+            user.email_verified = False
+            db.session.commit()
+
         response = client.post(
             "/api/auth/send-verification",
             headers=auth_headers,
@@ -323,6 +399,94 @@ class TestSendVerification:
             user = User.query.filter_by(email=test_user["email"]).first()
             assert user.email_verification_token is not None
             assert user.email_verification_sent_at is not None
+
+
+class TestResendVerification:
+    """Tests for POST /api/auth/resend-verification (public endpoint)"""
+
+    def setup_method(self):
+        """Clear rate limit storage before each test."""
+        _verification_rate_limits.clear()
+
+    def test_resend_verification_returns_200_for_unverified_user(self, app, client):
+        """Test that resend-verification sends email and returns 200."""
+        with app.app_context():
+            user = User(
+                email="resend@example.com",
+                full_name="Resend User",
+                email_verified=False,
+            )
+            user.set_password("TestPass123")
+            db.session.add(user)
+            db.session.commit()
+
+        response = client.post(
+            "/api/auth/resend-verification",
+            json={"email": "resend@example.com"},
+        )
+
+        assert response.status_code == 200
+        data = response.get_json()
+        assert "message" in data
+
+    def test_resend_verification_returns_200_for_nonexistent_email(self, client):
+        """Test that resend-verification returns 200 even for non-existent email (prevents enumeration)."""
+        response = client.post(
+            "/api/auth/resend-verification",
+            json={"email": "nonexistent@example.com"},
+        )
+
+        assert response.status_code == 200
+
+    def test_resend_verification_returns_200_for_already_verified_user(self, app, client):
+        """Test that resend-verification returns 200 for already verified user (prevents enumeration)."""
+        with app.app_context():
+            user = User(
+                email="verified@example.com",
+                full_name="Verified User",
+                email_verified=True,
+            )
+            user.set_password("TestPass123")
+            db.session.add(user)
+            db.session.commit()
+
+        response = client.post(
+            "/api/auth/resend-verification",
+            json={"email": "verified@example.com"},
+        )
+
+        assert response.status_code == 200
+
+    def test_resend_verification_creates_token(self, app, client):
+        """Test that resend-verification creates a verification token."""
+        with app.app_context():
+            user = User(
+                email="tokentest@example.com",
+                full_name="Token Test",
+                email_verified=False,
+            )
+            user.set_password("TestPass123")
+            db.session.add(user)
+            db.session.commit()
+
+        client.post(
+            "/api/auth/resend-verification",
+            json={"email": "tokentest@example.com"},
+        )
+
+        with app.app_context():
+            user = User.query.filter_by(email="tokentest@example.com").first()
+            assert user.email_verification_token is not None
+            assert user.email_verification_sent_at is not None
+
+    def test_resend_verification_no_email_returns_200(self, client):
+        """Test that missing email returns 200 (prevents enumeration)."""
+        response = client.post(
+            "/api/auth/resend-verification",
+            json={},
+        )
+
+        assert response.status_code == 200
 
 
 class TestVerifyEmail:
@@ -423,8 +587,8 @@ class TestVerifyEmail:
 class TestMeEndpointEmailVerified:
     """Tests for GET /api/auth/me returning email_verified"""
 
-    def test_me_returns_email_verified_false_for_new_user(self, client, test_user, auth_headers):
-        """Test that /me returns email_verified: false for new users."""
+    def test_me_returns_email_verified_true_for_test_user(self, client, test_user, auth_headers):
+        """Test that /me returns email_verified: true for the test user (verified by default)."""
         response = client.get(
             "/api/auth/me",
             headers=auth_headers,
@@ -433,7 +597,7 @@ class TestMeEndpointEmailVerified:
         assert response.status_code == 200
         data = response.get_json()
         assert "email_verified" in data
-        assert data["email_verified"] is False
+        assert data["email_verified"] is True
 
     def test_me_returns_email_verified_true_after_verification(self, app, client, test_user, auth_headers):
         """Test that /me returns email_verified: true after verification."""
@@ -1055,7 +1219,7 @@ class TestDeleteAccount:
 
             # Create a document
             document = Document(
-                user_id=user.id, original_filename="test.pdf", file_path="/test/path", doc_type="cv_pdf"
+                user_id=user.id, original_filename="test.pdf", file_path="/test/path", doc_type="lebenslauf"
             )
             db.session.add(document)
             db.session.commit()
