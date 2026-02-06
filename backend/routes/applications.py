@@ -3,6 +3,10 @@ import io
 import os
 import tempfile
 from datetime import datetime, timedelta
+from email import encoders
+from email.mime.base import MIMEBase
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 
 from flask import Blueprint, jsonify, make_response, request, send_file
 from reportlab.lib import colors
@@ -784,6 +788,58 @@ def download_pdf(app_id, current_user):
     # Sanitize company name for use in filename
     safe_firma = sanitize_filename(app.firma)
     return send_file(os.path.abspath(app.pdf_path), as_attachment=True, download_name=f"Anschreiben_{safe_firma}.pdf")
+
+
+def _replace_template_vars(text, app):
+    """Replace template variables in text with actual application values."""
+    if not text:
+        return ""
+    return (
+        text.replace("{{FIRMA}}", app.firma or "")
+        .replace("{{POSITION}}", app.position or "")
+        .replace("{{ANSPRECHPARTNER}}", app.ansprechpartner or "")
+        .replace("{{QUELLE}}", app.quelle or "")
+    )
+
+
+@applications_bp.route("/<int:app_id>/email-draft", methods=["GET"])
+@jwt_required_custom
+def download_email_draft(app_id, current_user):
+    """Generate and download a .eml email draft file with the Anschreiben PDF attached."""
+    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+
+    if not app:
+        return jsonify({"error": "Application not found"}), 404
+
+    if not app.pdf_path or not os.path.exists(app.pdf_path):
+        return jsonify({"error": "PDF not found"}), 404
+
+    safe_firma = sanitize_filename(app.firma)
+
+    # Build MIME message
+    msg = MIMEMultipart()
+    if app.email:
+        msg["To"] = app.email
+    msg["Subject"] = _replace_template_vars(app.betreff, app)
+
+    # Plain text body
+    body = _replace_template_vars(app.email_text, app)
+    msg.attach(MIMEText(body, "plain", "utf-8"))
+
+    # Attach PDF
+    with open(app.pdf_path, "rb") as f:
+        pdf_part = MIMEBase("application", "pdf")
+        pdf_part.set_payload(f.read())
+    encoders.encode_base64(pdf_part)
+    pdf_part.add_header("Content-Disposition", "attachment", filename=f"Anschreiben_{safe_firma}.pdf")
+    msg.attach(pdf_part)
+
+    # Return as .eml download
+    eml_bytes = msg.as_bytes()
+    response = make_response(eml_bytes)
+    response.headers["Content-Type"] = "message/rfc822"
+    response.headers["Content-Disposition"] = f'attachment; filename="Bewerbung_{safe_firma}.eml"'
+    return response
 
 
 @applications_bp.route("/export", methods=["GET"])

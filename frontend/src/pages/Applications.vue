@@ -585,7 +585,7 @@
                 </svg>
                 Interview-Prep
               </router-link>
-              <button @click="openMailClient(selectedApp)" class="zen-btn zen-btn-ai">
+              <button @click="downloadEmailDraft(selectedApp)" class="zen-btn zen-btn-ai">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
@@ -1012,26 +1012,30 @@ const exportApplications = async (format) => {
   }
 }
 
-const replaceTemplateVariables = (text, app) => {
-  if (!text) return ''
-  return text
-    .replace(/\{\{FIRMA\}\}/g, app.firma || '')
-    .replace(/\{\{POSITION\}\}/g, app.position || '')
-    .replace(/\{\{ANSPRECHPARTNER\}\}/g, app.ansprechpartner || '')
-    .replace(/\{\{QUELLE\}\}/g, app.quelle || '')
-}
+const downloadEmailDraft = async (app) => {
+  try {
+    const response = await api.get(`/applications/${app.id}/email-draft`, {
+      responseType: 'blob'
+    })
+    const blob = new Blob([response.data], { type: 'message/rfc822' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const firma = app.firma || 'Bewerbung'
+    link.download = `Bewerbung_${firma}.eml`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
 
-const openMailClient = (app) => {
-  const to = app.email || ''
-  const subject = encodeURIComponent(replaceTemplateVariables(app.betreff, app))
-  const body = encodeURIComponent(replaceTemplateVariables(app.email_text, app))
-  window.open(`mailto:${to}?subject=${subject}&body=${body}`, '_blank')
-
-  if (window.$toast) {
-    window.$toast('E-Mail-App geoeffnet. Bitte Anschreiben-PDF und Lebenslauf anhaengen.', 'info', 6000)
+    if (window.$toast) {
+      window.$toast('E-Mail-Entwurf heruntergeladen. Doppelklicken Sie die Datei, um sie in Ihrem E-Mail-Programm zu oeffnen.', 'success', 6000)
+    }
+  } catch (_e) {
+    if (window.$toast) {
+      window.$toast('Fehler beim Erstellen des E-Mail-Entwurfs', 'error')
+    }
   }
-
-  downloadPDF(app.id)
 }
 
 // Escape key handler for modals
