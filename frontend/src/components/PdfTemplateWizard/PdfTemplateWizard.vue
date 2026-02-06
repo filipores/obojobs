@@ -252,6 +252,7 @@ async function startAnalysis() {
       headers: {
         'Content-Type': 'multipart/form-data'
       },
+      suppressToast: true,
       onUploadProgress: (progressEvent) => {
         if (progressEvent.total) {
           uploadProgress.value = Math.round((progressEvent.loaded * 100) / progressEvent.total)
@@ -269,36 +270,55 @@ async function startAnalysis() {
     // Step 2: Analyze variables using AI
     analysisStatus.value = 'KI analysiert Dokumentstruktur...'
 
-    const analyzeResponse = await api.post(`/templates/${templateId.value}/analyze-variables`)
+    try {
+      const analyzeResponse = await api.post(`/templates/${templateId.value}/analyze-variables`, null, { suppressToast: true })
 
-    analysisStatus.value = 'Variablen werden identifiziert...'
-    await delay(400)
+      analysisStatus.value = 'Variablen werden identifiziert...'
+      await delay(400)
 
-    // Process suggestions from API
-    if (analyzeResponse.data.suggestions && Array.isArray(analyzeResponse.data.suggestions)) {
-      suggestions.value = analyzeResponse.data.suggestions.map((s, index) => ({
-        id: s.id || `suggestion_${index}`,
-        variable_name: s.variable_name || s.variableName || s.variable,
-        suggested_text: s.suggested_text || s.suggestedText || s.text,
-        reason: s.reason || s.explanation,
-        position: s.position || null,
-        status: 'pending'
-      }))
-    } else {
+      // Process suggestions from API
+      if (analyzeResponse.data.suggestions && Array.isArray(analyzeResponse.data.suggestions)) {
+        suggestions.value = analyzeResponse.data.suggestions.map((s, index) => ({
+          id: s.id || `suggestion_${index}`,
+          variable_name: s.variable_name || s.variableName || s.variable,
+          suggested_text: s.suggested_text || s.suggestedText || s.text,
+          reason: s.reason || s.explanation,
+          position: s.position || null,
+          status: 'pending'
+        }))
+      } else {
+        suggestions.value = []
+      }
+
+      analysisStatus.value = 'Analyse abgeschlossen!'
+      await delay(400)
+    } catch (analyzeErr) {
+      // AI variable analysis failed, but the PDF template was already uploaded successfully.
+      // Show a toast and allow the user to continue - template is still usable without AI variables.
+      console.error('Variable analysis error:', analyzeErr)
+      const analyzeErrMsg = 'KI-Variablenerkennung fehlgeschlagen. Sie koennen die Variablen manuell setzen.'
+      if (window.$toast) {
+        window.$toast(analyzeErrMsg, 'warning')
+      }
+      errorMessage.value = analyzeErrMsg
       suggestions.value = []
+      // Emit template-created so the user stays on the templates page with the uploaded template
+      emit('template-created', templateData.value)
+      return
     }
-
-    analysisStatus.value = 'Analyse abgeschlossen!'
-    await delay(400)
 
     // Stay on step 2 to show QuickReview
     // showDetailedReview is false by default, so QuickReview will be shown
 
   } catch (err) {
-    console.error('Analysis error:', err)
-    errorMessage.value = err.response?.data?.error || 'Fehler bei der PDF-Analyse. Bitte versuchen Sie es erneut.'
+    console.error('Upload error:', err)
+    const uploadErrMsg = err.response?.data?.error || 'Fehler beim PDF-Upload. Bitte versuchen Sie es erneut.'
+    errorMessage.value = uploadErrMsg
+    if (window.$toast) {
+      window.$toast(uploadErrMsg, 'error')
+    }
 
-    // Fall back to step 1 on error
+    // Fall back to step 1 on upload error only
     step.value = 1
   } finally {
     analyzing.value = false

@@ -158,14 +158,41 @@
       <!-- Ink Stroke Divider -->
       <div class="ink-stroke"></div>
 
-      <!-- Create New Template - Single CTA -->
+      <!-- Create New Template - Three Options -->
       <section v-if="!showWizard && !showPdfWizard && !showManualForm" class="create-section animate-fade-up">
-        <div class="create-cta">
-          <button class="create-cta__button zen-btn zen-btn-filled zen-btn-lg" @click="openCreationOverlay">
-            <span class="create-cta__icon">✨</span>
-            Neue Vorlage erstellen
+        <h2 class="create-section__title">Neue Vorlage erstellen</h2>
+        <div class="create-options">
+          <button class="create-option zen-card" @click="openCreationOverlay">
+            <div class="create-option__icon create-option__icon--ai">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <circle cx="12" cy="12" r="3"/>
+                <path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/>
+              </svg>
+            </div>
+            <h3>Mit KI erstellen</h3>
+            <p>Beschreiben Sie sich und erhalten Sie 3 Varianten in 60 Sekunden.</p>
           </button>
-          <p class="create-cta__hint">In 60 Sekunden zur perfekten Bewerbungsvorlage</p>
+          <button class="create-option zen-card" @click="startPdfWizard">
+            <div class="create-option__icon create-option__icon--pdf">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                <polyline points="14 2 14 8 20 8"/>
+                <path d="M12 18v-6M9 15l3 3 3-3"/>
+              </svg>
+            </div>
+            <h3>PDF hochladen</h3>
+            <p>Laden Sie ein bestehendes Anschreiben als PDF hoch. KI erkennt Variablen automatisch.</p>
+          </button>
+          <button class="create-option zen-card" @click="startManual">
+            <div class="create-option__icon create-option__icon--manual">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+              </svg>
+            </div>
+            <h3>Manuell erstellen</h3>
+            <p>Schreiben Sie Ihre Vorlage selbst mit Platzhaltern wie {{FIRMA}} und {{POSITION}}.</p>
+          </button>
         </div>
       </section>
 
@@ -597,7 +624,7 @@ const _startWizard = () => {
   }
 }
 
-const _startPdfWizard = () => {
+const startPdfWizard = () => {
   showPdfWizard.value = true
   showWizard.value = false
   showManualForm.value = false
@@ -642,12 +669,16 @@ const handleCreationSubmit = async ({ description, category }) => {
     message.value = ''
 
     try {
-      const { data } = await api.post('/templates/generate-variants', { description })
+      const { data } = await api.post('/templates/generate-variants', { description }, { suppressToast: true })
       generatedVariants.value = data.variants || []
     } catch (e) {
       showVariantPicker.value = false
-      message.value = e.response?.data?.error || 'Fehler beim Generieren der Varianten'
+      const errorMsg = e.response?.data?.error || 'KI-Generierung fehlgeschlagen. Bitte versuchen Sie es spaeter erneut oder erstellen Sie eine Vorlage manuell.'
+      message.value = errorMsg
       messageClass.value = 'error'
+      if (window.$toast) {
+        window.$toast(errorMsg, 'error')
+      }
     } finally {
       generatingVariants.value = false
     }
@@ -669,13 +700,13 @@ const closeVariantPicker = () => {
 const handleVariantSelect = async (variant) => {
   // Save the selected variant as a new template
   try {
-    const templateData = {
+    const templatePayload = {
       name: `${variant.name} Vorlage`,
       content: variant.content,
       is_default: true
     }
 
-    const { data } = await api.post('/templates', templateData)
+    const { data } = await api.post('/templates', templatePayload, { suppressToast: true })
 
     // Open in editor for fine-tuning
     form.value = {
@@ -692,8 +723,12 @@ const handleVariantSelect = async (variant) => {
 
     await loadTemplates()
   } catch (e) {
-    message.value = e.response?.data?.error || 'Fehler beim Speichern der Vorlage'
+    const errorMsg = e.response?.data?.error || 'Fehler beim Speichern der Vorlage'
+    message.value = errorMsg
     messageClass.value = 'error'
+    if (window.$toast) {
+      window.$toast(errorMsg, 'error')
+    }
   }
 }
 
@@ -714,7 +749,7 @@ const generateWithAI = async () => {
   message.value = ''
 
   try {
-    const { data } = await api.post('/templates/generate', wizardData.value)
+    const { data } = await api.post('/templates/generate', wizardData.value, { suppressToast: true })
 
     form.value = {
       name: data.template.name,
@@ -738,8 +773,14 @@ const generateWithAI = async () => {
 
     await loadTemplates()
   } catch (e) {
-    message.value = e.response?.data?.error || 'Fehler beim Generieren des Templates'
+    const errorMsg = e.response?.data?.error || 'KI-Generierung fehlgeschlagen. Bitte versuchen Sie es spaeter erneut oder erstellen Sie eine Vorlage manuell.'
+    message.value = errorMsg
     messageClass.value = 'error'
+    if (window.$toast) {
+      window.$toast(errorMsg, 'error')
+    }
+    // Stay on templates page - close wizard but do NOT navigate away
+    showWizard.value = false
   } finally {
     generating.value = false
   }
@@ -1166,32 +1207,76 @@ onUnmounted(() => {
   margin-top: var(--space-ma);
 }
 
-/* Single CTA Style */
-.create-cta {
+/* Section Title */
+.create-section__title {
+  text-align: center;
+  font-size: 1.5rem;
+  font-weight: 500;
+  margin-bottom: var(--space-lg);
+}
+
+/* Create Options Grid */
+.create-options {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-lg);
+}
+
+.create-option {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: var(--space-ma-lg) 0;
+  text-align: center;
+  padding: var(--space-xl) var(--space-lg);
+  cursor: pointer;
+  border: 2px solid transparent;
+  transition: all var(--transition-base);
+  background: none;
+  font-family: inherit;
 }
 
-.create-cta__button {
-  display: inline-flex;
+.create-option:hover {
+  border-color: var(--color-ai);
+  transform: translateY(-2px);
+}
+
+.create-option__icon {
+  width: 56px;
+  height: 56px;
+  display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-lg) var(--space-xl);
+  justify-content: center;
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+}
+
+.create-option__icon--ai {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+}
+
+.create-option__icon--pdf {
+  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.create-option__icon--manual {
+  background: var(--color-sand);
+  color: var(--color-sumi);
+}
+
+.create-option h3 {
   font-size: 1.125rem;
   font-weight: 500;
+  color: var(--color-sumi);
+  margin-bottom: var(--space-sm);
 }
 
-.create-cta__icon {
-  font-size: 1.25rem;
-}
-
-.create-cta__hint {
-  margin-top: var(--space-md);
-  font-size: 0.9375rem;
-  color: var(--color-text-tertiary);
+.create-option p {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0;
 }
 
 /* ========================================
