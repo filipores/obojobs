@@ -1,3 +1,10 @@
+## [1.35.2](https://github.com/filipores/obojobs/compare/v1.35.1...v1.35.2) (2026-02-07)
+
+
+### Bug Fixes
+
+* **template:** handle empty profile fields gracefully in default template ([afd2a33](https://github.com/filipores/obojobs/commit/afd2a338b5bfd8ed02c9a3596aafb51a1467d161))
+
 ## [1.35.1](https://github.com/filipores/obojobs/compare/v1.35.0...v1.35.1) (2026-02-07)
 
 
