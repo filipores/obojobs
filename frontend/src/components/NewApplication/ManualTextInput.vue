@@ -53,7 +53,6 @@
           :disabled="analyzingManualText"
           required
           aria-required="true"
-          @focus="onManualTextareaFocus"
         ></textarea>
         <p class="form-hint">
           <span v-if="manualJobText.length > 0" class="char-count" :class="{ 'char-count--valid': canAnalyzeManualText }">
@@ -105,10 +104,6 @@ const manualTextareaRef = ref(null)
 const canAnalyzeManualText = computed(() => {
   return manualJobText.value.trim().length >= 100
 })
-
-const onManualTextareaFocus = () => {
-  // Focus is handled by CSS :focus-within
-}
 
 const handleAnalyze = () => {
   emit('analyze', {

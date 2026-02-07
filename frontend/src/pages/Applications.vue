@@ -288,9 +288,8 @@ const hasActiveFilters = computed(() => {
 })
 
 const isExportDisabled = computed(() => {
-  if (applications.value.length === 0) return true
-  if (exportFilteredOnly.value && filteredApplications.value.length === 0) return true
-  return false
+  return applications.value.length === 0 ||
+    (exportFilteredOnly.value && filteredApplications.value.length === 0)
 })
 
 const exportDisabledReason = computed(() => {
@@ -529,10 +528,8 @@ const downloadEmailDraft = async (app) => {
 }
 
 const handleEscapeKey = (event) => {
-  if (event.key === 'Escape') {
-    if (selectedApp.value) {
-      closeDetails()
-    }
+  if (event.key === 'Escape' && selectedApp.value) {
+    closeDetails()
   }
 }
 

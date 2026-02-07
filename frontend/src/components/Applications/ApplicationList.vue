@@ -178,7 +178,7 @@ const props = defineProps({
   totalApplications: { type: Number, default: 0 }
 })
 
-defineEmits(['open-details', 'download-pdf', 'toggle-sort', 'go-to-page'])
+const emit = defineEmits(['open-details', 'download-pdf', 'toggle-sort', 'go-to-page'])
 
 const visiblePages = computed(() => {
   const pages = []
@@ -215,10 +215,10 @@ const getJobFitClass = (score) => {
   return 'job-fit-low'
 }
 
-const handleSortKeydown = (event, _field) => {
+const handleSortKeydown = (event, field) => {
   if (event.key === 'Enter' || event.key === ' ') {
     event.preventDefault()
-    // Emit will be caught by parent
+    emit('toggle-sort', field)
   }
 }
 </script>

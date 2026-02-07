@@ -255,19 +255,15 @@ def preview_job(current_user):
 
         # Check for missing important fields
         missing_fields = []
-        if not job_data.get("title"):
+        if not (job_data.get("title") or "").strip():
             missing_fields.append("Titel")
-        if not job_data.get("company"):
+        if not (job_data.get("company") or "").strip():
             missing_fields.append("Firma")
-        if not job_data.get("description") and not job_data.get("text"):
+        if not ((job_data.get("description") or "").strip() or (job_data.get("text") or "").strip()):
             missing_fields.append("Beschreibung")
 
         # If ALL required fields are missing, scraping failed completely
-        has_title = bool((job_data.get("title") or "").strip())
-        has_company = bool((job_data.get("company") or "").strip())
-        has_description = bool((job_data.get("description") or "").strip() or (job_data.get("text") or "").strip())
-
-        if not has_title and not has_company and not has_description:
+        if len(missing_fields) == 3:
             return jsonify(
                 {
                     "success": False,

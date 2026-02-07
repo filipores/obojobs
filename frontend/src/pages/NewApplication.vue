@@ -268,7 +268,17 @@ const recognizedCompany = ref('')
 let pasteDebounceTimeout = null
 
 const previewData = ref(null)
-const editableData = ref({
+const editableData = ref(defaultEditableData())
+
+const showManualFallback = ref(false)
+const manualJobText = ref('')
+const manualCompany = ref('')
+const manualTitle = ref('')
+const manualTextError = ref('')
+const analyzingManualText = ref(false)
+const isManualEntry = ref(false)
+
+const defaultEditableData = () => ({
   company: '',
   title: '',
   location: '',
@@ -279,13 +289,9 @@ const editableData = ref({
   description: ''
 })
 
-const showManualFallback = ref(false)
-const manualJobText = ref('')
-const manualCompany = ref('')
-const manualTitle = ref('')
-const manualTextError = ref('')
-const analyzingManualText = ref(false)
-const isManualEntry = ref(false)
+const extractApiError = (e, fallbackMessage) => {
+  return e.response?.data?.error || fallbackMessage
+}
 
 const isAtUsageLimit = computed(() => {
   if (!usage.value || usage.value.unlimited) return false
@@ -304,16 +310,7 @@ const onUrlInput = () => {
 
   if (previewData.value && url.value !== previewData.value.url) {
     previewData.value = null
-    editableData.value = {
-      company: '',
-      title: '',
-      location: '',
-      employment_type: '',
-      contact_person: '',
-      contact_email: '',
-      salary: '',
-      description: ''
-    }
+    editableData.value = defaultEditableData()
   }
 }
 
@@ -381,14 +378,9 @@ const loadPreview = async () => {
       quickConfirmData.value = data.data
 
       editableData.value = {
+        ...defaultEditableData(),
         company: data.data.company || '',
         title: data.data.title || '',
-        location: '',
-        employment_type: '',
-        contact_person: '',
-        contact_email: '',
-        salary: '',
-        description: ''
       }
 
       loading.value = false
@@ -401,15 +393,7 @@ const loadPreview = async () => {
       loading.value = false
     }
   } catch (e) {
-    if (e.response?.status === 400 && e.response?.data?.error) {
-      error.value = e.response.data.error
-    } else if (e.response?.status === 500 && e.response?.data?.error) {
-      error.value = e.response.data.error
-    } else if (e.response?.data?.error) {
-      error.value = e.response.data.error
-    } else {
-      error.value = 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.'
-    }
+    error.value = extractApiError(e, 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.')
     loading.value = false
   }
 }
@@ -450,15 +434,7 @@ const loadFullPreview = async () => {
       loading.value = false
     }
   } catch (e) {
-    if (e.response?.status === 400 && e.response?.data?.error) {
-      error.value = e.response.data.error
-    } else if (e.response?.status === 500 && e.response?.data?.error) {
-      error.value = e.response.data.error
-    } else if (e.response?.data?.error) {
-      error.value = e.response.data.error
-    } else {
-      error.value = 'Fehler beim Laden der Details. Bitte versuche es erneut.'
-    }
+    error.value = extractApiError(e, 'Fehler beim Laden der Details. Bitte versuche es erneut.')
     loading.value = false
   }
 }
@@ -467,16 +443,7 @@ const resetPreview = () => {
   quickConfirmData.value = null
   showFullPreview.value = false
   previewData.value = null
-  editableData.value = {
-    company: '',
-    title: '',
-    location: '',
-    employment_type: '',
-    contact_person: '',
-    contact_email: '',
-    salary: '',
-    description: ''
-  }
+  editableData.value = defaultEditableData()
   error.value = ''
   isManualEntry.value = false
   showManualFallback.value = false
@@ -500,11 +467,7 @@ const resetManualFallback = () => {
   manualTextError.value = ''
 }
 
-const analyzeManualText = async (payload) => {
-  const jobText = payload.jobText
-  const company = payload.company
-  const title = payload.title
-
+const analyzeManualText = async ({ jobText, company, title }) => {
   if (jobText.trim().length < 100) return
 
   analyzingManualText.value = true
@@ -513,8 +476,8 @@ const analyzeManualText = async (payload) => {
   try {
     const { data } = await api.post('/applications/analyze-manual-text', {
       job_text: jobText,
-      company: company,
-      title: title
+      company,
+      title
     })
 
     if (data.success) {
@@ -618,16 +581,7 @@ const generateApplication = async () => {
       quickConfirmData.value = null
       showFullPreview.value = false
       previewData.value = null
-      editableData.value = {
-        company: '',
-        title: '',
-        location: '',
-        employment_type: '',
-        contact_person: '',
-        contact_email: '',
-        salary: '',
-        description: ''
-      }
+      editableData.value = defaultEditableData()
       isManualEntry.value = false
       showManualFallback.value = false
       manualJobText.value = ''
@@ -648,13 +602,7 @@ const generateApplication = async () => {
     }
   } catch (e) {
     showCraftingOverlay.value = false
-    if (e.response?.status === 403 && e.response?.data?.error_code === 'SUBSCRIPTION_LIMIT_REACHED') {
-      error.value = e.response.data.error
-    } else if (e.response?.data?.error) {
-      error.value = e.response.data.error
-    } else {
-      error.value = 'Fehler bei der Generierung. Bitte versuche es erneut.'
-    }
+    error.value = extractApiError(e, 'Fehler bei der Generierung. Bitte versuche es erneut.')
   } finally {
     generating.value = false
   }
