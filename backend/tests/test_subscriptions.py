@@ -52,39 +52,20 @@ class TestCreateCheckout:
         )
         assert response.status_code == 400
 
-    def test_dev_price_ids_rejected(self, client, auth_headers):
-        """Dev price IDs (price_dev_*) should return 503"""
+    def test_stripe_disabled_returns_503(self, client, auth_headers):
+        """When Stripe is not configured, create-checkout should return 503"""
         from unittest.mock import patch
 
-        with patch(
-            "routes.subscriptions.SUBSCRIPTION_PLANS",
-            {
-                "basic": {
-                    "plan_id": "basic",
-                    "name": "Basic",
-                    "price": 999,
-                    "price_formatted": "€9,99/Monat",
-                    "features": [],
-                    "limits": {},
-                    "stripe_price_id": "price_dev_basic_mock",
-                },
-                "pro": {
-                    "plan_id": "pro",
-                    "name": "Pro",
-                    "price": 1999,
-                    "price_formatted": "€19,99/Monat",
-                    "features": [],
-                    "limits": {},
-                    "stripe_price_id": "price_dev_pro_mock",
-                },
-            },
-        ):
+        with patch("routes.subscriptions.config") as mock_config:
+            mock_config.is_stripe_enabled.return_value = False
             response = client.post(
                 "/api/subscriptions/create-checkout",
                 json={"plan": "basic", "success_url": "http://x", "cancel_url": "http://x"},
                 headers=auth_headers,
             )
             assert response.status_code == 503
+            data = response.get_json()
+            assert data["payments_available"] is False
 
     def test_missing_urls(self, client, auth_headers):
         response = client.post(

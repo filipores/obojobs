@@ -66,13 +66,32 @@ SUBSCRIPTION_PLANS = {
 }
 
 
+@subscriptions_bp.route("/status", methods=["GET"])
+def get_payment_status():
+    """
+    Check if payment system is available (public endpoint).
+
+    Returns whether Stripe payments are configured and operational.
+    """
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "payments_available": config.is_stripe_enabled(),
+            },
+        }
+    ), 200
+
+
 @subscriptions_bp.route("/plans", methods=["GET"])
 def get_plans():
     """
     Get available subscription plans (public endpoint).
 
     Returns a list of all subscription plans with their features and limits.
+    Plans are always returned; payments_available indicates if checkout works.
     """
+    payments_available = config.is_stripe_enabled()
     plans = []
     for plan_key in ["free", "basic", "pro"]:  # Maintain order
         plan = SUBSCRIPTION_PLANS[plan_key]
@@ -84,12 +103,11 @@ def get_plans():
                 "price_formatted": plan["price_formatted"],
                 "features": plan["features"],
                 "limits": plan["limits"],
-                # Only include stripe_price_id if it exists (not for free plan)
-                "stripe_price_id": plan["stripe_price_id"] if plan["stripe_price_id"] else None,
+                "stripe_price_id": plan["stripe_price_id"],
             }
         )
 
-    return jsonify({"success": True, "data": plans}), 200
+    return jsonify({"success": True, "data": plans, "payments_available": payments_available}), 200
 
 
 def get_plan_limits(plan_name: str) -> dict:
@@ -121,6 +139,16 @@ def create_checkout():
         checkout_url: URL to redirect user to Stripe Checkout
         session_id: Stripe Checkout Session ID
     """
+    # Check if payments are available
+    if not config.is_stripe_enabled():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Zahlungssystem wird eingerichtet",
+                "payments_available": False,
+            }
+        ), 503
+
     data = request.json or {}
 
     plan = data.get("plan")
@@ -141,15 +169,6 @@ def create_checkout():
         return jsonify({"success": False, "error": "Plan nicht konfiguriert"}), 400
 
     price_id = plan_data["stripe_price_id"]
-
-    # Check if using mock/development price IDs
-    if price_id.startswith("price_dev_"):
-        return jsonify(
-            {
-                "success": False,
-                "error": "Stripe ist im Development-Modus nicht konfiguriert. Upgrade-Funktionen sind nur in der Produktionsumgebung verfügbar.",
-            }
-        ), 503  # Service Unavailable
 
     # Get current user
     user_id = get_jwt_identity()
@@ -195,6 +214,16 @@ def create_portal_session():
     Returns:
         portal_url: URL to redirect user to Stripe Customer Portal
     """
+    # Check if payments are available
+    if not config.is_stripe_enabled():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Zahlungssystem wird eingerichtet",
+                "payments_available": False,
+            }
+        ), 503
+
     data = request.json or {}
     return_url = data.get("return_url")
 
@@ -266,5 +295,7 @@ def get_current_subscription():
         subscription_data["status"] = user.subscription.status.value
         if user.subscription.current_period_end:
             subscription_data["next_billing_date"] = user.subscription.current_period_end.isoformat()
+
+    subscription_data["payments_available"] = config.is_stripe_enabled()
 
     return jsonify({"success": True, "data": subscription_data}), 200

@@ -108,6 +108,21 @@
         </div>
       </section>
 
+      <!-- Payments Unavailable Banner -->
+      <div v-if="subscription && !paymentsAvailable" class="payments-unavailable-banner animate-fade-up" style="animation-delay: 175ms;">
+        <div class="banner-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="banner-text">
+          <strong>{{ t('subscription.paymentsUnavailable') }}</strong>
+          <p>{{ t('subscription.paymentsUnavailableDescription') }}</p>
+        </div>
+      </div>
+
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
@@ -145,14 +160,17 @@
           <!-- Upgrade Prompt (for free users) -->
           <div v-else class="upgrade-section">
             <p class="upgrade-info">
-              Sie haben aktuell den kostenlosen Plan. Upgraden Sie fuer mehr Bewerbungen pro Monat!
+              {{ paymentsAvailable
+                ? 'Sie haben aktuell den kostenlosen Plan. Upgraden Sie fuer mehr Bewerbungen pro Monat!'
+                : t('subscription.paymentsUnavailableDescription')
+              }}
             </p>
             <div class="upgrade-buttons">
               <button
                 @click="handleUpgrade('basic')"
                 class="zen-btn zen-btn-filled"
                 :class="{ 'is-loading-other': isUpgrading && upgradingPlan !== 'basic' }"
-                :disabled="isUpgrading"
+                :disabled="isUpgrading || !paymentsAvailable"
               >
                 <span v-if="upgradingPlan === 'basic'" class="btn-spinner"></span>
                 {{ upgradingPlan === 'basic' ? 'Wird geladen...' : 'Basic - 9,99 EUR/Monat' }}
@@ -161,7 +179,7 @@
                 @click="handleUpgrade('pro')"
                 class="zen-btn zen-btn-ai"
                 :class="{ 'is-loading-other': isUpgrading && upgradingPlan !== 'pro' }"
-                :disabled="isUpgrading"
+                :disabled="isUpgrading || !paymentsAvailable"
               >
                 <span v-if="upgradingPlan === 'pro'" class="btn-spinner"></span>
                 {{ upgradingPlan === 'pro' ? 'Wird geladen...' : 'Pro - 19,99 EUR/Monat' }}
@@ -313,7 +331,7 @@
                       plan.plan_id === 'pro' ? 'zen-btn-ai' : 'zen-btn-filled',
                       { 'is-loading-other': isUpgrading && upgradingPlan !== plan.plan_id }
                     ]"
-                    :disabled="isUpgrading"
+                    :disabled="isUpgrading || !paymentsAvailable"
                   >
                     <span v-if="upgradingPlan === plan.plan_id" class="btn-spinner"></span>
                     {{ upgradingPlan === plan.plan_id ? 'Wird geladen...' : getUpgradeButtonText(plan.plan_id) }}
@@ -368,7 +386,7 @@
                 plan.plan_id === 'pro' ? 'zen-btn-ai' : 'zen-btn-filled',
                 { 'is-loading-other': isUpgrading && upgradingPlan !== plan.plan_id }
               ]"
-              :disabled="isUpgrading"
+              :disabled="isUpgrading || !paymentsAvailable"
             >
               <span v-if="upgradingPlan === plan.plan_id" class="btn-spinner"></span>
               {{ upgradingPlan === plan.plan_id ? 'Wird geladen...' : getUpgradeButtonText(plan.plan_id) }}
@@ -393,10 +411,12 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useSubscription } from '../composables/useSubscription'
 import { getFullLocale } from '../i18n'
 
-const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, isLoading } = useSubscription()
+const { t } = useI18n()
+const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, isLoading, paymentsAvailable } = useSubscription()
 
 const subscription = ref(null)
 const availablePlans = ref([])
@@ -1027,6 +1047,38 @@ onMounted(() => {
 
 .plan-card .zen-btn {
   width: 100%;
+}
+
+/* ========================================
+   PAYMENTS UNAVAILABLE BANNER
+   ======================================== */
+.payments-unavailable-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--color-ai-subtle);
+  border: 1px solid rgba(61, 90, 108, 0.2);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-ma);
+}
+
+.payments-unavailable-banner .banner-icon {
+  color: var(--color-ai);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.payments-unavailable-banner .banner-text strong {
+  display: block;
+  color: var(--color-sumi);
+  margin-bottom: var(--space-xs);
+}
+
+.payments-unavailable-banner .banner-text p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
 }
 
 /* ========================================

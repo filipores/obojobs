@@ -10,6 +10,7 @@ import api from '../api/client'
 import { useStripe } from './useStripe'
 
 const plans = ref([])
+const paymentsAvailable = ref(true)
 const isLoading = ref(false)
 const error = ref(null)
 
@@ -25,6 +26,9 @@ async function fetchPlans() {
     const { data } = await api.get('/subscriptions/plans')
     if (data.success) {
       plans.value = data.data
+      if (data.payments_available !== undefined) {
+        paymentsAvailable.value = data.payments_available
+      }
       return data.data
     }
     throw new Error('Failed to fetch plans')
@@ -85,6 +89,9 @@ async function fetchCurrentSubscription() {
   try {
     const { data } = await api.get('/subscriptions/current')
     if (data.success) {
+      if (data.data.payments_available !== undefined) {
+        paymentsAvailable.value = data.data.payments_available
+      }
       return data.data
     }
     throw new Error('Failed to fetch subscription')
@@ -131,6 +138,7 @@ async function openBillingPortal() {
 export function useSubscription() {
   return {
     plans: readonly(plans),
+    paymentsAvailable: readonly(paymentsAvailable),
     isLoading: readonly(isLoading),
     error: readonly(error),
     fetchPlans,
