@@ -1,3 +1,10 @@
+## [1.35.1](https://github.com/filipores/obojobs/compare/v1.35.0...v1.35.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* **generator:** remove legacy anschreiben document fallback ([4007234](https://github.com/filipores/obojobs/commit/4007234e6d047551361f05a4d414fdfb677544f0))
+
 # [1.35.0](https://github.com/filipores/obojobs/compare/v1.34.1...v1.35.0) (2026-02-07)
 
 
