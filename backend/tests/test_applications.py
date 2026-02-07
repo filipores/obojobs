@@ -248,7 +248,7 @@ class TestQuickExtract:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_success(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = "stepstone"
@@ -270,7 +270,7 @@ class TestQuickExtract:
         assert data["data"]["title"] == "Python Developer"
         assert data["data"]["portal"] == "StepStone"
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_empty_extraction(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = None
@@ -313,7 +313,7 @@ class TestPreviewJob:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_success(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = "indeed"
@@ -335,7 +335,7 @@ class TestPreviewJob:
         assert data["company"] == "Startup AG"
         assert data["portal"] == "Indeed"
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_empty_scrape(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = None
@@ -380,11 +380,11 @@ class TestGenerateFromUrl:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.calculate_and_store_job_fit")
-    @patch("routes.applications.increment_application_count")
-    @patch("routes.applications.get_subscription_usage")
-    @patch("routes.applications.BewerbungsGenerator")
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.calculate_and_store_job_fit")
+    @patch("routes.applications.generation.increment_application_count")
+    @patch("routes.applications.generation.get_subscription_usage")
+    @patch("routes.applications.generation.BewerbungsGenerator")
+    @patch("routes.applications.generation.WebScraper")
     def test_success_with_user_data(
         self,
         mock_scraper_class,
@@ -439,11 +439,11 @@ class TestGenerateFromUrl:
         assert data["pdf_path"] == "/tmp/test.pdf"
         mock_gen.generate_bewerbung.assert_called_once()
 
-    @patch("routes.applications.calculate_and_store_job_fit")
-    @patch("routes.applications.increment_application_count")
-    @patch("routes.applications.get_subscription_usage")
-    @patch("routes.applications.BewerbungsGenerator")
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.calculate_and_store_job_fit")
+    @patch("routes.applications.generation.increment_application_count")
+    @patch("routes.applications.generation.get_subscription_usage")
+    @patch("routes.applications.generation.BewerbungsGenerator")
+    @patch("routes.applications.generation.WebScraper")
     def test_success_scrape_flow(
         self,
         mock_scraper_class,
@@ -495,7 +495,7 @@ class TestGenerateFromUrl:
         assert response.status_code == 200
         assert response.get_json()["success"] is True
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_scrape_returns_empty(self, mock_scraper_class, client, auth_headers):
         """Should return 400 when scraper returns no text."""
         mock_scraper = MagicMock()
@@ -543,10 +543,10 @@ class TestGenerateFromText:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.calculate_and_store_job_fit")
-    @patch("routes.applications.increment_application_count")
-    @patch("routes.applications.get_subscription_usage")
-    @patch("routes.applications.BewerbungsGenerator")
+    @patch("routes.applications.generation.calculate_and_store_job_fit")
+    @patch("routes.applications.generation.increment_application_count")
+    @patch("routes.applications.generation.get_subscription_usage")
+    @patch("routes.applications.generation.BewerbungsGenerator")
     def test_success(
         self,
         mock_gen_class,
@@ -621,7 +621,7 @@ class TestAnalyzeManualText:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.ContactExtractor")
+    @patch("routes.applications.generation.ContactExtractor")
     def test_success(self, mock_extractor_class, client, auth_headers):
         mock_extractor = MagicMock()
         mock_extractor.extract_contact_data.return_value = {
@@ -648,7 +648,7 @@ class TestAnalyzeManualText:
         assert data["data"]["portal"] == "Manuell eingegeben"
         assert data["data"]["contact_email"] == "jobs@firma.de"
 
-    @patch("routes.applications.ContactExtractor")
+    @patch("routes.applications.generation.ContactExtractor")
     def test_with_company_and_title(self, mock_extractor_class, client, auth_headers):
         mock_extractor = MagicMock()
         mock_extractor.extract_contact_data.return_value = {}

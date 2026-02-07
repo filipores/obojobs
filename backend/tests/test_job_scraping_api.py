@@ -84,7 +84,7 @@ class TestPreviewJobEndpoint:
 class TestStepStoneScraping:
     """Tests for scraping StepStone job postings."""
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_preview_stepstone_job(self, mock_scraper_class, client, auth_headers):
         """Should successfully scrape StepStone job posting."""
         mock_scraper = MagicMock()
@@ -106,7 +106,7 @@ class TestStepStoneScraping:
         assert data["data"]["title"] == SAMPLE_JOB_DATA["title"]
         assert data["data"]["company"] == SAMPLE_JOB_DATA["company"]
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_stepstone_returns_all_fields(self, mock_scraper_class, client, auth_headers):
         """Should return all extracted fields from StepStone."""
         mock_scraper = MagicMock()
@@ -132,7 +132,7 @@ class TestStepStoneScraping:
 class TestIndeedScraping:
     """Tests for scraping Indeed.de job postings."""
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_preview_indeed_job(self, mock_scraper_class, client, auth_headers):
         """Should successfully scrape Indeed.de job posting."""
         mock_scraper = MagicMock()
@@ -156,7 +156,7 @@ class TestIndeedScraping:
 class TestXingScraping:
     """Tests for scraping XING job postings."""
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_preview_xing_job(self, mock_scraper_class, client, auth_headers):
         """Should successfully scrape XING job posting."""
         mock_scraper = MagicMock()
@@ -180,7 +180,7 @@ class TestXingScraping:
 class TestArbeitsagenturScraping:
     """Tests for scraping Arbeitsagentur job postings."""
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_preview_arbeitsagentur_job(self, mock_scraper_class, client, auth_headers):
         """Should scrape Arbeitsagentur job posting (generic portal)."""
         mock_scraper = MagicMock()
@@ -205,7 +205,7 @@ class TestArbeitsagenturScraping:
 class TestScrapingErrorHandling:
     """Tests for error handling during scraping."""
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_handles_empty_response(self, mock_scraper_class, client, auth_headers):
         """Should return 400 when no job data found."""
         mock_scraper = MagicMock()
@@ -224,7 +224,7 @@ class TestScrapingErrorHandling:
         assert data["success"] is False
         assert "Stellenanzeige" in data["error"]
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_handles_403_error(self, mock_scraper_class, client, auth_headers):
         """Should return 400 for 403 Forbidden errors (blocked by site)."""
         mock_scraper = MagicMock()
@@ -240,7 +240,7 @@ class TestScrapingErrorHandling:
 
         assert response.status_code == 400
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_handles_404_error(self, mock_scraper_class, client, auth_headers):
         """Should return 400 for 404 Not Found errors."""
         mock_scraper = MagicMock()
@@ -256,7 +256,7 @@ class TestScrapingErrorHandling:
 
         assert response.status_code == 400
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_handles_rate_limiting(self, mock_scraper_class, client, auth_headers):
         """Should return 400 for 429 Too Many Requests errors."""
         mock_scraper = MagicMock()
@@ -272,7 +272,7 @@ class TestScrapingErrorHandling:
 
         assert response.status_code == 400
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_handles_connection_error(self, mock_scraper_class, client, auth_headers):
         """Should return 500 for connection/server errors."""
         mock_scraper = MagicMock()
@@ -294,7 +294,7 @@ class TestScrapingErrorHandling:
 class TestMissingFieldsDetection:
     """Tests for detecting missing fields in scraped data."""
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_reports_missing_title(self, mock_scraper_class, client, auth_headers):
         """Should report missing title field."""
         job_data = {**SAMPLE_JOB_DATA, "title": None}
@@ -312,7 +312,7 @@ class TestMissingFieldsDetection:
         data = response.get_json()
         assert "Titel" in data["data"]["missing_fields"]
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_reports_missing_company(self, mock_scraper_class, client, auth_headers):
         """Should report missing company field."""
         job_data = {**SAMPLE_JOB_DATA, "company": None}
@@ -330,7 +330,7 @@ class TestMissingFieldsDetection:
         data = response.get_json()
         assert "Firma" in data["data"]["missing_fields"]
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_reports_missing_description(self, mock_scraper_class, client, auth_headers):
         """Should report missing description field when both description and text are missing."""
         job_data = {**SAMPLE_JOB_DATA, "description": None, "text": None}
@@ -348,7 +348,7 @@ class TestMissingFieldsDetection:
         data = response.get_json()
         assert "Beschreibung" in data["data"]["missing_fields"]
 
-    @patch("routes.applications.WebScraper")
+    @patch("routes.applications.generation.WebScraper")
     def test_no_missing_fields_when_complete(self, mock_scraper_class, client, auth_headers):
         """Should report empty missing_fields when all fields present."""
         mock_scraper = MagicMock()
