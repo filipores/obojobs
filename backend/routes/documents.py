@@ -1,3 +1,4 @@
+import logging
 import os
 
 from flask import Blueprint, jsonify, request, send_file
@@ -8,6 +9,8 @@ from middleware.jwt_required import jwt_required_custom
 from models import Document, UserSkill, db
 from services.pdf_handler import extract_text_from_pdf
 from services.skill_extractor import SkillExtractor
+
+logger = logging.getLogger(__name__)
 
 documents_bp = Blueprint("documents", __name__)
 
@@ -136,7 +139,7 @@ def upload_document(current_user):
 
                 db.session.commit()
             except Exception as skill_error:
-                print(f"⚠ Skill-Extraktion fehlgeschlagen: {str(skill_error)}")
+                logger.warning("Skill-Extraktion fehlgeschlagen: %s", skill_error)
                 # Continue anyway, document upload was successful
 
         response_data = {

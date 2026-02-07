@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
@@ -124,7 +126,7 @@ def create_app():
         app=app,
         key_func=get_rate_limit_key,
         default_limits=["200 per hour", "50 per minute"],
-        storage_uri="memory://",
+        storage_uri=os.getenv("RATE_LIMIT_STORAGE_URI", "memory://"),
         strategy="fixed-window",
     )
 
@@ -181,8 +183,6 @@ def create_app():
     @app.route("/api/version")
     @limiter.exempt
     def version():
-        import os
-
         return {
             "version": os.environ.get("APP_VERSION", "development"),
             "commit": os.environ.get("APP_COMMIT", "unknown"),
@@ -192,17 +192,20 @@ def create_app():
 
 
 if __name__ == "__main__":
+    import os
+
     app = create_app()
 
     # Validate config
     config.validate_config()
 
-    # Initialize database
-    with app.app_context():
-        from migrations.init_db import init_database, seed_test_data
+    # Initialize database (only in development)
+    if os.getenv("FLASK_ENV") != "production":
+        with app.app_context():
+            from migrations.init_db import init_database, seed_test_data
 
-        init_database(app)
-        seed_test_data(app)
+            init_database(app)
+            seed_test_data(app)
 
     print("\n" + "=" * 60)
     print("obojobs API Server")

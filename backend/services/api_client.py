@@ -1,8 +1,11 @@
+import logging
 import time
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class ClaudeAPIClient:
@@ -29,10 +32,10 @@ class ClaudeAPIClient:
                 return self._parse_extracted_details(extracted_text, firma_name)
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Detail-Extraktion fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("Detail-Extraktion fehlgeschlagen (Versuch %d/%d): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
-                    print("⚠ Detail-Extraktion fehlgeschlagen, verwende Defaults")
+                    logger.warning("Detail-Extraktion fehlgeschlagen, verwende Defaults")
                     return self._get_default_details(firma_name)
 
     def _parse_extracted_details(self, text: str, firma_name: str) -> dict[str, str]:
@@ -87,7 +90,7 @@ class ClaudeAPIClient:
                 return response.content[0].text.strip()
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Extraktion fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("Extraktion fehlgeschlagen (Versuch %d/%d): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
                     raise Exception(f"Informationsextraktion fehlgeschlagen: {str(e)}") from e
@@ -105,9 +108,9 @@ class ClaudeAPIClient:
         if details and details.get("stellenanzeige_kompakt"):
             stellenanzeige_text = details["stellenanzeige_kompakt"]
         elif use_extraction:
-            print("  → Extrahiere Kerninformationen aus Stellenanzeige...")
+            logger.info("Extrahiere Kerninformationen aus Stellenanzeige...")
             stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
-            print(f"  → Extraktion abgeschlossen ({len(stellenanzeige_text)} Zeichen)")
+            logger.info("Extraktion abgeschlossen (%d Zeichen)", len(stellenanzeige_text))
 
         position = details.get("position", "Softwareentwickler") if details else "Softwareentwickler"
         quelle = details.get("quelle", "eure Website") if details else "eure Website"
@@ -131,8 +134,8 @@ class ClaudeAPIClient:
                 return einleitung
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"API-Fehler (Versuch {attempt + 1}/{retry_count}): {str(e)}")
-                    print("Warte 2 Sekunden vor erneutem Versuch...")
+                    logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
+                    logger.info("Warte 2 Sekunden vor erneutem Versuch...")
                     time.sleep(2)
                 else:
                     raise Exception(f"Claude API Fehler nach {retry_count} Versuchen: {str(e)}") from e
@@ -240,7 +243,7 @@ Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil 
         """Generate personalized email text for job application"""
         if attachments is None:
             # Note: Arbeitszeugnis is optional - caller should pass it explicitly if available
-            attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis"]
+            attachments = ["Anschreiben", "Lebenslauf"]
 
         # Add company context if available
         position_text = f"die Position als {position}"

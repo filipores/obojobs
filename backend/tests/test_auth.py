@@ -1293,19 +1293,21 @@ class TestDeleteAccount:
             user = User.query.get(test_user["id"])
             assert user is not None
 
-    def test_delete_account_logs_deletion_for_gdpr_compliance(self, app, client, test_user, auth_headers, capfd):
+    def test_delete_account_logs_deletion_for_gdpr_compliance(self, app, client, test_user, auth_headers, caplog):
         """Test that account deletion is logged for GDPR compliance."""
-        response = client.delete(
-            "/api/auth/delete-account",
-            headers=auth_headers,
-        )
-        assert response.status_code == 200
+        import logging
+
+        with caplog.at_level(logging.INFO, logger="routes.auth"):
+            response = client.delete(
+                "/api/auth/delete-account",
+                headers=auth_headers,
+            )
+            assert response.status_code == 200
 
         # Check that GDPR log entry was created
-        captured = capfd.readouterr()
-        assert "[GDPR]" in captured.out
-        assert test_user["email"] in captured.out
-        assert "Account deleted" in captured.out
+        assert "[GDPR]" in caplog.text
+        assert test_user["email"] in caplog.text
+        assert "Account deleted" in caplog.text
 
 
 class TestRefreshToken:

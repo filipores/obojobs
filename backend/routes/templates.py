@@ -1,4 +1,5 @@
 import json
+import logging
 import os
 import re
 import time
@@ -101,11 +102,13 @@ def parse_ai_response_with_suggestions(response_text):
                         )
             except json.JSONDecodeError as e:
                 # Log parsing failure for debugging, but continue without suggestions
-                print(f"Warning: Failed to parse suggestions JSON: {str(e)}")
-                print(f"Raw JSON part (first 200 chars): {json_part[:200] if json_part else 'empty'}")
+                logger.warning("Failed to parse suggestions JSON: %s", e)
+                logger.debug("Raw JSON part (first 200 chars): %s", json_part[:200] if json_part else "empty")
 
     return template_text, suggestions
 
+
+logger = logging.getLogger(__name__)
 
 templates_bp = Blueprint("templates", __name__)
 
@@ -396,7 +399,7 @@ Generiere jetzt das Anschreiben mit Suggestions:"""
         return jsonify({"success": True, "message": "Template erfolgreich generiert!", "template": template_dict}), 201
 
     except Exception as e:
-        print(f"Fehler bei Template-Generierung: {str(e)}")
+        logger.error("Fehler bei Template-Generierung: %s", e)
         return jsonify({"error": f"Fehler beim Generieren: {str(e)}"}), 500
 
 
@@ -495,7 +498,7 @@ def upload_pdf_template(current_user):
         # Cleanup on error
         if os.path.exists(pdf_path):
             os.remove(pdf_path)
-        print(f"Fehler beim PDF-Template Upload: {str(e)}")
+        logger.error("Fehler beim PDF-Template Upload: %s", e)
         return jsonify({"error": f"Fehler beim Verarbeiten der PDF: {str(e)}"}), 500
 
 
@@ -519,7 +522,7 @@ def analyze_template_variables(template_id, current_user):
             extraction_result = extractor.extract_text_with_positions(template.pdf_path)
             text_blocks = extraction_result.get("text_blocks", [])
         except Exception as e:
-            print(f"Warnung: Konnte Text-Blöcke nicht neu extrahieren: {str(e)}")
+            logger.warning("Konnte Text-Blöcke nicht neu extrahieren: %s", e)
 
     # Use template content for analysis
     template_text = template.content
@@ -578,8 +581,8 @@ WICHTIG:
                 if json_match:
                     suggestions = json.loads(json_match.group())
         except json.JSONDecodeError as e:
-            print(f"Warnung: JSON-Parsing fehlgeschlagen: {str(e)}")
-            print(f"Response: {response_text[:500]}")
+            logger.warning("JSON-Parsing fehlgeschlagen: %s", e)
+            logger.debug("Response: %s", response_text[:500])
 
         # Calculate line numbers for each page based on Y positions
         page_line_numbers: dict[int, list[float]] = {}
@@ -661,7 +664,7 @@ WICHTIG:
         ), 200
 
     except Exception as e:
-        print(f"Fehler bei der Variablen-Analyse: {str(e)}")
+        logger.error("Fehler bei der Variablen-Analyse: %s", e)
         return jsonify({"error": f"Fehler bei der Analyse: {str(e)}"}), 500
 
 
@@ -814,7 +817,7 @@ Generiere jetzt das Anschreiben:"""
         ), 200
 
     except Exception as e:
-        print(f"Fehler bei Varianten-Generierung: {str(e)}")
+        logger.error("Fehler bei Varianten-Generierung: %s", e)
         return jsonify({"error": f"Fehler beim Generieren: {str(e)}"}), 500
 
 
@@ -838,7 +841,7 @@ def save_variable_positions(template_id, current_user):
     if variable_positions is None:
         return jsonify({"error": "variable_positions ist erforderlich"}), 400
 
-    if not isinstance(variable_positions, (list, dict)):
+    if not isinstance(variable_positions, list | dict):
         return jsonify({"error": "variable_positions muss ein Array oder Objekt sein"}), 400
 
     # Allowed variable names
@@ -897,5 +900,5 @@ def save_variable_positions(template_id, current_user):
 
     except Exception as e:
         db.session.rollback()
-        print(f"Fehler beim Speichern der Variablen-Positionen: {str(e)}")
+        logger.error("Fehler beim Speichern der Variablen-Positionen: %s", e)
         return jsonify({"error": f"Fehler beim Speichern: {str(e)}"}), 500

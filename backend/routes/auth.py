@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
@@ -12,6 +13,8 @@ from services.email_service import send_password_reset_email, send_verification_
 from services.email_verification_service import EmailVerificationService
 from services.password_reset_service import PasswordResetService
 from services.password_validator import PasswordValidator
+
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -156,7 +159,7 @@ def google_auth():
         # Token verification failed
         return jsonify({"error": "Ungültiges Google-Token"}), 401
     except Exception as e:
-        print(f"Google auth error: {e}")
+        logger.error("Google auth error: %s", e)
         return jsonify({"error": "Google-Authentifizierung fehlgeschlagen"}), 500
 
 
@@ -580,7 +583,7 @@ def delete_account():
                 pass
             except Exception as e:
                 # Log the error but don't fail the deletion
-                print(f"Warning: Could not cancel Stripe subscription for user {user.id}: {e}")
+                logger.warning("Could not cancel Stripe subscription for user %s: %s", user.id, e)
 
         # Store info for logging before deletion
         user_email = user.email
@@ -598,11 +601,11 @@ def delete_account():
         # API calls with this token will fail during user lookup anyway.
 
         # Log successful deletion (for compliance purposes)
-        print(f"[GDPR] Account deleted for user {user_email} (ID: {current_user_id})")
+        logger.info("[GDPR] Account deleted for user %s (ID: %s)", user_email, current_user_id)
 
         return jsonify({"message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}), 200
 
     except Exception as e:
         db.session.rollback()
-        print(f"Error deleting account for user {current_user_id}: {e}")
+        logger.error("Error deleting account for user %s: %s", current_user_id, e)
         return jsonify({"error": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."}), 500

@@ -102,4 +102,22 @@ class Config:
         print("✓ Configuration validated")
 
 
+def _check_production_secrets():
+    """Raise ValueError if default secrets are used in production."""
+    flask_env = os.getenv("FLASK_ENV", "development")
+    if flask_env == "production":
+        if Config.SECRET_KEY == "dev-secret-key-change-in-production":
+            raise ValueError(
+                "SECRET_KEY must be changed from its default value in production. "
+                "Set a strong, unique SECRET_KEY environment variable."
+            )
+        if Config.JWT_SECRET_KEY == "dev-secret-key-change-in-production":
+            raise ValueError(
+                "JWT_SECRET_KEY must be changed from its default value in production. "
+                "Set a strong, unique JWT_SECRET_KEY environment variable."
+            )
+
+
+_check_production_secrets()
+
 config = Config()

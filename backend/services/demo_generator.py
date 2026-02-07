@@ -118,7 +118,7 @@ class DemoGenerator:
             position=details["position"],
             ansprechperson=details["ansprechpartner"],
             firma_name=firma_name,
-            attachments=["Anschreiben", "Lebenslauf", "Bachelorzeugnis"],
+            attachments=["Anschreiben", "Lebenslauf"],
         )
 
         return {
