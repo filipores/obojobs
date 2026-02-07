@@ -2,7 +2,7 @@
 # Usage: docker compose -f docker-compose.prod.yml up -d --build
 
 services:
-  # Caddy - Reverse Proxy with automatic HTTPS
+  # Caddy - Reverse Proxy with automatic HTTPS + static file server
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -13,15 +13,18 @@ services:
       - DOMAIN=${DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+      - frontend_dist:/srv/frontend:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
     networks:
       - obojobs-network
 
-  # Frontend - Vue.js served via Nginx
+  # Frontend - Build-only container that populates the shared volume
   frontend:
     build:
       context: ./frontend
@@ -29,18 +32,13 @@ services:
       args:
         - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
         - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
-    restart: unless-stopped
-    expose:
-      - "80"
-    depends_on:
-      - backend
+    volumes:
+      - frontend_dist:/srv/frontend
+    # Copy built files from image staging path into the shared volume, then exit
+    command: ["sh", "-c", "rm -rf /srv/frontend/* && cp -a /build/dist/. /srv/frontend/"]
+    restart: "no"
     networks:
       - obojobs-network
-    healthcheck:
-      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Backend - Flask API with Gunicorn
   backend:
@@ -113,6 +111,8 @@ volumes:
   postgres_data:
     driver: local
   uploads:
+    driver: local
+  frontend_dist:
     driver: local
   caddy_data:
     driver: local

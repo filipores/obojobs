@@ -22,16 +22,8 @@ COPY . .
 # Build app
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Production stage - minimal image that holds built files for volume copy
+FROM alpine:3.20
 
-# Copy built files
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Copy built files to a staging path (NOT the volume mount point)
+COPY --from=build /app/dist /build/dist
