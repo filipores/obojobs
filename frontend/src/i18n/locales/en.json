@@ -221,6 +221,12 @@
     "websiteHint": "Personal website or portfolio",
     "contactDataSection": "Contact details for applications"
   },
+  "profile": {
+    "incompleteWarning": "Your profile is incomplete.",
+    "completeForBetter": "Complete missing fields in Settings for more professional applications.",
+    "goToSettings": "Go to Settings",
+    "dismiss": "Got it"
+  },
   "language": {
     "de": "Deutsch",
     "en": "English",
@@ -229,7 +235,9 @@
   "subscription": {
     "free": "Free",
     "basic": "Basic",
-    "pro": "Pro"
+    "pro": "Pro",
+    "paymentsUnavailable": "Paid plans coming soon",
+    "paymentsUnavailableDescription": "The payment system is being set up. The free plan is fully available to you."
   },
   "validation": {
     "invalidVerificationToken": "Invalid verification token",

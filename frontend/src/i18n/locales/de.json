@@ -221,6 +221,12 @@
     "websiteHint": "Persönliche Website oder Portfolio",
     "contactDataSection": "Kontaktdaten für Bewerbungen"
   },
+  "profile": {
+    "incompleteWarning": "Dein Profil ist unvollständig.",
+    "completeForBetter": "Ergänze fehlende Angaben in den Einstellungen für professionellere Bewerbungen.",
+    "goToSettings": "Zu den Einstellungen",
+    "dismiss": "Verstanden"
+  },
   "language": {
     "de": "Deutsch",
     "en": "English",
@@ -229,7 +235,9 @@
   "subscription": {
     "free": "Free",
     "basic": "Basic",
-    "pro": "Pro"
+    "pro": "Pro",
+    "paymentsUnavailable": "Kostenpflichtige Plaene werden bald verfuegbar",
+    "paymentsUnavailableDescription": "Das Zahlungssystem wird gerade eingerichtet. Der kostenlose Plan steht Ihnen uneingeschraenkt zur Verfuegung."
   },
   "validation": {
     "invalidVerificationToken": "Ungültiger Bestätigungstoken",

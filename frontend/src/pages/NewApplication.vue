@@ -61,6 +61,35 @@
         </div>
       </section>
 
+      <!-- Profile Incomplete Warning Banner -->
+      <section v-if="profileIncomplete && hasResume" class="profile-warning-section animate-fade-up" style="animation-delay: 120ms;">
+        <div class="profile-warning zen-card">
+          <div class="warning-icon-box profile-warning-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="warning-text-content">
+            <h3>Profil unvollst&auml;ndig</h3>
+            <p>
+              Erg&auml;nze fehlende Angaben in den <strong>Einstellungen</strong> f&uuml;r professionellere Bewerbungen.
+              Du kannst trotzdem Bewerbungen generieren.
+            </p>
+            <div class="warning-actions">
+              <router-link to="/settings" class="zen-btn zen-btn-secondary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+                Zu den Einstellungen
+              </router-link>
+              <button class="zen-btn zen-btn-ghost profile-dismiss-btn" @click="dismissProfileWarning">Verstanden</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Usage Indicator - Show prominently before form -->
       <section v-if="usage" class="usage-section animate-fade-up" style="animation-delay: 150ms;">
         <UsageIndicator
@@ -746,6 +775,7 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
+import { authStore } from '../store/auth'
 import UsageIndicator from '../components/UsageIndicator.vue'
 import EnsoCircle from '../components/application/EnsoCircle.vue'
 import CraftingOverlay from '../components/application/CraftingOverlay.vue'
@@ -774,6 +804,10 @@ const hasSkills = ref(true)
 // Resume/CV check state
 const checkingResume = ref(true)
 const hasResume = ref(true)
+
+// Profile completeness check
+const profileIncomplete = ref(false)
+const profileWarningDismissed = ref(false)
 
 // State
 const url = ref('')
@@ -1338,6 +1372,12 @@ const generateApplication = async () => {
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
+        // Show profile warning toast if backend flagged incomplete profile
+        if (data.profile_warning?.incomplete) {
+          setTimeout(() => {
+            window.$toast('Profil unvollständig — ergänze fehlende Angaben in den Einstellungen.', 'warning')
+          }, 1500)
+        }
       }
     } else {
       showCraftingOverlay.value = false
@@ -1474,11 +1514,26 @@ const checkUserResume = async () => {
   }
 }
 
+// Check if user profile is complete (local check from authStore)
+const checkProfileCompleteness = () => {
+  const user = authStore.user
+  if (!user) return
+  const requiredFields = ['full_name', 'phone', 'address', 'city', 'postal_code']
+  const missing = requiredFields.filter(f => !user[f])
+  profileIncomplete.value = missing.length > 0 && !profileWarningDismissed.value
+}
+
+const dismissProfileWarning = () => {
+  profileWarningDismissed.value = true
+  profileIncomplete.value = false
+}
+
 onMounted(() => {
   loadTemplates()
   loadUsage()
   checkUserSkills()
   checkUserResume()
+  checkProfileCompleteness()
   // Add escape key listener for modal
   document.addEventListener('keydown', handleKeydown)
 })
@@ -1674,6 +1729,38 @@ onMounted(() => {
 
   .warning-actions {
     flex-direction: column;
+    align-items: center;
+  }
+}
+
+/* ========================================
+   PROFILE WARNING BANNER
+   ======================================== */
+.profile-warning-section {
+  max-width: 640px;
+  margin-bottom: var(--space-lg);
+}
+
+.profile-warning {
+  display: flex;
+  gap: var(--space-lg);
+  padding: var(--space-xl);
+  border: 2px solid var(--color-warning, #e6a817);
+  background: color-mix(in srgb, var(--color-warning, #e6a817) 8%, var(--color-washi));
+}
+
+.profile-warning-icon {
+  background: var(--color-warning, #e6a817);
+}
+
+.profile-dismiss-btn {
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .profile-warning {
+    flex-direction: column;
+    text-align: center;
     align-items: center;
   }
 }

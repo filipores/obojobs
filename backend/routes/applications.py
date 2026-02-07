@@ -48,6 +48,21 @@ PORTAL_DISPLAY_NAMES = {
 # HTTP status codes that indicate a client-side scraping error (not a server bug)
 _SCRAPER_CLIENT_ERROR_CODES = ("403", "404", "429", "400", "401", "502", "503")
 
+# Fields to check for profile completeness warnings
+_PROFILE_FIELDS = ["full_name", "phone", "address", "city", "postal_code"]
+
+
+def _get_profile_warning(user):
+    """Check if user profile is missing key contact fields.
+
+    Returns a dict with 'incomplete' and 'missing_fields' if any fields
+    are empty, or None if profile is complete.
+    """
+    missing = [f for f in _PROFILE_FIELDS if not getattr(user, f, None)]
+    if missing:
+        return {"incomplete": True, "missing_fields": missing}
+    return None
+
 
 def _is_scraper_client_error(error_message: str) -> bool:
     """Check if a scraper error message indicates a client-side HTTP error."""
@@ -245,18 +260,21 @@ def generate_application(current_user):
         # Get updated usage info
         usage = get_subscription_usage(current_user)
 
-        return jsonify(
-            {
-                "success": True,
-                "pdf_path": pdf_path,
-                "company": company,
-                "position": latest.position if latest else "",
-                "email": latest.email if latest else "",
-                "betreff": latest.betreff if latest else "",
-                "usage": usage,
-                "message": f"Bewerbung für {company} erstellt",
-            }
-        ), 200
+        result = {
+            "success": True,
+            "pdf_path": pdf_path,
+            "company": company,
+            "position": latest.position if latest else "",
+            "email": latest.email if latest else "",
+            "betreff": latest.betreff if latest else "",
+            "usage": usage,
+            "message": f"Bewerbung für {company} erstellt",
+        }
+        profile_warning = _get_profile_warning(current_user)
+        if profile_warning:
+            result["profile_warning"] = profile_warning
+
+        return jsonify(result), 200
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
@@ -606,15 +624,18 @@ def generate_from_url(current_user):
         # Get updated usage info
         usage = get_subscription_usage(current_user)
 
-        return jsonify(
-            {
-                "success": True,
-                "application": latest.to_dict() if latest else None,
-                "pdf_path": pdf_path,
-                "usage": usage,
-                "message": f"Bewerbung für {company} erstellt",
-            }
-        ), 200
+        result = {
+            "success": True,
+            "application": latest.to_dict() if latest else None,
+            "pdf_path": pdf_path,
+            "usage": usage,
+            "message": f"Bewerbung für {company} erstellt",
+        }
+        profile_warning = _get_profile_warning(current_user)
+        if profile_warning:
+            result["profile_warning"] = profile_warning
+
+        return jsonify(result), 200
 
     except ValueError as e:
         # Missing documents error from generator
@@ -689,15 +710,18 @@ def generate_from_text(current_user):
             # Get updated usage info
             usage = get_subscription_usage(current_user)
 
-            return jsonify(
-                {
-                    "success": True,
-                    "application": latest.to_dict() if latest else None,
-                    "pdf_path": pdf_path,
-                    "usage": usage,
-                    "message": f"Bewerbung für {company} erstellt",
-                }
-            ), 200
+            result = {
+                "success": True,
+                "application": latest.to_dict() if latest else None,
+                "pdf_path": pdf_path,
+                "usage": usage,
+                "message": f"Bewerbung für {company} erstellt",
+            }
+            profile_warning = _get_profile_warning(current_user)
+            if profile_warning:
+                result["profile_warning"] = profile_warning
+
+            return jsonify(result), 200
 
         finally:
             # Cleanup temp file
