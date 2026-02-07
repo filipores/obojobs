@@ -1,6 +1,7 @@
 import json
 import logging
 import os
+import re
 from datetime import datetime
 
 from config import config
@@ -212,6 +213,16 @@ class BewerbungsGenerator:
         now = datetime.now()
         datum_formatiert = f"{now.day:02d}. {german_months[now.month - 1]} {now.year}"
 
+        # Build smart composite values that handle empty fields gracefully
+        kontakt_parts = []
+        if self.user.phone:
+            kontakt_parts.append(self.user.phone)
+        if self.user.email:
+            kontakt_parts.append(self.user.email)
+        kontakt_zeile = " | ".join(kontakt_parts)
+
+        ort_datum = f"{self.user.city}, {datum_formatiert}" if self.user.city else datum_formatiert
+
         # Prepare variable replacements
         replacements = {
             "FIRMA": firma_name,
@@ -227,6 +238,8 @@ class BewerbungsGenerator:
             "WEBSEITE": self.user.website or "",
             "DATUM": datum_formatiert,
             "STADT": self.user.city or "",
+            "KONTAKT_ZEILE": kontakt_zeile,
+            "ORT_DATUM": ort_datum,
         }
 
         # Create user-specific PDF directory
@@ -259,6 +272,10 @@ class BewerbungsGenerator:
             for var_name, value in replacements.items():
                 placeholder = f"{{{{{var_name}}}}}"
                 anschreiben_vollstaendig = anschreiben_vollstaendig.replace(placeholder, value)
+
+            # Clean up blank lines from empty variables (e.g. missing address/phone)
+            anschreiben_vollstaendig = re.sub(r"\n{3,}", "\n\n", anschreiben_vollstaendig)
+            anschreiben_vollstaendig = anschreiben_vollstaendig.strip()
 
             logger.info("5/5 Erstelle PDF...")
             create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)

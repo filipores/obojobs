@@ -48,10 +48,8 @@ class TestCreateDefaultTemplate:
             assert "{{NAME}}" in template.content
             assert "{{ADRESSE}}" in template.content
             assert "{{PLZ_ORT}}" in template.content
-            assert "{{TELEFON}}" in template.content
-            assert "{{EMAIL}}" in template.content
-            assert "{{DATUM}}" in template.content
-            assert "{{STADT}}" in template.content
+            assert "{{KONTAKT_ZEILE}}" in template.content
+            assert "{{ORT_DATUM}}" in template.content
 
 
 class TestGetOrCreateDefaultTemplate:
@@ -140,6 +138,5 @@ class TestDefaultTemplateContent:
         # Should contain closing
         assert "Mit freundlichen Grüßen" in DEFAULT_GERMAN_TEMPLATE
 
-        # Should contain date and city
-        assert "{{DATUM}}" in DEFAULT_GERMAN_TEMPLATE
-        assert "{{STADT}}" in DEFAULT_GERMAN_TEMPLATE
+        # Should contain smart date/location composite
+        assert "{{ORT_DATUM}}" in DEFAULT_GERMAN_TEMPLATE

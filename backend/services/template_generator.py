@@ -5,12 +5,11 @@ from models import Template, db
 DEFAULT_GERMAN_TEMPLATE = """{{NAME}}
 {{ADRESSE}}
 {{PLZ_ORT}}
-{{TELEFON}} | {{EMAIL}}
+{{KONTAKT_ZEILE}}
 
 {{FIRMA}}
-z.Hd. {{ANSPRECHPARTNER}}
 
-{{STADT}}, {{DATUM}}
+{{ORT_DATUM}}
 
 Bewerbung als {{POSITION}}
 

@@ -91,4 +91,16 @@ export const variableDescriptions: Record<string, VariableDescription> = {
     description: 'Ihre Stadt aus den Profileinstellungen. Wird z.B. für die Ortsangabe im Datum verwendet.',
     example: 'München',
   },
+
+  KONTAKT_ZEILE: {
+    title: 'Kontaktzeile',
+    description: 'Telefon und E-Mail zusammengefasst. Leere Felder werden automatisch ausgelassen.',
+    example: '+49 170 1234567 | max@email.de',
+  },
+
+  ORT_DATUM: {
+    title: 'Ort und Datum',
+    description: 'Stadt und Datum zusammengefasst. Falls keine Stadt hinterlegt ist, wird nur das Datum angezeigt.',
+    example: 'München, 06. Februar 2026',
+  },
 }
