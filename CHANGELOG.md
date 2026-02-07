@@ -1,3 +1,10 @@
+# [1.35.0](https://github.com/filipores/obojobs/compare/v1.34.1...v1.35.0) (2026-02-07)
+
+
+### Features
+
+* **i18n:** replace hardcoded german strings with vue-i18n t() calls ([56c2e42](https://github.com/filipores/obojobs/commit/56c2e42e3704ed510b10b32ba6971343b1f79500))
+
 ## [1.34.1](https://github.com/filipores/obojobs/compare/v1.34.0...v1.34.1) (2026-02-07)
 
 
