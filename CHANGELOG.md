@@ -1,3 +1,10 @@
+## [1.35.3](https://github.com/filipores/obojobs/compare/v1.35.2...v1.35.3) (2026-02-07)
+
+
+### Bug Fixes
+
+* **new-application:** move helper functions before first use to fix tdz error ([90460f0](https://github.com/filipores/obojobs/commit/90460f07bdb5635b44b4a43036819c003271b457))
+
 ## [1.35.2](https://github.com/filipores/obojobs/compare/v1.35.1...v1.35.2) (2026-02-07)
 
 
