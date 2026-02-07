@@ -1,3 +1,12 @@
+## [1.34.1](https://github.com/filipores/obojobs/compare/v1.34.0...v1.34.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* **deploy:** complete docker and deployment configuration ([43021cf](https://github.com/filipores/obojobs/commit/43021cfb62c45b6156b71c4d79be83f15cf4083b))
+* **security:** harden backend for production deployment ([a9d3818](https://github.com/filipores/obojobs/commit/a9d38182d07b06c51130bf6ba2657ec22deb7443))
+* **ui:** replace alert dialogs with toast notifications ([a319078](https://github.com/filipores/obojobs/commit/a3190786a81334f26be05790228851c764d587ea))
+
 # [1.34.0](https://github.com/filipores/obojobs/compare/v1.33.0...v1.34.0) (2026-02-07)
 
 
