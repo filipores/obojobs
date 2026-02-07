@@ -59,6 +59,15 @@ class Config:
     STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC", "price_dev_basic_mock")  # €9.99/month
     STRIPE_PRICE_PRO = os.getenv("STRIPE_PRICE_PRO", "price_dev_pro_mock")  # €19.99/month
 
+    @staticmethod
+    def is_stripe_enabled():
+        """Check if Stripe payments are properly configured."""
+        return bool(
+            Config.STRIPE_SECRET_KEY
+            and not Config.STRIPE_PRICE_BASIC.startswith("price_dev_")
+            and not Config.STRIPE_PRICE_PRO.startswith("price_dev_")
+        )
+
     # Google OAuth
     GOOGLE_CLIENT_ID = os.getenv("GOOGLE_CLIENT_ID")
     GOOGLE_CLIENT_SECRET = os.getenv("GOOGLE_CLIENT_SECRET")
@@ -69,6 +78,14 @@ class Config:
     MAIL_USERNAME = os.getenv("MAIL_USERNAME")
     MAIL_PASSWORD = os.getenv("MAIL_PASSWORD")
     MAIL_DEFAULT_SENDER = os.getenv("MAIL_DEFAULT_SENDER", MAIL_USERNAME)
+
+    # Legal / Impressum
+    COMPANY_NAME = os.getenv("COMPANY_NAME", "obo - Filip Ores")
+    COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", "Teststraße 1")
+    COMPANY_POSTAL_CODE = os.getenv("COMPANY_POSTAL_CODE", "80331")
+    COMPANY_CITY = os.getenv("COMPANY_CITY", "München")
+    COMPANY_EMAIL = os.getenv("COMPANY_EMAIL", "kontakt@obojobs.de")
+    COMPANY_PHONE = os.getenv("COMPANY_PHONE", "")
 
     # Rate Limit Whitelist (comma-separated IPs that bypass rate limiting)
     RATE_LIMIT_WHITELIST = os.getenv("RATE_LIMIT_WHITELIST", "127.0.0.1").split(",")

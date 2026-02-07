@@ -75,11 +75,10 @@
           <h3>Hinweis zur verantwortlichen Stelle</h3>
           <p>
             Die verantwortliche Stelle für die Datenverarbeitung auf dieser Website ist:<br><br>
-            obo - Filip Ores<br>
-            <!-- TODO: Echte Adresse eintragen -->
-            Teststraße 1<br>
-            80331 München<br>
-            E-Mail: <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>
+            {{ legal.company_name }}<br>
+            {{ legal.company_address }}<br>
+            {{ legal.company_postal_code }} {{ legal.company_city }}<br>
+            E-Mail: <a :href="'mailto:' + legal.company_email">{{ legal.company_email }}</a>
           </p>
 
           <h3>Speicherdauer</h3>
@@ -112,7 +111,7 @@
           </ul>
           <p>
             Zur Ausübung Ihrer Rechte kontaktieren Sie uns bitte unter
-            <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>.
+            <a :href="'mailto:' + legal.company_email">{{ legal.company_email }}</a>.
           </p>
 
           <h3>Beschwerderecht bei einer Aufsichtsbehörde</h3>
@@ -262,7 +261,7 @@
           </p>
           <p>
             Sie können Ihr Konto jederzeit löschen lassen. Kontaktieren Sie uns dazu
-            per E-Mail an <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a>.
+            per E-Mail an <a :href="'mailto:' + legal.company_email">{{ legal.company_email }}</a>.
             Bei der Kontolöschung werden alle Ihre personenbezogenen Daten,
             hochgeladenen Dokumente und erstellten Bewerbungen unwiderruflich gelöscht.
           </p>
@@ -281,5 +280,7 @@
 </template>
 
 <script setup>
-// Static page - styles defined in assets/styles.css under .legal-page
+import { useLegalInfo } from '@/composables/useLegalInfo.js'
+
+const { legal } = useLegalInfo()
 </script>

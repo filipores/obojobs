@@ -17,10 +17,9 @@
         <div class="legal-section">
           <h2>Angaben gemäß § 5 TMG</h2>
           <p>
-            <strong>obo - Filip Ores</strong><br>
-            <!-- TODO: Echte Adresse eintragen -->
-            Teststraße 1<br>
-            80331 München<br>
+            <strong>{{ legal.company_name }}</strong><br>
+            {{ legal.company_address }}<br>
+            {{ legal.company_postal_code }} {{ legal.company_city }}<br>
             Deutschland
           </p>
         </div>
@@ -28,7 +27,8 @@
         <div class="legal-section">
           <h2>Kontakt</h2>
           <p>
-            E-Mail: <a href="mailto:kontakt@obojobs.de">kontakt@obojobs.de</a><br>
+            E-Mail: <a :href="'mailto:' + legal.company_email">{{ legal.company_email }}</a><br>
+            <span v-if="legal.company_phone">Telefon: {{ legal.company_phone }}<br></span>
             Website: <a href="https://obojobs.de" target="_blank" rel="noopener">obojobs.de</a>
           </p>
         </div>
@@ -36,10 +36,9 @@
         <div class="legal-section">
           <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
           <p>
-            Filip Ores<br>
-            <!-- TODO: Echte Adresse eintragen -->
-            Teststraße 1<br>
-            80331 München
+            {{ legal.company_name }}<br>
+            {{ legal.company_address }}<br>
+            {{ legal.company_postal_code }} {{ legal.company_city }}
           </p>
         </div>
 
@@ -103,5 +102,7 @@
 </template>
 
 <script setup>
-// Static page - styles defined in assets/styles.css under .legal-page
+import { useLegalInfo } from '@/composables/useLegalInfo.js'
+
+const { legal } = useLegalInfo()
 </script>
