@@ -792,7 +792,7 @@ const downloadPDF = async (id) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (_e) {
-    alert('Fehler beim PDF-Download')
+    if (window.$toast) { window.$toast('Fehler beim PDF-Download', 'error') }
   }
 }
 
@@ -833,7 +833,7 @@ const updateStatus = async (app) => {
       window.$toast('Status erfolgreich geändert', 'success')
     }
   } catch (_e) {
-    alert('Fehler beim Aktualisieren')
+    if (window.$toast) { window.$toast('Fehler beim Aktualisieren', 'error') }
   }
 }
 
@@ -847,7 +847,7 @@ const updateNotes = async (app) => {
       applications.value[index].notizen = app.notizen
     }
   } catch (_e) {
-    alert('Fehler beim Speichern der Notizen')
+    if (window.$toast) { window.$toast('Fehler beim Speichern der Notizen', 'error') }
   }
 }
 
@@ -872,7 +872,7 @@ const deleteApp = async (id) => {
       : currentPage.value
     loadApplications(pageToLoad)
   } catch (_e) {
-    alert('Fehler beim Löschen')
+    if (window.$toast) { window.$toast('Fehler beim Löschen', 'error') }
   }
 }
 
@@ -1008,7 +1008,7 @@ const exportApplications = async (format) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (_e) {
-    alert('Fehler beim Export')
+    if (window.$toast) { window.$toast('Fehler beim Export', 'error') }
   }
 }
 
@@ -1032,11 +1032,7 @@ const downloadEmailDraft = async (app) => {
       window.$toast('E-Mail-Entwurf heruntergeladen. Doppelklicken Sie die Datei, um sie in Ihrem E-Mail-Programm zu oeffnen.', 'success', 6000)
     }
   } catch (_e) {
-    if (window.$toast) {
-      window.$toast('Fehler beim Erstellen des E-Mail-Entwurfs', 'error')
-    } else {
-      alert('Fehler beim Erstellen des E-Mail-Entwurfs')
-    }
+    if (window.$toast) { window.$toast('Fehler beim Erstellen des E-Mail-Entwurfs', 'error') }
   }
 }
 

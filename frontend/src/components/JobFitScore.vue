@@ -34,9 +34,9 @@
             Erneut versuchen
           </button>
           <!-- Contact link for persistent errors -->
-          <router-link
+          <a
             v-if="errorState.showContactLink"
-            to="/support"
+            href="mailto:kontakt@obojobs.de"
             class="contact-link"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -44,7 +44,7 @@
               <polyline points="22,6 12,13 2,6"/>
             </svg>
             Support kontaktieren
-          </router-link>
+          </a>
         </div>
       </div>
     </div>

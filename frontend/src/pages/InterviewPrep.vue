@@ -337,7 +337,7 @@ const regenerateQuestions = async () => {
     }
   } catch (err) {
     console.error('Fehler beim Generieren der Fragen:', err)
-    alert(err.response?.data?.error || 'Fehler beim Generieren der Interview-Fragen')
+    if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler beim Generieren der Interview-Fragen', 'error') }
   } finally {
     isGenerating.value = false
   }

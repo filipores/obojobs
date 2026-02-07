@@ -784,7 +784,7 @@ const deleteKey = async (id) => {
     await api.delete(`/keys/${id}`)
     loadKeys()
   } catch (_e) {
-    alert('Fehler beim Löschen')
+    if (window.$toast) { window.$toast('Fehler beim Löschen', 'error') }
   }
 }
 

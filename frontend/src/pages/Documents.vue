@@ -506,7 +506,7 @@ const deleteDoc = async (id, docType) => {
     await api.delete(url)
     await loadDocuments()
   } catch (e) {
-    alert('Fehler beim Löschen: ' + (e.response?.data?.error || 'Unbekannter Fehler'))
+    if (window.$toast) { window.$toast('Fehler beim Löschen: ' + (e.response?.data?.error || 'Unbekannter Fehler'), 'error') }
   }
 }
 

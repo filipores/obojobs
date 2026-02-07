@@ -55,7 +55,7 @@ async function startCheckout(plan) {
 
   try {
     const successUrl = `${window.location.origin}/subscription/success?session_id={CHECKOUT_SESSION_ID}`
-    const cancelUrl = `${window.location.origin}/buy-credits`
+    const cancelUrl = `${window.location.origin}/subscription`
 
     const { data } = await api.post('/subscriptions/create-checkout', {
       plan,

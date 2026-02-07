@@ -764,7 +764,7 @@ const submitAnswer = async () => {
     }
   } catch (err) {
     console.error('Fehler bei der Bewertung:', err)
-    alert(err.response?.data?.error || 'Fehler bei der Bewertung der Antwort')
+    if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der Bewertung der Antwort', 'error') }
   } finally {
     isEvaluating.value = false
   }
@@ -800,7 +800,7 @@ const loadDetailedStarAnalysis = async () => {
     }
   } catch (err) {
     console.error('Fehler bei der STAR-Analyse:', err)
-    alert(err.response?.data?.error || 'Fehler bei der detaillierten STAR-Analyse')
+    if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der detaillierten STAR-Analyse', 'error') }
   } finally {
     isLoadingStarAnalysis.value = false
   }

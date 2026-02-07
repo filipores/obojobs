@@ -395,7 +395,7 @@ const updateStatus = async (app) => {
       applications.value[index].status = app.status
     }
   } catch (_e) {
-    alert('Fehler beim Aktualisieren des Status')
+    if (window.$toast) { window.$toast('Fehler beim Aktualisieren des Status', 'error') }
   }
 }
 
@@ -409,7 +409,7 @@ const updateNotes = async (app) => {
       applications.value[index].notizen = app.notizen
     }
   } catch (_e) {
-    alert('Fehler beim Speichern der Notizen')
+    if (window.$toast) { window.$toast('Fehler beim Speichern der Notizen', 'error') }
   }
 }
 
@@ -431,7 +431,7 @@ const downloadPDF = async (id) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (_e) {
-    alert('Fehler beim PDF-Download')
+    if (window.$toast) { window.$toast('Fehler beim PDF-Download', 'error') }
   }
 }
 
