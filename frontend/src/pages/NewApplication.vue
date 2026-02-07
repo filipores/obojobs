@@ -267,17 +267,6 @@ const recognitionComplete = ref(false)
 const recognizedCompany = ref('')
 let pasteDebounceTimeout = null
 
-const previewData = ref(null)
-const editableData = ref(defaultEditableData())
-
-const showManualFallback = ref(false)
-const manualJobText = ref('')
-const manualCompany = ref('')
-const manualTitle = ref('')
-const manualTextError = ref('')
-const analyzingManualText = ref(false)
-const isManualEntry = ref(false)
-
 const defaultEditableData = () => ({
   company: '',
   title: '',
@@ -292,6 +281,17 @@ const defaultEditableData = () => ({
 const extractApiError = (e, fallbackMessage) => {
   return e.response?.data?.error || fallbackMessage
 }
+
+const previewData = ref(null)
+const editableData = ref(defaultEditableData())
+
+const showManualFallback = ref(false)
+const manualJobText = ref('')
+const manualCompany = ref('')
+const manualTitle = ref('')
+const manualTextError = ref('')
+const analyzingManualText = ref(false)
+const isManualEntry = ref(false)
 
 const isAtUsageLimit = computed(() => {
   if (!usage.value || usage.value.unlimited) return false
