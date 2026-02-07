@@ -102,538 +102,63 @@
 
       <!-- Form Section - subtly faded when no CV (anticipation) -->
       <section class="form-section animate-fade-up" :class="{ 'form-section--anticipation': !checkingResume && !hasResume }" style="animation-delay: 100ms;">
-        <div class="form-card zen-card">
-          <!-- URL Input with Portal Detection -->
-          <div class="form-group">
-            <label class="form-label">Stellenanzeigen-URL</label>
-            <div class="url-input-wrapper">
-              <svg class="url-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-              </svg>
-              <input
-                v-model="url"
-                type="url"
-                placeholder="https://example.com/jobs/stellenanzeige"
-                class="form-input url-input"
-                :class="{
-                  'url-valid': showUrlValidation && urlValidation.isValid === true,
-                  'url-invalid': showUrlValidation && urlValidation.isValid === false
-                }"
-                :disabled="loading || generating"
-                @input="onUrlInput"
-                @paste="onUrlPaste"
-                @keydown.enter="onUrlEnterPressed"
-              />
-              <!-- Validation Icon -->
-              <span v-if="showUrlValidation && urlValidation.isValid === true" class="url-validation-icon url-validation-valid">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-              </span>
-              <span v-else-if="showUrlValidation && urlValidation.isValid === false" class="url-validation-icon url-validation-invalid" :title="urlValidation.message">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </span>
-              <!-- Portal Badge -->
-              <span v-if="detectedPortal && urlValidation.isValid !== false" :class="['portal-badge', `portal-${detectedPortal.id}`]">
-                {{ detectedPortal.name }}
-              </span>
-            </div>
-            <!-- Validation Error Message -->
-            <p v-if="showUrlValidation && urlValidation.isValid === false" class="url-validation-message">
-              {{ urlValidation.message }}
-            </p>
-            <p v-else class="form-hint">Kopiere die URL der Stellenanzeige und füge sie hier ein</p>
-            <!-- ARIA Live Region for Screenreaders -->
-            <div class="sr-only" aria-live="polite" aria-atomic="true">
-              {{ urlValidationAnnouncement }}
-            </div>
-          </div>
-
-          <!-- Enso Recognition Animation (shown during paste detection) -->
-          <div v-if="loading && !quickConfirmData && !previewData" class="enso-recognition-container">
-            <div class="enso-recognition" :class="{ 'enso-complete': recognitionComplete }">
-              <svg class="enso-circle" viewBox="0 0 100 100">
-                <circle
-                  class="enso-path"
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                />
-              </svg>
-              <div v-if="recognitionComplete && recognizedCompany" class="enso-company-name">
-                {{ recognizedCompany }}
-              </div>
-              <div v-else class="enso-status">
-                Erkenne Stellenanzeige...
-              </div>
-            </div>
-          </div>
-
-          <!-- Error State with Broken Enso - Graceful Fallback -->
-          <div v-if="error && !previewData && !showManualFallback" class="scrape-error-state">
-            <div class="scrape-error-enso">
-              <EnsoCircle state="broken" size="lg" color="var(--color-stone)" :duration="3000" />
-            </div>
-            <p class="scrape-error-message">Diese Seite spricht nicht mit uns.</p>
-            <p class="scrape-error-reassurance">Kein Problem.</p>
-            <button @click="showManualFallback = true" class="zen-btn zen-btn-ai scrape-error-action">
-              Stellentext selbst einfügen
-            </button>
-          </div>
-
-          <!-- Manual Text Fallback Section - Expanding Flow -->
-          <div v-if="showManualFallback && !previewData" class="manual-fallback-section manual-fallback-expanding">
-            <div class="manual-fallback-header">
-              <div class="manual-fallback-enso">
-                <EnsoCircle state="breathing" size="md" color="var(--color-ai)" :duration="4000" />
-              </div>
-              <div class="manual-fallback-intro">
-                <h3>Füge den Stellentext ein</h3>
-                <p>Wir analysieren ihn und erstellen dein Anschreiben.</p>
-              </div>
-              <button @click="resetManualFallback" class="close-fallback-btn" aria-label="Schließen">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-
-            <div class="manual-fallback-fields">
-              <div class="form-row manual-compact-row">
-                <div class="form-group">
-                  <label class="form-label">Firmenname</label>
-                  <input
-                    v-model="manualCompany"
-                    type="text"
-                    class="form-input"
-                    placeholder="z.B. Beispiel GmbH"
-                    :disabled="analyzingManualText"
-                  />
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label">Position (optional)</label>
-                  <input
-                    v-model="manualTitle"
-                    type="text"
-                    class="form-input"
-                    placeholder="z.B. Software Entwickler (m/w/d)"
-                    :disabled="analyzingManualText"
-                  />
-                </div>
-              </div>
-
-              <div class="form-group manual-text-group">
-                <label class="form-label required" for="manual-job-text">Stellentext</label>
-                <textarea
-                  id="manual-job-text"
-                  ref="manualTextareaRef"
-                  v-model="manualJobText"
-                  class="form-textarea manual-text-area"
-                  rows="10"
-                  placeholder="Kopiere den vollständigen Text der Stellenanzeige hierher..."
-                  :disabled="analyzingManualText"
-                  required
-                  aria-required="true"
-                  @focus="onManualTextareaFocus"
-                ></textarea>
-                <p class="form-hint">
-                  <span v-if="manualJobText.length > 0" class="char-count" :class="{ 'char-count--valid': canAnalyzeManualText }">
-                    {{ manualJobText.length }} / 100 Zeichen
-                  </span>
-                  <span v-else>Mindestens 100 Zeichen erforderlich</span>
-                </p>
-              </div>
-
-              <div v-if="manualTextError" class="manual-error-hint">
-                {{ manualTextError }}
-              </div>
-
-              <div class="form-actions manual-actions">
-                <button
-                  @click="analyzeManualText"
-                  :disabled="!canAnalyzeManualText || analyzingManualText"
-                  class="zen-btn zen-btn-ai zen-btn-lg"
-                >
-                  <span v-if="analyzingManualText" class="btn-loading">
-                    <EnsoCircle state="rotating" size="sm" color="currentColor" :duration="1500" />
-                    <span>Analysiere...</span>
-                  </span>
-                  <span v-else>
-                    Bewerbung erstellen
-                  </span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+        <JobUrlInput
+          v-model="url"
+          :loading="loading"
+          :generating="generating"
+          :error="error"
+          :quick-confirm-data="quickConfirmData"
+          :preview-data="previewData"
+          :show-manual-fallback="showManualFallback"
+          :analyzing-manual-text="analyzingManualText"
+          :recognition-complete="recognitionComplete"
+          :recognized-company="recognizedCompany"
+          :url-touched="urlTouched"
+          @url-input="onUrlInput"
+          @url-paste="onUrlPaste"
+          @url-enter="loadPreview"
+          @show-manual-fallback="showManualFallback = true"
+          @analyze-manual-text="analyzeManualText"
+          @reset-manual-fallback="resetManualFallback"
+        />
       </section>
 
       <!-- Minimal Confirmation Section (quick flow) -->
-      <section v-if="quickConfirmData && !showFullPreview" class="quick-confirm-section animate-fade-up" style="animation-delay: 150ms;">
-        <div class="quick-confirm-card zen-card">
-          <div class="quick-confirm-header">
-            <span :class="['portal-tag', `portal-${quickConfirmData.portal_id}`]">
-              {{ quickConfirmData.portal }}
-            </span>
-            <button @click="resetPreview" class="reset-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-          </div>
-
-          <div class="quick-confirm-content">
-            <h2 class="quick-confirm-title">Bewerbung erstellen?</h2>
-            <p class="quick-confirm-job">
-              <strong>{{ quickConfirmData.title || 'Position' }}</strong>
-              <span class="quick-confirm-at">bei</span>
-              <strong>{{ quickConfirmData.company || 'Unbekannt' }}</strong>
-            </p>
-          </div>
-
-          <!-- Template Selection -->
-          <div class="form-group template-selection">
-            <label class="form-label">Anschreiben-Template</label>
-            <select v-model="selectedTemplateId" class="form-select" :disabled="generating || loadingTemplates">
-              <option :value="null">Standard-Template verwenden</option>
-              <option v-for="template in templates" :key="template.id" :value="template.id">
-                {{ template.name }}{{ template.is_default ? ' (Standard)' : '' }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Quick Actions -->
-          <div class="quick-confirm-actions">
-            <button
-              @click="generateApplication"
-              :disabled="!canGenerate || generating"
-              class="zen-btn zen-btn-ai zen-btn-lg"
-            >
-              <span v-if="generating" class="btn-loading">
-                <span class="loading-spinner"></span>
-                Generiere Bewerbung...
-              </span>
-              <span v-else>
-                Bewerbung generieren
-              </span>
-            </button>
-
-            <button
-              @click="loadFullPreview"
-              :disabled="loading"
-              class="zen-btn zen-btn-secondary"
-            >
-              <span v-if="loading" class="btn-loading">
-                <span class="loading-spinner"></span>
-                Lade Details...
-              </span>
-              <span v-else>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-                </svg>
-                Details bearbeiten
-              </span>
-            </button>
-          </div>
-
-          <p class="usage-info">
-            <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
-            <span v-else>Noch {{ usage?.remaining || 0 }} von {{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
-          </p>
-
-          <!-- Error Message -->
-          <div v-if="error" class="error-box" :class="{ 'error-with-action': isDocumentMissingError || isSubscriptionLimitError }">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/>
-              <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
-            <div class="error-content">
-              <span>{{ error }}</span>
-              <div v-if="isDocumentMissingError" class="error-actions">
-                <router-link to="/documents" class="zen-btn zen-btn-sm">
-                  Zu den Dokumenten
-                </router-link>
-              </div>
-              <div v-if="isSubscriptionLimitError" class="error-actions">
-                <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
-                  Abo upgraden
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <QuickExtract
+        v-if="quickConfirmData && !showFullPreview"
+        :quick-confirm-data="quickConfirmData"
+        :selected-template-id="selectedTemplateId"
+        :templates="templates"
+        :loading-templates="loadingTemplates"
+        :generating="generating"
+        :loading="loading"
+        :can-generate="canGenerate"
+        :usage="usage"
+        :error="error"
+        @generate="generateApplication"
+        @load-full-preview="loadFullPreview"
+        @reset="resetPreview"
+        @update:selected-template-id="selectedTemplateId = $event"
+      />
 
       <!-- Preview Section (shown after loading full details) -->
-      <section v-if="previewData && showFullPreview" class="preview-section animate-fade-up" style="animation-delay: 150ms;">
-        <div class="preview-card zen-card">
-          <div class="preview-header">
-            <div class="preview-title-row">
-              <h2>Stellenanzeige Preview</h2>
-              <span :class="['portal-tag', `portal-${previewData.portal_id}`]">
-                {{ previewData.portal }}
-              </span>
-            </div>
-            <button @click="resetPreview" class="reset-btn">
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
-                <path d="M21 3v5h-5"/>
-                <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
-                <path d="M8 16H3v5"/>
-              </svg>
-              Neu laden
-            </button>
-          </div>
-
-          <!-- Missing Fields Warning -->
-          <div v-if="previewData.missing_fields?.length > 0" class="warning-box">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            <div>
-              <strong>Fehlende Daten</strong>
-              <p>Folgende wichtige Felder konnten nicht automatisch erkannt werden: {{ previewData.missing_fields.join(', ') }}</p>
-            </div>
-          </div>
-
-          <!-- Editable Preview Form -->
-          <div class="preview-form">
-            <!-- Core Fields Row -->
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label required" for="preview-company">Firma</label>
-                <input
-                  id="preview-company"
-                  v-model="editableData.company"
-                  type="text"
-                  class="form-input"
-                  :class="{ 'field-warning': !editableData.company }"
-                  placeholder="Firmenname eingeben"
-                  required
-                  aria-required="true"
-                />
-              </div>
-              <div class="form-group">
-                <label class="form-label required" for="preview-title">Position</label>
-                <input
-                  id="preview-title"
-                  v-model="editableData.title"
-                  type="text"
-                  class="form-input"
-                  :class="{ 'field-warning': !editableData.title }"
-                  placeholder="Stellentitel eingeben"
-                  required
-                  aria-required="true"
-                />
-              </div>
-            </div>
-
-            <!-- Location and Employment Type Row -->
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="location-input">Standort</label>
-                <input
-                  id="location-input"
-                  v-model="editableData.location"
-                  type="text"
-                  class="form-input"
-                  placeholder="z.B. Berlin, Hamburg"
-                />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="employment-type-input">Anstellungsart</label>
-                <input
-                  id="employment-type-input"
-                  v-model="editableData.employment_type"
-                  type="text"
-                  class="form-input"
-                  placeholder="z.B. Vollzeit, Teilzeit"
-                />
-              </div>
-            </div>
-
-            <!-- Contact Fields Row -->
-            <div class="form-row">
-              <div class="form-group">
-                <label class="form-label" for="contact-person-input">Ansprechpartner</label>
-                <input
-                  id="contact-person-input"
-                  v-model="editableData.contact_person"
-                  type="text"
-                  class="form-input"
-                  placeholder="Name des Ansprechpartners"
-                />
-              </div>
-              <div class="form-group">
-                <label class="form-label" for="contact-email-input">Kontakt-Email</label>
-                <input
-                  id="contact-email-input"
-                  v-model="editableData.contact_email"
-                  type="email"
-                  class="form-input"
-                  placeholder="email@firma.de"
-                />
-              </div>
-            </div>
-
-            <!-- Salary (if available) -->
-            <div v-if="editableData.salary || previewData.salary" class="form-group">
-              <label class="form-label" for="salary-input">Gehalt</label>
-              <input
-                id="salary-input"
-                v-model="editableData.salary"
-                type="text"
-                class="form-input"
-                placeholder="Gehaltsangabe"
-              />
-            </div>
-
-            <!-- Description (collapsible) -->
-            <div class="form-group description-group">
-              <div
-                class="description-header"
-                tabindex="0"
-                role="button"
-                :aria-expanded="showDescription"
-                aria-controls="description-content"
-                @click="showDescription = !showDescription"
-                @keydown.enter.prevent="showDescription = !showDescription"
-                @keydown.space.prevent="showDescription = !showDescription"
-              >
-                <label class="form-label">Stellenbeschreibung</label>
-                <button type="button" class="toggle-btn" tabindex="-1" aria-hidden="true">
-                  <svg
-                    :class="['toggle-icon', { rotated: showDescription }]"
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    stroke="currentColor"
-                    stroke-width="2"
-                  >
-                    <polyline points="6 9 12 15 18 9"/>
-                  </svg>
-                </button>
-              </div>
-              <div v-show="showDescription" id="description-content" class="description-content">
-                <textarea
-                  v-model="editableData.description"
-                  class="form-textarea"
-                  rows="8"
-                  placeholder="Stellenbeschreibung..."
-                ></textarea>
-              </div>
-            </div>
-
-            <!-- Template Variables Info -->
-            <div class="template-variables-info">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="12" cy="12" r="10"/>
-                <line x1="12" y1="16" x2="12" y2="12"/>
-                <line x1="12" y1="8" x2="12.01" y2="8"/>
-              </svg>
-              <div>
-                <strong>Template-Variablen werden automatisch befüllt:</strong>
-                <span class="variable-list">
-                  <code
-                    v-for="(value, key) in templateVariables"
-                    :key="key"
-                    :title="value || 'nicht verfügbar'"
-                    :class="{ missing: !value }"
-                  >{{ getVariableDisplay(key) }}</code>
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Template Selection -->
-          <div class="form-group template-selection">
-            <label class="form-label">Anschreiben-Template</label>
-            <select v-model="selectedTemplateId" class="form-select" :disabled="generating || loadingTemplates">
-              <option :value="null">Standard-Template verwenden</option>
-              <option v-for="template in templates" :key="template.id" :value="template.id">
-                {{ template.name }}{{ template.is_default ? ' (Standard)' : '' }}
-              </option>
-            </select>
-          </div>
-
-          <!-- Generate Button -->
-          <div class="form-actions">
-            <button
-              @click="generateApplication"
-              :disabled="!canGenerate || generating"
-              class="zen-btn zen-btn-ai zen-btn-lg"
-              :class="{ 'btn-disabled-limit': isAtUsageLimit }"
-            >
-              <span v-if="generating" class="btn-loading">
-                <span class="loading-spinner"></span>
-                Generiere Bewerbung...
-              </span>
-              <span v-else-if="isAtUsageLimit">
-                Limit erreicht
-              </span>
-              <span v-else>
-                Bewerbung generieren
-              </span>
-            </button>
-            <p v-if="isAtUsageLimit" class="usage-info usage-info-limit">
-              <router-link to="/subscription">Upgrade dein Abo</router-link> um weitere Bewerbungen zu generieren
-            </p>
-            <p v-else class="usage-info">
-              <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
-              <span v-else>Noch {{ usage?.remaining || 0 }} von {{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
-            </p>
-          </div>
-
-          <!-- Error Message -->
-          <div v-if="error && previewData" class="error-box" :class="{ 'error-with-action': isDocumentMissingError || isSubscriptionLimitError }">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="15" y1="9" x2="9" y2="15"/>
-              <line x1="9" y1="9" x2="15" y2="15"/>
-            </svg>
-            <div class="error-content">
-              <span>{{ error }}</span>
-              <div v-if="isDocumentMissingError" class="error-actions">
-                <router-link to="/documents" class="zen-btn zen-btn-sm">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14,2 14,8 20,8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <line x1="10" y1="9" x2="8" y2="9"/>
-                  </svg>
-                  Zu den Dokumenten
-                </router-link>
-              </div>
-              <div v-if="isSubscriptionLimitError" class="error-actions">
-                <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                    <path d="M2 17l10 5 10-5"/>
-                    <path d="M2 12l10 5 10-5"/>
-                  </svg>
-                  Abo upgraden
-                </router-link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      <JobPreview
+        v-if="previewData && showFullPreview"
+        :preview-data="previewData"
+        :editable-data="editableData"
+        :selected-template-id="selectedTemplateId"
+        :templates="templates"
+        :loading-templates="loadingTemplates"
+        :generating="generating"
+        :can-generate="canGenerate"
+        :is-at-usage-limit="isAtUsageLimit"
+        :usage="usage"
+        :error="error"
+        @reset="resetPreview"
+        @generate="generateApplication"
+        @update:editable-data="editableData = $event"
+        @update:selected-template-id="selectedTemplateId = $event"
+      />
 
       <!-- Info Box (show when no quick confirm or preview) -->
       <section v-if="!quickConfirmData && !previewData" class="info-section animate-fade-up" style="animation-delay: 200ms;">
@@ -673,100 +198,14 @@
       />
 
       <!-- Premium Reveal Success Modal -->
-      <Teleport to="body">
-        <div v-if="generatedApp" class="premium-reveal-overlay" @click="closeModal">
-          <div
-            class="premium-reveal-modal"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="success-modal-title"
-            @click.stop
-            @keydown.tab="trapFocus"
-          >
-            <!-- Close button -->
-            <button @click="closeModal" class="premium-reveal-close" aria-label="Modal schließen">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="18" y1="6" x2="6" y2="18"/>
-                <line x1="6" y1="6" x2="18" y2="18"/>
-              </svg>
-            </button>
-
-            <!-- Phase 1: Enso Circle -->
-            <div class="premium-reveal-enso" :class="{ 'premium-reveal-enso--visible': revealPhase >= 1 }">
-              <EnsoCircle :state="ensoState" size="lg" :duration="600" />
-            </div>
-
-            <!-- Phase 2: Content reveal -->
-            <div class="premium-reveal-content" :class="{ 'premium-reveal-content--visible': revealPhase >= 2 }">
-              <!-- Success header -->
-              <div class="premium-reveal-header">
-                <h2 id="success-modal-title" class="premium-reveal-title">Bewerbung erstellt</h2>
-                <p class="premium-reveal-company">{{ generatedApp.position }} bei <strong>{{ generatedApp.firma }}</strong></p>
-              </div>
-
-              <!-- Einleitung preview - the "holy shit" moment -->
-              <div v-if="einleitungPreview" class="premium-reveal-einleitung">
-                <div class="premium-reveal-einleitung-label">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M12 20h9"/>
-                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
-                  </svg>
-                  Dein personalisierter Einstieg
-                </div>
-                <p class="premium-reveal-einleitung-text">{{ einleitungPreview }}</p>
-              </div>
-
-              <!-- Subject line preview -->
-              <div v-if="generatedApp.betreff" class="premium-reveal-betreff">
-                <div class="premium-reveal-betreff-label">Betreff</div>
-                <p class="premium-reveal-betreff-text">{{ generatedApp.betreff }}</p>
-              </div>
-            </div>
-
-            <!-- Phase 3: PDF card and actions -->
-            <div class="premium-reveal-actions" :class="{ 'premium-reveal-actions--visible': revealPhase >= 3 }">
-              <!-- PDF Preview Card -->
-              <div class="premium-reveal-pdf-card" @click="downloadPDF">
-                <div class="premium-reveal-pdf-icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                    <polyline points="14,2 14,8 20,8"/>
-                    <line x1="16" y1="13" x2="8" y2="13"/>
-                    <line x1="16" y1="17" x2="8" y2="17"/>
-                    <line x1="10" y1="9" x2="8" y2="9"/>
-                  </svg>
-                </div>
-                <div class="premium-reveal-pdf-info">
-                  <span class="premium-reveal-pdf-name">Anschreiben_{{ generatedApp.firma }}.pdf</span>
-                  <span class="premium-reveal-pdf-action">Klicken zum Herunterladen</span>
-                </div>
-                <div class="premium-reveal-pdf-download">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                </div>
-              </div>
-
-              <!-- Action buttons -->
-              <div class="premium-reveal-buttons">
-                <button @click="downloadPDF" class="zen-btn zen-btn-ai zen-btn-lg premium-reveal-btn-primary">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="7 10 12 15 17 10"/>
-                    <line x1="12" y1="15" x2="12" y2="3"/>
-                  </svg>
-                  PDF herunterladen
-                </button>
-                <button @click="goToApplications" class="zen-btn premium-reveal-btn-secondary">
-                  Alle Bewerbungen
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </Teleport>
+      <GenerationResult
+        :generated-app="generatedApp"
+        :reveal-phase="revealPhase"
+        :enso-state="ensoState"
+        @close="closeModal"
+        @download-pdf="downloadPDF"
+        @go-to-applications="goToApplications"
+      />
     </div>
   </div>
 </template>
@@ -775,14 +214,17 @@
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import UsageIndicator from '../components/UsageIndicator.vue'
 import EnsoCircle from '../components/application/EnsoCircle.vue'
 import CraftingOverlay from '../components/application/CraftingOverlay.vue'
+import JobUrlInput from '../components/NewApplication/JobUrlInput.vue'
+import QuickExtract from '../components/NewApplication/QuickExtract.vue'
+import JobPreview from '../components/NewApplication/JobPreview.vue'
+import GenerationResult from '../components/NewApplication/GenerationResult.vue'
 
 const router = useRouter()
 
-// Escape key handler for modal
 const handleKeydown = (e) => {
   if (e.key === 'Escape' && generatedApp.value) {
     closeModal()
@@ -791,25 +233,18 @@ const handleKeydown = (e) => {
 
 onUnmounted(() => {
   document.removeEventListener('keydown', handleKeydown)
-  // Clean up paste debounce timeout
   if (pasteDebounceTimeout) {
     clearTimeout(pasteDebounceTimeout)
   }
 })
 
-// Skills check state
 const checkingSkills = ref(true)
 const hasSkills = ref(true)
-
-// Resume/CV check state
 const checkingResume = ref(true)
 const hasResume = ref(true)
-
-// Profile completeness check
 const profileIncomplete = ref(false)
 const profileWarningDismissed = ref(false)
 
-// State
 const url = ref('')
 const urlTouched = ref(false)
 const selectedTemplateId = ref(null)
@@ -822,30 +257,16 @@ const usage = ref(null)
 const generatedApp = ref(null)
 const showCraftingOverlay = ref(false)
 
-// Premium reveal animation state
-const revealPhase = ref(0) // 0: hidden, 1: enso, 2: content, 3: actions
+const revealPhase = ref(0)
 const ensoState = ref('broken')
 
-// Computed for first 2 sentences of einleitung
-const einleitungPreview = computed(() => {
-  if (!generatedApp.value?.einleitung) return ''
-  const text = generatedApp.value.einleitung
-  // Split by sentence-ending punctuation followed by space
-  const sentences = text.match(/[^.!?]*[.!?]+/g) || []
-  // Get first 2 sentences and join
-  return sentences.slice(0, 2).join(' ').trim()
-})
-
-// Quick confirmation state (minimal flow)
 const quickConfirmData = ref(null)
 const showFullPreview = ref(false)
 
-// Auto-paste recognition state
 const recognitionComplete = ref(false)
 const recognizedCompany = ref('')
 let pasteDebounceTimeout = null
 
-// Preview state (full preview for power users)
 const previewData = ref(null)
 const editableData = ref({
   company: '',
@@ -857,9 +278,7 @@ const editableData = ref({
   salary: '',
   description: ''
 })
-const showDescription = ref(false)
 
-// Manual text fallback state
 const showManualFallback = ref(false)
 const manualJobText = ref('')
 const manualCompany = ref('')
@@ -867,146 +286,22 @@ const manualTitle = ref('')
 const manualTextError = ref('')
 const analyzingManualText = ref(false)
 const isManualEntry = ref(false)
-const manualTextareaRef = ref(null)
 
-// Can analyze manual text check
-const canAnalyzeManualText = computed(() => {
-  return manualJobText.value.trim().length >= 100
-})
-
-// URL validation
-const urlValidation = computed(() => {
-  const urlValue = url.value.trim()
-
-  // Empty - no validation state
-  if (!urlValue) {
-    return { isValid: null, message: '' }
-  }
-
-  // Must start with http:// or https://
-  if (!urlValue.match(/^https?:\/\//i)) {
-    return { isValid: false, message: 'URL muss mit http:// oder https:// beginnen' }
-  }
-
-  // Basic URL pattern check
-  try {
-    const parsedUrl = new URL(urlValue)
-
-    // Check for valid hostname (must have at least one dot)
-    if (!parsedUrl.hostname.includes('.')) {
-      return { isValid: false, message: 'Ungültige Domain (z.B. example.com)' }
-    }
-
-    // Check for common typos
-    if (parsedUrl.hostname.endsWith('.')) {
-      return { isValid: false, message: 'Domain darf nicht mit einem Punkt enden' }
-    }
-
-    return { isValid: true, message: '' }
-  } catch {
-    return { isValid: false, message: 'Ungültiges URL-Format' }
-  }
-})
-
-// Show validation feedback only after user has interacted
-const showUrlValidation = computed(() => {
-  return urlTouched.value && url.value.trim().length > 0
-})
-
-// ARIA announcement for screenreaders
-const urlValidationAnnouncement = computed(() => {
-  if (!showUrlValidation.value) return ''
-  if (urlValidation.value.isValid === true) {
-    return 'URL ist gültig'
-  }
-  if (urlValidation.value.isValid === false) {
-    return `URL ungültig: ${urlValidation.value.message}`
-  }
-  return ''
-})
-
-// Portal detection (real-time based on URL)
-const detectedPortal = computed(() => {
-  if (!url.value) return null
-
-  const urlLower = url.value.toLowerCase()
-
-  if (urlLower.includes('stepstone.de')) {
-    return { id: 'stepstone', name: 'StepStone' }
-  }
-  if (urlLower.includes('indeed.com') || urlLower.includes('indeed.de')) {
-    return { id: 'indeed', name: 'Indeed' }
-  }
-  if (urlLower.includes('xing.com')) {
-    return { id: 'xing', name: 'XING' }
-  }
-  if (urlLower.includes('arbeitsagentur.de')) {
-    return { id: 'arbeitsagentur', name: 'Arbeitsagentur' }
-  }
-
-  // Generic if it looks like a URL
-  if (url.value.startsWith('http')) {
-    return { id: 'generic', name: 'Sonstige' }
-  }
-
-  return null
-})
-
-// Template variables computed from editable data
-const templateVariables = computed(() => ({
-  FIRMA: editableData.value.company,
-  POSITION: editableData.value.title,
-  ANSPRECHPARTNER: editableData.value.contact_person,
-  STANDORT: editableData.value.location,
-  QUELLE: previewData.value?.portal || ''
-}))
-
-// Check if at usage limit
 const isAtUsageLimit = computed(() => {
   if (!usage.value || usage.value.unlimited) return false
   return usage.value.used >= usage.value.limit
 })
 
-// Can generate check
 const canGenerate = computed(() => {
   return editableData.value.company && editableData.value.title && !isAtUsageLimit.value
 })
 
-// Check if error is about missing documents (CV/resume/Lebenslauf)
-// Note: Arbeitszeugnis is optional and should not trigger this error
-const isDocumentMissingError = computed(() => {
-  if (!error.value) return false
-  const errorLower = error.value.toLowerCase()
-  return errorLower.includes('lebenslauf') ||
-         errorLower.includes('resume') ||
-         errorLower.includes('cv')
-})
-
-// Check if error is about subscription limit (CORE-016-BUG-001)
-const isSubscriptionLimitError = computed(() => {
-  if (!error.value) return false
-  const errorLower = error.value.toLowerCase()
-  return errorLower.includes('limit') ||
-         errorLower.includes('subscription') ||
-         errorLower.includes('abonnement') ||
-         errorLower.includes('kontingent')
-})
-
-// Helper to display template variable name with double braces
-const getVariableDisplay = (key) => {
-  return `{{${key}}}`
-}
-
-// Debounce URL input
 let urlInputTimeout = null
 const onUrlInput = () => {
-  // Mark as touched for validation display
   urlTouched.value = true
 
-  // Clear any existing timeout
   if (urlInputTimeout) clearTimeout(urlInputTimeout)
 
-  // Reset preview when URL changes significantly
   if (previewData.value && url.value !== previewData.value.url) {
     previewData.value = null
     editableData.value = {
@@ -1022,20 +317,30 @@ const onUrlInput = () => {
   }
 }
 
-// Handle paste event for auto-detection
+const urlValidation = computed(() => {
+  const urlValue = url.value.trim()
+  if (!urlValue) return { isValid: null, message: '' }
+  if (!urlValue.match(/^https?:\/\//i)) {
+    return { isValid: false, message: 'URL muss mit http:// oder https:// beginnen' }
+  }
+  try {
+    const parsedUrl = new URL(urlValue)
+    if (!parsedUrl.hostname.includes('.')) return { isValid: false, message: 'Ungültige Domain' }
+    if (parsedUrl.hostname.endsWith('.')) return { isValid: false, message: 'Domain darf nicht mit einem Punkt enden' }
+    return { isValid: true, message: '' }
+  } catch {
+    return { isValid: false, message: 'Ungültiges URL-Format' }
+  }
+})
+
 const onUrlPaste = () => {
-  // Mark as touched immediately for visual feedback
   urlTouched.value = true
 
-  // Clear any existing debounce timeout
   if (pasteDebounceTimeout) {
     clearTimeout(pasteDebounceTimeout)
   }
 
-  // Use nextTick to ensure v-model has updated with pasted value
-  // then debounce 500ms before triggering extraction
   setTimeout(() => {
-    // Validate URL after paste
     if (url.value && urlValidation.value.isValid === true && !loading.value && !generating.value && !quickConfirmData.value && !previewData.value) {
       pasteDebounceTimeout = setTimeout(() => {
         loadPreviewWithAnimation()
@@ -1044,35 +349,20 @@ const onUrlPaste = () => {
   }, 0)
 }
 
-// Load preview with enso recognition animation
 const loadPreviewWithAnimation = async () => {
-  // Reset recognition state
   recognitionComplete.value = false
   recognizedCompany.value = ''
 
-  // Call regular loadPreview - animation shows during loading state
   await loadPreview()
 
-  // After successful load, trigger completion animation
   if (quickConfirmData.value) {
     recognizedCompany.value = quickConfirmData.value.company || ''
     recognitionComplete.value = true
 
-    // Small delay to show completion animation before transitioning to quick confirm
     await new Promise(resolve => setTimeout(resolve, 800))
   }
 }
 
-// Handle Enter key press in URL input
-const onUrlEnterPressed = (event) => {
-  // Only proceed if URL is valid and not already loading
-  if (url.value && urlValidation.value.isValid === true && !loading.value && !generating.value && !previewData.value) {
-    event.preventDefault()
-    loadPreview()
-  }
-}
-
-// Load quick confirmation data from URL (minimal flow)
 const loadPreview = async () => {
   if (!url.value) return
 
@@ -1083,7 +373,6 @@ const loadPreview = async () => {
   previewData.value = null
 
   try {
-    // Use quick-extract for minimal confirmation flow
     const { data } = await api.post('/applications/quick-extract', {
       url: url.value
     })
@@ -1091,7 +380,6 @@ const loadPreview = async () => {
     if (data.success) {
       quickConfirmData.value = data.data
 
-      // Pre-populate editable data with minimal info
       editableData.value = {
         company: data.data.company || '',
         title: data.data.title || '',
@@ -1113,7 +401,6 @@ const loadPreview = async () => {
       loading.value = false
     }
   } catch (e) {
-    // Handle different HTTP status codes appropriately
     if (e.response?.status === 400 && e.response?.data?.error) {
       error.value = e.response.data.error
     } else if (e.response?.status === 500 && e.response?.data?.error) {
@@ -1127,7 +414,6 @@ const loadPreview = async () => {
   }
 }
 
-// Load full preview data for power users who want to edit details
 const loadFullPreview = async () => {
   if (!url.value) return
 
@@ -1143,7 +429,6 @@ const loadFullPreview = async () => {
       previewData.value = data.data
       showFullPreview.value = true
 
-      // Populate editable data from preview
       editableData.value = {
         company: data.data.company || '',
         title: data.data.title || '',
@@ -1178,7 +463,6 @@ const loadFullPreview = async () => {
   }
 }
 
-// Reset preview and start fresh
 const resetPreview = () => {
   quickConfirmData.value = null
   showFullPreview.value = false
@@ -1200,7 +484,6 @@ const resetPreview = () => {
   manualCompany.value = ''
   manualTitle.value = ''
   urlTouched.value = false
-  // Reset recognition animation state
   recognitionComplete.value = false
   recognizedCompany.value = ''
   if (pasteDebounceTimeout) {
@@ -1209,7 +492,6 @@ const resetPreview = () => {
   }
 }
 
-// Reset manual fallback to go back to error state
 const resetManualFallback = () => {
   showManualFallback.value = false
   manualJobText.value = ''
@@ -1218,45 +500,42 @@ const resetManualFallback = () => {
   manualTextError.value = ''
 }
 
-// Focus handler for manual textarea - auto-expand effect
-const onManualTextareaFocus = () => {
-  // Focus is handled by CSS :focus-within
-}
+const analyzeManualText = async (payload) => {
+  const jobText = payload.jobText
+  const company = payload.company
+  const title = payload.title
 
-// Analyze manually pasted job text
-const analyzeManualText = async () => {
-  if (!canAnalyzeManualText.value) return
+  if (jobText.trim().length < 100) return
 
   analyzingManualText.value = true
   manualTextError.value = ''
 
   try {
     const { data } = await api.post('/applications/analyze-manual-text', {
-      job_text: manualJobText.value,
-      company: manualCompany.value,
-      title: manualTitle.value
+      job_text: jobText,
+      company: company,
+      title: title
     })
 
     if (data.success) {
       previewData.value = data.data
       isManualEntry.value = true
 
-      // Populate editable data from analysis
       editableData.value = {
-        company: data.data.company || manualCompany.value || '',
-        title: data.data.title || manualTitle.value || '',
+        company: data.data.company || company || '',
+        title: data.data.title || title || '',
         location: data.data.location || '',
         employment_type: data.data.employment_type || '',
         contact_person: data.data.contact_person || '',
         contact_email: data.data.contact_email || '',
         salary: data.data.salary || '',
-        description: data.data.description || manualJobText.value
+        description: data.data.description || jobText
       }
 
       showFullPreview.value = true
       showManualFallback.value = false
       analyzingManualText.value = false
-      error.value = '' // Clear any previous error from URL loading
+      error.value = ''
 
       if (window.$toast) {
         window.$toast('Stellentext analysiert!', 'success')
@@ -1271,7 +550,6 @@ const analyzeManualText = async () => {
   }
 }
 
-// Load templates
 const loadTemplates = async () => {
   loadingTemplates.value = true
   try {
@@ -1284,7 +562,6 @@ const loadTemplates = async () => {
   }
 }
 
-// Load usage
 const loadUsage = async () => {
   try {
     const { data } = await api.get('/stats')
@@ -1294,17 +571,10 @@ const loadUsage = async () => {
   }
 }
 
-const getPlanLabel = () => {
-  const plan = usage.value?.plan || 'free'
-  return plan.charAt(0).toUpperCase() + plan.slice(1)
-}
-
-// Handle crafting overlay completion
 const onCraftingComplete = () => {
   showCraftingOverlay.value = false
 }
 
-// Generate application
 const generateApplication = async () => {
   if (!canGenerate.value) return
 
@@ -1316,20 +586,17 @@ const generateApplication = async () => {
     let response
 
     if (isManualEntry.value) {
-      // Generate from manually entered text
       response = await api.post('/applications/generate-from-text', {
         job_text: editableData.value.description,
         company: editableData.value.company,
         title: editableData.value.title,
         template_id: selectedTemplateId.value,
-        description: editableData.value.description // Include structured description for interview prep
+        description: editableData.value.description
       })
     } else {
-      // Generate from URL with user-edited preview data
       response = await api.post('/applications/generate-from-url', {
         url: url.value,
         template_id: selectedTemplateId.value,
-        // Include user-edited data to preserve their changes
         company: editableData.value.company,
         title: editableData.value.title,
         contact_person: editableData.value.contact_person,
@@ -1344,11 +611,8 @@ const generateApplication = async () => {
     if (data.success) {
       generatedApp.value = data.application
       showCraftingOverlay.value = false
-      // Trigger premium reveal animation
       startPremiumReveal()
-      // Reload usage after generation
       await loadUsage()
-      // Reset form
       url.value = ''
       urlTouched.value = false
       quickConfirmData.value = null
@@ -1372,7 +636,6 @@ const generateApplication = async () => {
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
-        // Show profile warning toast if backend flagged incomplete profile
         if (data.profile_warning?.incomplete) {
           setTimeout(() => {
             window.$toast('Profil unvollständig — ergänze fehlende Angaben in den Einstellungen.', 'warning')
@@ -1401,21 +664,19 @@ const downloadPDF = async () => {
   if (!generatedApp.value?.id) return
 
   try {
-    // Use authenticated request to fetch PDF blob
     const response = await api.get(`/applications/${generatedApp.value.id}/pdf`, {
       responseType: 'blob'
     })
 
-    // Create download link from blob
     const blob = new Blob([response.data], { type: 'application/pdf' })
-    const url = window.URL.createObjectURL(blob)
+    const pdfUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
-    link.href = url
+    link.href = pdfUrl
     link.download = `bewerbung_${generatedApp.value.id}.pdf`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    window.URL.revokeObjectURL(pdfUrl)
   } catch (err) {
     console.error('PDF download error:', err)
     error.value = 'Fehler beim Herunterladen des PDF'
@@ -1428,62 +689,31 @@ const goToApplications = () => {
 
 const closeModal = () => {
   generatedApp.value = null
-  // Reset reveal animation state
   revealPhase.value = 0
   ensoState.value = 'broken'
 }
 
-// Premium reveal animation - staggered reveal for "holy shit" moment
 const startPremiumReveal = async () => {
   revealPhase.value = 0
   ensoState.value = 'broken'
 
   await nextTick()
 
-  // Phase 1: Show modal with enso circle animating
   revealPhase.value = 1
 
-  // After brief pause, complete the enso
   setTimeout(() => {
     ensoState.value = 'complete'
   }, 300)
 
-  // Phase 2: Reveal content (einleitung, betreff)
   setTimeout(() => {
     revealPhase.value = 2
   }, 900)
 
-  // Phase 3: Reveal PDF card and actions
   setTimeout(() => {
     revealPhase.value = 3
   }, 1400)
 }
 
-// Focus trap for success modal (CORE-020-BUG-002)
-const trapFocus = (e) => {
-  const modal = e.currentTarget
-  const focusableElements = modal.querySelectorAll(
-    'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
-  )
-  const firstFocusable = focusableElements[0]
-  const lastFocusable = focusableElements[focusableElements.length - 1]
-
-  if (e.shiftKey) {
-    // Shift + Tab: if on first element, go to last
-    if (document.activeElement === firstFocusable) {
-      e.preventDefault()
-      lastFocusable.focus()
-    }
-  } else {
-    // Tab: if on last element, go to first
-    if (document.activeElement === lastFocusable) {
-      e.preventDefault()
-      firstFocusable.focus()
-    }
-  }
-}
-
-// Check if user has skills for Job-Fit analysis
 const checkUserSkills = async () => {
   checkingSkills.value = true
   try {
@@ -1491,30 +721,25 @@ const checkUserSkills = async () => {
     const userSkills = data.skills || []
     hasSkills.value = userSkills.length > 0
   } catch {
-    // On error, assume skills exist to not block the user
     hasSkills.value = true
   } finally {
     checkingSkills.value = false
   }
 }
 
-// Check if user has a resume/CV uploaded
 const checkUserResume = async () => {
   checkingResume.value = true
   try {
     const { data } = await api.get('/documents')
     const documents = data.documents || []
-    // Check if any document is of type 'lebenslauf'
     hasResume.value = documents.some(doc => doc.doc_type === 'lebenslauf')
   } catch {
-    // On error, assume resume exists to not block the user
     hasResume.value = true
   } finally {
     checkingResume.value = false
   }
 }
 
-// Check if user profile is complete (local check from authStore)
 const checkProfileCompleteness = () => {
   const user = authStore.user
   if (!user) return
@@ -1534,7 +759,6 @@ onMounted(() => {
   checkUserSkills()
   checkUserResume()
   checkProfileCompleteness()
-  // Add escape key listener for modal
   document.addEventListener('keydown', handleKeydown)
 })
 </script>
@@ -1546,9 +770,6 @@ onMounted(() => {
   padding-bottom: var(--space-ma-xl);
 }
 
-/* ========================================
-   PAGE HEADER
-   ======================================== */
 .page-header {
   padding: var(--space-ma-lg) 0 var(--space-ma);
 }
@@ -1566,9 +787,6 @@ onMounted(() => {
   margin-bottom: 0;
 }
 
-/* ========================================
-   CV INVITATION - ZERO STATE EXPERIENCE
-   ======================================== */
 .cv-invitation-section {
   max-width: 520px;
   margin-bottom: var(--space-xl);
@@ -1618,7 +836,6 @@ onMounted(() => {
   color: var(--color-text-tertiary);
 }
 
-/* Anticipation state for form when no CV */
 .form-section--anticipation {
   opacity: 0.5;
   pointer-events: none;
@@ -1636,23 +853,6 @@ onMounted(() => {
   pointer-events: none;
 }
 
-@media (max-width: 768px) {
-  .cv-invitation-card {
-    padding: var(--space-xl) var(--space-lg);
-  }
-
-  .cv-invitation-title {
-    font-size: 1.25rem;
-  }
-
-  .cv-invitation-text {
-    font-size: 0.9375rem;
-  }
-}
-
-/* ========================================
-   SKILLS WARNING BANNER
-   ======================================== */
 .skills-warning-section {
   max-width: 640px;
   margin-bottom: var(--space-lg);
@@ -1716,26 +916,6 @@ onMounted(() => {
   font-style: italic;
 }
 
-@media (max-width: 768px) {
-  .skills-warning {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-  }
-
-  .warning-text-content {
-    text-align: center;
-  }
-
-  .warning-actions {
-    flex-direction: column;
-    align-items: center;
-  }
-}
-
-/* ========================================
-   PROFILE WARNING BANNER
-   ======================================== */
 .profile-warning-section {
   max-width: 640px;
   margin-bottom: var(--space-lg);
@@ -1757,473 +937,14 @@ onMounted(() => {
   font-size: 0.875rem;
 }
 
-@media (max-width: 768px) {
-  .profile-warning {
-    flex-direction: column;
-    text-align: center;
-    align-items: center;
-  }
-}
-
-/* ========================================
-   FORM SECTION
-   ======================================== */
 .form-section {
   max-width: 640px;
 }
 
-.form-card {
-  padding: var(--space-xl);
-}
-
-.form-group {
+.usage-section {
   margin-bottom: var(--space-lg);
 }
 
-.form-label {
-  display: block;
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-sumi);
-  margin-bottom: var(--space-sm);
-}
-
-.form-label.required::after {
-  content: ' *';
-  color: #b45050;
-}
-
-.form-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-lg);
-}
-
-.url-input-wrapper {
-  position: relative;
-}
-
-.url-icon {
-  position: absolute;
-  left: var(--space-md);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-stone);
-  pointer-events: none;
-}
-
-.url-input {
-  padding-left: calc(var(--space-md) + 28px);
-  padding-right: 130px;
-  transition: border-color var(--transition-base), box-shadow var(--transition-base);
-}
-
-/* URL Validation Styles */
-.url-input.url-valid {
-  border-color: var(--color-koke);
-  box-shadow: 0 0 0 3px rgba(122, 139, 110, 0.15);
-}
-
-.url-input.url-invalid {
-  border-color: #b45050;
-  box-shadow: 0 0 0 3px rgba(180, 80, 80, 0.15);
-}
-
-.url-validation-icon {
-  position: absolute;
-  right: 100px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-}
-
-.url-validation-valid {
-  color: var(--color-koke);
-  background: rgba(122, 139, 110, 0.15);
-}
-
-.url-validation-invalid {
-  color: #b45050;
-  background: rgba(180, 80, 80, 0.15);
-  cursor: help;
-}
-
-.url-validation-message {
-  font-size: 0.8125rem;
-  color: #b45050;
-  margin-top: var(--space-xs);
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.form-hint {
-  font-size: 0.8125rem;
-  color: var(--color-text-tertiary);
-  margin-top: var(--space-xs);
-}
-
-/* Screen reader only - visually hidden but accessible */
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
-/* ========================================
-   PORTAL BADGE
-   ======================================== */
-.portal-badge {
-  position: absolute;
-  right: var(--space-md);
-  top: 50%;
-  transform: translateY(-50%);
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wide);
-}
-
-.portal-badge.portal-stepstone {
-  background: rgba(0, 102, 204, 0.15);
-  color: #0066cc;
-}
-
-.portal-badge.portal-indeed {
-  background: rgba(46, 92, 168, 0.15);
-  color: #2e5ca8;
-}
-
-.portal-badge.portal-xing {
-  background: rgba(0, 111, 107, 0.15);
-  color: #006f6b;
-}
-
-.portal-badge.portal-arbeitsagentur {
-  background: rgba(0, 68, 103, 0.15);
-  color: #004467;
-}
-
-.portal-badge.portal-generic {
-  background: var(--color-washi-aged);
-  color: var(--color-text-tertiary);
-}
-
-/* ========================================
-   QUICK CONFIRMATION SECTION (Minimal Flow)
-   ======================================== */
-.quick-confirm-section {
-  max-width: 560px;
-}
-
-.quick-confirm-card {
-  padding: var(--space-xl);
-  text-align: center;
-}
-
-.quick-confirm-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-lg);
-}
-
-.quick-confirm-content {
-  margin-bottom: var(--space-xl);
-}
-
-.quick-confirm-title {
-  font-size: 1.5rem;
-  font-weight: 400;
-  margin: 0 0 var(--space-md) 0;
-  color: var(--color-text-primary);
-}
-
-.quick-confirm-job {
-  font-size: 1.125rem;
-  margin: 0;
-  line-height: 1.6;
-}
-
-.quick-confirm-job strong {
-  color: var(--color-ai);
-}
-
-.quick-confirm-at {
-  color: var(--color-text-secondary);
-  margin: 0 var(--space-xs);
-}
-
-.quick-confirm-actions {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
-}
-
-.quick-confirm-actions .zen-btn-ai {
-  width: 100%;
-}
-
-.quick-confirm-actions .zen-btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.quick-confirm-actions .zen-btn-secondary:hover {
-  border-color: var(--color-ai);
-  color: var(--color-ai);
-}
-
-.quick-confirm-card .template-selection {
-  text-align: left;
-  margin-bottom: var(--space-lg);
-}
-
-.quick-confirm-card .usage-info {
-  text-align: center;
-}
-
-.quick-confirm-card .error-box {
-  text-align: left;
-  margin-top: var(--space-md);
-}
-
-/* ========================================
-   PREVIEW SECTION
-   ======================================== */
-.preview-section {
-  max-width: 800px;
-}
-
-.preview-card {
-  padding: var(--space-xl);
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-lg);
-  padding-bottom: var(--space-md);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.preview-title-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.preview-title-row h2 {
-  font-size: 1.25rem;
-  font-weight: 500;
-  margin: 0;
-}
-
-.portal-tag {
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-}
-
-.portal-tag.portal-stepstone {
-  background: rgba(0, 102, 204, 0.15);
-  color: #0066cc;
-}
-
-.portal-tag.portal-indeed {
-  background: rgba(46, 92, 168, 0.15);
-  color: #2e5ca8;
-}
-
-.portal-tag.portal-xing {
-  background: rgba(0, 111, 107, 0.15);
-  color: #006f6b;
-}
-
-.portal-tag.portal-generic {
-  background: var(--color-washi-aged);
-  color: var(--color-text-tertiary);
-}
-
-.reset-btn {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: transparent;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.reset-btn:hover {
-  background: var(--color-washi-warm);
-  color: var(--color-text-primary);
-}
-
-/* ========================================
-   WARNING BOX
-   ======================================== */
-.warning-box {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: rgba(201, 162, 39, 0.1);
-  border: 1px solid rgba(201, 162, 39, 0.3);
-  border-radius: var(--radius-md);
-  margin-bottom: var(--space-lg);
-}
-
-.warning-box svg {
-  flex-shrink: 0;
-  color: #c9a227;
-}
-
-.warning-box strong {
-  display: block;
-  color: #8a6d17;
-  margin-bottom: var(--space-xs);
-  font-size: 0.875rem;
-}
-
-.warning-box p {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-}
-
-/* ========================================
-   PREVIEW FORM
-   ======================================== */
-.preview-form {
-  margin-bottom: var(--space-lg);
-}
-
-.field-warning {
-  border-color: rgba(201, 162, 39, 0.5);
-  background: rgba(201, 162, 39, 0.05);
-}
-
-/* Description Toggle */
-.description-group {
-  margin-top: var(--space-lg);
-  padding-top: var(--space-lg);
-  border-top: 1px solid var(--color-border-light);
-}
-
-.description-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  cursor: pointer;
-}
-
-.description-header .form-label {
-  margin-bottom: 0;
-  cursor: pointer;
-}
-
-.toggle-btn {
-  background: none;
-  border: none;
-  padding: var(--space-xs);
-  cursor: pointer;
-  color: var(--color-text-tertiary);
-}
-
-.toggle-icon {
-  transition: transform var(--transition-base);
-}
-
-.toggle-icon.rotated {
-  transform: rotate(180deg);
-}
-
-.description-content {
-  margin-top: var(--space-md);
-}
-
-/* ========================================
-   TEMPLATE VARIABLES INFO
-   ======================================== */
-.template-variables-info {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-ai-subtle);
-  border-radius: var(--radius-md);
-  margin-top: var(--space-lg);
-}
-
-.template-variables-info svg {
-  flex-shrink: 0;
-  color: var(--color-ai);
-  margin-top: 2px;
-}
-
-.template-variables-info strong {
-  display: block;
-  font-size: 0.8125rem;
-  color: var(--color-sumi);
-  margin-bottom: var(--space-sm);
-}
-
-.variable-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
-
-.variable-list code {
-  padding: 2px var(--space-xs);
-  background: var(--color-washi);
-  border-radius: var(--radius-xs);
-  font-size: 0.75rem;
-  color: var(--color-ai);
-}
-
-.variable-list code.missing {
-  color: var(--color-text-tertiary);
-  opacity: 0.6;
-}
-
-/* ========================================
-   TEMPLATE SELECTION
-   ======================================== */
-.template-selection {
-  padding-top: var(--space-lg);
-  border-top: 1px solid var(--color-border-light);
-}
-
-/* ========================================
-   INFO SECTION
-   ======================================== */
 .info-section {
   max-width: 640px;
 }
@@ -2299,1053 +1020,48 @@ onMounted(() => {
   color: var(--color-text-tertiary);
 }
 
-/* ========================================
-   FORM ACTIONS
-   ======================================== */
-.form-actions {
-  text-align: center;
-}
-
-.preview-actions {
-  margin-top: var(--space-lg);
-}
-
 .zen-btn-lg {
   padding: var(--space-md) var(--space-xl);
   font-size: 1rem;
   min-width: 240px;
 }
 
-.btn-loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-}
-
-.loading-spinner {
-  width: 18px;
-  height: 18px;
-  border: 2px solid currentColor;
-  border-top-color: transparent;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.usage-info {
-  margin-top: var(--space-md);
-  font-size: 0.875rem;
-  color: var(--color-text-tertiary);
-}
-
-.usage-info-limit {
-  color: var(--color-error);
-}
-
-.usage-info-limit a {
-  color: var(--color-ai);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.usage-info-limit a:hover {
-  text-decoration: underline;
-}
-
-.usage-section {
-  margin-bottom: var(--space-lg);
-}
-
-.btn-disabled-limit {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-/* ========================================
-   ERROR BOX
-   ======================================== */
-.error-box {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: rgba(180, 80, 80, 0.1);
-  border-radius: var(--radius-md);
-  border-left: 3px solid #b45050;
-  margin-top: var(--space-lg);
-  color: #b45050;
-  font-size: 0.875rem;
-}
-
-.error-box svg {
-  flex-shrink: 0;
-}
-
-/* Error with action button (document missing) */
-.error-box.error-with-action {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.error-box.error-with-action > svg {
-  position: absolute;
-  top: var(--space-md);
-  left: var(--space-md);
-}
-
-.error-box.error-with-action {
-  position: relative;
-  padding-left: calc(var(--space-md) + 28px);
-}
-
-.error-box .error-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-  width: 100%;
-}
-
-.error-actions {
-  margin-top: var(--space-sm);
-}
-
-.error-actions .zen-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  color: var(--color-ai);
-  border-color: var(--color-ai);
-  text-decoration: none;
-}
-
-.error-actions .zen-btn:hover {
-  background-color: var(--color-ai);
-  color: white;
-}
-
-/* Error with Fallback */
-.error-with-fallback {
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.error-with-fallback > svg {
-  position: absolute;
-  top: var(--space-md);
-  left: var(--space-md);
-}
-
-.error-with-fallback {
-  position: relative;
-  padding-left: calc(var(--space-md) + 28px);
-}
-
-.error-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-sm);
-}
-
-.fallback-hint {
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.fallback-btn {
-  margin-top: var(--space-sm);
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-/* ========================================
-   SCRAPE ERROR STATE - BROKEN ENSO FALLBACK
-   ======================================== */
-.scrape-error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: var(--space-2xl) var(--space-lg);
-  margin-top: var(--space-lg);
-  animation: scrape-error-fade-in 0.6s var(--ease-zen) forwards;
-}
-
-.scrape-error-enso {
-  margin-bottom: var(--space-xl);
-  opacity: 0;
-  animation: scrape-error-enso-appear 0.8s var(--ease-zen) 0.2s forwards;
-}
-
-.scrape-error-message {
-  font-size: 1.25rem;
-  font-weight: 400;
-  color: var(--color-sumi);
-  margin: 0 0 var(--space-xs) 0;
-  opacity: 0;
-  animation: scrape-error-text-appear 0.6s var(--ease-zen) 0.5s forwards;
-}
-
-.scrape-error-reassurance {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--space-xl) 0;
-  font-style: italic;
-  opacity: 0;
-  animation: scrape-error-text-appear 0.6s var(--ease-zen) 0.7s forwards;
-}
-
-.scrape-error-action {
-  opacity: 0;
-  animation: scrape-error-action-appear 0.5s var(--ease-zen) 1s forwards;
-}
-
-@keyframes scrape-error-fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes scrape-error-enso-appear {
-  from {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-@keyframes scrape-error-text-appear {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-@keyframes scrape-error-action-appear {
-  from {
-    opacity: 0;
-    transform: translateY(12px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-/* ========================================
-   MANUAL FALLBACK SECTION
-   ======================================== */
-.manual-fallback-section {
-  margin-top: var(--space-lg);
-  padding: var(--space-lg);
-  background: var(--color-washi-warm);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border);
-}
-
-.fallback-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--space-md);
-}
-
-.fallback-header h3 {
-  font-size: 1.125rem;
-  font-weight: 500;
-  margin: 0;
-}
-
-.close-fallback-btn {
-  background: transparent;
-  border: none;
-  padding: var(--space-xs);
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
-}
-
-.close-fallback-btn:hover {
-  background: var(--color-washi);
-  color: var(--color-sumi);
-}
-
-.fallback-description {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-  margin-bottom: var(--space-lg);
-}
-
-.manual-text-area {
-  min-height: 200px;
-  resize: vertical;
-}
-
-/* ========================================
-   MANUAL FALLBACK - EXPANDING FLOW STYLES
-   ======================================== */
-.manual-fallback-expanding {
-  animation: manual-expand-in 0.5s var(--ease-zen) forwards;
-  background: linear-gradient(180deg, var(--color-washi) 0%, var(--color-washi-warm) 100%);
-  border: 1px solid var(--color-border-light);
-}
-
-.manual-fallback-header {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-lg);
-  margin-bottom: var(--space-xl);
-}
-
-.manual-fallback-enso {
-  flex-shrink: 0;
-}
-
-.manual-fallback-intro {
-  flex: 1;
-}
-
-.manual-fallback-intro h3 {
-  font-size: 1.25rem;
-  font-weight: 400;
-  color: var(--color-sumi);
-  margin: 0 0 var(--space-xs) 0;
-}
-
-.manual-fallback-intro p {
-  font-size: 0.9375rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.manual-fallback-fields {
-  animation: manual-fields-appear 0.4s var(--ease-zen) 0.2s forwards;
-  opacity: 0;
-}
-
-.manual-compact-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--space-md);
-}
-
-.manual-text-group {
-  margin-top: var(--space-md);
-}
-
-.manual-text-group .form-textarea {
-  transition: min-height 0.3s var(--ease-zen), box-shadow 0.2s var(--ease-zen);
-}
-
-.manual-text-group .form-textarea:focus {
-  min-height: 280px;
-  box-shadow: 0 0 0 3px var(--color-ai-subtle);
-}
-
-.char-count {
-  color: var(--color-text-tertiary);
-  font-variant-numeric: tabular-nums;
-}
-
-.char-count--valid {
-  color: var(--color-koke);
-}
-
-.manual-error-hint {
-  font-size: 0.875rem;
-  color: #b45050;
-  padding: var(--space-sm) var(--space-md);
-  background: rgba(180, 80, 80, 0.08);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-md);
-}
-
-.manual-actions {
-  margin-top: var(--space-lg);
-}
-
-.manual-actions .btn-loading {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-@keyframes manual-expand-in {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-    max-height: 0;
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-    max-height: 1000px;
-  }
-}
-
-@keyframes manual-fields-appear {
-  from {
-    opacity: 0;
-    transform: translateY(8px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
 @media (max-width: 768px) {
-  .manual-compact-row {
-    grid-template-columns: 1fr;
+  .cv-invitation-card {
+    padding: var(--space-xl) var(--space-lg);
   }
 
-  .manual-fallback-header {
+  .cv-invitation-title {
+    font-size: 1.25rem;
+  }
+
+  .cv-invitation-text {
+    font-size: 0.9375rem;
+  }
+
+  .skills-warning {
     flex-direction: column;
+    text-align: center;
     align-items: center;
+  }
+
+  .warning-text-content {
     text-align: center;
   }
-}
 
-/* ========================================
-   MODAL
-   ======================================== */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: rgba(44, 44, 44, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--space-lg);
-}
-
-.modal {
-  width: 100%;
-  max-width: 560px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  align-items: flex-start;
-  gap: var(--space-md);
-  padding: var(--space-xl);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.success-header {
-  background: rgba(122, 139, 110, 0.1);
-}
-
-.success-icon {
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-koke);
-  color: white;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.modal-header h2 {
-  font-size: 1.5rem;
-  font-weight: 500;
-  margin: 0 0 var(--space-xs) 0;
-}
-
-.modal-subtitle {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.modal-close {
-  margin-left: auto;
-  background: none;
-  border: none;
-  color: var(--color-stone);
-  cursor: pointer;
-  padding: var(--space-xs);
-  transition: color var(--transition-base);
-}
-
-.modal-close:hover {
-  color: var(--color-sumi);
-}
-
-.modal-content {
-  padding: var(--space-xl);
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-lg);
-  margin-bottom: var(--space-lg);
-}
-
-.detail-group {
-  margin-bottom: var(--space-md);
-}
-
-.detail-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--color-text-ghost);
-  margin-bottom: var(--space-xs);
-}
-
-.detail-value {
-  margin: 0;
-  color: var(--color-sumi);
-  font-size: 1rem;
-}
-
-.detail-value-block {
-  padding: var(--space-md);
-  background: var(--color-washi);
-  border-radius: var(--radius-sm);
-}
-
-.detail-link {
-  color: var(--color-ai);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.detail-link:hover {
-  text-decoration: underline;
-}
-
-.modal-footer {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-lg) var(--space-xl);
-  border-top: 1px solid var(--color-border-light);
-  background: var(--color-washi);
-}
-
-/* ========================================
-   RESPONSIVE
-   ======================================== */
-@media (max-width: 768px) {
-  .form-card,
-  .preview-card {
-    padding: var(--space-lg);
-  }
-
-  .form-row {
-    grid-template-columns: 1fr;
-  }
-
-  .preview-header {
+  .warning-actions {
     flex-direction: column;
-    align-items: flex-start;
-    gap: var(--space-md);
+    align-items: center;
   }
 
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-footer {
+  .profile-warning {
     flex-direction: column;
+    text-align: center;
+    align-items: center;
   }
 
   .zen-btn-lg {
     width: 100%;
-  }
-
-  .url-input {
-    padding-right: var(--space-md);
-  }
-
-  .url-input.url-valid,
-  .url-input.url-invalid {
-    padding-right: 50px;
-  }
-
-  .url-validation-icon {
-    right: var(--space-md);
-  }
-
-  .portal-badge {
-    position: static;
-    transform: none;
-    display: inline-block;
-    margin-top: var(--space-sm);
-  }
-
-  .url-input-wrapper {
-    display: flex;
-    flex-direction: column;
-  }
-}
-
-/* ========================================
-   ENSO RECOGNITION ANIMATION
-   ======================================== */
-.enso-recognition-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--space-xl) 0;
-  margin-top: var(--space-lg);
-}
-
-.enso-recognition {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.enso-circle {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.enso-path {
-  stroke: var(--color-ai);
-  stroke-dasharray: 283;
-  stroke-dashoffset: 283;
-  animation: enso-draw 1.5s ease-in-out forwards, enso-pulse 2s ease-in-out 1.5s infinite;
-  opacity: 0.8;
-}
-
-.enso-complete .enso-path {
-  stroke-dashoffset: 0;
-  animation: enso-complete-glow 0.6s ease-out forwards;
-}
-
-.enso-status {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  text-align: center;
-  margin-top: var(--space-sm);
-  animation: enso-status-fade 1.5s ease-in-out infinite;
-}
-
-.enso-company-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-ai);
-  text-align: center;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  animation: enso-materialize 0.6s ease-out forwards;
-  opacity: 0;
-  transform: scale(0.8);
-}
-
-@keyframes enso-draw {
-  0% {
-    stroke-dashoffset: 283;
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    stroke-dashoffset: 20;
-    opacity: 0.8;
-  }
-}
-
-@keyframes enso-pulse {
-  0%, 100% {
-    stroke-dashoffset: 20;
-    opacity: 0.6;
-  }
-  50% {
-    stroke-dashoffset: 40;
-    opacity: 1;
-  }
-}
-
-@keyframes enso-complete-glow {
-  0% {
-    stroke: var(--color-ai);
-    filter: none;
-  }
-  50% {
-    stroke: var(--color-koke);
-    filter: drop-shadow(0 0 8px var(--color-koke));
-  }
-  100% {
-    stroke: var(--color-koke);
-    filter: none;
-    opacity: 1;
-  }
-}
-
-@keyframes enso-status-fade {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes enso-materialize {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-/* ========================================
-   PREMIUM REVEAL MODAL - "Holy Shit" Moment
-   ======================================== */
-.premium-reveal-overlay {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: rgba(30, 30, 30, 0.85);
-  backdrop-filter: blur(8px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--space-lg);
-}
-
-.premium-reveal-modal {
-  width: 100%;
-  max-width: 520px;
-  background: var(--color-washi);
-  border-radius: var(--radius-lg);
-  box-shadow:
-    0 25px 50px -12px rgba(0, 0, 0, 0.25),
-    0 0 0 1px rgba(255, 255, 255, 0.1);
-  padding: var(--space-xl);
-  position: relative;
-  overflow: hidden;
-}
-
-.premium-reveal-close {
-  position: absolute;
-  top: var(--space-md);
-  right: var(--space-md);
-  background: transparent;
-  border: none;
-  color: var(--color-stone);
-  cursor: pointer;
-  padding: var(--space-xs);
-  border-radius: var(--radius-sm);
-  opacity: 0.6;
-  transition: opacity var(--transition-base), color var(--transition-base);
-  z-index: 10;
-}
-
-.premium-reveal-close:hover {
-  opacity: 1;
-  color: var(--color-sumi);
-}
-
-/* Enso Circle Phase */
-.premium-reveal-enso {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--space-lg) 0;
-  opacity: 0;
-  transform: scale(0.8);
-  transition: opacity 0.4s var(--ease-zen), transform 0.4s var(--ease-zen);
-}
-
-.premium-reveal-enso--visible {
-  opacity: 1;
-  transform: scale(1);
-}
-
-/* Content Phase */
-.premium-reveal-content {
-  opacity: 0;
-  transform: translateY(20px);
-  transition: opacity 0.5s var(--ease-zen) 0.1s, transform 0.5s var(--ease-zen) 0.1s;
-}
-
-.premium-reveal-content--visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-.premium-reveal-header {
-  text-align: center;
-  margin-bottom: var(--space-xl);
-}
-
-.premium-reveal-title {
-  font-size: 1.75rem;
-  font-weight: 400;
-  letter-spacing: -0.02em;
-  color: var(--color-sumi);
-  margin: 0 0 var(--space-sm) 0;
-}
-
-.premium-reveal-company {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.premium-reveal-company strong {
-  color: var(--color-ai);
-  font-weight: 500;
-}
-
-/* Einleitung Preview - The Holy Shit Moment */
-.premium-reveal-einleitung {
-  background: linear-gradient(135deg, var(--color-ai-subtle) 0%, rgba(61, 90, 108, 0.08) 100%);
-  border-radius: var(--radius-md);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  border-left: 3px solid var(--color-ai);
-}
-
-.premium-reveal-einleitung-label {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  color: var(--color-ai);
-  margin-bottom: var(--space-sm);
-}
-
-.premium-reveal-einleitung-text {
-  font-size: 1rem;
-  line-height: var(--leading-relaxed);
-  color: var(--color-sumi);
-  margin: 0;
-  font-style: italic;
-}
-
-/* Subject Line Preview */
-.premium-reveal-betreff {
-  background: var(--color-washi-warm);
-  border-radius: var(--radius-sm);
-  padding: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-
-.premium-reveal-betreff-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  color: var(--color-text-ghost);
-  margin-bottom: var(--space-xs);
-}
-
-.premium-reveal-betreff-text {
-  font-size: 0.9375rem;
-  color: var(--color-sumi);
-  margin: 0;
-  font-weight: 500;
-}
-
-/* Actions Phase */
-.premium-reveal-actions {
-  opacity: 0;
-  transform: translateY(30px);
-  transition: opacity 0.5s var(--ease-zen), transform 0.5s var(--ease-zen);
-}
-
-.premium-reveal-actions--visible {
-  opacity: 1;
-  transform: translateY(0);
-}
-
-/* PDF Preview Card */
-.premium-reveal-pdf-card {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  background: white;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-md) var(--space-lg);
-  margin-bottom: var(--space-lg);
-  cursor: pointer;
-  transition: all var(--transition-base);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
-}
-
-.premium-reveal-pdf-card:hover {
-  border-color: var(--color-ai);
-  box-shadow: 0 4px 16px rgba(61, 90, 108, 0.12);
-  transform: translateY(-2px);
-}
-
-.premium-reveal-pdf-icon {
-  flex-shrink: 0;
-  width: 48px;
-  height: 48px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(135deg, #f8f5f0 0%, #ebe7e0 100%);
-  border-radius: var(--radius-sm);
-  color: var(--color-ai);
-}
-
-.premium-reveal-pdf-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.premium-reveal-pdf-name {
-  display: block;
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--color-sumi);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.premium-reveal-pdf-action {
-  display: block;
-  font-size: 0.8125rem;
-  color: var(--color-ai);
-  margin-top: 2px;
-}
-
-.premium-reveal-pdf-download {
-  flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-ai);
-  border-radius: 50%;
-  color: white;
-}
-
-/* Action Buttons */
-.premium-reveal-buttons {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.premium-reveal-btn-primary {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: var(--space-sm);
-}
-
-.premium-reveal-btn-secondary {
-  flex-shrink: 0;
-  background: transparent;
-  border: 1px solid var(--color-border);
-  color: var(--color-text-secondary);
-}
-
-.premium-reveal-btn-secondary:hover {
-  border-color: var(--color-sumi);
-  color: var(--color-sumi);
-  background: var(--color-washi-warm);
-}
-
-/* Mobile Responsive */
-@media (max-width: 768px) {
-  .premium-reveal-modal {
-    padding: var(--space-lg);
-    margin: var(--space-md);
-    max-width: calc(100% - var(--space-lg));
-  }
-
-  .premium-reveal-title {
-    font-size: 1.5rem;
-  }
-
-  .premium-reveal-einleitung {
-    padding: var(--space-md);
-  }
-
-  .premium-reveal-einleitung-text {
-    font-size: 0.9375rem;
-  }
-
-  .premium-reveal-pdf-card {
-    padding: var(--space-md);
-  }
-
-  .premium-reveal-pdf-icon {
-    width: 40px;
-    height: 40px;
-  }
-
-  .premium-reveal-pdf-icon svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .premium-reveal-buttons {
-    flex-direction: column;
-  }
-
-  .premium-reveal-btn-secondary {
-    width: 100%;
-    justify-content: center;
-  }
-}
-
-/* Reduced motion preference */
-@media (prefers-reduced-motion: reduce) {
-  .premium-reveal-enso,
-  .premium-reveal-content,
-  .premium-reveal-actions {
-    transition: none;
-    opacity: 1;
-    transform: none;
   }
 }
 </style>

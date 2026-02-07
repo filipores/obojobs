@@ -41,7 +41,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { setLocale } from '../i18n'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import api from '../api/client'
 
 const { locale } = useI18n()

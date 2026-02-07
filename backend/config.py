@@ -1,9 +1,10 @@
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-# Load environment variables from project root .env (single source of truth)
-load_dotenv(os.path.join(os.path.dirname(__file__), "..", ".env"))
+# WICHTIG: Nur die Root-.env wird geladen. Keine backend/.env anlegen!
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 
 class Config:
@@ -87,7 +88,8 @@ class Config:
     COMPANY_EMAIL = os.getenv("COMPANY_EMAIL", "kontakt@obojobs.de")
     COMPANY_PHONE = os.getenv("COMPANY_PHONE", "")
 
-    # Rate Limit Whitelist (comma-separated IPs that bypass rate limiting)
+    # Rate Limiting
+    RATE_LIMIT_STORAGE_URI = os.getenv("RATE_LIMIT_STORAGE_URI", "memory://")
     RATE_LIMIT_WHITELIST = os.getenv("RATE_LIMIT_WHITELIST", "127.0.0.1").split(",")
 
     @staticmethod

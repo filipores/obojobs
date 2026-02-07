@@ -82,8 +82,8 @@
             </svg>
           </button>
 
-          <!-- Language Switcher -->
-          <LanguageSwitcher />
+          <!-- Language Switcher (hidden until EN locale is fully supported) -->
+          <LanguageSwitcher v-if="false" />
 
           <!-- Settings -->
           <router-link to="/settings" class="nav-icon" title="Einstellungen">
@@ -303,7 +303,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { authStore } from './store/auth'
+import { authStore } from './stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import Toast from './components/Toast.vue'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'

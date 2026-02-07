@@ -20,9 +20,7 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./backend
-        run: |
-          pip install -r requirements.txt
-          pip install pytest pytest-cov pytest-json-report ruff mypy
+        run: pip install -r requirements-dev.txt
 
       - name: Run ruff linter
         working-directory: ./backend

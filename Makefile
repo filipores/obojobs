@@ -96,7 +96,7 @@ install-backend:
 	@if [ ! -d "$(VENV)" ]; then \
 		python3 -m venv $(VENV); \
 	fi
-	$(PIP) install -r $(BACKEND_DIR)/requirements.txt
+	$(PIP) install -r $(BACKEND_DIR)/requirements-dev.txt
 
 # ===========================================
 # Development

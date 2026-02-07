@@ -60,8 +60,21 @@ class BewerbungsGenerator:
         self.template = None  # Store template object for PDF template support
         self.zeugnis_text = None
         self.extracted_links = None
-        self.user = User.query.get(user_id)
+        self.user = None
+        self._prepared = False
+
+    def prepare(self):
+        """Load user data and documents from database.
+
+        Performs all I/O operations: DB queries and file reads.
+        Must be called before generate_bewerbung(). If not called explicitly,
+        generate_bewerbung() will call it automatically for backwards compatibility.
+        """
+        if self._prepared:
+            return
+        self.user = User.query.get(self.user_id)
         self.load_user_documents()
+        self._prepared = True
 
     def load_user_documents(self):
         """Load documents from database for this user"""
@@ -131,6 +144,10 @@ class BewerbungsGenerator:
                 - description: Job description text (used instead of re-scraping)
                 - quelle: Source/portal name
         """
+        # Auto-prepare if not already done (backwards compatibility)
+        if not self._prepared:
+            self.prepare()
+
         logger.info("Generiere Bewerbung fuer: %s", firma_name)
 
         # Check if user provided pre-edited data with description
@@ -184,6 +201,11 @@ class BewerbungsGenerator:
         logger.info("Quelle: %s", details["quelle"])
 
         logger.info("3/5 Generiere personalisierten Einleitungsabsatz mit Claude...")
+        # Extract user's first name for personalized AI prompts
+        bewerber_vorname = None
+        if self.user and self.user.full_name:
+            bewerber_vorname = self.user.full_name.split()[0]
+
         einleitung = self.api_client.generate_einleitung(
             cv_text=self.cv_text,
             stellenanzeige_text=stellenanzeige_text,
@@ -191,6 +213,7 @@ class BewerbungsGenerator:
             zeugnis_text=self.zeugnis_text,
             details=details,
             use_extraction=config.USE_EXTRACTION,
+            bewerber_vorname=bewerber_vorname,
         )
         logger.info("Einleitung generiert (%d Zeichen)", len(einleitung))
         logger.debug("Generierte Einleitung: %s", einleitung)

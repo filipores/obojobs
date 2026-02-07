@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import { demoStore } from '../stores/demo'
 import i18n from '../i18n'
 

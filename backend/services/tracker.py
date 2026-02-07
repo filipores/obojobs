@@ -1,8 +1,11 @@
 import csv
 import json
+import logging
 import os
 from datetime import datetime
 from typing import Any
+
+logger = logging.getLogger(__name__)
 
 
 class BewerbungsTracker:
@@ -15,7 +18,7 @@ class BewerbungsTracker:
         if os.path.exists(csv_path) and not os.path.exists(json_path):
             self._migrate_from_csv(csv_path)
             os.remove(csv_path)
-            print("✓ CSV-Daten nach JSON migriert und CSV gelöscht")
+            logger.info("CSV-Daten nach JSON migriert und CSV gelöscht")
         elif os.path.exists(json_path):
             self._load_json()
         else:
@@ -97,24 +100,24 @@ class BewerbungsTracker:
 
     def list_bewerbungen(self, limit: int = 10):
         if not self.bewerbungen:
-            print("Noch keine Bewerbungen vorhanden")
+            logger.info("Noch keine Bewerbungen vorhanden")
             return
 
-        print(f"\n{'=' * 80}")
-        print(f"Letzte {min(limit, len(self.bewerbungen))} Bewerbungen:")
-        print(f"{'=' * 80}\n")
+        logger.info("\n%s", "=" * 80)
+        logger.info("Letzte %s Bewerbungen:", min(limit, len(self.bewerbungen)))
+        logger.info("%s\n", "=" * 80)
 
         for bew in self.bewerbungen[-limit:]:
-            print(f"📅 {bew['datum']}")
-            print(f"🏢 {bew['firma']} - {bew['position']}")
-            print(f"👤 {bew['ansprechpartner']}")
-            print(f"📧 {bew['email'] if bew['email'] else 'Keine E-Mail'}")
-            print(f"📊 Status: {bew['status']}")
+            logger.info("Datum: %s", bew["datum"])
+            logger.info("Firma: %s - %s", bew["firma"], bew["position"])
+            logger.info("Ansprechpartner: %s", bew["ansprechpartner"])
+            logger.info("Email: %s", bew["email"] if bew["email"] else "Keine E-Mail")
+            logger.info("Status: %s", bew["status"])
             if bew.get("betreff"):
-                print(f"📝 Betreff: {bew['betreff']}")
+                logger.info("Betreff: %s", bew["betreff"])
             if bew.get("notizen"):
-                print(f"💬 Notizen: {bew['notizen']}")
-            print(f"{'-' * 80}\n")
+                logger.info("Notizen: %s", bew["notizen"])
+            logger.info("%s\n", "-" * 80)
 
     def get_latest_bewerbung(self) -> dict | None:
         return self.bewerbungen[-1] if self.bewerbungen else None

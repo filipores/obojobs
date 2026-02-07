@@ -4,11 +4,14 @@ Provides feedback on structure, content, length, and STAR method compliance.
 """
 
 import json
+import logging
 import time
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class InterviewEvaluator:
@@ -68,10 +71,10 @@ class InterviewEvaluator:
 
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Antwort-Bewertung fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("Antwort-Bewertung fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
-                    print(f"Antwort-Bewertung fehlgeschlagen nach {retry_count} Versuchen: {str(e)}")
+                    logger.error("Antwort-Bewertung fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
                     return self._get_fallback_evaluation(question_type)
 
         return self._get_fallback_evaluation(question_type)
@@ -173,7 +176,7 @@ Gib jetzt das JSON-Objekt aus:"""
         end_idx = text.rfind("}")
 
         if start_idx == -1 or end_idx == -1:
-            print("Keine JSON-Struktur in der Antwort gefunden")
+            logger.warning("Keine JSON-Struktur in der Antwort gefunden")
             return self._get_fallback_evaluation(question_type)
 
         json_text = text[start_idx : end_idx + 1]
@@ -220,7 +223,7 @@ Gib jetzt das JSON-Objekt aus:"""
             return result
 
         except json.JSONDecodeError as e:
-            print(f"JSON Parse Error: {str(e)}")
+            logger.error("JSON Parse Error: %s", e)
             return self._get_fallback_evaluation(question_type)
 
     def _validate_star_analysis(self, star_data: dict) -> dict:

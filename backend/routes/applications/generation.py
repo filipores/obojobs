@@ -8,8 +8,8 @@ from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
 from middleware.subscription_limit import (
     check_subscription_limit,
+    decrement_application_count,
     get_subscription_usage,
-    increment_application_count,
 )
 from models import Application, JobRequirement, Template, db
 from routes.applications import applications_bp
@@ -121,6 +121,7 @@ def generate_application(current_user):
 
         # Generate application with optional template
         generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+        generator.prepare()
         pdf_path = generator.generate_bewerbung(stellenanzeige_source, company)
 
         # Get latest application
@@ -132,10 +133,7 @@ def generate_application(current_user):
             if os.path.exists(temp_path):
                 os.unlink(temp_path)
 
-        # Increment subscription usage counter
-        increment_application_count(current_user)
-
-        # Get updated usage info
+        # Get updated usage info (increment already done by @check_subscription_limit)
         usage = get_subscription_usage(current_user)
 
         result = {
@@ -484,6 +482,7 @@ def generate_from_url(current_user):
 
         # Generate application using existing generator
         generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+        generator.prepare()
         pdf_path = generator.generate_bewerbung(url, company, user_details=user_details)
 
         # Get the newly created application
@@ -493,10 +492,7 @@ def generate_from_url(current_user):
         if latest and job_text:
             calculate_and_store_job_fit(latest, job_text, current_user.id)
 
-        # Increment subscription usage counter
-        increment_application_count(current_user)
-
-        # Get updated usage info
+        # Get updated usage info (increment already done by @check_subscription_limit)
         usage = get_subscription_usage(current_user)
 
         result = {
@@ -513,9 +509,12 @@ def generate_from_url(current_user):
         return jsonify(result), 200
 
     except ValueError as e:
-        # Missing documents error from generator
+        # Missing documents error from generator -- rollback the counter
+        decrement_application_count(current_user)
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
+        # Generation failed -- rollback the counter
+        decrement_application_count(current_user)
         return jsonify({"success": False, "error": f"Fehler bei der Generierung: {str(e)}"}), 500
 
 
@@ -562,6 +561,7 @@ def generate_from_text(current_user):
         try:
             # Generate application using existing generator with temp file
             generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+            generator.prepare()
             pdf_path = generator.generate_bewerbung(temp_file, company)
 
             # Get the newly created application
@@ -579,10 +579,7 @@ def generate_from_text(current_user):
                 # Calculate and store job-fit score (non-blocking)
                 calculate_and_store_job_fit(latest, job_text, current_user.id)
 
-            # Increment subscription usage counter
-            increment_application_count(current_user)
-
-            # Get updated usage info
+            # Get updated usage info (increment already done by @check_subscription_limit)
             usage = get_subscription_usage(current_user)
 
             result = {
@@ -606,6 +603,10 @@ def generate_from_text(current_user):
                 os.rmdir(temp_dir)
 
     except ValueError as e:
+        # Generation failed -- rollback the counter
+        decrement_application_count(current_user)
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
+        # Generation failed -- rollback the counter
+        decrement_application_count(current_user)
         return jsonify({"success": False, "error": f"Fehler bei der Generierung: {str(e)}"}), 500

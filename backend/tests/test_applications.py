@@ -381,7 +381,6 @@ class TestGenerateFromUrl:
         assert response.status_code == 400
 
     @patch("routes.applications.generation.calculate_and_store_job_fit")
-    @patch("routes.applications.generation.increment_application_count")
     @patch("routes.applications.generation.get_subscription_usage")
     @patch("routes.applications.generation.BewerbungsGenerator")
     @patch("routes.applications.generation.WebScraper")
@@ -390,7 +389,6 @@ class TestGenerateFromUrl:
         mock_scraper_class,
         mock_gen_class,
         mock_usage,
-        mock_increment,
         mock_job_fit,
         client,
         auth_headers,
@@ -440,7 +438,6 @@ class TestGenerateFromUrl:
         mock_gen.generate_bewerbung.assert_called_once()
 
     @patch("routes.applications.generation.calculate_and_store_job_fit")
-    @patch("routes.applications.generation.increment_application_count")
     @patch("routes.applications.generation.get_subscription_usage")
     @patch("routes.applications.generation.BewerbungsGenerator")
     @patch("routes.applications.generation.WebScraper")
@@ -449,7 +446,6 @@ class TestGenerateFromUrl:
         mock_scraper_class,
         mock_gen_class,
         mock_usage,
-        mock_increment,
         mock_job_fit,
         client,
         auth_headers,
@@ -544,14 +540,12 @@ class TestGenerateFromText:
         assert response.status_code == 400
 
     @patch("routes.applications.generation.calculate_and_store_job_fit")
-    @patch("routes.applications.generation.increment_application_count")
     @patch("routes.applications.generation.get_subscription_usage")
     @patch("routes.applications.generation.BewerbungsGenerator")
     def test_success(
         self,
         mock_gen_class,
         mock_usage,
-        mock_increment,
         mock_job_fit,
         client,
         auth_headers,

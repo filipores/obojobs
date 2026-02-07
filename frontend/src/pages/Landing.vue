@@ -430,7 +430,7 @@ import DemoGenerator from '../components/landing/DemoGenerator.vue'
 import CVUploadModal from '../components/landing/CVUploadModal.vue'
 import DemoCraftingScreen from '../components/landing/DemoCraftingScreen.vue'
 import { demoStore } from '../stores/demo'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import api from '../api/client'
 
 const router = useRouter()

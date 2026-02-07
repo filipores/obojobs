@@ -76,7 +76,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import { getFullLocale } from '../i18n'
 
 const route = useRoute()

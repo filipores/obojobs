@@ -104,6 +104,7 @@ class ClaudeAPIClient:
         details: dict[str, str] | None = None,
         use_extraction: bool = True,
         retry_count: int = 3,
+        bewerber_vorname: str | None = None,
     ) -> str:
         if details and details.get("stellenanzeige_kompakt"):
             stellenanzeige_text = details["stellenanzeige_kompakt"]
@@ -115,7 +116,7 @@ class ClaudeAPIClient:
         position = details.get("position", "Softwareentwickler") if details else "Softwareentwickler"
         quelle = details.get("quelle", "eure Website") if details else "eure Website"
 
-        system_blocks = self._create_cached_system_blocks(cv_text, zeugnis_text, position, quelle)
+        system_blocks = self._create_cached_system_blocks(cv_text, zeugnis_text, position, quelle, bewerber_vorname)
         user_prompt = self._create_user_prompt(stellenanzeige_text, firma_name)
 
         for attempt in range(retry_count):
@@ -185,8 +186,22 @@ Extrahiere folgende Informationen in kompakter Form:
 WICHTIG: Fasse dich sehr kurz. Keine langen Beschreibungen. Nur die Kernfakten.
 Schreibe die Extraktion in Stichpunkten oder kurzen Sätzen:"""
 
-    def _create_cached_system_blocks(self, cv_text: str, zeugnis_text: str | None, position: str, quelle: str) -> list:
+    def _create_cached_system_blocks(
+        self, cv_text: str, zeugnis_text: str | None, position: str, quelle: str, bewerber_vorname: str | None = None
+    ) -> list:
         system_blocks = []
+
+        # Use the applicant's first name for personalized style, or generic phrasing
+        if bewerber_vorname:
+            stil_referenz = f'wie {bewerber_vorname} schreibt: "hiermit bewerbe ich mich initiativ bei euch als..."'
+            bezug_referenz = f"Position, wie {bewerber_vorname} auf das Unternehmen aufmerksam wurde (Quelle), warum er/sie interessiert ist"
+            stil_schluss = f"im lockeren, authentischen Stil von {bewerber_vorname}"
+        else:
+            stil_referenz = (
+                'locker und authentisch formulieren (z.B. "hiermit bewerbe ich mich initiativ bei euch als...")'
+            )
+            bezug_referenz = "Position, wie der Bewerber auf das Unternehmen aufmerksam wurde (Quelle), warum er/sie interessiert ist"
+            stil_schluss = "im lockeren, authentischen Stil"
 
         instructions = f"""Du bist ein professioneller Bewerbungsschreiber. Deine Aufgabe ist es, einen kurzen, prägnanten Einleitungsabsatz für ein Anschreiben zu verfassen.
 
@@ -196,8 +211,8 @@ KONTEXT:
 
 WICHTIGE ANFORDERUNGEN:
 - Der Absatz soll 2-4 Sätze lang sein
-- Locker und authentisch formulieren (wie Filip schreibt: "hiermit bewerbe ich mich initiativ bei euch als...")
-- Bezug nehmen auf: Position, wie Filip auf das Unternehmen aufmerksam wurde (Quelle), warum er interessiert ist
+- {stil_referenz}
+- Bezug nehmen auf: {bezug_referenz}
 - OHNE Anrede beginnen (das steht schon im Template)
 - Den Firmennamen NICHT wiederholen (steht schon in der Anrede)
 - Authentisch und individuell klingen
@@ -205,7 +220,7 @@ WICHTIGE ANFORDERUNGEN:
 - Locker, aber professionell ("bei euch" statt "bei Ihnen")
 - keine Bindestriche verwenden
 
-Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil von Filip. Beginne direkt mit dem Text, ohne Anrede."""
+Schreibe NUR den Einleitungsabsatz (2-4 Sätze) {stil_schluss}. Beginne direkt mit dem Text, ohne Anrede."""
 
         system_blocks.append({"type": "text", "text": instructions, "cache_control": {"type": "ephemeral"}})
 

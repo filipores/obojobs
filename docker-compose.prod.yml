@@ -76,10 +76,13 @@ services:
       - COMPANY_POSTAL_CODE=${COMPANY_POSTAL_CODE:-}
       - COMPANY_CITY=${COMPANY_CITY:-}
       - COMPANY_PHONE=${COMPANY_PHONE:-}
+      - RATE_LIMIT_STORAGE_URI=redis://redis:6379/1
     volumes:
       - uploads:/app/uploads
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     networks:
       - obojobs-network
@@ -87,6 +90,20 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:5002/api/health"]
       interval: 30s
       timeout: 10s
+      retries: 3
+
+  # Redis - Rate limiting storage (shared across Gunicorn workers)
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    networks:
+      - obojobs-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 3
 
   # PostgreSQL Database

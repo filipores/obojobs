@@ -563,7 +563,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
 

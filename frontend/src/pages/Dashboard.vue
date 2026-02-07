@@ -355,7 +355,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '../api/client'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import WeeklyGoalWidget from '../components/WeeklyGoalWidget.vue'
 import InterviewStatsWidget from '../components/InterviewStatsWidget.vue'
 import JobRecommendations from '../components/JobRecommendations.vue'

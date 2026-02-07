@@ -18,7 +18,7 @@
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
       </button>
-      <LanguageSwitcher />
+      <LanguageSwitcher v-if="false" />
     </div>
 
     <!-- Decorative Elements -->
@@ -203,7 +203,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api/client'
 

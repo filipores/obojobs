@@ -41,7 +41,7 @@ describe('Auth Store', () => {
 
       // Re-import to trigger safeParseUser
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
 
       expect(authStore.user).toBeNull()
     })
@@ -54,7 +54,7 @@ describe('Auth Store', () => {
       })
 
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
 
       expect(authStore.user).toEqual(mockUser)
     })
@@ -66,7 +66,7 @@ describe('Auth Store', () => {
       })
 
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
 
       expect(authStore.user).toBeNull()
       expect(localStorageMock.removeItem).toHaveBeenCalledWith('user')
@@ -77,7 +77,7 @@ describe('Auth Store', () => {
   describe('isAuthenticated', () => {
     it('should return false when no token exists', async () => {
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
       authStore.token = null
 
       expect(authStore.isAuthenticated()).toBe(false)
@@ -85,7 +85,7 @@ describe('Auth Store', () => {
 
     it('should return false for invalid token format (not 3 parts)', async () => {
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
       authStore.token = 'invalid.token'
 
       expect(authStore.isAuthenticated()).toBe(false)
@@ -94,7 +94,7 @@ describe('Auth Store', () => {
 
     it('should return false for expired token', async () => {
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
 
       // Create an expired JWT (exp in the past)
       const payload = { exp: Math.floor(Date.now() / 1000) - 3600 } // 1 hour ago
@@ -107,7 +107,7 @@ describe('Auth Store', () => {
 
     it('should return true for valid non-expired token', async () => {
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
 
       // Create a valid JWT (exp in the future)
       const payload = { exp: Math.floor(Date.now() / 1000) + 3600 } // 1 hour from now
@@ -119,7 +119,7 @@ describe('Auth Store', () => {
 
     it('should return true for token without exp claim', async () => {
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
 
       // Create a JWT without exp claim
       const payload = { sub: 'user123' }
@@ -133,7 +133,7 @@ describe('Auth Store', () => {
   describe('clearAuthState', () => {
     it('should clear user and token from store and localStorage', async () => {
       vi.resetModules()
-      const { authStore } = await import('../store/auth.js')
+      const { authStore } = await import('../stores/auth.js')
 
       authStore.user = { id: 1 }
       authStore.token = 'some-token'

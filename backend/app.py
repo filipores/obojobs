@@ -126,7 +126,7 @@ def create_app():
         app=app,
         key_func=get_rate_limit_key,
         default_limits=["200 per hour", "50 per minute"],
-        storage_uri=os.getenv("RATE_LIMIT_STORAGE_URI", "memory://"),
+        storage_uri=config.RATE_LIMIT_STORAGE_URI,
         strategy="fixed-window",
     )
 

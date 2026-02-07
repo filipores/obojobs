@@ -65,92 +65,22 @@
         </div>
       </section>
 
-      <!-- Status Filter Tabs -->
-      <section class="status-tabs-section animate-fade-up" style="animation-delay: 125ms;">
-        <div class="status-tabs" role="tablist" :aria-label="t('applications.statusFilterLabel')">
-          <button
-            v-for="status in statusOptions"
-            :key="status.value"
-            :class="['status-tab', { 'status-tab-active': filterStatus === status.value }]"
-            @click="filterStatus = status.value"
-            role="tab"
-            :aria-selected="filterStatus === status.value"
-            :aria-controls="'applications-list'"
-          >
-            <span class="status-tab-label">{{ status.label }}</span>
-            <span class="status-tab-count">{{ status.count }}</span>
-          </button>
-        </div>
-      </section>
-
-      <!-- Filter Section -->
-      <section class="filter-section animate-fade-up" style="animation-delay: 150ms;">
-        <div class="filter-row">
-          <div class="search-group">
-            <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="11" cy="11" r="8"/>
-              <path d="M21 21l-4.35-4.35"/>
-            </svg>
-            <input
-              v-model="searchInput"
-              type="text"
-              :placeholder="t('applications.searchPlaceholder')"
-              class="form-input search-input"
-            />
-          </div>
-          <div class="filter-group sort-group">
-            <select v-model="sortBy" class="form-select">
-              <option value="datum_desc">{{ t('applications.sortDateDesc') }}</option>
-              <option value="datum_asc">{{ t('applications.sortDateAsc') }}</option>
-              <option value="firma_asc">{{ t('applications.sortCompanyAsc') }}</option>
-              <option value="firma_desc">{{ t('applications.sortCompanyDesc') }}</option>
-              <option value="status">{{ t('applications.sortStatus') }}</option>
-            </select>
-          </div>
-          <div class="view-toggle" role="group" :aria-label="t('applications.switchView')">
-            <button
-              :class="['view-toggle-btn', { active: viewMode === 'grid' }]"
-              @click="viewMode = 'grid'"
-              :aria-pressed="viewMode === 'grid'"
-              :title="t('applications.gridView')"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="7" height="7"/>
-                <rect x="14" y="3" width="7" height="7"/>
-                <rect x="3" y="14" width="7" height="7"/>
-                <rect x="14" y="14" width="7" height="7"/>
-              </svg>
-            </button>
-            <button
-              :class="['view-toggle-btn', { active: viewMode === 'table' }]"
-              @click="viewMode = 'table'"
-              :aria-pressed="viewMode === 'table'"
-              :title="t('applications.tableView')"
-            >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <line x1="3" y1="6" x2="21" y2="6"/>
-                <line x1="3" y1="12" x2="21" y2="12"/>
-                <line x1="3" y1="18" x2="21" y2="18"/>
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div v-if="searchQuery || filterStatus || filterFirma" class="active-filters">
-          <span v-if="searchQuery" class="filter-tag">
-            "{{ searchQuery }}"
-            <button @click="searchInput = ''; searchQuery = ''" class="filter-tag-close">&times;</button>
-          </span>
-          <span v-if="filterStatus" class="filter-tag">
-            {{ getStatusLabel(filterStatus) }}
-            <button @click="filterStatus = ''" class="filter-tag-close">&times;</button>
-          </span>
-          <span v-if="filterFirma" class="filter-tag filter-tag-firma">
-            {{ t('applications.companyLabel') }}: {{ filterFirma }}
-            <button @click="clearFilters" class="filter-tag-close">&times;</button>
-          </span>
-        </div>
-      </section>
+      <!-- Filters -->
+      <ApplicationFilters
+        :status-options="statusOptions"
+        :filter-status="filterStatus"
+        :search-input="searchInput"
+        :search-query="searchQuery"
+        :sort-by="sortBy"
+        :view-mode="viewMode"
+        :filter-firma="filterFirma"
+        @update:filter-status="filterStatus = $event"
+        @update:search-input="searchInput = $event"
+        @update:sort-by="sortBy = $event"
+        @update:view-mode="viewMode = $event"
+        @clear-search="searchInput = ''; searchQuery = ''"
+        @clear-filters="clearFilters"
+      />
 
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
@@ -200,214 +130,20 @@
         </button>
       </div>
 
-      <!-- Applications Grid -->
+      <!-- Applications List -->
       <section v-else-if="filteredApplications.length > 0" id="applications-list" class="applications-section" aria-live="polite">
-        <!-- Grid View -->
-        <div v-if="viewMode === 'grid'" class="applications-grid" role="list" data-testid="applications-grid">
-          <div
-            v-for="app in filteredApplications"
-            :key="app.id"
-            class="application-card zen-card stagger-item"
-            role="listitem"
-            data-testid="application-card"
-            @click="openDetails(app)"
-          >
-            <div class="card-header">
-              <div class="card-title-group">
-                <h3>{{ app.firma }}</h3>
-                <p class="card-position">{{ app.position || t('applications.positionNotSpecified') }}</p>
-              </div>
-              <span :class="['status-badge', `status-${app.status}`]">
-                {{ getStatusLabel(app.status) }}
-              </span>
-            </div>
-
-            <div class="card-meta">
-              <span class="meta-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
-                  <line x1="16" y1="2" x2="16" y2="6"/>
-                  <line x1="8" y1="2" x2="8" y2="6"/>
-                  <line x1="3" y1="10" x2="21" y2="10"/>
-                </svg>
-                {{ formatDate(app.datum) }}
-              </span>
-              <span v-if="app.job_fit_score !== null" class="meta-item">
-                <span :class="['job-fit-badge', getJobFitClass(app.job_fit_score)]">
-                  {{ app.job_fit_score }}%
-                </span>
-              </span>
-              <span v-if="app.quelle" class="meta-item">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
-                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
-                </svg>
-                {{ getDomain(app.quelle) }}
-              </span>
-            </div>
-
-            <div v-if="app.notizen" class="card-notes">
-              {{ app.notizen.slice(0, 80) }}{{ app.notizen.length > 80 ? '...' : '' }}
-            </div>
-
-            <div class="card-actions" @click.stop>
-              <button @click="downloadPDF(app.id)" class="zen-btn zen-btn-sm">
-                PDF
-              </button>
-              <button @click="openDetails(app)" class="zen-btn zen-btn-ai zen-btn-sm">
-                {{ t('applications.details') }}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <!-- Table View -->
-        <ScrollableTable v-else class="applications-table-wrapper" data-testid="applications-table">
-          <table class="applications-table">
-            <thead>
-              <tr>
-                <th
-                  @click="toggleTableSort('firma')"
-                  @keydown="handleSortKeydown($event, 'firma')"
-                  class="sortable-header"
-                  tabindex="0"
-                  role="columnheader"
-                  aria-sort="none"
-                >
-                  {{ t('applications.tableCompany') }}
-                  <span v-if="sortBy.startsWith('firma')" class="sort-indicator">
-                    {{ sortBy === 'firma_asc' ? '↑' : '↓' }}
-                  </span>
-                </th>
-                <th>{{ t('applications.tablePosition') }}</th>
-                <th
-                  @click="toggleTableSort('datum')"
-                  @keydown="handleSortKeydown($event, 'datum')"
-                  class="sortable-header"
-                  tabindex="0"
-                  role="columnheader"
-                  aria-sort="none"
-                >
-                  {{ t('applications.tableDate') }}
-                  <span v-if="sortBy.startsWith('datum')" class="sort-indicator">
-                    {{ sortBy === 'datum_asc' ? '↑' : '↓' }}
-                  </span>
-                </th>
-                <th
-                  @click="toggleTableSort('status')"
-                  @keydown="handleSortKeydown($event, 'status')"
-                  class="sortable-header"
-                  tabindex="0"
-                  role="columnheader"
-                  aria-sort="none"
-                >
-                  {{ t('applications.tableStatus') }}
-                  <span v-if="sortBy === 'status'" class="sort-indicator">●</span>
-                </th>
-                <th>{{ t('applications.tableJobFit') }}</th>
-                <th>{{ t('applications.tableSource') }}</th>
-                <th class="actions-header">{{ t('applications.tableActions') }}</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr
-                v-for="app in filteredApplications"
-                :key="app.id"
-                class="table-row"
-                @click="openDetails(app)"
-              >
-                <td class="cell-firma">{{ app.firma }}</td>
-                <td class="cell-position">{{ app.position || '–' }}</td>
-                <td class="cell-datum">{{ formatDate(app.datum) }}</td>
-                <td class="cell-status">
-                  <span :class="['status-badge status-badge-sm', `status-${app.status}`]">
-                    {{ getStatusLabel(app.status) }}
-                  </span>
-                </td>
-                <td class="cell-job-fit">
-                  <span v-if="app.job_fit_score !== null" :class="['job-fit-badge', getJobFitClass(app.job_fit_score)]">
-                    {{ app.job_fit_score }}%
-                  </span>
-                  <span v-else class="text-muted">–</span>
-                </td>
-                <td class="cell-quelle">
-                  <a v-if="app.quelle" :href="app.quelle" target="_blank" @click.stop class="table-link">
-                    {{ getDomain(app.quelle) }}
-                  </a>
-                  <span v-else class="text-muted">–</span>
-                </td>
-                <td class="cell-actions" @click.stop>
-                  <button @click="downloadPDF(app.id)" class="zen-btn zen-btn-sm" :title="t('applications.downloadPdf')">
-                    PDF
-                  </button>
-                  <button @click="openDetails(app)" class="zen-btn zen-btn-ai zen-btn-sm" :title="t('applications.showDetails')">
-                    {{ t('applications.details') }}
-                  </button>
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </ScrollableTable>
-
-        <!-- Pagination -->
-        <nav v-if="totalPages > 1" class="pagination" :aria-label="t('applications.paginationNav')">
-          <button
-            class="pagination-btn"
-            :disabled="currentPage === 1"
-            @click="goToPage(currentPage - 1)"
-            :aria-label="t('applications.previousPage')"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="15 18 9 12 15 6"/>
-            </svg>
-          </button>
-
-          <div class="pagination-pages">
-            <button
-              v-if="currentPage > 2"
-              class="pagination-btn pagination-page"
-              @click="goToPage(1)"
-            >
-              1
-            </button>
-            <span v-if="currentPage > 3" class="pagination-ellipsis">...</span>
-
-            <button
-              v-for="page in visiblePages"
-              :key="page"
-              class="pagination-btn pagination-page"
-              :class="{ 'pagination-page-active': page === currentPage }"
-              @click="goToPage(page)"
-              :aria-current="page === currentPage ? 'page' : undefined"
-            >
-              {{ page }}
-            </button>
-
-            <span v-if="currentPage < totalPages - 2" class="pagination-ellipsis">...</span>
-            <button
-              v-if="currentPage < totalPages - 1"
-              class="pagination-btn pagination-page"
-              @click="goToPage(totalPages)"
-            >
-              {{ totalPages }}
-            </button>
-          </div>
-
-          <button
-            class="pagination-btn"
-            :disabled="currentPage === totalPages"
-            @click="goToPage(currentPage + 1)"
-            :aria-label="t('applications.nextPage')"
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="9 18 15 12 9 6"/>
-            </svg>
-          </button>
-        </nav>
-
-        <p v-if="totalPages > 1" class="pagination-info">
-          {{ t('applications.paginationInfo', { current: currentPage, total: totalPages, count: totalApplications }) }}
-        </p>
+        <ApplicationList
+          :applications="filteredApplications"
+          :view-mode="viewMode"
+          :sort-by="sortBy"
+          :current-page="currentPage"
+          :total-pages="totalPages"
+          :total-applications="totalApplications"
+          @open-details="openDetails"
+          @download-pdf="downloadPDF"
+          @toggle-sort="toggleTableSort"
+          @go-to-page="goToPage"
+        />
       </section>
 
       <!-- Empty State -->
@@ -429,180 +165,19 @@
       </section>
 
       <!-- Detail Modal -->
-      <Teleport to="body">
-        <div v-if="selectedApp" class="modal-overlay" @click="closeDetails">
-          <div class="modal zen-card animate-fade-up" @click.stop>
-            <div class="modal-header">
-              <div>
-                <h2>{{ selectedApp.firma }}</h2>
-                <p class="modal-subtitle">{{ selectedApp.position }}</p>
-              </div>
-              <button @click="closeDetails" class="modal-close">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <line x1="18" y1="6" x2="6" y2="18"/>
-                  <line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </div>
-
-            <div class="modal-content">
-              <!-- Status -->
-              <div class="detail-group detail-group-highlight">
-                <label class="detail-label">{{ t('applications.status') }}</label>
-                <select v-model="selectedApp.status" @change="updateStatus(selectedApp)" class="form-select">
-                  <option value="erstellt">{{ t('applications.statusCreated') }}</option>
-                  <option value="versendet">{{ t('applications.statusSent') }}</option>
-                  <option value="antwort_erhalten">{{ t('applications.statusResponseReceived') }}</option>
-                  <option value="absage">{{ t('applications.statusRejection') }}</option>
-                  <option value="zusage">{{ t('applications.statusAcceptance') }}</option>
-                </select>
-              </div>
-
-              <!-- Info Grid -->
-              <div class="info-grid">
-                <div class="detail-group">
-                  <label class="detail-label">{{ t('applications.companyLabel') }}</label>
-                  <p class="detail-value">{{ selectedApp.firma }}</p>
-                </div>
-
-                <div v-if="selectedApp.position" class="detail-group">
-                  <label class="detail-label">{{ t('applications.position') }}</label>
-                  <p class="detail-value">{{ selectedApp.position }}</p>
-                </div>
-
-                <div v-if="selectedApp.ansprechpartner" class="detail-group">
-                  <label class="detail-label">{{ t('applications.contactPerson') }}</label>
-                  <p class="detail-value">{{ selectedApp.ansprechpartner }}</p>
-                </div>
-
-                <div v-if="selectedApp.email" class="detail-group">
-                  <label class="detail-label">{{ t('applications.email') }}</label>
-                  <p class="detail-value">
-                    <a :href="`mailto:${selectedApp.email}`" class="detail-link">{{ selectedApp.email }}</a>
-                  </p>
-                </div>
-
-                <div v-if="selectedApp.quelle" class="detail-group">
-                  <label class="detail-label">{{ t('applications.source') }}</label>
-                  <p class="detail-value">
-                    <a :href="selectedApp.quelle" target="_blank" class="detail-link">{{ getDomain(selectedApp.quelle) }}</a>
-                  </p>
-                </div>
-
-                <div class="detail-group">
-                  <label class="detail-label">{{ t('applications.date') }}</label>
-                  <p class="detail-value">{{ formatDateTime(selectedApp.datum) }}</p>
-                </div>
-              </div>
-
-              <!-- Sent Info -->
-              <div v-if="selectedApp.sent_at" class="detail-group detail-group-sent">
-                <label class="detail-label">{{ t('applications.sentLabel') }}</label>
-                <p class="detail-value">
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sent-icon">
-                    <path d="M22 2L11 13"/>
-                    <path d="M22 2L15 22L11 13L2 9L22 2Z"/>
-                  </svg>
-                  {{ formatDateTime(selectedApp.sent_at) }} via {{ getSentViaLabel(selectedApp.sent_via) }}
-                </p>
-              </div>
-
-              <!-- Betreff -->
-              <div v-if="selectedApp.betreff" class="detail-group">
-                <label class="detail-label">{{ t('applications.subject') }}</label>
-                <p class="detail-value detail-value-block">{{ selectedApp.betreff }}</p>
-              </div>
-
-              <!-- Notes -->
-              <div class="detail-group">
-                <label class="detail-label">{{ t('applications.notes') }}</label>
-                <textarea
-                  v-model="selectedApp.notizen"
-                  @blur="updateNotes(selectedApp)"
-                  :placeholder="t('applications.notesPlaceholder')"
-                  rows="4"
-                  class="form-textarea"
-                ></textarea>
-              </div>
-
-              <!-- Interview Tracking Section -->
-              <div class="detail-group">
-                <label class="detail-label">{{ t('applications.interviewTracking') }}</label>
-                <InterviewTracker
-                  :application-id="selectedApp.id"
-                  :initial-date="selectedApp.interview_date"
-                  :initial-result="selectedApp.interview_result"
-                  :initial-feedback="selectedApp.interview_feedback"
-                  @updated="onInterviewUpdated"
-                />
-              </div>
-
-              <!-- ATS Optimizer Section -->
-              <div class="detail-group">
-                <label class="detail-label">{{ t('applications.atsOptimization') }}</label>
-                <ATSOptimizer
-                  v-if="selectedApp.id"
-                  :application-id="selectedApp.id"
-                  @optimized="onATSOptimized"
-                />
-              </div>
-
-              <!-- Gap Analysis / Learning Recommendations Section -->
-              <div class="detail-group">
-                <label class="detail-label">{{ t('applications.skillGapsAndRecommendations') }}</label>
-                <div v-if="jobFitLoading" class="gap-loading-state">
-                  <div class="loading-spinner"></div>
-                  <span>{{ t('applications.loadingSkillAnalysis') }}</span>
-                </div>
-                <GapAnalysis
-                  v-else-if="jobFitData"
-                  :recommendations="jobFitData.learning_recommendations || []"
-                  :missing-skills="jobFitData.missing_skills || []"
-                  :partial-matches="jobFitData.partial_matches || []"
-                  :loading="false"
-                />
-                <div v-else class="gap-empty-state">
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <circle cx="12" cy="12" r="10"/>
-                    <line x1="12" y1="8" x2="12" y2="12"/>
-                    <line x1="12" y1="16" x2="12.01" y2="16"/>
-                  </svg>
-                  <div>
-                    <strong>{{ t('applications.noSkillAnalysis') }}</strong>
-                    <p>{{ t('applications.analyzeRequirementsFirst') }}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="modal-footer">
-              <router-link
-                :to="`/applications/${selectedApp.id}/interview`"
-                class="zen-btn zen-btn-interview"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
-                </svg>
-                {{ t('applications.interviewPrep') }}
-              </router-link>
-              <button @click="downloadEmailDraft(selectedApp)" class="zen-btn zen-btn-ai">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-                {{ t('applications.sendViaEmail') }}
-              </button>
-              <button @click="downloadPDF(selectedApp.id)" class="zen-btn">
-                {{ t('applications.downloadPdf') }}
-              </button>
-              <button @click="deleteApp(selectedApp.id)" class="zen-btn zen-btn-danger" :aria-label="t('applications.deleteApplication')" :title="t('applications.deleteApplication')">
-                {{ t('common.delete') }}
-              </button>
-            </div>
-          </div>
-        </div>
-      </Teleport>
-
+      <ApplicationDetail
+        :selected-app="selectedApp"
+        :job-fit-data="jobFitData"
+        :job-fit-loading="jobFitLoading"
+        @close="closeDetails"
+        @update-status="updateStatus"
+        @update-notes="updateNotes"
+        @download-pdf="downloadPDF"
+        @download-email-draft="downloadEmailDraft"
+        @delete="deleteApp"
+        @interview-updated="onInterviewUpdated"
+        @ats-optimized="onATSOptimized"
+      />
     </div>
   </div>
 </template>
@@ -611,13 +186,11 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
-import ATSOptimizer from '../components/ATSOptimizer.vue'
-import GapAnalysis from '../components/GapAnalysis.vue'
-import InterviewTracker from '../components/InterviewTracker.vue'
-import ScrollableTable from '../components/ScrollableTable.vue'
 import { confirm } from '../composables/useConfirm'
-import { getFullLocale } from '../i18n'
 import { useI18n } from 'vue-i18n'
+import ApplicationFilters from '../components/Applications/ApplicationFilters.vue'
+import ApplicationList from '../components/Applications/ApplicationList.vue'
+import ApplicationDetail from '../components/Applications/ApplicationDetail.vue'
 
 const { t } = useI18n()
 
@@ -628,8 +201,8 @@ const applications = ref([])
 const selectedApp = ref(null)
 const loading = ref(false)
 const loadError = ref(false)
-const searchInput = ref('')  // What user types (for v-model)
-const searchQuery = ref('')  // What filtering uses (debounced)
+const searchInput = ref('')
+const searchQuery = ref('')
 let searchTimeout = null
 const filterStatus = ref('')
 const filterFirma = ref('')
@@ -637,13 +210,11 @@ const sortBy = ref('datum_desc')
 const exportFilteredOnly = ref(false)
 const viewMode = ref(localStorage.getItem('applications_view_mode') || 'grid')
 
-// Pagination State
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalApplications = ref(0)
 const perPage = ref(15)
 
-// Job-Fit / Gap Analysis State
 const jobFitData = ref(null)
 const jobFitLoading = ref(false)
 
@@ -692,7 +263,6 @@ const filteredApplications = computed(() => {
     filtered = filtered.filter(app => app.firma === filterFirma.value)
   }
 
-  // Sortierung anwenden
   return [...filtered].sort((a, b) => {
     switch (sortBy.value) {
       case 'datum_desc':
@@ -718,9 +288,7 @@ const hasActiveFilters = computed(() => {
 })
 
 const isExportDisabled = computed(() => {
-  // Disabled wenn keine Bewerbungen vorhanden
   if (applications.value.length === 0) return true
-  // Disabled wenn "Nur gefilterte" aktiv und 0 Ergebnisse
   if (exportFilteredOnly.value && filteredApplications.value.length === 0) return true
   return false
 })
@@ -733,18 +301,6 @@ const exportDisabledReason = computed(() => {
     return t('applications.exportNoFilteredResults')
   }
   return ''
-})
-
-// Pagination: visible page numbers
-const visiblePages = computed(() => {
-  const pages = []
-  const start = Math.max(1, currentPage.value - 1)
-  const end = Math.min(totalPages.value, currentPage.value + 1)
-
-  for (let i = start; i <= end; i++) {
-    pages.push(i)
-  }
-  return pages
 })
 
 const loadApplications = async (page = 1) => {
@@ -779,12 +335,10 @@ const goToPage = (page) => {
 
 const downloadPDF = async (id) => {
   try {
-    // Use authenticated request to fetch PDF blob
     const response = await api.get(`/applications/${id}/pdf`, {
       responseType: 'blob'
     })
 
-    // Create download link from blob
     const blob = new Blob([response.data], { type: 'application/pdf' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -832,6 +386,9 @@ const updateStatus = async (app) => {
     if (index !== -1) {
       applications.value[index].status = app.status
     }
+    if (selectedApp.value) {
+      selectedApp.value.status = app.status
+    }
     if (window.$toast) {
       window.$toast(t('applications.statusChangedSuccess'), 'success')
     }
@@ -869,7 +426,6 @@ const deleteApp = async (id) => {
     if (selectedApp.value && selectedApp.value.id === id) {
       selectedApp.value = null
     }
-    // Reload current page (or go back one page if empty)
     const pageToLoad = applications.value.length === 1 && currentPage.value > 1
       ? currentPage.value - 1
       : currentPage.value
@@ -884,7 +440,6 @@ const clearFilters = () => {
   searchQuery.value = ''
   filterStatus.value = ''
   filterFirma.value = ''
-  // Remove query params from URL
   if (route.query.firma) {
     router.replace({ path: '/applications' })
   }
@@ -900,23 +455,13 @@ const toggleTableSort = (field) => {
   }
 }
 
-// Keyboard handler for sortable headers
-const handleSortKeydown = (event, field) => {
-  if (event.key === 'Enter' || event.key === ' ') {
-    event.preventDefault()
-    toggleTableSort(field)
-  }
-}
-
 const onATSOptimized = (data) => {
-  // Reload application data after optimization
   if (selectedApp.value && data.optimized_text) {
     selectedApp.value.email_text = data.optimized_text
   }
 }
 
 const onInterviewUpdated = (updatedApp) => {
-  // Update both selectedApp and applications list
   if (selectedApp.value) {
     selectedApp.value.interview_date = updatedApp.interview_date
     selectedApp.value.interview_result = updatedApp.interview_result
@@ -928,65 +473,10 @@ const onInterviewUpdated = (updatedApp) => {
   }
 }
 
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString(getFullLocale(), {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
-
-const formatDateTime = (date) => {
-  return new Date(date).toLocaleString(getFullLocale(), {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const getDomain = (url) => {
-  try {
-    const domain = new URL(url).hostname
-    return domain.replace('www.', '')
-  } catch {
-    return url
-  }
-}
-
-const getStatusLabel = (status) => {
-  const labels = {
-    'erstellt': t('applications.statusCreated'),
-    'versendet': t('applications.statusSent'),
-    'antwort_erhalten': t('applications.statusResponse'),
-    'absage': t('applications.statusRejection'),
-    'zusage': t('applications.statusAcceptance')
-  }
-  return labels[status] || status
-}
-
-const getJobFitClass = (score) => {
-  if (score >= 80) return 'job-fit-excellent'
-  if (score >= 60) return 'job-fit-good'
-  if (score >= 40) return 'job-fit-medium'
-  return 'job-fit-low'
-}
-
-const getSentViaLabel = (provider) => {
-  const labels = {
-    'gmail': 'Gmail',
-    'outlook': 'Outlook'
-  }
-  return labels[provider] || provider
-}
-
 const exportApplications = async (format) => {
   try {
-    // Build query parameters
     const params = new URLSearchParams({ format })
 
-    // Add filter parameters if exporting filtered only
     if (exportFilteredOnly.value && hasActiveFilters.value) {
       if (searchQuery.value) params.append('search', searchQuery.value)
       if (filterStatus.value) params.append('status', filterStatus.value)
@@ -996,7 +486,6 @@ const exportApplications = async (format) => {
     const response = await api.get(`/applications/export?${params}`, {
       responseType: 'blob'
     })
-    // Create download link
     const blob = new Blob([response.data], {
       type: format === 'pdf' ? 'application/pdf' : 'text/csv'
     })
@@ -1039,7 +528,6 @@ const downloadEmailDraft = async (app) => {
   }
 }
 
-// Escape key handler for modals
 const handleEscapeKey = (event) => {
   if (event.key === 'Escape') {
     if (selectedApp.value) {
@@ -1049,29 +537,22 @@ const handleEscapeKey = (event) => {
 }
 
 onMounted(() => {
-  // Check for firma query parameter from Company Insights
   if (route.query.firma) {
     filterFirma.value = route.query.firma
   }
   loadApplications()
-
-  // Add escape key listener for modals
   document.addEventListener('keydown', handleEscapeKey)
 })
 
 onUnmounted(() => {
-  // Clean up search debounce timeout
   if (searchTimeout) clearTimeout(searchTimeout)
-  // Remove escape key listener
   document.removeEventListener('keydown', handleEscapeKey)
 })
 
-// Watch for route query changes
 watch(() => route.query.firma, (newFirma) => {
   filterFirma.value = newFirma || ''
 })
 
-// Debounce search input
 watch(searchInput, (newVal) => {
   if (searchTimeout) clearTimeout(searchTimeout)
   searchTimeout = setTimeout(() => {
@@ -1079,14 +560,12 @@ watch(searchInput, (newVal) => {
   }, 300)
 })
 
-// Reset exportFilteredOnly when no filters are active
 watch(hasActiveFilters, (isActive) => {
   if (!isActive) {
     exportFilteredOnly.value = false
   }
 })
 
-// Persist view mode preference
 watch(viewMode, (newMode) => {
   localStorage.setItem('applications_view_mode', newMode)
 })
@@ -1099,9 +578,6 @@ watch(viewMode, (newMode) => {
   padding-bottom: var(--space-ma-xl);
 }
 
-/* ========================================
-   PAGE HEADER
-   ======================================== */
 .page-header {
   padding: var(--space-ma-lg) 0 var(--space-ma);
 }
@@ -1143,9 +619,6 @@ watch(viewMode, (newMode) => {
   cursor: not-allowed;
 }
 
-/* ========================================
-   STATS SECTION
-   ======================================== */
 .stats-section {
   margin-bottom: var(--space-lg);
 }
@@ -1184,85 +657,6 @@ watch(viewMode, (newMode) => {
   background: var(--color-sand);
 }
 
-/* ========================================
-   FILTER SECTION
-   ======================================== */
-.filter-section {
-  margin-bottom: var(--space-ma);
-}
-
-.filter-row {
-  display: flex;
-  gap: var(--space-md);
-}
-
-.search-group {
-  flex: 1;
-  position: relative;
-}
-
-.search-icon {
-  position: absolute;
-  left: var(--space-md);
-  top: 50%;
-  transform: translateY(-50%);
-  color: var(--color-stone);
-  pointer-events: none;
-}
-
-.search-input {
-  padding-left: calc(var(--space-md) + 26px);
-}
-
-.filter-group {
-  min-width: 200px;
-}
-
-.sort-group {
-  min-width: 220px;
-}
-
-.active-filters {
-  display: flex;
-  gap: var(--space-sm);
-  margin-top: var(--space-md);
-}
-
-.filter-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: var(--space-xs) var(--space-md);
-  background: var(--color-ai-subtle);
-  color: var(--color-ai);
-  border-radius: var(--radius-full);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.filter-tag-close {
-  background: none;
-  border: none;
-  color: inherit;
-  cursor: pointer;
-  font-size: 1.25rem;
-  line-height: 1;
-  padding: 0;
-  opacity: 0.7;
-}
-
-.filter-tag-close:hover {
-  opacity: 1;
-}
-
-.filter-tag-firma {
-  background: rgba(122, 139, 110, 0.15);
-  color: var(--color-koke);
-}
-
-/* ========================================
-   LOADING SKELETON
-   ======================================== */
 .loading-skeleton {
   padding: var(--space-ma) 0;
 }
@@ -1357,142 +751,10 @@ watch(viewMode, (newMode) => {
   100% { background-position: -200% 0; }
 }
 
-/* ========================================
-   APPLICATIONS GRID
-   ======================================== */
 .applications-section {
   margin-top: var(--space-ma);
 }
 
-.applications-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: var(--space-lg);
-}
-
-.application-card {
-  padding: var(--space-lg);
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.application-card:hover {
-  border-color: var(--color-ai);
-  transform: translateY(-2px);
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: var(--space-md);
-  margin-bottom: var(--space-md);
-}
-
-.card-title-group {
-  flex: 1;
-  min-width: 0;
-}
-
-.card-title-group h3 {
-  font-size: 1.125rem;
-  font-weight: 500;
-  color: var(--color-sumi);
-  margin: 0 0 var(--space-xs) 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.card-position {
-  font-size: 0.875rem;
-  color: var(--color-text-tertiary);
-  margin: 0;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* ========================================
-   STATUS BADGES
-   ======================================== */
-.status-badge {
-  padding: var(--space-xs) var(--space-sm);
-  border-radius: var(--radius-sm);
-  font-size: 0.6875rem;
-  font-weight: 500;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  white-space: nowrap;
-}
-
-.status-erstellt {
-  background: var(--color-ai-subtle);
-  color: var(--color-ai);
-}
-
-.status-versendet {
-  background: rgba(184, 122, 94, 0.15);
-  color: var(--color-terra);
-}
-
-.status-antwort_erhalten {
-  background: rgba(122, 139, 110, 0.15);
-  color: var(--color-koke);
-}
-
-.status-absage {
-  background: rgba(180, 80, 80, 0.15);
-  color: #b45050;
-}
-
-.status-zusage {
-  background: var(--color-koke);
-  color: var(--color-washi);
-}
-
-/* ========================================
-   CARD META
-   ======================================== */
-.card-meta {
-  display: flex;
-  gap: var(--space-lg);
-  padding: var(--space-md) 0;
-  border-top: 1px solid var(--color-border-light);
-  border-bottom: 1px solid var(--color-border-light);
-  margin-bottom: var(--space-md);
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  font-size: 0.8125rem;
-  color: var(--color-text-tertiary);
-}
-
-.meta-item svg {
-  color: var(--color-stone);
-}
-
-.card-notes {
-  font-size: 0.875rem;
-  color: var(--color-text-secondary);
-  line-height: var(--leading-relaxed);
-  padding: var(--space-md);
-  background: var(--color-washi);
-  border-radius: var(--radius-sm);
-  margin-bottom: var(--space-md);
-}
-
-.card-actions {
-  display: flex;
-  gap: var(--space-sm);
-}
-
-/* ========================================
-   ERROR STATE
-   ======================================== */
 .error-state {
   text-align: center;
   padding: var(--space-ma-xl) 0;
@@ -1522,9 +784,6 @@ watch(viewMode, (newMode) => {
   gap: var(--space-xs);
 }
 
-/* ========================================
-   EMPTY STATE
-   ======================================== */
 .empty-state {
   text-align: center;
   padding: var(--space-ma-xl) 0;
@@ -1551,149 +810,6 @@ watch(viewMode, (newMode) => {
   margin-bottom: var(--space-lg);
 }
 
-/* ========================================
-   MODAL
-   ======================================== */
-.modal-overlay {
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  background: rgba(44, 44, 44, 0.6);
-  backdrop-filter: blur(4px);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: var(--z-modal);
-  padding: var(--space-lg);
-}
-
-.modal {
-  width: 100%;
-  max-width: 640px;
-  max-height: 90vh;
-  overflow-y: auto;
-}
-
-.modal-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: var(--space-xl);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.modal-header h2 {
-  font-size: 1.5rem;
-  font-weight: 500;
-  margin: 0 0 var(--space-xs) 0;
-}
-
-.modal-subtitle {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  margin: 0;
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  color: var(--color-stone);
-  cursor: pointer;
-  padding: var(--space-xs);
-  transition: color var(--transition-base);
-}
-
-.modal-close:hover {
-  color: var(--color-sumi);
-}
-
-.modal-content {
-  padding: var(--space-xl);
-}
-
-.detail-group {
-  margin-bottom: var(--space-lg);
-}
-
-.detail-group-highlight {
-  padding: var(--space-md);
-  background: var(--color-ai-subtle);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--color-ai);
-}
-
-.detail-group-sent {
-  padding: var(--space-md);
-  background: rgba(122, 139, 110, 0.1);
-  border-radius: var(--radius-md);
-  border-left: 3px solid var(--color-koke);
-}
-
-.detail-group-sent .detail-value {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  color: var(--color-koke);
-  font-weight: 500;
-}
-
-.sent-icon {
-  flex-shrink: 0;
-}
-
-.detail-label {
-  display: block;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--color-text-ghost);
-  margin-bottom: var(--space-xs);
-}
-
-.detail-value {
-  margin: 0;
-  color: var(--color-sumi);
-  font-size: 1rem;
-}
-
-.detail-value-block {
-  padding: var(--space-md);
-  background: var(--color-washi);
-  border-radius: var(--radius-sm);
-  white-space: pre-wrap;
-}
-
-.detail-link {
-  color: var(--color-ai);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.detail-link:hover {
-  text-decoration: underline;
-}
-
-.info-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--space-lg);
-  margin-bottom: var(--space-lg);
-}
-
-.modal-footer {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-lg) var(--space-xl);
-  border-top: 1px solid var(--color-border-light);
-  background: var(--color-washi);
-}
-
-/* ========================================
-   RESPONSIVE
-   ======================================== */
 @media (max-width: 768px) {
   .page-header-content {
     flex-direction: column;
@@ -1704,503 +820,18 @@ watch(viewMode, (newMode) => {
     justify-content: flex-start;
   }
 
-  .filter-row {
-    flex-direction: column;
-  }
-
-  .filter-group {
-    min-width: 100%;
-  }
-
-  .applications-grid {
+  .skeleton-grid {
     grid-template-columns: 1fr;
   }
 
   .stats-grid {
     flex-wrap: wrap;
   }
-
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .modal-footer {
-    flex-direction: column;
-  }
 }
 
 @media (max-width: 480px) {
   .page-header h1 {
     font-size: 2rem;
-  }
-
-  .card-actions {
-    flex-direction: column;
-  }
-}
-
-/* ========================================
-   MODAL FOOTER ACTIONS
-   ======================================== */
-/* Modal Footer Button with Icon */
-.modal-footer .zen-btn svg {
-  margin-right: var(--space-xs);
-  vertical-align: middle;
-}
-
-/* Interview Prep Button */
-.zen-btn-interview {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  background: rgba(138, 79, 125, 0.1);
-  border-color: rgba(138, 79, 125, 0.3);
-  color: #8a4f7d;
-  text-decoration: none;
-}
-
-.zen-btn-interview:hover {
-  background: rgba(138, 79, 125, 0.2);
-  border-color: #8a4f7d;
-}
-
-/* Gap Analysis States */
-.gap-loading-state {
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-  padding: var(--space-lg);
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-light);
-  color: var(--color-text-secondary);
-}
-
-.gap-loading-state .loading-spinner {
-  width: 20px;
-  height: 20px;
-  border: 2px solid var(--color-border);
-  border-top-color: var(--color-ai);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.gap-empty-state {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-lg);
-  background: var(--color-washi-aged);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-light);
-}
-
-.gap-empty-state svg {
-  flex-shrink: 0;
-  color: var(--color-ai);
-  opacity: 0.7;
-}
-
-.gap-empty-state strong {
-  display: block;
-  color: var(--color-sumi);
-  margin-bottom: var(--space-xs);
-  font-size: 0.9375rem;
-}
-
-.gap-empty-state p {
-  margin: 0;
-  font-size: 0.8125rem;
-  color: var(--color-text-secondary);
-  line-height: 1.5;
-}
-
-/* ========================================
-   PAGINATION
-   ======================================== */
-.pagination {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: var(--space-sm);
-  margin-top: var(--space-ma);
-  padding-top: var(--space-lg);
-  border-top: 1px solid var(--color-border-light);
-}
-
-.pagination-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  height: 40px;
-  padding: var(--space-sm);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.pagination-btn:hover:not(:disabled) {
-  background: var(--color-ai-subtle);
-  border-color: var(--color-ai);
-  color: var(--color-ai);
-}
-
-.pagination-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.pagination-pages {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-}
-
-.pagination-page {
-  font-weight: 500;
-  font-size: 0.875rem;
-}
-
-.pagination-page-active {
-  background: var(--color-ai);
-  border-color: var(--color-ai);
-  color: var(--color-washi);
-}
-
-.pagination-page-active:hover:not(:disabled) {
-  background: var(--color-ai);
-  color: var(--color-washi);
-}
-
-.pagination-ellipsis {
-  padding: 0 var(--space-xs);
-  color: var(--color-text-tertiary);
-}
-
-.pagination-info {
-  text-align: center;
-  font-size: 0.8125rem;
-  color: var(--color-text-tertiary);
-  margin-top: var(--space-md);
-}
-
-@media (max-width: 480px) {
-  .pagination {
-    gap: var(--space-xs);
-  }
-
-  .pagination-btn {
-    min-width: 36px;
-    height: 36px;
-  }
-
-  .pagination-page {
-    font-size: 0.8125rem;
-  }
-}
-
-/* ========================================
-   VIEW TOGGLE
-   ======================================== */
-.view-toggle {
-  display: flex;
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-}
-
-.view-toggle-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 38px;
-  background: transparent;
-  border: none;
-  color: var(--color-stone);
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.view-toggle-btn:hover {
-  background: var(--color-washi-aged);
-  color: var(--color-sumi);
-}
-
-.view-toggle-btn.active {
-  background: var(--color-ai);
-  color: var(--color-washi);
-}
-
-.view-toggle-btn:first-child {
-  border-right: 1px solid var(--color-border);
-}
-
-/* ========================================
-   TABLE VIEW
-   ======================================== */
-.applications-table-wrapper {
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg);
-}
-
-.applications-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9375rem;
-}
-
-.applications-table thead {
-  background: var(--color-washi-aged);
-  border-bottom: 1px solid var(--color-border);
-}
-
-.applications-table th {
-  padding: var(--space-md) var(--space-lg);
-  text-align: left;
-  font-size: 0.75rem;
-  font-weight: 500;
-  letter-spacing: var(--tracking-wider);
-  text-transform: uppercase;
-  color: var(--color-text-ghost);
-  white-space: nowrap;
-}
-
-.sortable-header {
-  cursor: pointer;
-  user-select: none;
-  transition: color var(--transition-base);
-}
-
-.sortable-header:hover {
-  color: var(--color-ai);
-}
-
-.sort-indicator {
-  margin-left: var(--space-xs);
-  color: var(--color-ai);
-}
-
-.actions-header {
-  text-align: right;
-}
-
-.applications-table tbody tr {
-  border-bottom: 1px solid var(--color-border-light);
-  transition: background var(--transition-base);
-  cursor: pointer;
-}
-
-.applications-table tbody tr:last-child {
-  border-bottom: none;
-}
-
-.applications-table tbody tr:hover {
-  background: var(--color-ai-subtle);
-}
-
-.applications-table td {
-  padding: var(--space-md) var(--space-lg);
-  vertical-align: middle;
-}
-
-.cell-firma {
-  font-weight: 500;
-  color: var(--color-sumi);
-  max-width: 200px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cell-position {
-  color: var(--color-text-secondary);
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.cell-datum {
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-}
-
-.cell-status {
-  white-space: nowrap;
-}
-
-.status-badge-sm {
-  font-size: 0.625rem;
-  padding: 2px var(--space-sm);
-}
-
-.cell-job-fit {
-  white-space: nowrap;
-}
-
-.job-fit-badge {
-  display: inline-block;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 4px;
-}
-
-.job-fit-excellent {
-  background-color: var(--color-success-muted, #dcfce7);
-  color: var(--color-success, #16a34a);
-}
-
-.job-fit-good {
-  background-color: var(--color-ai-muted, #dbeafe);
-  color: var(--color-ai, #2563eb);
-}
-
-.job-fit-medium {
-  background-color: var(--color-warning-muted, #fef3c7);
-  color: var(--color-warning, #d97706);
-}
-
-.job-fit-low {
-  background-color: var(--color-error-muted, #fee2e2);
-  color: var(--color-error, #dc2626);
-}
-
-.cell-quelle {
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.table-link {
-  color: var(--color-ai);
-  text-decoration: none;
-  font-weight: 500;
-}
-
-.table-link:hover {
-  text-decoration: underline;
-}
-
-.text-muted {
-  color: var(--color-text-ghost);
-}
-
-.cell-actions {
-  text-align: right;
-  white-space: nowrap;
-}
-
-.cell-actions .zen-btn {
-  margin-left: var(--space-xs);
-}
-
-/* Table Responsive */
-@media (max-width: 1024px) {
-  .applications-table {
-    min-width: 700px;
-  }
-}
-
-@media (max-width: 768px) {
-  .view-toggle {
-    display: none;
-  }
-}
-
-/* ========================================
-   STATUS FILTER TABS
-   ======================================== */
-.status-tabs-section {
-  margin-bottom: var(--space-md);
-}
-
-.status-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-sm);
-}
-
-.status-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--space-xs);
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-bg-elevated);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-full);
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-text-secondary);
-  cursor: pointer;
-  transition: all var(--transition-base);
-}
-
-.status-tab:hover {
-  background: var(--color-washi-aged);
-  border-color: var(--color-stone);
-  color: var(--color-sumi);
-}
-
-.status-tab:focus-visible {
-  outline: var(--focus-ring-width) solid var(--focus-ring-color);
-  outline-offset: var(--focus-ring-offset);
-}
-
-.status-tab-active {
-  background: var(--color-ai);
-  border-color: var(--color-ai);
-  color: var(--color-washi);
-}
-
-.status-tab-active:hover {
-  background: var(--color-ai-dark, #2d4a5a);
-  border-color: var(--color-ai-dark, #2d4a5a);
-  color: var(--color-washi);
-}
-
-.status-tab-label {
-  white-space: nowrap;
-}
-
-.status-tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 20px;
-  height: 20px;
-  padding: 0 var(--space-xs);
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: var(--radius-full);
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-.status-tab-active .status-tab-count {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-@media (max-width: 768px) {
-  .status-tabs {
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    padding-bottom: var(--space-sm);
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .status-tab {
-    flex-shrink: 0;
   }
 }
 </style>
