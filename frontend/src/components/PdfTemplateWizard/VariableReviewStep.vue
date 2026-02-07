@@ -2,9 +2,9 @@
   <div class="variable-review-step">
     <div class="review-header">
       <div class="step-marker">03</div>
-      <h3>Variablen ueberpruefen</h3>
+      <h3>{{ t('components.variableReview.title') }}</h3>
       <p class="review-hint">
-        Ueberpruefen Sie die von der KI erkannten Variablen und passen Sie sie bei Bedarf an.
+        {{ t('components.variableReview.description') }}
       </p>
     </div>
 
@@ -169,6 +169,9 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   suggestions: {

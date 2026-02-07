@@ -242,7 +242,7 @@
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
           <polyline points="22 4 12 14.01 9 11.01"/>
         </svg>
-        <span>Bewerbung ist gut fuer ATS optimiert!</span>
+        <span>{{ t('components.atsOptimizer.wellOptimized') }}</span>
       </div>
     </div>
 
@@ -292,10 +292,10 @@
       <!-- Action Buttons -->
       <div class="comparison-actions">
         <button @click="revertToOriginal" class="zen-btn">
-          Zurueck zum Original
+          {{ t('components.atsOptimizer.backToOriginal') }}
         </button>
         <button @click="acceptOptimization" class="zen-btn zen-btn-ai">
-          Optimierung uebernehmen
+          {{ t('components.atsOptimizer.acceptOptimization') }}
         </button>
       </div>
     </div>
@@ -304,7 +304,10 @@
 
 <script setup>
 import { ref, computed, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
+
+const { t } = useI18n()
 
 const props = defineProps({
   applicationId: {
@@ -452,7 +455,7 @@ const revertToOriginal = async () => {
     // Reload ATS score
     await loadATSScore()
   } catch (e) {
-    error.value = e.response?.data?.error || 'Fehler beim Zuruecksetzen'
+    error.value = e.response?.data?.error || t('components.atsOptimizer.resetError')
   }
 }
 

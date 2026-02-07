@@ -39,7 +39,7 @@
         class="form-textarea"
         @blur="updateInterviewData"
       ></textarea>
-      <p class="feedback-hint">Diese Notizen sind nur fuer Sie sichtbar und helfen bei der Analyse.</p>
+      <p class="feedback-hint">{{ t('components.interviewTracker.notesPrivate') }}</p>
     </div>
 
     <!-- Save Status -->
@@ -51,8 +51,11 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
 import DateTimePicker from './DateTimePicker.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   applicationId: {

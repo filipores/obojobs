@@ -38,7 +38,7 @@
         <line x1="12" y1="16" x2="12.01" y2="16"/>
       </svg>
       <div>
-        <strong>Recherche nicht moeglich</strong>
+        <strong>{{ t('components.companyResearch.researchNotPossible') }}</strong>
         <p>{{ error }}</p>
         <button class="zen-btn zen-btn-sm" @click="fetchResearch">
           Erneut versuchen
@@ -143,7 +143,7 @@
             <line x1="12" y1="16" x2="12" y2="12"/>
             <line x1="12" y1="8" x2="12.01" y2="8"/>
           </svg>
-          Ueber das Unternehmen
+          {{ t('components.companyResearch.aboutCompany') }}
         </h4>
         <p id="about-text-content" class="about-text" :class="{ expanded: aboutExpanded }">
           {{ aboutExpanded ? research.about_text : truncatedAbout }}
@@ -215,8 +215,11 @@
 
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
 import { getFullLocale } from '../i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   companyName: {

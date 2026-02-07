@@ -237,7 +237,27 @@
     "basic": "Basic",
     "pro": "Pro",
     "paymentsUnavailable": "Paid plans coming soon",
-    "paymentsUnavailableDescription": "The payment system is being set up. The free plan is fully available to you."
+    "paymentsUnavailableDescription": "The payment system is being set up. The free plan is fully available to you.",
+    "nextBilling": "Next billing",
+    "monthlyPrice": "Monthly price",
+    "none": "None",
+    "includedFeatures": "Included features",
+    "manageSubscription": "Manage subscription",
+    "manageDescription": "Payment method, change plan or cancel",
+    "stripePortalInfo": "Through the Stripe customer portal you can change your payment method, upgrade or downgrade your plan and view invoices.",
+    "opening": "Opening...",
+    "portalError": "Error opening portal",
+    "currentFreePlan": "You are currently on the free plan. Upgrade for more applications per month!",
+    "allPlansComparison": "Compare all plans",
+    "choosePlan": "Choose the plan that fits your needs",
+    "usageThisMonth": "Usage this month",
+    "applicationsCreated": "Applications created",
+    "unlimited": "Unlimited",
+    "unlimitedApplications": "Unlimited applications",
+    "currentPlan": "Current plan",
+    "active": "Active",
+    "downgrade": "Downgrade",
+    "yourCurrentPlan": "Your current plan"
   },
   "validation": {
     "invalidVerificationToken": "Invalid verification token",
@@ -282,5 +302,159 @@
     "interviewPrep": "Interview Preparation",
     "mockInterview": "Mock Interview",
     "notFound": "Page Not Found"
+  },
+  "mockInterview": {
+    "backToPrep": "Back to interview preparation",
+    "noStarAnalysis": "No STAR analysis for this question",
+    "starExplanation": "The STAR method (Situation, Task, Action, Result) is specifically designed for behavioral questions.",
+    "nextQuestion": "Next question",
+    "finishInterview": "Finish interview",
+    "nextSteps": "Recommended next steps",
+    "goodWithImprovements": "A good answer with minor areas for improvement.",
+    "hintTechnical": "Structure your answer: explain concepts clearly, give examples and show practical experience.",
+    "hintSituational": "Describe your approach step by step and explain your decisions.",
+    "hintCompanySpecific": "Show your company research and connect your answer with your career goals.",
+    "hintSalaryNegotiation": "Stay objective, state your salary expectations with reasoning and show willingness to negotiate.",
+    "defaultHint": "Give a structured and well-reasoned answer.",
+    "needsImprovement": "Needs improvement"
+  },
+  "interviewPrep": {
+    "backToApplications": "Back to applications",
+    "noSampleAnswer": "No sample answer available.",
+    "starTip": "Tip: Use the STAR method (Situation, Task, Action, Result) for structured answers."
+  },
+  "components": {
+    "companyResearch": {
+      "researchNotPossible": "Research not possible",
+      "aboutCompany": "About the company"
+    },
+    "jobFitScore": {
+      "mightNotFit": "This position may not match your profile. Consider whether applying is worthwhile.",
+      "noRequirements": "No requirements found for this position"
+    },
+    "gapAnalysis": {
+      "allRequirementsMet": "Your profile meets all requirements for this position.",
+      "improveFuture": "Improve your qualifications for future applications",
+      "openResource": "Open resource"
+    },
+    "starFeedback": {
+      "noAnalysis": "No STAR analysis available."
+    },
+    "interviewTracker": {
+      "notesPrivate": "These notes are only visible to you and help with analysis."
+    },
+    "atsOptimizer": {
+      "wellOptimized": "Application is well optimized for ATS!",
+      "backToOriginal": "Back to original",
+      "acceptOptimization": "Accept optimization",
+      "resetError": "Error resetting"
+    },
+    "dateTimePicker": {
+      "closeCalendar": "Close calendar",
+      "openCalendar": "Open calendar",
+      "clearDate": "Clear date",
+      "nextMonth": "Next month"
+    },
+    "pdfPreview": {
+      "nextPage": "Next page",
+      "zoomIn": "Zoom in"
+    },
+    "pdfUpload": {
+      "uploadDescription": "Upload a PDF document to use as a template for your applications.",
+      "maxSize": "Maximum size: 10 MB",
+      "fileTooLarge": "The file is too large. Maximum size:"
+    },
+    "pdfWizard": {
+      "back": "Back"
+    },
+    "variableReview": {
+      "title": "Review variables",
+      "description": "Review the variables detected by AI and adjust them if needed."
+    }
+  },
+  "applications": {
+    "noSkillAnalysis": "No skill analysis available",
+    "emlDownloaded": "Email draft downloaded. Double-click the file to open it in your email program.",
+    "title": "Applications",
+    "subtitle": "Manage and track all your applications",
+    "filteredOnly": "Filtered only ({count})",
+    "total": "Total",
+    "created": "Created",
+    "sent": "Sent",
+    "searchPlaceholder": "Search by company or position...",
+    "sortDateDesc": "Date (newest first)",
+    "sortDateAsc": "Date (oldest first)",
+    "sortCompanyAsc": "Company (A-Z)",
+    "sortCompanyDesc": "Company (Z-A)",
+    "sortStatus": "Status",
+    "gridView": "Grid view",
+    "tableView": "Table view",
+    "companyLabel": "Company",
+    "positionNotSpecified": "Position not specified",
+    "details": "Details",
+    "tableCompany": "Company",
+    "tablePosition": "Position",
+    "tableDate": "Date",
+    "tableStatus": "Status",
+    "tableJobFit": "Job Fit",
+    "tableSource": "Source",
+    "tableActions": "Actions",
+    "downloadPdf": "Download PDF",
+    "showDetails": "Show details",
+    "paginationInfo": "Page {current} of {total} ({count} applications)",
+    "noResults": "No results",
+    "noApplicationsYet": "No applications yet",
+    "noApplicationsFound": "No applications found. Try different search terms.",
+    "createFirst": "Create your first application right here or via the Chrome Extension.",
+    "createNew": "Create new application",
+    "resetFilters": "Reset filters",
+    "statusCreated": "Created",
+    "statusSent": "Sent",
+    "statusResponseReceived": "Response received",
+    "statusRejection": "Rejection",
+    "statusAcceptance": "Acceptance",
+    "statusAll": "All",
+    "statusResponse": "Response",
+    "status": "Status",
+    "position": "Position",
+    "contactPerson": "Contact person",
+    "email": "Email",
+    "source": "Source",
+    "date": "Date",
+    "sentLabel": "Sent",
+    "subject": "Subject",
+    "notes": "Notes",
+    "notesPlaceholder": "Add notes...",
+    "interviewTracking": "Interview Tracking",
+    "atsOptimization": "ATS Optimization",
+    "skillGapsAndRecommendations": "Skill Gaps & Learning Recommendations",
+    "loadingSkillAnalysis": "Loading skill analysis...",
+    "analyzeRequirementsFirst": "Analyze the job requirements first to get skill gaps and learning recommendations.",
+    "interviewPrep": "Interview Prep",
+    "sendViaEmail": "Send via email",
+    "deleteApplication": "Delete application",
+    "retryLoad": "Try again",
+    "loadErrorTitle": "Error loading applications",
+    "loadErrorMessage": "There was a technical problem loading your applications. Please try again.",
+    "statusFilterLabel": "Status filter",
+    "previousPage": "Previous page",
+    "nextPage": "Next page",
+    "paginationNav": "Application page navigation",
+    "loadingApplications": "Loading applications",
+    "switchView": "Switch view",
+    "statusChangedSuccess": "Status changed successfully",
+    "statusChangeError": "Error updating status",
+    "noteSaveError": "Error saving notes",
+    "pdfDownloadError": "Error downloading PDF",
+    "deleteConfirmTitle": "Delete application",
+    "deleteConfirmMessage": "Do you really want to delete this application?",
+    "deleteError": "Error deleting",
+    "exportError": "Error exporting",
+    "exportNoApplications": "No applications to export",
+    "exportNoFilteredResults": "No filtered results to export",
+    "emailDraftError": "Error creating email draft"
+  },
+  "dashboard": {
+    "closeHint": "Close hint"
   }
 }

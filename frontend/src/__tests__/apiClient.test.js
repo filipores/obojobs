@@ -103,7 +103,7 @@ describe('API Client', () => {
       }
 
       await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
-      expect(mockToast).toHaveBeenCalledWith('Keine Berechtigung', 'error')
+      expect(mockToast).toHaveBeenCalledWith('Access denied', 'error')
     })
 
     it('should show toast for 404 Not Found errors', async () => {
@@ -115,7 +115,7 @@ describe('API Client', () => {
       }
 
       await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
-      expect(mockToast).toHaveBeenCalledWith('Nicht gefunden', 'error')
+      expect(mockToast).toHaveBeenCalledWith('Not found', 'error')
     })
 
     it('should show toast for 500+ Server errors', async () => {
@@ -127,7 +127,7 @@ describe('API Client', () => {
       }
 
       await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
-      expect(mockToast).toHaveBeenCalledWith('Serverfehler. Bitte später erneut versuchen.', 'error')
+      expect(mockToast).toHaveBeenCalledWith('Server error. Please try again later.', 'error')
     })
 
     it('should not show toast when suppressToast is true', async () => {

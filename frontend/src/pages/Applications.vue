@@ -5,13 +5,13 @@
       <section class="page-header animate-fade-up">
         <div class="page-header-content">
           <div>
-            <h1>Bewerbungen</h1>
-            <p class="page-subtitle">Verwalten und verfolgen Sie alle Ihre Bewerbungen</p>
+            <h1>{{ t('applications.title') }}</h1>
+            <p class="page-subtitle">{{ t('applications.subtitle') }}</p>
           </div>
           <div class="export-section">
             <label class="export-filter-toggle" v-if="hasActiveFilters">
               <input type="checkbox" v-model="exportFilteredOnly" />
-              <span>Nur gefilterte ({{ filteredApplications.length }})</span>
+              <span>{{ t('applications.filteredOnly', { count: filteredApplications.length }) }}</span>
             </label>
             <div class="export-buttons">
               <button
@@ -50,24 +50,24 @@
         <div class="stats-grid">
           <div class="stat-item">
             <span class="stat-value">{{ totalApplications }}</span>
-            <span class="stat-label">Gesamt</span>
+            <span class="stat-label">{{ t('applications.total') }}</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-value">{{ stats.erstellt }}</span>
-            <span class="stat-label">Erstellt</span>
+            <span class="stat-label">{{ t('applications.created') }}</span>
           </div>
           <div class="stat-divider"></div>
           <div class="stat-item">
             <span class="stat-value">{{ stats.versendet }}</span>
-            <span class="stat-label">Versendet</span>
+            <span class="stat-label">{{ t('applications.sent') }}</span>
           </div>
         </div>
       </section>
 
       <!-- Status Filter Tabs -->
       <section class="status-tabs-section animate-fade-up" style="animation-delay: 125ms;">
-        <div class="status-tabs" role="tablist" aria-label="Status-Filter">
+        <div class="status-tabs" role="tablist" :aria-label="t('applications.statusFilterLabel')">
           <button
             v-for="status in statusOptions"
             :key="status.value"
@@ -94,25 +94,25 @@
             <input
               v-model="searchInput"
               type="text"
-              placeholder="Suche nach Firma oder Position..."
+              :placeholder="t('applications.searchPlaceholder')"
               class="form-input search-input"
             />
           </div>
           <div class="filter-group sort-group">
             <select v-model="sortBy" class="form-select">
-              <option value="datum_desc">Datum (neueste zuerst)</option>
-              <option value="datum_asc">Datum (älteste zuerst)</option>
-              <option value="firma_asc">Firma (A-Z)</option>
-              <option value="firma_desc">Firma (Z-A)</option>
-              <option value="status">Status</option>
+              <option value="datum_desc">{{ t('applications.sortDateDesc') }}</option>
+              <option value="datum_asc">{{ t('applications.sortDateAsc') }}</option>
+              <option value="firma_asc">{{ t('applications.sortCompanyAsc') }}</option>
+              <option value="firma_desc">{{ t('applications.sortCompanyDesc') }}</option>
+              <option value="status">{{ t('applications.sortStatus') }}</option>
             </select>
           </div>
-          <div class="view-toggle" role="group" aria-label="Ansicht wechseln">
+          <div class="view-toggle" role="group" :aria-label="t('applications.switchView')">
             <button
               :class="['view-toggle-btn', { active: viewMode === 'grid' }]"
               @click="viewMode = 'grid'"
               :aria-pressed="viewMode === 'grid'"
-              title="Karten-Ansicht"
+              :title="t('applications.gridView')"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="3" width="7" height="7"/>
@@ -125,7 +125,7 @@
               :class="['view-toggle-btn', { active: viewMode === 'table' }]"
               @click="viewMode = 'table'"
               :aria-pressed="viewMode === 'table'"
-              title="Tabellen-Ansicht"
+              :title="t('applications.tableView')"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="3" y1="6" x2="21" y2="6"/>
@@ -146,7 +146,7 @@
             <button @click="filterStatus = ''" class="filter-tag-close">&times;</button>
           </span>
           <span v-if="filterFirma" class="filter-tag filter-tag-firma">
-            Firma: {{ filterFirma }}
+            {{ t('applications.companyLabel') }}: {{ filterFirma }}
             <button @click="clearFilters" class="filter-tag-close">&times;</button>
           </span>
         </div>
@@ -156,7 +156,7 @@
       <div class="ink-stroke"></div>
 
       <!-- Loading State - Skeleton -->
-      <div v-if="loading" class="loading-skeleton" aria-label="Lade Bewerbungen" data-testid="loading-state">
+      <div v-if="loading" class="loading-skeleton" :aria-label="t('applications.loadingApplications')" data-testid="loading-state">
         <div class="skeleton-grid">
           <div v-for="i in 6" :key="i" class="skeleton-card zen-card">
             <div class="skeleton-card-header">
@@ -188,15 +188,15 @@
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
         </div>
-        <h3>Fehler beim Laden der Bewerbungen</h3>
-        <p>Es gab ein technisches Problem beim Laden Ihrer Bewerbungen. Bitte versuchen Sie es erneut.</p>
+        <h3>{{ t('applications.loadErrorTitle') }}</h3>
+        <p>{{ t('applications.loadErrorMessage') }}</p>
         <button @click="loadApplications()" class="zen-btn zen-btn-ai">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="23 4 23 10 17 10"/>
             <polyline points="1 20 1 14 7 14"/>
             <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/>
           </svg>
-          Erneut versuchen
+          {{ t('applications.retryLoad') }}
         </button>
       </div>
 
@@ -215,7 +215,7 @@
             <div class="card-header">
               <div class="card-title-group">
                 <h3>{{ app.firma }}</h3>
-                <p class="card-position">{{ app.position || 'Position nicht angegeben' }}</p>
+                <p class="card-position">{{ app.position || t('applications.positionNotSpecified') }}</p>
               </div>
               <span :class="['status-badge', `status-${app.status}`]">
                 {{ getStatusLabel(app.status) }}
@@ -255,7 +255,7 @@
                 PDF
               </button>
               <button @click="openDetails(app)" class="zen-btn zen-btn-ai zen-btn-sm">
-                Details
+                {{ t('applications.details') }}
               </button>
             </div>
           </div>
@@ -274,12 +274,12 @@
                   role="columnheader"
                   aria-sort="none"
                 >
-                  Firma
+                  {{ t('applications.tableCompany') }}
                   <span v-if="sortBy.startsWith('firma')" class="sort-indicator">
                     {{ sortBy === 'firma_asc' ? '↑' : '↓' }}
                   </span>
                 </th>
-                <th>Position</th>
+                <th>{{ t('applications.tablePosition') }}</th>
                 <th
                   @click="toggleTableSort('datum')"
                   @keydown="handleSortKeydown($event, 'datum')"
@@ -288,7 +288,7 @@
                   role="columnheader"
                   aria-sort="none"
                 >
-                  Datum
+                  {{ t('applications.tableDate') }}
                   <span v-if="sortBy.startsWith('datum')" class="sort-indicator">
                     {{ sortBy === 'datum_asc' ? '↑' : '↓' }}
                   </span>
@@ -301,12 +301,12 @@
                   role="columnheader"
                   aria-sort="none"
                 >
-                  Status
+                  {{ t('applications.tableStatus') }}
                   <span v-if="sortBy === 'status'" class="sort-indicator">●</span>
                 </th>
-                <th>Job-Fit</th>
-                <th>Quelle</th>
-                <th class="actions-header">Aktionen</th>
+                <th>{{ t('applications.tableJobFit') }}</th>
+                <th>{{ t('applications.tableSource') }}</th>
+                <th class="actions-header">{{ t('applications.tableActions') }}</th>
               </tr>
             </thead>
             <tbody>
@@ -337,11 +337,11 @@
                   <span v-else class="text-muted">–</span>
                 </td>
                 <td class="cell-actions" @click.stop>
-                  <button @click="downloadPDF(app.id)" class="zen-btn zen-btn-sm" title="PDF herunterladen">
+                  <button @click="downloadPDF(app.id)" class="zen-btn zen-btn-sm" :title="t('applications.downloadPdf')">
                     PDF
                   </button>
-                  <button @click="openDetails(app)" class="zen-btn zen-btn-ai zen-btn-sm" title="Details anzeigen">
-                    Details
+                  <button @click="openDetails(app)" class="zen-btn zen-btn-ai zen-btn-sm" :title="t('applications.showDetails')">
+                    {{ t('applications.details') }}
                   </button>
                 </td>
               </tr>
@@ -350,12 +350,12 @@
         </ScrollableTable>
 
         <!-- Pagination -->
-        <nav v-if="totalPages > 1" class="pagination" aria-label="Bewerbungs-Seitennavigation">
+        <nav v-if="totalPages > 1" class="pagination" :aria-label="t('applications.paginationNav')">
           <button
             class="pagination-btn"
             :disabled="currentPage === 1"
             @click="goToPage(currentPage - 1)"
-            aria-label="Vorherige Seite"
+            :aria-label="t('applications.previousPage')"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="15 18 9 12 15 6"/>
@@ -397,7 +397,7 @@
             class="pagination-btn"
             :disabled="currentPage === totalPages"
             @click="goToPage(currentPage + 1)"
-            aria-label="Nächste Seite"
+            :aria-label="t('applications.nextPage')"
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <polyline points="9 18 15 12 9 6"/>
@@ -406,25 +406,25 @@
         </nav>
 
         <p v-if="totalPages > 1" class="pagination-info">
-          Seite {{ currentPage }} von {{ totalPages }} ({{ totalApplications }} Bewerbungen)
+          {{ t('applications.paginationInfo', { current: currentPage, total: totalPages, count: totalApplications }) }}
         </p>
       </section>
 
       <!-- Empty State -->
       <section v-else id="applications-list" class="empty-state" data-testid="empty-state" aria-live="polite">
         <div class="empty-enso" aria-hidden="true"></div>
-        <h3>{{ searchQuery || filterStatus || filterFirma ? 'Keine Ergebnisse' : 'Noch keine Bewerbungen' }}</h3>
+        <h3>{{ searchQuery || filterStatus || filterFirma ? t('applications.noResults') : t('applications.noApplicationsYet') }}</h3>
         <p v-if="searchQuery || filterStatus || filterFirma">
-          Keine Bewerbungen gefunden. Versuchen Sie andere Suchbegriffe.
+          {{ t('applications.noApplicationsFound') }}
         </p>
         <p v-else>
-          Erstellen Sie Ihre erste Bewerbung direkt hier oder über die Chrome Extension.
+          {{ t('applications.createFirst') }}
         </p>
         <router-link v-if="!(searchQuery || filterStatus || filterFirma)" to="/new-application" class="zen-btn zen-btn-ai" data-testid="new-application-btn">
-          Neue Bewerbung erstellen
+          {{ t('applications.createNew') }}
         </router-link>
         <button v-if="searchQuery || filterStatus || filterFirma" @click="clearFilters" class="zen-btn" data-testid="clear-filters-btn">
-          Filter zurücksetzen
+          {{ t('applications.resetFilters') }}
         </button>
       </section>
 
@@ -448,56 +448,56 @@
             <div class="modal-content">
               <!-- Status -->
               <div class="detail-group detail-group-highlight">
-                <label class="detail-label">Status</label>
+                <label class="detail-label">{{ t('applications.status') }}</label>
                 <select v-model="selectedApp.status" @change="updateStatus(selectedApp)" class="form-select">
-                  <option value="erstellt">Erstellt</option>
-                  <option value="versendet">Versendet</option>
-                  <option value="antwort_erhalten">Antwort erhalten</option>
-                  <option value="absage">Absage</option>
-                  <option value="zusage">Zusage</option>
+                  <option value="erstellt">{{ t('applications.statusCreated') }}</option>
+                  <option value="versendet">{{ t('applications.statusSent') }}</option>
+                  <option value="antwort_erhalten">{{ t('applications.statusResponseReceived') }}</option>
+                  <option value="absage">{{ t('applications.statusRejection') }}</option>
+                  <option value="zusage">{{ t('applications.statusAcceptance') }}</option>
                 </select>
               </div>
 
               <!-- Info Grid -->
               <div class="info-grid">
                 <div class="detail-group">
-                  <label class="detail-label">Firma</label>
+                  <label class="detail-label">{{ t('applications.companyLabel') }}</label>
                   <p class="detail-value">{{ selectedApp.firma }}</p>
                 </div>
 
                 <div v-if="selectedApp.position" class="detail-group">
-                  <label class="detail-label">Position</label>
+                  <label class="detail-label">{{ t('applications.position') }}</label>
                   <p class="detail-value">{{ selectedApp.position }}</p>
                 </div>
 
                 <div v-if="selectedApp.ansprechpartner" class="detail-group">
-                  <label class="detail-label">Ansprechpartner</label>
+                  <label class="detail-label">{{ t('applications.contactPerson') }}</label>
                   <p class="detail-value">{{ selectedApp.ansprechpartner }}</p>
                 </div>
 
                 <div v-if="selectedApp.email" class="detail-group">
-                  <label class="detail-label">Email</label>
+                  <label class="detail-label">{{ t('applications.email') }}</label>
                   <p class="detail-value">
                     <a :href="`mailto:${selectedApp.email}`" class="detail-link">{{ selectedApp.email }}</a>
                   </p>
                 </div>
 
                 <div v-if="selectedApp.quelle" class="detail-group">
-                  <label class="detail-label">Quelle</label>
+                  <label class="detail-label">{{ t('applications.source') }}</label>
                   <p class="detail-value">
                     <a :href="selectedApp.quelle" target="_blank" class="detail-link">{{ getDomain(selectedApp.quelle) }}</a>
                   </p>
                 </div>
 
                 <div class="detail-group">
-                  <label class="detail-label">Datum</label>
+                  <label class="detail-label">{{ t('applications.date') }}</label>
                   <p class="detail-value">{{ formatDateTime(selectedApp.datum) }}</p>
                 </div>
               </div>
 
               <!-- Sent Info -->
               <div v-if="selectedApp.sent_at" class="detail-group detail-group-sent">
-                <label class="detail-label">Gesendet</label>
+                <label class="detail-label">{{ t('applications.sentLabel') }}</label>
                 <p class="detail-value">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="sent-icon">
                     <path d="M22 2L11 13"/>
@@ -509,17 +509,17 @@
 
               <!-- Betreff -->
               <div v-if="selectedApp.betreff" class="detail-group">
-                <label class="detail-label">Betreff</label>
+                <label class="detail-label">{{ t('applications.subject') }}</label>
                 <p class="detail-value detail-value-block">{{ selectedApp.betreff }}</p>
               </div>
 
               <!-- Notes -->
               <div class="detail-group">
-                <label class="detail-label">Notizen</label>
+                <label class="detail-label">{{ t('applications.notes') }}</label>
                 <textarea
                   v-model="selectedApp.notizen"
                   @blur="updateNotes(selectedApp)"
-                  placeholder="Notizen hinzufügen..."
+                  :placeholder="t('applications.notesPlaceholder')"
                   rows="4"
                   class="form-textarea"
                 ></textarea>
@@ -527,7 +527,7 @@
 
               <!-- Interview Tracking Section -->
               <div class="detail-group">
-                <label class="detail-label">Interview-Tracking</label>
+                <label class="detail-label">{{ t('applications.interviewTracking') }}</label>
                 <InterviewTracker
                   :application-id="selectedApp.id"
                   :initial-date="selectedApp.interview_date"
@@ -539,7 +539,7 @@
 
               <!-- ATS Optimizer Section -->
               <div class="detail-group">
-                <label class="detail-label">ATS-Optimierung</label>
+                <label class="detail-label">{{ t('applications.atsOptimization') }}</label>
                 <ATSOptimizer
                   v-if="selectedApp.id"
                   :application-id="selectedApp.id"
@@ -549,10 +549,10 @@
 
               <!-- Gap Analysis / Learning Recommendations Section -->
               <div class="detail-group">
-                <label class="detail-label">Skill-Luecken & Lernempfehlungen</label>
+                <label class="detail-label">{{ t('applications.skillGapsAndRecommendations') }}</label>
                 <div v-if="jobFitLoading" class="gap-loading-state">
                   <div class="loading-spinner"></div>
-                  <span>Lade Skill-Analyse...</span>
+                  <span>{{ t('applications.loadingSkillAnalysis') }}</span>
                 </div>
                 <GapAnalysis
                   v-else-if="jobFitData"
@@ -568,8 +568,8 @@
                     <line x1="12" y1="16" x2="12.01" y2="16"/>
                   </svg>
                   <div>
-                    <strong>Keine Skill-Analyse verfuegbar</strong>
-                    <p>Analysieren Sie zuerst die Stellenanforderungen, um Skill-Luecken und Lernempfehlungen zu erhalten.</p>
+                    <strong>{{ t('applications.noSkillAnalysis') }}</strong>
+                    <p>{{ t('applications.analyzeRequirementsFirst') }}</p>
                   </div>
                 </div>
               </div>
@@ -583,20 +583,20 @@
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
-                Interview-Prep
+                {{ t('applications.interviewPrep') }}
               </router-link>
               <button @click="downloadEmailDraft(selectedApp)" class="zen-btn zen-btn-ai">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                   <polyline points="22,6 12,13 2,6"/>
                 </svg>
-                Per E-Mail versenden
+                {{ t('applications.sendViaEmail') }}
               </button>
               <button @click="downloadPDF(selectedApp.id)" class="zen-btn">
-                PDF herunterladen
+                {{ t('applications.downloadPdf') }}
               </button>
-              <button @click="deleteApp(selectedApp.id)" class="zen-btn zen-btn-danger" aria-label="Bewerbung löschen" title="Bewerbung löschen">
-                Löschen
+              <button @click="deleteApp(selectedApp.id)" class="zen-btn zen-btn-danger" :aria-label="t('applications.deleteApplication')" :title="t('applications.deleteApplication')">
+                {{ t('common.delete') }}
               </button>
             </div>
           </div>
@@ -617,6 +617,9 @@ import InterviewTracker from '../components/InterviewTracker.vue'
 import ScrollableTable from '../components/ScrollableTable.vue'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const route = useRoute()
 const router = useRouter()
@@ -661,12 +664,12 @@ const statusOptions = computed(() => {
     'zusage': applications.value.filter(a => a.status === 'zusage').length
   }
   return [
-    { value: '', label: 'Alle', count: counts[''] },
-    { value: 'erstellt', label: 'Erstellt', count: counts['erstellt'] },
-    { value: 'versendet', label: 'Versendet', count: counts['versendet'] },
-    { value: 'antwort_erhalten', label: 'Antwort', count: counts['antwort_erhalten'] },
-    { value: 'absage', label: 'Absage', count: counts['absage'] },
-    { value: 'zusage', label: 'Zusage', count: counts['zusage'] }
+    { value: '', label: t('applications.statusAll'), count: counts[''] },
+    { value: 'erstellt', label: t('applications.statusCreated'), count: counts['erstellt'] },
+    { value: 'versendet', label: t('applications.statusSent'), count: counts['versendet'] },
+    { value: 'antwort_erhalten', label: t('applications.statusResponse'), count: counts['antwort_erhalten'] },
+    { value: 'absage', label: t('applications.statusRejection'), count: counts['absage'] },
+    { value: 'zusage', label: t('applications.statusAcceptance'), count: counts['zusage'] }
   ]
 })
 
@@ -724,10 +727,10 @@ const isExportDisabled = computed(() => {
 
 const exportDisabledReason = computed(() => {
   if (applications.value.length === 0) {
-    return 'Keine Bewerbungen zum Exportieren vorhanden'
+    return t('applications.exportNoApplications')
   }
   if (exportFilteredOnly.value && filteredApplications.value.length === 0) {
-    return 'Keine gefilterten Ergebnisse zum Exportieren'
+    return t('applications.exportNoFilteredResults')
   }
   return ''
 })
@@ -792,7 +795,7 @@ const downloadPDF = async (id) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (_e) {
-    if (window.$toast) { window.$toast('Fehler beim PDF-Download', 'error') }
+    if (window.$toast) { window.$toast(t('applications.pdfDownloadError'), 'error') }
   }
 }
 
@@ -830,10 +833,10 @@ const updateStatus = async (app) => {
       applications.value[index].status = app.status
     }
     if (window.$toast) {
-      window.$toast('Status erfolgreich geändert', 'success')
+      window.$toast(t('applications.statusChangedSuccess'), 'success')
     }
   } catch (_e) {
-    if (window.$toast) { window.$toast('Fehler beim Aktualisieren', 'error') }
+    if (window.$toast) { window.$toast(t('applications.statusChangeError'), 'error') }
   }
 }
 
@@ -847,16 +850,16 @@ const updateNotes = async (app) => {
       applications.value[index].notizen = app.notizen
     }
   } catch (_e) {
-    if (window.$toast) { window.$toast('Fehler beim Speichern der Notizen', 'error') }
+    if (window.$toast) { window.$toast(t('applications.noteSaveError'), 'error') }
   }
 }
 
 const deleteApp = async (id) => {
   const confirmed = await confirm({
-    title: 'Bewerbung löschen',
-    message: 'Möchten Sie diese Bewerbung wirklich löschen?',
-    confirmText: 'Löschen',
-    cancelText: 'Abbrechen',
+    title: t('applications.deleteConfirmTitle'),
+    message: t('applications.deleteConfirmMessage'),
+    confirmText: t('common.delete'),
+    cancelText: t('common.cancel'),
     type: 'danger'
   })
   if (!confirmed) return
@@ -872,7 +875,7 @@ const deleteApp = async (id) => {
       : currentPage.value
     loadApplications(pageToLoad)
   } catch (_e) {
-    if (window.$toast) { window.$toast('Fehler beim Löschen', 'error') }
+    if (window.$toast) { window.$toast(t('applications.deleteError'), 'error') }
   }
 }
 
@@ -954,11 +957,11 @@ const getDomain = (url) => {
 
 const getStatusLabel = (status) => {
   const labels = {
-    'erstellt': 'Erstellt',
-    'versendet': 'Versendet',
-    'antwort_erhalten': 'Antwort',
-    'absage': 'Absage',
-    'zusage': 'Zusage'
+    'erstellt': t('applications.statusCreated'),
+    'versendet': t('applications.statusSent'),
+    'antwort_erhalten': t('applications.statusResponse'),
+    'absage': t('applications.statusRejection'),
+    'zusage': t('applications.statusAcceptance')
   }
   return labels[status] || status
 }
@@ -1008,7 +1011,7 @@ const exportApplications = async (format) => {
     document.body.removeChild(link)
     window.URL.revokeObjectURL(url)
   } catch (_e) {
-    if (window.$toast) { window.$toast('Fehler beim Export', 'error') }
+    if (window.$toast) { window.$toast(t('applications.exportError'), 'error') }
   }
 }
 
@@ -1029,10 +1032,10 @@ const downloadEmailDraft = async (app) => {
     window.URL.revokeObjectURL(url)
 
     if (window.$toast) {
-      window.$toast('E-Mail-Entwurf heruntergeladen. Doppelklicken Sie die Datei, um sie in Ihrem E-Mail-Programm zu oeffnen.', 'success', 6000)
+      window.$toast(t('applications.emlDownloaded'), 'success', 6000)
     }
   } catch (_e) {
-    if (window.$toast) { window.$toast('Fehler beim Erstellen des E-Mail-Entwurfs', 'error') }
+    if (window.$toast) { window.$toast(t('applications.emailDraftError'), 'error') }
   }
 }
 

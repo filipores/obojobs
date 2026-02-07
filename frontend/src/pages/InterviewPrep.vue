@@ -9,7 +9,7 @@
               <path d="M19 12H5"/>
               <polyline points="12 19 5 12 12 5"/>
             </svg>
-            Zurueck zu Bewerbungen
+            {{ t('interviewPrep.backToApplications') }}
           </router-link>
           <div class="header-main">
             <div>
@@ -222,13 +222,13 @@
                   </svg>
                   <span>Beispiel-Antwort</span>
                 </div>
-                <p class="answer-text">{{ question.sample_answer || 'Keine Beispiel-Antwort verfuegbar.' }}</p>
+                <p class="answer-text">{{ question.sample_answer || t('interviewPrep.noSampleAnswer') }}</p>
 
                 <div v-if="question.question_type === 'behavioral'" class="star-hint">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
                   </svg>
-                  <span>Tipp: Nutze die STAR-Methode (Situation, Task, Action, Result) fuer strukturierte Antworten.</span>
+                  <span>{{ t('interviewPrep.starTip') }}</span>
                 </div>
               </div>
             </transition>
@@ -259,12 +259,14 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
 import CompanyResearch from '../components/CompanyResearch.vue'
 import SalaryCoach from '../components/SalaryCoach.vue'
 
 const route = useRoute()
 const router = useRouter()
+const { t } = useI18n()
 
 const applicationId = computed(() => route.params.id)
 const application = ref(null)

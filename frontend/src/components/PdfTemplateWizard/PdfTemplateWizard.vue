@@ -113,14 +113,14 @@
           class="zen-btn"
           @click="handleBackToQuickReview"
         >
-          Zurueck
+          {{ t('components.pdfWizard.back') }}
         </button>
         <button
           v-else-if="step > 1 && !analyzing"
           class="zen-btn"
           @click="prevStep"
         >
-          Zurueck
+          {{ t('components.pdfWizard.back') }}
         </button>
         <button class="zen-btn" @click="handleCancel">
           Abbrechen
@@ -159,11 +159,14 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '@/api/client'
 import PdfUploadStep from './PdfUploadStep.vue'
 import VariableReviewStep from './VariableReviewStep.vue'
 import PdfPreview from './PdfPreview.vue'
 import QuickReview from './QuickReview.vue'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['template-created', 'cancel'])
 

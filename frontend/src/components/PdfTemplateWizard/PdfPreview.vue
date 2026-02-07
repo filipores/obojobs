@@ -18,7 +18,7 @@
           class="control-btn"
           :disabled="currentPage >= totalPages"
           @click="nextPage"
-          title="Naechste Seite"
+          :title="t('components.pdfPreview.nextPage')"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="9 18 15 12 9 6"/>
@@ -42,7 +42,7 @@
           class="control-btn"
           @click="zoomIn"
           :disabled="scale >= 2"
-          title="Vergroessern"
+          :title="t('components.pdfPreview.zoomIn')"
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"/>
@@ -111,7 +111,10 @@
 
 <script setup>
 import { ref, shallowRef, computed, watch, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import * as pdfjsLib from 'pdfjs-dist'
+
+const { t } = useI18n()
 
 // Set worker source
 pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(

@@ -39,7 +39,7 @@
       </svg>
       <div>
         <strong>Keine Skill-Luecken gefunden!</strong>
-        <p>Ihr Profil erfuellt alle Anforderungen fuer diese Stelle.</p>
+        <p>{{ t('components.gapAnalysis.allRequirementsMet') }}</p>
       </div>
     </div>
 
@@ -56,7 +56,7 @@
             Lernempfehlungen
           </h3>
           <p class="header-subtitle">
-            Verbessern Sie Ihre Qualifikationen fuer zukuenftige Bewerbungen
+            {{ t('components.gapAnalysis.improveFuture') }}
           </p>
         </div>
         <div class="gap-summary">
@@ -174,7 +174,7 @@
                 <polyline points="15 3 21 3 21 9"/>
                 <line x1="10" y1="14" x2="21" y2="3"/>
               </svg>
-              Ressource oeffnen
+              {{ t('components.gapAnalysis.openResource') }}
             </a>
           </div>
         </div>
@@ -197,6 +197,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   recommendations: {

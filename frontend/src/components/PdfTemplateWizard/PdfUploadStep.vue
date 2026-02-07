@@ -4,7 +4,7 @@
       <div class="step-marker">01</div>
       <h3>PDF-Vorlage hochladen</h3>
       <p class="upload-hint">
-        Laden Sie ein PDF-Dokument hoch, das als Vorlage fuer Ihre Bewerbungen dienen soll.
+        {{ t('components.pdfUpload.uploadDescription') }}
       </p>
     </div>
 
@@ -106,7 +106,7 @@
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="20 6 9 17 4 12"/>
           </svg>
-          Maximale Groesse: 10 MB
+          {{ t('components.pdfUpload.maxSize') }}
         </li>
         <li>
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -121,6 +121,9 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const emit = defineEmits(['file-selected'])
 
@@ -183,7 +186,7 @@ function validateAndSelectFile(file) {
 
   // Check file size
   if (file.size > MAX_FILE_SIZE) {
-    errorMessage.value = `Die Datei ist zu gross. Maximale Groesse: ${formatFileSize(MAX_FILE_SIZE)}.`
+    errorMessage.value = `${t('components.pdfUpload.fileTooLarge')} ${formatFileSize(MAX_FILE_SIZE)}.`
     return
   }
 

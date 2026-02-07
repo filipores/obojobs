@@ -1,7 +1,19 @@
 import { describe, it, expect } from 'vitest'
 import { mount } from '@vue/test-utils'
+import { createI18n } from 'vue-i18n'
+import de from '../i18n/locales/de.json'
+import en from '../i18n/locales/en.json'
 import PdfUploadStep from '../components/PdfTemplateWizard/PdfUploadStep.vue'
 import VariableReviewStep from '../components/PdfTemplateWizard/VariableReviewStep.vue'
+
+const i18n = createI18n({
+  legacy: false,
+  locale: 'de',
+  fallbackLocale: 'de',
+  messages: { de, en }
+})
+
+const globalPlugins = { global: { plugins: [i18n] } }
 
 // Mock File constructor for tests
 function createMockFile(name, size, type = 'application/pdf') {
@@ -13,7 +25,7 @@ function createMockFile(name, size, type = 'application/pdf') {
 describe('PdfUploadStep.vue', () => {
   describe('rendering', () => {
     it('renders drop zone in empty state', () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       expect(wrapper.find('.drop-zone').exists()).toBe(true)
       expect(wrapper.find('.drop-zone-text').exists()).toBe(true)
       expect(wrapper.text()).toContain('Klicken')
@@ -21,21 +33,21 @@ describe('PdfUploadStep.vue', () => {
     })
 
     it('renders file requirements list', () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       expect(wrapper.find('.upload-requirements').exists()).toBe(true)
       expect(wrapper.text()).toContain('PDF-Format')
       expect(wrapper.text()).toContain('10 MB')
     })
 
     it('does not show error message initially', () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       expect(wrapper.find('.upload-error').exists()).toBe(false)
     })
   })
 
   describe('file validation', () => {
     it('accepts valid PDF file', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const file = createMockFile('test.pdf', 1024, 'application/pdf')
 
       const input = wrapper.find('input[type="file"]')
@@ -50,7 +62,7 @@ describe('PdfUploadStep.vue', () => {
     })
 
     it('rejects non-PDF file', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const file = createMockFile('test.txt', 1024, 'text/plain')
 
       const input = wrapper.find('input[type="file"]')
@@ -65,7 +77,7 @@ describe('PdfUploadStep.vue', () => {
     })
 
     it('rejects file larger than 10 MB', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const file = createMockFile('large.pdf', 11 * 1024 * 1024, 'application/pdf')
 
       const input = wrapper.find('input[type="file"]')
@@ -75,11 +87,11 @@ describe('PdfUploadStep.vue', () => {
       await input.trigger('change')
 
       expect(wrapper.find('.upload-error').exists()).toBe(true)
-      expect(wrapper.text()).toContain('zu gross')
+      expect(wrapper.text()).toContain('zu groß')
     })
 
     it('rejects empty file', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const file = createMockFile('empty.pdf', 0, 'application/pdf')
 
       const input = wrapper.find('input[type="file"]')
@@ -93,7 +105,7 @@ describe('PdfUploadStep.vue', () => {
     })
 
     it('accepts PDF by extension even without correct MIME type', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       // Some systems report different MIME types
       const file = createMockFile('document.pdf', 1024, 'application/octet-stream')
 
@@ -109,7 +121,7 @@ describe('PdfUploadStep.vue', () => {
 
   describe('drag and drop', () => {
     it('shows drag-over state on dragenter', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const dropZone = wrapper.find('.drop-zone')
 
       await dropZone.trigger('dragenter')
@@ -118,7 +130,7 @@ describe('PdfUploadStep.vue', () => {
     })
 
     it('removes drag-over state on dragleave', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const dropZone = wrapper.find('.drop-zone')
 
       await dropZone.trigger('dragenter')
@@ -133,7 +145,7 @@ describe('PdfUploadStep.vue', () => {
     })
 
     it('handles file drop', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const dropZone = wrapper.find('.drop-zone')
       const file = createMockFile('dropped.pdf', 1024, 'application/pdf')
 
@@ -150,7 +162,7 @@ describe('PdfUploadStep.vue', () => {
 
   describe('file removal', () => {
     it('removes selected file when remove button clicked', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const file = createMockFile('test.pdf', 1024, 'application/pdf')
 
       // First select a file
@@ -172,7 +184,7 @@ describe('PdfUploadStep.vue', () => {
 
   describe('file size formatting', () => {
     it('displays file size correctly', async () => {
-      const wrapper = mount(PdfUploadStep)
+      const wrapper = mount(PdfUploadStep, globalPlugins)
       const file = createMockFile('test.pdf', 1536, 'application/pdf') // 1.5 KB
 
       const input = wrapper.find('input[type="file"]')
@@ -217,6 +229,7 @@ describe('VariableReviewStep.vue', () => {
   describe('rendering', () => {
     it('renders suggestion cards for each suggestion', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -226,6 +239,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('displays correct stats summary', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -235,6 +249,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('shows empty state when no suggestions', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: [] }
       })
 
@@ -244,6 +259,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('displays variable name and suggested text', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -253,6 +269,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('displays reason when provided', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -261,6 +278,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('displays position information', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -272,6 +290,7 @@ describe('VariableReviewStep.vue', () => {
     it('emits accept event when accept button clicked', async () => {
       const suggestions = createSuggestions()
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -286,6 +305,7 @@ describe('VariableReviewStep.vue', () => {
     it('emits reject event when reject button clicked', async () => {
       const suggestions = createSuggestions()
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -298,6 +318,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('shows status badge for accepted suggestions', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -309,6 +330,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('shows undo button for decided suggestions', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -320,6 +342,7 @@ describe('VariableReviewStep.vue', () => {
   describe('bulk actions', () => {
     it('shows bulk action buttons when pending items exist', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions: createSuggestions() }
       })
 
@@ -335,6 +358,7 @@ describe('VariableReviewStep.vue', () => {
       }))
 
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -344,6 +368,7 @@ describe('VariableReviewStep.vue', () => {
     it('emits accept for all pending when "accept all" clicked', async () => {
       const suggestions = createSuggestions()
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -360,6 +385,7 @@ describe('VariableReviewStep.vue', () => {
     it('emits reject for all pending when "reject all" clicked', async () => {
       const suggestions = createSuggestions()
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -381,6 +407,7 @@ describe('VariableReviewStep.vue', () => {
       ]
 
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -395,6 +422,7 @@ describe('VariableReviewStep.vue', () => {
       ]
 
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -410,6 +438,7 @@ describe('VariableReviewStep.vue', () => {
       ]
 
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: { suggestions }
       })
 
@@ -421,6 +450,7 @@ describe('VariableReviewStep.vue', () => {
   describe('variable styling', () => {
     it('applies correct CSS class for FIRMA variable', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: {
           suggestions: [
             { id: '1', variable_name: 'FIRMA', suggested_text: 'Test', status: 'pending' }
@@ -433,6 +463,7 @@ describe('VariableReviewStep.vue', () => {
 
     it('applies correct CSS class for POSITION variable', () => {
       const wrapper = mount(VariableReviewStep, {
+        ...globalPlugins,
         props: {
           suggestions: [
             { id: '1', variable_name: 'POSITION', suggested_text: 'Test', status: 'pending' }

@@ -13,7 +13,7 @@
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
         </router-link>
-        <button @click="dismissVerificationBanner" class="reminder-dismiss" aria-label="Hinweis schließen">
+        <button @click="dismissVerificationBanner" class="reminder-dismiss" :aria-label="t('dashboard.closeHint')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -40,7 +40,7 @@
           <router-link to="/documents" class="zen-btn zen-btn-ai zen-btn-sm">
             Lebenslauf hochladen
           </router-link>
-          <button @click="dismissSkillsHint" class="skills-hint-dismiss" aria-label="Hinweis schliessen">
+          <button @click="dismissSkillsHint" class="skills-hint-dismiss" :aria-label="t('dashboard.closeHint')">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <line x1="18" y1="6" x2="6" y2="18"/>
               <line x1="6" y1="6" x2="18" y2="18"/>
@@ -353,12 +353,15 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
 import { authStore } from '../store/auth'
 import WeeklyGoalWidget from '../components/WeeklyGoalWidget.vue'
 import InterviewStatsWidget from '../components/InterviewStatsWidget.vue'
 import JobRecommendations from '../components/JobRecommendations.vue'
 import { getFullLocale } from '../i18n'
+
+const { t } = useI18n()
 
 const stats = ref(null)
 const usage = ref(null)

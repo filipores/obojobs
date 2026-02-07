@@ -17,7 +17,7 @@
         type="button"
         class="calendar-trigger"
         @click="togglePicker"
-        :aria-label="isOpen ? 'Kalender schliessen' : 'Kalender oeffnen'"
+        :aria-label="isOpen ? t('components.dateTimePicker.closeCalendar') : t('components.dateTimePicker.openCalendar')"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
@@ -31,7 +31,7 @@
         type="button"
         class="clear-trigger"
         @click.stop="clearValue"
-        aria-label="Datum loeschen"
+        :aria-label="t('components.dateTimePicker.clearDate')"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"></line>
@@ -67,7 +67,7 @@
               type="button"
               class="nav-btn"
               @click="nextMonth"
-              aria-label="Naechster Monat"
+              :aria-label="t('components.dateTimePicker.nextMonth')"
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="9,6 15,12 9,18"></polyline>
@@ -152,6 +152,9 @@
 
 <script setup>
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: {

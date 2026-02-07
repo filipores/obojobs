@@ -114,7 +114,7 @@
         </svg>
         <div>
           <strong>Niedriger Job-Fit Score</strong>
-          <p>Diese Stelle passt moeglicherweise nicht zu Ihrem Profil. Ueberlegen Sie, ob sich eine Bewerbung lohnt.</p>
+          <p>{{ t('components.jobFitScore.mightNotFit') }}</p>
         </div>
       </div>
 
@@ -190,7 +190,10 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
+
+const { t } = useI18n()
 
 const props = defineProps({
   applicationId: {
@@ -231,7 +234,7 @@ const parseErrorResponse = (e) => {
   // 404 - No requirements found (not really an error)
   if (status === 404) {
     return {
-      message: 'Keine Anforderungen fuer diese Stelle gefunden',
+      message: t('components.jobFitScore.noRequirements'),
       hint: 'Die Stellenanzeige enthaelt keine analysierbaren Anforderungen.',
       isTemporary: false,
       showContactLink: false
