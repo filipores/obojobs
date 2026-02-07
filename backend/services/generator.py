@@ -214,12 +214,7 @@ class BewerbungsGenerator:
         datum_formatiert = f"{now.day:02d}. {german_months[now.month - 1]} {now.year}"
 
         # Build smart composite values that handle empty fields gracefully
-        kontakt_parts = []
-        if self.user.phone:
-            kontakt_parts.append(self.user.phone)
-        if self.user.email:
-            kontakt_parts.append(self.user.email)
-        kontakt_zeile = " | ".join(kontakt_parts)
+        kontakt_zeile = " | ".join(filter(None, [self.user.phone, self.user.email]))
 
         ort_datum = f"{self.user.city}, {datum_formatiert}" if self.user.city else datum_formatiert
 
@@ -306,18 +301,14 @@ class BewerbungsGenerator:
             user_website=self.user.website,
         )
 
-        # Sammle alle extrahierten Informationen
+        # Collect all extracted information
+        links = self.extracted_links or {}
         extracted_info = {
             "email_from_text": details.get("email", ""),
-            "email_links": [],
-            "application_links": [],
-            "all_links": [],
+            "email_links": links.get("email_links", []),
+            "application_links": links.get("application_links", []),
+            "all_links": links.get("all_links", []),
         }
-
-        if self.extracted_links:
-            extracted_info["email_links"] = self.extracted_links.get("email_links", [])
-            extracted_info["application_links"] = self.extracted_links.get("application_links", [])
-            extracted_info["all_links"] = self.extracted_links.get("all_links", [])
 
         # Save to database
         application = Application(
