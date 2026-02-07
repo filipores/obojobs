@@ -96,24 +96,16 @@ class BewerbungsGenerator:
             else:
                 raise ValueError(f"Template mit ID {self.template_id} nicht gefunden.")
         else:
-            # Load Anschreiben-Template (falls hochgeladen)
-            anschreiben_doc = Document.query.filter_by(user_id=self.user_id, doc_type="anschreiben").first()
-            if anschreiben_doc and os.path.exists(anschreiben_doc.file_path):
-                # Use uploaded Anschreiben as template
-                self.anschreiben_template = read_document(anschreiben_doc.file_path)
-                logger.info("Anschreiben-Vorlage aus Upload geladen")
+            # No specific template selected - use default template from DB
+            template = get_or_create_default_template(self.user_id)
+            self.template = template
+            self.anschreiben_template = template.content
+            if template.name == "Standard-Vorlage (automatisch erstellt)":
+                logger.info("Standard-Template automatisch erstellt")
             else:
-                # Falls kein Anschreiben hochgeladen, nutze Template aus DB
-                # Auto-create default template if none exists
-                template = get_or_create_default_template(self.user_id)
-                self.template = template
-                self.anschreiben_template = template.content
-                if template.name == "Standard-Vorlage (automatisch erstellt)":
-                    logger.info("Standard-Template automatisch erstellt")
-                else:
-                    logger.info("Template geladen")
-                if template.is_pdf_template:
-                    logger.info("PDF-Template erkannt: %s", template.pdf_path)
+                logger.info("Template geladen")
+            if template.is_pdf_template:
+                logger.info("PDF-Template erkannt: %s", template.pdf_path)
 
         logger.info("Dokumente geladen")
 
