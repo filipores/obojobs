@@ -28,6 +28,7 @@ services:
       dockerfile: Dockerfile
       args:
         - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
     restart: unless-stopped
     expose:
       - "80"
@@ -36,7 +37,7 @@ services:
     networks:
       - obojobs-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:80"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -65,6 +66,18 @@ services:
       - REGISTRATION_ENABLED=${REGISTRATION_ENABLED:-true}
       - APP_VERSION=${APP_VERSION:-development}
       - APP_COMMIT=${APP_COMMIT:-unknown}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-}
+      - EMAIL_ENCRYPTION_KEY=${EMAIL_ENCRYPTION_KEY}
+      - FORCE_HTTPS=true
+      - SECURITY_HEADERS_ENABLED=true
+      - COMPANY_NAME=${COMPANY_NAME:-obojobs}
+      - COMPANY_EMAIL=${COMPANY_EMAIL:-kontakt@obojobs.de}
+      - COMPANY_ADDRESS=${COMPANY_ADDRESS:-}
+      - COMPANY_POSTAL_CODE=${COMPANY_POSTAL_CODE:-}
+      - COMPANY_CITY=${COMPANY_CITY:-}
+      - COMPANY_PHONE=${COMPANY_PHONE:-}
     volumes:
       - uploads:/app/uploads
     depends_on:

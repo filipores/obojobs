@@ -6,7 +6,8 @@
 .PHONY: help install dev dev-frontend dev-backend build test lint clean \
         db-migrate db-upgrade db-downgrade db-reset \
         ralph ralph-status ralph-report ralph-reset ralph-headed ralph-split \
-        logs docker-build docker-up docker-down
+        logs docker-build docker-up docker-down docker-logs \
+        docker-prod-build docker-prod-up docker-prod-down docker-prod-logs
 
 # Default target
 .DEFAULT_GOAL := help
@@ -64,10 +65,16 @@ help:
 	@echo "  make ralph-headed   - Tests mit sichtbarem Browser"
 	@echo "  make ralph-split    - Split-Screen (tmux)"
 	@echo ""
-	@echo "$(GREEN)Docker:$(NC)"
+	@echo "$(GREEN)Docker (Dev):$(NC)"
 	@echo "  make docker-build   - Docker Images bauen"
 	@echo "  make docker-up      - Container starten"
 	@echo "  make docker-down    - Container stoppen"
+	@echo ""
+	@echo "$(GREEN)Docker (Prod):$(NC)"
+	@echo "  make docker-prod-build  - Production Images bauen"
+	@echo "  make docker-prod-up     - Production Container starten"
+	@echo "  make docker-prod-down   - Production Container stoppen"
+	@echo "  make docker-prod-logs   - Production Logs anzeigen"
 	@echo ""
 	@echo "$(GREEN)Utilities:$(NC)"
 	@echo "  make logs           - Backend Logs anzeigen"
@@ -159,21 +166,21 @@ lint-fix:
 # ===========================================
 db-migrate:
 	@echo "$(CYAN)Erstelle Migration: $(m)$(NC)"
-	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db migrate -m "$(m)"
+	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db migrate --directory $(BACKEND_DIR)/migrations -m "$(m)"
 
 db-upgrade:
 	@echo "$(CYAN)Migrationen anwenden...$(NC)"
-	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db upgrade
+	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db upgrade --directory $(BACKEND_DIR)/migrations
 
 db-downgrade:
 	@echo "$(CYAN)Letzte Migration rueckgaengig...$(NC)"
-	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db downgrade
+	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db downgrade --directory $(BACKEND_DIR)/migrations
 
 db-reset:
 	@echo "$(RED)ACHTUNG: Datenbank wird zurueckgesetzt!$(NC)"
 	@read -p "Fortfahren? (y/n): " confirm && [ "$$confirm" = "y" ]
 	rm -f $(BACKEND_DIR)/instance/*.db
-	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db upgrade
+	$(PYTHON) -m flask --app $(BACKEND_DIR)/app db upgrade --directory $(BACKEND_DIR)/migrations
 	@echo "$(GREEN)Datenbank zurueckgesetzt$(NC)"
 
 db-shell:
@@ -212,21 +219,37 @@ ralph-split:
 # ===========================================
 docker-build:
 	@echo "$(CYAN)Docker Images bauen...$(NC)"
-	docker-compose build
+	docker compose build
 
 docker-up:
 	@echo "$(CYAN)Docker Container starten...$(NC)"
-	docker-compose up -d
+	docker compose up -d
 	@echo "$(GREEN)Container gestartet$(NC)"
 	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
 	@echo "$(YELLOW)Backend:  http://localhost:5002$(NC)"
 
 docker-down:
 	@echo "$(CYAN)Docker Container stoppen...$(NC)"
-	docker-compose down
+	docker compose down
 
 docker-logs:
-	docker-compose logs -f
+	docker compose logs -f
+
+docker-prod-build:
+	@echo "$(CYAN)Production Docker Images bauen...$(NC)"
+	docker compose -f docker-compose.prod.yml build
+
+docker-prod-up:
+	@echo "$(CYAN)Production Container starten...$(NC)"
+	docker compose -f docker-compose.prod.yml up -d
+	@echo "$(GREEN)Production Container gestartet$(NC)"
+
+docker-prod-down:
+	@echo "$(CYAN)Production Container stoppen...$(NC)"
+	docker compose -f docker-compose.prod.yml down
+
+docker-prod-logs:
+	docker compose -f docker-compose.prod.yml logs -f
 
 # ===========================================
 # Utilities
