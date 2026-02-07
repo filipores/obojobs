@@ -1,3 +1,12 @@
+# [1.34.0](https://github.com/filipores/obojobs/compare/v1.33.0...v1.34.0) (2026-02-07)
+
+
+### Features
+
+* **applications:** add profile completeness warning before generation ([a7b5dd0](https://github.com/filipores/obojobs/commit/a7b5dd03031cac7f043ebfd6b62dcf0cb47340c1))
+* **legal:** make impressum and datenschutz address configurable via env ([5d61158](https://github.com/filipores/obojobs/commit/5d611585fb9c1548078a0dda4dbb9cc1d798dfea))
+* **subscriptions:** gracefully handle missing stripe configuration ([1f5fff6](https://github.com/filipores/obojobs/commit/1f5fff6ba8875a0fc42219e2cc65fa24bdabdef5))
+
 # [1.33.0](https://github.com/filipores/obojobs/compare/v1.32.2...v1.33.0) (2026-02-06)
 
 
