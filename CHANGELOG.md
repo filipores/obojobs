@@ -1,3 +1,10 @@
+## [1.39.5](https://github.com/filipores/obojobs/compare/v1.39.4...v1.39.5) (2026-02-08)
+
+
+### Bug Fixes
+
+* resolve landing page bugs, fix umlauts, redesign generation modal ([4b597a4](https://github.com/filipores/obojobs/commit/4b597a4e8b0ba22bce087069e20a0a43f27c52bd))
+
 ## [1.39.4](https://github.com/filipores/obojobs/compare/v1.39.3...v1.39.4) (2026-02-08)
 
 
