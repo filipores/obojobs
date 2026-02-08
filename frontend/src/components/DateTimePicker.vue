@@ -342,10 +342,14 @@ const updateDropdownPosition = async () => {
   const top = rect.bottom + 8
   const wouldOverflow = top + dropdownHeight > viewportHeight
 
+  const finalTop = wouldOverflow
+    ? Math.max(8, rect.top - dropdownHeight - 8)
+    : top
+
   dropdownStyle.value = {
     position: 'fixed',
     left: `${Math.max(8, rect.left)}px`,
-    top: wouldOverflow ? `${rect.top - dropdownHeight - 8}px` : `${top}px`,
+    top: `${finalTop}px`,
     zIndex: 'var(--z-modal)'
   }
 }

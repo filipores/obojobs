@@ -922,14 +922,12 @@ onUnmounted(() => {
     gap: var(--space-xs);
   }
 
-  .nav-icon {
-    width: 36px;
-    height: 36px;
-  }
-
   .subscription-display {
     padding: var(--space-xs) var(--space-sm);
     min-width: 0; /* Allow flex shrinking */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .subscription-plan {
@@ -944,11 +942,6 @@ onUnmounted(() => {
 
   .nav-actions {
     gap: 2px;
-  }
-
-  .nav-icon {
-    width: 32px;
-    height: 32px;
   }
 
   .subscription-display {
@@ -1033,14 +1026,14 @@ onUnmounted(() => {
   color: var(--color-text-ghost);
 }
 
-/* Add padding for bottom nav (visible up to 1024px) */
-@media (max-width: 1024px) {
+/* Add padding for bottom nav (visible up to 768px) */
+@media (max-width: 768px) {
   .main-content.with-nav {
-    padding-bottom: 72px;
+    padding-bottom: 84px;
   }
 
   .zen-footer {
-    padding-bottom: calc(var(--space-lg) + 72px);
+    padding-bottom: calc(var(--space-lg) + 84px);
   }
 }
 
@@ -1081,7 +1074,7 @@ onUnmounted(() => {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
-@media (max-width: 1024px) {
+@media (max-width: 768px) {
   .bottom-nav {
     display: flex;
     justify-content: space-around;

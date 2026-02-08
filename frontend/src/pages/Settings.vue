@@ -1133,11 +1133,22 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-md) 0;
+  gap: var(--space-md);
+}
+
+@media (max-width: 375px) {
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
 }
 
 .info-label {
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .info-value {
@@ -1704,6 +1715,7 @@ onUnmounted(() => {
   .nav-item {
     flex: 1 1 auto;
     min-width: fit-content;
+    min-height: 44px;
     justify-content: center;
     padding: var(--space-sm) var(--space-md);
   }

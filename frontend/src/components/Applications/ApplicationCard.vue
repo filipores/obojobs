@@ -95,6 +95,8 @@ const getJobFitClass = (score) => {
   padding: var(--space-lg);
   cursor: pointer;
   transition: all var(--transition-base);
+  overflow: hidden;
+  max-width: 100%;
 }
 
 .application-card:hover {
@@ -136,7 +138,8 @@ const getJobFitClass = (score) => {
 
 .card-meta {
   display: flex;
-  gap: var(--space-lg);
+  flex-wrap: wrap;
+  gap: var(--space-sm) var(--space-lg);
   padding: var(--space-md) 0;
   border-top: 1px solid var(--color-border-light);
   border-bottom: 1px solid var(--color-border-light);
