@@ -1,3 +1,10 @@
+## [1.39.3](https://github.com/filipores/obojobs/compare/v1.39.2...v1.39.3) (2026-02-08)
+
+
+### Performance Improvements
+
+* **scraper:** use scraperapi first in production, eliminate double-scrape ([2377987](https://github.com/filipores/obojobs/commit/237798723da0c47decc5fc2ae2a1313c1bae790c))
+
 ## [1.39.2](https://github.com/filipores/obojobs/compare/v1.39.1...v1.39.2) (2026-02-08)
 
 
