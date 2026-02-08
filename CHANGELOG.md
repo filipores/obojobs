@@ -1,3 +1,10 @@
+## [1.37.1](https://github.com/filipores/obojobs/compare/v1.37.0...v1.37.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **generator:** prevent double greeting in cover letter anrede ([d85fa62](https://github.com/filipores/obojobs/commit/d85fa62c28acaeae78aa6c1739042c080929ca2e))
+
 # [1.37.0](https://github.com/filipores/obojobs/compare/v1.36.0...v1.37.0) (2026-02-08)
 
 
