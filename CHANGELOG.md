@@ -1,3 +1,10 @@
+## [1.37.3](https://github.com/filipores/obojobs/compare/v1.37.2...v1.37.3) (2026-02-08)
+
+
+### Bug Fixes
+
+* **scraper:** add cloudscraper fallback for 403 bot protection ([5d843cd](https://github.com/filipores/obojobs/commit/5d843cd15e5ddf310fd16394e2afa401b57cbb48))
+
 ## [1.37.2](https://github.com/filipores/obojobs/compare/v1.37.1...v1.37.2) (2026-02-08)
 
 
