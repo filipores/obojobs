@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
@@ -2250,8 +2251,11 @@ JOB_BOARD_PARSERS: list[type[JobBoardParser]] = [
 
 
 class WebScraper:
+    SCRAPER_API_BASE = "https://api.scraperapi.com"
+
     def __init__(self, timeout: int = 15):
         self.timeout = timeout
+        self.scraper_api_key = os.getenv("SCRAPER_API_KEY")
         self.session = requests.Session()
         self.session.headers.update(
             {
@@ -2262,8 +2266,23 @@ class WebScraper:
             }
         )
 
+    def _fetch_via_scraper_api(self, url: str) -> requests.Response | None:
+        """Fetch a page through ScraperAPI proxy. Returns None if not configured."""
+        if not self.scraper_api_key:
+            return None
+        proxy_url = f"{self.SCRAPER_API_BASE}?api_key={self.scraper_api_key}&url={url}&country_code=de"
+        try:
+            response = self.session.get(proxy_url, timeout=max(self.timeout, 30))
+            response.raise_for_status()
+            logger.info("ScraperAPI success for %s", urlparse(url).netloc)
+            return response
+        except Exception as e:
+            logger.warning("ScraperAPI failed for %s: %s", urlparse(url).netloc, e)
+            return None
+
     def _fetch_page(self, url: str, headers: dict | None = None) -> requests.Response:
-        """Fetch a page, retrying with cloudscraper on 403/timeout/connection errors."""
+        """Fetch a page with 3-tier fallback: direct → ScraperAPI → cloudscraper."""
+        # Attempt 1: Direct request
         try:
             response = self.session.get(url, timeout=self.timeout, headers=headers)
             response.raise_for_status()
@@ -2273,14 +2292,22 @@ class WebScraper:
             is_retriable = isinstance(e, requests.ConnectionError | requests.Timeout) or is_403
             if not is_retriable:
                 raise
-            logger.info("Request to %s failed (%s), retrying with cloudscraper", urlparse(url).netloc, type(e).__name__)
+            logger.info("Direct request to %s failed (%s)", urlparse(url).netloc, type(e).__name__)
+
+            # Attempt 2: ScraperAPI (residential IP rotation)
+            api_response = self._fetch_via_scraper_api(url)
+            if api_response is not None:
+                return api_response
+
+            # Attempt 3: cloudscraper (anti-bot bypass)
+            logger.info("Retrying %s with cloudscraper", urlparse(url).netloc)
             try:
                 scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "linux"})
                 response = scraper.get(url, timeout=self.timeout)
                 response.raise_for_status()
                 return response
             except Exception:
-                raise e from None  # Re-raise the original error if cloudscraper also fails
+                raise e from None  # Re-raise the original error if all attempts fail
 
     @staticmethod
     def _make_http_error(e: requests.HTTPError) -> Exception:
