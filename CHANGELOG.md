@@ -1,3 +1,10 @@
+## [1.39.6](https://github.com/filipores/obojobs/compare/v1.39.5...v1.39.6) (2026-02-08)
+
+
+### Bug Fixes
+
+* **mobile:** resolve mobile compatibility issues across viewports ([687be74](https://github.com/filipores/obojobs/commit/687be741b92850ecf4b43894cc9e1931b44c4585))
+
 ## [1.39.5](https://github.com/filipores/obojobs/compare/v1.39.4...v1.39.5) (2026-02-08)
 
 
