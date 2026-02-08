@@ -2263,19 +2263,39 @@ class WebScraper:
         )
 
     def _fetch_page(self, url: str, headers: dict | None = None) -> requests.Response:
-        """Fetch a page, retrying with cloudscraper on 403."""
+        """Fetch a page, retrying with cloudscraper on 403/timeout/connection errors."""
         try:
             response = self.session.get(url, timeout=self.timeout, headers=headers)
             response.raise_for_status()
             return response
-        except requests.HTTPError as e:
-            if e.response is not None and e.response.status_code == 403:
-                logger.info("Got 403 from %s, retrying with cloudscraper", urlparse(url).netloc)
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout) as e:
+            is_403 = isinstance(e, requests.HTTPError) and e.response is not None and e.response.status_code == 403
+            is_retriable = isinstance(e, requests.ConnectionError | requests.Timeout) or is_403
+            if not is_retriable:
+                raise
+            logger.info("Request to %s failed (%s), retrying with cloudscraper", urlparse(url).netloc, type(e).__name__)
+            try:
                 scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "linux"})
                 response = scraper.get(url, timeout=self.timeout)
                 response.raise_for_status()
                 return response
-            raise
+            except Exception:
+                raise e from None  # Re-raise the original error if cloudscraper also fails
+
+    @staticmethod
+    def _make_http_error(e: requests.HTTPError) -> Exception:
+        """Convert HTTPError to user-friendly German error message."""
+        status = e.response.status_code if e.response is not None else 0
+        if status == 403:
+            return Exception(
+                "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
+                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+            )
+        if status == 404:
+            return Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.")
+        if status == 429:
+            return Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.")
+        return Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {e}")
 
     def detect_job_board(self, url: str) -> str | None:
         """Detect which job board a URL belongs to."""
@@ -2343,19 +2363,12 @@ class WebScraper:
             }
 
         except requests.HTTPError as e:
-            status = e.response.status_code if e.response is not None else 0
-            if status == 403:
-                raise Exception(
-                    "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
-                ) from e
-            elif status == 404:
-                raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
-            elif status == 429:
-                raise Exception(
-                    "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
-                ) from e
-            else:
-                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {str(e)}") from e
+            raise self._make_http_error(e) from e
+        except (requests.ConnectionError, requests.Timeout) as e:
+            raise Exception(
+                "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
+                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+            ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
@@ -2496,19 +2509,12 @@ class WebScraper:
             return result
 
         except requests.HTTPError as e:
-            status = e.response.status_code if e.response is not None else 0
-            if status == 403:
-                raise Exception(
-                    "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
-                ) from e
-            elif status == 404:
-                raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
-            elif status == 429:
-                raise Exception(
-                    "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
-                ) from e
-            else:
-                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {str(e)}") from e
+            raise self._make_http_error(e) from e
+        except (requests.ConnectionError, requests.Timeout) as e:
+            raise Exception(
+                "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
+                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+            ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
