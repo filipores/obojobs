@@ -1,6 +1,17 @@
 """Tests for subscription routes."""
 
+from unittest.mock import patch
+
+import pytest
+
 from models import Subscription, SubscriptionPlan, SubscriptionStatus, User, db
+
+
+@pytest.fixture(autouse=True)
+def _stripe_enabled():
+    """Enable Stripe for all tests so validation checks are reached."""
+    with patch("routes.subscriptions.config.is_stripe_enabled", return_value=True):
+        yield
 
 
 class TestGetPlans:
@@ -54,8 +65,6 @@ class TestCreateCheckout:
 
     def test_stripe_disabled_returns_503(self, client, auth_headers):
         """When Stripe is not configured, create-checkout should return 503"""
-        from unittest.mock import patch
-
         with patch("routes.subscriptions.config") as mock_config:
             mock_config.is_stripe_enabled.return_value = False
             response = client.post(

@@ -34,6 +34,15 @@ vi.mock('@/utils/errorTranslations', () => ({
   translateError: vi.fn((msg) => msg)
 }))
 
+// Mock i18n to return the key as-is
+vi.mock('@/i18n', () => ({
+  default: {
+    global: {
+      t: vi.fn((key) => key)
+    }
+  }
+}))
+
 describe('API Client', () => {
   let mockToast
 
@@ -103,7 +112,7 @@ describe('API Client', () => {
       }
 
       await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
-      expect(mockToast).toHaveBeenCalledWith('Access denied', 'error')
+      expect(mockToast).toHaveBeenCalledWith('errors.forbidden', 'error')
     })
 
     it('should show toast for 404 Not Found errors', async () => {
@@ -115,7 +124,7 @@ describe('API Client', () => {
       }
 
       await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
-      expect(mockToast).toHaveBeenCalledWith('Not found', 'error')
+      expect(mockToast).toHaveBeenCalledWith('errors.notFound', 'error')
     })
 
     it('should show toast for 500+ Server errors', async () => {
@@ -127,7 +136,7 @@ describe('API Client', () => {
       }
 
       await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
-      expect(mockToast).toHaveBeenCalledWith('Server error. Please try again later.', 'error')
+      expect(mockToast).toHaveBeenCalledWith('errors.serverError', 'error')
     })
 
     it('should not show toast when suppressToast is true', async () => {
