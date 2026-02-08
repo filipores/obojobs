@@ -1,3 +1,10 @@
+## [1.39.9](https://github.com/filipores/obojobs/compare/v1.39.8...v1.39.9) (2026-02-08)
+
+
+### Bug Fixes
+
+* use correct ipv4 address in rate limit whitelist ([e75144a](https://github.com/filipores/obojobs/commit/e75144a2ec6b8abf2403e0a26f79ffcd6d862120))
+
 ## [1.39.8](https://github.com/filipores/obojobs/compare/v1.39.7...v1.39.8) (2026-02-08)
 
 
