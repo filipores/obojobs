@@ -1,3 +1,10 @@
+# [1.36.0](https://github.com/filipores/obojobs/compare/v1.35.3...v1.36.0) (2026-02-08)
+
+
+### Features
+
+* bug fixes, ux improvements, and new features ([8f5ac6a](https://github.com/filipores/obojobs/commit/8f5ac6a6e1b908b918df1217d7043cba7e37031e))
+
 ## [1.35.3](https://github.com/filipores/obojobs/compare/v1.35.2...v1.35.3) (2026-02-07)
 
 
