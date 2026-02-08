@@ -1,3 +1,10 @@
+# [1.37.0](https://github.com/filipores/obojobs/compare/v1.36.0...v1.37.0) (2026-02-08)
+
+
+### Features
+
+* **new-application:** personalize crafting overlay and redesign generation result modal ([f1175bd](https://github.com/filipores/obojobs/commit/f1175bd77704c9ad83c14a4741aa183e99ea6f36))
+
 # [1.36.0](https://github.com/filipores/obojobs/compare/v1.35.3...v1.36.0) (2026-02-08)
 
 
