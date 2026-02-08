@@ -420,12 +420,13 @@ const downloadPDF = async (id) => {
       responseType: 'blob'
     })
 
-    // Create download link from blob
     const blob = new Blob([response.data], { type: 'application/pdf' })
     const url = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = url
-    link.download = `bewerbung_${id}.pdf`
+    const disposition = response.headers['content-disposition']
+    const match = disposition?.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/)
+    link.download = match ? decodeURIComponent(match[1]) : `Anschreiben_${id}.pdf`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

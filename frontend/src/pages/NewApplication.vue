@@ -619,7 +619,10 @@ const downloadPDF = async () => {
     const pdfUrl = window.URL.createObjectURL(blob)
     const link = document.createElement('a')
     link.href = pdfUrl
-    link.download = `bewerbung_${generatedApp.value.id}.pdf`
+    // Use filename from Content-Disposition header, fallback to dynamic name
+    const disposition = response.headers['content-disposition']
+    const match = disposition?.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/)
+    link.download = match ? decodeURIComponent(match[1]) : `Anschreiben_${generatedApp.value.firma || generatedApp.value.id}.pdf`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)
