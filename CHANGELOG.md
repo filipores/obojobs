@@ -1,3 +1,10 @@
+## [1.37.4](https://github.com/filipores/obojobs/compare/v1.37.3...v1.37.4) (2026-02-08)
+
+
+### Bug Fixes
+
+* **scraper:** retry on timeout/connection errors and improve error messages ([d5aaad5](https://github.com/filipores/obojobs/commit/d5aaad57bff6673b18c4b6d9634a55a1613e2d3f))
+
 ## [1.37.3](https://github.com/filipores/obojobs/compare/v1.37.2...v1.37.3) (2026-02-08)
 
 
