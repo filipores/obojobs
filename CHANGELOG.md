@@ -1,3 +1,10 @@
+# [1.38.0](https://github.com/filipores/obojobs/compare/v1.37.5...v1.38.0) (2026-02-08)
+
+
+### Features
+
+* **extension:** add dom-based job extraction to bypass server scraping ([c05a432](https://github.com/filipores/obojobs/commit/c05a432db05ca63e54784e2eeb50b8b48c37e10b))
+
 ## [1.37.5](https://github.com/filipores/obojobs/compare/v1.37.4...v1.37.5) (2026-02-08)
 
 
