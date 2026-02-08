@@ -1,3 +1,10 @@
+## [1.37.5](https://github.com/filipores/obojobs/compare/v1.37.4...v1.37.5) (2026-02-08)
+
+
+### Bug Fixes
+
+* **scraper:** pass user-friendly error messages through to frontend ([3f5bb4a](https://github.com/filipores/obojobs/commit/3f5bb4ad566c4c4c5ffd942fefbc9780f0cb0a7c))
+
 ## [1.37.4](https://github.com/filipores/obojobs/compare/v1.37.3...v1.37.4) (2026-02-08)
 
 
