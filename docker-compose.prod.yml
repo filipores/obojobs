@@ -76,6 +76,7 @@ services:
       - COMPANY_POSTAL_CODE=${COMPANY_POSTAL_CODE:-}
       - COMPANY_CITY=${COMPANY_CITY:-}
       - COMPANY_PHONE=${COMPANY_PHONE:-}
+      - SCRAPER_API_KEY=${SCRAPER_API_KEY:-}
       - RATE_LIMIT_STORAGE_URI=redis://redis:6379/1
     volumes:
       - uploads:/app/uploads
