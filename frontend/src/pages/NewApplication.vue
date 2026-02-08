@@ -194,6 +194,8 @@
         :is-active="showCraftingOverlay"
         :company-name="editableData.company"
         :job-title="editableData.title"
+        :job-description="editableData.description"
+        :contact-person="editableData.contact_person"
         @complete="onCraftingComplete"
       />
 
@@ -205,6 +207,7 @@
         @close="closeModal"
         @download-pdf="downloadPDF"
         @go-to-applications="goToApplications"
+        @send-email="sendEmail"
       />
     </div>
   </div>
@@ -577,16 +580,7 @@ const generateApplication = async () => {
       startPremiumReveal()
       await loadUsage()
       url.value = ''
-      urlTouched.value = false
-      quickConfirmData.value = null
-      showFullPreview.value = false
-      previewData.value = null
-      editableData.value = defaultEditableData()
-      isManualEntry.value = false
-      showManualFallback.value = false
-      manualJobText.value = ''
-      manualCompany.value = ''
-      manualTitle.value = ''
+      resetPreview()
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
@@ -633,6 +627,13 @@ const downloadPDF = async () => {
 
 const goToApplications = () => {
   router.push('/applications')
+}
+
+const sendEmail = () => {
+  const id = generatedApp.value?.id
+  if (!id) return
+  closeModal()
+  router.push({ path: '/applications', query: { open: String(id), action: 'email' } })
 }
 
 const closeModal = () => {

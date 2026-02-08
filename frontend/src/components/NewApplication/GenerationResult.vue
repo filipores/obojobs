@@ -49,30 +49,23 @@
           </div>
         </div>
 
-        <!-- Phase 3: PDF card and actions -->
+        <!-- Phase 3: Email CTA and actions -->
         <div class="premium-reveal-actions" :class="{ 'premium-reveal-actions--visible': revealPhase >= 3 }">
-          <!-- PDF Preview Card -->
-          <div class="premium-reveal-pdf-card">
-            <div class="premium-reveal-pdf-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14,2 14,8 20,8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <line x1="10" y1="9" x2="8" y2="9"/>
+          <!-- Email CTA -->
+          <div v-if="recipientEmail" class="premium-reveal-email-cta">
+            <div class="premium-reveal-email-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
               </svg>
             </div>
-            <div class="premium-reveal-pdf-info">
-              <span class="premium-reveal-pdf-name">Anschreiben_{{ generatedApp.firma }}.pdf</span>
-              <span class="premium-reveal-pdf-action">PDF Bewerbung</span>
+            <div class="premium-reveal-email-info">
+              <span class="premium-reveal-email-label">Bewerbung jetzt versenden!</span>
+              <span class="premium-reveal-email-recipient">An: {{ recipientEmail }}</span>
             </div>
-            <div class="premium-reveal-pdf-download">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                <polyline points="7 10 12 15 17 10"/>
-                <line x1="12" y1="15" x2="12" y2="3"/>
-              </svg>
-            </div>
+            <button @click="$emit('send-email')" class="zen-btn zen-btn-ai premium-reveal-email-btn">
+              Per E-Mail versenden
+            </button>
           </div>
 
           <!-- Action buttons -->
@@ -96,7 +89,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, watch, onUnmounted } from 'vue'
 import EnsoCircle from '../application/EnsoCircle.vue'
 
 const props = defineProps({
@@ -105,7 +98,7 @@ const props = defineProps({
   ensoState: { type: String, default: 'broken' }
 })
 
-defineEmits(['close', 'download-pdf', 'go-to-applications'])
+defineEmits(['close', 'download-pdf', 'go-to-applications', 'send-email'])
 
 const einleitungPreview = computed(() => {
   if (!props.generatedApp?.einleitung) return ''
@@ -114,24 +107,38 @@ const einleitungPreview = computed(() => {
   return sentences.slice(0, 2).join(' ').trim()
 })
 
-const trapFocus = (e) => {
-  const modal = e.currentTarget
-  const focusableElements = modal.querySelectorAll(
+const recipientEmail = computed(() => {
+  const app = props.generatedApp
+  if (!app) return ''
+  if (app.email) return app.email
+  try {
+    const links = JSON.parse(app.links_json || '{}')
+    return links.email_from_text || ''
+  } catch { return '' }
+})
+
+// Body scroll lock when modal is open
+watch(() => props.generatedApp, (app) => {
+  document.body.style.overflow = app ? 'hidden' : ''
+})
+
+onUnmounted(() => {
+  document.body.style.overflow = ''
+})
+
+function trapFocus(e) {
+  const focusableElements = e.currentTarget.querySelectorAll(
     'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
   )
   const firstFocusable = focusableElements[0]
   const lastFocusable = focusableElements[focusableElements.length - 1]
 
-  if (e.shiftKey) {
-    if (document.activeElement === firstFocusable) {
-      e.preventDefault()
-      lastFocusable.focus()
-    }
-  } else {
-    if (document.activeElement === lastFocusable) {
-      e.preventDefault()
-      firstFocusable.focus()
-    }
+  const targetFocusable = e.shiftKey ? firstFocusable : lastFocusable
+  const wrapFocusable = e.shiftKey ? lastFocusable : firstFocusable
+
+  if (document.activeElement === targetFocusable) {
+    e.preventDefault()
+    wrapFocusable.focus()
   }
 }
 </script>
@@ -155,6 +162,8 @@ const trapFocus = (e) => {
 .premium-reveal-modal {
   width: 100%;
   max-width: 520px;
+  max-height: calc(100dvh - 2 * var(--space-lg));
+  overflow-y: auto;
   background: var(--color-washi);
   border-radius: var(--radius-lg);
   box-shadow:
@@ -162,7 +171,6 @@ const trapFocus = (e) => {
     0 0 0 1px rgba(255, 255, 255, 0.1);
   padding: var(--space-xl);
   position: relative;
-  overflow: hidden;
 }
 
 .premium-reveal-close {
@@ -297,68 +305,55 @@ const trapFocus = (e) => {
   transform: translateY(0);
 }
 
-.premium-reveal-pdf-card {
+/* Email CTA */
+.premium-reveal-email-cta {
+  background: linear-gradient(135deg, var(--color-ai-subtle), rgba(61, 90, 108, 0.12));
+  border: 1px solid var(--color-ai);
+  border-radius: var(--radius-md);
+  padding: var(--space-lg);
+  margin-bottom: var(--space-lg);
   display: flex;
   align-items: center;
   gap: var(--space-md);
-  background: white;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-md);
-  padding: var(--space-md) var(--space-lg);
-  margin-bottom: var(--space-lg);
-  transition: all var(--transition-base);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
 
-.premium-reveal-pdf-card:hover {
-  border-color: var(--color-ai);
-  box-shadow: 0 4px 16px rgba(61, 90, 108, 0.12);
-}
-
-.premium-reveal-pdf-icon {
+.premium-reveal-email-icon {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8f5f0 0%, #ebe7e0 100%);
+  background: var(--color-ai);
   border-radius: var(--radius-sm);
-  color: var(--color-ai);
+  color: white;
 }
 
-.premium-reveal-pdf-info {
+.premium-reveal-email-info {
   flex: 1;
   min-width: 0;
 }
 
-.premium-reveal-pdf-name {
+.premium-reveal-email-label {
   display: block;
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
   color: var(--color-sumi);
+  margin-bottom: 2px;
+}
+
+.premium-reveal-email-recipient {
+  display: block;
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.premium-reveal-pdf-action {
-  display: block;
-  font-size: 0.8125rem;
-  color: var(--color-ai);
-  margin-top: 2px;
-}
-
-.premium-reveal-pdf-download {
+.premium-reveal-email-btn {
   flex-shrink: 0;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-ai);
-  border-radius: 50%;
-  color: white;
+  white-space: nowrap;
 }
 
 .premium-reveal-buttons {
@@ -412,18 +407,17 @@ const trapFocus = (e) => {
     font-size: 0.9375rem;
   }
 
-  .premium-reveal-pdf-card {
-    padding: var(--space-md);
+  .premium-reveal-email-cta {
+    flex-direction: column;
+    text-align: center;
   }
 
-  .premium-reveal-pdf-icon {
-    width: 40px;
-    height: 40px;
+  .premium-reveal-email-info {
+    text-align: center;
   }
 
-  .premium-reveal-pdf-icon svg {
-    width: 24px;
-    height: 24px;
+  .premium-reveal-email-btn {
+    width: 100%;
   }
 
   .premium-reveal-buttons {
