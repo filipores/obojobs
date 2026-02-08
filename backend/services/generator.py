@@ -8,6 +8,7 @@ from config import config
 from models import Application, Document, JobRequirement, Template, User, db
 
 from .api_client import ClaudeAPIClient
+from .contact_extractor import ContactExtractor
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
 from .pdf_template_modifier import PDFTemplateModifier
 from .requirement_analyzer import RequirementAnalyzer
@@ -183,10 +184,15 @@ class BewerbungsGenerator:
         # Use user-provided details or extract via Claude API
         if use_user_data:
             logger.info("2/5 Verwende bearbeitete Details...")
+            contact_person = user_details.get("contact_person") or ""
+            # Format raw contact name into proper salutation (e.g. "Tom Heinfling" -> "Sehr geehrte/r Tom Heinfling")
+            ansprechpartner = ContactExtractor().format_contact_person_salutation(
+                contact_person if contact_person else None, firma_name
+            )
             details = {
                 "firma": firma_name,
                 "position": user_details.get("position") or "Softwareentwickler",
-                "ansprechpartner": user_details.get("contact_person") or "Sehr geehrte Damen und Herren",
+                "ansprechpartner": ansprechpartner,
                 "quelle": user_details.get("quelle") or "eure Website",
                 "email": user_details.get("contact_email") or "",
                 "stellenanzeige_kompakt": stellenanzeige_text[:500] if stellenanzeige_text else "",
@@ -241,10 +247,30 @@ class BewerbungsGenerator:
 
         ort_datum = f"{self.user.city}, {datum_formatiert}" if self.user.city else datum_formatiert
 
+        # Check if template has text before {{ANSPRECHPARTNER}} on the same line
+        # e.g. "Moin Moin liebes {{ANSPRECHPARTNER}}," — needs only the name
+        # vs. "{{ANSPRECHPARTNER}}," — needs full salutation
+        ansprechpartner_value = details["ansprechpartner"]
+        template_text = self.anschreiben_template or ""
+        for line in template_text.split("\n"):
+            if "{{ANSPRECHPARTNER}}" in line:
+                prefix = line.split("{{ANSPRECHPARTNER}}")[0].strip()
+                if prefix:
+                    # Template already has greeting text — strip salutation prefix from value
+                    ansprechpartner_value = re.sub(
+                        r"^(Sehr geehrte/?r?\s*|Sehr geehrte Damen und Herren|Moin Moin liebes\s*)",
+                        "",
+                        ansprechpartner_value,
+                    ).strip()
+                    # If stripped to empty (was just "Sehr geehrte Damen und Herren"), use company fallback
+                    if not ansprechpartner_value:
+                        ansprechpartner_value = f"{firma_name} Team"
+                break
+
         # Prepare variable replacements
         replacements = {
             "FIRMA": firma_name,
-            "ANSPRECHPARTNER": details["ansprechpartner"],
+            "ANSPRECHPARTNER": ansprechpartner_value,
             "POSITION": details["position"],
             "QUELLE": details["quelle"],
             "EINLEITUNG": einleitung,
