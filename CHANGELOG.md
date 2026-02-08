@@ -1,3 +1,10 @@
+## [1.38.1](https://github.com/filipores/obojobs/compare/v1.38.0...v1.38.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **extension:** add /jobs-- pattern to stepstone url matcher ([238d01d](https://github.com/filipores/obojobs/commit/238d01d07fb111e2fd3023dfc5173250cae16300))
+
 # [1.38.0](https://github.com/filipores/obojobs/compare/v1.37.5...v1.38.0) (2026-02-08)
 
 
