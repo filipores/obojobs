@@ -245,7 +245,7 @@ const onUrlEnterPressed = (event) => {
 
 .url-input {
   padding-left: calc(var(--space-md) + 28px);
-  padding-right: 130px;
+  padding-right: 144px;
   transition: border-color var(--transition-base), box-shadow var(--transition-base);
 }
 
@@ -261,7 +261,7 @@ const onUrlEnterPressed = (event) => {
 
 .url-validation-icon {
   position: absolute;
-  right: 100px;
+  right: 112px;
   top: 50%;
   transform: translateY(-50%);
   display: flex;

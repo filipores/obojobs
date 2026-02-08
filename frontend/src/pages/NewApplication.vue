@@ -207,7 +207,7 @@
         @close="closeModal"
         @download-pdf="downloadPDF"
         @go-to-applications="goToApplications"
-        @send-email="sendEmail"
+        @download-email-draft="downloadEmailDraft"
       />
     </div>
   </div>
@@ -637,11 +637,36 @@ const goToApplications = () => {
   router.push('/applications')
 }
 
-const sendEmail = () => {
+const downloadEmailDraft = async () => {
   const id = generatedApp.value?.id
   if (!id) return
-  closeModal()
-  router.push({ path: '/applications', query: { open: String(id), action: 'email' } })
+
+  try {
+    const response = await api.get(`/applications/${id}/email-draft`, {
+      responseType: 'blob'
+    })
+    const blob = new Blob([response.data], { type: 'message/rfc822' })
+    const url = window.URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    const firma = generatedApp.value.firma || 'Bewerbung'
+    link.download = `Bewerbung_${firma}.eml`
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+    window.URL.revokeObjectURL(url)
+
+    // Try to open in default email client
+    window.location.href = window.URL.createObjectURL(new Blob([response.data], { type: 'message/rfc822' }))
+
+    if (window.$toast) {
+      window.$toast('E-Mail-Entwurf heruntergeladen', 'success', 6000)
+    }
+  } catch (_err) {
+    if (window.$toast) {
+      window.$toast('Fehler beim Erstellen des E-Mail-Entwurfs', 'error')
+    }
+  }
 }
 
 const closeModal = () => {
@@ -896,6 +921,7 @@ onMounted(() => {
 
 .form-section {
   max-width: 640px;
+  margin-bottom: var(--space-xl);
 }
 
 .usage-section {

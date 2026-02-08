@@ -30,53 +30,48 @@
             <p class="premium-reveal-company">{{ generatedApp.position }} bei <strong>{{ generatedApp.firma }}</strong></p>
           </div>
 
-          <!-- Einleitung preview - the "holy shit" moment -->
-          <div v-if="einleitungPreview" class="premium-reveal-einleitung">
-            <div class="premium-reveal-einleitung-label">
+          <!-- Peek card for intro preview -->
+          <div
+            v-if="einleitungPreview"
+            class="premium-reveal-peek"
+            :class="{ 'premium-reveal-peek--expanded': peekExpanded }"
+            @mouseenter="peekExpanded = true"
+            @mouseleave="peekExpanded = false"
+            @click="peekExpanded = !peekExpanded"
+          >
+            <div class="premium-reveal-peek-header">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 20h9"/>
-                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
               </svg>
-              Dein personalisierter Einstieg
+              <span class="premium-reveal-peek-label">Vorschau Einstieg</span>
+              <svg class="premium-reveal-peek-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
             </div>
-            <p class="premium-reveal-einleitung-text">{{ einleitungPreview }}</p>
-          </div>
-
-          <!-- Subject line preview -->
-          <div v-if="generatedApp.betreff" class="premium-reveal-betreff">
-            <div class="premium-reveal-betreff-label">Betreff</div>
-            <p class="premium-reveal-betreff-text">{{ generatedApp.betreff }}</p>
+            <div class="premium-reveal-peek-body">
+              <p class="premium-reveal-peek-text">{{ einleitungPreview }}</p>
+            </div>
           </div>
         </div>
 
-        <!-- Phase 3: Email CTA and actions -->
+        <!-- Phase 3: Action buttons -->
         <div class="premium-reveal-actions" :class="{ 'premium-reveal-actions--visible': revealPhase >= 3 }">
-          <!-- Email CTA -->
-          <div v-if="recipientEmail" class="premium-reveal-email-cta">
-            <div class="premium-reveal-email-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                <polyline points="22,6 12,13 2,6"/>
-              </svg>
-            </div>
-            <div class="premium-reveal-email-info">
-              <span class="premium-reveal-email-label">Bewerbung jetzt versenden!</span>
-              <span class="premium-reveal-email-recipient">An: {{ recipientEmail }}</span>
-            </div>
-            <button @click="$emit('send-email')" class="zen-btn zen-btn-ai premium-reveal-email-btn">
-              Per E-Mail versenden
-            </button>
-          </div>
-
-          <!-- Action buttons -->
           <div class="premium-reveal-buttons">
-            <button @click="$emit('download-pdf')" class="zen-btn zen-btn-ai zen-btn-lg premium-reveal-btn-primary">
+            <button @click="$emit('download-pdf')" class="zen-btn zen-btn-ai premium-reveal-btn-primary">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
               PDF herunterladen
+            </button>
+            <button @click="$emit('download-email-draft')" class="zen-btn premium-reveal-btn-email">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              E-Mail versenden
             </button>
             <button @click="$emit('go-to-applications')" class="zen-btn premium-reveal-btn-secondary">
               Alle Bewerbungen
@@ -89,7 +84,7 @@
 </template>
 
 <script setup>
-import { computed, watch, onUnmounted } from 'vue'
+import { ref, computed, watch, onUnmounted } from 'vue'
 import EnsoCircle from '../application/EnsoCircle.vue'
 
 const props = defineProps({
@@ -98,23 +93,20 @@ const props = defineProps({
   ensoState: { type: String, default: 'broken' }
 })
 
-defineEmits(['close', 'download-pdf', 'go-to-applications', 'send-email'])
+defineEmits(['close', 'download-pdf', 'go-to-applications', 'download-email-draft'])
+
+const peekExpanded = ref(false)
 
 const einleitungPreview = computed(() => {
   if (!props.generatedApp?.einleitung) return ''
   const text = props.generatedApp.einleitung
   const sentences = text.match(/[^.!?]*[.!?]+/g) || []
-  return sentences.slice(0, 2).join(' ').trim()
+  return sentences.slice(0, 3).join(' ').trim()
 })
 
-const recipientEmail = computed(() => {
-  const app = props.generatedApp
-  if (!app) return ''
-  if (app.email) return app.email
-  try {
-    const links = JSON.parse(app.links_json || '{}')
-    return links.email_from_text || ''
-  } catch { return '' }
+// Reset peek state when modal opens/closes
+watch(() => props.generatedApp, () => {
+  peekExpanded.value = false
 })
 
 // Body scroll lock when modal is open
@@ -161,7 +153,7 @@ function trapFocus(e) {
 
 .premium-reveal-modal {
   width: 100%;
-  max-width: 520px;
+  max-width: 480px;
   max-height: calc(100dvh - 2 * var(--space-lg));
   overflow-y: auto;
   background: var(--color-washi);
@@ -169,7 +161,7 @@ function trapFocus(e) {
   box-shadow:
     0 25px 50px -12px rgba(0, 0, 0, 0.25),
     0 0 0 1px rgba(255, 255, 255, 0.1);
-  padding: var(--space-xl);
+  padding: var(--space-2xl) var(--space-xl) var(--space-xl);
   position: relative;
 }
 
@@ -197,7 +189,7 @@ function trapFocus(e) {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: var(--space-lg) 0;
+  padding: var(--space-xl) 0 var(--space-lg);
   opacity: 0;
   transform: scale(0.8);
   transition: opacity 0.4s var(--ease-zen), transform 0.4s var(--ease-zen);
@@ -221,7 +213,7 @@ function trapFocus(e) {
 
 .premium-reveal-header {
   text-align: center;
-  margin-bottom: var(--space-xl);
+  margin-bottom: var(--space-lg);
 }
 
 .premium-reveal-title {
@@ -243,61 +235,72 @@ function trapFocus(e) {
   font-weight: 500;
 }
 
-.premium-reveal-einleitung {
-  background: linear-gradient(135deg, var(--color-ai-subtle) 0%, rgba(61, 90, 108, 0.08) 100%);
+/* Peek card */
+.premium-reveal-peek {
+  border: 1px solid var(--color-border-light);
   border-radius: var(--radius-md);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  border-left: 3px solid var(--color-ai);
+  margin-bottom: var(--space-md);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease-zen), box-shadow 0.2s var(--ease-zen);
+  overflow: hidden;
 }
 
-.premium-reveal-einleitung-label {
+.premium-reveal-peek:hover {
+  border-color: var(--color-ai);
+  box-shadow: 0 2px 8px rgba(61, 90, 108, 0.08);
+}
+
+.premium-reveal-peek-header {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-tertiary);
   font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
   letter-spacing: var(--tracking-wider);
-  color: var(--color-ai);
-  margin-bottom: var(--space-sm);
+  text-transform: uppercase;
+  font-weight: 500;
 }
 
-.premium-reveal-einleitung-text {
-  font-size: 1rem;
+.premium-reveal-peek-label {
+  flex: 1;
+}
+
+.premium-reveal-peek-chevron {
+  transition: transform 0.2s var(--ease-zen);
+  flex-shrink: 0;
+}
+
+.premium-reveal-peek--expanded .premium-reveal-peek-chevron {
+  transform: rotate(180deg);
+}
+
+.premium-reveal-peek-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s var(--ease-zen), padding 0.3s var(--ease-zen);
+  padding: 0 var(--space-md);
+}
+
+.premium-reveal-peek--expanded .premium-reveal-peek-body {
+  max-height: 120px;
+  padding: 0 var(--space-md) var(--space-md);
+}
+
+.premium-reveal-peek-text {
+  font-size: 0.875rem;
   line-height: var(--leading-relaxed);
-  color: var(--color-sumi);
+  color: var(--color-text-secondary);
   margin: 0;
   font-style: italic;
 }
 
-.premium-reveal-betreff {
-  background: var(--color-washi-warm);
-  border-radius: var(--radius-sm);
-  padding: var(--space-md);
-  margin-bottom: var(--space-lg);
-}
-
-.premium-reveal-betreff-label {
-  font-size: 0.6875rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  color: var(--color-text-ghost);
-  margin-bottom: var(--space-xs);
-}
-
-.premium-reveal-betreff-text {
-  font-size: 0.9375rem;
-  color: var(--color-sumi);
-  margin: 0;
-  font-weight: 500;
-}
-
+/* Actions */
 .premium-reveal-actions {
   opacity: 0;
   transform: translateY(30px);
   transition: opacity 0.5s var(--ease-zen), transform 0.5s var(--ease-zen);
+  padding-top: var(--space-md);
 }
 
 .premium-reveal-actions--visible {
@@ -305,60 +308,9 @@ function trapFocus(e) {
   transform: translateY(0);
 }
 
-/* Email CTA */
-.premium-reveal-email-cta {
-  background: linear-gradient(135deg, var(--color-ai-subtle), rgba(61, 90, 108, 0.12));
-  border: 1px solid var(--color-ai);
-  border-radius: var(--radius-md);
-  padding: var(--space-lg);
-  margin-bottom: var(--space-lg);
-  display: flex;
-  align-items: center;
-  gap: var(--space-md);
-}
-
-.premium-reveal-email-icon {
-  flex-shrink: 0;
-  width: 44px;
-  height: 44px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--color-ai);
-  border-radius: var(--radius-sm);
-  color: white;
-}
-
-.premium-reveal-email-info {
-  flex: 1;
-  min-width: 0;
-}
-
-.premium-reveal-email-label {
-  display: block;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  color: var(--color-sumi);
-  margin-bottom: 2px;
-}
-
-.premium-reveal-email-recipient {
-  display: block;
-  font-size: 0.8125rem;
-  color: var(--color-text-tertiary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.premium-reveal-email-btn {
-  flex-shrink: 0;
-  white-space: nowrap;
-}
-
 .premium-reveal-buttons {
   display: flex;
-  gap: var(--space-md);
+  gap: var(--space-sm);
 }
 
 .premium-reveal-btn-primary {
@@ -367,6 +319,23 @@ function trapFocus(e) {
   align-items: center;
   justify-content: center;
   gap: var(--space-sm);
+}
+
+.premium-reveal-btn-email {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  background: transparent;
+  border: 1px solid var(--color-ai);
+  color: var(--color-ai);
+}
+
+.premium-reveal-btn-email:hover {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  border-color: var(--color-ai);
 }
 
 .premium-reveal-btn-secondary {
@@ -382,42 +351,15 @@ function trapFocus(e) {
   background: var(--color-washi-warm);
 }
 
-.zen-btn-lg {
-  padding: var(--space-md) var(--space-xl);
-  font-size: 1rem;
-  min-width: 240px;
-}
-
 @media (max-width: 768px) {
   .premium-reveal-modal {
-    padding: var(--space-lg);
+    padding: var(--space-xl) var(--space-lg) var(--space-lg);
     margin: var(--space-md);
     max-width: calc(100% - var(--space-lg));
   }
 
   .premium-reveal-title {
     font-size: 1.5rem;
-  }
-
-  .premium-reveal-einleitung {
-    padding: var(--space-md);
-  }
-
-  .premium-reveal-einleitung-text {
-    font-size: 0.9375rem;
-  }
-
-  .premium-reveal-email-cta {
-    flex-direction: column;
-    text-align: center;
-  }
-
-  .premium-reveal-email-info {
-    text-align: center;
-  }
-
-  .premium-reveal-email-btn {
-    width: 100%;
   }
 
   .premium-reveal-buttons {
@@ -437,6 +379,11 @@ function trapFocus(e) {
     transition: none;
     opacity: 1;
     transform: none;
+  }
+
+  .premium-reveal-peek-body,
+  .premium-reveal-peek-chevron {
+    transition: none;
   }
 }
 </style>

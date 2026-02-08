@@ -20,7 +20,7 @@
               </svg>
             </div>
             <h2 id="cv-modal-title">Personalisiere dein Anschreiben</h2>
-            <p class="cv-modal-subtitle">Lade deinen Lebenslauf hoch fur ein individuelles Anschreiben</p>
+            <p class="cv-modal-subtitle">Lade deinen Lebenslauf hoch für ein individuelles Anschreiben</p>
           </div>
 
           <!-- Drop Zone -->
@@ -53,7 +53,7 @@
               </div>
               <p class="drop-zone-text">
                 <strong>PDF hier ablegen</strong> oder
-                <button type="button" @click="triggerFileSelect" class="drop-zone-link">Datei auswahlen</button>
+                <button type="button" @click="triggerFileSelect" class="drop-zone-link">Datei auswählen</button>
               </p>
               <span class="drop-zone-hint">Nur PDF-Dateien, max. 10 MB</span>
             </div>
@@ -100,7 +100,7 @@
               <circle cx="12" cy="12" r="10"/>
               <path d="M12 16v-4M12 8h.01"/>
             </svg>
-            Dein Lebenslauf wird nur fur diese Demo verwendet
+            Dein Lebenslauf wird nur für diese Demo verwendet
           </p>
         </div>
       </div>
@@ -133,13 +133,13 @@ const triggerFileSelect = () => {
 
 const validateFile = (file) => {
   if (!file) {
-    return 'Bitte wahle eine Datei aus.'
+    return 'Bitte wähle eine Datei aus.'
   }
   if (file.type !== 'application/pdf') {
-    return 'Bitte wahle eine PDF-Datei aus.'
+    return 'Bitte wähle eine PDF-Datei aus.'
   }
   if (file.size > MAX_FILE_SIZE) {
-    return 'Die Datei ist zu gross. Maximal 10 MB erlaubt.'
+    return 'Die Datei ist zu groß. Maximal 10 MB erlaubt.'
   }
   return null
 }

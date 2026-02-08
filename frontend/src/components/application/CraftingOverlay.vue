@@ -522,11 +522,10 @@ defineExpose({ reset })
   min-height: 120px;
 }
 
-.typewriter-preview :deep(.typewriter) {
+.typewriter-preview :deep(.ink-reveal) {
   font-size: 0.9375rem;
   line-height: var(--leading-relaxed);
   color: var(--color-text-secondary);
-  white-space: pre-wrap;
 }
 
 /* Phase 4: Checklist */

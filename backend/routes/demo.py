@@ -46,7 +46,7 @@ def _generate_demo_logic():
             cv_file = request.files["cv_file"]
 
             if cv_file.filename == "":
-                return jsonify({"success": False, "message": "Keine Datei ausgewahlt"}), 400
+                return jsonify({"success": False, "message": "Keine Datei ausgewählt"}), 400
 
             if not _allowed_file(cv_file.filename):
                 return jsonify({"success": False, "message": "Nur PDF-Dateien erlaubt"}), 400
@@ -57,7 +57,7 @@ def _generate_demo_logic():
             cv_file.seek(0)
 
             if file_size > MAX_FILE_SIZE:
-                return jsonify({"success": False, "message": "Datei zu gross. Max. 10 MB erlaubt."}), 400
+                return jsonify({"success": False, "message": "Datei zu groß. Max. 10 MB erlaubt."}), 400
 
             # Save to temp file and extract text
             filename = secure_filename(cv_file.filename)
@@ -84,7 +84,7 @@ def _generate_demo_logic():
             return jsonify({"success": False, "message": "URL ist erforderlich"}), 400
 
         if not url.startswith(("http://", "https://")):
-            return jsonify({"success": False, "message": "Ungultige URL"}), 400
+            return jsonify({"success": False, "message": "Ungültige URL"}), 400
 
         from services.demo_generator import DemoGenerator
 

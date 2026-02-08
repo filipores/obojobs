@@ -10,7 +10,7 @@
         ref="inputRef"
         v-model="url"
         type="url"
-        placeholder="Stellenanzeigen-URL einfugen..."
+        placeholder="Stellenanzeigen-URL einfügen..."
         class="demo-input"
         :disabled="loading"
         @focus="isFocused = true"
@@ -99,28 +99,18 @@ const onPaste = async () => {
   }
 }
 
-// Start the demo - request CV upload first
+// Start the demo - call API directly (no CV required)
 const startDemo = async () => {
   if (!isValidUrl.value || loading.value) return
-
-  // Emit event to parent to show CV upload modal
-  emit('request-cv', url.value)
-}
-
-// Generate demo with CV file (called by parent after CV upload)
-const generateWithCV = async (cvFile) => {
-  if (!isValidUrl.value) return
 
   loading.value = true
   error.value = ''
   emit('demo-started')
 
-  // Animate loading text
   const loadingTexts = [
     'Analysiere Stellenanzeige...',
-    'Lese deinen Lebenslauf...',
     'Extrahiere Anforderungen...',
-    'Erstelle personalisiertes Anschreiben...'
+    'Erstelle Anschreiben...'
   ]
   let textIndex = 0
   const textInterval = setInterval(() => {
@@ -129,13 +119,7 @@ const generateWithCV = async (cvFile) => {
   }, 2500)
 
   try {
-    // Create FormData for file upload
-    const formData = new FormData()
-    formData.append('url', url.value)
-    formData.append('cv_file', cvFile)
-
-    // Call the demo generation API with CV
-    const response = await api.post('/demo/generate', formData)
+    const response = await api.post('/demo/generate', { url: url.value }, { suppressToast: true })
 
     if (response.data.success) {
       emit('demo-complete', {
@@ -146,16 +130,46 @@ const generateWithCV = async (cvFile) => {
       error.value = response.data.message || 'Fehler beim Generieren des Anschreibens'
     }
   } catch (err) {
-    // For demo purposes, if API doesn't exist yet, redirect anyway
-    if (err.response?.status === 404) {
-      // API endpoint not implemented yet - redirect to register
-      emit('demo-complete', {
-        url: url.value,
-        result: null
-      })
+    if (err.response?.status === 429) {
+      error.value = 'Demo-Limit erreicht. Bitte registriere dich für unbegrenzten Zugang.'
     } else {
       error.value = err.response?.data?.message || 'Fehler beim Verarbeiten der URL. Bitte versuche es erneut.'
     }
+  } finally {
+    clearInterval(textInterval)
+    loading.value = false
+  }
+}
+
+// Generate demo with CV file (called by parent after CV upload)
+const generateWithCV = async (cvFile) => {
+  if (!isValidUrl.value) return
+
+  loading.value = true
+  error.value = ''
+
+  const textInterval = setInterval(() => {
+    const texts = ['Lese deinen Lebenslauf...', 'Erstelle personalisiertes Anschreiben...']
+    loadingText.value = texts[Math.floor(Math.random() * texts.length)]
+  }, 2500)
+
+  try {
+    const formData = new FormData()
+    formData.append('url', url.value)
+    formData.append('cv_file', cvFile)
+
+    const response = await api.post('/demo/generate', formData, { suppressToast: true })
+
+    if (response.data.success) {
+      emit('demo-complete', {
+        url: url.value,
+        result: response.data
+      })
+    } else {
+      error.value = response.data.message || 'Fehler beim Generieren des Anschreibens'
+    }
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Fehler beim Verarbeiten der URL. Bitte versuche es erneut.'
   } finally {
     clearInterval(textInterval)
     loading.value = false

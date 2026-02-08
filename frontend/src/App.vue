@@ -503,7 +503,7 @@ onUnmounted(() => {
   top: 0;
   z-index: var(--z-nav);
   background: var(--color-washi);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* ========================================
@@ -550,7 +550,7 @@ onUnmounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: var(--space-md);
-  overflow: hidden;
+  overflow: visible;
 }
 
 /* Brand */
@@ -597,7 +597,7 @@ onUnmounted(() => {
   align-items: center;
   gap: var(--space-xs);
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
   flex: 1 1 auto;
 }
 

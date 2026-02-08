@@ -39,7 +39,7 @@
                 </svg>
               </div>
               <p class="drop-zone-text">
-                <strong>PDF hier ablegen</strong> oder <button type="button" @click="triggerFileSelect" class="drop-zone-link">Datei auswahlen</button>
+                <strong>PDF hier ablegen</strong> oder <button type="button" @click="triggerFileSelect" class="drop-zone-link">Datei auswählen</button>
               </p>
             </div>
 
@@ -80,7 +80,7 @@
 
           <!-- Skip Link -->
           <button @click="skipToDashboard" class="skip-link">
-            Spater hochladen
+            Später hochladen
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M5 12h14M12 5l7 7-7 7"/>
             </svg>
@@ -107,7 +107,7 @@
           <h2 class="crafting-title">Erstelle dein Anschreiben...</h2>
           <p class="crafting-subtitle">{{ craftingText }}</p>
           <p v-if="demoStore.demoResult?.data?.firma" class="crafting-job">
-            fur {{ demoStore.demoResult.data.firma }}
+            für {{ demoStore.demoResult.data.firma }}
           </p>
         </div>
 
@@ -121,7 +121,7 @@
           </div>
           <h2 class="result-title">Dein personalisiertes Anschreiben</h2>
           <p v-if="regeneratedResult?.firma" class="result-job">
-            fur {{ regeneratedResult.firma }} - {{ regeneratedResult.position }}
+            für {{ regeneratedResult.firma }} - {{ regeneratedResult.position }}
           </p>
 
           <!-- Application Preview -->
@@ -137,7 +137,7 @@
           <!-- Usage Info -->
           <div v-if="usageInfo" class="usage-info">
             <span class="usage-remaining">
-              Noch {{ usageInfo.remaining }} von {{ usageInfo.limit }} Bewerbungen diesen Monat ubrig
+              Noch {{ usageInfo.remaining }} von {{ usageInfo.limit }} Bewerbungen diesen Monat übrig
             </span>
           </div>
 
@@ -210,7 +210,7 @@
 
             <!-- Supported Sites -->
             <div class="supported-sites">
-              <span class="supported-label">Unterstutzte Portale:</span>
+              <span class="supported-label">Unterstützte Portale:</span>
               <div class="site-badges">
                 <span class="site-badge">Indeed</span>
                 <span class="site-badge">StepStone</span>
@@ -242,7 +242,7 @@
                   <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
                 </svg>
               </div>
-              <h3>URL einfugen</h3>
+              <h3>URL einfügen</h3>
               <p>Kopiere die URL der Stellenanzeige von Indeed, StepStone oder anderen Jobportalen.</p>
             </div>
 
@@ -255,7 +255,7 @@
                 </svg>
               </div>
               <h3>KI analysiert</h3>
-              <p>Unsere KI extrahiert die Anforderungen und erstellt ein massgeschneidertes Anschreiben.</p>
+              <p>Unsere KI extrahiert die Anforderungen und erstellt ein maßgeschneidertes Anschreiben.</p>
             </div>
 
             <div class="step-card animate-fade-up" style="animation-delay: 300ms;">
@@ -379,7 +379,7 @@
                 </li>
               </ul>
               <router-link to="/register?plan=pro" class="pricing-cta zen-btn zen-btn-ai">
-                Pro wahlen
+                Pro wählen
               </router-link>
             </div>
           </div>
@@ -390,7 +390,7 @@
       <section class="final-cta-section">
         <div class="container">
           <div class="cta-content animate-fade-up">
-            <h2>Bereit fur deine nachste Bewerbung?</h2>
+            <h2>Bereit für deine nächste Bewerbung?</h2>
             <p>Probiere es jetzt aus - kostenlos und ohne Anmeldung.</p>
             <button @click="scrollToTop" class="zen-btn zen-btn-ai zen-btn-lg">
               Jetzt Anschreiben erstellen
@@ -479,7 +479,7 @@ const onFileSelect = (event) => {
     selectedFile.value = file
     uploadError.value = ''
   } else if (file) {
-    uploadError.value = 'Bitte wahle eine PDF-Datei aus.'
+    uploadError.value = 'Bitte wähle eine PDF-Datei aus.'
   }
 }
 
@@ -498,7 +498,7 @@ const onDrop = (event) => {
     selectedFile.value = file
     uploadError.value = ''
   } else if (file) {
-    uploadError.value = 'Bitte wahle eine PDF-Datei aus.'
+    uploadError.value = 'Bitte wähle eine PDF-Datei aus.'
   }
 }
 
