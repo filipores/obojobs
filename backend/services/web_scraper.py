@@ -6,6 +6,7 @@ from datetime import datetime
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
+import cloudscraper
 import requests
 from bs4 import BeautifulSoup, Tag
 
@@ -946,7 +947,7 @@ class SoftgardenParser(JobBoardParser):
                     result["salary"] = f"{min_val}-{max_val} {currency}"
                 elif min_val:
                     result["salary"] = f"ab {min_val} {currency}"
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, int | float):
                 currency = salary.get("currency", "EUR")
                 result["salary"] = f"{value} {currency}"
 
@@ -1721,7 +1722,7 @@ class GenericJobParser:
                         result["salary"] = f"ab {min_val} {currency}"
                     elif max_val:
                         result["salary"] = f"bis {max_val} {currency}"
-                elif isinstance(value, (int, float)):
+                elif isinstance(value, int | float):
                     result["salary"] = f"{value} {currency}"
 
         return result
@@ -2249,12 +2250,32 @@ JOB_BOARD_PARSERS: list[type[JobBoardParser]] = [
 
 
 class WebScraper:
-    def __init__(self, timeout: int = 10):
+    def __init__(self, timeout: int = 15):
         self.timeout = timeout
         self.session = requests.Session()
         self.session.headers.update(
-            {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+            {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+            }
         )
+
+    def _fetch_page(self, url: str, headers: dict | None = None) -> requests.Response:
+        """Fetch a page, retrying with cloudscraper on 403."""
+        try:
+            response = self.session.get(url, timeout=self.timeout, headers=headers)
+            response.raise_for_status()
+            return response
+        except requests.HTTPError as e:
+            if e.response is not None and e.response.status_code == 403:
+                logger.info("Got 403 from %s, retrying with cloudscraper", urlparse(url).netloc)
+                scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "linux"})
+                response = scraper.get(url, timeout=self.timeout)
+                response.raise_for_status()
+                return response
+            raise
 
     def detect_job_board(self, url: str) -> str | None:
         """Detect which job board a URL belongs to."""
@@ -2271,8 +2292,7 @@ class WebScraper:
             Dict mit 'text', 'links', 'email_links', 'application_links'
         """
         try:
-            response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()
+            response = self._fetch_page(url)
             response.encoding = response.apparent_encoding
 
             soup = BeautifulSoup(response.text, "html.parser")
@@ -2323,20 +2343,19 @@ class WebScraper:
             }
 
         except requests.HTTPError as e:
-            if e.response.status_code == 403:
+            status = e.response.status_code if e.response is not None else 0
+            if status == 403:
                 raise Exception(
                     "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
                 ) from e
-            elif e.response.status_code == 404:
+            elif status == 404:
                 raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
-            elif e.response.status_code == 429:
+            elif status == 429:
                 raise Exception(
                     "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
                 ) from e
             else:
-                raise Exception(
-                    f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}"
-                ) from e
+                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {str(e)}") from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
@@ -2381,8 +2400,7 @@ class WebScraper:
                     request_headers = parser_class.HEADERS
                     break
 
-            response = self.session.get(url, timeout=self.timeout, headers=request_headers)
-            response.raise_for_status()
+            response = self._fetch_page(url, headers=request_headers)
             response.encoding = response.apparent_encoding
 
             # Parse HTML - keep original soup for structured parsing
@@ -2478,20 +2496,19 @@ class WebScraper:
             return result
 
         except requests.HTTPError as e:
-            if e.response.status_code == 403:
+            status = e.response.status_code if e.response is not None else 0
+            if status == 403:
                 raise Exception(
                     "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
                 ) from e
-            elif e.response.status_code == 404:
+            elif status == 404:
                 raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
-            elif e.response.status_code == 429:
+            elif status == 429:
                 raise Exception(
                     "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
                 ) from e
             else:
-                raise Exception(
-                    f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}"
-                ) from e
+                raise Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {str(e)}") from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
