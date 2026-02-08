@@ -193,6 +193,18 @@
             <h3>Manuell erstellen</h3>
             <p>Schreiben Sie Ihre Vorlage selbst mit Platzhaltern wie {{FIRMA}} und {{POSITION}}.</p>
           </button>
+          <button class="create-option zen-card" @click="generateFromStyle" :disabled="generatingFromStyle">
+            <div class="create-option__icon create-option__icon--style">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 19l7-7 3 3-7 7-3-3z"/>
+                <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/>
+                <path d="M2 2l7.586 7.586"/>
+                <circle cx="11" cy="11" r="2"/>
+              </svg>
+            </div>
+            <h3>{{ generatingFromStyle ? 'Analysiere...' : 'Aus Schreibstil' }}</h3>
+            <p>Lade eigene Anschreiben hoch und erhalte ein Template in deinem persönlichen Stil.</p>
+          </button>
         </div>
       </section>
 
@@ -479,6 +491,7 @@ const generatedVariants = ref([])
 const generatingVariants = ref(false)
 const editingTemplate = ref(null)
 const generating = ref(false)
+const generatingFromStyle = ref(false)
 const message = ref('')
 const messageClass = ref('')
 
@@ -734,6 +747,38 @@ const handleVariantSelect = async (variant) => {
 
 const cancelWizard = () => {
   showWizard.value = false
+}
+
+const generateFromStyle = async () => {
+  generatingFromStyle.value = true
+  message.value = ''
+
+  try {
+    const { data } = await api.post('/templates/generate-from-style', {}, { suppressToast: true })
+
+    message.value = data.message || 'Template aus Schreibstil erfolgreich erstellt!'
+    messageClass.value = 'success'
+
+    if (window.$toast) {
+      window.$toast(message.value, 'success')
+    }
+
+    await loadTemplates()
+
+    // Open the new template in the editor
+    if (data.template) {
+      editTemplate(data.template)
+    }
+  } catch (e) {
+    const errorMsg = e.response?.data?.error || 'Schreibstil-Analyse fehlgeschlagen. Bitte versuchen Sie es erneut.'
+    message.value = errorMsg
+    messageClass.value = 'error'
+    if (window.$toast) {
+      window.$toast(errorMsg, 'error')
+    }
+  } finally {
+    generatingFromStyle.value = false
+  }
 }
 
 const cancelEdit = () => {
@@ -1218,7 +1263,7 @@ onUnmounted(() => {
 /* Create Options Grid */
 .create-options {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: var(--space-lg);
 }
 
@@ -1263,6 +1308,11 @@ onUnmounted(() => {
 .create-option__icon--manual {
   background: var(--color-sand);
   color: var(--color-sumi);
+}
+
+.create-option__icon--style {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
 }
 
 .create-option h3 {
@@ -1578,6 +1628,12 @@ onUnmounted(() => {
 /* ========================================
    RESPONSIVE
    ======================================== */
+.create-option:disabled {
+  opacity: 0.6;
+  cursor: wait;
+  transform: none;
+}
+
 @media (max-width: 1200px) {
   .create-options {
     grid-template-columns: repeat(2, 1fr);

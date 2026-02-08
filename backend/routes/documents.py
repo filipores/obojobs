@@ -142,6 +142,28 @@ def upload_document(current_user):
                 logger.warning("Skill-Extraktion fehlgeschlagen: %s", skill_error)
                 # Continue anyway, document upload was successful
 
+            # Profile data extraction from CV
+            profile_fields_updated = []
+            try:
+                from services.profile_extractor import ProfileExtractor
+
+                profile_extractor = ProfileExtractor()
+                profile_data = profile_extractor.extract_profile_from_cv(extracted_text)
+
+                # Only fill empty fields, never overwrite existing data
+                for field_name in ["full_name", "phone", "address", "city", "postal_code", "website"]:
+                    current_value = getattr(current_user, field_name, None)
+                    new_value = profile_data.get(field_name)
+                    if not current_value and new_value:
+                        setattr(current_user, field_name, new_value)
+                        profile_fields_updated.append(field_name)
+
+                if profile_fields_updated:
+                    db.session.commit()
+                    logger.info("Profildaten aus CV extrahiert: %s", profile_fields_updated)
+            except Exception as profile_err:
+                logger.warning("Profil-Extraktion fehlgeschlagen: %s", profile_err)
+
         response_data = {
             "success": True,
             "message": f"{doc_type.capitalize()} erfolgreich hochgeladen und Text extrahiert",
@@ -151,6 +173,9 @@ def upload_document(current_user):
 
         if doc_type == "lebenslauf":
             response_data["skills_extracted"] = skills_extracted
+            if profile_fields_updated:
+                response_data["profile_updated"] = True
+                response_data["profile_fields_updated"] = profile_fields_updated
 
         return jsonify(response_data), 201
 

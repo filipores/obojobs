@@ -269,21 +269,36 @@ class BewerbungsGenerator:
         # Check if using PDF template or text template
         if self.template and self.template.is_pdf_template:
             logger.info("4/5 PDF-Template wird verwendet...")
-            logger.info("5/5 Erstelle PDF aus Template...")
 
-            # Use PDFTemplateModifier to generate PDF from template
-            modifier = PDFTemplateModifier()
             # Convert variable_positions to dict format if it's a list
             positions_dict = _convert_variable_positions_to_dict(self.template.variable_positions)
-            pdf_bytes = modifier.generate_from_template(
-                pdf_path=self.template.pdf_path,
-                variable_positions=positions_dict,
-                replacements=replacements,
-            )
 
-            # Write the PDF bytes to output file
-            with open(output_path, "wb") as f:
-                f.write(pdf_bytes)
+            if positions_dict:
+                logger.info("5/5 Erstelle PDF aus Template...")
+                # Use PDFTemplateModifier to generate PDF from template
+                modifier = PDFTemplateModifier()
+                pdf_bytes = modifier.generate_from_template(
+                    pdf_path=self.template.pdf_path,
+                    variable_positions=positions_dict,
+                    replacements=replacements,
+                )
+
+                # Write the PDF bytes to output file
+                with open(output_path, "wb") as f:
+                    f.write(pdf_bytes)
+            else:
+                logger.warning("PDF-Template hat keine Variable-Positionen, verwende Text-Fallback")
+                # Fall back to text-based substitution
+                anschreiben_vollstaendig = self.anschreiben_template
+                for var_name, value in replacements.items():
+                    placeholder = f"{{{{{var_name}}}}}"
+                    anschreiben_vollstaendig = anschreiben_vollstaendig.replace(placeholder, value)
+
+                anschreiben_vollstaendig = re.sub(r"\n{3,}", "\n\n", anschreiben_vollstaendig)
+                anschreiben_vollstaendig = anschreiben_vollstaendig.strip()
+
+                logger.info("5/5 Erstelle PDF (Text-Fallback)...")
+                create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
         else:
             logger.info("4/5 Erstelle vollstaendiges Anschreiben...")
             anschreiben_vollstaendig = self.anschreiben_template

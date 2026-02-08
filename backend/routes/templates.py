@@ -403,6 +403,63 @@ Generiere jetzt das Anschreiben mit Suggestions:"""
         return jsonify({"error": f"Fehler beim Generieren: {str(e)}"}), 500
 
 
+@templates_bp.route("/generate-from-style", methods=["POST"])
+@jwt_required_custom
+def generate_template_from_style(current_user):
+    """Generate a personalized template by analyzing the user's writing style from uploaded Anschreiben."""
+    # Query all uploaded Anschreiben documents for this user
+    anschreiben_docs = Document.query.filter_by(user_id=current_user.id, doc_type="anschreiben").all()
+
+    if not anschreiben_docs:
+        return jsonify({"error": "Keine Anschreiben gefunden. Lade zuerst eigene Anschreiben als Dokumente hoch."}), 400
+
+    # Read text from each document's file_path (the .txt extracted text file)
+    cover_letters = []
+    for doc in anschreiben_docs:
+        if doc.file_path and os.path.exists(doc.file_path):
+            try:
+                text = read_document(doc.file_path)
+                if text and text.strip():
+                    cover_letters.append(text)
+            except Exception as e:
+                logger.warning("Konnte Anschreiben %s nicht lesen: %s", doc.id, e)
+
+    if not cover_letters:
+        return jsonify(
+            {"error": "Konnte keinen Text aus den Anschreiben lesen. Bitte lade die Dokumente erneut hoch."}
+        ), 400
+
+    try:
+        from services.style_analyzer import StyleAnalyzer
+
+        analyzer = StyleAnalyzer()
+        result = analyzer.analyze_and_generate(cover_letters, current_user.full_name or "")
+
+        # Create new template
+        template = Template(
+            user_id=current_user.id,
+            name=result["template_name"],
+            content=result["template_content"],
+            is_default=False,
+        )
+
+        db.session.add(template)
+        db.session.commit()
+
+        return jsonify(
+            {
+                "success": True,
+                "message": "Template aus Schreibstil-Analyse erfolgreich erstellt!",
+                "template": template.to_dict(),
+                "style_profile": result["style_profile"],
+            }
+        ), 201
+
+    except Exception as e:
+        logger.error("Fehler bei Schreibstil-Analyse: %s", e)
+        return jsonify({"error": f"Fehler bei der Schreibstil-Analyse: {str(e)}"}), 500
+
+
 @templates_bp.route("/list-simple", methods=["GET"])
 @api_key_required  # Extension uses API key
 def list_templates_simple(current_user):

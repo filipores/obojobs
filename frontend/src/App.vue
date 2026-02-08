@@ -23,29 +23,40 @@
           <router-link to="/dashboard" class="nav-link" exact-active-class="active" title="Dashboard">
             <span class="nav-text">Dashboard</span>
           </router-link>
-          <router-link to="/documents" class="nav-link" active-class="active" title="Dokumente verwalten">
-            <span class="nav-text">Dokumente</span>
-          </router-link>
-          <router-link to="/templates" class="nav-link" active-class="active" title="Bewerbungsvorlagen">
-            <span class="nav-text">Templates</span>
-          </router-link>
           <router-link to="/applications" class="nav-link" active-class="active" title="Meine Bewerbungen">
             <span class="nav-text">Bewerbungen</span>
           </router-link>
-          <router-link to="/timeline" class="nav-link" active-class="active" title="Aktivitäten-Timeline">
-            <span class="nav-text">Timeline</span>
-          </router-link>
-          <router-link to="/ats" class="nav-link" active-class="active" title="ATS-Optimierung">
-            <span class="nav-text">ATS</span>
-          </router-link>
-          <router-link to="/company-insights" class="nav-link nav-link-with-icon" active-class="active" title="Firmen-Insights">
-            <svg class="nav-icon-mobile" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M18 20V10"/>
-              <path d="M12 20V4"/>
-              <path d="M6 20v-6"/>
-            </svg>
-            <span class="nav-text">Insights</span>
-          </router-link>
+          <!-- Mehr Dropdown -->
+          <div class="mehr-dropdown-wrapper" ref="moreDropdownRef">
+            <button
+              class="nav-link mehr-toggle"
+              :class="{ 'active': isMoreDropdownOpen || isMoreRouteActive }"
+              @click="toggleMoreDropdown"
+              title="Mehr anzeigen"
+            >
+              <span class="nav-text">Mehr</span>
+              <svg class="mehr-chevron" :class="{ 'mehr-chevron-open': isMoreDropdownOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div v-if="isMoreDropdownOpen" class="mehr-dropdown">
+              <router-link to="/documents" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Dokumente verwalten">
+                Dokumente
+              </router-link>
+              <router-link to="/templates" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Bewerbungsvorlagen">
+                Templates
+              </router-link>
+              <router-link to="/timeline" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Aktivitäten-Timeline">
+                Timeline
+              </router-link>
+              <router-link to="/ats" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="ATS-Optimierung">
+                ATS
+              </router-link>
+              <router-link to="/company-insights" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Firmen-Insights">
+                Insights
+              </router-link>
+            </div>
+          </div>
           <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active" title="Neue Bewerbung erstellen">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
@@ -314,6 +325,19 @@ const toastRef = ref(null)
 const isDarkMode = ref(false)
 const isSidebarOpen = ref(false)
 const isResizing = ref(false)
+const isMoreDropdownOpen = ref(false)
+const moreDropdownRef = ref(null)
+const moreRoutes = ['/documents', '/templates', '/timeline', '/ats', '/company-insights']
+const isMoreRouteActive = computed(() => moreRoutes.some(r => route.path.startsWith(r)))
+
+const toggleMoreDropdown = () => {
+  isMoreDropdownOpen.value = !isMoreDropdownOpen.value
+}
+
+const closeMoreDropdown = () => {
+  isMoreDropdownOpen.value = false
+}
+
 const currentYear = computed(() => new Date().getFullYear())
 const isLandingPage = computed(() => route.meta?.landing === true)
 
@@ -389,8 +413,15 @@ const handleEscapeKey = (event) => {
   }
 }
 
+const handleClickOutside = (e) => {
+  if (moreDropdownRef.value && !moreDropdownRef.value.contains(e.target)) {
+    isMoreDropdownOpen.value = false
+  }
+}
+
 // Close sidebar on route change
 const handleRouteChange = () => {
+  isMoreDropdownOpen.value = false
   if (isSidebarOpen.value) {
     closeMobileSidebar()
   }
@@ -449,12 +480,15 @@ onMounted(() => {
 
   // Watch for route changes to close sidebar
   router.afterEach(handleRouteChange)
+
+  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   // Clean up event listeners
   document.removeEventListener('keydown', handleEscapeKey)
   window.removeEventListener('resize', handleResize)
+  document.removeEventListener('click', handleClickOutside)
   clearTimeout(resizeTimer)
   document.body.classList.remove('sidebar-open')
 })
@@ -651,6 +685,76 @@ onUnmounted(() => {
 .nav-link.active::after {
   width: 24px;
   background: var(--color-ai);
+}
+
+/* Mehr Dropdown */
+.mehr-dropdown-wrapper {
+  position: relative;
+}
+
+.mehr-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mehr-chevron {
+  transition: transform var(--transition-base);
+  flex-shrink: 0;
+}
+
+.mehr-chevron-open {
+  transform: rotate(180deg);
+}
+
+.mehr-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 180px;
+  background: var(--color-washi);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lifted);
+  padding: var(--space-xs) 0;
+  z-index: calc(var(--z-nav) + 1);
+  animation: dropdownFade 0.15s var(--ease-zen);
+}
+
+.mehr-dropdown-item {
+  display: block;
+  padding: var(--space-sm) var(--space-lg);
+  color: var(--color-text-tertiary);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.mehr-dropdown-item:hover {
+  background: var(--color-washi-aged);
+  color: var(--color-text-primary);
+}
+
+.mehr-dropdown-item.mehr-item-active {
+  color: var(--color-ai);
+  font-weight: 500;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
 }
 
 /* Actions */

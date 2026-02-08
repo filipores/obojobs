@@ -52,7 +52,7 @@
         <!-- Phase 3: PDF card and actions -->
         <div class="premium-reveal-actions" :class="{ 'premium-reveal-actions--visible': revealPhase >= 3 }">
           <!-- PDF Preview Card -->
-          <div class="premium-reveal-pdf-card" @click="$emit('download-pdf')">
+          <div class="premium-reveal-pdf-card">
             <div class="premium-reveal-pdf-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -64,7 +64,7 @@
             </div>
             <div class="premium-reveal-pdf-info">
               <span class="premium-reveal-pdf-name">Anschreiben_{{ generatedApp.firma }}.pdf</span>
-              <span class="premium-reveal-pdf-action">Klicken zum Herunterladen</span>
+              <span class="premium-reveal-pdf-action">PDF Bewerbung</span>
             </div>
             <div class="premium-reveal-pdf-download">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -306,7 +306,6 @@ const trapFocus = (e) => {
   border-radius: var(--radius-md);
   padding: var(--space-md) var(--space-lg);
   margin-bottom: var(--space-lg);
-  cursor: pointer;
   transition: all var(--transition-base);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
 }
@@ -314,7 +313,6 @@ const trapFocus = (e) => {
 .premium-reveal-pdf-card:hover {
   border-color: var(--color-ai);
   box-shadow: 0 4px 16px rgba(61, 90, 108, 0.12);
-  transform: translateY(-2px);
 }
 
 .premium-reveal-pdf-icon {

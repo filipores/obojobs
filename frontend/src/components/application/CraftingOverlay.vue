@@ -76,9 +76,9 @@
                 <div class="typewriter-preview">
                   <TypewriterText
                     :text="previewText"
-                    :speed="60"
+                    :speed="35"
                     :delay="500"
-                    variant="default"
+                    variant="brush"
                     :show-cursor="true"
                     @complete="onTypewriterComplete"
                   />
@@ -163,11 +163,11 @@ const emit = defineEmits(['complete', 'phase-change'])
 
 // Phase definitions with timing
 const phases = [
-  { title: 'Sammle deine Dokumente', duration: 3000 },
-  { title: 'Verstehe die Anforderungen', duration: 5000 },
-  { title: 'Schreibe dein Anschreiben', duration: 12000 },
-  { title: 'Letzte Pinselstriche', duration: 5000 },
-  { title: '', duration: 1500 }
+  { title: 'Sammle deine Dokumente', duration: 2500 },
+  { title: 'Verstehe die Anforderungen', duration: 4000 },
+  { title: 'Schreibe dein Anschreiben', duration: 7000 },
+  { title: 'Letzte Pinselstriche', duration: 3500 },
+  { title: '', duration: 1000 }
 ]
 
 // State

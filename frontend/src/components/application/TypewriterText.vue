@@ -76,7 +76,7 @@ const typeNextChar = () => {
     emit('char', props.text[charIndex])
     charIndex++
 
-    const variation = Math.random() * 40 - 20
+    const variation = Math.random() * 20 - 10
     const nextDelay = props.speed + variation
 
     typingTimeout = setTimeout(typeNextChar, Math.max(30, nextDelay))
@@ -178,12 +178,19 @@ defineExpose({ start, reset, pause, resume })
   background: linear-gradient(
     90deg,
     var(--color-sumi) 0%,
+    var(--color-ai) 45%,
+    var(--color-sumi) 55%,
     var(--color-sumi) 100%
   );
-  background-size: 200% 100%;
+  background-size: 300% 100%;
   -webkit-background-clip: text;
   background-clip: text;
-  animation: brushReveal 0.3s ease-out forwards;
+  -webkit-text-fill-color: transparent;
+  animation: brushShimmer 3s ease-in-out infinite;
+}
+
+.typewriter--brush .typewriter__cursor {
+  text-shadow: 0 0 8px var(--color-ai);
 }
 
 /* Fade variant - gentle appearance */
@@ -206,6 +213,12 @@ defineExpose({ start, reset, pause, resume })
     background-position: 0 0;
     opacity: 1;
   }
+}
+
+@keyframes brushShimmer {
+  0% { background-position: 100% 0; }
+  50% { background-position: 0% 0; }
+  100% { background-position: 100% 0; }
 }
 
 @keyframes fadeChar {

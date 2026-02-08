@@ -120,7 +120,7 @@
   --transition-subtle: 200ms var(--ease-zen);
   --transition-base: 350ms var(--ease-zen);
   --transition-slow: 500ms var(--ease-zen);
-  --transition-drift: 800ms var(--ease-zen);
+  --transition-drift: 500ms var(--ease-zen);
 
   /* Focus Ring (A11Y) */
   --focus-ring-color: var(--color-ai);
@@ -495,7 +495,7 @@ small {
 
 .zen-card:hover {
   box-shadow: var(--shadow-lifted);
-  transform: translateY(-2px) rotate(0.3deg); /* Subtle organic movement */
+  transform: translateY(-2px);
 }
 
 .zen-card:hover::before {
@@ -989,7 +989,7 @@ tbody tr:hover {
 @keyframes fadeUp {
   from {
     opacity: 0;
-    transform: translateY(20px);
+    transform: translateY(8px);
   }
   to {
     opacity: 1;
@@ -1053,7 +1053,7 @@ tbody tr:hover {
 
 @keyframes float {
   0%, 100% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-10px) rotate(2deg); }
+  50% { transform: translateY(-4px); }
 }
 
 /* Animation utility classes */
@@ -1079,11 +1079,11 @@ tbody tr:hover {
 }
 
 .stagger-item:nth-child(1) { animation-delay: 0ms; }
-.stagger-item:nth-child(2) { animation-delay: 80ms; }
-.stagger-item:nth-child(3) { animation-delay: 160ms; }
-.stagger-item:nth-child(4) { animation-delay: 240ms; }
-.stagger-item:nth-child(5) { animation-delay: 320ms; }
-.stagger-item:nth-child(6) { animation-delay: 400ms; }
+.stagger-item:nth-child(2) { animation-delay: 50ms; }
+.stagger-item:nth-child(3) { animation-delay: 100ms; }
+.stagger-item:nth-child(4) { animation-delay: 150ms; }
+.stagger-item:nth-child(5) { animation-delay: 200ms; }
+.stagger-item:nth-child(6) { animation-delay: 250ms; }
 
 /* ========================================
    KEN BURNS EFFECT - For images

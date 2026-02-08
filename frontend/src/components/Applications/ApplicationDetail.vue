@@ -361,10 +361,22 @@ const getSentViaLabel = (provider) => {
 
 .modal-footer {
   display: flex;
+  flex-wrap: wrap;
   gap: var(--space-md);
   padding: var(--space-lg) var(--space-xl);
   border-top: 1px solid var(--color-border-light);
   background: var(--color-washi);
+}
+
+.modal-footer .zen-btn,
+.modal-footer .zen-btn-interview {
+  flex: 1 1 auto;
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+.modal-footer .zen-btn-danger {
+  flex: 0 1 auto;
 }
 
 .modal-footer .zen-btn svg {
