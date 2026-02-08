@@ -1026,8 +1026,8 @@ onUnmounted(() => {
   color: var(--color-text-ghost);
 }
 
-/* Add padding for bottom nav (visible up to 768px) */
-@media (max-width: 768px) {
+/* Add padding for bottom nav (visible below 768px) */
+@media (max-width: 767px) {
   .main-content.with-nav {
     padding-bottom: 84px;
   }
@@ -1074,7 +1074,7 @@ onUnmounted(() => {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .bottom-nav {
     display: flex;
     justify-content: space-around;
