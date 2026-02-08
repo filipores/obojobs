@@ -109,7 +109,7 @@ const JobExtractor = {
     // StepStone
     {
       name: 'stepstone',
-      matches: (url) => /stepstone\.de/i.test(url) && /\/stellenangebote--|\/offer\//i.test(url),
+      matches: (url) => /stepstone\.de/i.test(url) && /\/stellenangebote--|\/offer\/|\/jobs--/i.test(url),
       extract(doc) {
         const result = {};
         const h1 = doc.querySelector('h1');
