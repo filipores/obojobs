@@ -1,3 +1,10 @@
+## [1.39.1](https://github.com/filipores/obojobs/compare/v1.39.0...v1.39.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **tests:** fix ci failures in subscription and api client tests ([cf4845a](https://github.com/filipores/obojobs/commit/cf4845a41383c7a252c0633961110495b1087b4c))
+
 # [1.39.0](https://github.com/filipores/obojobs/compare/v1.38.1...v1.39.0) (2026-02-08)
 
 
