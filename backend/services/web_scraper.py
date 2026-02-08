@@ -2281,7 +2281,48 @@ class WebScraper:
             return None
 
     def _fetch_page(self, url: str, headers: dict | None = None) -> requests.Response:
-        """Fetch a page with 3-tier fallback: direct → ScraperAPI → cloudscraper."""
+        """Fetch a page with environment-aware fallback strategy.
+
+        Production (datacenter IP): ScraperAPI → cloudscraper → direct (last resort)
+        Development (residential IP): direct → ScraperAPI → cloudscraper
+        """
+        is_production = os.getenv("FLASK_ENV") == "production"
+
+        if is_production and self.scraper_api_key:
+            return self._fetch_page_production(url, headers)
+        return self._fetch_page_dev(url, headers)
+
+    def _fetch_via_cloudscraper(self, url: str) -> requests.Response | None:
+        """Fetch a page using cloudscraper for anti-bot bypass. Returns None on failure."""
+        logger.info("Trying cloudscraper for %s", urlparse(url).netloc)
+        try:
+            scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "linux"})
+            response = scraper.get(url, timeout=self.timeout)
+            response.raise_for_status()
+            return response
+        except Exception:
+            return None
+
+    def _fetch_page_production(self, url: str, headers: dict | None = None) -> requests.Response:
+        """Production: ScraperAPI first (datacenter IP gets blocked by job boards)."""
+        # Attempt 1: ScraperAPI (residential IP rotation)
+        api_response = self._fetch_via_scraper_api(url)
+        if api_response is not None:
+            return api_response
+
+        # Attempt 2: cloudscraper (anti-bot bypass)
+        cs_response = self._fetch_via_cloudscraper(url)
+        if cs_response is not None:
+            return cs_response
+
+        # Attempt 3: Direct request (last resort)
+        logger.info("Trying direct request for %s", urlparse(url).netloc)
+        response = self.session.get(url, timeout=self.timeout, headers=headers)
+        response.raise_for_status()
+        return response
+
+    def _fetch_page_dev(self, url: str, headers: dict | None = None) -> requests.Response:
+        """Development: direct request first (residential IP usually works)."""
         # Attempt 1: Direct request
         try:
             response = self.session.get(url, timeout=self.timeout, headers=headers)
@@ -2300,14 +2341,11 @@ class WebScraper:
                 return api_response
 
             # Attempt 3: cloudscraper (anti-bot bypass)
-            logger.info("Retrying %s with cloudscraper", urlparse(url).netloc)
-            try:
-                scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "linux"})
-                response = scraper.get(url, timeout=self.timeout)
-                response.raise_for_status()
-                return response
-            except Exception:
-                raise e from None  # Re-raise the original error if all attempts fail
+            cs_response = self._fetch_via_cloudscraper(url)
+            if cs_response is not None:
+                return cs_response
+
+            raise e from None  # Re-raise the original error if all attempts fail
 
     @staticmethod
     def _make_http_error(e: requests.HTTPError) -> Exception:

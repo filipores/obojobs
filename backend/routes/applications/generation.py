@@ -174,14 +174,11 @@ def generate_application(current_user):
 @applications_bp.route("/quick-extract", methods=["POST"])
 @jwt_required_custom
 def quick_extract(current_user):
-    """Quick extraction of company and title from job URL for minimal confirmation flow.
+    """Quick extraction of job data from URL for minimal confirmation flow.
 
-    Returns only the essential fields needed for a quick confirmation dialog:
-    - company: The company name
-    - title: The job position title
-
-    This is faster than the full preview-job endpoint since it doesn't extract
-    the full description and other optional fields.
+    Returns the essential fields (company, title, description) needed for
+    a quick confirmation dialog, without extracting optional fields like
+    location, contact person, or salary.
     """
     data = request.json
     url = data.get("url", "").strip()
@@ -198,12 +195,13 @@ def quick_extract(current_user):
         # Detect job board for display
         job_board = scraper.detect_job_board(url)
 
-        # Fetch structured job data (uses same scraper but we only return essential fields)
+        # Fetch structured job data (includes description to avoid re-scraping later)
         job_data = scraper.fetch_structured_job_posting(url)
 
-        # Extract only company and title
+        # Extract fields
         company = (job_data.get("company") or "").strip()
         title = (job_data.get("title") or "").strip()
+        description = (job_data.get("description") or job_data.get("text") or "").strip()
 
         # If both are missing, extraction failed
         if not company and not title:
@@ -221,6 +219,7 @@ def quick_extract(current_user):
                 "data": {
                     "company": company,
                     "title": title,
+                    "description": description,
                     "portal": PORTAL_DISPLAY_NAMES.get(job_board, "Sonstige"),
                     "portal_id": job_board or "generic",
                     "url": url,

@@ -381,9 +381,14 @@ const loadPreview = async () => {
       quickConfirmData.value = data.data
 
       editableData.value = {
-        ...defaultEditableData(),
         company: data.data.company || '',
         title: data.data.title || '',
+        location: '',
+        employment_type: '',
+        contact_person: '',
+        contact_email: '',
+        salary: '',
+        description: data.data.description || '',
       }
 
       loading.value = false
