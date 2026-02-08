@@ -1,3 +1,10 @@
+# [1.39.0](https://github.com/filipores/obojobs/compare/v1.38.1...v1.39.0) (2026-02-08)
+
+
+### Features
+
+* **scraper:** add scraperapi as fallback for blocked datacenter ips ([dce5ed4](https://github.com/filipores/obojobs/commit/dce5ed4a30aed0025ecec302b322356c764b37c3))
+
 ## [1.38.1](https://github.com/filipores/obojobs/compare/v1.38.0...v1.38.1) (2026-02-08)
 
 
