@@ -1,3 +1,10 @@
+## [1.39.2](https://github.com/filipores/obojobs/compare/v1.39.1...v1.39.2) (2026-02-08)
+
+
+### Bug Fixes
+
+* **deploy:** pass scraper_api_key to backend container ([28d50a7](https://github.com/filipores/obojobs/commit/28d50a78290247bb326e4f458e5482d4adde0bf4))
+
 ## [1.39.1](https://github.com/filipores/obojobs/compare/v1.39.0...v1.39.1) (2026-02-08)
 
 
