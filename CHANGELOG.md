@@ -1,3 +1,10 @@
+## [1.37.2](https://github.com/filipores/obojobs/compare/v1.37.1...v1.37.2) (2026-02-08)
+
+
+### Bug Fixes
+
+* **pdf:** use content-based formatting instead of line-count heuristic ([20efb54](https://github.com/filipores/obojobs/commit/20efb545e6aaddb1108e0e37e620669ac98f3813))
+
 ## [1.37.1](https://github.com/filipores/obojobs/compare/v1.37.0...v1.37.1) (2026-02-08)
 
 
