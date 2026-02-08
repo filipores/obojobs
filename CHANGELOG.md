@@ -1,3 +1,10 @@
+## [1.39.8](https://github.com/filipores/obojobs/compare/v1.39.7...v1.39.8) (2026-02-08)
+
+
+### Bug Fixes
+
+* add proxy-fix middleware and rate limit ip whitelist ([685b268](https://github.com/filipores/obojobs/commit/685b268b897f634c534a9815f8c8782317fc36b4))
+
 ## [1.39.7](https://github.com/filipores/obojobs/compare/v1.39.6...v1.39.7) (2026-02-08)
 
 
