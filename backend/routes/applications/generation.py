@@ -26,8 +26,23 @@ PORTAL_DISPLAY_NAMES = {
     "xing": "XING",
 }
 
-# HTTP status codes that indicate a client-side scraping error (not a server bug)
-_SCRAPER_CLIENT_ERROR_CODES = ("403", "404", "429", "400", "401", "502", "503")
+# Patterns that indicate a scraper error we should pass through to the user (not a server bug)
+_SCRAPER_ERROR_PATTERNS = (
+    "403",
+    "404",
+    "429",
+    "400",
+    "401",
+    "502",
+    "503",
+    "blockiert",
+    "nicht gefunden",
+    "nicht zugänglich",
+    "konnte nicht geladen",
+    "Zu viele Anfragen",
+    "manuell",
+    "manuelle Eingabe",
+)
 
 # Fields to check for profile completeness warnings
 _PROFILE_FIELDS = ["full_name", "phone", "address", "city", "postal_code"]
@@ -46,8 +61,8 @@ def _get_profile_warning(user):
 
 
 def _is_scraper_client_error(error_message: str) -> bool:
-    """Check if a scraper error message indicates a client-side HTTP error."""
-    return any(code in error_message for code in _SCRAPER_CLIENT_ERROR_CODES)
+    """Check if a scraper error is user-facing (not an internal server bug)."""
+    return any(pattern in error_message for pattern in _SCRAPER_ERROR_PATTERNS)
 
 
 def calculate_and_store_job_fit(app, job_description, user_id):
