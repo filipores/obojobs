@@ -1,3 +1,10 @@
+## [1.39.7](https://github.com/filipores/obojobs/compare/v1.39.6...v1.39.7) (2026-02-08)
+
+
+### Bug Fixes
+
+* **mobile:** use 767px breakpoint for bottom nav to exclude tablets ([9e59cfe](https://github.com/filipores/obojobs/commit/9e59cfe2602acd59bb7a4da0356ea8319bda05cb))
+
 ## [1.39.6](https://github.com/filipores/obojobs/compare/v1.39.5...v1.39.6) (2026-02-08)
 
 
