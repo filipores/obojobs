@@ -1,88 +1,95 @@
 document.addEventListener('DOMContentLoaded', async () => {
-  const status = document.getElementById('status');
-  const credits = document.getElementById('credits');
+  const statusEl = document.getElementById('status');
+  const creditsEl = document.getElementById('credits');
   const templateSection = document.getElementById('template-section');
   const templateSelect = document.getElementById('template-select');
+  const extractBtn = document.getElementById('extract-btn');
 
-  // Get settings
+  // Settings button
+  document.getElementById('settings-btn').addEventListener('click', () => {
+    chrome.runtime.openOptionsPage();
+  });
+
+  // Template selection persistence
+  templateSelect.addEventListener('change', () => {
+    const selectedId = templateSelect.value ? parseInt(templateSelect.value) : null;
+    chrome.storage.sync.set({ selectedTemplateId: selectedId });
+  });
+
+  // Extract button: trigger DOM extraction + show modal on page
+  extractBtn.addEventListener('click', () => {
+    extractBtn.disabled = true;
+    extractBtn.textContent = 'Extrahiere...';
+    chrome.runtime.sendMessage({ action: 'extractAndGenerate' }, (resp) => {
+      if (resp?.success) {
+        window.close();
+      } else {
+        extractBtn.disabled = false;
+        extractBtn.textContent = 'Bewerbung von dieser Seite';
+      }
+    });
+  });
+
+  // Check settings
   const settings = await chrome.storage.sync.get(['serverUrl', 'apiKey', 'selectedTemplateId']);
 
   if (!settings.serverUrl || !settings.apiKey) {
-    status.textContent = 'Settings not configured';
-    status.className = 'status error';
-    credits.textContent = 'Click Settings button below';
+    statusEl.textContent = 'Settings not configured';
+    statusEl.className = 'status error';
+    creditsEl.textContent = 'Click Settings button below';
     return;
   }
 
-  // Check server
+  // Check server connection
   try {
     const response = await fetch(`${settings.serverUrl}/api/auth/me`, {
       headers: { 'X-API-Key': settings.apiKey }
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      status.textContent = 'Server connected';
-      status.className = 'status ok';
-      credits.textContent = `Credits: ${data.credits_remaining}/${data.credits_max}`;
-
-      // Fetch and display templates
-      await loadTemplates(settings.serverUrl, settings.apiKey, settings.selectedTemplateId);
-    } else {
-      status.textContent = 'Invalid API Key';
-      status.className = 'status error';
+    if (!response.ok) {
+      statusEl.textContent = 'Invalid API Key';
+      statusEl.className = 'status error';
+      return;
     }
-  } catch {
-    status.textContent = 'Server not reachable';
-    status.className = 'status error';
-  }
 
-  // Handle template selection
-  templateSelect.addEventListener('change', async () => {
-    const selectedId = templateSelect.value ? parseInt(templateSelect.value) : null;
-    await chrome.storage.sync.set({ selectedTemplateId: selectedId });
-  });
+    const data = await response.json();
+    statusEl.textContent = 'Server connected';
+    statusEl.className = 'status ok';
+    creditsEl.textContent = `Credits: ${data.credits_remaining}/${data.credits_max}`;
+    extractBtn.style.display = 'block';
+
+    await loadTemplates(settings, templateSelect, templateSection);
+  } catch {
+    statusEl.textContent = 'Server not reachable';
+    statusEl.className = 'status error';
+  }
 });
 
-// Load templates
-async function loadTemplates(serverUrl, apiKey, selectedTemplateId) {
+async function loadTemplates(settings, selectEl, sectionEl) {
   try {
-    const response = await fetch(`${serverUrl}/api/templates/list-simple`, {
-      headers: { 'X-API-Key': apiKey }
+    const response = await fetch(`${settings.serverUrl}/api/templates/list-simple`, {
+      headers: { 'X-API-Key': settings.apiKey }
     });
 
-    if (response.ok) {
-      const data = await response.json();
-      const templates = data.templates;
+    if (!response.ok) return;
 
-      if (templates && templates.length > 0) {
-        const templateSelect = document.getElementById('template-select');
-        const templateSection = document.getElementById('template-section');
+    const data = await response.json();
+    const templates = data.templates;
 
-        // Clear existing options (except first)
-        templateSelect.innerHTML = '<option value="">Standard (Default)</option>';
+    if (!templates || templates.length === 0) return;
 
-        // Add templates
-        templates.forEach(t => {
-          const option = document.createElement('option');
-          option.value = t.id;
-          option.textContent = t.name + (t.is_default ? ' ⭐' : '');
-          if (selectedTemplateId && selectedTemplateId === t.id) {
-            option.selected = true;
-          }
-          templateSelect.appendChild(option);
-        });
+    selectEl.innerHTML = '<option value="">Standard (Default)</option>';
 
-        // Show template section
-        templateSection.style.display = 'block';
-      }
+    for (const t of templates) {
+      const option = document.createElement('option');
+      option.value = t.id;
+      option.textContent = t.name + (t.is_default ? ' *' : '');
+      option.selected = settings.selectedTemplateId === t.id;
+      selectEl.appendChild(option);
     }
+
+    sectionEl.style.display = 'block';
   } catch (err) {
     console.error('Failed to load templates:', err);
   }
 }
-
-// Settings button
-document.getElementById('settings-btn').addEventListener('click', () => {
-  chrome.runtime.openOptionsPage();
-});
