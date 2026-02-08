@@ -78,6 +78,7 @@ services:
       - COMPANY_PHONE=${COMPANY_PHONE:-}
       - SCRAPER_API_KEY=${SCRAPER_API_KEY:-}
       - RATE_LIMIT_STORAGE_URI=redis://redis:6379/1
+      - RATE_LIMIT_WHITELIST=127.0.0.1,2003:fc:8f1d:a400:84dd:e9e6:481c:2cd4
     volumes:
       - uploads:/app/uploads
     depends_on:

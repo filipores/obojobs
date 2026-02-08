@@ -6,6 +6,7 @@ from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import config
 
@@ -35,6 +36,10 @@ migrate = Migrate()
 def create_app():
     """Create and configure Flask application"""
     app = Flask(__name__)
+
+    # Trust X-Forwarded-For from reverse proxy (Caddy)
+    # x_for=1: trust 1 proxy hop for the client IP
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Load configuration
     app.config.from_object(config)
