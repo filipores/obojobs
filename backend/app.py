@@ -145,6 +145,7 @@ def create_app():
     init_security_headers(app)
 
     # Register blueprints
+    from routes.admin import admin_bp
     from routes.api_keys import api_keys_bp
     from routes.applications import applications_bp
     from routes.ats import ats_bp
@@ -178,6 +179,7 @@ def create_app():
     app.register_blueprint(recommendations_bp, url_prefix="/api")
     app.register_blueprint(salary_bp, url_prefix="/api/salary")
     app.register_blueprint(legal_bp, url_prefix="/api/legal")
+    app.register_blueprint(admin_bp, url_prefix="/api/admin")
 
     # Health check endpoint (no rate limit)
     @app.route("/api/health")

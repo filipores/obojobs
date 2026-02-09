@@ -61,6 +61,7 @@ def seed_test_data(app):
             email_verified=True,  # Pre-verified for easier testing
         )
         test_user.set_password("Test1234!")
+        test_user.is_admin = True
 
         db.session.add(test_user)
         db.session.flush()  # Get user ID

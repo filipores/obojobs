@@ -55,6 +55,10 @@
               <router-link to="/company-insights" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Firmen-Insights">
                 Insights
               </router-link>
+              <div v-if="authStore.user?.is_admin" class="mehr-dropdown-divider"></div>
+              <router-link v-if="authStore.user?.is_admin" to="/admin" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Admin Dashboard">
+                Admin
+              </router-link>
             </div>
           </div>
           <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active" title="Neue Bewerbung erstellen">
@@ -216,6 +220,13 @@
             <span>Abo ({{ getPlanLabel() }})</span>
           </router-link>
 
+          <router-link v-if="authStore.user?.is_admin" to="/admin" class="sidebar-link" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <span>Admin</span>
+          </router-link>
+
           <router-link to="/settings" class="sidebar-link" @click="closeMobileSidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="12" cy="12" r="3"/>
@@ -327,7 +338,7 @@ const isSidebarOpen = ref(false)
 const isResizing = ref(false)
 const isMoreDropdownOpen = ref(false)
 const moreDropdownRef = ref(null)
-const moreRoutes = ['/documents', '/templates', '/timeline', '/ats', '/company-insights']
+const moreRoutes = ['/documents', '/templates', '/timeline', '/ats', '/company-insights', '/admin']
 const isMoreRouteActive = computed(() => moreRoutes.some(r => route.path.startsWith(r)))
 
 const toggleMoreDropdown = () => {
@@ -744,6 +755,12 @@ onUnmounted(() => {
 .mehr-dropdown-item.mehr-item-active {
   color: var(--color-ai);
   font-weight: 500;
+}
+
+.mehr-dropdown-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: var(--space-xs) 0;
 }
 
 @keyframes dropdownFade {

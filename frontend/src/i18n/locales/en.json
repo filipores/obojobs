@@ -304,7 +304,10 @@
     "subscriptionSuccess": "Subscription Successful",
     "interviewPrep": "Interview Preparation",
     "mockInterview": "Mock Interview",
-    "notFound": "Page Not Found"
+    "notFound": "Page Not Found",
+    "admin": "Admin",
+    "adminUsers": "Admin - Users",
+    "adminUserDetail": "Admin - User Details"
   },
   "mockInterview": {
     "backToPrep": "Back to interview preparation",
@@ -459,5 +462,55 @@
   },
   "dashboard": {
     "closeHint": "Close hint"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "totalUsers": "Total Users",
+      "activeUsers": "Active Users (30 Days)",
+      "totalApplications": "Total Applications",
+      "applicationsThisMonth": "Applications This Month",
+      "mrr": "Monthly Revenue (MRR)",
+      "subscriptions": "Subscriptions",
+      "signupsLast7Days": "Signups (7 Days)",
+      "emailVerified": "Email Verified",
+      "viewAllUsers": "View All Users"
+    },
+    "users": {
+      "title": "User Management",
+      "searchPlaceholder": "Search name or email...",
+      "allPlans": "All Plans",
+      "email": "Email",
+      "name": "Name",
+      "plan": "Plan",
+      "status": "Status",
+      "applications": "Applications",
+      "registered": "Registered",
+      "active": "Active",
+      "inactive": "Inactive",
+      "noUsersFound": "No users found"
+    },
+    "userDetail": {
+      "title": "User Details",
+      "backToUsers": "Back to user list",
+      "memberSince": "Member since",
+      "emailVerified": "Email verified",
+      "notVerified": "Not verified",
+      "activate": "Activate",
+      "deactivate": "Deactivate",
+      "grantAdmin": "Grant admin rights",
+      "revokeAdmin": "Revoke admin rights",
+      "documents": "Documents",
+      "templates": "Templates",
+      "applications": "Applications",
+      "recentApplications": "Recent Applications",
+      "company": "Company",
+      "position": "Position",
+      "date": "Date",
+      "status": "Status",
+      "noApplications": "No applications",
+      "updateSuccess": "User updated",
+      "updateError": "Error updating user"
+    }
   }
 }

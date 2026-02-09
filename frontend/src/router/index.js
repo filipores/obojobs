@@ -34,6 +34,11 @@ const routes = [
   { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true, titleKey: 'pages.interviewPrep' } },
   { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, titleKey: 'pages.mockInterview' } },
 
+  // Admin routes
+  { path: '/admin', component: () => import('../pages/AdminDashboard.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.admin' } },
+  { path: '/admin/users', component: () => import('../pages/AdminUsers.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.adminUsers' } },
+  { path: '/admin/users/:id', component: () => import('../pages/AdminUserDetail.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.adminUserDetail' } },
+
   // Catch-all route for 404 - must be last
   { path: '/:pathMatch(.*)*', component: () => import('../pages/NotFound.vue'), meta: { titleKey: 'pages.notFound' } }
 ]
@@ -71,9 +76,16 @@ router.beforeEach((to, from, next) => {
   // Protected routes: check authentication
   if (to.meta.requiresAuth && !authStore.isAuthenticated()) {
     next('/login')
-  } else {
-    next()
+    return
   }
+
+  // Admin routes: check admin status
+  if (to.meta.requiresAdmin && !authStore.user?.is_admin) {
+    next('/dashboard')
+    return
+  }
+
+  next()
 })
 
 // Set dynamic page title after each navigation

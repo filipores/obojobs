@@ -304,7 +304,10 @@
     "subscriptionSuccess": "Abonnement erfolgreich",
     "interviewPrep": "Interview-Vorbereitung",
     "mockInterview": "Mock-Interview",
-    "notFound": "Seite nicht gefunden"
+    "notFound": "Seite nicht gefunden",
+    "admin": "Admin",
+    "adminUsers": "Admin - Benutzer",
+    "adminUserDetail": "Admin - Benutzerdetails"
   },
   "mockInterview": {
     "backToPrep": "Zurück zur Interview-Vorbereitung",
@@ -459,5 +462,55 @@
   },
   "dashboard": {
     "closeHint": "Hinweis schließen"
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "totalUsers": "Benutzer gesamt",
+      "activeUsers": "Aktive Benutzer (30 Tage)",
+      "totalApplications": "Bewerbungen gesamt",
+      "applicationsThisMonth": "Bewerbungen diesen Monat",
+      "mrr": "Monatlicher Umsatz (MRR)",
+      "subscriptions": "Abonnements",
+      "signupsLast7Days": "Registrierungen (7 Tage)",
+      "emailVerified": "E-Mail verifiziert",
+      "viewAllUsers": "Alle Benutzer anzeigen"
+    },
+    "users": {
+      "title": "Benutzerverwaltung",
+      "searchPlaceholder": "Name oder E-Mail suchen...",
+      "allPlans": "Alle Pläne",
+      "email": "E-Mail",
+      "name": "Name",
+      "plan": "Plan",
+      "status": "Status",
+      "applications": "Bewerbungen",
+      "registered": "Registriert",
+      "active": "Aktiv",
+      "inactive": "Inaktiv",
+      "noUsersFound": "Keine Benutzer gefunden"
+    },
+    "userDetail": {
+      "title": "Benutzerdetails",
+      "backToUsers": "Zurück zur Benutzerliste",
+      "memberSince": "Mitglied seit",
+      "emailVerified": "E-Mail verifiziert",
+      "notVerified": "Nicht verifiziert",
+      "activate": "Aktivieren",
+      "deactivate": "Deaktivieren",
+      "grantAdmin": "Admin-Rechte vergeben",
+      "revokeAdmin": "Admin-Rechte entziehen",
+      "documents": "Dokumente",
+      "templates": "Templates",
+      "applications": "Bewerbungen",
+      "recentApplications": "Letzte Bewerbungen",
+      "company": "Firma",
+      "position": "Position",
+      "date": "Datum",
+      "status": "Status",
+      "noApplications": "Keine Bewerbungen vorhanden",
+      "updateSuccess": "Benutzer aktualisiert",
+      "updateError": "Fehler beim Aktualisieren"
+    }
   }
 }
