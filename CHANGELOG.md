@@ -1,3 +1,10 @@
+# [1.41.0](https://github.com/filipores/obojobs/compare/v1.40.0...v1.41.0) (2026-02-09)
+
+
+### Features
+
+* add landing page nav bar and fix deploy cache busting ([0156165](https://github.com/filipores/obojobs/commit/01561653ed27c43e3e63727559f175046e94b99d))
+
 # [1.40.0](https://github.com/filipores/obojobs/compare/v1.39.10...v1.40.0) (2026-02-09)
 
 
