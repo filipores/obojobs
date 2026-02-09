@@ -133,19 +133,97 @@
         </div>
       </section>
 
-      <!-- Recent Applications -->
-      <section v-if="userData.recent_applications?.length" class="user-applications-section">
+      <!-- Applications (Accordion) -->
+      <section v-if="userData.application_count > 0" class="user-applications-section">
         <div class="container">
           <h2 class="section-title">{{ $t('admin.userDetail.recentApplications') }}</h2>
-          <div class="applications-list">
-            <div v-for="app in userData.recent_applications" :key="app.id" class="application-row">
-              <div class="app-info">
-                <span class="app-company">{{ app.firma || '–' }}</span>
-                <span class="app-position">{{ app.position || '–' }}</span>
+
+          <div v-if="applicationsLoading" class="loading-hint">
+            {{ $t('admin.userDetail.loadingApplications') }}
+          </div>
+
+          <div v-else class="applications-list">
+            <div v-for="app in fullApplications" :key="app.id" class="application-item">
+              <div class="application-row" @click="toggleApplication(app.id)">
+                <div class="app-info">
+                  <span class="app-company">{{ app.firma || '–' }}</span>
+                  <span class="app-position">{{ app.position || '–' }}</span>
+                </div>
+                <div class="app-meta">
+                  <span class="app-status" :class="'status-' + (app.status || 'erstellt')">{{ app.status || 'erstellt' }}</span>
+                  <span class="app-date">{{ formatDateDE(app.datum) }}</span>
+                  <svg
+                    class="expand-icon"
+                    :class="{ 'expand-icon-open': expandedApps.has(app.id) }"
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  ><path d="M6 9l6 6 6-6"/></svg>
+                </div>
               </div>
-              <div class="app-meta">
-                <span class="app-status" :class="'status-' + (app.status || 'erstellt')">{{ app.status || 'erstellt' }}</span>
-                <span class="app-date">{{ formatDateDE(app.created_at) }}</span>
+              <div v-if="expandedApps.has(app.id)" class="app-detail">
+                <div class="detail-field" v-if="app.einleitung">
+                  <span class="detail-label">{{ $t('admin.userDetail.einleitung') }}</span>
+                  <p class="detail-value">{{ app.einleitung }}</p>
+                </div>
+                <div class="detail-field" v-if="app.betreff">
+                  <span class="detail-label">{{ $t('admin.userDetail.betreff') }}</span>
+                  <p class="detail-value">{{ app.betreff }}</p>
+                </div>
+                <div class="detail-field" v-if="app.email_text">
+                  <span class="detail-label">{{ $t('admin.userDetail.emailText') }}</span>
+                  <pre class="detail-value detail-pre">{{ app.email_text }}</pre>
+                </div>
+                <div class="detail-field" v-if="app.notizen">
+                  <span class="detail-label">{{ $t('admin.userDetail.notizen') }}</span>
+                  <p class="detail-value">{{ app.notizen }}</p>
+                </div>
+                <div class="detail-field" v-if="app.quelle">
+                  <span class="detail-label">{{ $t('admin.userDetail.quelle') }}</span>
+                  <a :href="app.quelle" target="_blank" rel="noopener" class="detail-link">{{ app.quelle }}</a>
+                </div>
+                <div class="detail-field" v-if="app.ansprechpartner">
+                  <span class="detail-label">{{ $t('admin.userDetail.ansprechpartner') }}</span>
+                  <p class="detail-value">{{ app.ansprechpartner }}</p>
+                </div>
+                <div v-if="!app.einleitung && !app.betreff && !app.email_text" class="detail-empty">
+                  {{ $t('admin.userDetail.noContent') }}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Templates -->
+      <section class="user-templates-section">
+        <div class="container">
+          <h2 class="section-title">{{ $t('admin.userDetail.templatesTitle') }}</h2>
+
+          <div v-if="templatesLoading" class="loading-hint">
+            {{ $t('admin.userDetail.loadingTemplates') }}
+          </div>
+
+          <div v-else-if="fullTemplates.length === 0" class="empty-hint">
+            {{ $t('admin.userDetail.noTemplates') }}
+          </div>
+
+          <div v-else class="templates-list">
+            <div v-for="tmpl in fullTemplates" :key="tmpl.id" class="template-item">
+              <div class="template-row" @click="toggleTemplate(tmpl.id)">
+                <div class="template-info">
+                  <span class="template-name">{{ tmpl.name }}</span>
+                  <span v-if="tmpl.is_default" class="template-default-badge">{{ $t('admin.userDetail.templateDefault') }}</span>
+                </div>
+                <div class="template-meta">
+                  <span class="template-date">{{ formatDateDE(tmpl.updated_at || tmpl.created_at) }}</span>
+                  <svg
+                    class="expand-icon"
+                    :class="{ 'expand-icon-open': expandedTemplates.has(tmpl.id) }"
+                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  ><path d="M6 9l6 6 6-6"/></svg>
+                </div>
+              </div>
+              <div v-if="expandedTemplates.has(tmpl.id)" class="template-detail">
+                <pre class="template-content">{{ tmpl.content || $t('admin.userDetail.noContent') }}</pre>
               </div>
             </div>
           </div>
@@ -176,7 +254,27 @@ const userData = ref(null)
 const loading = ref(true)
 const updating = ref(false)
 
-const loadUser = async () => {
+const fullApplications = ref([])
+const applicationsLoading = ref(false)
+const applicationsLoaded = ref(false)
+const expandedApps = ref(new Set())
+
+const fullTemplates = ref([])
+const templatesLoading = ref(false)
+const templatesLoaded = ref(false)
+const expandedTemplates = ref(new Set())
+
+function toggleSetEntry(setRef, id) {
+  const next = new Set(setRef.value)
+  if (next.has(id)) {
+    next.delete(id)
+  } else {
+    next.add(id)
+  }
+  setRef.value = next
+}
+
+async function loadUser() {
   loading.value = true
   try {
     const { data } = await api.get(`/admin/users/${route.params.id}`)
@@ -188,7 +286,38 @@ const loadUser = async () => {
   }
 }
 
-const toggleField = async (field) => {
+async function loadRelatedData(loadedRef, loadingRef, dataRef, endpoint, label) {
+  if (loadedRef.value) return
+  loadingRef.value = true
+  try {
+    const { data } = await api.get(`/admin/users/${route.params.id}/${endpoint}`)
+    dataRef.value = data[endpoint]
+    loadedRef.value = true
+  } catch (e) {
+    console.error(`Failed to load ${label}:`, e)
+  } finally {
+    loadingRef.value = false
+  }
+}
+
+function loadApplications() {
+  return loadRelatedData(applicationsLoaded, applicationsLoading, fullApplications, 'applications', 'applications')
+}
+
+function loadTemplates() {
+  return loadRelatedData(templatesLoaded, templatesLoading, fullTemplates, 'templates', 'templates')
+}
+
+function toggleApplication(id) {
+  if (!applicationsLoaded.value) loadApplications()
+  toggleSetEntry(expandedApps, id)
+}
+
+function toggleTemplate(id) {
+  toggleSetEntry(expandedTemplates, id)
+}
+
+async function toggleField(field) {
   if (!userData.value || updating.value) return
   updating.value = true
   try {
@@ -205,7 +334,13 @@ const toggleField = async (field) => {
   }
 }
 
-onMounted(loadUser)
+onMounted(async () => {
+  await loadUser()
+  if (userData.value) {
+    loadApplications()
+    loadTemplates()
+  }
+})
 </script>
 
 <style scoped>
@@ -462,13 +597,26 @@ onMounted(loadUser)
 }
 
 /* ========================================
-   RECENT APPLICATIONS
+   APPLICATIONS (ACCORDION)
    ======================================== */
 .user-applications-section {
+  padding: 0 0 var(--space-ma);
+}
+
+.user-templates-section {
   padding: 0 0 var(--space-ma-xl);
 }
 
-.applications-list {
+.loading-hint,
+.empty-hint {
+  text-align: center;
+  padding: var(--space-lg);
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+}
+
+.applications-list,
+.templates-list {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-paper);
@@ -476,16 +624,29 @@ onMounted(loadUser)
   overflow: hidden;
 }
 
-.application-row {
+.application-item,
+.template-item {
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.application-item:last-child,
+.template-item:last-child {
+  border-bottom: none;
+}
+
+.application-row,
+.template-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: var(--space-md) var(--space-lg);
-  border-bottom: 1px solid var(--color-border-light);
+  cursor: pointer;
+  transition: background var(--transition-base);
 }
 
-.application-row:last-child {
-  border-bottom: none;
+.application-row:hover,
+.template-row:hover {
+  background: var(--color-bg-hover, rgba(0,0,0,0.02));
 }
 
 .app-info {
@@ -505,7 +666,8 @@ onMounted(loadUser)
   color: var(--color-text-tertiary);
 }
 
-.app-meta {
+.app-meta,
+.template-meta {
   display: flex;
   align-items: center;
   gap: var(--space-md);
@@ -540,10 +702,115 @@ onMounted(loadUser)
   color: var(--color-success);
 }
 
-.app-date {
+.app-date,
+.template-date {
   font-size: 0.8125rem;
   color: var(--color-text-tertiary);
   white-space: nowrap;
+}
+
+.expand-icon {
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+  color: var(--color-text-ghost);
+}
+
+.expand-icon-open {
+  transform: rotate(180deg);
+}
+
+/* Detail panels */
+.app-detail,
+.template-detail {
+  padding: var(--space-md) var(--space-lg) var(--space-lg);
+  background: var(--color-bg-subtle, var(--color-washi));
+  border-top: 1px solid var(--color-border-light);
+}
+
+.detail-field {
+  margin-bottom: var(--space-md);
+}
+
+.detail-field:last-child {
+  margin-bottom: 0;
+}
+
+.detail-label {
+  display: block;
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+  margin-bottom: var(--space-xs);
+}
+
+.detail-value {
+  font-size: 0.875rem;
+  color: var(--color-text-primary);
+  line-height: 1.6;
+  margin: 0;
+}
+
+.detail-pre {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--color-bg-elevated);
+  padding: var(--space-sm) var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
+}
+
+.detail-link {
+  font-size: 0.875rem;
+  color: var(--color-ai);
+  word-break: break-all;
+}
+
+.detail-empty {
+  font-size: 0.875rem;
+  color: var(--color-text-ghost);
+  font-style: italic;
+}
+
+/* Templates */
+.template-info {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.template-name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.template-default-badge {
+  font-size: 0.625rem;
+  font-weight: 500;
+  padding: 0.0625rem 0.375rem;
+  border-radius: var(--radius-full, 9999px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+}
+
+.template-content {
+  font-family: var(--font-mono, monospace);
+  font-size: 0.8125rem;
+  white-space: pre-wrap;
+  word-break: break-word;
+  line-height: 1.6;
+  color: var(--color-text-primary);
+  margin: 0;
+  background: var(--color-bg-elevated);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border-light);
 }
 
 /* ========================================
@@ -577,7 +844,8 @@ onMounted(loadUser)
     width: 100%;
   }
 
-  .application-row {
+  .application-row,
+  .template-row {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-sm);

@@ -10,6 +10,14 @@ from models.subscription import SubscriptionPlan, SubscriptionStatus
 admin_bp = Blueprint("admin", __name__)
 
 
+def _get_user_or_404(user_id):
+    """Look up a user by id. Returns (user, None) on success or (None, error_response) on failure."""
+    user = User.query.get(user_id)
+    if not user:
+        return None, (jsonify({"error": "Benutzer nicht gefunden"}), 404)
+    return user, None
+
+
 @admin_bp.route("/stats", methods=["GET"])
 @admin_required
 def get_stats(current_user):
@@ -158,9 +166,9 @@ def list_users(current_user):
 @admin_bp.route("/users/<int:user_id>", methods=["GET"])
 @admin_required
 def get_user_detail(user_id, current_user):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+    user, error = _get_user_or_404(user_id)
+    if error:
+        return error
 
     sub = user.subscription
     recent_apps = sorted(user.applications, key=lambda a: a.datum or datetime.min, reverse=True)[:10]
@@ -197,9 +205,9 @@ def get_user_detail(user_id, current_user):
 @admin_bp.route("/users/<int:user_id>", methods=["PATCH"])
 @admin_required
 def patch_user(user_id, current_user):
-    user = User.query.get(user_id)
-    if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+    user, error = _get_user_or_404(user_id)
+    if error:
+        return error
 
     data = request.get_json()
     if not data:
@@ -223,3 +231,25 @@ def patch_user(user_id, current_user):
     db.session.commit()
 
     return jsonify({"user": user.to_dict()})
+
+
+@admin_bp.route("/users/<int:user_id>/applications", methods=["GET"])
+@admin_required
+def get_user_applications(user_id, current_user):
+    user, error = _get_user_or_404(user_id)
+    if error:
+        return error
+
+    applications = sorted(user.applications, key=lambda a: a.datum or datetime.min, reverse=True)
+    return jsonify({"applications": [app.to_dict() for app in applications]})
+
+
+@admin_bp.route("/users/<int:user_id>/templates", methods=["GET"])
+@admin_required
+def get_user_templates(user_id, current_user):
+    user, error = _get_user_or_404(user_id)
+    if error:
+        return error
+
+    templates = sorted(user.templates, key=lambda t: t.updated_at or datetime.min, reverse=True)
+    return jsonify({"templates": [t.to_dict() for t in templates]})

@@ -667,3 +667,117 @@ class TestAdminUserPatch:
             headers=auth_headers,
         )
         assert response.status_code == 403
+
+
+class TestAdminUserApplications:
+    """Test GET /api/admin/users/<id>/applications."""
+
+    def test_get_user_applications(self, client, admin_headers, app):
+        """Returns full application data for a user."""
+        with app.app_context():
+            user = User(email="apps@example.com", full_name="Apps User")
+            user.set_password("Pass1234!")
+            db.session.add(user)
+            db.session.flush()
+            user_id = user.id
+
+            app1 = Application(
+                user_id=user.id,
+                firma="Firma A",
+                position="Developer",
+                datum=datetime.utcnow(),
+                status="erstellt",
+                einleitung="Sehr geehrte Damen und Herren",
+                betreff="Bewerbung als Developer",
+                email_text="Hiermit bewerbe ich mich...",
+                notizen="Telefonisch nachfragen",
+                quelle="https://example.com/job",
+                ansprechpartner="Herr Müller",
+            )
+            app2 = Application(
+                user_id=user.id,
+                firma="Firma B",
+                position="PM",
+                datum=datetime.utcnow() - timedelta(days=5),
+                status="versendet",
+            )
+            db.session.add_all([app1, app2])
+            db.session.commit()
+
+        response = client.get(f"/api/admin/users/{user_id}/applications", headers=admin_headers)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["applications"]) == 2
+        # Newest first
+        assert data["applications"][0]["firma"] == "Firma A"
+        assert data["applications"][0]["einleitung"] == "Sehr geehrte Damen und Herren"
+        assert data["applications"][0]["betreff"] == "Bewerbung als Developer"
+        assert data["applications"][0]["email_text"] == "Hiermit bewerbe ich mich..."
+        assert data["applications"][0]["notizen"] == "Telefonisch nachfragen"
+        assert data["applications"][0]["quelle"] == "https://example.com/job"
+        assert data["applications"][0]["ansprechpartner"] == "Herr Müller"
+        assert data["applications"][1]["firma"] == "Firma B"
+
+    def test_get_user_applications_empty(self, client, admin_headers, app):
+        """Returns empty list when user has no applications."""
+        with app.app_context():
+            user = User(email="noapps@example.com", full_name="No Apps")
+            user.set_password("Pass1234!")
+            db.session.add(user)
+            db.session.commit()
+            user_id = user.id
+
+        response = client.get(f"/api/admin/users/{user_id}/applications", headers=admin_headers)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["applications"] == []
+
+    def test_get_user_applications_not_found(self, client, admin_headers):
+        """Returns 404 for non-existent user."""
+        response = client.get("/api/admin/users/99999/applications", headers=admin_headers)
+        assert response.status_code == 404
+
+
+class TestAdminUserTemplates:
+    """Test GET /api/admin/users/<id>/templates."""
+
+    def test_get_user_templates(self, client, admin_headers, app):
+        """Returns full template data for a user."""
+        with app.app_context():
+            user = User(email="tmpl@example.com", full_name="Template User")
+            user.set_password("Pass1234!")
+            db.session.add(user)
+            db.session.flush()
+            user_id = user.id
+
+            t1 = Template(
+                user_id=user.id,
+                name="Mein Template",
+                content="Sehr geehrte(r) {{ANSPRECHPARTNER}},\n\n{{EINLEITUNG}}\n\nMit freundlichen Grüßen",
+                is_default=True,
+            )
+            t2 = Template(
+                user_id=user.id,
+                name="Zweites Template",
+                content="Hallo {{FIRMA}}",
+                is_default=False,
+            )
+            db.session.add_all([t1, t2])
+            db.session.commit()
+
+        response = client.get(f"/api/admin/users/{user_id}/templates", headers=admin_headers)
+        assert response.status_code == 200
+        data = response.get_json()
+        assert len(data["templates"]) == 2
+        names = [t["name"] for t in data["templates"]]
+        assert "Mein Template" in names
+        assert "Zweites Template" in names
+        # Check content is included
+        template_with_content = next(t for t in data["templates"] if t["name"] == "Mein Template")
+        assert "{{ANSPRECHPARTNER}}" in template_with_content["content"]
+        assert template_with_content["is_default"] is True
+
+    def test_get_user_templates_not_found(self, client, admin_headers):
+        """Returns 404 for non-existent user."""
+        response = client.get("/api/admin/users/99999/templates", headers=admin_headers)
+        assert response.status_code == 404
