@@ -165,10 +165,12 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { useRoute } from 'vue-router'
 import api from '@/api/client'
 import { capitalize, formatDateDE } from '@/utils/format.js'
 
+const { t } = useI18n()
 const route = useRoute()
 const userData = ref(null)
 const loading = ref(true)
@@ -191,12 +193,13 @@ const toggleField = async (field) => {
   updating.value = true
   try {
     const newValue = !userData.value[field]
-    const { data } = await api.patch(`/admin/users/${route.params.id}`, { [field]: newValue })
-    userData.value = data.user
-    window.$toast?.('success', 'Benutzer aktualisiert')
+    await api.patch(`/admin/users/${route.params.id}`, { [field]: newValue })
+    userData.value[field] = newValue
+    window.$toast?.('success', t('admin.userDetail.updateSuccess'))
   } catch (e) {
     console.error('Failed to update user:', e)
-    window.$toast?.('error', 'Fehler beim Aktualisieren')
+    const msg = e.response?.data?.error || t('admin.userDetail.updateError')
+    window.$toast?.('error', msg)
   } finally {
     updating.value = false
   }

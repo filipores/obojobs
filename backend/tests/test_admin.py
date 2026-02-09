@@ -630,6 +630,35 @@ class TestAdminUserPatch:
         assert data["user"]["is_admin"] is True
         assert data["user"]["email_verified"] is True
 
+    def test_cannot_deactivate_self(self, client, admin_headers, admin_user):
+        """Admin cannot deactivate their own account."""
+        response = client.patch(
+            f"/api/admin/users/{admin_user['id']}",
+            json={"is_active": False},
+            headers=admin_headers,
+        )
+        assert response.status_code == 400
+        assert "eigenes Konto" in response.get_json()["error"]
+
+    def test_cannot_remove_own_admin(self, client, admin_headers, admin_user):
+        """Admin cannot remove their own admin rights."""
+        response = client.patch(
+            f"/api/admin/users/{admin_user['id']}",
+            json={"is_admin": False},
+            headers=admin_headers,
+        )
+        assert response.status_code == 400
+        assert "Admin-Rechte" in response.get_json()["error"]
+
+    def test_can_verify_own_email(self, client, admin_headers, admin_user):
+        """Admin can still toggle email_verified on their own account."""
+        response = client.patch(
+            f"/api/admin/users/{admin_user['id']}",
+            json={"email_verified": True},
+            headers=admin_headers,
+        )
+        assert response.status_code == 200
+
     def test_non_admin_cannot_patch(self, client, auth_headers, test_user):
         """Non-admin user gets 403 on PATCH."""
         response = client.patch(

@@ -103,10 +103,12 @@ def list_users(current_user):
             )
             query = query.filter(User.id.in_(subquery))
 
-    # Sorting
+    # Sorting — 'name' and 'application_count' are frontend aliases
     sort_column = {
         "created_at": User.created_at,
         "email": User.email,
+        "name": User.full_name,
+        "application_count": User.applications_this_month,
         "applications_this_month": User.applications_this_month,
     }.get(sort, User.created_at)
 
@@ -207,6 +209,13 @@ def patch_user(user_id, current_user):
     invalid_fields = set(data.keys()) - allowed_fields
     if invalid_fields:
         return jsonify({"error": f"Unzulässige Felder: {', '.join(invalid_fields)}"}), 400
+
+    # Prevent admins from deactivating or removing admin rights from themselves
+    if user.id == current_user.id:
+        if "is_active" in data and not data["is_active"]:
+            return jsonify({"error": "Sie können Ihr eigenes Konto nicht deaktivieren"}), 400
+        if "is_admin" in data and not data["is_admin"]:
+            return jsonify({"error": "Sie können sich nicht selbst die Admin-Rechte entziehen"}), 400
 
     for field in allowed_fields & data.keys():
         setattr(user, field, bool(data[field]))
