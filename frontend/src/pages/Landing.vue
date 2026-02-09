@@ -229,6 +229,20 @@
 
     <!-- Normal Landing Page (when not in CV upload flow) -->
     <template v-if="!showCvUploadFlow">
+      <!-- Top Navigation -->
+      <nav class="landing-nav">
+        <div class="landing-nav-inner">
+          <router-link to="/" class="nav-brand">
+            <div class="nav-brand-enso"></div>
+            <span>obo</span>
+          </router-link>
+          <div class="nav-links">
+            <router-link to="/login" class="nav-link">Anmelden</router-link>
+            <router-link to="/register" class="nav-link nav-link-cta">Registrieren</router-link>
+          </div>
+        </div>
+      </nav>
+
       <!-- Hero Section - The product IS the hero -->
       <section class="hero-section">
         <div class="hero-container">
@@ -1202,6 +1216,76 @@ onMounted(() => {
 }
 
 /* ========================================
+   LANDING NAV
+   ======================================== */
+.landing-nav {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: var(--space-md) var(--space-ma);
+}
+
+.landing-nav-inner {
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  text-decoration: none;
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+  letter-spacing: -0.02em;
+}
+
+.nav-brand-enso {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--color-sumi);
+  opacity: 0.7;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.nav-link {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  text-decoration: none;
+  padding: var(--space-xs) var(--space-md);
+  border-radius: var(--radius-full);
+  transition: color var(--transition-base);
+}
+
+.nav-link:hover {
+  color: var(--color-sumi);
+}
+
+.nav-link-cta {
+  background: var(--color-ai);
+  color: var(--color-text-inverse);
+  font-weight: 500;
+}
+
+.nav-link-cta:hover {
+  color: var(--color-text-inverse);
+  opacity: 0.9;
+}
+
+/* ========================================
    HERO SECTION
    ======================================== */
 .hero-section {
@@ -1684,6 +1768,20 @@ onMounted(() => {
 }
 
 @media (max-width: 768px) {
+  .landing-nav {
+    padding: var(--space-sm) var(--space-md);
+  }
+
+  .nav-link:not(.nav-link-cta) {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.875rem;
+  }
+
+  .nav-link-cta {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: 0.875rem;
+  }
+
   .hero-section,
   .cv-upload-section {
     padding: var(--space-ma-lg) var(--space-md);
