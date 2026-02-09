@@ -1,3 +1,10 @@
+## [1.39.10](https://github.com/filipores/obojobs/compare/v1.39.9...v1.39.10) (2026-02-09)
+
+
+### Bug Fixes
+
+* **demo:** include sample cv and template in backend directory ([7c58398](https://github.com/filipores/obojobs/commit/7c58398885c8c1f3cddf3d822907ddcff368af9a))
+
 ## [1.39.9](https://github.com/filipores/obojobs/compare/v1.39.8...v1.39.9) (2026-02-08)
 
 
