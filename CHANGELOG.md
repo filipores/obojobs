@@ -1,3 +1,10 @@
+## [1.43.1](https://github.com/filipores/obojobs/compare/v1.43.0...v1.43.1) (2026-02-09)
+
+
+### Bug Fixes
+
+* **admin:** add missing i18n keys, fix toggle data loss, and prevent self-deactivation ([1e6bc18](https://github.com/filipores/obojobs/commit/1e6bc18aae7585609bd9e9d46a2aab66b945d603))
+
 # [1.43.0](https://github.com/filipores/obojobs/compare/v1.42.0...v1.43.0) (2026-02-09)
 
 
