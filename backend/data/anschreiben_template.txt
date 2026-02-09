@@ -1,0 +1,21 @@
+Anschreiben
+{{POSITION}}
+
+Hamburg | +49 15254112096 | filip.ores@hotmail.com | filipores.com
+
+
+{{ANSPRECHPARTNER}},
+
+{{EINLEITUNG}}
+
+Hey, ich bin Filip, Softwareentwickler und gebürtiger Hamburger. Nach meinem Soziologie Abschluss habe ich meine Leidenschaft für Softwareentwicklung entdeckt und direkt mein eigenes kleines IT Startup aufgebaut. Dort habe ich eine App für Jurastudierende entwickelt, die Gesetzesverweise automatisch erkennt und Lernenden strukturiert anzeigt. Dieses Projekt hat mir gezeigt, wie sehr ich Produktentwicklung, Problemlösung und eigenverantwortliches Arbeiten liebe.
+
+Um mich fachlich breiter aufzustellen, bin ich anschließend zu YOOtheme gewechselt. Dort konnte ich praktische Erfahrung in allen Bereichen der Fullstackentwicklung sammeln. Die genauen Aufgabenbereiche findet ihr in meinem Lebenslauf.
+
+Meine größte Stärke ist meine Vielseitigkeit: Ich kann mich schnell in neue Themen einarbeiten und habe Spaß daran, Neues auszuprobieren. Darüber hinaus bin ich kommunikativ und arbeite unglaublich gerne im Team. Das zeigt sich nicht nur im Büro. Seit vielen Jahren arbeite ich am Wochenende in Bars. Dort habe ich gelernt, unter Stress ruhig zu bleiben, mit sehr unterschiedlichen Menschen klar zu kommunizieren und als echtes Teammitglied zu funktionieren. Genau diese Mischung nehme ich auch mit in die IT.
+
+Ich würde mich sehr freuen, wenn wir uns persönlich kennenlernen und gemeinsam herausfinden, wie ich euch mit meinen Fähigkeiten unterstützen kann. Vielleicht passt mein Profil ja genauso gut zu euch, wie ich das Gefühl habe, dass euer Unternehmen zu mir passt.
+
+Mit freundlichen Grüßen,
+
+Filip

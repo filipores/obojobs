@@ -22,9 +22,9 @@ class DemoGenerator:
     - Returns ephemeral data for display only
     """
 
-    # Sample CV path relative to project root
-    SAMPLE_CV_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "cv_summary.txt")
-    SAMPLE_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "..", "..", "data", "anschreiben_template.txt")
+    # Sample CV path relative to backend root
+    SAMPLE_CV_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "cv_summary.txt")
+    SAMPLE_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "anschreiben_template.txt")
 
     def __init__(self):
         self.api_client = ClaudeAPIClient()
