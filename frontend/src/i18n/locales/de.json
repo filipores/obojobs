@@ -257,7 +257,10 @@
     "currentPlan": "Aktueller Plan",
     "active": "Aktiv",
     "downgrade": "Downgraden",
-    "yourCurrentPlan": "Ihr aktueller Plan"
+    "yourCurrentPlan": "Ihr aktueller Plan",
+    "cancellationPending": "Kündigung ausstehend",
+    "cancellationPendingDescription": "Ihr Abonnement wird zum {date} gekündigt. Bis dahin können Sie alle Funktionen weiter nutzen.",
+    "planChanged": "Plan erfolgreich geändert"
   },
   "validation": {
     "invalidVerificationToken": "Ungültiger Bestätigungstoken",

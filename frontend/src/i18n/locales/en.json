@@ -257,7 +257,10 @@
     "currentPlan": "Current plan",
     "active": "Active",
     "downgrade": "Downgrade",
-    "yourCurrentPlan": "Your current plan"
+    "yourCurrentPlan": "Your current plan",
+    "cancellationPending": "Cancellation pending",
+    "cancellationPendingDescription": "Your subscription will be cancelled on {date}. You can continue using all features until then.",
+    "planChanged": "Plan changed successfully"
   },
   "validation": {
     "invalidVerificationToken": "Invalid verification token",

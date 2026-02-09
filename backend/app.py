@@ -26,6 +26,7 @@ from models import (  # noqa: F401
     TokenBlacklist,
     User,
     UserSkill,
+    WebhookEvent,
     db,
 )
 

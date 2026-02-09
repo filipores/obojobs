@@ -63,6 +63,21 @@
         </div>
       </section>
 
+      <!-- Cancellation Pending Banner -->
+      <div v-if="subscription?.cancel_at_period_end" class="cancellation-banner animate-fade-up" style="animation-delay: 125ms;">
+        <div class="banner-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/>
+            <line x1="12" y1="8" x2="12" y2="12"/>
+            <line x1="12" y1="16" x2="12.01" y2="16"/>
+          </svg>
+        </div>
+        <div class="banner-text">
+          <strong>{{ t('subscription.cancellationPending') }}</strong>
+          <p>{{ t('subscription.cancellationPendingDescription', { date: formatDate(subscription?.next_billing_date) }) }}</p>
+        </div>
+      </div>
+
       <!-- Ink Stroke -->
       <div class="ink-stroke"></div>
 
@@ -415,14 +430,57 @@ import { useSubscription } from '../composables/useSubscription'
 import { getFullLocale } from '../i18n'
 
 const { t } = useI18n()
-const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, isLoading, paymentsAvailable } = useSubscription()
+const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, changePlan, isLoading, paymentsAvailable } = useSubscription()
 
 const subscription = ref(null)
 const availablePlans = ref([])
 const isPortalLoading = ref(false)
 const isUpgrading = ref(false)
-const upgradingPlan = ref(null) // Track which plan is being upgraded to
+const upgradingPlan = ref(null)
 const errorMessage = ref('')
+
+const PLAN_ORDER = { free: 0, basic: 1, pro: 2 }
+
+const FALLBACK_PLANS = [
+  {
+    plan_id: 'free',
+    name: 'Free',
+    price: 0,
+    price_formatted: '€0/Monat',
+    features: [
+      '3 Bewerbungen pro Monat',
+      'Basis-Templates',
+      'PDF Export'
+    ]
+  },
+  {
+    plan_id: 'basic',
+    name: 'Basic',
+    price: 9.99,
+    price_formatted: '€9,99/Monat',
+    features: [
+      '20 Bewerbungen pro Monat',
+      'Alle Templates',
+      'PDF Export',
+      'ATS-Optimierung',
+      'E-Mail Support'
+    ]
+  },
+  {
+    plan_id: 'pro',
+    name: 'Pro',
+    price: 19.99,
+    price_formatted: '€19,99/Monat',
+    features: [
+      'Unbegrenzte Bewerbungen',
+      'Alle Templates',
+      'PDF Export',
+      'ATS-Optimierung',
+      'Prioritäts-Support',
+      'Erweiterte Analyse'
+    ]
+  }
+]
 
 const usagePercentage = computed(() => {
   if (!subscription.value?.usage || subscription.value.usage.unlimited) return 0
@@ -432,95 +490,18 @@ const usagePercentage = computed(() => {
 })
 
 const getCurrentPlanFeatures = computed(() => {
-  // First try to get features from subscription plan_details
   if (subscription.value?.plan_details?.features?.length) {
     return subscription.value.plan_details.features
   }
 
-  // Fallback: get features from the current plan based on plan name
+  // Fallback: look up from available plans (always has hardcoded defaults)
   const currentPlan = subscription.value?.plan || 'free'
-  const planFromAvailable = getAvailablePlans.value.find(plan => plan.plan_id === currentPlan)
-  if (planFromAvailable?.features?.length) {
-    return planFromAvailable.features
-  }
-
-  // Last resort: hardcoded features for the free plan
-  if (currentPlan === 'free') {
-    return [
-      '3 Bewerbungen pro Monat',
-      'Basis-Templates',
-      'PDF Export'
-    ]
-  } else if (currentPlan === 'basic') {
-    return [
-      '20 Bewerbungen pro Monat',
-      'Alle Templates',
-      'PDF Export',
-      'ATS-Optimierung',
-      'E-Mail Support'
-    ]
-  } else if (currentPlan === 'pro') {
-    return [
-      'Unbegrenzte Bewerbungen',
-      'Alle Templates',
-      'PDF Export',
-      'ATS-Optimierung',
-      'Prioritäts-Support',
-      'Erweiterte Analyse'
-    ]
-  }
-
-  // Absolute fallback
-  return ['Keine Features verfügbar']
+  const match = getAvailablePlans.value.find(p => p.plan_id === currentPlan)
+  return match?.features || []
 })
 
 const getAvailablePlans = computed(() => {
-  // If API data is available, use it
-  if (availablePlans.value?.length > 0) {
-    return availablePlans.value
-  }
-
-  // Fallback: hardcoded plan data that matches backend structure
-  return [
-    {
-      plan_id: 'free',
-      name: 'Free',
-      price: 0,
-      price_formatted: '€0/Monat',
-      features: [
-        '3 Bewerbungen pro Monat',
-        'Basis-Templates',
-        'PDF Export'
-      ]
-    },
-    {
-      plan_id: 'basic',
-      name: 'Basic',
-      price: 9.99,
-      price_formatted: '€9,99/Monat',
-      features: [
-        '20 Bewerbungen pro Monat',
-        'Alle Templates',
-        'PDF Export',
-        'ATS-Optimierung',
-        'E-Mail Support'
-      ]
-    },
-    {
-      plan_id: 'pro',
-      name: 'Pro',
-      price: 19.99,
-      price_formatted: '€19,99/Monat',
-      features: [
-        'Unbegrenzte Bewerbungen',
-        'Alle Templates',
-        'PDF Export',
-        'ATS-Optimierung',
-        'Prioritäts-Support',
-        'Erweiterte Analyse'
-      ]
-    }
-  ]
+  return availablePlans.value?.length > 0 ? availablePlans.value : FALLBACK_PLANS
 })
 
 const getPlanDisplayName = (plan) => {
@@ -543,9 +524,8 @@ const formatDate = (dateString) => {
 
 const getUpgradeButtonText = (planId) => {
   if (!subscription.value) return 'Upgraden'
-  const currentPlanOrder = { free: 0, basic: 1, pro: 2 }
-  const targetOrder = currentPlanOrder[planId] || 0
-  const currentOrder = currentPlanOrder[subscription.value.plan] || 0
+  const targetOrder = PLAN_ORDER[planId] || 0
+  const currentOrder = PLAN_ORDER[subscription.value.plan] || 0
 
   if (targetOrder > currentOrder) return 'Upgraden'
   if (targetOrder < currentOrder) return t('subscription.downgrade')
@@ -580,9 +560,17 @@ const handleUpgrade = async (planId) => {
   errorMessage.value = ''
 
   try {
-    await startCheckout(planId)
+    if (subscription.value?.has_stripe_customer && subscription.value?.status === 'active') {
+      await changePlan(planId)
+      if (window.$toast) {
+        window.$toast(t('subscription.planChanged'), 'success')
+      }
+      subscription.value = await fetchCurrentSubscription()
+    } else {
+      await startCheckout(planId)
+    }
   } catch (err) {
-    errorMessage.value = err.message || 'Fehler beim Starten des Checkouts'
+    errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Starten des Checkouts'
   } finally {
     isUpgrading.value = false
     upgradingPlan.value = null
@@ -1075,6 +1063,38 @@ onMounted(() => {
 }
 
 .payments-unavailable-banner .banner-text p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+/* ========================================
+   CANCELLATION BANNER
+   ======================================== */
+.cancellation-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  background: rgba(184, 122, 94, 0.08);
+  border: 1px solid rgba(184, 122, 94, 0.25);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-ma);
+}
+
+.cancellation-banner .banner-icon {
+  color: var(--color-terra);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.cancellation-banner .banner-text strong {
+  display: block;
+  color: var(--color-terra);
+  margin-bottom: var(--space-xs);
+}
+
+.cancellation-banner .banner-text p {
   margin: 0;
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
