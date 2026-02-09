@@ -165,23 +165,70 @@
       </div>
     </section>
 
-    <!-- NEW: Crafting Screen (shows animation while API runs) -->
-    <DemoCraftingScreen
+    <!-- CraftingOverlay (shows 5-phase animation while API runs) -->
+    <CraftingOverlay
       :isActive="showCraftingScreen"
-      :data="craftingData"
-      :pdfBlob="pdfBlob"
-      @register="onCraftingRegister"
+      :companyName="craftingData?.firma || ''"
+      :jobTitle="craftingData?.position || ''"
+      :jobDescription="craftingData?.einleitung || ''"
+      :contactPerson="craftingData?.ansprechpartner || ''"
+      @complete="onCraftingComplete"
     />
+
+    <!-- Demo Result Overlay -->
+    <Teleport to="body">
+      <Transition name="demo-result">
+        <div v-if="showDemoResult" class="demo-result-overlay">
+          <div class="demo-result-content">
+            <!-- Enso circle -->
+            <div class="demo-result-enso">
+              <svg viewBox="0 0 100 100" width="80" height="80">
+                <circle
+                  cx="50" cy="50" r="45"
+                  fill="none"
+                  stroke="var(--color-koke)"
+                  stroke-width="3"
+                  stroke-linecap="round"
+                />
+              </svg>
+            </div>
+
+            <h2 class="demo-result-title">Bewerbung erstellt</h2>
+            <p v-if="demoResultData?.firma" class="demo-result-subtitle">
+              {{ demoResultData.firma }} — {{ demoResultData.position }}
+            </p>
+
+            <!-- Einleitung preview card -->
+            <div class="demo-result-preview">
+              <div class="demo-result-preview-header">
+                <span class="demo-result-preview-label">Einleitung</span>
+              </div>
+              <div class="demo-result-preview-body" :class="{ 'expanded': previewExpanded }">
+                {{ demoResultData?.einleitung || '' }}
+              </div>
+              <button
+                v-if="demoResultData?.einleitung?.length > 200"
+                @click="previewExpanded = !previewExpanded"
+                class="demo-result-expand-btn"
+              >
+                {{ previewExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen' }}
+              </button>
+            </div>
+
+            <!-- CTA -->
+            <button @click="onDemoRegister" class="zen-btn zen-btn-ai zen-btn-lg demo-result-cta">
+              Kostenlos registrieren
+            </button>
+            <button @click="showDemoResult = false" class="demo-result-dismiss">
+              Zurück zur Startseite
+            </button>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
 
     <!-- Normal Landing Page (when not in CV upload flow) -->
     <template v-if="!showCvUploadFlow">
-      <!-- CV Upload Modal -->
-      <CVUploadModal
-        :visible="showCvModal"
-        @close="showCvModal = false"
-        @submit="onCvSubmitted"
-      />
-
       <!-- Hero Section - The product IS the hero -->
       <section class="hero-section">
         <div class="hero-container">
@@ -205,7 +252,6 @@
               ref="demoGeneratorRef"
               @demo-started="onDemoStarted"
               @demo-complete="onDemoComplete"
-              @request-cv="onRequestCv"
             />
 
             <!-- Supported Sites -->
@@ -425,19 +471,16 @@
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import DemoGenerator from '../components/landing/DemoGenerator.vue'
-import CVUploadModal from '../components/landing/CVUploadModal.vue'
-import DemoCraftingScreen from '../components/landing/DemoCraftingScreen.vue'
+import CraftingOverlay from '../components/application/CraftingOverlay.vue'
 import { demoStore } from '../stores/demo'
 import { authStore } from '../stores/auth'
 import api from '../api/client'
 
 const router = useRouter()
-const route = useRoute()
 const currentYear = computed(() => new Date().getFullYear())
 
-// Demo Generator ref
 const demoGeneratorRef = ref(null)
 
 // CV Upload Flow State (post-registration)
@@ -452,35 +495,34 @@ const regeneratedResult = ref(null)
 const usageInfo = ref(null)
 const createdApplicationId = ref(null)
 
-// NEW: Demo flow state (pre-registration)
-const showCvModal = ref(false)
-const pendingJobUrl = ref('')
-const previewData = ref(null)
-const isGenerating = ref(false)
-
-// NEW: Crafting screen state
+// Demo flow state
 const showCraftingScreen = ref(false)
 const craftingData = ref(null)
-const pdfBlob = ref(null)
+const demoResultData = ref(null)
+const showDemoResult = ref(false)
+const previewExpanded = ref(false)
+const apiComplete = ref(false)
 
-// Show CV upload flow when user is authenticated and in demo flow
 const showCvUploadFlow = computed(() => {
   return authStore.isAuthenticated() && demoStore.isInDemoFlow()
 })
 
-// File handling
+function handleFileSelection(file) {
+  if (!file) return
+  if (file.type === 'application/pdf') {
+    selectedFile.value = file
+    uploadError.value = ''
+  } else {
+    uploadError.value = 'Bitte wähle eine PDF-Datei aus.'
+  }
+}
+
 const triggerFileSelect = () => {
   fileInput.value?.click()
 }
 
 const onFileSelect = (event) => {
-  const file = event.target.files?.[0]
-  if (file && file.type === 'application/pdf') {
-    selectedFile.value = file
-    uploadError.value = ''
-  } else if (file) {
-    uploadError.value = 'Bitte wähle eine PDF-Datei aus.'
-  }
+  handleFileSelection(event.target.files?.[0])
 }
 
 const onDragOver = () => {
@@ -493,13 +535,7 @@ const onDragLeave = () => {
 
 const onDrop = (event) => {
   isDragging.value = false
-  const file = event.dataTransfer.files?.[0]
-  if (file && file.type === 'application/pdf') {
-    selectedFile.value = file
-    uploadError.value = ''
-  } else if (file) {
-    uploadError.value = 'Bitte wähle eine PDF-Datei aus.'
-  }
+  handleFileSelection(event.dataTransfer.files?.[0])
 }
 
 const clearFile = () => {
@@ -509,7 +545,6 @@ const clearFile = () => {
   }
 }
 
-// Upload CV and regenerate application
 const uploadCvAndRegenerate = async () => {
   if (!selectedFile.value || isUploading.value) return
 
@@ -527,7 +562,6 @@ const uploadCvAndRegenerate = async () => {
     // Step 2: Show crafting animation
     flowState.value = 'crafting'
 
-    // Animate crafting text
     const craftingTexts = [
       'Analysiere deinen Lebenslauf...',
       'Extrahiere deine Skills...',
@@ -551,15 +585,13 @@ const uploadCvAndRegenerate = async () => {
         regeneratedResult.value = response.data.data
         createdApplicationId.value = response.data.data?.id
 
-        // Get usage info
         try {
           const statsResponse = await api.silent.get('/stats')
           usageInfo.value = statsResponse.data.usage
         } catch {
-          // Ignore usage fetch errors
+          // Usage info is non-critical
         }
 
-        // Store in demo store for reference
         demoStore.setRegeneratedResult(response.data.data)
 
         flowState.value = 'result'
@@ -571,23 +603,20 @@ const uploadCvAndRegenerate = async () => {
       flowState.value = 'upload'
       uploadError.value = genError.response?.data?.error || 'Anschreiben konnte nicht erstellt werden. Bitte versuche es erneut.'
     }
-  } catch (error) {
-    uploadError.value = error.response?.data?.error || 'Upload fehlgeschlagen. Bitte versuche es erneut.'
+  } catch (uploadErr) {
+    uploadError.value = uploadErr.response?.data?.error || 'Upload fehlgeschlagen. Bitte versuche es erneut.'
   } finally {
     isUploading.value = false
   }
 }
 
-// Skip CV upload and go to dashboard
 const skipToDashboard = () => {
   demoStore.clear()
   router.push('/dashboard')
 }
 
-// Download PDF
 const downloadPdf = async () => {
   if (!createdApplicationId.value) {
-    // Fallback: go to dashboard
     router.push('/dashboard')
     return
   }
@@ -597,7 +626,6 @@ const downloadPdf = async () => {
       responseType: 'blob'
     })
 
-    // Create download link
     const blob = new Blob([response.data], { type: 'application/pdf' })
     const url = window.URL.createObjectURL(blob)
     const a = document.createElement('a')
@@ -607,76 +635,49 @@ const downloadPdf = async () => {
     a.click()
     window.URL.revokeObjectURL(url)
     document.body.removeChild(a)
-  } catch (error) {
-    console.error('PDF download failed:', error)
-    // On error, redirect to application details
-    router.push(`/applications`)
+  } catch (err) {
+    console.error('PDF download failed:', err)
+    router.push('/applications')
   }
 }
 
-// NEW: Handle CV upload request from DemoGenerator
-const onRequestCv = (url) => {
-  pendingJobUrl.value = url
-  showCvModal.value = true
-}
-
-// NEW: Handle CV file submission from modal
-const onCvSubmitted = async (cvFile) => {
-  showCvModal.value = false
-  showCraftingScreen.value = true  // Show immediately
-  isGenerating.value = true
-
-  // Prepare crafting data from demoStore or default
-  craftingData.value = {
-    ansprechpartner: demoStore.previewData?.ansprechpartner || 'Personalabteilung',
-    firma: demoStore.previewData?.firma || 'Unternehmen',
-    position: demoStore.previewData?.position || 'Position',
-    einleitung: ''  // Will be filled by API
-  }
-
-  // API call runs parallel to animation
-  if (demoGeneratorRef.value) {
-    demoGeneratorRef.value.generateWithCV(cvFile)
-  }
-}
-
-// Demo flow handlers
 const onDemoStarted = () => {
-  // Track demo start for analytics
-  isGenerating.value = true
+  showCraftingScreen.value = true
+  apiComplete.value = false
+  demoResultData.value = null
+
+  craftingData.value = {
+    ansprechpartner: '',
+    firma: '',
+    position: '',
+    einleitung: ''
+  }
 }
 
 const onDemoComplete = (result) => {
-  isGenerating.value = false
+  apiComplete.value = true
 
-  // If we have valid result data, update crafting data with real results
   if (result.result?.data) {
-    // Update crafting data with real results
     craftingData.value = {
-      ...craftingData.value,
-      ansprechpartner: result.result.data.ansprechpartner,
-      firma: result.result.data.firma,
-      position: result.result.data.position,
-      einleitung: result.result.data.einleitung
+      ansprechpartner: result.result.data.ansprechpartner || '',
+      firma: result.result.data.firma || '',
+      position: result.result.data.position || '',
+      einleitung: result.result.data.einleitung || ''
     }
 
-    // Store preview data for later use
-    previewData.value = result.result.data
+    demoResultData.value = result.result.data
 
-    // Store CV text for post-registration use
     if (result.result.data.cv_text) {
       demoStore.setCvData(result.result.data.cv_text, null)
     }
     demoStore.setPreviewData(result.result.data)
+    demoStore.setDemoComplete(result.url, result.result)
 
-    // If crafting screen is not shown, show it now (fallback for non-CV flow)
     if (!showCraftingScreen.value) {
-      showCraftingScreen.value = true
+      showDemoResult.value = true
     }
   } else {
-    // Fallback: redirect to register directly
     showCraftingScreen.value = false
-    demoStore.setDemoComplete(result.url, result)
     router.push({
       path: '/register',
       query: { demo: 'complete' }
@@ -684,12 +685,16 @@ const onDemoComplete = (result) => {
   }
 }
 
-// NEW: Handle register click from crafting screen
-const onCraftingRegister = () => {
+const onCraftingComplete = () => {
   showCraftingScreen.value = false
-  // Store demo data before redirecting
-  demoStore.setDemoComplete(pendingJobUrl.value, { data: previewData.value })
-  // Navigate to registration
+
+  if (apiComplete.value && demoResultData.value) {
+    showDemoResult.value = true
+  }
+}
+
+const onDemoRegister = () => {
+  showDemoResult.value = false
   router.push('/register')
 }
 
@@ -697,15 +702,9 @@ const scrollToTop = () => {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
-// Check on mount if we should show CV upload flow
 onMounted(() => {
-  // If user is authenticated and came from demo flow, show CV upload
-  if (route.query.demo === 'complete' && authStore.isAuthenticated()) {
-    // User just registered after demo - stay in CV upload flow
-    // demoStore should already have the data
-  } else if (!authStore.isAuthenticated() && demoStore.isInDemoFlow()) {
-    // User is not authenticated but has demo data - they probably logged out
-    // Clear the demo state to show normal landing
+  // Clear leftover demo state if user is no longer authenticated
+  if (!authStore.isAuthenticated() && demoStore.isInDemoFlow()) {
     demoStore.clear()
   }
 })
@@ -1036,6 +1035,170 @@ onMounted(() => {
   align-items: center;
   justify-content: center;
   gap: var(--space-xs);
+}
+
+/* ========================================
+   DEMO RESULT OVERLAY
+   ======================================== */
+.demo-result-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(
+    135deg,
+    var(--color-washi) 0%,
+    var(--color-washi-warm) 50%,
+    var(--color-washi-aged) 100%
+  );
+  padding: var(--space-lg);
+}
+
+.demo-result-content {
+  max-width: 560px;
+  width: 100%;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.demo-result-enso {
+  animation: resultEnsoEnter 0.8s var(--ease-zen);
+}
+
+@keyframes resultEnsoEnter {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  60% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.demo-result-title {
+  font-size: clamp(1.75rem, 4vw, 2.25rem);
+  font-weight: 400;
+  color: var(--color-sumi);
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.demo-result-subtitle {
+  font-size: 1.125rem;
+  color: var(--color-ai);
+  font-weight: 500;
+  margin: 0;
+}
+
+.demo-result-preview {
+  width: 100%;
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  overflow: hidden;
+  text-align: left;
+}
+
+.demo-result-preview-header {
+  padding: var(--space-sm) var(--space-md);
+  background: var(--color-washi-warm);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.demo-result-preview-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-text-ghost);
+}
+
+.demo-result-preview-body {
+  padding: var(--space-md) var(--space-lg);
+  font-size: 0.9375rem;
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+  max-height: 4.5em;
+  overflow: hidden;
+  transition: max-height 0.3s var(--ease-zen);
+  white-space: pre-wrap;
+}
+
+.demo-result-preview-body.expanded {
+  max-height: 500px;
+}
+
+.demo-result-expand-btn {
+  display: block;
+  width: 100%;
+  padding: var(--space-sm);
+  background: none;
+  border: none;
+  border-top: 1px solid var(--color-border-light);
+  color: var(--color-ai);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-base);
+}
+
+.demo-result-expand-btn:hover {
+  background: var(--color-ai-subtle);
+}
+
+.demo-result-cta {
+  width: 100%;
+  max-width: 320px;
+  margin-top: var(--space-sm);
+}
+
+.demo-result-dismiss {
+  background: none;
+  border: none;
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: color var(--transition-base);
+}
+
+.demo-result-dismiss:hover {
+  color: var(--color-ai);
+}
+
+/* Demo result transitions */
+.demo-result-enter-active {
+  animation: demoResultEnter 0.5s var(--ease-zen);
+}
+
+.demo-result-leave-active {
+  animation: demoResultLeave 0.3s var(--ease-zen);
+}
+
+@keyframes demoResultEnter {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes demoResultLeave {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
 }
 
 /* ========================================
@@ -1564,6 +1727,10 @@ onMounted(() => {
 
   .result-actions {
     gap: var(--space-sm);
+  }
+
+  .demo-result-overlay {
+    padding: var(--space-md);
   }
 }
 

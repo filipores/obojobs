@@ -15,14 +15,13 @@
         :disabled="loading"
         @focus="isFocused = true"
         @blur="isFocused = false"
-        @paste="onPaste"
         @keydown.enter="startDemo"
       />
       <button
         v-if="!loading"
         @click="startDemo"
         class="demo-submit-btn"
-        :disabled="!isValidUrl"
+        :disabled="!canSubmit"
         aria-label="Demo starten"
       >
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -34,22 +33,45 @@
       </div>
     </div>
 
-    <!-- Loading State -->
-    <div v-if="loading" class="demo-loading-state">
-      <div class="loading-enso">
-        <svg class="enso-circle" viewBox="0 0 100 100">
-          <circle
-            class="enso-path"
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke-width="3"
-            stroke-linecap="round"
-          />
+    <!-- CV Upload Drop Zone -->
+    <div
+      class="cv-drop-zone"
+      :class="{ 'is-dragging': isDragging, 'has-file': selectedFile, 'is-loading': loading }"
+      @dragover.prevent="onDragOver"
+      @dragleave.prevent="onDragLeave"
+      @drop.prevent="onDrop"
+    >
+      <input
+        ref="fileInput"
+        type="file"
+        accept=".pdf"
+        class="file-input"
+        @change="onFileSelect"
+      />
+
+      <div v-if="!selectedFile" class="drop-zone-content">
+        <svg class="drop-zone-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
         </svg>
+        <p class="drop-zone-text">
+          <strong>PDF hier ablegen</strong> oder <button type="button" @click="triggerFileSelect" class="drop-zone-link">Datei auswählen</button>
+        </p>
       </div>
-      <p class="loading-text">{{ loadingText }}</p>
+
+      <div v-else class="selected-file-info">
+        <svg class="file-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span class="file-name">{{ selectedFile.name }}</span>
+        <button type="button" @click="clearFile" class="clear-file-btn" aria-label="Datei entfernen">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
     </div>
 
     <!-- Error State -->
@@ -60,7 +82,7 @@
 
     <!-- Hint Text -->
     <p v-if="!loading && !error" class="demo-hint">
-      Probiere es aus - keine Anmeldung erforderlich
+      Lebenslauf + Stellenanzeigen-URL — keine Anmeldung nötig
     </p>
   </div>
 </template>
@@ -69,16 +91,17 @@
 import { ref, computed, onMounted } from 'vue'
 import api from '../../api/client'
 
-const emit = defineEmits(['demo-started', 'demo-complete', 'request-cv'])
+const emit = defineEmits(['demo-started', 'demo-complete'])
 
 const inputRef = ref(null)
+const fileInput = ref(null)
 const url = ref('')
 const isFocused = ref(false)
 const loading = ref(false)
 const error = ref('')
-const loadingText = ref('Analysiere Stellenanzeige...')
+const selectedFile = ref(null)
+const isDragging = ref(false)
 
-// Validate URL
 const isValidUrl = computed(() => {
   if (!url.value) return false
   try {
@@ -89,37 +112,59 @@ const isValidUrl = computed(() => {
   }
 })
 
-// Handle paste - auto-start on paste
-const onPaste = async () => {
-  // Let the paste complete first
-  await new Promise(resolve => setTimeout(resolve, 50))
+const canSubmit = computed(() => isValidUrl.value && selectedFile.value)
 
-  if (isValidUrl.value) {
-    startDemo()
+function handleFileSelection(file) {
+  if (!file) return
+  if (file.type === 'application/pdf') {
+    selectedFile.value = file
+    error.value = ''
+  } else {
+    error.value = 'Bitte wähle eine PDF-Datei aus.'
   }
 }
 
-// Start the demo - call API directly (no CV required)
+const triggerFileSelect = () => {
+  fileInput.value?.click()
+}
+
+const onFileSelect = (event) => {
+  handleFileSelection(event.target.files?.[0])
+}
+
+const onDragOver = () => {
+  isDragging.value = true
+}
+
+const onDragLeave = () => {
+  isDragging.value = false
+}
+
+const onDrop = (event) => {
+  isDragging.value = false
+  handleFileSelection(event.dataTransfer.files?.[0])
+}
+
+const clearFile = () => {
+  selectedFile.value = null
+  if (fileInput.value) {
+    fileInput.value.value = ''
+  }
+}
+
 const startDemo = async () => {
-  if (!isValidUrl.value || loading.value) return
+  if (!canSubmit.value || loading.value) return
 
   loading.value = true
   error.value = ''
   emit('demo-started')
 
-  const loadingTexts = [
-    'Analysiere Stellenanzeige...',
-    'Extrahiere Anforderungen...',
-    'Erstelle Anschreiben...'
-  ]
-  let textIndex = 0
-  const textInterval = setInterval(() => {
-    textIndex = (textIndex + 1) % loadingTexts.length
-    loadingText.value = loadingTexts[textIndex]
-  }, 2500)
-
   try {
-    const response = await api.post('/demo/generate', { url: url.value }, { suppressToast: true })
+    const formData = new FormData()
+    formData.append('url', url.value)
+    formData.append('cv_file', selectedFile.value)
+
+    const response = await api.post('/demo/generate', formData, { suppressToast: true })
 
     if (response.data.success) {
       emit('demo-complete', {
@@ -136,63 +181,22 @@ const startDemo = async () => {
       error.value = err.response?.data?.message || 'Fehler beim Verarbeiten der URL. Bitte versuche es erneut.'
     }
   } finally {
-    clearInterval(textInterval)
     loading.value = false
   }
 }
 
-// Generate demo with CV file (called by parent after CV upload)
-const generateWithCV = async (cvFile) => {
-  if (!isValidUrl.value) return
-
-  loading.value = true
+const clearError = () => {
   error.value = ''
-
-  const textInterval = setInterval(() => {
-    const texts = ['Lese deinen Lebenslauf...', 'Erstelle personalisiertes Anschreiben...']
-    loadingText.value = texts[Math.floor(Math.random() * texts.length)]
-  }, 2500)
-
-  try {
-    const formData = new FormData()
-    formData.append('url', url.value)
-    formData.append('cv_file', cvFile)
-
-    const response = await api.post('/demo/generate', formData, { suppressToast: true })
-
-    if (response.data.success) {
-      emit('demo-complete', {
-        url: url.value,
-        result: response.data
-      })
-    } else {
-      error.value = response.data.message || 'Fehler beim Generieren des Anschreibens'
-    }
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Fehler beim Verarbeiten der URL. Bitte versuche es erneut.'
-  } finally {
-    clearInterval(textInterval)
-    loading.value = false
-  }
 }
 
-// Reset the generator state
 const reset = () => {
   loading.value = false
   error.value = ''
 }
 
-// Expose methods to parent
-defineExpose({ generateWithCV, reset })
-
-const clearError = () => {
-  error.value = ''
-  url.value = ''
-  inputRef.value?.focus()
-}
+defineExpose({ reset })
 
 onMounted(() => {
-  // Auto-focus the input on mount
   inputRef.value?.focus()
 })
 </script>
@@ -290,51 +294,105 @@ onMounted(() => {
   animation: spin 0.8s linear infinite;
 }
 
-/* Loading State */
-.demo-loading-state {
+/* CV Drop Zone */
+.cv-drop-zone {
+  margin-top: var(--space-md);
+  border: 2px dashed var(--color-border-light);
+  border-radius: var(--radius-lg);
+  padding: var(--space-md) var(--space-lg);
+  transition: all var(--transition-base);
+  background: var(--color-washi);
+  cursor: pointer;
+}
+
+.cv-drop-zone:hover,
+.cv-drop-zone.is-dragging {
+  border-color: var(--color-ai);
+  background: var(--color-ai-subtle);
+}
+
+.cv-drop-zone.has-file {
+  border-style: solid;
+  border-color: var(--color-koke);
+  background: rgba(122, 139, 110, 0.05);
+}
+
+.cv-drop-zone.is-loading {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.file-input {
+  display: none;
+}
+
+.drop-zone-content {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  margin-top: var(--space-xl);
+  justify-content: center;
+  gap: var(--space-sm);
 }
 
-.loading-enso {
-  width: 80px;
-  height: 80px;
-  margin-bottom: var(--space-md);
+.drop-zone-icon {
+  color: var(--color-stone);
+  opacity: 0.6;
+  flex-shrink: 0;
 }
 
-.enso-circle {
-  width: 100%;
-  height: 100%;
-}
-
-.enso-path {
-  stroke: var(--color-ai);
-  stroke-dasharray: 283;
-  stroke-dashoffset: 283;
-  animation: draw-enso 2s var(--ease-zen) forwards, pulse-opacity 2s ease-in-out infinite 2s;
-}
-
-@keyframes draw-enso {
-  to {
-    stroke-dashoffset: 0;
-  }
-}
-
-@keyframes pulse-opacity {
-  0%, 100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.6;
-  }
-}
-
-.loading-text {
+.drop-zone-text {
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
-  animation: fade-in 0.3s ease-out;
+  margin: 0;
+}
+
+.drop-zone-text strong {
+  color: var(--color-sumi);
+}
+
+.drop-zone-link {
+  background: none;
+  border: none;
+  color: var(--color-ai);
+  font-weight: 500;
+  cursor: pointer;
+  text-decoration: underline;
+  font-size: inherit;
+}
+
+.selected-file-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.file-icon {
+  color: var(--color-koke);
+  flex-shrink: 0;
+}
+
+.file-name {
+  font-weight: 500;
+  color: var(--color-sumi);
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clear-file-btn {
+  background: none;
+  border: none;
+  padding: var(--space-xs);
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+}
+
+.clear-file-btn:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-error);
 }
 
 /* Error State */
@@ -386,15 +444,6 @@ onMounted(() => {
   }
 }
 
-@keyframes fade-in {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
 /* Responsive */
 @media (max-width: 768px) {
   .demo-input-wrapper {
@@ -408,6 +457,10 @@ onMounted(() => {
   .demo-submit-btn {
     width: 40px;
     height: 40px;
+  }
+
+  .cv-drop-zone {
+    padding: var(--space-sm) var(--space-md);
   }
 }
 </style>
