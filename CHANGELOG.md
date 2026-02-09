@@ -1,3 +1,10 @@
+# [1.42.0](https://github.com/filipores/obojobs/compare/v1.41.0...v1.42.0) (2026-02-09)
+
+
+### Features
+
+* **payments:** add webhook idempotency, plan changes, and invoice handling ([c31bf26](https://github.com/filipores/obojobs/commit/c31bf262e672fbe3c631c31022b4a3d73cac43fc))
+
 # [1.41.0](https://github.com/filipores/obojobs/compare/v1.40.0...v1.41.0) (2026-02-09)
 
 
