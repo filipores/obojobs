@@ -1,3 +1,10 @@
+# [1.43.0](https://github.com/filipores/obojobs/compare/v1.42.0...v1.43.0) (2026-02-09)
+
+
+### Features
+
+* **admin:** add admin dashboard with user management and stats api ([b9df139](https://github.com/filipores/obojobs/commit/b9df139c37add90844815a1f28764bae4e3b2a4c))
+
 # [1.42.0](https://github.com/filipores/obojobs/compare/v1.41.0...v1.42.0) (2026-02-09)
 
 
