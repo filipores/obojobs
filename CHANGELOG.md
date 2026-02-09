@@ -1,3 +1,10 @@
+# [1.44.0](https://github.com/filipores/obojobs/compare/v1.43.1...v1.44.0) (2026-02-09)
+
+
+### Features
+
+* **admin:** add full application and template content views for ai eval ([554d300](https://github.com/filipores/obojobs/commit/554d300a193cff3bfb3050b5711a6ebc9dacf258))
+
 ## [1.43.1](https://github.com/filipores/obojobs/compare/v1.43.0...v1.43.1) (2026-02-09)
 
 
