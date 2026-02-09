@@ -1,3 +1,10 @@
+# [1.40.0](https://github.com/filipores/obojobs/compare/v1.39.10...v1.40.0) (2026-02-09)
+
+
+### Features
+
+* **demo:** require cv upload and use crafting overlay animation ([6f0f6aa](https://github.com/filipores/obojobs/commit/6f0f6aa9622019c3d9de846ebd923305a700992f))
+
 ## [1.39.10](https://github.com/filipores/obojobs/compare/v1.39.9...v1.39.10) (2026-02-09)
 
 
