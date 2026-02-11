@@ -42,10 +42,13 @@ class DemoGenerator:
             raise ValueError("Konnte keinen Text von der URL extrahieren")
 
         parsed_url = urlparse(job_url)
-        firma_name = parsed_url.netloc.replace("www.", "").split(".")[0].title()
+        url_firma = parsed_url.netloc.replace("www.", "").split(".")[0].title()
 
         # Phase 2: Extract details (position, contact, source)
-        details = self.api_client.extract_bewerbung_details(stellenanzeige_text, firma_name)
+        details = self.api_client.extract_bewerbung_details(stellenanzeige_text, url_firma)
+
+        # Use AI-extracted firma if available, fall back to URL-based
+        firma_name = details.get("firma") or url_firma
 
         # Phase 3: Generate full cover letter body
         anschreiben_body = self.api_client.generate_anschreiben(

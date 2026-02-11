@@ -167,17 +167,45 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
 
 Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
 
+        messages = [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
         for attempt in range(retry_count):
             try:
                 raw = self._call_api(
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                    ],
+                    messages=messages,
                     max_tokens=config.QWEN_ANSCHREIBEN_MAX_TOKENS,
                     temperature=config.QWEN_ANSCHREIBEN_TEMPERATURE,
                 )
-                return self._postprocess_anschreiben(raw)
+                result = self._postprocess_anschreiben(raw)
+
+                # Check for forbidden phrases and retry with correction prompt
+                violations = self._find_forbidden_phrases(result)
+                if violations and attempt < retry_count - 1:
+                    logger.warning(
+                        "Verbotene Phrasen gefunden (Versuch %d/%d): %s",
+                        attempt + 1,
+                        retry_count,
+                        violations,
+                    )
+                    phrases_str = ", ".join(f'"{p}"' for p in violations)
+                    messages = [
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                        {"role": "assistant", "content": raw},
+                        {
+                            "role": "user",
+                            "content": f"Dein Text enthält verbotene Phrasen: {phrases_str}. "
+                            "Schreibe das Anschreiben KOMPLETT NEU ohne diese Phrasen. "
+                            "Formuliere die betroffenen Stellen völlig anders.",
+                        },
+                    ]
+                    time.sleep(RETRY_DELAY_SECONDS)
+                    continue
+
+                return result
             except Exception as e:
                 if attempt < retry_count - 1:
                     logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
@@ -451,6 +479,29 @@ Schreibe NUR den Einleitungsabsatz {stil_schluss}. Keine Anrede, keine Erklärun
 Beginne direkt mit dem ersten Satz. Ein fließender Absatz, KEINE Zeilenumbrüche.
 Der Text darf KEINE Bindestriche als Satzzeichen enthalten."""
 
+    FORBIDDEN_PHRASES = [
+        "genau die Mischung aus",
+        "spricht mich besonders an",
+        "reizt mich besonders",
+        "hat mich sofort angesprochen",
+        "hat meine Aufmerksamkeit geweckt",
+        "mit großem Interesse",
+        "Hiermit bewerbe ich mich",
+        "hochmotiviert",
+        "vielfältige Herausforderungen",
+        "bin ich der ideale Kandidat",
+        "freue mich auf die Herausforderung",
+        "in einem dynamischen Umfeld",
+        "meine Leidenschaft für",
+        "passt genau zu meinen Erfahrungen",
+        "technische Tiefe",
+        "Lösungskompetenz",
+        "praktische Erfahrung mitbringen",
+        "konnte ich unter Beweis stellen",
+        "erfolgreich einsetzen",
+        "ich bewerbe mich auf die Stelle",
+    ]
+
     def _postprocess_anschreiben(self, text: str) -> str:
         """Clean up AI-generated cover letter text."""
         # Remove preambles like "Hier ist das Anschreiben:" or "Gerne, hier..."
@@ -475,6 +526,11 @@ Der Text darf KEINE Bindestriche als Satzzeichen enthalten."""
             text = text[1:-1].strip()
 
         return text
+
+    def _find_forbidden_phrases(self, text: str) -> list[str]:
+        """Return list of forbidden phrases found in the text."""
+        text_lower = text.lower()
+        return [phrase for phrase in self.FORBIDDEN_PHRASES if phrase.lower() in text_lower]
 
     def _build_anschreiben_system_prompt(
         self,

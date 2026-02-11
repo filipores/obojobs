@@ -198,16 +198,16 @@
               {{ demoResultData.firma }} — {{ demoResultData.position }}
             </p>
 
-            <!-- Einleitung preview card -->
+            <!-- Anschreiben preview card -->
             <div class="demo-result-preview">
               <div class="demo-result-preview-header">
-                <span class="demo-result-preview-label">Einleitung</span>
+                <span class="demo-result-preview-label">Anschreiben</span>
               </div>
               <div class="demo-result-preview-body" :class="{ 'expanded': previewExpanded }">
-                {{ demoResultData?.einleitung || '' }}
+                {{ demoResultData?.anschreiben || demoResultData?.einleitung || '' }}
               </div>
               <button
-                v-if="demoResultData?.einleitung?.length > 200"
+                v-if="(demoResultData?.anschreiben || demoResultData?.einleitung || '').length > 200"
                 @click="previewExpanded = !previewExpanded"
                 class="demo-result-expand-btn"
               >
