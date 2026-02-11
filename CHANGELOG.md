@@ -1,3 +1,13 @@
+# [1.46.0](https://github.com/filipores/obojobs/compare/v1.45.0...v1.46.0) (2026-02-11)
+
+
+### Features
+
+* add background scheduler with APScheduler for job cleanup and auto-search ([8b8237d](https://github.com/filipores/obojobs/commit/8b8237d89183faa758bf926aa90915849d6c1457))
+* add job dashboard page with search and recommendations ([d0d241a](https://github.com/filipores/obojobs/commit/d0d241a935f2644e9f53120dec6debc7e8a12d9c))
+* **ai:** replace template system with full ai cover letter generation ([446e04a](https://github.com/filipores/obojobs/commit/446e04afd036fd57c20c9edefcef6bb631abec5f))
+* **api:** integrate Bundesagentur job search API ([70585ee](https://github.com/filipores/obojobs/commit/70585eeef1646cd4b2c79bb49fd2720a7dcb6e7e))
+
 # [1.45.0](https://github.com/filipores/obojobs/compare/v1.44.0...v1.45.0) (2026-02-11)
 
 
