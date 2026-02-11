@@ -1,3 +1,10 @@
+# [1.45.0](https://github.com/filipores/obojobs/compare/v1.44.0...v1.45.0) (2026-02-11)
+
+
+### Features
+
+* **ai:** replace claude with qwen3-235b via together.xyz ([72c710a](https://github.com/filipores/obojobs/commit/72c710a667568f41678c0145f3cb2addf7c1c507))
+
 # [1.44.0](https://github.com/filipores/obojobs/compare/v1.43.1...v1.44.0) (2026-02-09)
 
 
