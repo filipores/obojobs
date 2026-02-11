@@ -1,3 +1,10 @@
+# [1.47.0](https://github.com/filipores/obojobs/compare/v1.46.2...v1.47.0) (2026-02-11)
+
+
+### Features
+
+* **ui:** add parallel job generation pipeline ([fdf6352](https://github.com/filipores/obojobs/commit/fdf6352806b5822431d54054a52b0cfda52e16c7))
+
 ## [1.46.2](https://github.com/filipores/obojobs/compare/v1.46.1...v1.46.2) (2026-02-11)
 
 
