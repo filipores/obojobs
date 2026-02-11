@@ -1,3 +1,10 @@
+# [1.50.0](https://github.com/filipores/obojobs/compare/v1.49.0...v1.50.0) (2026-02-11)
+
+
+### Features
+
+* **frontend:** add job suggestions dashboard replacing search portal ([950d539](https://github.com/filipores/obojobs/commit/950d539ca588d710fed8e150f1c12b22fd781a65))
+
 # [1.49.0](https://github.com/filipores/obojobs/compare/v1.48.0...v1.49.0) (2026-02-11)
 
 
