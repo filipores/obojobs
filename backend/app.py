@@ -1,3 +1,4 @@
+import atexit
 import os
 
 from flask import Flask, jsonify
@@ -180,6 +181,12 @@ def create_app():
     app.register_blueprint(salary_bp, url_prefix="/api/salary")
     app.register_blueprint(legal_bp, url_prefix="/api/legal")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
+
+    # Initialize background scheduler
+    from services.scheduler import init_scheduler, shutdown_scheduler
+
+    init_scheduler(app)
+    atexit.register(shutdown_scheduler)
 
     # Health check endpoint (no rate limit)
     @app.route("/api/health")
