@@ -1,3 +1,10 @@
+## [1.46.1](https://github.com/filipores/obojobs/compare/v1.46.0...v1.46.1) (2026-02-11)
+
+
+### Bug Fixes
+
+* **ai:** fix firma extraction, label, and forbidden phrase handling ([e4a09db](https://github.com/filipores/obojobs/commit/e4a09db800ba6f73cb907a86704a47463baa04f1))
+
 # [1.46.0](https://github.com/filipores/obojobs/compare/v1.45.0...v1.46.0) (2026-02-11)
 
 
