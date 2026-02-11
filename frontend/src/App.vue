@@ -55,6 +55,9 @@
               <router-link to="/company-insights" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Firmen-Insights">
                 Insights
               </router-link>
+              <router-link to="/job-dashboard" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Job-Dashboard">
+                Jobsuche
+              </router-link>
               <div v-if="authStore.user?.is_admin" class="mehr-dropdown-divider"></div>
               <router-link v-if="authStore.user?.is_admin" to="/admin" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Admin Dashboard">
                 Admin
@@ -207,6 +210,14 @@
             </svg>
             <span>Firmen-Insights</span>
           </router-link>
+
+          <router-link to="/job-dashboard" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <span>Jobsuche</span>
+          </router-link>
         </nav>
 
         <!-- Sidebar Footer -->
@@ -338,7 +349,7 @@ const isSidebarOpen = ref(false)
 const isResizing = ref(false)
 const isMoreDropdownOpen = ref(false)
 const moreDropdownRef = ref(null)
-const moreRoutes = ['/documents', '/templates', '/timeline', '/ats', '/company-insights', '/admin']
+const moreRoutes = ['/documents', '/templates', '/timeline', '/ats', '/company-insights', '/job-dashboard', '/admin']
 const isMoreRouteActive = computed(() => moreRoutes.some(r => route.path.startsWith(r)))
 
 const toggleMoreDropdown = () => {

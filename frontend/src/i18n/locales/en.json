@@ -305,6 +305,7 @@
     "interviewPrep": "Interview Preparation",
     "mockInterview": "Mock Interview",
     "notFound": "Page Not Found",
+    "jobDashboard": "Job Search",
     "admin": "Admin",
     "adminUsers": "Admin - Users",
     "adminUserDetail": "Admin - User Details"
@@ -462,6 +463,33 @@
   },
   "dashboard": {
     "closeHint": "Close hint"
+  },
+  "jobDashboard": {
+    "title": "Job Dashboard",
+    "subtitle": "Find matching positions based on your profile",
+    "searchTitle": "Job Search",
+    "location": "Location",
+    "locationPlaceholder": "e.g. Berlin, Munich, Hamburg...",
+    "workingTime": "Working Time",
+    "allTypes": "All types",
+    "fullTime": "Full-time",
+    "partTime": "Part-time",
+    "homeOffice": "Home Office",
+    "searchButton": "Search Jobs",
+    "searching": "Searching...",
+    "searchResults": "Search Results",
+    "savedRecommendations": "Saved Recommendations",
+    "statsActive": "Active",
+    "statsVeryGood": "Very Good (80%+)",
+    "statsGood": "Good (60-79%)",
+    "statsApplied": "Applied",
+    "unknownPosition": "Unknown Position",
+    "unknownCompany": "Unknown Company",
+    "openJob": "Open Job",
+    "dismiss": "Dismiss",
+    "markApplied": "Mark as Applied",
+    "emptyTitle": "No Recommendations Yet",
+    "emptyDescription": "Search for jobs to get personalized recommendations based on your profile."
   },
   "admin": {
     "dashboard": {

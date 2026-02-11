@@ -305,6 +305,7 @@
     "interviewPrep": "Interview-Vorbereitung",
     "mockInterview": "Mock-Interview",
     "notFound": "Seite nicht gefunden",
+    "jobDashboard": "Jobsuche",
     "admin": "Admin",
     "adminUsers": "Admin - Benutzer",
     "adminUserDetail": "Admin - Benutzerdetails"
@@ -462,6 +463,33 @@
   },
   "dashboard": {
     "closeHint": "Hinweis schließen"
+  },
+  "jobDashboard": {
+    "title": "Job-Dashboard",
+    "subtitle": "Finden Sie passende Stellen basierend auf Ihrem Profil",
+    "searchTitle": "Jobsuche",
+    "location": "Standort",
+    "locationPlaceholder": "z.B. Berlin, München, Hamburg...",
+    "workingTime": "Arbeitszeit",
+    "allTypes": "Alle Arbeitszeiten",
+    "fullTime": "Vollzeit",
+    "partTime": "Teilzeit",
+    "homeOffice": "Homeoffice",
+    "searchButton": "Jobs suchen",
+    "searching": "Suche läuft...",
+    "searchResults": "Suchergebnisse",
+    "savedRecommendations": "Gespeicherte Empfehlungen",
+    "statsActive": "Aktiv",
+    "statsVeryGood": "Sehr gut (80%+)",
+    "statsGood": "Gut (60-79%)",
+    "statsApplied": "Beworben",
+    "unknownPosition": "Unbekannte Position",
+    "unknownCompany": "Unbekanntes Unternehmen",
+    "openJob": "Stelle öffnen",
+    "dismiss": "Ausblenden",
+    "markApplied": "Als beworben markieren",
+    "emptyTitle": "Noch keine Empfehlungen",
+    "emptyDescription": "Suchen Sie nach Jobs, um personalisierte Empfehlungen basierend auf Ihrem Profil zu erhalten."
   },
   "admin": {
     "dashboard": {

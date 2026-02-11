@@ -33,6 +33,7 @@ const routes = [
   { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true, titleKey: 'pages.subscriptionSuccess' } },
   { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true, titleKey: 'pages.interviewPrep' } },
   { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, titleKey: 'pages.mockInterview' } },
+  { path: '/job-dashboard', component: () => import('../pages/JobDashboard.vue'), meta: { requiresAuth: true, titleKey: 'pages.jobDashboard' } },
 
   // Admin routes
   { path: '/admin', component: () => import('../pages/AdminDashboard.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.admin' } },
