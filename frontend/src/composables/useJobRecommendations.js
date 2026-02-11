@@ -7,7 +7,12 @@ const stats = ref(null)
 const isLoading = ref(false)
 const isSearching = ref(false)
 const error = ref(null)
+const hasSearched = ref(false)
+const currentPage = ref(1)
+const totalFound = ref(0)
+const savedJobUrls = ref(new Set())
 const searchFilters = ref({
+  keywords: '',
   location: '',
   working_time: '',
   max_results: 10
@@ -50,27 +55,86 @@ async function fetchStats() {
 async function searchJobs(filters = {}) {
   isSearching.value = true
   error.value = null
+  currentPage.value = 1
   searchResults.value = []
 
   const payload = {
+    keywords: filters.keywords || searchFilters.value.keywords,
     location: filters.location || searchFilters.value.location,
     working_time: filters.working_time || searchFilters.value.working_time,
     max_results: filters.max_results || searchFilters.value.max_results,
+    page: 1,
   }
 
   try {
     const { data } = await api.post('/recommendations/search', payload)
     if (data.success) {
       searchResults.value = data.data.results || []
+      totalFound.value = data.data.total_found || searchResults.value.length
+      hasSearched.value = true
       await Promise.all([fetchRecommendations(), fetchStats()])
       return data.data
     }
     throw new Error('Search failed')
   } catch (err) {
     error.value = extractErrorMessage(err)
+    hasSearched.value = true
     throw err
   } finally {
     isSearching.value = false
+  }
+}
+
+async function loadMore() {
+  isSearching.value = true
+  error.value = null
+  currentPage.value++
+
+  const payload = {
+    keywords: searchFilters.value.keywords,
+    location: searchFilters.value.location,
+    working_time: searchFilters.value.working_time,
+    max_results: searchFilters.value.max_results,
+    page: currentPage.value,
+  }
+
+  try {
+    const { data } = await api.post('/recommendations/search', payload)
+    if (data.success) {
+      const newResults = data.data.results || []
+      searchResults.value = [...searchResults.value, ...newResults]
+      totalFound.value = data.data.total_found || totalFound.value
+      return data.data
+    }
+    throw new Error('Search failed')
+  } catch (err) {
+    error.value = extractErrorMessage(err)
+    currentPage.value--
+    throw err
+  } finally {
+    isSearching.value = false
+  }
+}
+
+async function saveJob(job) {
+  try {
+    await api.post('/recommendations/save', {
+      job_data: {
+        title: job.title,
+        company: job.company,
+        location: job.location,
+        url: job.url,
+        source: job.source || 'arbeitsagentur',
+        description: job.description,
+      },
+      fit_score: job.fit_score || 50,
+      fit_category: job.fit_category || 'mittel',
+    })
+    savedJobUrls.value = new Set([...savedJobUrls.value, job.url])
+    await fetchStats()
+  } catch (err) {
+    error.value = extractErrorMessage(err)
+    throw err
   }
 }
 
@@ -113,11 +177,17 @@ export function useJobRecommendations() {
     isLoading: readonly(isLoading),
     isSearching: readonly(isSearching),
     error: readonly(error),
+    hasSearched: readonly(hasSearched),
+    currentPage: readonly(currentPage),
+    totalFound: readonly(totalFound),
+    savedJobUrls: readonly(savedJobUrls),
     searchFilters,
     activeRecommendations,
     fetchRecommendations,
     fetchStats,
     searchJobs,
+    loadMore,
+    saveJob,
     dismissRecommendation,
     markAsApplied,
     deleteRecommendation,

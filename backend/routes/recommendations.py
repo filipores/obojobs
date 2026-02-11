@@ -125,6 +125,11 @@ def search_jobs(current_user):
     location = data.get("location", "")
     working_time = data.get("working_time", "")
     max_results = min(int(data.get("max_results", 10)), 25)
+    keywords = data.get("keywords", "")
+    try:
+        page = max(1, int(data.get("page", 1)))
+    except (ValueError, TypeError):
+        page = 1
 
     recommender = JobRecommender()
     result = recommender.search_and_score_jobs(
@@ -132,6 +137,8 @@ def search_jobs(current_user):
         location=location,
         working_time=working_time,
         max_results=max_results,
+        keywords=keywords,
+        page=page,
     )
 
     saved_count = 0
@@ -153,6 +160,8 @@ def search_jobs(current_user):
                 "results": result["results"],
                 "total_found": result["total_found"],
                 "saved_count": saved_count,
+                "page": result.get("page", 1),
+                "has_more": result.get("has_more", False),
             },
         }
     )

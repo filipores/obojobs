@@ -109,24 +109,34 @@ class JobRecommender:
         return results
 
     def search_and_score_jobs(
-        self, user_id: int, location: str = "", working_time: str = "", max_results: int = 10
+        self,
+        user_id: int,
+        location: str = "",
+        working_time: str = "",
+        max_results: int = 10,
+        keywords: str = "",
+        page: int = 1,
     ) -> dict:
         """Search Bundesagentur API, fetch details, and score each job."""
-        keywords = self.get_user_search_keywords(user_id)
-        if not keywords:
-            return {"results": [], "total_found": 0, "saved_count": 0}
+        if keywords and keywords.strip():
+            search_keywords = [kw.strip() for kw in keywords.split(",") if kw.strip()]
+        else:
+            search_keywords = self.get_user_search_keywords(user_id)
+        if not search_keywords:
+            return {"results": [], "total_found": 0, "saved_count": 0, "page": page, "has_more": False}
 
         # Search per keyword individually (API uses AND logic, combining keywords returns too few results)
         seen_refnrs = set()
         all_jobs = []
         total = 0
 
-        for keyword in keywords[:3]:
+        for keyword in search_keywords[:3]:
             jobs, found = self.ba_client.search_jobs(
                 keywords=keyword,
                 location=location,
                 working_time=working_time,
                 size=min(max_results, 25),
+                page=page,
             )
             total += found
             for job in jobs:
@@ -134,12 +144,23 @@ class JobRecommender:
                     seen_refnrs.add(job.refnr)
                     all_jobs.append(job)
 
+        # Filter out irrelevant results only when custom keywords are provided
+        # (profile-based search relies on the API's own keyword matching)
+        if keywords and keywords.strip():
+            all_jobs = [job for job in all_jobs if self._is_relevant(job, search_keywords)]
+
         if not all_jobs:
-            return {"results": [], "total_found": total, "saved_count": 0}
+            return {
+                "results": [],
+                "total_found": total,
+                "saved_count": 0,
+                "page": page,
+                "has_more": total > page * max_results,
+            }
 
         user_skills = UserSkill.query.filter_by(user_id=user_id).all()
         if not user_skills:
-            return {"results": [], "total_found": total, "saved_count": 0}
+            return {"results": [], "total_found": total, "saved_count": 0, "page": page, "has_more": False}
 
         results = []
         saved_count = 0
@@ -157,6 +178,7 @@ class JobRecommender:
                 time.sleep(BundesagenturClient.DETAIL_DELAY)
 
             description = job_data.get("description", "")
+            scored = False
             if description and len(description) > 50:
                 requirements = self.requirement_analyzer.analyze_requirements(job_text=description)
                 if requirements:
@@ -165,12 +187,14 @@ class JobRecommender:
                     job_data["fit_category"] = fit_result["category"]
                     job_data["matched_skills"] = fit_result["matched"]
                     job_data["missing_skills"] = fit_result["missing"]
-                else:
-                    job_data["fit_score"] = 50
-                    job_data["fit_category"] = "mittel"
-            else:
-                job_data["fit_score"] = 50
-                job_data["fit_category"] = "mittel"
+                    scored = True
+
+            if not scored:
+                fit_result = self._title_based_score(job, user_skills)
+                job_data["fit_score"] = fit_result["score"]
+                job_data["fit_category"] = fit_result["category"]
+                job_data["matched_skills"] = fit_result["matched"]
+                job_data["missing_skills"] = []
 
             results.append(job_data)
 
@@ -183,6 +207,8 @@ class JobRecommender:
             "results": results,
             "total_found": total,
             "saved_count": saved_count,
+            "page": page,
+            "has_more": total > page * max_results,
         }
 
     def analyze_job_for_user(self, user_id: int, job_url: str) -> dict | None:
@@ -333,6 +359,34 @@ class JobRecommender:
                 if base_skill in text:
                     return True
 
+        return False
+
+    def _title_based_score(self, job, user_skills: list) -> dict:
+        """Score a job based on title/beruf matching against user skills (fallback when no description)."""
+        text = f"{job.titel} {job.beruf}".lower()
+        matched = []
+        for skill in user_skills:
+            skill_name = skill.skill_name.lower()
+            if skill_name in text or self._fuzzy_match(skill_name, text):
+                matched.append({"requirement": job.titel, "skill": skill.skill_name, "type": "title_match"})
+
+        if not user_skills:
+            return {"score": 50, "category": "mittel", "matched": []}
+
+        # Consider up to 5 most relevant skills for scoring
+        considered = min(len(user_skills), 5)
+        match_ratio = len(matched) / considered
+        # Scale: 0 matches -> 30, all match -> 90
+        score = int(30 + match_ratio * 60)
+        return {"score": score, "category": self.score_to_category(score), "matched": matched}
+
+    @staticmethod
+    def _is_relevant(job, keywords: list[str]) -> bool:
+        """Check if a job is relevant to the user's keywords (at least one must appear in title or beruf)."""
+        text = f"{job.titel} {job.beruf}".lower()
+        for kw in keywords:
+            if kw.lower() in text:
+                return True
         return False
 
     def create_recommendation(

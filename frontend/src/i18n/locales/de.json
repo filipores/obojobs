@@ -485,7 +485,16 @@
     "dismiss": "Ausblenden",
     "markApplied": "Als beworben markieren",
     "emptyTitle": "Noch keine Empfehlungen",
-    "emptyDescription": "Suchen Sie nach Jobs, um personalisierte Empfehlungen basierend auf Ihrem Profil zu erhalten."
+    "emptyDescription": "Suchen Sie nach Jobs, um personalisierte Empfehlungen basierend auf Ihrem Profil zu erhalten.",
+    "searchKeyword": "Suchbegriff",
+    "searchKeywordPlaceholder": "z.B. Softwareentwickler, Marketing...",
+    "noResults": "Keine passenden Stellen gefunden. Versuchen Sie andere Suchbegriffe.",
+    "saveJob": "Speichern",
+    "jobSaved": "Gespeichert",
+    "loadMore": "Mehr laden",
+    "totalFound": "{count} Stellen gefunden",
+    "publishedAt": "Veröffentlicht am {date}",
+    "errorOccurred": "Bei der Suche ist ein Fehler aufgetreten. Bitte versuchen Sie es erneut."
   },
   "admin": {
     "dashboard": {

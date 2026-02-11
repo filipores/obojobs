@@ -149,5 +149,9 @@ class BundesagenturClient:
         """Parse location data into a readable string."""
         if not ort_data:
             return ""
-        parts = [ort_data[key] for key in ("ort", "region") if ort_data.get(key)]
+        parts = []
+        for key in ("ort", "region"):
+            val = ort_data.get(key)
+            if val and val not in parts:
+                parts.append(val)
         return ", ".join(parts)

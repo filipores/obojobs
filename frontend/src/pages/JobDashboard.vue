@@ -14,6 +14,17 @@
         <h2 class="search-title">{{ $t('jobDashboard.searchTitle') }}</h2>
         <div class="search-form">
           <div class="search-field">
+            <label for="search-keywords">{{ $t('jobDashboard.searchKeyword') }}</label>
+            <input
+              id="search-keywords"
+              v-model="searchFilters.keywords"
+              type="text"
+              class="form-input"
+              :placeholder="$t('jobDashboard.searchKeywordPlaceholder')"
+              :disabled="isSearching"
+            />
+          </div>
+          <div class="search-field">
             <label for="search-location">{{ $t('jobDashboard.location') }}</label>
             <input
               id="search-location"
@@ -53,8 +64,18 @@
         </div>
       </div>
 
-      <!-- Stats Row -->
-      <div v-if="stats" class="stats-row animate-fade-up">
+      <!-- Error Alert (Fix #5) -->
+      <div v-if="error" class="error-alert animate-fade-up">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="10"/>
+          <line x1="12" y1="8" x2="12" y2="12"/>
+          <line x1="12" y1="16" x2="12.01" y2="16"/>
+        </svg>
+        <span>{{ $t('jobDashboard.errorOccurred') }}</span>
+      </div>
+
+      <!-- Stats Row (Fix #10: hide when all zeros) -->
+      <div v-if="stats && (stats.active > 0 || stats.by_score?.sehr_gut > 0 || stats.by_score?.gut > 0 || stats.applied > 0)" class="stats-row animate-fade-up">
         <div class="stat-item">
           <span class="stat-value">{{ stats.active }}</span>
           <span class="stat-label">{{ $t('jobDashboard.statsActive') }}</span>
@@ -75,7 +96,10 @@
 
       <!-- Search Results -->
       <div v-if="searchResults.length > 0" class="results-section animate-fade-up">
-        <h2 class="section-title">{{ $t('jobDashboard.searchResults') }} ({{ searchResults.length }})</h2>
+        <div class="results-header">
+          <h2 class="section-title">{{ $t('jobDashboard.searchResults') }} ({{ searchResults.length }})</h2>
+          <p v-if="totalFound > 0" class="total-found">{{ $t('jobDashboard.totalFound', { count: totalFound }) }}</p>
+        </div>
         <div class="results-grid">
           <div
             v-for="(job, index) in searchResults"
@@ -102,6 +126,9 @@
             </div>
             <div class="card-body">
               <div class="source-tag">Arbeitsagentur</div>
+              <p v-if="job.veroeffentlicht_am" class="published-at">
+                {{ $t('jobDashboard.publishedAt', { date: formatDate(job.veroeffentlicht_am) }) }}
+              </p>
             </div>
             <div class="card-footer">
               <a
@@ -113,13 +140,49 @@
               >
                 {{ $t('jobDashboard.openJob') }}
               </a>
+              <button
+                @click="handleSaveJob(job)"
+                class="zen-btn zen-btn-sm save-btn"
+                :class="{ 'save-btn-saved': isJobSaved(job) }"
+                :disabled="isJobSaved(job)"
+              >
+                <svg v-if="isJobSaved(job)" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <svg v-else width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>
+                </svg>
+                <span>{{ isJobSaved(job) ? $t('jobDashboard.jobSaved') : $t('jobDashboard.saveJob') }}</span>
+              </button>
             </div>
           </div>
         </div>
+        <!-- Load More (Fix #9) -->
+        <div v-if="searchResults.length < totalFound" class="load-more-section">
+          <button
+            @click="handleLoadMore"
+            class="zen-btn zen-btn-ghost load-more-btn"
+            :disabled="isSearching"
+          >
+            <span v-if="isSearching">{{ $t('jobDashboard.searching') }}</span>
+            <span v-else>{{ $t('jobDashboard.loadMore') }}</span>
+          </button>
+        </div>
       </div>
 
-      <!-- Loading Skeleton -->
-      <div v-if="isLoading" class="loading-skeleton">
+      <!-- No Results (Fix #5) -->
+      <div v-if="hasSearched && !isSearching && !error && searchResults.length === 0" class="no-results-state animate-fade-up">
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+        </div>
+        <h3>{{ $t('jobDashboard.noResults') }}</h3>
+      </div>
+
+      <!-- Loading Skeleton (Fix #4: also show when isSearching) -->
+      <div v-if="isLoading || isSearching" class="loading-skeleton">
         <div v-for="i in 3" :key="i" class="skeleton-card zen-card">
           <div class="skeleton-card-header">
             <div class="skeleton skeleton-badge"></div>
@@ -203,8 +266,8 @@
         </div>
       </div>
 
-      <!-- Empty State (no recommendations and no search results) -->
-      <div v-else-if="!isLoading && !isSearching" class="empty-state animate-fade-up">
+      <!-- Empty State (Fix #11: also check searchResults.length === 0) -->
+      <div v-else-if="!isLoading && !isSearching && searchResults.length === 0" class="empty-state animate-fade-up">
         <div class="empty-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
             <circle cx="11" cy="11" r="8"/>
@@ -228,11 +291,17 @@ const {
   stats,
   isLoading,
   isSearching,
+  error,
+  hasSearched,
+  totalFound,
+  savedJobUrls,
   searchFilters,
   activeRecommendations,
   fetchRecommendations,
   fetchStats,
   searchJobs,
+  loadMore,
+  saveJob,
   dismissRecommendation,
   markAsApplied,
 } = useJobRecommendations()
@@ -243,6 +312,26 @@ async function handleSearch() {
   } catch {
     // Error already set in composable
   }
+}
+
+async function handleLoadMore() {
+  try {
+    await loadMore()
+  } catch {
+    // Error already set in composable
+  }
+}
+
+async function handleSaveJob(job) {
+  try {
+    await saveJob(job)
+  } catch {
+    // Error already set in composable
+  }
+}
+
+function isJobSaved(job) {
+  return savedJobUrls.value.has(job.url)
 }
 
 function openUrl(url) {
@@ -376,6 +465,18 @@ onMounted(async () => {
   height: fit-content;
 }
 
+.error-alert {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  padding: var(--space-sm) var(--space-md);
+  background: color-mix(in srgb, var(--color-error) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--color-error) 30%, transparent);
+  border-radius: var(--radius-md);
+  color: var(--color-error);
+  font-size: 0.9375rem;
+}
+
 .stats-row {
   display: flex;
   gap: var(--space-lg);
@@ -412,6 +513,23 @@ onMounted(async () => {
   font-weight: 500;
   margin-bottom: var(--space-md);
   color: var(--color-sumi);
+}
+
+.results-header {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+}
+
+.results-header .section-title {
+  margin-bottom: 0;
+}
+
+.total-found {
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+  margin: 0;
 }
 
 .results-grid {
@@ -525,6 +643,12 @@ onMounted(async () => {
   border-radius: var(--radius-sm);
 }
 
+.published-at {
+  color: var(--color-text-tertiary);
+  font-size: 0.8125rem;
+  margin: 0;
+}
+
 .recommended-at {
   color: var(--color-text-tertiary);
   font-size: 0.875rem;
@@ -532,7 +656,56 @@ onMounted(async () => {
 }
 
 .card-footer {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
   margin-top: var(--space-md);
+}
+
+.save-btn {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  border: 1px solid var(--color-border);
+  background: transparent;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.save-btn:hover:not(:disabled) {
+  border-color: var(--color-ai);
+  color: var(--color-ai);
+}
+
+.save-btn-saved {
+  border-color: var(--color-success);
+  color: var(--color-success);
+  cursor: default;
+}
+
+.load-more-section {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-lg);
+}
+
+.load-more-btn {
+  min-width: 200px;
+}
+
+.no-results-state {
+  text-align: center;
+  padding: var(--space-xl);
+}
+
+.no-results-state .empty-icon {
+  margin-bottom: var(--space-md);
+  color: var(--color-text-ghost);
+}
+
+.no-results-state h3 {
+  color: var(--color-text-secondary);
 }
 
 .loading-skeleton {
@@ -627,6 +800,10 @@ onMounted(async () => {
   .card-actions {
     width: 100%;
     justify-content: flex-end;
+  }
+
+  .card-footer {
+    flex-wrap: wrap;
   }
 }
 </style>

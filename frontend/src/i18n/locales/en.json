@@ -485,7 +485,16 @@
     "dismiss": "Dismiss",
     "markApplied": "Mark as Applied",
     "emptyTitle": "No Recommendations Yet",
-    "emptyDescription": "Search for jobs to get personalized recommendations based on your profile."
+    "emptyDescription": "Search for jobs to get personalized recommendations based on your profile.",
+    "searchKeyword": "Keyword",
+    "searchKeywordPlaceholder": "e.g. Software Developer, Marketing...",
+    "noResults": "No matching jobs found. Try different search terms.",
+    "saveJob": "Save",
+    "jobSaved": "Saved",
+    "loadMore": "Load more",
+    "totalFound": "{count} jobs found",
+    "publishedAt": "Published on {date}",
+    "errorOccurred": "An error occurred during search. Please try again."
   },
   "admin": {
     "dashboard": {
