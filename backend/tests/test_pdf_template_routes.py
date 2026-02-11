@@ -211,22 +211,10 @@ class TestAnalyzeVariables:
             db.session.commit()
             template_id = template.id
 
-        mock_ai_response = MagicMock()
-        mock_ai_response.content = [
-            MagicMock(
-                text=json.dumps(
-                    [
-                        {"text": "Muster GmbH", "variable": "FIRMA", "confidence": 0.95, "reason": "Company name"},
-                        {"text": "Entwickler", "variable": "POSITION", "confidence": 0.90, "reason": "Job title"},
-                    ]
-                )
-            )
-        ]
-
         with (
             patch("routes.templates.os.path.exists", return_value=True),
             patch("routes.templates.PDFTemplateExtractor") as mock_extractor_class,
-            patch("routes.templates.ClaudeAPIClient") as mock_api_class,
+            patch("routes.templates.QwenAPIClient") as mock_api_class,
         ):
             mock_extractor = MagicMock()
             mock_extractor.extract_text_with_positions.return_value = {
@@ -235,7 +223,12 @@ class TestAnalyzeVariables:
             mock_extractor_class.return_value = mock_extractor
 
             mock_api = MagicMock()
-            mock_api.client.messages.create.return_value = mock_ai_response
+            mock_api.chat_complete.return_value = json.dumps(
+                [
+                    {"text": "Muster GmbH", "variable": "FIRMA", "confidence": 0.95, "reason": "Company name"},
+                    {"text": "Entwickler", "variable": "POSITION", "confidence": 0.90, "reason": "Job title"},
+                ]
+            )
             mock_api_class.return_value = mock_api
 
             response = client.post(
@@ -329,9 +322,9 @@ class TestAnalyzeVariables:
             db.session.commit()
             template_id = template.id
 
-        with patch("routes.templates.ClaudeAPIClient") as mock_api_class:
+        with patch("routes.templates.QwenAPIClient") as mock_api_class:
             mock_api = MagicMock()
-            mock_api.client.messages.create.side_effect = Exception("API Error")
+            mock_api.chat_complete.side_effect = Exception("API Error")
             mock_api_class.return_value = mock_api
 
             response = client.post(

@@ -421,7 +421,7 @@ class TestSearchFilterSort:
 
 
 class TestGenerateTemplate:
-    @patch("routes.templates.ClaudeAPIClient")
+    @patch("routes.templates.QwenAPIClient")
     @patch("routes.templates.read_document")
     def test_generate_template_success(self, mock_read_doc, mock_api_class, client, auth_headers, app, test_user):
         # Create a CV document
@@ -438,19 +438,13 @@ class TestGenerateTemplate:
         mock_read_doc.return_value = "Lebenslauf text..."
 
         mock_api = MagicMock()
-        mock_response = MagicMock()
-        mock_response.content = [
-            MagicMock(
-                text="""Sehr geehrte Frau Müller,
+        mock_api.chat_complete.return_value = """Sehr geehrte Frau Müller,
 
 ich bewerbe mich bei Musterfirma GmbH als Softwareentwickler.
 
 ---SUGGESTIONS_JSON---
 [{"text": "Musterfirma GmbH", "variable": "FIRMA", "reason": "Company name"},{"text": "Softwareentwickler", "variable": "POSITION", "reason": "Job title"},{"text": "Sehr geehrte Frau Müller", "variable": "ANSPRECHPARTNER", "reason": "Contact"}]
 ---END_SUGGESTIONS---"""
-            )
-        ]
-        mock_api.client.messages.create.return_value = mock_response
         mock_api_class.return_value = mock_api
 
         # Patch os.path.exists to return True for the fake CV path
@@ -507,7 +501,7 @@ ich bewerbe mich bei Musterfirma GmbH als Softwareentwickler.
         )
         assert response.status_code == 400
 
-    @patch("routes.templates.ClaudeAPIClient")
+    @patch("routes.templates.QwenAPIClient")
     @patch("routes.templates.read_document")
     def test_generate_invalid_tonalitaet_defaults_to_modern(
         self, mock_read_doc, mock_api_class, client, auth_headers, app, test_user
@@ -525,9 +519,7 @@ ich bewerbe mich bei Musterfirma GmbH als Softwareentwickler.
         mock_read_doc.return_value = "Lebenslauf text..."
 
         mock_api = MagicMock()
-        mock_response = MagicMock()
-        mock_response.content = [MagicMock(text="Einfaches Anschreiben")]
-        mock_api.client.messages.create.return_value = mock_response
+        mock_api.chat_complete.return_value = "Einfaches Anschreiben"
         mock_api_class.return_value = mock_api
 
         with patch("routes.templates.os.path.exists", return_value=True):

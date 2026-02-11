@@ -10,8 +10,8 @@ from urllib.parse import urlparse
 
 from config import config
 
-from .api_client import ClaudeAPIClient
 from .pdf_handler import read_document
+from .qwen_client import QwenAPIClient
 
 
 class DemoGenerator:
@@ -26,7 +26,7 @@ class DemoGenerator:
     SAMPLE_TEMPLATE_PATH = os.path.join(os.path.dirname(__file__), "..", "data", "anschreiben_template.txt")
 
     def __init__(self):
-        self.api_client = ClaudeAPIClient()
+        self.api_client = QwenAPIClient()
         self.anschreiben_template = self._load_sample_template()
 
     def _load_sample_template(self) -> str:

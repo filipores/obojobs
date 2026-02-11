@@ -41,6 +41,13 @@ class Config:
     TEMPERATURE = 0.7
     USE_EXTRACTION = True
 
+    # Together.xyz / Qwen API
+    TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
+    QWEN_MODEL = os.getenv("QWEN_MODEL", "Qwen/Qwen3-235B-A22B-Instruct-2507-tput")
+    QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://api.together.xyz/v1")
+    QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
+    QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))
+
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 
@@ -95,8 +102,8 @@ class Config:
     @staticmethod
     def validate_config():
         """Validate required configuration"""
-        if not Config.ANTHROPIC_API_KEY:
-            raise ValueError("ANTHROPIC_API_KEY environment variable is required")
+        if not Config.TOGETHER_API_KEY:
+            raise ValueError("TOGETHER_API_KEY environment variable is required")
 
         # Create upload folder if it doesn't exist
         os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)

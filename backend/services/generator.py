@@ -5,12 +5,12 @@ import re
 from datetime import datetime
 
 from config import config
-from models import Application, Document, JobRequirement, Template, User, db
+from models import Application, Document, JobRequirement, Template, User, UserSkill, db
 
-from .api_client import ClaudeAPIClient
 from .contact_extractor import ContactExtractor
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
 from .pdf_template_modifier import PDFTemplateModifier
+from .qwen_client import QwenAPIClient
 from .requirement_analyzer import RequirementAnalyzer
 from .template_generator import get_or_create_default_template
 
@@ -55,7 +55,7 @@ class BewerbungsGenerator:
     def __init__(self, user_id: int, template_id: int | None = None):
         self.user_id = user_id
         self.template_id = template_id
-        self.api_client = ClaudeAPIClient()
+        self.api_client = QwenAPIClient()
         self.cv_text = None
         self.anschreiben_template = None
         self.template = None  # Store template object for PDF template support
@@ -206,11 +206,14 @@ class BewerbungsGenerator:
         logger.info("Ansprechpartner: %s", details["ansprechpartner"])
         logger.info("Quelle: %s", details["quelle"])
 
-        logger.info("3/5 Generiere personalisierten Einleitungsabsatz mit Claude...")
+        logger.info("3/5 Generiere personalisierten Einleitungsabsatz...")
         # Extract user's first name for personalized AI prompts
         bewerber_vorname = None
         if self.user and self.user.full_name:
             bewerber_vorname = self.user.full_name.split()[0]
+
+        # Load user skills for dynamic prompt personalization
+        user_skills = UserSkill.query.filter_by(user_id=self.user_id).all() if self.user_id else []
 
         einleitung = self.api_client.generate_einleitung(
             cv_text=self.cv_text,
@@ -220,6 +223,7 @@ class BewerbungsGenerator:
             details=details,
             use_extraction=config.USE_EXTRACTION,
             bewerber_vorname=bewerber_vorname,
+            user_skills=user_skills,
         )
         logger.info("Einleitung generiert (%d Zeichen)", len(einleitung))
         logger.debug("Generierte Einleitung: %s", einleitung)

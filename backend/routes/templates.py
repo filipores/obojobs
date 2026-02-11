@@ -11,9 +11,9 @@ from config import config
 from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
 from models import Document, Template, db
-from services.api_client import ClaudeAPIClient
 from services.pdf_handler import read_document
 from services.pdf_template_extractor import PDFTemplateExtractor
+from services.qwen_client import QwenAPIClient
 
 # Validation constants
 MAX_NAME_LENGTH = 200
@@ -309,7 +309,7 @@ def generate_template_with_ai(current_user):
         cv_text = sanitize_prompt_input(cv_text, MAX_CV_LENGTH)
 
         # Claude API Prompt erstellen
-        api_client = ClaudeAPIClient()
+        api_client = QwenAPIClient()
 
         # Tonalität-Beschreibungen
         tone_descriptions = {
@@ -368,15 +368,11 @@ Das Anschreiben soll {tone_desc}
 
 Generiere jetzt das Anschreiben mit Suggestions:"""
 
-        # Claude API Call
-        response = api_client.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+        raw_response = api_client.chat_complete(
+            messages=[{"role": "user", "content": prompt}],
             max_tokens=2000,
             temperature=0.8,
-            messages=[{"role": "user", "content": prompt}],
         )
-
-        raw_response = response.content[0].text.strip()
 
         # Parse response to extract template and suggestions
         generated_content, suggestions = parse_ai_response_with_suggestions(raw_response)
@@ -587,8 +583,8 @@ def analyze_template_variables(template_id, current_user):
         return jsonify({"error": "Template enthält keinen Text"}), 400
 
     try:
-        # Send to Claude API for variable analysis
-        api_client = ClaudeAPIClient()
+        # Send to AI API for variable analysis
+        api_client = QwenAPIClient()
 
         prompt = f"""Analysiere diesen Bewerbungs-Template-Text und identifiziere Passagen, die als dynamische Variablen markiert werden sollten.
 
@@ -617,14 +613,11 @@ WICHTIG:
 - Identifiziere mindestens FIRMA, POSITION und ANSPRECHPARTNER falls vorhanden
 - Gib NUR das JSON-Array zurück, keine anderen Texte"""
 
-        response = api_client.client.messages.create(
-            model="claude-3-5-haiku-20241022",
+        response_text = api_client.chat_complete(
+            messages=[{"role": "user", "content": prompt}],
             max_tokens=1500,
             temperature=0.3,
-            messages=[{"role": "user", "content": prompt}],
         )
-
-        response_text = response.content[0].text.strip()
 
         # Parse JSON response
         suggestions = []
@@ -747,7 +740,7 @@ def generate_template_variants(current_user):
             cv_text = ""
 
     try:
-        api_client = ClaudeAPIClient()
+        api_client = QwenAPIClient()
 
         # Define the 3 tones
         tones = [
@@ -820,14 +813,11 @@ Das Anschreiben soll {tone["description"]}
 
 Generiere jetzt das Anschreiben:"""
 
-            response = api_client.client.messages.create(
-                model="claude-3-5-haiku-20241022",
-                max_tokens=1500,
-                temperature=0.9,  # Higher temperature for more variety
+            raw_response = api_client.chat_complete(
                 messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500,
+                temperature=0.9,
             )
-
-            raw_response = response.content[0].text.strip()
 
             # Parse response
             preview_text = raw_response

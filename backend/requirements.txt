@@ -1,5 +1,6 @@
 # Production dependencies. For dev/test: pip install -r requirements-dev.txt
 anthropic>=0.40.0
+openai>=1.0.0
 stripe>=7.0.0
 flask==3.1.2
 flask-cors==6.0.2
