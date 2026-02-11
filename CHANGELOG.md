@@ -1,3 +1,10 @@
+## [1.46.2](https://github.com/filipores/obojobs/compare/v1.46.1...v1.46.2) (2026-02-11)
+
+
+### Bug Fixes
+
+* **jobs:** fix bundesagentur api search returning no results ([1ca1d45](https://github.com/filipores/obojobs/commit/1ca1d457fb65e827a75f51a422bc0ec09b45aa10))
+
 ## [1.46.1](https://github.com/filipores/obojobs/compare/v1.46.0...v1.46.1) (2026-02-11)
 
 
