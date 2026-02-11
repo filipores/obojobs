@@ -1,3 +1,399 @@
+# [1.49.0](https://github.com/filipores/obojobs/compare/v1.48.0...v1.49.0) (2026-02-11)
+
+
+### Features
+
+* **jobs:** improve job dashboard with scoring, search, and ux fixes ([26f365f](https://github.com/filipores/obojobs/commit/26f365fb854316c5f0b20b4ef1ce7e601e0518c2))
+
+# [1.48.0](https://github.com/filipores/obojobs/compare/v1.47.0...v1.48.0) (2026-02-11)
+
+
+### Features
+
+* **ui:** add 8 UX improvements for parallel job generation ([6bad88c](https://github.com/filipores/obojobs/commit/6bad88c0e07841d6b33fa0bc66700a1fd84a0d46))
+
+# [1.47.0](https://github.com/filipores/obojobs/compare/v1.46.2...v1.47.0) (2026-02-11)
+
+
+### Features
+
+* **ui:** add parallel job generation pipeline ([fdf6352](https://github.com/filipores/obojobs/commit/fdf6352806b5822431d54054a52b0cfda52e16c7))
+
+## [1.46.2](https://github.com/filipores/obojobs/compare/v1.46.1...v1.46.2) (2026-02-11)
+
+
+### Bug Fixes
+
+* **jobs:** fix bundesagentur api search returning no results ([1ca1d45](https://github.com/filipores/obojobs/commit/1ca1d457fb65e827a75f51a422bc0ec09b45aa10))
+
+## [1.46.1](https://github.com/filipores/obojobs/compare/v1.46.0...v1.46.1) (2026-02-11)
+
+
+### Bug Fixes
+
+* **ai:** fix firma extraction, label, and forbidden phrase handling ([e4a09db](https://github.com/filipores/obojobs/commit/e4a09db800ba6f73cb907a86704a47463baa04f1))
+
+# [1.46.0](https://github.com/filipores/obojobs/compare/v1.45.0...v1.46.0) (2026-02-11)
+
+
+### Features
+
+* add background scheduler with APScheduler for job cleanup and auto-search ([8b8237d](https://github.com/filipores/obojobs/commit/8b8237d89183faa758bf926aa90915849d6c1457))
+* add job dashboard page with search and recommendations ([d0d241a](https://github.com/filipores/obojobs/commit/d0d241a935f2644e9f53120dec6debc7e8a12d9c))
+* **ai:** replace template system with full ai cover letter generation ([446e04a](https://github.com/filipores/obojobs/commit/446e04afd036fd57c20c9edefcef6bb631abec5f))
+* **api:** integrate Bundesagentur job search API ([70585ee](https://github.com/filipores/obojobs/commit/70585eeef1646cd4b2c79bb49fd2720a7dcb6e7e))
+
+# [1.45.0](https://github.com/filipores/obojobs/compare/v1.44.0...v1.45.0) (2026-02-11)
+
+
+### Features
+
+* **ai:** replace claude with qwen3-235b via together.xyz ([72c710a](https://github.com/filipores/obojobs/commit/72c710a667568f41678c0145f3cb2addf7c1c507))
+
+# [1.44.0](https://github.com/filipores/obojobs/compare/v1.43.1...v1.44.0) (2026-02-09)
+
+
+### Features
+
+* **admin:** add full application and template content views for ai eval ([554d300](https://github.com/filipores/obojobs/commit/554d300a193cff3bfb3050b5711a6ebc9dacf258))
+
+## [1.43.1](https://github.com/filipores/obojobs/compare/v1.43.0...v1.43.1) (2026-02-09)
+
+
+### Bug Fixes
+
+* **admin:** add missing i18n keys, fix toggle data loss, and prevent self-deactivation ([1e6bc18](https://github.com/filipores/obojobs/commit/1e6bc18aae7585609bd9e9d46a2aab66b945d603))
+
+# [1.43.0](https://github.com/filipores/obojobs/compare/v1.42.0...v1.43.0) (2026-02-09)
+
+
+### Features
+
+* **admin:** add admin dashboard with user management and stats api ([b9df139](https://github.com/filipores/obojobs/commit/b9df139c37add90844815a1f28764bae4e3b2a4c))
+
+# [1.42.0](https://github.com/filipores/obojobs/compare/v1.41.0...v1.42.0) (2026-02-09)
+
+
+### Features
+
+* **payments:** add webhook idempotency, plan changes, and invoice handling ([c31bf26](https://github.com/filipores/obojobs/commit/c31bf262e672fbe3c631c31022b4a3d73cac43fc))
+
+# [1.41.0](https://github.com/filipores/obojobs/compare/v1.40.0...v1.41.0) (2026-02-09)
+
+
+### Features
+
+* add landing page nav bar and fix deploy cache busting ([0156165](https://github.com/filipores/obojobs/commit/01561653ed27c43e3e63727559f175046e94b99d))
+
+# [1.40.0](https://github.com/filipores/obojobs/compare/v1.39.10...v1.40.0) (2026-02-09)
+
+
+### Features
+
+* **demo:** require cv upload and use crafting overlay animation ([6f0f6aa](https://github.com/filipores/obojobs/commit/6f0f6aa9622019c3d9de846ebd923305a700992f))
+
+## [1.39.10](https://github.com/filipores/obojobs/compare/v1.39.9...v1.39.10) (2026-02-09)
+
+
+### Bug Fixes
+
+* **demo:** include sample cv and template in backend directory ([7c58398](https://github.com/filipores/obojobs/commit/7c58398885c8c1f3cddf3d822907ddcff368af9a))
+
+## [1.39.9](https://github.com/filipores/obojobs/compare/v1.39.8...v1.39.9) (2026-02-08)
+
+
+### Bug Fixes
+
+* use correct ipv4 address in rate limit whitelist ([e75144a](https://github.com/filipores/obojobs/commit/e75144a2ec6b8abf2403e0a26f79ffcd6d862120))
+
+## [1.39.8](https://github.com/filipores/obojobs/compare/v1.39.7...v1.39.8) (2026-02-08)
+
+
+### Bug Fixes
+
+* add proxy-fix middleware and rate limit ip whitelist ([685b268](https://github.com/filipores/obojobs/commit/685b268b897f634c534a9815f8c8782317fc36b4))
+
+## [1.39.7](https://github.com/filipores/obojobs/compare/v1.39.6...v1.39.7) (2026-02-08)
+
+
+### Bug Fixes
+
+* **mobile:** use 767px breakpoint for bottom nav to exclude tablets ([9e59cfe](https://github.com/filipores/obojobs/commit/9e59cfe2602acd59bb7a4da0356ea8319bda05cb))
+
+## [1.39.6](https://github.com/filipores/obojobs/compare/v1.39.5...v1.39.6) (2026-02-08)
+
+
+### Bug Fixes
+
+* **mobile:** resolve mobile compatibility issues across viewports ([687be74](https://github.com/filipores/obojobs/commit/687be741b92850ecf4b43894cc9e1931b44c4585))
+
+## [1.39.5](https://github.com/filipores/obojobs/compare/v1.39.4...v1.39.5) (2026-02-08)
+
+
+### Bug Fixes
+
+* resolve landing page bugs, fix umlauts, redesign generation modal ([4b597a4](https://github.com/filipores/obojobs/commit/4b597a4e8b0ba22bce087069e20a0a43f27c52bd))
+
+## [1.39.4](https://github.com/filipores/obojobs/compare/v1.39.3...v1.39.4) (2026-02-08)
+
+
+### Bug Fixes
+
+* **pdf:** use backend content-disposition header for download filename ([0f453e6](https://github.com/filipores/obojobs/commit/0f453e628a1beba84d8a3de8c497ff91d46869fa))
+
+## [1.39.3](https://github.com/filipores/obojobs/compare/v1.39.2...v1.39.3) (2026-02-08)
+
+
+### Performance Improvements
+
+* **scraper:** use scraperapi first in production, eliminate double-scrape ([2377987](https://github.com/filipores/obojobs/commit/237798723da0c47decc5fc2ae2a1313c1bae790c))
+
+## [1.39.2](https://github.com/filipores/obojobs/compare/v1.39.1...v1.39.2) (2026-02-08)
+
+
+### Bug Fixes
+
+* **deploy:** pass scraper_api_key to backend container ([28d50a7](https://github.com/filipores/obojobs/commit/28d50a78290247bb326e4f458e5482d4adde0bf4))
+
+## [1.39.1](https://github.com/filipores/obojobs/compare/v1.39.0...v1.39.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **tests:** fix ci failures in subscription and api client tests ([cf4845a](https://github.com/filipores/obojobs/commit/cf4845a41383c7a252c0633961110495b1087b4c))
+
+# [1.39.0](https://github.com/filipores/obojobs/compare/v1.38.1...v1.39.0) (2026-02-08)
+
+
+### Features
+
+* **scraper:** add scraperapi as fallback for blocked datacenter ips ([dce5ed4](https://github.com/filipores/obojobs/commit/dce5ed4a30aed0025ecec302b322356c764b37c3))
+
+## [1.38.1](https://github.com/filipores/obojobs/compare/v1.38.0...v1.38.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **extension:** add /jobs-- pattern to stepstone url matcher ([238d01d](https://github.com/filipores/obojobs/commit/238d01d07fb111e2fd3023dfc5173250cae16300))
+
+# [1.38.0](https://github.com/filipores/obojobs/compare/v1.37.5...v1.38.0) (2026-02-08)
+
+
+### Features
+
+* **extension:** add dom-based job extraction to bypass server scraping ([c05a432](https://github.com/filipores/obojobs/commit/c05a432db05ca63e54784e2eeb50b8b48c37e10b))
+
+## [1.37.5](https://github.com/filipores/obojobs/compare/v1.37.4...v1.37.5) (2026-02-08)
+
+
+### Bug Fixes
+
+* **scraper:** pass user-friendly error messages through to frontend ([3f5bb4a](https://github.com/filipores/obojobs/commit/3f5bb4ad566c4c4c5ffd942fefbc9780f0cb0a7c))
+
+## [1.37.4](https://github.com/filipores/obojobs/compare/v1.37.3...v1.37.4) (2026-02-08)
+
+
+### Bug Fixes
+
+* **scraper:** retry on timeout/connection errors and improve error messages ([d5aaad5](https://github.com/filipores/obojobs/commit/d5aaad57bff6673b18c4b6d9634a55a1613e2d3f))
+
+## [1.37.3](https://github.com/filipores/obojobs/compare/v1.37.2...v1.37.3) (2026-02-08)
+
+
+### Bug Fixes
+
+* **scraper:** add cloudscraper fallback for 403 bot protection ([5d843cd](https://github.com/filipores/obojobs/commit/5d843cd15e5ddf310fd16394e2afa401b57cbb48))
+
+## [1.37.2](https://github.com/filipores/obojobs/compare/v1.37.1...v1.37.2) (2026-02-08)
+
+
+### Bug Fixes
+
+* **pdf:** use content-based formatting instead of line-count heuristic ([20efb54](https://github.com/filipores/obojobs/commit/20efb545e6aaddb1108e0e37e620669ac98f3813))
+
+## [1.37.1](https://github.com/filipores/obojobs/compare/v1.37.0...v1.37.1) (2026-02-08)
+
+
+### Bug Fixes
+
+* **generator:** prevent double greeting in cover letter anrede ([d85fa62](https://github.com/filipores/obojobs/commit/d85fa62c28acaeae78aa6c1739042c080929ca2e))
+
+# [1.37.0](https://github.com/filipores/obojobs/compare/v1.36.0...v1.37.0) (2026-02-08)
+
+
+### Features
+
+* **new-application:** personalize crafting overlay and redesign generation result modal ([f1175bd](https://github.com/filipores/obojobs/commit/f1175bd77704c9ad83c14a4741aa183e99ea6f36))
+
+# [1.36.0](https://github.com/filipores/obojobs/compare/v1.35.3...v1.36.0) (2026-02-08)
+
+
+### Features
+
+* bug fixes, ux improvements, and new features ([8f5ac6a](https://github.com/filipores/obojobs/commit/8f5ac6a6e1b908b918df1217d7043cba7e37031e))
+
+## [1.35.3](https://github.com/filipores/obojobs/compare/v1.35.2...v1.35.3) (2026-02-07)
+
+
+### Bug Fixes
+
+* **new-application:** move helper functions before first use to fix tdz error ([90460f0](https://github.com/filipores/obojobs/commit/90460f07bdb5635b44b4a43036819c003271b457))
+
+## [1.35.2](https://github.com/filipores/obojobs/compare/v1.35.1...v1.35.2) (2026-02-07)
+
+
+### Bug Fixes
+
+* **template:** handle empty profile fields gracefully in default template ([afd2a33](https://github.com/filipores/obojobs/commit/afd2a338b5bfd8ed02c9a3596aafb51a1467d161))
+
+## [1.35.1](https://github.com/filipores/obojobs/compare/v1.35.0...v1.35.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* **generator:** remove legacy anschreiben document fallback ([4007234](https://github.com/filipores/obojobs/commit/4007234e6d047551361f05a4d414fdfb677544f0))
+
+# [1.35.0](https://github.com/filipores/obojobs/compare/v1.34.1...v1.35.0) (2026-02-07)
+
+
+### Features
+
+* **i18n:** replace hardcoded german strings with vue-i18n t() calls ([56c2e42](https://github.com/filipores/obojobs/commit/56c2e42e3704ed510b10b32ba6971343b1f79500))
+
+## [1.34.1](https://github.com/filipores/obojobs/compare/v1.34.0...v1.34.1) (2026-02-07)
+
+
+### Bug Fixes
+
+* **deploy:** complete docker and deployment configuration ([43021cf](https://github.com/filipores/obojobs/commit/43021cfb62c45b6156b71c4d79be83f15cf4083b))
+* **security:** harden backend for production deployment ([a9d3818](https://github.com/filipores/obojobs/commit/a9d38182d07b06c51130bf6ba2657ec22deb7443))
+* **ui:** replace alert dialogs with toast notifications ([a319078](https://github.com/filipores/obojobs/commit/a3190786a81334f26be05790228851c764d587ea))
+
+# [1.34.0](https://github.com/filipores/obojobs/compare/v1.33.0...v1.34.0) (2026-02-07)
+
+
+### Features
+
+* **applications:** add profile completeness warning before generation ([a7b5dd0](https://github.com/filipores/obojobs/commit/a7b5dd03031cac7f043ebfd6b62dcf0cb47340c1))
+* **legal:** make impressum and datenschutz address configurable via env ([5d61158](https://github.com/filipores/obojobs/commit/5d611585fb9c1548078a0dda4dbb9cc1d798dfea))
+* **subscriptions:** gracefully handle missing stripe configuration ([1f5fff6](https://github.com/filipores/obojobs/commit/1f5fff6ba8875a0fc42219e2cc65fa24bdabdef5))
+
+# [1.33.0](https://github.com/filipores/obojobs/compare/v1.32.2...v1.33.0) (2026-02-06)
+
+
+### Features
+
+* **auth:** block login for unverified email accounts ([52f0880](https://github.com/filipores/obojobs/commit/52f08801b7f72e5df7a0ceca43702a72d765331e))
+* **documents:** store cv pdfs and attach to email drafts ([94e75f9](https://github.com/filipores/obojobs/commit/94e75f9bbb865f7e846da3368b9dea4250113b8c))
+* **legal:** add real impressum and datenschutz content ([08ac85f](https://github.com/filipores/obojobs/commit/08ac85f34e26894b951974a0a99526332a01aecc))
+
+## [1.32.2](https://github.com/filipores/obojobs/compare/v1.32.1...v1.32.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* **settings:** sync profile data with localstorage and fetch fresh on mount ([a557b4e](https://github.com/filipores/obojobs/commit/a557b4e19bd74b3ca08828a1b65987493fbb8071))
+
+## [1.32.1](https://github.com/filipores/obojobs/compare/v1.32.0...v1.32.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **ui:** add alert fallback for email draft download errors ([492eefe](https://github.com/filipores/obojobs/commit/492eefeb7170963fb85a0bc8d94a23f2d19e9498))
+
+# [1.32.0](https://github.com/filipores/obojobs/compare/v1.31.1...v1.32.0) (2026-02-06)
+
+
+### Features
+
+* **email:** generate downloadable .eml draft with pdf attachment ([bb8e28e](https://github.com/filipores/obojobs/commit/bb8e28eb41eec6712ef3ae3171f1ec6385f761c4))
+
+## [1.31.1](https://github.com/filipores/obojobs/compare/v1.31.0...v1.31.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **config:** change backend port from 5001 to 5002 ([2589e9d](https://github.com/filipores/obojobs/commit/2589e9d176ce238e7bd7bd25f755722ce63e2cab))
+
+# [1.31.0](https://github.com/filipores/obojobs/compare/v1.30.2...v1.31.0) (2026-02-06)
+
+
+### Features
+
+* **email:** add transactional email service via gmail smtp ([961f825](https://github.com/filipores/obojobs/commit/961f825b3dabb2349ba23a87819d5bf013c8142c))
+
+## [1.30.2](https://github.com/filipores/obojobs/compare/v1.30.1...v1.30.2) (2026-02-06)
+
+
+### Bug Fixes
+
+* **config:** resolve upload_folder path relative to project root ([0b0fc91](https://github.com/filipores/obojobs/commit/0b0fc91d2a7df86ebfc49660d9b038d06b659c84))
+
+## [1.30.1](https://github.com/filipores/obojobs/compare/v1.30.0...v1.30.1) (2026-02-06)
+
+
+### Bug Fixes
+
+* **db:** correct migration down_revision to actual head ([994fee3](https://github.com/filipores/obojobs/commit/994fee32ae9d88f22b54a5a5f64c68333b9072fa))
+
+# [1.30.0](https://github.com/filipores/obojobs/compare/v1.29.7...v1.30.0) (2026-02-06)
+
+
+### Features
+
+* **templates:** add personal data variables to templates and pdfs ([d5392ca](https://github.com/filipores/obojobs/commit/d5392ca390e41a517e6961335a4dfb673e5db066))
+
+## [1.29.7](https://github.com/filipores/obojobs/compare/v1.29.6...v1.29.7) (2026-02-06)
+
+
+### Bug Fixes
+
+* **config:** consolidate .env files into single root .env ([52e7944](https://github.com/filipores/obojobs/commit/52e7944100e785652257493860baf93a071b4aa1))
+
+## [1.29.6](https://github.com/filipores/obojobs/compare/v1.29.5...v1.29.6) (2026-02-06)
+
+
+### Bug Fixes
+
+* **api:** use absolute paths in send_file for pdf and document downloads ([e7e2abc](https://github.com/filipores/obojobs/commit/e7e2abc86f277ba6eb3e8b8ccd75892478f6c1a4))
+
+## [1.29.5](https://github.com/filipores/obojobs/compare/v1.29.4...v1.29.5) (2026-02-06)
+
+
+### Bug Fixes
+
+* **applications:** merge manual text flow fix ([d578bc3](https://github.com/filipores/obojobs/commit/d578bc391213111bcf5dca95709b19052795eb59))
+* **applications:** show preview form after manual text analysis ([5c2cf31](https://github.com/filipores/obojobs/commit/5c2cf3111d7b8053244f46345d43a70572a1f2da))
+* **layout:** merge viewport resize navigation fix ([c31ca83](https://github.com/filipores/obojobs/commit/c31ca8312313f1fc655f451c282f4d353b506e03))
+* **layout:** prevent viewport resize from triggering navigation ([55c88ac](https://github.com/filipores/obojobs/commit/55c88ac44101804906a17390e39e28dd3d7e853a))
+* **templates:** add pdf wizard access and improve error handling ([701efdb](https://github.com/filipores/obojobs/commit/701efdbb7777c1ec03cb508b0d8cfb03a32f620c))
+* **templates:** merge pdf wizard access and error handling ([b43230e](https://github.com/filipores/obojobs/commit/b43230e59d62e246f1780ce49de5c654b6172282))
+* **ui:** fix company insights heading, umlauts, and skills banner ([6d65603](https://github.com/filipores/obojobs/commit/6d65603bc1e0d33ea5dff1e7f22d8aee5f75bba7))
+* **ui:** merge umlaut, i18n, and skills banner fixes ([24abb1d](https://github.com/filipores/obojobs/commit/24abb1d6287f4dc9657d5f09449548d4e75f4d8d))
+
+## [1.29.4](https://github.com/filipores/obojobs/compare/v1.29.3...v1.29.4) (2026-02-05)
+
+
+### Bug Fixes
+
+* **auth:** add full_name assertions to registration and Google OAuth tests ([f319297](https://github.com/filipores/obojobs/commit/f31929702c9a143d5a9ac2f9b74d6c0770c044ab))
+* **dev:** align vite proxy port with backend (5001) ([eb26d64](https://github.com/filipores/obojobs/commit/eb26d64e8a87dd81b67def4f11a0a589463af704))
+* **i18n:** complete i18n coverage for remaining hardcoded strings ([2f02728](https://github.com/filipores/obojobs/commit/2f02728b232fb5dc8b41d7d6ad737974bd2f0a6f))
+
+## [1.29.3](https://github.com/filipores/obojobs/compare/v1.29.2...v1.29.3) (2026-02-05)
+
+
+### Bug Fixes
+
+* **apps:** improve empty state CTA and fix timeline route ([b52b52e](https://github.com/filipores/obojobs/commit/b52b52e6ee3a92e1422b0aad52e5886884bb1e84))
+* **apps:** merge applications empty state improvements ([f29e0df](https://github.com/filipores/obojobs/commit/f29e0df2537e8e36a657d5cea225696b47e3fd8c))
+* **auth:** add i18n to register, forgot-password, email-verification pages ([6a46d56](https://github.com/filipores/obojobs/commit/6a46d5638c0cd2f86d4da5f5286556aa644caa98))
+* **auth:** merge auth pages i18n and ux improvements ([66a75db](https://github.com/filipores/obojobs/commit/66a75db032d0808138de54f3208b7c7e06d86ef1))
+* **i18n:** merge translation html warning fixes ([92e300a](https://github.com/filipores/obojobs/commit/92e300a363713f139c1113654972518236463e4c))
+* **i18n:** remove HTML from translation strings to fix intlify warnings ([9f7d97d](https://github.com/filipores/obojobs/commit/9f7d97da7f58ddd976911e45c7ac8a368571a1eb))
+* **subscription:** merge subscription page fix ([89d7cf5](https://github.com/filipores/obojobs/commit/89d7cf5ba3171ba51c41657aebe9dc8b9b89af43))
+* **subscription:** remove parentheses from computed property call ([93150e7](https://github.com/filipores/obojobs/commit/93150e7ef8a6072f0ddd2046ec097774042f781a))
+
 ## [1.29.2](https://github.com/filipores/obojobs/compare/v1.29.1...v1.29.2) (2026-02-04)
 
 

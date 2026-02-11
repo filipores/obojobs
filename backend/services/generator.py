@@ -1,71 +1,52 @@
 import json
+import logging
 import os
+import re
+from datetime import datetime
 
 from config import config
-from models import Application, Document, JobRequirement, Template, db
+from models import Application, Document, JobRequirement, User, UserSkill, db
 
-from .api_client import ClaudeAPIClient
+from .contact_extractor import ContactExtractor
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
-from .pdf_template_modifier import PDFTemplateModifier
+from .qwen_client import QwenAPIClient
 from .requirement_analyzer import RequirementAnalyzer
-from .template_generator import get_or_create_default_template
 
-
-def _convert_variable_positions_to_dict(variable_positions) -> dict:
-    """
-    Convert variable_positions from list format to dict format.
-
-    The PDFTemplateModifier expects a dict like:
-        {"FIRMA": {"x": 100, "y": 200, "width": 150, ...}, ...}
-
-    But the frontend may send a list like:
-        [{"variable_name": "FIRMA", "x": 100, "y": 200, ...}, ...]
-    """
-    if variable_positions is None:
-        return {}
-
-    if isinstance(variable_positions, dict):
-        return variable_positions
-
-    if isinstance(variable_positions, list):
-        result = {}
-        for item in variable_positions:
-            if not isinstance(item, dict):
-                continue
-            var_name = item.get("variable_name") or item.get("variable")
-            if not var_name:
-                continue
-            # Extract position data, excluding the variable name key
-            position_data = {
-                k: v for k, v in item.items() if k not in ("variable_name", "variable", "suggested_text", "text")
-            }
-            result[var_name] = position_data
-        return result
-
-    return {}
+logger = logging.getLogger(__name__)
 
 
 class BewerbungsGenerator:
-    def __init__(self, user_id: int, template_id: int | None = None):
+    def __init__(self, user_id: int):
         self.user_id = user_id
-        self.template_id = template_id
-        self.api_client = ClaudeAPIClient()
+        self.api_client = QwenAPIClient()
         self.cv_text = None
-        self.anschreiben_template = None
-        self.template = None  # Store template object for PDF template support
         self.zeugnis_text = None
         self.extracted_links = None
+        self.user = None
+        self._prepared = False
+
+    def prepare(self):
+        """Load user data and documents from database.
+
+        Performs all I/O operations: DB queries and file reads.
+        Must be called before generate_bewerbung(). If not called explicitly,
+        generate_bewerbung() will call it automatically for backwards compatibility.
+        """
+        if self._prepared:
+            return
+        self.user = User.query.get(self.user_id)
         self.load_user_documents()
+        self._prepared = True
 
     def load_user_documents(self):
         """Load documents from database for this user"""
-        print(f"Lade Dokumente für User {self.user_id}...")
+        logger.info("Lade Dokumente für User %s...", self.user_id)
 
         # Load Lebenslauf (Pflicht)
         cv_doc = Document.query.filter_by(user_id=self.user_id, doc_type="lebenslauf").first()
         if cv_doc and os.path.exists(cv_doc.file_path):
             self.cv_text = read_document(cv_doc.file_path)
-            print("✓ Lebenslauf geladen")
+            logger.info("Lebenslauf geladen")
         else:
             raise ValueError("Lebenslauf nicht gefunden. Bitte lade deinen Lebenslauf hoch.")
 
@@ -73,44 +54,12 @@ class BewerbungsGenerator:
         zeugnis_doc = Document.query.filter_by(user_id=self.user_id, doc_type="arbeitszeugnis").first()
         if zeugnis_doc and os.path.exists(zeugnis_doc.file_path):
             self.zeugnis_text = read_document(zeugnis_doc.file_path)
-            print("✓ Arbeitszeugnis geladen")
+            logger.info("Arbeitszeugnis geladen")
         else:
             self.zeugnis_text = None
-            print("ℹ Arbeitszeugnis nicht vorhanden (optional)")
+            logger.info("Arbeitszeugnis nicht vorhanden (optional)")
 
-        # Load Anschreiben-Template
-        if self.template_id:
-            # Specific template requested
-            template = Template.query.filter_by(id=self.template_id, user_id=self.user_id).first()
-            if template:
-                self.template = template
-                self.anschreiben_template = template.content
-                print(f"✓ Template '{template.name}' geladen (ID: {self.template_id})")
-                if template.is_pdf_template:
-                    print(f"  → PDF-Template erkannt: {template.pdf_path}")
-            else:
-                raise ValueError(f"Template mit ID {self.template_id} nicht gefunden.")
-        else:
-            # Load Anschreiben-Template (falls hochgeladen)
-            anschreiben_doc = Document.query.filter_by(user_id=self.user_id, doc_type="anschreiben").first()
-            if anschreiben_doc and os.path.exists(anschreiben_doc.file_path):
-                # Use uploaded Anschreiben as template
-                self.anschreiben_template = read_document(anschreiben_doc.file_path)
-                print("✓ Anschreiben-Vorlage aus Upload geladen")
-            else:
-                # Falls kein Anschreiben hochgeladen, nutze Template aus DB
-                # Auto-create default template if none exists
-                template = get_or_create_default_template(self.user_id)
-                self.template = template
-                self.anschreiben_template = template.content
-                if template.name == "Standard-Vorlage (automatisch erstellt)":
-                    print("✓ Standard-Template automatisch erstellt")
-                else:
-                    print("✓ Template geladen")
-                if template.is_pdf_template:
-                    print(f"  → PDF-Template erkannt: {template.pdf_path}")
-
-        print("✓ Dokumente geladen")
+        logger.info("Dokumente geladen")
 
     def generate_bewerbung(
         self,
@@ -118,6 +67,7 @@ class BewerbungsGenerator:
         firma_name: str,
         output_filename: str | None = None,
         user_details: dict | None = None,
+        tonalitaet: str = "modern",
     ) -> str:
         """Generate a job application.
 
@@ -133,31 +83,33 @@ class BewerbungsGenerator:
                 - description: Job description text (used instead of re-scraping)
                 - quelle: Source/portal name
         """
-        print(f"\n{'=' * 60}")
-        print(f"Generiere Bewerbung für: {firma_name}")
-        print(f"{'=' * 60}")
+        # Auto-prepare if not already done (backwards compatibility)
+        if not self._prepared:
+            self.prepare()
+
+        logger.info("Generiere Bewerbung fuer: %s", firma_name)
 
         # Check if user provided pre-edited data with description
         use_user_data = user_details and user_details.get("description")
 
         if use_user_data:
-            print("1/5 Verwende Benutzerdaten aus Vorschau...")
+            logger.info("1/5 Verwende Benutzerdaten aus Vorschau...")
             stellenanzeige_text = user_details["description"]
             self.extracted_links = None
-            print("✓ Benutzerdaten geladen")
+            logger.info("Benutzerdaten geladen")
         else:
-            print("1/5 Lese Stellenanzeige...")
+            logger.info("1/5 Lese Stellenanzeige...")
 
             if is_url(stellenanzeige_path):
-                print(f"  → Lade von URL: {stellenanzeige_path}")
+                logger.info("Lade von URL: %s", stellenanzeige_path)
                 doc_result = read_document(stellenanzeige_path, return_links=True)
                 stellenanzeige_text = doc_result["text"]
 
                 # Zeige gefundene Links
                 if doc_result.get("email_links"):
-                    print(f"  → {len(doc_result['email_links'])} E-Mail-Link(s) gefunden")
+                    logger.info("%d E-Mail-Link(s) gefunden", len(doc_result["email_links"]))
                 if doc_result.get("application_links"):
-                    print(f"  → {len(doc_result['application_links'])} Bewerbungs-Link(s) gefunden")
+                    logger.info("%d Bewerbungs-Link(s) gefunden", len(doc_result["application_links"]))
 
                 # Speichere Links für spätere Verwendung
                 self.extracted_links = doc_result
@@ -165,110 +117,155 @@ class BewerbungsGenerator:
                 stellenanzeige_text = read_document(stellenanzeige_path)
                 self.extracted_links = None
 
-            print("✓ Stellenanzeige geladen")
+            logger.info("Stellenanzeige geladen")
 
         # Use user-provided details or extract via Claude API
         if use_user_data:
-            print("2/5 Verwende bearbeitete Details...")
+            logger.info("2/5 Verwende bearbeitete Details...")
+            contact_person = user_details.get("contact_person") or ""
+            # Format raw contact name into proper salutation (e.g. "Tom Heinfling" -> "Sehr geehrte/r Tom Heinfling")
+            ansprechpartner = ContactExtractor().format_contact_person_salutation(
+                contact_person if contact_person else None, firma_name
+            )
             details = {
                 "firma": firma_name,
                 "position": user_details.get("position") or "Softwareentwickler",
-                "ansprechpartner": user_details.get("contact_person") or "Sehr geehrte Damen und Herren",
+                "ansprechpartner": ansprechpartner,
                 "quelle": user_details.get("quelle") or "eure Website",
                 "email": user_details.get("contact_email") or "",
                 "stellenanzeige_kompakt": stellenanzeige_text[:500] if stellenanzeige_text else "",
             }
-            print("✓ Details aus Vorschau verwendet:")
+            logger.info("Details aus Vorschau verwendet")
         else:
-            print("2/5 Extrahiere Details (Position, Ansprechpartner, Quelle)...")
+            logger.info("2/5 Extrahiere Details (Position, Ansprechpartner, Quelle)...")
             details = self.api_client.extract_bewerbung_details(stellenanzeige_text, firma_name)
-            print("✓ Details extrahiert:")
-        print(f"  - Position: {details['position']}")
-        print(f"  - Ansprechpartner: {details['ansprechpartner']}")
-        print(f"  - Quelle: {details['quelle']}")
+            logger.info("Details extrahiert")
+        logger.info("Position: %s", details["position"])
+        logger.info("Ansprechpartner: %s", details["ansprechpartner"])
+        logger.info("Quelle: %s", details["quelle"])
 
-        print("3/5 Generiere personalisierten Einleitungsabsatz mit Claude...")
-        einleitung = self.api_client.generate_einleitung(
+        logger.info("3/5 Generiere vollständiges Anschreiben...")
+        bewerber_vorname = None
+        bewerber_name = None
+        if self.user and self.user.full_name:
+            bewerber_vorname = self.user.full_name.split()[0]
+            bewerber_name = self.user.full_name
+
+        user_skills = UserSkill.query.filter_by(user_id=self.user_id).all() if self.user_id else []
+
+        anschreiben_body = self.api_client.generate_anschreiben(
             cv_text=self.cv_text,
             stellenanzeige_text=stellenanzeige_text,
             firma_name=firma_name,
+            position=details["position"],
+            ansprechpartner=details["ansprechpartner"],
+            quelle=details["quelle"],
             zeugnis_text=self.zeugnis_text,
-            details=details,
-            use_extraction=config.USE_EXTRACTION,
+            bewerber_vorname=bewerber_vorname,
+            bewerber_name=bewerber_name,
+            user_skills=user_skills,
+            tonalitaet=tonalitaet,
         )
-        print(f"✓ Einleitung generiert ({len(einleitung)} Zeichen)")
-        print(f"\nGenerierte Einleitung:\n{'-' * 60}\n{einleitung}\n{'-' * 60}\n")
+        logger.info("Anschreiben generiert (%d Zeichen)", len(anschreiben_body))
 
-        # Prepare variable replacements
-        replacements = {
-            "FIRMA": firma_name,
-            "ANSPRECHPARTNER": details["ansprechpartner"],
-            "POSITION": details["position"],
-            "QUELLE": details["quelle"],
-            "EINLEITUNG": einleitung,
-        }
+        # Format current date in German
+        german_months = [
+            "Januar",
+            "Februar",
+            "März",
+            "April",
+            "Mai",
+            "Juni",
+            "Juli",
+            "August",
+            "September",
+            "Oktober",
+            "November",
+            "Dezember",
+        ]
+        now = datetime.now()
+        datum_formatiert = f"{now.day:02d}. {german_months[now.month - 1]} {now.year}"
 
-        # Create user-specific PDF directory
+        # Build briefkopf (header) programmatically
+        header_parts = []
+        if self.user.full_name:
+            header_parts.append(self.user.full_name)
+        if self.user.address:
+            header_parts.append(self.user.address)
+        if self.user.postal_code or self.user.city:
+            header_parts.append(f"{self.user.postal_code or ''} {self.user.city or ''}".strip())
+
+        contact_parts = []
+        if self.user.phone:
+            contact_parts.append(self.user.phone)
+        if self.user.email:
+            contact_parts.append(self.user.email)
+        if self.user.website:
+            contact_parts.append(self.user.website)
+        if contact_parts:
+            header_parts.append(" | ".join(contact_parts))
+
+        # Company + date
+        header_parts.append("")  # blank line
+        header_parts.append(firma_name)
+        ort_datum = f"{self.user.city}, {datum_formatiert}" if self.user.city else datum_formatiert
+        header_parts.append(ort_datum)
+        header_parts.append("")  # blank line
+        header_parts.append(f"Bewerbung als {details['position']}")
+        header_parts.append("")  # blank line
+
+        briefkopf = "\n".join(header_parts)
+
+        # Combine briefkopf + AI-generated body
+        anschreiben_vollstaendig = briefkopf + anschreiben_body
+
+        # Clean up excessive blank lines
+        anschreiben_vollstaendig = re.sub(r"\n{3,}", "\n\n", anschreiben_vollstaendig)
+        anschreiben_vollstaendig = anschreiben_vollstaendig.strip()
+
+        # Create PDF
         pdf_dir = os.path.join(config.UPLOAD_FOLDER, f"user_{self.user_id}", "pdfs")
         os.makedirs(pdf_dir, exist_ok=True)
         output_filename = output_filename or f"Anschreiben_{firma_name.replace(' ', '_')}.pdf"
         output_path = os.path.join(pdf_dir, output_filename)
 
-        # Check if using PDF template or text template
-        if self.template and self.template.is_pdf_template:
-            print("4/5 PDF-Template wird verwendet...")
-            print("5/5 Erstelle PDF aus Template...")
+        logger.info("4/5 Erstelle PDF...")
+        create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
 
-            # Use PDFTemplateModifier to generate PDF from template
-            modifier = PDFTemplateModifier()
-            # Convert variable_positions to dict format if it's a list
-            positions_dict = _convert_variable_positions_to_dict(self.template.variable_positions)
-            pdf_bytes = modifier.generate_from_template(
-                pdf_path=self.template.pdf_path,
-                variable_positions=positions_dict,
-                replacements=replacements,
-            )
-
-            # Write the PDF bytes to output file
-            with open(output_path, "wb") as f:
-                f.write(pdf_bytes)
-        else:
-            print("4/5 Erstelle vollständiges Anschreiben...")
-            anschreiben_vollstaendig = self.anschreiben_template
-            for var_name, value in replacements.items():
-                placeholder = f"{{{{{var_name}}}}}"
-                anschreiben_vollstaendig = anschreiben_vollstaendig.replace(placeholder, value)
-
-            print("5/5 Erstelle PDF...")
-            create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
-
-        print(f"✓ Bewerbung erstellt: {output_path}")
+        logger.info("Bewerbung erstellt: %s", output_path)
 
         # Email-Daten generieren mit verbesserter Personalisierung
-        betreff = self.api_client.generate_betreff(details["position"], firma_name, style="professional")
-        # Build attachments list dynamically - Arbeitszeugnis only if available
-        attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis"]
-        if self.zeugnis_text:
-            attachments.append("Arbeitszeugnis")
+        betreff = self.api_client.generate_betreff(
+            details["position"], firma_name, style="professional", user_name=self.user.full_name
+        )
+        # Build attachments list dynamically from user's uploaded documents
+        attachments = ["Anschreiben", "Lebenslauf"]
+        user_docs = Document.query.filter_by(user_id=self.user_id).all()
+        for doc in user_docs:
+            if doc.doc_type == "arbeitszeugnis":
+                attachments.append(doc.original_filename or "Arbeitszeugnis")
+            elif doc.doc_type not in ("lebenslauf", "anschreiben"):
+                attachments.append(doc.original_filename or doc.doc_type)
         email_text = self.api_client.generate_email_text(
             position=details["position"],
             ansprechperson=details["ansprechpartner"],
             firma_name=firma_name,
             attachments=attachments,
+            user_name=self.user.full_name,
+            user_email=self.user.email,
+            user_phone=self.user.phone,
+            user_city=self.user.city,
+            user_website=self.user.website,
         )
 
-        # Sammle alle extrahierten Informationen
+        # Collect all extracted information
+        links = self.extracted_links or {}
         extracted_info = {
             "email_from_text": details.get("email", ""),
-            "email_links": [],
-            "application_links": [],
-            "all_links": [],
+            "email_links": links.get("email_links", []),
+            "application_links": links.get("application_links", []),
+            "all_links": links.get("all_links", []),
         }
-
-        if self.extracted_links:
-            extracted_info["email_links"] = self.extracted_links.get("email_links", [])
-            extracted_info["application_links"] = self.extracted_links.get("application_links", [])
-            extracted_info["all_links"] = self.extracted_links.get("all_links", [])
 
         # Save to database
         application = Application(
@@ -282,7 +279,7 @@ class BewerbungsGenerator:
             pdf_path=output_path,
             betreff=betreff,
             email_text=email_text,
-            einleitung=einleitung,
+            einleitung=anschreiben_body,
             links_json=json.dumps(extracted_info),
         )
         # Initialize status history with 'erstellt'
@@ -293,26 +290,19 @@ class BewerbungsGenerator:
         # Extract and save job requirements in background
         self._extract_requirements(application.id, stellenanzeige_text)
 
-        # Zeige Email-Informationen an
-        print(f"\n{'=' * 60}")
-        print("📧 EMAIL-INFORMATIONEN")
-        print(f"{'=' * 60}")
-        print(f"An: {details.get('email') or 'Keine E-Mail-Adresse gefunden'}")
-        print(f"Betreff: {betreff}")
-        print(f"\nText:\n{email_text}")
+        # Log email information
+        logger.info("Email an: %s", details.get("email") or "Keine E-Mail-Adresse gefunden")
+        logger.info("Betreff: %s", betreff)
+        logger.debug("Email-Text: %s", email_text)
 
-        # Zeige extrahierte Links
+        # Log extrahierte Links
         if extracted_info["email_links"]:
-            print("\n📧 Gefundene E-Mail-Links:")
             for link in extracted_info["email_links"]:
-                print(f"  - {link['email']} ({link['text']})")
+                logger.info("E-Mail-Link: %s (%s)", link["email"], link["text"])
 
         if extracted_info["application_links"]:
-            print("\n🔗 Gefundene Bewerbungs-Links:")
-            for link in extracted_info["application_links"][:5]:  # Max 5 zeigen
-                print(f"  - {link['text']}: {link['url']}")
-
-        print(f"{'=' * 60}\n")
+            for link in extracted_info["application_links"][:5]:
+                logger.info("Bewerbungs-Link: %s: %s", link["text"], link["url"])
 
         return output_path
 
@@ -326,7 +316,7 @@ class BewerbungsGenerator:
 
             return self.generate_bewerbung(stellenanzeige_path, firma_name)
         except Exception as e:
-            print(f"✗ Fehler bei {firma_config.get('name', 'unbekannt')}: {str(e)}")
+            logger.error("Fehler bei %s: %s", firma_config.get("name", "unbekannt"), e)
             return None
 
     def _extract_requirements(self, application_id: int, job_text: str) -> None:
@@ -336,12 +326,12 @@ class BewerbungsGenerator:
         Errors are logged but don't cause the main flow to fail.
         """
         try:
-            print("→ Extrahiere Anforderungen aus Stellenanzeige...")
+            logger.info("Extrahiere Anforderungen aus Stellenanzeige...")
             analyzer = RequirementAnalyzer()
             requirements = analyzer.analyze_requirements(job_text)
 
             if not requirements:
-                print("  → Keine Anforderungen gefunden")
+                logger.info("Keine Anforderungen gefunden")
                 return
 
             # Save requirements to database
@@ -358,9 +348,12 @@ class BewerbungsGenerator:
 
             must_have_count = sum(1 for r in requirements if r["requirement_type"] == "must_have")
             nice_to_have_count = len(requirements) - must_have_count
-            print(
-                f"✓ {len(requirements)} Anforderungen extrahiert ({must_have_count} Pflicht, {nice_to_have_count} Optional)"
+            logger.info(
+                "%d Anforderungen extrahiert (%d Pflicht, %d Optional)",
+                len(requirements),
+                must_have_count,
+                nice_to_have_count,
             )
 
         except Exception as e:
-            print(f"⚠ Anforderungs-Extraktion fehlgeschlagen: {str(e)}")
+            logger.warning("Anforderungs-Extraktion fehlgeschlagen: %s", e)

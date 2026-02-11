@@ -4,12 +4,15 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from config import config
-from models import User, db
+from models import Subscription, User, db
 from services.stripe_service import StripeService
 
 logger = logging.getLogger(__name__)
 
 subscriptions_bp = Blueprint("subscriptions", __name__)
+
+# Plan ordering for upgrade/downgrade detection
+PLAN_ORDER = {"free": 0, "basic": 1, "pro": 2}
 
 # Subscription plan definitions
 SUBSCRIPTION_PLANS = {
@@ -66,61 +69,51 @@ SUBSCRIPTION_PLANS = {
 }
 
 
+@subscriptions_bp.route("/status", methods=["GET"])
+def get_payment_status():
+    """Check if payment system is available (public endpoint)."""
+    return jsonify(
+        {
+            "success": True,
+            "data": {
+                "payments_available": config.is_stripe_enabled(),
+            },
+        }
+    ), 200
+
+
 @subscriptions_bp.route("/plans", methods=["GET"])
 def get_plans():
-    """
-    Get available subscription plans (public endpoint).
-
-    Returns a list of all subscription plans with their features and limits.
-    """
-    plans = []
-    for plan_key in ["free", "basic", "pro"]:  # Maintain order
-        plan = SUBSCRIPTION_PLANS[plan_key]
-        plans.append(
-            {
-                "plan_id": plan["plan_id"],
-                "name": plan["name"],
-                "price": plan["price"],
-                "price_formatted": plan["price_formatted"],
-                "features": plan["features"],
-                "limits": plan["limits"],
-                # Only include stripe_price_id if it exists (not for free plan)
-                "stripe_price_id": plan["stripe_price_id"] if plan["stripe_price_id"] else None,
-            }
-        )
-
-    return jsonify({"success": True, "data": plans}), 200
+    """Get available subscription plans (public endpoint)."""
+    plans = list(SUBSCRIPTION_PLANS.values())
+    return jsonify(
+        {
+            "success": True,
+            "data": plans,
+            "payments_available": config.is_stripe_enabled(),
+        }
+    ), 200
 
 
 def get_plan_limits(plan_name: str) -> dict:
-    """
-    Get the limits for a specific plan.
-
-    Args:
-        plan_name: Name of the plan (free, basic, pro)
-
-    Returns:
-        Dictionary with plan limits
-    """
-    plan = SUBSCRIPTION_PLANS.get(plan_name, SUBSCRIPTION_PLANS["free"])
-    return plan["limits"]
+    """Get the limits for a specific plan (free, basic, pro)."""
+    return SUBSCRIPTION_PLANS.get(plan_name, SUBSCRIPTION_PLANS["free"])["limits"]
 
 
 @subscriptions_bp.route("/create-checkout", methods=["POST"])
 @jwt_required()
 def create_checkout():
-    """
-    Create a Stripe Checkout Session for subscription purchase.
+    """Create a Stripe Checkout Session for subscription purchase."""
+    # Check if payments are available
+    if not config.is_stripe_enabled():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Zahlungssystem wird eingerichtet",
+                "payments_available": False,
+            }
+        ), 503
 
-    Request Body:
-        plan: 'basic' or 'pro'
-        success_url: URL to redirect after successful payment
-        cancel_url: URL to redirect if user cancels
-
-    Returns:
-        checkout_url: URL to redirect user to Stripe Checkout
-        session_id: Stripe Checkout Session ID
-    """
     data = request.json or {}
 
     plan = data.get("plan")
@@ -142,15 +135,6 @@ def create_checkout():
 
     price_id = plan_data["stripe_price_id"]
 
-    # Check if using mock/development price IDs
-    if price_id.startswith("price_dev_"):
-        return jsonify(
-            {
-                "success": False,
-                "error": "Stripe ist im Development-Modus nicht konfiguriert. Upgrade-Funktionen sind nur in der Produktionsumgebung verfügbar.",
-            }
-        ), 503  # Service Unavailable
-
     # Get current user
     user_id = get_jwt_identity()
     user = User.query.get(int(user_id))
@@ -162,7 +146,11 @@ def create_checkout():
 
         # Create Stripe Customer if not exists
         if not user.stripe_customer_id:
-            customer_id = stripe_service.create_customer(email=user.email, name=user.full_name)
+            customer_id = stripe_service.create_customer(
+                email=user.email,
+                name=user.full_name,
+                metadata={"user_id": str(user.id)},
+            )
             user.stripe_customer_id = customer_id
             db.session.commit()
             logger.info(f"Created Stripe customer {customer_id} for user {user.id}")
@@ -171,7 +159,11 @@ def create_checkout():
 
         # Create Checkout Session
         session = stripe_service.create_checkout_session(
-            customer_id=customer_id, price_id=price_id, success_url=success_url, cancel_url=cancel_url
+            customer_id=customer_id,
+            price_id=price_id,
+            success_url=success_url,
+            cancel_url=cancel_url,
+            metadata={"user_id": str(user.id), "plan": plan},
         )
 
         logger.info(f"Created checkout session {session.id} for user {user.id}, plan {plan}")
@@ -186,15 +178,17 @@ def create_checkout():
 @subscriptions_bp.route("/portal", methods=["POST"])
 @jwt_required()
 def create_portal_session():
-    """
-    Create a Stripe Customer Portal session for subscription management.
+    """Create a Stripe Customer Portal session for subscription management."""
+    # Check if payments are available
+    if not config.is_stripe_enabled():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Zahlungssystem wird eingerichtet",
+                "payments_available": False,
+            }
+        ), 503
 
-    Request Body:
-        return_url: URL to return to after portal session
-
-    Returns:
-        portal_url: URL to redirect user to Stripe Customer Portal
-    """
     data = request.json or {}
     return_url = data.get("return_url")
 
@@ -225,18 +219,91 @@ def create_portal_session():
         return jsonify({"success": False, "error": "Fehler beim Erstellen der Portal-Sitzung"}), 500
 
 
+@subscriptions_bp.route("/change-plan", methods=["POST"])
+@jwt_required()
+def change_plan():
+    """Change subscription plan (upgrade or downgrade via Stripe)."""
+    if not config.is_stripe_enabled():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Zahlungssystem wird eingerichtet",
+                "payments_available": False,
+            }
+        ), 503
+
+    data = request.json or {}
+    new_plan = data.get("plan")
+
+    # Validate plan
+    if new_plan not in ["basic", "pro"]:
+        return jsonify({"success": False, "error": "Ungültiger Plan. Muss 'basic' oder 'pro' sein."}), 400
+
+    # Get current user
+    user_id = get_jwt_identity()
+    user = User.query.get(int(user_id))
+    if not user:
+        return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
+
+    # Check existing subscription
+    subscription = Subscription.query.filter_by(user_id=user.id).first()
+    if not subscription or not subscription.stripe_subscription_id:
+        return jsonify(
+            {"success": False, "error": "Kein aktives Abonnement vorhanden. Bitte zuerst ein Abo abschließen."}
+        ), 400
+
+    # Check if same plan
+    current_plan = subscription.plan.value if subscription.plan else "free"
+    if current_plan == new_plan:
+        return jsonify({"success": False, "error": "Sie haben bereits diesen Plan."}), 400
+
+    # Get new price ID
+    plan_data = SUBSCRIPTION_PLANS.get(new_plan)
+    if not plan_data or not plan_data.get("stripe_price_id"):
+        return jsonify({"success": False, "error": "Plan nicht konfiguriert"}), 400
+
+    new_price_id = plan_data["stripe_price_id"]
+
+    # Determine proration behavior
+    current_order = PLAN_ORDER.get(current_plan, 0)
+    new_order = PLAN_ORDER.get(new_plan, 0)
+    is_upgrade = new_order > current_order
+
+    proration_behavior = "always_invoice" if is_upgrade else "create_prorations"
+
+    try:
+        stripe_service = StripeService()
+        stripe_service.modify_subscription(
+            subscription_id=subscription.stripe_subscription_id,
+            new_price_id=new_price_id,
+            proration_behavior=proration_behavior,
+        )
+
+        logger.info(
+            f"User {user.id} changed plan from {current_plan} to {new_plan} "
+            f"({'upgrade' if is_upgrade else 'downgrade'})"
+        )
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "previous_plan": current_plan,
+                    "new_plan": new_plan,
+                    "is_upgrade": is_upgrade,
+                },
+            }
+        ), 200
+
+    except Exception as e:
+        logger.error(f"Failed to change plan for user {user.id}: {e}")
+        return jsonify({"success": False, "error": "Fehler beim Planwechsel"}), 500
+
+
 @subscriptions_bp.route("/current", methods=["GET"])
 @jwt_required()
 def get_current_subscription():
-    """
-    Get the current user's subscription details and usage.
-
-    Returns:
-        plan: Current plan name
-        status: Subscription status
-        usage: Usage details (used, limit, remaining, unlimited)
-        next_billing_date: Next billing date (if applicable)
-    """
+    """Get the current user's subscription details and usage."""
     from middleware.subscription_limit import get_subscription_usage
 
     user_id = get_jwt_identity()
@@ -266,5 +333,11 @@ def get_current_subscription():
         subscription_data["status"] = user.subscription.status.value
         if user.subscription.current_period_end:
             subscription_data["next_billing_date"] = user.subscription.current_period_end.isoformat()
+        subscription_data["cancel_at_period_end"] = user.subscription.cancel_at_period_end
+        subscription_data["canceled_at"] = (
+            user.subscription.canceled_at.isoformat() if user.subscription.canceled_at else None
+        )
+
+    subscription_data["payments_available"] = config.is_stripe_enabled()
 
     return jsonify({"success": True, "data": subscription_data}), 200

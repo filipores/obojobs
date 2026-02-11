@@ -124,3 +124,5 @@ export function useJobRecommendations() {
     markAsApplied
   }
 }
+
+export default useJobRecommendations

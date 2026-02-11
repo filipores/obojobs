@@ -4,12 +4,15 @@ Supports German salary negotiation culture with personalized tips and negotiatio
 """
 
 import json
+import logging
 import time
 from dataclasses import dataclass, field
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -198,10 +201,10 @@ class SalaryCoach:
 
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Salary research failed (attempt {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("Salary research failed (attempt %s/%s): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
-                    print(f"Salary research failed after {retry_count} attempts: {str(e)}")
+                    logger.error("Salary research failed after %s attempts: %s", retry_count, e)
                     return self._get_fallback_salary_research(position, region, experience_years, industry)
 
         return self._get_fallback_salary_research(position, region, experience_years, industry)
@@ -254,10 +257,12 @@ class SalaryCoach:
 
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Negotiation tips generation failed (attempt {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning(
+                        "Negotiation tips generation failed (attempt %s/%s): %s", attempt + 1, retry_count, e
+                    )
                     time.sleep(2)
                 else:
-                    print(f"Negotiation tips generation failed after {retry_count} attempts: {str(e)}")
+                    logger.error("Negotiation tips generation failed after %s attempts: %s", retry_count, e)
                     return self._get_fallback_negotiation_strategy(target_salary, current_salary, position)
 
         return self._get_fallback_negotiation_strategy(target_salary, current_salary, position)
@@ -387,7 +392,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
         end_idx = text.rfind("}")
 
         if start_idx == -1 or end_idx == -1:
-            print("No JSON structure found in salary research response")
+            logger.warning("No JSON structure found in salary research response")
             return self._get_fallback_salary_research(position, region, experience_years, None)
 
         json_text = text[start_idx : end_idx + 1]
@@ -409,7 +414,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
             )
 
         except json.JSONDecodeError as e:
-            print(f"JSON Parse Error in salary research: {str(e)}")
+            logger.error("JSON Parse Error in salary research: %s", e)
             return self._get_fallback_salary_research(position, region, experience_years, None)
 
     def _parse_negotiation_strategy(
@@ -426,7 +431,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
         end_idx = text.rfind("}")
 
         if start_idx == -1 or end_idx == -1:
-            print("No JSON structure found in negotiation strategy response")
+            logger.warning("No JSON structure found in negotiation strategy response")
             return self._get_fallback_negotiation_strategy(target_salary, current_salary, "")
 
         json_text = text[start_idx : end_idx + 1]
@@ -469,7 +474,7 @@ Erstelle jetzt die Verhandlungsstrategie:"""
             )
 
         except json.JSONDecodeError as e:
-            print(f"JSON Parse Error in negotiation strategy: {str(e)}")
+            logger.error("JSON Parse Error in negotiation strategy: %s", e)
             return self._get_fallback_negotiation_strategy(target_salary, current_salary, "")
 
     def _get_fallback_salary_research(

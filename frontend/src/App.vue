@@ -19,33 +19,48 @@
         </router-link>
 
         <!-- Center Navigation - Horizontal links -->
-        <div class="nav-center">
+        <div class="nav-center" :class="{ 'nav-resizing': isResizing }">
           <router-link to="/dashboard" class="nav-link" exact-active-class="active" title="Dashboard">
             <span class="nav-text">Dashboard</span>
-          </router-link>
-          <router-link to="/documents" class="nav-link" active-class="active" title="Dokumente verwalten">
-            <span class="nav-text">Dokumente</span>
-          </router-link>
-          <router-link to="/templates" class="nav-link" active-class="active" title="Bewerbungsvorlagen">
-            <span class="nav-text">Templates</span>
           </router-link>
           <router-link to="/applications" class="nav-link" active-class="active" title="Meine Bewerbungen">
             <span class="nav-text">Bewerbungen</span>
           </router-link>
-          <router-link to="/timeline" class="nav-link" active-class="active" title="Aktivitäten-Timeline">
-            <span class="nav-text">Timeline</span>
-          </router-link>
-          <router-link to="/ats" class="nav-link" active-class="active" title="ATS-Optimierung">
-            <span class="nav-text">ATS</span>
-          </router-link>
-          <router-link to="/company-insights" class="nav-link nav-link-with-icon" active-class="active" title="Firmen-Insights">
-            <svg class="nav-icon-mobile" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M18 20V10"/>
-              <path d="M12 20V4"/>
-              <path d="M6 20v-6"/>
-            </svg>
-            <span class="nav-text">Insights</span>
-          </router-link>
+          <!-- Mehr Dropdown -->
+          <div class="mehr-dropdown-wrapper" ref="moreDropdownRef">
+            <button
+              class="nav-link mehr-toggle"
+              :class="{ 'active': isMoreDropdownOpen || isMoreRouteActive }"
+              @click="toggleMoreDropdown"
+              title="Mehr anzeigen"
+            >
+              <span class="nav-text">Mehr</span>
+              <svg class="mehr-chevron" :class="{ 'mehr-chevron-open': isMoreDropdownOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="6 9 12 15 18 9"/>
+              </svg>
+            </button>
+            <div v-if="isMoreDropdownOpen" class="mehr-dropdown">
+              <router-link to="/documents" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Dokumente verwalten">
+                Dokumente
+              </router-link>
+              <router-link to="/timeline" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Aktivitäten-Timeline">
+                Timeline
+              </router-link>
+              <router-link to="/ats" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="ATS-Optimierung">
+                ATS
+              </router-link>
+              <router-link to="/company-insights" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Firmen-Insights">
+                Insights
+              </router-link>
+              <router-link to="/job-dashboard" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Job-Dashboard">
+                Jobsuche
+              </router-link>
+              <div v-if="authStore.user?.is_admin" class="mehr-dropdown-divider"></div>
+              <router-link v-if="authStore.user?.is_admin" to="/admin" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Admin Dashboard">
+                Admin
+              </router-link>
+            </div>
+          </div>
           <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active" title="Neue Bewerbung erstellen">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
@@ -82,8 +97,8 @@
             </svg>
           </button>
 
-          <!-- Language Switcher -->
-          <LanguageSwitcher />
+          <!-- Language Switcher (hidden until EN locale is fully supported) -->
+          <LanguageSwitcher v-if="false" />
 
           <!-- Settings -->
           <router-link to="/settings" class="nav-icon" title="Einstellungen">
@@ -149,14 +164,6 @@
             <span>Dokumente</span>
           </router-link>
 
-          <router-link to="/templates" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-              <polyline points="14.5 2 14.5 8 20.5 8"/>
-            </svg>
-            <span>Templates</span>
-          </router-link>
-
           <router-link to="/applications" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -192,6 +199,14 @@
             </svg>
             <span>Firmen-Insights</span>
           </router-link>
+
+          <router-link to="/job-dashboard" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="11" cy="11" r="8"/>
+              <path d="M21 21l-4.35-4.35"/>
+            </svg>
+            <span>Jobsuche</span>
+          </router-link>
         </nav>
 
         <!-- Sidebar Footer -->
@@ -203,6 +218,13 @@
               <path d="M12 17h.01"/>
             </svg>
             <span>Abo ({{ getPlanLabel() }})</span>
+          </router-link>
+
+          <router-link v-if="authStore.user?.is_admin" to="/admin" class="sidebar-link" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+            </svg>
+            <span>Admin</span>
           </router-link>
 
           <router-link to="/settings" class="sidebar-link" @click="closeMobileSidebar">
@@ -286,9 +308,9 @@
           <span>obo</span>
         </div>
         <div class="footer-links">
-          <router-link to="/impressum">Impressum</router-link>
+          <router-link to="/impressum">{{ $t('pages.impressum') }}</router-link>
           <span class="footer-divider">|</span>
-          <router-link to="/datenschutz">Datenschutz</router-link>
+          <router-link to="/datenschutz">{{ $t('pages.datenschutz') }}</router-link>
         </div>
         <div class="footer-copyright">
           &copy; {{ currentYear }} obo
@@ -303,7 +325,7 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { authStore } from './store/auth'
+import { authStore } from './stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import Toast from './components/Toast.vue'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'
@@ -313,6 +335,20 @@ const route = useRoute()
 const toastRef = ref(null)
 const isDarkMode = ref(false)
 const isSidebarOpen = ref(false)
+const isResizing = ref(false)
+const isMoreDropdownOpen = ref(false)
+const moreDropdownRef = ref(null)
+const moreRoutes = ['/documents', '/timeline', '/ats', '/company-insights', '/job-dashboard', '/admin']
+const isMoreRouteActive = computed(() => moreRoutes.some(r => route.path.startsWith(r)))
+
+const toggleMoreDropdown = () => {
+  isMoreDropdownOpen.value = !isMoreDropdownOpen.value
+}
+
+const closeMoreDropdown = () => {
+  isMoreDropdownOpen.value = false
+}
+
 const currentYear = computed(() => new Date().getFullYear())
 const isLandingPage = computed(() => route.meta?.landing === true)
 
@@ -388,11 +424,40 @@ const handleEscapeKey = (event) => {
   }
 }
 
+const handleClickOutside = (e) => {
+  if (moreDropdownRef.value && !moreDropdownRef.value.contains(e.target)) {
+    isMoreDropdownOpen.value = false
+  }
+}
+
 // Close sidebar on route change
 const handleRouteChange = () => {
+  isMoreDropdownOpen.value = false
   if (isSidebarOpen.value) {
     closeMobileSidebar()
   }
+}
+
+// Prevent viewport resize from triggering accidental navigation
+// When browser crosses the 1024px breakpoint, nav links suddenly appear/disappear
+// and the mouseup from a window drag-resize can trigger a click on the newly-visible link
+let resizeTimer = null
+const MOBILE_BREAKPOINT = 1024
+
+const handleResize = () => {
+  // Temporarily disable pointer events on nav links during resize
+  isResizing.value = true
+
+  // Close mobile sidebar when resizing to desktop
+  if (window.innerWidth > MOBILE_BREAKPOINT && isSidebarOpen.value) {
+    closeMobileSidebar()
+  }
+
+  // Re-enable pointer events after resize settles
+  clearTimeout(resizeTimer)
+  resizeTimer = setTimeout(() => {
+    isResizing.value = false
+  }, 150)
 }
 
 // Watch for system preference changes
@@ -421,13 +486,21 @@ onMounted(() => {
   // Add keyboard listener for escape key
   document.addEventListener('keydown', handleEscapeKey)
 
+  // Add resize listener to prevent accidental navigation during viewport resize
+  window.addEventListener('resize', handleResize)
+
   // Watch for route changes to close sidebar
   router.afterEach(handleRouteChange)
+
+  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   // Clean up event listeners
   document.removeEventListener('keydown', handleEscapeKey)
+  window.removeEventListener('resize', handleResize)
+  document.removeEventListener('click', handleClickOutside)
+  clearTimeout(resizeTimer)
   document.body.classList.remove('sidebar-open')
 })
 </script>
@@ -441,6 +514,7 @@ onUnmounted(() => {
   top: 0;
   z-index: var(--z-nav);
   background: var(--color-washi);
+  overflow: visible;
 }
 
 /* ========================================
@@ -472,22 +546,22 @@ onUnmounted(() => {
   background: var(--color-ai);
 }
 
-/* Show hamburger only on mobile */
-@media (max-width: 768px) {
+/* Show hamburger on mobile and tablet (until desktop nav fits) */
+@media (max-width: 1024px) {
   .mobile-hamburger {
     display: flex;
   }
 }
 
 .nav-container {
-  max-width: var(--container-xl);
   margin: 0 auto;
   padding: 0 var(--space-ma);
   height: 72px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--space-ma);
+  gap: var(--space-md);
+  overflow: visible;
 }
 
 /* Brand */
@@ -497,6 +571,7 @@ onUnmounted(() => {
   gap: var(--space-sm);
   text-decoration: none;
   color: var(--color-sumi);
+  flex-shrink: 0;
 }
 
 .brand-mark {
@@ -532,6 +607,14 @@ onUnmounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-xs);
+  min-width: 0;
+  overflow: visible;
+  flex: 1 1 auto;
+}
+
+/* Disable pointer events during viewport resize to prevent accidental navigation */
+.nav-center.nav-resizing {
+  pointer-events: none;
 }
 
 .nav-link {
@@ -543,6 +626,8 @@ onUnmounted(() => {
   font-weight: 400;
   letter-spacing: var(--tracking-normal);
   transition: color var(--transition-base);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .nav-link-cta {
@@ -613,11 +698,88 @@ onUnmounted(() => {
   background: var(--color-ai);
 }
 
+/* Mehr Dropdown */
+.mehr-dropdown-wrapper {
+  position: relative;
+}
+
+.mehr-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.mehr-chevron {
+  transition: transform var(--transition-base);
+  flex-shrink: 0;
+}
+
+.mehr-chevron-open {
+  transform: rotate(180deg);
+}
+
+.mehr-dropdown {
+  position: absolute;
+  top: calc(100% + var(--space-xs));
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 180px;
+  background: var(--color-washi);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-lifted);
+  padding: var(--space-xs) 0;
+  z-index: calc(var(--z-nav) + 1);
+  animation: dropdownFade 0.15s var(--ease-zen);
+}
+
+.mehr-dropdown-item {
+  display: block;
+  padding: var(--space-sm) var(--space-lg);
+  color: var(--color-text-tertiary);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  transition: all var(--transition-base);
+  white-space: nowrap;
+}
+
+.mehr-dropdown-item:hover {
+  background: var(--color-washi-aged);
+  color: var(--color-text-primary);
+}
+
+.mehr-dropdown-item.mehr-item-active {
+  color: var(--color-ai);
+  font-weight: 500;
+}
+
+.mehr-dropdown-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: var(--space-xs) 0;
+}
+
+@keyframes dropdownFade {
+  from {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+}
+
 /* Actions */
 .nav-actions {
   display: flex;
   align-items: center;
   gap: var(--space-md);
+  flex-shrink: 0;
 }
 
 .subscription-display {
@@ -733,13 +895,13 @@ onUnmounted(() => {
 /* ========================================
    RESPONSIVE
    ======================================== */
-@media (max-width: 768px) {
+@media (max-width: 1024px) {
   .nav-container {
     padding: 0 var(--space-md);
     gap: var(--space-md);
   }
 
-  /* Hide center nav on mobile - users use sidebar or bottom nav instead */
+  /* Hide center nav on mobile/tablet - users use sidebar or bottom nav instead */
   .nav-center {
     display: none;
   }
@@ -764,7 +926,9 @@ onUnmounted(() => {
   .nav-link-cta {
     padding: var(--space-xs) var(--space-sm);
   }
+}
 
+@media (max-width: 768px) {
   .brand-text {
     display: none;
   }
@@ -775,14 +939,12 @@ onUnmounted(() => {
     gap: var(--space-xs);
   }
 
-  .nav-icon {
-    width: 36px;
-    height: 36px;
-  }
-
   .subscription-display {
     padding: var(--space-xs) var(--space-sm);
     min-width: 0; /* Allow flex shrinking */
+    min-height: 44px;
+    display: flex;
+    align-items: center;
   }
 
   .subscription-plan {
@@ -797,11 +959,6 @@ onUnmounted(() => {
 
   .nav-actions {
     gap: 2px;
-  }
-
-  .nav-icon {
-    width: 32px;
-    height: 32px;
   }
 
   .subscription-display {
@@ -886,6 +1043,17 @@ onUnmounted(() => {
   color: var(--color-text-ghost);
 }
 
+/* Add padding for bottom nav (visible below 768px) */
+@media (max-width: 767px) {
+  .main-content.with-nav {
+    padding-bottom: 84px;
+  }
+
+  .zen-footer {
+    padding-bottom: calc(var(--space-lg) + 84px);
+  }
+}
+
 @media (max-width: 768px) {
   .footer-container {
     flex-direction: column;
@@ -903,15 +1071,6 @@ onUnmounted(() => {
 
   .footer-copyright {
     order: 3;
-  }
-
-  /* Add padding for bottom nav */
-  .main-content.with-nav {
-    padding-bottom: 72px;
-  }
-
-  .zen-footer {
-    padding-bottom: calc(var(--space-lg) + 72px);
   }
 }
 
@@ -932,7 +1091,7 @@ onUnmounted(() => {
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
 }
 
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .bottom-nav {
     display: flex;
     justify-content: space-around;
@@ -1211,8 +1370,8 @@ onUnmounted(() => {
   overflow: hidden;
 }
 
-/* Show sidebar only on mobile */
-@media (min-width: 769px) {
+/* Show sidebar only on mobile/tablet - hidden when desktop nav is visible */
+@media (min-width: 1025px) {
   .mobile-sidebar {
     display: none !important;
   }

@@ -536,7 +536,7 @@ const researchSalary = async () => {
     }
   } catch (err) {
     console.error('Salary research error:', err)
-    alert(err.response?.data?.error || 'Fehler bei der Gehaltsrecherche')
+    if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der Gehaltsrecherche', 'error') }
   } finally {
     isResearching.value = false
   }
@@ -564,7 +564,7 @@ const getStrategy = async () => {
     }
   } catch (err) {
     console.error('Strategy generation error:', err)
-    alert(err.response?.data?.error || 'Fehler bei der Strategieentwicklung')
+    if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der Strategieentwicklung', 'error') }
   } finally {
     isGenerating.value = false
   }

@@ -24,8 +24,11 @@ COPY . .
 # Create upload and database directories
 RUN mkdir -p uploads db
 
-# Expose port
-EXPOSE 5001
+# Make entrypoint script executable (already copied by COPY . .)
+RUN chmod +x /app/entrypoint.sh
 
-# Run with gunicorn in production
-CMD ["gunicorn", "--bind", "0.0.0.0:5001", "--workers", "2", "--timeout", "120", "wsgi:app"]
+# Expose port
+EXPOSE 5002
+
+# Run migrations then start gunicorn
+ENTRYPOINT ["/app/entrypoint.sh"]

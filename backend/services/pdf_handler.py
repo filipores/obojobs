@@ -1,8 +1,11 @@
+import re
+
 import PyPDF2
 import pytesseract
 from pdf2image import convert_from_path
+from reportlab.lib import colors
 from reportlab.lib.colors import HexColor
-from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.lib.units import cm
@@ -76,45 +79,86 @@ def read_document(file_path: str, return_links: bool = False) -> str | dict:
         return text
 
 
+def _is_header_line(line: str) -> bool:
+    """Detect header/contact lines by structural markers (pipes, email, phone, URLs)."""
+    pipe_count = line.count("|")
+    has_email = "@" in line and "." in line
+    has_phone = bool(re.search(r"\+?\d[\d\s\-/]{6,}", line))
+    has_url = bool(re.search(r"\w+\.\w{2,}", line)) and "@" not in line.split(".")[-1]
+    return pipe_count >= 2 or (has_email and (has_phone or has_url))
+
+
+def _is_greeting_line(line: str) -> bool:
+    """Detect salutation/greeting lines."""
+    lower = line.lower().rstrip(",").strip()
+    greeting_starts = (
+        "sehr geehrte",
+        "moin",
+        "hallo",
+        "liebe",
+        "guten tag",
+        "dear",
+        "hi ",
+        "hey ",
+        "bewerbung als",
+        "bewerbung um",
+    )
+    return lower.startswith(greeting_starts)
+
+
+def _is_date_or_location_line(line: str) -> bool:
+    """Detect date or location lines like 'Hamburg, 08. Februar 2026'."""
+    return bool(re.search(r"\d{1,2}\.\s*\w+\s+\d{4}", line))
+
+
 def create_anschreiben_pdf(anschreiben_text: str, output_path: str, firma_name: str) -> str:
     doc = SimpleDocTemplate(
         output_path, pagesize=A4, rightMargin=2 * cm, leftMargin=2 * cm, topMargin=2 * cm, bottomMargin=2 * cm
     )
 
-    title_style = ParagraphStyle(
-        "Title", fontName="Helvetica-Bold", fontSize=16, leading=20, alignment=TA_CENTER, spaceAfter=8
+    header_style = ParagraphStyle(
+        "Header", fontName="Helvetica-Bold", fontSize=12, leading=16, alignment=TA_CENTER, spaceAfter=4
     )
-    h2_style = ParagraphStyle(
-        "H2", fontName="Helvetica-Bold", fontSize=14, leading=18, alignment=TA_CENTER, spaceAfter=8
+    greeting_style = ParagraphStyle(
+        "Greeting", fontName="Helvetica-Bold", fontSize=11, leading=16, alignment=TA_LEFT, spaceAfter=8
     )
-    contact_style = ParagraphStyle(
-        "Contact", fontName="Helvetica", fontSize=10, leading=14, alignment=TA_CENTER, spaceAfter=20
+    meta_style = ParagraphStyle(
+        "Meta",
+        fontName="Helvetica",
+        fontSize=10,
+        leading=14,
+        alignment=TA_LEFT,
+        spaceAfter=4,
+        textColor=colors.HexColor("#555555"),
     )
     body_style = ParagraphStyle(
         "Body", fontName="Helvetica", fontSize=11, leading=16, alignment=TA_JUSTIFY, spaceAfter=12
     )
 
     story = []
-    line_count = 0
-    in_header = True
+    header_done = False
 
     for para in anschreiben_text.split("\n"):
         para_stripped = para.strip()
-        if para_stripped:
-            line_count += 1
-            para_escaped = para_stripped.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        if not para_stripped:
+            if header_done:
+                story.append(Spacer(1, 0.3 * cm))
+            continue
 
-            if line_count == 1:
-                story.append(Paragraph(para_escaped, title_style))
-            elif line_count == 2:
-                story.append(Paragraph(para_escaped, h2_style))
-            elif line_count == 3:
-                story.append(Paragraph(para_escaped, contact_style))
-                in_header = False
-            else:
-                story.append(Paragraph(para_escaped, body_style))
-        elif not in_header:
-            story.append(Spacer(1, 0.3 * cm))
+        para_escaped = para_stripped.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+
+        if not header_done and _is_header_line(para_stripped):
+            story.append(Paragraph(para_escaped, header_style))
+        elif not header_done and _is_date_or_location_line(para_stripped):
+            story.append(Paragraph(para_escaped, meta_style))
+        elif _is_greeting_line(para_stripped):
+            if not header_done:
+                story.append(Spacer(1, 0.4 * cm))
+            header_done = True
+            story.append(Paragraph(para_escaped, greeting_style))
+        else:
+            header_done = True
+            story.append(Paragraph(para_escaped, body_style))
 
     doc.build(story)
     return output_path

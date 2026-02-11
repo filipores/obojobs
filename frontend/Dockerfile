@@ -1,11 +1,14 @@
 # Build stage
-FROM node:22-alpine as build
+FROM node:22-alpine AS build
 
 WORKDIR /app
 
-# Build argument for Stripe key (needed at build time for Vite)
+# Build arguments (needed at build time for Vite)
 ARG VITE_STRIPE_PUBLISHABLE_KEY
 ENV VITE_STRIPE_PUBLISHABLE_KEY=$VITE_STRIPE_PUBLISHABLE_KEY
+
+ARG VITE_GOOGLE_CLIENT_ID
+ENV VITE_GOOGLE_CLIENT_ID=$VITE_GOOGLE_CLIENT_ID
 
 # Copy package files
 COPY package*.json ./
@@ -19,19 +22,8 @@ COPY . .
 # Build app
 RUN npm run build
 
-# Production stage
-FROM nginx:alpine
+# Production stage - minimal image that holds built files for volume copy
+FROM alpine:3.20
 
-# Install curl for healthcheck
-RUN apk add --no-cache curl
-
-# Copy built files
-COPY --from=build /app/dist /usr/share/nginx/html
-
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-
-# Expose port
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Copy built files to a staging path (NOT the volume mount point)
+COPY --from=build /app/dist /build/dist

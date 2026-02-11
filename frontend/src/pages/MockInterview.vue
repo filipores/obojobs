@@ -9,7 +9,7 @@
               <path d="M19 12H5"/>
               <polyline points="12 19 5 12 12 5"/>
             </svg>
-            Zurueck zur Interview-Vorbereitung
+            {{ t('mockInterview.backToPrep') }}
           </router-link>
           <div class="header-main">
             <div>
@@ -324,9 +324,9 @@
                 <line x1="12" y1="8" x2="12.01" y2="8"/>
               </svg>
               <div class="hint-content">
-                <span class="hint-title">Keine STAR-Analyse fuer diese Frage</span>
+                <span class="hint-title">{{ t('mockInterview.noStarAnalysis') }}</span>
                 <span class="hint-text">
-                  Die STAR-Methode (Situation, Task, Action, Result) ist speziell fuer Verhaltens-Fragen konzipiert.
+                  {{ t('mockInterview.starExplanation') }}
                   Diese {{ getQuestionTypeLabel(currentQuestion.question_type) }} Frage erfordert einen anderen Antwort-Ansatz.
                 </span>
               </div>
@@ -363,14 +363,14 @@
                   <path d="M5 12h14"/>
                   <polyline points="12 5 19 12 12 19"/>
                 </svg>
-                Naechste Frage
+                {{ t('mockInterview.nextQuestion') }}
               </button>
               <button v-else @click="finishInterview" class="zen-btn zen-btn-ai">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                   <polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
-                Interview abschliessen
+                {{ t('mockInterview.finishInterview') }}
               </button>
             </div>
           </div>
@@ -447,7 +447,7 @@
                   <path d="M5 12h14"/>
                   <polyline points="12 5 19 12 12 19"/>
                 </svg>
-                Empfohlene naechste Schritte
+                {{ t('mockInterview.nextSteps') }}
               </h3>
               <ol>
                 <li v-for="(step, index) in summary.next_steps" :key="'ns-' + index">
@@ -507,12 +507,13 @@
 
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
 import STARFeedback from '../components/STARFeedback.vue'
 
+const { t } = useI18n()
 const route = useRoute()
-const _router = useRouter()
 
 const applicationId = computed(() => route.params.id)
 const startQuestionId = computed(() => route.query.questionId)
@@ -764,7 +765,7 @@ const submitAnswer = async () => {
     }
   } catch (err) {
     console.error('Fehler bei der Bewertung:', err)
-    alert(err.response?.data?.error || 'Fehler bei der Bewertung der Antwort')
+    if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der Bewertung der Antwort', 'error') }
   } finally {
     isEvaluating.value = false
   }
@@ -800,7 +801,7 @@ const loadDetailedStarAnalysis = async () => {
     }
   } catch (err) {
     console.error('Fehler bei der STAR-Analyse:', err)
-    alert(err.response?.data?.error || 'Fehler bei der detaillierten STAR-Analyse')
+    if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der detaillierten STAR-Analyse', 'error') }
   } finally {
     isLoadingStarAnalysis.value = false
   }
@@ -883,17 +884,17 @@ const getRatingLabel = (rating) => {
     excellent: 'Ausgezeichnet!',
     good: 'Gut gemacht!',
     adequate: 'Solide Basis',
-    needs_improvement: 'Verbesserungswuerdig'
+    needs_improvement: t('mockInterview.needsImprovement')
   }
   return labels[rating] || rating
 }
 
 const getRatingDescription = (rating) => {
   const descriptions = {
-    excellent: 'Ihre Antwort war ueberzeugend und gut strukturiert.',
-    good: 'Eine gute Antwort mit kleinen Verbesserungsmoeglichkeiten.',
+    excellent: 'Ihre Antwort war überzeugend und gut strukturiert.',
+    good: t('mockInterview.goodWithImprovements'),
     adequate: 'Die Grundlagen sind da, aber es gibt Potenzial nach oben.',
-    needs_improvement: 'Diese Antwort koennte deutlich verbessert werden.'
+    needs_improvement: 'Diese Antwort könnte deutlich verbessert werden.'
   }
   return descriptions[rating] || ''
 }
@@ -951,12 +952,12 @@ const getQuestionTypeHintTitle = (type) => {
 
 const getQuestionTypeHint = (type) => {
   const hints = {
-    technical: 'Strukturieren Sie Ihre Antwort: Erklaeren Sie Konzepte klar, geben Sie Beispiele und zeigen Sie praktische Erfahrung.',
-    situational: 'Beschreiben Sie Ihren Loesungsansatz Schritt fuer Schritt und begruenden Sie Ihre Entscheidungen.',
-    company_specific: 'Zeigen Sie Ihre Recherche zur Firma und verbinden Sie Ihre Antwort mit Ihren Karrierezielen.',
-    salary_negotiation: 'Bleiben Sie sachlich, nennen Sie Ihre Gehaltsvorstellung mit Begruendung und zeigen Sie Verhandlungsbereitschaft.'
+    technical: t('mockInterview.hintTechnical'),
+    situational: t('mockInterview.hintSituational'),
+    company_specific: t('mockInterview.hintCompanySpecific'),
+    salary_negotiation: t('mockInterview.hintSalaryNegotiation')
   }
-  return hints[type] || 'Geben Sie eine strukturierte und begruendete Antwort.'
+  return hints[type] || t('mockInterview.defaultHint')
 }
 
 onMounted(async () => {

@@ -17,8 +17,9 @@
         <div class="legal-section">
           <h2>Angaben gemäß § 5 TMG</h2>
           <p>
-            <strong>Filip Ores</strong><br>
-            Hamburg<br>
+            <strong>{{ legal.company_name }}</strong><br>
+            {{ legal.company_address }}<br>
+            {{ legal.company_postal_code }} {{ legal.company_city }}<br>
             Deutschland
           </p>
         </div>
@@ -26,16 +27,18 @@
         <div class="legal-section">
           <h2>Kontakt</h2>
           <p>
-            E-Mail: <a href="mailto:filip.ores@hotmail.com">filip.ores@hotmail.com</a><br>
-            Website: <a href="https://filipores.com" target="_blank" rel="noopener">filipores.com</a>
+            E-Mail: <a :href="'mailto:' + legal.company_email">{{ legal.company_email }}</a><br>
+            <span v-if="legal.company_phone">Telefon: {{ legal.company_phone }}<br></span>
+            Website: <a href="https://obojobs.de" target="_blank" rel="noopener">obojobs.de</a>
           </p>
         </div>
 
         <div class="legal-section">
           <h2>Verantwortlich für den Inhalt nach § 55 Abs. 2 RStV</h2>
           <p>
-            Filip Ores<br>
-            Hamburg
+            {{ legal.company_name }}<br>
+            {{ legal.company_address }}<br>
+            {{ legal.company_postal_code }} {{ legal.company_city }}
           </p>
         </div>
 
@@ -91,7 +94,7 @@
         </div>
 
         <div class="legal-footer">
-          <p class="last-updated">Stand: Januar 2026</p>
+          <p class="last-updated">Stand: Februar 2026</p>
         </div>
       </section>
     </div>
@@ -99,5 +102,7 @@
 </template>
 
 <script setup>
-// Static page - styles defined in assets/styles.css under .legal-page
+import { useLegalInfo } from '@/composables/useLegalInfo.js'
+
+const { legal } = useLegalInfo()
 </script>

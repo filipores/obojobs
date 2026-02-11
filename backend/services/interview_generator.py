@@ -3,11 +3,14 @@ Interview Generator Service - Generates interview questions based on job posting
 """
 
 import json
+import logging
 import time
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class InterviewGenerator:
@@ -82,12 +85,12 @@ class InterviewGenerator:
 
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(
-                        f"Interview-Fragen Generierung fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}"
+                    logger.warning(
+                        "Interview-Fragen Generierung fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e
                     )
                     time.sleep(2)
                 else:
-                    print(f"Interview-Fragen Generierung fehlgeschlagen nach {retry_count} Versuchen: {str(e)}")
+                    logger.error("Interview-Fragen Generierung fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
                     # Return fallback questions
                     return self._get_fallback_questions(firma, position)
 
@@ -175,7 +178,7 @@ Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
         end_idx = text.rfind("]")
 
         if start_idx == -1 or end_idx == -1:
-            print("Keine JSON-Struktur in der Antwort gefunden")
+            logger.warning("Keine JSON-Struktur in der Antwort gefunden")
             return []
 
         json_text = text[start_idx : end_idx + 1]
@@ -234,7 +237,7 @@ Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
             return valid_questions
 
         except json.JSONDecodeError as e:
-            print(f"JSON Parse Error: {str(e)}")
+            logger.error("JSON Parse Error: %s", e)
             return []
 
     def _get_fallback_questions(self, firma: str, position: str) -> list[dict]:

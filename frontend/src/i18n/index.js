@@ -2,20 +2,8 @@ import { createI18n } from 'vue-i18n'
 import de from './locales/de.json'
 import en from './locales/en.json'
 
-// Get saved locale from localStorage or default to 'de'
+// Always use German locale until EN locale is fully supported
 function getInitialLocale() {
-  const savedLocale = localStorage.getItem('obojobs-locale')
-  if (savedLocale && ['de', 'en'].includes(savedLocale)) {
-    return savedLocale
-  }
-
-  // Check browser language preference
-  const browserLang = navigator.language?.split('-')[0]
-  if (browserLang === 'en') {
-    return 'en'
-  }
-
-  // Default to German
   return 'de'
 }
 

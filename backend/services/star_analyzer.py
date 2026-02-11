@@ -6,11 +6,14 @@ detailed improvement suggestions for each missing or weak component.
 """
 
 import json
+import logging
 import time
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class STARAnalyzer:
@@ -96,10 +99,10 @@ class STARAnalyzer:
 
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"STAR-Analyse fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("STAR-Analyse fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
-                    print(f"STAR-Analyse fehlgeschlagen nach {retry_count} Versuchen: {str(e)}")
+                    logger.error("STAR-Analyse fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
                     return self._get_fallback_analysis()
 
         return self._get_fallback_analysis()
@@ -192,7 +195,7 @@ Gib jetzt das JSON-Objekt aus:"""
         end_idx = text.rfind("}")
 
         if start_idx == -1 or end_idx == -1:
-            print("Keine JSON-Struktur in der STAR-Analyse gefunden")
+            logger.warning("Keine JSON-Struktur in der STAR-Analyse gefunden")
             return self._get_fallback_analysis()
 
         json_text = text[start_idx : end_idx + 1]
@@ -216,7 +219,7 @@ Gib jetzt das JSON-Objekt aus:"""
             return result
 
         except json.JSONDecodeError as e:
-            print(f"JSON Parse Error in STAR-Analyse: {str(e)}")
+            logger.error("JSON Parse Error in STAR-Analyse: %s", e)
             return self._get_fallback_analysis()
 
     def _validate_components(self, components_data: dict) -> dict:

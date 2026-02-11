@@ -1,9 +1,13 @@
+import atexit
+import os
+
 from flask import Flask, jsonify
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 from flask_migrate import Migrate
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from config import config
 
@@ -23,6 +27,7 @@ from models import (  # noqa: F401
     TokenBlacklist,
     User,
     UserSkill,
+    WebhookEvent,
     db,
 )
 
@@ -33,6 +38,10 @@ migrate = Migrate()
 def create_app():
     """Create and configure Flask application"""
     app = Flask(__name__)
+
+    # Trust X-Forwarded-For from reverse proxy (Caddy)
+    # x_for=1: trust 1 proxy hop for the client IP
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
     # Load configuration
     app.config.from_object(config)
@@ -70,47 +79,6 @@ def create_app():
     def token_verification_failed_callback(jwt_header, jwt_payload):
         return jsonify({"error": "Ungültiger Token"}), 401
 
-    # Middleware to intercept JWT responses and change status code
-    @app.after_request
-    def after_request(response):
-        # Only process 422 responses with JSON content
-        if response.status_code == 422 and response.content_type and "application/json" in response.content_type:
-            try:
-                # Try to parse the response data
-                import json
-
-                response_data = json.loads(response.data.decode("utf-8"))
-                error_msg = response_data.get("msg", "")
-
-                # Common JWT error patterns that should return 401
-                jwt_error_patterns = [
-                    "Not enough segments",
-                    "Invalid header string",
-                    "Invalid token",
-                    "Token is invalid",
-                    "Signature verification failed",
-                    "Token has expired",
-                    "Insufficient segments",
-                ]
-
-                for pattern in jwt_error_patterns:
-                    if pattern in error_msg:
-                        # Create new response with 401 status and German error message
-                        from flask import Response
-
-                        new_response = Response(
-                            json.dumps({"error": "Ungültiger Token"}), status=401, mimetype="application/json"
-                        )
-                        # Copy headers from original response
-                        for key, value in response.headers:
-                            if key.lower() not in ["content-length", "content-type"]:
-                                new_response.headers[key] = value
-                        return new_response
-            except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
-                pass
-
-        return response
-
     # Custom key function that exempts whitelisted IPs
     def get_rate_limit_key():
         remote_addr = get_remote_address()
@@ -124,7 +92,7 @@ def create_app():
         app=app,
         key_func=get_rate_limit_key,
         default_limits=["200 per hour", "50 per minute"],
-        storage_uri="memory://",
+        storage_uri=config.RATE_LIMIT_STORAGE_URI,
         strategy="fixed-window",
     )
 
@@ -137,6 +105,7 @@ def create_app():
     init_security_headers(app)
 
     # Register blueprints
+    from routes.admin import admin_bp
     from routes.api_keys import api_keys_bp
     from routes.applications import applications_bp
     from routes.ats import ats_bp
@@ -145,6 +114,7 @@ def create_app():
     from routes.demo import demo_bp
     from routes.documents import documents_bp
     from routes.email import email_bp
+    from routes.legal import legal_bp
     from routes.recommendations import bp as recommendations_bp
     from routes.salary import salary_bp
     from routes.skills import skills_bp
@@ -168,6 +138,14 @@ def create_app():
     app.register_blueprint(companies_bp, url_prefix="/api/companies")
     app.register_blueprint(recommendations_bp, url_prefix="/api")
     app.register_blueprint(salary_bp, url_prefix="/api/salary")
+    app.register_blueprint(legal_bp, url_prefix="/api/legal")
+    app.register_blueprint(admin_bp, url_prefix="/api/admin")
+
+    # Initialize background scheduler
+    from services.scheduler import init_scheduler, shutdown_scheduler
+
+    init_scheduler(app)
+    atexit.register(shutdown_scheduler)
 
     # Health check endpoint (no rate limit)
     @app.route("/api/health")
@@ -179,8 +157,6 @@ def create_app():
     @app.route("/api/version")
     @limiter.exempt
     def version():
-        import os
-
         return {
             "version": os.environ.get("APP_VERSION", "development"),
             "commit": os.environ.get("APP_COMMIT", "unknown"),
@@ -195,17 +171,18 @@ if __name__ == "__main__":
     # Validate config
     config.validate_config()
 
-    # Initialize database
-    with app.app_context():
-        from migrations.init_db import init_database, seed_test_data
+    # Initialize database (only in development)
+    if os.getenv("FLASK_ENV") != "production":
+        with app.app_context():
+            from migrations.init_db import init_database, seed_test_data
 
-        init_database(app)
-        seed_test_data(app)
+            init_database(app)
+            seed_test_data(app)
 
     print("\n" + "=" * 60)
     print("obojobs API Server")
     print("=" * 60)
-    print("Server running on http://localhost:5001")
+    print("Server running on http://localhost:5002")
     print("=" * 60 + "\n")
 
-    app.run(host="0.0.0.0", port=5001, debug=config.DEBUG)
+    app.run(host="0.0.0.0", port=5002, debug=config.DEBUG)

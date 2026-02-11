@@ -34,9 +34,9 @@
             Erneut versuchen
           </button>
           <!-- Contact link for persistent errors -->
-          <router-link
+          <a
             v-if="errorState.showContactLink"
-            to="/support"
+            href="mailto:kontakt@obojobs.de"
             class="contact-link"
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -44,7 +44,7 @@
               <polyline points="22,6 12,13 2,6"/>
             </svg>
             Support kontaktieren
-          </router-link>
+          </a>
         </div>
       </div>
     </div>
@@ -114,7 +114,7 @@
         </svg>
         <div>
           <strong>Niedriger Job-Fit Score</strong>
-          <p>Diese Stelle passt moeglicherweise nicht zu Ihrem Profil. Ueberlegen Sie, ob sich eine Bewerbung lohnt.</p>
+          <p>{{ t('components.jobFitScore.mightNotFit') }}</p>
         </div>
       </div>
 
@@ -190,7 +190,10 @@
 
 <script setup>
 import { ref, watch, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
+
+const { t } = useI18n()
 
 const props = defineProps({
   applicationId: {
@@ -231,7 +234,7 @@ const parseErrorResponse = (e) => {
   // 404 - No requirements found (not really an error)
   if (status === 404) {
     return {
-      message: 'Keine Anforderungen fuer diese Stelle gefunden',
+      message: t('components.jobFitScore.noRequirements'),
       hint: 'Die Stellenanzeige enthaelt keine analysierbaren Anforderungen.',
       isTemporary: false,
       showContactLink: false

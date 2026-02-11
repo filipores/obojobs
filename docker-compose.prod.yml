@@ -2,7 +2,7 @@
 # Usage: docker compose -f docker-compose.prod.yml up -d --build
 
 services:
-  # Caddy - Reverse Proxy with automatic HTTPS
+  # Caddy - Reverse Proxy with automatic HTTPS + static file server
   caddy:
     image: caddy:2-alpine
     restart: unless-stopped
@@ -13,33 +13,32 @@ services:
       - DOMAIN=${DOMAIN}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile
+      - frontend_dist:/srv/frontend:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      - frontend
-      - backend
+      frontend:
+        condition: service_completed_successfully
+      backend:
+        condition: service_started
     networks:
       - obojobs-network
 
-  # Frontend - Vue.js served via Nginx
+  # Frontend - Build-only container that populates the shared volume
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
       args:
         - VITE_STRIPE_PUBLISHABLE_KEY=${VITE_STRIPE_PUBLISHABLE_KEY}
-    restart: unless-stopped
-    expose:
-      - "80"
-    depends_on:
-      - backend
+        - VITE_GOOGLE_CLIENT_ID=${VITE_GOOGLE_CLIENT_ID}
+    volumes:
+      - frontend_dist:/srv/frontend
+    # Copy built files from image staging path into the shared volume, then exit
+    command: ["sh", "-c", "rm -rf /srv/frontend/* && cp -a /build/dist/. /srv/frontend/"]
+    restart: "no"
     networks:
       - obojobs-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:80"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
 
   # Backend - Flask API with Gunicorn
   backend:
@@ -48,7 +47,7 @@ services:
       dockerfile: Dockerfile
     restart: unless-stopped
     expose:
-      - "5001"
+      - "5002"
     environment:
       - FLASK_ENV=production
       - DATABASE_URL=postgresql://obojobs:${DB_PASSWORD}@db:5432/obojobs
@@ -65,17 +64,48 @@ services:
       - REGISTRATION_ENABLED=${REGISTRATION_ENABLED:-true}
       - APP_VERSION=${APP_VERSION:-development}
       - APP_COMMIT=${APP_COMMIT:-unknown}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_REDIRECT_URI=${GOOGLE_REDIRECT_URI:-}
+      - EMAIL_ENCRYPTION_KEY=${EMAIL_ENCRYPTION_KEY}
+      - FORCE_HTTPS=true
+      - SECURITY_HEADERS_ENABLED=true
+      - COMPANY_NAME=${COMPANY_NAME:-obojobs}
+      - COMPANY_EMAIL=${COMPANY_EMAIL:-kontakt@obojobs.de}
+      - COMPANY_ADDRESS=${COMPANY_ADDRESS:-}
+      - COMPANY_POSTAL_CODE=${COMPANY_POSTAL_CODE:-}
+      - COMPANY_CITY=${COMPANY_CITY:-}
+      - COMPANY_PHONE=${COMPANY_PHONE:-}
+      - SCRAPER_API_KEY=${SCRAPER_API_KEY:-}
+      - RATE_LIMIT_STORAGE_URI=redis://redis:6379/1
+      - RATE_LIMIT_WHITELIST=127.0.0.1,84.158.169.231
     volumes:
       - uploads:/app/uploads
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - obojobs-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5002/api/health"]
       interval: 30s
       timeout: 10s
+      retries: 3
+
+  # Redis - Rate limiting storage (shared across Gunicorn workers)
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    expose:
+      - "6379"
+    networks:
+      - obojobs-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
       retries: 3
 
   # PostgreSQL Database
@@ -100,6 +130,8 @@ volumes:
   postgres_data:
     driver: local
   uploads:
+    driver: local
+  frontend_dist:
     driver: local
   caddy_data:
     driver: local

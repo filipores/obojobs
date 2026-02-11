@@ -5,7 +5,7 @@ services:
       dockerfile: Dockerfile
     container_name: obojobs-backend
     ports:
-      - "5001:5001"
+      - "5002:5002"
     volumes:
       - uploads:/app/uploads
       - database:/app/db
@@ -19,7 +19,7 @@ services:
       - CORS_ORIGINS=http://localhost,http://localhost:80
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5001/api/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:5002/api/health"]
       interval: 30s
       timeout: 10s
       retries: 3

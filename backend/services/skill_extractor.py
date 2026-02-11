@@ -3,11 +3,14 @@ Skill Extractor Service - Extracts skills from CV text using Claude API.
 """
 
 import json
+import logging
 import time
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class SkillExtractor:
@@ -53,10 +56,10 @@ class SkillExtractor:
 
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Skill-Extraktion fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("Skill-Extraktion fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
-                    print(f"⚠ Skill-Extraktion fehlgeschlagen nach {retry_count} Versuchen: {str(e)}")
+                    logger.error("Skill-Extraktion fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
                     return []
 
     def _create_extraction_prompt(self, cv_text: str) -> str:
@@ -97,7 +100,7 @@ Extrahiere jetzt alle Skills als JSON-Array:"""
         end_idx = text.rfind("]")
 
         if start_idx == -1 or end_idx == -1:
-            print("⚠ Keine JSON-Struktur in der Antwort gefunden")
+            logger.warning("Keine JSON-Struktur in der Antwort gefunden")
             return []
 
         json_text = text[start_idx : end_idx + 1]
@@ -152,5 +155,5 @@ Extrahiere jetzt alle Skills als JSON-Array:"""
             return valid_skills
 
         except json.JSONDecodeError as e:
-            print(f"⚠ JSON Parse Error: {str(e)}")
+            logger.error("JSON Parse Error: %s", e)
             return []

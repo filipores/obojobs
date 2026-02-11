@@ -7,11 +7,14 @@ using a combination of regex patterns and AI-based NLP extraction.
 UX-004: Automatische Extraktion von Kontaktdaten aus manuellem Text
 """
 
+import logging
 import re
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class ContactExtractor:
@@ -323,7 +326,7 @@ ANSTELLUNGSART: [Wert]"""
             return self._parse_nlp_response(response_text)
 
         except Exception as e:
-            print(f"NLP extraction failed: {e}")
+            logger.error("NLP extraction failed: %s", e)
             return {}
 
     def _parse_nlp_response(self, response_text: str) -> dict:

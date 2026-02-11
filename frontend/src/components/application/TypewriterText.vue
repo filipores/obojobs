@@ -1,20 +1,22 @@
 <template>
   <span
     :class="[
-      'typewriter',
-      `typewriter--${variant}`,
-      { 'typewriter--cursor': showCursor && !isComplete }
+      'ink-reveal',
+      `ink-reveal--${variant}`,
     ]"
     :style="cssVars"
     :aria-label="text"
     role="text"
   >
-    <span class="typewriter__text" aria-hidden="true">{{ displayedText }}</span>
-    <span
-      v-if="showCursor && !isComplete"
-      class="typewriter__cursor"
-      aria-hidden="true"
-    >|</span>
+    <span class="ink-reveal__text" aria-hidden="true">
+      <span
+        v-for="(word, i) in words"
+        :key="i"
+        class="ink-reveal__word"
+        :class="{ 'ink-reveal__word--visible': i < revealedCount }"
+        :style="{ transitionDelay: `${i * staggerMs}ms` }"
+      >{{ word }}</span>
+    </span>
   </span>
 </template>
 
@@ -59,34 +61,62 @@ const props = defineProps({
 
 const emit = defineEmits(['start', 'complete', 'char'])
 
-const displayedText = ref('')
+const revealedCount = ref(0)
 const isComplete = ref(false)
 const isTyping = ref(false)
-let typingTimeout = null
-let charIndex = 0
+let revealTimeout = null
+
+// Split text into words, preserving whitespace and newlines as part of each word
+const words = computed(() => {
+  if (!props.text) return []
+  // Split on word boundaries but keep spaces attached to the following word
+  // This preserves the original spacing when rendered
+  const result = []
+  const parts = props.text.split(/(\s+)/)
+  let current = ''
+  for (const part of parts) {
+    if (/^\s+$/.test(part)) {
+      // Whitespace - attach to next word
+      current += part
+    } else {
+      // Word - combine with any preceding whitespace
+      current += part
+      if (current) {
+        result.push(current)
+        current = ''
+      }
+    }
+  }
+  if (current) result.push(current)
+  return result
+})
+
+// Stagger delay between words - derived from speed prop
+// speed is per-character in the old API, so multiply by avg word length (~5)
+const staggerMs = computed(() => Math.max(20, props.speed * 1.5))
 
 const cssVars = computed(() => ({
-  '--typewriter-speed': `${props.speed}ms`,
-  '--typewriter-cursor-blink': '800ms'
+  '--ink-settle-duration': '420ms',
+  '--ink-blur-start': '6px',
 }))
 
-const typeNextChar = () => {
-  if (charIndex < props.text.length) {
-    displayedText.value = props.text.slice(0, charIndex + 1)
-    emit('char', props.text[charIndex])
-    charIndex++
+const revealNextWord = () => {
+  if (revealedCount.value < words.value.length) {
+    revealedCount.value++
+    emit('char', words.value[revealedCount.value - 1])
 
-    const variation = Math.random() * 40 - 20
-    const nextDelay = props.speed + variation
+    // Slight timing variation for natural feel
+    const variation = Math.random() * 30 - 15
+    const nextDelay = staggerMs.value + variation
 
-    typingTimeout = setTimeout(typeNextChar, Math.max(30, nextDelay))
+    revealTimeout = setTimeout(revealNextWord, Math.max(20, nextDelay))
   } else {
     isTyping.value = false
     isComplete.value = true
     emit('complete')
 
     if (props.loop) {
-      typingTimeout = setTimeout(() => {
+      revealTimeout = setTimeout(() => {
         reset()
         start()
       }, props.loopDelay)
@@ -101,26 +131,25 @@ const start = () => {
   isComplete.value = false
   emit('start')
 
-  typingTimeout = setTimeout(typeNextChar, props.delay)
+  revealTimeout = setTimeout(revealNextWord, props.delay)
 }
 
 const reset = () => {
-  clearTimeout(typingTimeout)
-  displayedText.value = ''
-  charIndex = 0
+  clearTimeout(revealTimeout)
+  revealedCount.value = 0
   isComplete.value = false
   isTyping.value = false
 }
 
 const pause = () => {
-  clearTimeout(typingTimeout)
+  clearTimeout(revealTimeout)
   isTyping.value = false
 }
 
 const resume = () => {
   if (!isComplete.value && !isTyping.value) {
     isTyping.value = true
-    typeNextChar()
+    revealNextWord()
   }
 }
 
@@ -138,98 +167,85 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  clearTimeout(typingTimeout)
+  clearTimeout(revealTimeout)
 })
 
 defineExpose({ start, reset, pause, resume })
 </script>
 
 <style scoped>
-.typewriter {
+.ink-reveal {
   display: inline;
   font-family: var(--font-body);
   color: var(--color-text-primary);
 }
 
-.typewriter__text {
+.ink-reveal__text {
   display: inline;
+  white-space: pre-wrap;
 }
 
-.typewriter__cursor {
+.ink-reveal__word {
   display: inline;
-  animation: cursorBlink var(--typewriter-cursor-blink) step-end infinite;
-  color: var(--color-ai);
-  font-weight: 300;
-  margin-left: 1px;
+  opacity: 0;
+  filter: blur(var(--ink-blur-start));
+  transform: translateY(6px);
+  transition:
+    opacity var(--ink-settle-duration) var(--ease-zen),
+    filter var(--ink-settle-duration) var(--ease-zen),
+    transform var(--ink-settle-duration) var(--ease-zen);
 }
 
-/* Default variant - clean typewriter */
-.typewriter--default .typewriter__text {
+.ink-reveal__word--visible {
+  opacity: 1;
+  filter: blur(0);
+  transform: translateY(0);
+}
+
+/* Default variant */
+.ink-reveal--default .ink-reveal__word {
   letter-spacing: var(--tracking-normal);
 }
 
-/* Brush variant - calligraphic reveal */
-.typewriter--brush {
+/* Brush variant - calligraphic feel with ink-wash coloring */
+.ink-reveal--brush {
   font-family: var(--font-display);
   font-weight: 400;
 }
 
-.typewriter--brush .typewriter__text {
-  background: linear-gradient(
-    90deg,
-    var(--color-sumi) 0%,
-    var(--color-sumi) 100%
-  );
-  background-size: 200% 100%;
-  -webkit-background-clip: text;
-  background-clip: text;
-  animation: brushReveal 0.3s ease-out forwards;
+.ink-reveal--brush .ink-reveal__word {
+  --ink-settle-duration: 500ms;
+  --ink-blur-start: 8px;
+  transform: translateY(8px) scaleY(0.96);
 }
 
-/* Fade variant - gentle appearance */
-.typewriter--fade .typewriter__text {
-  opacity: 0;
-  animation: fadeChar 0.4s var(--ease-zen) forwards;
+.ink-reveal--brush .ink-reveal__word--visible {
+  transform: translateY(0) scaleY(1);
+  color: var(--color-sumi);
 }
 
-@keyframes cursorBlink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0; }
+/* Fade variant - gentler, less movement */
+.ink-reveal--fade .ink-reveal__word {
+  --ink-settle-duration: 350ms;
+  --ink-blur-start: 3px;
+  transform: translateY(3px);
 }
 
-@keyframes brushReveal {
-  from {
-    background-position: 100% 0;
-    opacity: 0.5;
-  }
-  to {
-    background-position: 0 0;
-    opacity: 1;
-  }
-}
-
-@keyframes fadeChar {
-  from {
-    opacity: 0;
-    transform: translateY(2px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+.ink-reveal--fade .ink-reveal__word--visible {
+  transform: translateY(0);
 }
 
 /* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  .typewriter__cursor {
-    animation: none;
-    opacity: 1;
+  .ink-reveal__word {
+    filter: none;
+    transform: none;
+    transition: opacity 0.2s;
   }
 
-  .typewriter--brush .typewriter__text,
-  .typewriter--fade .typewriter__text {
-    animation: none;
-    opacity: 1;
+  .ink-reveal__word--visible {
+    filter: none;
+    transform: none;
   }
 }
 </style>

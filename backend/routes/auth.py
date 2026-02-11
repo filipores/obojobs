@@ -1,3 +1,4 @@
+import logging
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
@@ -8,9 +9,12 @@ from google.oauth2 import id_token
 from config import Config
 from models import TokenBlacklist, User, db
 from services.auth_service import AuthService
+from services.email_service import send_password_reset_email, send_verification_email
 from services.email_verification_service import EmailVerificationService
 from services.password_reset_service import PasswordResetService
 from services.password_validator import PasswordValidator
+
+logger = logging.getLogger(__name__)
 
 auth_bp = Blueprint("auth", __name__)
 
@@ -53,6 +57,22 @@ def login():
 
     try:
         result = AuthService.login_user(email, password)
+
+        # Block login for users who haven't verified their email.
+        # Google OAuth users are excluded (they have no email verification flow).
+        # We check AFTER login_user succeeds to avoid revealing verification status
+        # for invalid passwords (security: prevents email enumeration).
+        user_data = result["user"]
+        if not user_data["email_verified"]:
+            user = User.query.filter_by(email=email).first()
+            if user and not user.google_id:
+                return jsonify(
+                    {
+                        "error": "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+                        "email_not_verified": True,
+                    }
+                ), 403
+
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 401
@@ -139,7 +159,7 @@ def google_auth():
         # Token verification failed
         return jsonify({"error": "Ungültiges Google-Token"}), 401
     except Exception as e:
-        print(f"Google auth error: {e}")
+        logger.error("Google auth error: %s", e)
         return jsonify({"error": "Google-Authentifizierung fehlgeschlagen"}), 500
 
 
@@ -223,6 +243,43 @@ def _record_verification_request(user_id: int) -> None:
     _verification_rate_limits[key].append(datetime.utcnow())
 
 
+_RESEND_VERIFICATION_RESPONSE = "Falls ein Konto mit dieser E-Mail existiert, wurde eine Bestätigungs-E-Mail gesendet."
+
+
+@auth_bp.route("/resend-verification", methods=["POST"])
+def resend_verification():
+    """
+    Resend email verification for unverified users who cannot log in.
+
+    Public endpoint - does not require authentication.
+    Accepts email in the request body. Rate limited to 3 requests per hour.
+    Always returns 200 to prevent email enumeration.
+    """
+    data = request.json or {}
+    email = data.get("email", "").strip().lower()
+
+    if not email:
+        return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
+
+    user = AuthService.get_user_by_email(email)
+
+    if not user or user.email_verified:
+        return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
+
+    if not _check_verification_rate_limit(user.id):
+        return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
+
+    # Generate and store token
+    token = EmailVerificationService.create_verification_token(user)
+
+    # Record the request for rate limiting
+    _record_verification_request(user.id)
+
+    send_verification_email(user.email, token)
+
+    return jsonify({"message": _RESEND_VERIFICATION_RESPONSE}), 200
+
+
 @auth_bp.route("/send-verification", methods=["POST"])
 @jwt_required()
 def send_verification():
@@ -254,9 +311,7 @@ def send_verification():
     # Record the request for rate limiting
     _record_verification_request(user.id)
 
-    # In development, log the token (in production, send email)
-    # TODO: Integrate actual email sending service
-    print(f"[DEV] Verification token for {user.email}: {token}")
+    send_verification_email(user.email, token)
 
     return jsonify({"message": "Bestätigungs-E-Mail gesendet", "email": user.email}), 200
 
@@ -346,9 +401,7 @@ def forgot_password():
         # Generate and store token
         token = PasswordResetService.create_reset_token(user)
 
-        # In development, log the token (in production, send email)
-        # TODO: Integrate actual email sending service
-        print(f"[DEV] Password reset token for {user.email}: {token}")
+        send_password_reset_email(user.email, token)
 
     # Always return same response to prevent email enumeration
     return jsonify({"message": "Falls ein Konto mit dieser E-Mail existiert, wurde ein Reset-Link gesendet."}), 200
@@ -456,9 +509,6 @@ def update_language():
         return jsonify({"error": "Ungültige Sprache. Muss 'de' oder 'en' sein."}), 400
 
     user.language = language
-
-    from models import db
-
     db.session.commit()
 
     return jsonify({"message": "Spracheinstellung aktualisiert", "language": user.language}), 200
@@ -479,20 +529,24 @@ def update_profile():
     if not user:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
-    # Update allowed fields
-    if "full_name" in data:
-        full_name = data["full_name"]
-        if full_name and len(full_name) > 255:
-            return jsonify({"error": "Name darf maximal 255 Zeichen haben"}), 400
-        user.full_name = full_name.strip() if full_name else None
+    # Profile field definitions: (json_key, model_attr, max_length, label)
+    profile_fields = [
+        ("full_name", "full_name", 255, "Name"),
+        ("display_name", "display_name", 100, "Anzeigename"),
+        ("phone", "phone", 50, "Telefonnummer"),
+        ("address", "address", 255, "Adresse"),
+        ("city", "city", 100, "Stadt"),
+        ("postal_code", "postal_code", 20, "PLZ"),
+        ("website", "website", 255, "Website"),
+    ]
 
-    if "display_name" in data:
-        display_name = data["display_name"]
-        if display_name and len(display_name) > 100:
-            return jsonify({"error": "Anzeigename darf maximal 100 Zeichen haben"}), 400
-        user.display_name = display_name.strip() if display_name else None
-
-    from models import db
+    for json_key, attr, max_length, label in profile_fields:
+        if json_key not in data:
+            continue
+        value = data[json_key]
+        if value and len(value) > max_length:
+            return jsonify({"error": f"{label} darf maximal {max_length} Zeichen haben"}), 400
+        setattr(user, attr, value.strip() if value else None)
 
     db.session.commit()
 
@@ -529,9 +583,7 @@ def delete_account():
                 pass
             except Exception as e:
                 # Log the error but don't fail the deletion
-                print(f"Warning: Could not cancel Stripe subscription for user {user.id}: {e}")
-
-        from models import TokenBlacklist, db
+                logger.warning("Could not cancel Stripe subscription for user %s: %s", user.id, e)
 
         # Store info for logging before deletion
         user_email = user.email
@@ -549,13 +601,11 @@ def delete_account():
         # API calls with this token will fail during user lookup anyway.
 
         # Log successful deletion (for compliance purposes)
-        print(f"[GDPR] Account deleted for user {user_email} (ID: {current_user_id})")
+        logger.info("[GDPR] Account deleted for user %s (ID: %s)", user_email, current_user_id)
 
         return jsonify({"message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}), 200
 
     except Exception as e:
-        from models import db
-
         db.session.rollback()
-        print(f"Error deleting account for user {current_user_id}: {e}")
+        logger.error("Error deleting account for user %s: %s", current_user_id, e)
         return jsonify({"error": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."}), 500

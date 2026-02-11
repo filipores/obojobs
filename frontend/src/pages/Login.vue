@@ -18,7 +18,7 @@
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
         </svg>
       </button>
-      <LanguageSwitcher />
+      <LanguageSwitcher v-if="false" />
     </div>
 
     <!-- Decorative Elements -->
@@ -109,8 +109,24 @@
             </div>
           </div>
 
+          <!-- Email Not Verified Message -->
+          <div v-if="emailNotVerified" class="alert alert-warning">
+            <p>{{ $t('login.emailNotVerified') }}</p>
+            <button
+              type="button"
+              class="resend-verification-btn"
+              :disabled="resendLoading || resendCooldown > 0"
+              @click="handleResendVerification"
+            >
+              <span v-if="resendLoading">{{ $t('emailVerification.resending') }}</span>
+              <span v-else-if="resendCooldown > 0">{{ $t('emailVerification.resendCountdown', { time: resendCooldown + 's' }) }}</span>
+              <span v-else>{{ $t('login.resendVerification') }}</span>
+            </button>
+            <p v-if="resendSuccess" class="resend-success">{{ $t('emailVerification.resendSuccess') }}</p>
+          </div>
+
           <!-- Error Message -->
-          <div v-if="error" class="alert alert-error">
+          <div v-if="error && !emailNotVerified" class="alert alert-error">
             {{ error }}
           </div>
 
@@ -155,7 +171,7 @@
       <!-- Info Section - Offset for asymmetry -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2 v-html="$t('login.aiPoweredTitle')"></h2>
+          <h2>{{ $t('login.aiPoweredTitleLine1') }}<br>{{ $t('login.aiPoweredTitleLine2') }}</h2>
           <p class="info-description">
             {{ $t('login.aiPoweredDescription') }}
           </p>
@@ -168,10 +184,6 @@
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
               <span>{{ $t('login.featureChromeExtension') }}</span>
-            </li>
-            <li class="feature-item stagger-item">
-              <span class="feature-marker"></span>
-              <span>{{ $t('login.featureTemplateManagement') }}</span>
             </li>
           </ul>
         </div>
@@ -187,7 +199,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
 import api from '../api/client'
 
@@ -201,6 +213,10 @@ const error = ref('')
 const loading = ref(false)
 const googleLoading = ref(false)
 const isDarkMode = ref(false)
+const emailNotVerified = ref(false)
+const resendLoading = ref(false)
+const resendSuccess = ref(false)
+const resendCooldown = ref(0)
 
 // Validation states
 const emailTouched = ref(false)
@@ -223,11 +239,6 @@ const passwordError = computed(() => {
   if (!passwordTouched.value) return ''
   if (!password.value) return t('auth.passwordRequired')
   return ''
-})
-
-// Form is valid when email format is correct and password is provided
-const _isFormValid = computed(() => {
-  return email.value && isValidEmail(email.value) && password.value
 })
 
 const THEME_KEY = 'obojobs-theme'
@@ -297,9 +308,37 @@ const handleLogin = async () => {
 
     router.push('/')
   } catch (e) {
-    error.value = e.response?.data?.error || t('auth.loginFailed')
+    if (e.response?.data?.email_not_verified) {
+      emailNotVerified.value = true
+      error.value = ''
+      resendSuccess.value = false
+    } else {
+      emailNotVerified.value = false
+      error.value = e.response?.data?.error || t('auth.loginFailed')
+    }
   } finally {
     loading.value = false
+  }
+}
+
+const handleResendVerification = async () => {
+  try {
+    resendLoading.value = true
+    resendSuccess.value = false
+    await api.silent.post('/auth/resend-verification', { email: email.value })
+    resendSuccess.value = true
+    // Start 60-second cooldown
+    resendCooldown.value = 60
+    const interval = setInterval(() => {
+      resendCooldown.value--
+      if (resendCooldown.value <= 0) {
+        clearInterval(interval)
+      }
+    }, 1000)
+  } catch {
+    // Silently handle - the endpoint always returns 200
+  } finally {
+    resendLoading.value = false
   }
 }
 
@@ -845,5 +884,52 @@ onMounted(() => {
 
 .google-icon {
   flex-shrink: 0;
+}
+
+/* ========================================
+   EMAIL NOT VERIFIED WARNING
+   ======================================== */
+.alert-warning {
+  background: rgba(200, 150, 50, 0.08);
+  border: 1px solid rgba(200, 150, 50, 0.3);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-md);
+  color: var(--color-text-primary);
+}
+
+.alert-warning p {
+  margin: 0 0 var(--space-sm) 0;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.resend-verification-btn {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--space-xs) var(--space-md);
+  background: var(--color-ai);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.8125rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.resend-verification-btn:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.resend-verification-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.resend-success {
+  color: #4a7c59;
+  font-size: 0.8125rem;
+  margin-top: var(--space-xs);
 }
 </style>

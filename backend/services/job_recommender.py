@@ -1,57 +1,45 @@
 """
 Job Recommender Service - Finds and recommends jobs based on user skills and profile.
-
-Scrapes job boards for relevant jobs and calculates Job-Fit scores.
 """
 
-from dataclasses import dataclass
+import time
 from datetime import datetime, timedelta
 
 from models import JobRecommendation, UserSkill, db
+from services.bundesagentur_client import BundesagenturClient
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
 from services.web_scraper import WebScraper
 
 
-@dataclass
-class JobSearchResult:
-    """Result of a job search from a job board."""
-
-    title: str
-    company: str
-    location: str | None
-    url: str
-    source: str
-    description: str | None = None
-    salary: str | None = None
-    employment_type: str | None = None
-
-
 class JobRecommender:
     """Service to find and recommend jobs based on user profile."""
 
-    # Minimum fit score to recommend a job
     MIN_FIT_SCORE = 60
-
-    # Maximum recommendations to generate per run
     MAX_RECOMMENDATIONS = 10
-
-    # Job board search URLs (simplified - using Indeed DE as primary source)
     SEARCH_URLS = {
         "indeed": "https://de.indeed.com/jobs?q={query}&l={location}&sort=date",
     }
+
+    @staticmethod
+    def score_to_category(score: int) -> str:
+        """Map a fit score to a category label."""
+        if score >= 80:
+            return "sehr_gut"
+        if score >= 60:
+            return "gut"
+        if score >= 40:
+            return "mittel"
+        return "niedrig"
 
     def __init__(self):
         self.scraper = WebScraper()
         self.fit_calculator = JobFitCalculator()
         self.requirement_analyzer = RequirementAnalyzer()
+        self.ba_client = BundesagenturClient()
 
     def get_user_search_keywords(self, user_id: int) -> list[str]:
-        """
-        Extract search keywords from user's skills.
-
-        Returns top skills by category for job search.
-        """
+        """Extract top search keywords from user's skills, prioritizing technical skills."""
         skills = UserSkill.query.filter_by(user_id=user_id).all()
 
         if not skills:
@@ -78,84 +66,139 @@ class JobRecommender:
         return keywords[:5]  # Limit to 5 keywords
 
     def find_jobs_for_user(self, user_id: int, location: str = "Deutschland", max_results: int = 20) -> list[dict]:
-        """
-        Search for jobs matching user's skill profile.
-
-        This is a simplified implementation that works with manual triggers.
-        For production, this could be enhanced with actual job board API access.
-
-        Args:
-            user_id: User ID to search for
-            location: Location to search in
-            max_results: Maximum number of jobs to fetch
-
-        Returns:
-            List of job data dicts with scraped job information
-        """
+        """Search for jobs matching user's skill profile via Bundesagentur API."""
         keywords = self.get_user_search_keywords(user_id)
 
         if not keywords:
             return []
 
-        # Note: This is a placeholder implementation.
-        # In production, you would integrate with job board APIs or
-        # use a more sophisticated scraping approach.
-        # For now, we support manual job URL input and analysis.
+        # Search per keyword individually (API uses AND logic)
+        seen_refnrs = set()
+        all_jobs = []
+        for keyword in keywords[:3]:
+            jobs, _ = self.ba_client.search_jobs(
+                keywords=keyword,
+                location=location,
+                size=max_results,
+            )
+            for job in jobs:
+                if job.refnr not in seen_refnrs:
+                    seen_refnrs.add(job.refnr)
+                    all_jobs.append(job)
 
-        return []
+        results = []
+        for job in all_jobs:
+            job_data = job.to_job_data()
+            if job_data.get("url") and self.check_duplicate(user_id, job_data["url"]):
+                continue
+            results.append(job_data)
 
-    def analyze_job_for_user(self, user_id: int, job_url: str) -> dict | None:
-        """
-        Analyze a specific job posting for a user and calculate fit score.
+        return results
 
-        Args:
-            user_id: The user's ID
-            job_url: URL of the job posting to analyze
+    def search_and_score_jobs(
+        self,
+        user_id: int,
+        location: str = "",
+        working_time: str = "",
+        max_results: int = 10,
+        keywords: str = "",
+        page: int = 1,
+    ) -> dict:
+        """Search Bundesagentur API, fetch details, and score each job."""
+        if keywords.strip():
+            search_keywords = [kw.strip() for kw in keywords.split(",") if kw.strip()]
+        else:
+            search_keywords = self.get_user_search_keywords(user_id)
+        if not search_keywords:
+            return {"results": [], "total_found": 0, "saved_count": 0, "page": page, "has_more": False}
 
-        Returns:
-            Dict with job data and fit score, or None if analysis fails
-        """
-        try:
-            # Scrape the job posting
-            job_data = self.scraper.fetch_structured_job_posting(job_url)
+        # Search per keyword individually (API uses AND logic, combining keywords returns too few results)
+        seen_refnrs = set()
+        all_jobs = []
+        total = 0
 
-            if not job_data or not job_data.get("description"):
-                return None
+        for keyword in search_keywords[:3]:
+            jobs, found = self.ba_client.search_jobs(
+                keywords=keyword,
+                location=location,
+                working_time=working_time,
+                size=min(max_results, 25),
+                page=page,
+            )
+            total += found
+            for job in jobs:
+                if job.refnr not in seen_refnrs:
+                    seen_refnrs.add(job.refnr)
+                    all_jobs.append(job)
 
-            # Get user skills
-            user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+        if keywords.strip():
+            all_jobs = [job for job in all_jobs if self._is_relevant(job, search_keywords)]
 
-            if not user_skills:
-                return {
-                    "job_data": job_data,
-                    "fit_score": 0,
-                    "fit_category": "niedrig",
-                    "error": "Keine Skills im Profil gefunden. Bitte laden Sie Ihren Lebenslauf hoch.",
-                }
-
-            # Analyze requirements from job posting
-            requirements = self.requirement_analyzer.analyze_requirements(job_text=job_data.get("description", ""))
-
-            if not requirements:
-                # If no requirements could be extracted, provide basic analysis
-                return {
-                    "job_data": job_data,
-                    "fit_score": 50,
-                    "fit_category": "mittel",
-                    "warning": "Anforderungen konnten nicht vollständig analysiert werden.",
-                }
-
-            # Calculate fit score
-            fit_result = self._calculate_fit_from_requirements(user_skills, requirements)
-
+        if not all_jobs:
             return {
-                "job_data": job_data,
-                "fit_score": fit_result["score"],
-                "fit_category": fit_result["category"],
-                "matched_skills": fit_result["matched"],
-                "missing_skills": fit_result["missing"],
+                "results": [],
+                "total_found": total,
+                "saved_count": 0,
+                "page": page,
+                "has_more": total > page * max_results,
             }
 
+        user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+        if not user_skills:
+            return {"results": [], "total_found": total, "saved_count": 0, "page": page, "has_more": False}
+
+        results = []
+
+        for job in all_jobs[: max_results * 2]:
+            job_data = job.to_job_data()
+
+            if job_data.get("url") and self.check_duplicate(user_id, job_data["url"]):
+                continue
+
+            if not job.beschreibung and job.refnr:
+                detailed = self.ba_client.get_job_details(job.refnr)
+                if detailed and detailed.beschreibung:
+                    job_data["description"] = detailed.beschreibung
+                time.sleep(BundesagenturClient.DETAIL_DELAY)
+
+            description = job_data.get("description", "")
+            fit_result = None
+            if description and len(description) > 50:
+                requirements = self.requirement_analyzer.analyze_requirements(job_text=description)
+                if requirements:
+                    fit_result = self._calculate_fit_from_requirements(user_skills, requirements)
+
+            if not fit_result:
+                fit_result = self._title_based_score(job, user_skills)
+                fit_result["missing"] = []
+
+            job_data["fit_score"] = fit_result["score"]
+            job_data["fit_category"] = fit_result["category"]
+            job_data["matched_skills"] = fit_result["matched"]
+            job_data["missing_skills"] = fit_result["missing"]
+
+            results.append(job_data)
+
+            if len(results) >= max_results:
+                break
+
+        results.sort(key=lambda x: x.get("fit_score", 0), reverse=True)
+
+        return {
+            "results": results,
+            "total_found": total,
+            "saved_count": 0,
+            "page": page,
+            "has_more": total > page * max_results,
+        }
+
+    def analyze_job_for_user(self, user_id: int, job_url: str) -> dict | None:
+        """Analyze a job posting URL and calculate fit score for the user."""
+        try:
+            job_data = self.scraper.fetch_structured_job_posting(job_url)
+            if not job_data or not job_data.get("description"):
+                return None
+            return self._score_job_data(user_id, job_data, job_data.get("description", ""))
         except Exception as e:
             return {
                 "error": f"Fehler bei der Analyse: {str(e)}",
@@ -166,21 +209,8 @@ class JobRecommender:
     def analyze_manual_job_for_user(
         self, user_id: int, job_text: str, company: str = "", title: str = ""
     ) -> dict | None:
-        """
-        Analyze manually pasted job text and calculate fit score.
-        Fallback when URL scraping fails.
-
-        Args:
-            user_id: The user's ID
-            job_text: Full text of the job posting
-            company: Company name (optional)
-            title: Job title (optional)
-
-        Returns:
-            Dict with job data and fit score, or None if analysis fails
-        """
+        """Analyze manually pasted job text and calculate fit score."""
         try:
-            # Create job data structure from manual input
             job_data = {
                 "title": title or "Unbekannte Position",
                 "company": company or "Unbekanntes Unternehmen",
@@ -189,41 +219,7 @@ class JobRecommender:
                 "url": None,
                 "source": "manual",
             }
-
-            # Get user skills
-            user_skills = UserSkill.query.filter_by(user_id=user_id).all()
-
-            if not user_skills:
-                return {
-                    "job_data": job_data,
-                    "fit_score": 0,
-                    "fit_category": "niedrig",
-                    "error": "Keine Skills im Profil gefunden. Bitte laden Sie Ihren Lebenslauf hoch.",
-                }
-
-            # Analyze requirements from job posting
-            requirements = self.requirement_analyzer.analyze_requirements(job_text=job_text)
-
-            if not requirements:
-                # If no requirements could be extracted, provide basic analysis
-                return {
-                    "job_data": job_data,
-                    "fit_score": 50,
-                    "fit_category": "mittel",
-                    "warning": "Anforderungen konnten nicht vollständig analysiert werden.",
-                }
-
-            # Calculate fit score
-            fit_result = self._calculate_fit_from_requirements(user_skills, requirements)
-
-            return {
-                "job_data": job_data,
-                "fit_score": fit_result["score"],
-                "fit_category": fit_result["category"],
-                "matched_skills": fit_result["matched"],
-                "missing_skills": fit_result["missing"],
-            }
-
+            return self._score_job_data(user_id, job_data, job_text)
         except Exception as e:
             return {
                 "error": f"Fehler bei der Analyse: {str(e)}",
@@ -231,31 +227,52 @@ class JobRecommender:
                 "fit_category": "niedrig",
             }
 
+    def _score_job_data(self, user_id: int, job_data: dict, job_text: str) -> dict:
+        """Score job data against user skills and return analysis result."""
+        user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+
+        if not user_skills:
+            return {
+                "job_data": job_data,
+                "fit_score": 0,
+                "fit_category": "niedrig",
+                "error": "Keine Skills im Profil gefunden. Bitte laden Sie Ihren Lebenslauf hoch.",
+            }
+
+        requirements = self.requirement_analyzer.analyze_requirements(job_text=job_text)
+
+        if not requirements:
+            return {
+                "job_data": job_data,
+                "fit_score": 50,
+                "fit_category": "mittel",
+                "warning": "Anforderungen konnten nicht vollständig analysiert werden.",
+            }
+
+        fit_result = self._calculate_fit_from_requirements(user_skills, requirements)
+
+        return {
+            "job_data": job_data,
+            "fit_score": fit_result["score"],
+            "fit_category": fit_result["category"],
+            "matched_skills": fit_result["matched"],
+            "missing_skills": fit_result["missing"],
+        }
+
     def _calculate_fit_from_requirements(self, user_skills: list[UserSkill], requirements: list[dict]) -> dict:
-        """
-        Calculate fit score from requirements and user skills.
-
-        Args:
-            user_skills: User's skills from database
-            requirements: Extracted requirements from job posting
-
-        Returns:
-            Dict with score, category, matched and missing skills
-        """
+        """Calculate fit score from requirements and user skills."""
         must_haves = [r for r in requirements if r.get("requirement_type") == "must_have"]
         nice_to_haves = [r for r in requirements if r.get("requirement_type") == "nice_to_have"]
 
         matched = []
         missing = []
 
-        # Check each requirement against user skills
         for req in requirements:
             req_text = req.get("requirement_text", "").lower()
             found = False
 
             for skill in user_skills:
                 skill_name = skill.skill_name.lower()
-                # Simple matching: check if skill name appears in requirement
                 if skill_name in req_text or self._fuzzy_match(skill_name, req_text):
                     matched.append(
                         {
@@ -275,20 +292,18 @@ class JobRecommender:
                     }
                 )
 
-        # Calculate scores
         must_have_matched = len([m for m in matched if m["type"] == "must_have"])
         nice_to_have_matched = len([m for m in matched if m["type"] == "nice_to_have"])
 
         total_must_have = len(must_haves)
         total_nice_to_have = len(nice_to_haves)
 
-        # Calculate percentages
         must_have_pct = (must_have_matched / total_must_have * 100) if total_must_have else 100
         nice_to_have_pct = (nice_to_have_matched / total_nice_to_have * 100) if total_nice_to_have else 100
 
         # Weighted score: 70% must-have, 30% nice-to-have
         if total_must_have == 0 and total_nice_to_have == 0:
-            score = 50  # No requirements found
+            score = 50
         elif total_must_have == 0:
             score = int(nice_to_have_pct)
         elif total_nice_to_have == 0:
@@ -296,32 +311,18 @@ class JobRecommender:
         else:
             score = int(must_have_pct * 0.7 + nice_to_have_pct * 0.3)
 
-        # Determine category
-        if score >= 80:
-            category = "sehr_gut"
-        elif score >= 60:
-            category = "gut"
-        elif score >= 40:
-            category = "mittel"
-        else:
-            category = "niedrig"
-
         return {
             "score": score,
-            "category": category,
+            "category": self.score_to_category(score),
             "matched": matched,
             "missing": missing,
         }
 
     def _fuzzy_match(self, skill: str, text: str) -> bool:
-        """Simple fuzzy matching for skills."""
-        # Split skill into words and check if any word appears in text
-        skill_words = skill.split()
-        for word in skill_words:
-            if len(word) >= 3 and word in text:
-                return True
+        """Simple fuzzy matching for skills using word overlap and known variations."""
+        if any(len(word) >= 3 and word in text for word in skill.split()):
+            return True
 
-        # Check for common variations
         variations = {
             "javascript": ["js", "node", "react", "vue", "angular"],
             "python": ["py", "django", "flask", "pandas"],
@@ -331,31 +332,41 @@ class JobRecommender:
         }
 
         for base_skill, alts in variations.items():
-            if base_skill in skill:
-                for alt in alts:
-                    if alt in text:
-                        return True
-            if skill in alts:
-                if base_skill in text:
-                    return True
+            if base_skill in skill and any(alt in text for alt in alts):
+                return True
+            if skill in alts and base_skill in text:
+                return True
 
         return False
+
+    def _title_based_score(self, job, user_skills: list) -> dict:
+        """Score a job based on title/beruf matching against user skills (fallback when no description)."""
+        if not user_skills:
+            return {"score": 50, "category": "mittel", "matched": []}
+
+        text = f"{job.titel} {job.beruf}".lower()
+        matched = []
+        for skill in user_skills:
+            skill_name = skill.skill_name.lower()
+            if skill_name in text or self._fuzzy_match(skill_name, text):
+                matched.append({"requirement": job.titel, "skill": skill.skill_name, "type": "title_match"})
+
+        considered = min(len(user_skills), 5)
+        match_ratio = len(matched) / considered
+        # Scale: 0 matches -> 30, all match -> 90
+        score = int(30 + match_ratio * 60)
+        return {"score": score, "category": self.score_to_category(score), "matched": matched}
+
+    @staticmethod
+    def _is_relevant(job, keywords: list[str]) -> bool:
+        """Check if a job is relevant to the user's keywords (at least one must appear in title or beruf)."""
+        text = f"{job.titel} {job.beruf}".lower()
+        return any(kw.lower() in text for kw in keywords)
 
     def create_recommendation(
         self, user_id: int, job_data: dict, fit_score: int, fit_category: str
     ) -> JobRecommendation:
-        """
-        Create a job recommendation for the user.
-
-        Args:
-            user_id: User ID
-            job_data: Scraped job data
-            fit_score: Calculated fit score
-            fit_category: Score category (sehr_gut, gut, etc.)
-
-        Returns:
-            Created JobRecommendation instance
-        """
+        """Create and persist a job recommendation."""
         recommendation = JobRecommendation.from_job_data(
             user_id=user_id,
             job_data=job_data,
@@ -371,17 +382,7 @@ class JobRecommender:
     def get_recommendations(
         self, user_id: int, include_dismissed: bool = False, limit: int = 20
     ) -> list[JobRecommendation]:
-        """
-        Get job recommendations for a user.
-
-        Args:
-            user_id: User ID
-            include_dismissed: Whether to include dismissed recommendations
-            limit: Maximum number of recommendations to return
-
-        Returns:
-            List of JobRecommendation objects
-        """
+        """Get job recommendations for a user, sorted by fit score."""
         query = JobRecommendation.query.filter_by(user_id=user_id)
 
         if not include_dismissed:
@@ -394,16 +395,7 @@ class JobRecommender:
         )
 
     def dismiss_recommendation(self, recommendation_id: int, user_id: int) -> bool:
-        """
-        Dismiss a job recommendation.
-
-        Args:
-            recommendation_id: ID of the recommendation to dismiss
-            user_id: User ID (for authorization)
-
-        Returns:
-            True if dismissed successfully, False otherwise
-        """
+        """Dismiss a recommendation. Returns True on success."""
         recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=user_id).first()
 
         if not recommendation:
@@ -414,17 +406,7 @@ class JobRecommender:
         return True
 
     def mark_as_applied(self, recommendation_id: int, user_id: int, application_id: int | None = None) -> bool:
-        """
-        Mark a recommendation as applied.
-
-        Args:
-            recommendation_id: ID of the recommendation
-            user_id: User ID (for authorization)
-            application_id: Optional application ID if an application was created
-
-        Returns:
-            True if updated successfully, False otherwise
-        """
+        """Mark a recommendation as applied. Returns True on success."""
         recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=user_id).first()
 
         if not recommendation:
@@ -437,29 +419,11 @@ class JobRecommender:
         return True
 
     def check_duplicate(self, user_id: int, job_url: str) -> bool:
-        """
-        Check if a job URL already exists as a recommendation for the user.
-
-        Args:
-            user_id: User ID
-            job_url: Job URL to check
-
-        Returns:
-            True if duplicate exists, False otherwise
-        """
-        existing = JobRecommendation.query.filter_by(user_id=user_id, job_url=job_url).first()
-        return existing is not None
+        """Check if a job URL already exists as a recommendation for the user."""
+        return JobRecommendation.query.filter_by(user_id=user_id, job_url=job_url).first() is not None
 
     def cleanup_old_recommendations(self, days: int = 30) -> int:
-        """
-        Remove recommendations older than specified days.
-
-        Args:
-            days: Number of days after which to remove recommendations
-
-        Returns:
-            Number of deleted recommendations
-        """
+        """Remove unapplied recommendations older than the specified number of days."""
         cutoff_date = datetime.utcnow() - timedelta(days=days)
 
         deleted = JobRecommendation.query.filter(

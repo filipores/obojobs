@@ -1,22 +1,25 @@
 <template>
   <div class="auth-page">
-    <!-- Theme Toggle - Floating -->
-    <button @click="toggleTheme" class="theme-toggle-float" :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
-      <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <circle cx="12" cy="12" r="5"/>
-        <line x1="12" y1="1" x2="12" y2="3"/>
-        <line x1="12" y1="21" x2="12" y2="23"/>
-        <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
-        <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
-        <line x1="1" y1="12" x2="3" y2="12"/>
-        <line x1="21" y1="12" x2="23" y2="12"/>
-        <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
-        <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
-      </svg>
-      <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
-      </svg>
-    </button>
+    <!-- Floating Controls - Theme Toggle & Language Switcher -->
+    <div class="floating-controls">
+      <button @click="toggleTheme" class="theme-toggle-float" :title="isDarkMode ? 'Light Mode' : 'Dark Mode'">
+        <svg v-if="isDarkMode" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <circle cx="12" cy="12" r="5"/>
+          <line x1="12" y1="1" x2="12" y2="3"/>
+          <line x1="12" y1="21" x2="12" y2="23"/>
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+          <line x1="1" y1="12" x2="3" y2="12"/>
+          <line x1="21" y1="12" x2="23" y2="12"/>
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+        <svg v-else width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+      </button>
+      <LanguageSwitcher v-if="false" />
+    </div>
 
     <!-- Decorative Elements -->
     <div class="auth-decoration">
@@ -37,8 +40,8 @@
 
         <!-- Header -->
         <div class="auth-header">
-          <h1>E-Mail bestätigen</h1>
-          <p>Verifizieren Sie Ihre E-Mail-Adresse</p>
+          <h1>{{ $t('emailVerification.title') }}</h1>
+          <p>{{ $t('emailVerification.subtitle') }}</p>
         </div>
 
         <!-- Main Card -->
@@ -50,13 +53,14 @@
             </svg>
           </div>
 
-          <h3>Verifizierungs-E-Mail gesendet</h3>
-          <p class="email-info">
-            Wir haben eine Bestätigungs-E-Mail an <strong>{{ userEmail }}</strong> gesendet.
-          </p>
+          <h3>{{ $t('emailVerification.cardTitle') }}</h3>
+          <i18n-t keypath="emailVerification.emailInfo" tag="p" class="email-info">
+            <template #email>
+              <strong>{{ userEmail }}</strong>
+            </template>
+          </i18n-t>
           <p class="instructions">
-            Klicken Sie auf den Link in der E-Mail, um Ihr Konto zu verifizieren.
-            Falls Sie die E-Mail nicht finden, prüfen Sie bitte auch Ihren Spam-Ordner.
+            {{ $t('emailVerification.instructions') }}
           </p>
 
           <!-- Success Message -->
@@ -75,15 +79,15 @@
             class="zen-btn zen-btn-filled zen-btn-lg"
             :disabled="loading || cooldownSeconds > 0"
           >
-            <span v-if="loading">Wird gesendet...</span>
+            <span v-if="loading">{{ $t('emailVerification.resending') }}</span>
             <span v-else-if="cooldownSeconds > 0">
-              Erneut senden in {{ formattedCooldown }}
+              {{ $t('emailVerification.resendCountdown', { time: formattedCooldown }) }}
             </span>
-            <span v-else>Erneut senden</span>
+            <span v-else>{{ $t('emailVerification.resend') }}</span>
           </button>
 
           <p class="rate-limit-info" v-if="cooldownSeconds > 0">
-            Sie können maximal 3 Verifizierungs-E-Mails pro Stunde anfordern.
+            {{ $t('emailVerification.rateLimitInfo') }}
           </p>
         </div>
 
@@ -92,36 +96,35 @@
 
         <!-- Footer -->
         <div class="auth-footer">
-          <p>Falsche E-Mail? <router-link to="/register">Neu registrieren</router-link></p>
-          <p>Bereits verifiziert? <router-link to="/login">Anmelden</router-link></p>
+          <p>{{ $t('emailVerification.wrongEmail') }} <router-link to="/register">{{ $t('emailVerification.registerAgain') }}</router-link></p>
+          <p>{{ $t('emailVerification.alreadyVerified') }} <router-link to="/login">{{ $t('auth.login') }}</router-link></p>
         </div>
       </div>
 
       <!-- Info Section -->
       <div class="auth-info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-content">
-          <h2>Warum E-Mail<br/>verifizieren?</h2>
+          <h2>{{ $t('emailVerification.infoTitleLine1') }}<br/>{{ $t('emailVerification.infoTitleLine2') }}</h2>
           <p class="info-description">
-            Die Verifizierung schützt Ihr Konto und ermöglicht uns,
-            wichtige Informationen sicher zuzustellen.
+            {{ $t('emailVerification.infoDescription') }}
           </p>
 
           <ul class="feature-list">
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Schutz vor unbefugtem Zugriff</span>
+              <span>{{ $t('emailVerification.featureProtection') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Passwort-Wiederherstellung möglich</span>
+              <span>{{ $t('emailVerification.featureRecovery') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Wichtige Benachrichtigungen</span>
+              <span>{{ $t('emailVerification.featureNotifications') }}</span>
             </li>
             <li class="feature-item stagger-item">
               <span class="feature-marker"></span>
-              <span>Voller Funktionsumfang</span>
+              <span>{{ $t('emailVerification.featureFullAccess') }}</span>
             </li>
           </ul>
         </div>
@@ -136,7 +139,11 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
+import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+
+const { t } = useI18n()
 
 const route = useRoute()
 
@@ -209,10 +216,10 @@ const resendVerification = async () => {
 
     await api.post('/auth/send-verification')
 
-    successMessage.value = 'Verifizierungs-E-Mail wurde erneut gesendet!'
+    successMessage.value = t('emailVerification.resendSuccess')
     startCooldown(60) // 60 seconds cooldown
   } catch (e) {
-    const errorMsg = e.response?.data?.error || 'Fehler beim Senden der E-Mail.'
+    const errorMsg = e.response?.data?.error || t('emailVerification.resendError')
     error.value = errorMsg
 
     // If rate limited, show cooldown
@@ -246,13 +253,19 @@ onUnmounted(() => {
 }
 
 /* ========================================
-   FLOATING THEME TOGGLE
+   FLOATING CONTROLS
    ======================================== */
-.theme-toggle-float {
+.floating-controls {
   position: fixed;
   top: var(--space-lg);
   right: var(--space-lg);
   z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.theme-toggle-float {
   width: 44px;
   height: 44px;
   display: flex;
@@ -414,7 +427,7 @@ onUnmounted(() => {
   margin-bottom: var(--space-sm);
 }
 
-.email-info strong {
+.email-info :deep(strong) {
   color: var(--color-sumi);
 }
 

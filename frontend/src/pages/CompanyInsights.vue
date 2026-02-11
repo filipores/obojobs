@@ -3,7 +3,7 @@
     <div class="container">
       <!-- Header Section -->
       <section class="page-header animate-fade-up">
-        <h1>Company Insights</h1>
+        <h1>{{ $t('pages.companyInsights') }}</h1>
         <p class="page-subtitle">Statistiken und Antwortverhalten nach Firma</p>
       </section>
 
@@ -31,7 +31,7 @@
       <div class="ink-stroke"></div>
 
       <!-- Loading State - Skeleton -->
-      <div v-if="loading" class="loading-skeleton" aria-label="Lade Company Insights">
+      <div v-if="loading" class="loading-skeleton" :aria-label="$t('pages.companyInsights')">
         <div class="skeleton-table zen-card">
           <div class="skeleton-table-header">
             <div class="skeleton skeleton-th" style="width: 200px;"></div>
@@ -119,7 +119,7 @@
       <!-- Empty State -->
       <section v-else class="empty-state">
         <div class="empty-enso"></div>
-        <h3>Keine Company Insights verfuegbar</h3>
+        <h3>Keine Firmen-Insights verfügbar</h3>
         <p>Erstellen Sie Bewerbungen, um Insights zu generieren.</p>
         <router-link to="/applications" class="zen-btn">
           Zu den Bewerbungen

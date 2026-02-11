@@ -1,8 +1,11 @@
+import logging
 import time
 
 from anthropic import Anthropic
 
 from config import config
+
+logger = logging.getLogger(__name__)
 
 
 class ClaudeAPIClient:
@@ -29,10 +32,10 @@ class ClaudeAPIClient:
                 return self._parse_extracted_details(extracted_text, firma_name)
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Detail-Extraktion fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("Detail-Extraktion fehlgeschlagen (Versuch %d/%d): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
-                    print("⚠ Detail-Extraktion fehlgeschlagen, verwende Defaults")
+                    logger.warning("Detail-Extraktion fehlgeschlagen, verwende Defaults")
                     return self._get_default_details(firma_name)
 
     def _parse_extracted_details(self, text: str, firma_name: str) -> dict[str, str]:
@@ -87,7 +90,7 @@ class ClaudeAPIClient:
                 return response.content[0].text.strip()
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"Extraktion fehlgeschlagen (Versuch {attempt + 1}/{retry_count}): {str(e)}")
+                    logger.warning("Extraktion fehlgeschlagen (Versuch %d/%d): %s", attempt + 1, retry_count, e)
                     time.sleep(2)
                 else:
                     raise Exception(f"Informationsextraktion fehlgeschlagen: {str(e)}") from e
@@ -101,18 +104,19 @@ class ClaudeAPIClient:
         details: dict[str, str] | None = None,
         use_extraction: bool = True,
         retry_count: int = 3,
+        bewerber_vorname: str | None = None,
     ) -> str:
         if details and details.get("stellenanzeige_kompakt"):
             stellenanzeige_text = details["stellenanzeige_kompakt"]
         elif use_extraction:
-            print("  → Extrahiere Kerninformationen aus Stellenanzeige...")
+            logger.info("Extrahiere Kerninformationen aus Stellenanzeige...")
             stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
-            print(f"  → Extraktion abgeschlossen ({len(stellenanzeige_text)} Zeichen)")
+            logger.info("Extraktion abgeschlossen (%d Zeichen)", len(stellenanzeige_text))
 
         position = details.get("position", "Softwareentwickler") if details else "Softwareentwickler"
         quelle = details.get("quelle", "eure Website") if details else "eure Website"
 
-        system_blocks = self._create_cached_system_blocks(cv_text, zeugnis_text, position, quelle)
+        system_blocks = self._create_cached_system_blocks(cv_text, zeugnis_text, position, quelle, bewerber_vorname)
         user_prompt = self._create_user_prompt(stellenanzeige_text, firma_name)
 
         for attempt in range(retry_count):
@@ -131,8 +135,8 @@ class ClaudeAPIClient:
                 return einleitung
             except Exception as e:
                 if attempt < retry_count - 1:
-                    print(f"API-Fehler (Versuch {attempt + 1}/{retry_count}): {str(e)}")
-                    print("Warte 2 Sekunden vor erneutem Versuch...")
+                    logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
+                    logger.info("Warte 2 Sekunden vor erneutem Versuch...")
                     time.sleep(2)
                 else:
                     raise Exception(f"Claude API Fehler nach {retry_count} Versuchen: {str(e)}") from e
@@ -182,8 +186,22 @@ Extrahiere folgende Informationen in kompakter Form:
 WICHTIG: Fasse dich sehr kurz. Keine langen Beschreibungen. Nur die Kernfakten.
 Schreibe die Extraktion in Stichpunkten oder kurzen Sätzen:"""
 
-    def _create_cached_system_blocks(self, cv_text: str, zeugnis_text: str | None, position: str, quelle: str) -> list:
+    def _create_cached_system_blocks(
+        self, cv_text: str, zeugnis_text: str | None, position: str, quelle: str, bewerber_vorname: str | None = None
+    ) -> list:
         system_blocks = []
+
+        # Use the applicant's first name for personalized style, or generic phrasing
+        if bewerber_vorname:
+            stil_referenz = f'wie {bewerber_vorname} schreibt: "hiermit bewerbe ich mich initiativ bei euch als..."'
+            bezug_referenz = f"Position, wie {bewerber_vorname} auf das Unternehmen aufmerksam wurde (Quelle), warum er/sie interessiert ist"
+            stil_schluss = f"im lockeren, authentischen Stil von {bewerber_vorname}"
+        else:
+            stil_referenz = (
+                'locker und authentisch formulieren (z.B. "hiermit bewerbe ich mich initiativ bei euch als...")'
+            )
+            bezug_referenz = "Position, wie der Bewerber auf das Unternehmen aufmerksam wurde (Quelle), warum er/sie interessiert ist"
+            stil_schluss = "im lockeren, authentischen Stil"
 
         instructions = f"""Du bist ein professioneller Bewerbungsschreiber. Deine Aufgabe ist es, einen kurzen, prägnanten Einleitungsabsatz für ein Anschreiben zu verfassen.
 
@@ -193,8 +211,8 @@ KONTEXT:
 
 WICHTIGE ANFORDERUNGEN:
 - Der Absatz soll 2-4 Sätze lang sein
-- Locker und authentisch formulieren (wie Filip schreibt: "hiermit bewerbe ich mich initiativ bei euch als...")
-- Bezug nehmen auf: Position, wie Filip auf das Unternehmen aufmerksam wurde (Quelle), warum er interessiert ist
+- {stil_referenz}
+- Bezug nehmen auf: {bezug_referenz}
 - OHNE Anrede beginnen (das steht schon im Template)
 - Den Firmennamen NICHT wiederholen (steht schon in der Anrede)
 - Authentisch und individuell klingen
@@ -202,7 +220,7 @@ WICHTIGE ANFORDERUNGEN:
 - Locker, aber professionell ("bei euch" statt "bei Ihnen")
 - keine Bindestriche verwenden
 
-Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil von Filip. Beginne direkt mit dem Text, ohne Anrede."""
+Schreibe NUR den Einleitungsabsatz (2-4 Sätze) {stil_schluss}. Beginne direkt mit dem Text, ohne Anrede."""
 
         system_blocks.append({"type": "text", "text": instructions, "cache_control": {"type": "ephemeral"}})
 
@@ -226,17 +244,38 @@ Schreibe NUR den Einleitungsabsatz (2-4 Sätze) im lockeren, authentischen Stil 
         return system_blocks
 
     def generate_email_text(
-        self, position: str, ansprechperson: str, firma_name: str = None, attachments: list = None
+        self,
+        position: str,
+        ansprechperson: str,
+        firma_name: str | None = None,
+        attachments: list[str] | None = None,
+        user_name: str | None = None,
+        user_email: str | None = None,
+        user_phone: str | None = None,
+        user_city: str | None = None,
+        user_website: str | None = None,
     ) -> str:
         """Generate personalized email text for job application"""
         if attachments is None:
             # Note: Arbeitszeugnis is optional - caller should pass it explicitly if available
-            attachments = ["Anschreiben", "Lebenslauf", "Bachelorzeugnis"]
+            attachments = ["Anschreiben", "Lebenslauf"]
 
         # Add company context if available
         position_text = f"die Position als {position}"
         if firma_name:
             position_text = f"die Position als {position} bei {firma_name}"
+
+        name = user_name or "Ihr Name"
+        signature_parts = [name]
+        contact_line = " | ".join(filter(None, [user_city, user_phone]))
+        if contact_line:
+            signature_parts.append(contact_line)
+        if user_email:
+            signature_parts.append(user_email)
+        if user_website:
+            signature_parts.append(user_website)
+
+        signature = "\n".join(signature_parts)
 
         return f"""{ansprechperson},
 
@@ -245,16 +284,15 @@ anbei finden Sie meine Bewerbungsunterlagen für {position_text}.
 Ich freue mich auf Ihre Rückmeldung.
 
 Mit freundlichen Grüßen
-Filip Ores
+{signature}"""
 
-Hamburg | +49 15254112096
-filip.ores@hotmail.com
-filipores.com"""
-
-    def generate_betreff(self, position: str, firma_name: str = None, style: str = "professional") -> str:
+    def generate_betreff(
+        self, position: str, firma_name: str | None = None, style: str = "professional", user_name: str | None = None
+    ) -> str:
         """Generate professional email subject line"""
+        name = user_name or "Bewerber"
         if style == "professional":
-            return f"Bewerbung als {position} - Filip Ores" if firma_name else f"Bewerbung als {position}"
+            return f"Bewerbung als {position} - {name}" if firma_name else f"Bewerbung als {position}"
         if style == "informal":
             return f"Bewerbung: {position}"
         # formal style

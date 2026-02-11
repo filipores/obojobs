@@ -1,5 +1,6 @@
 import axios from 'axios'
 import { translateError } from '@/utils/errorTranslations'
+import i18n from '@/i18n'
 
 // Helper function to detect JWT error messages
 function isJWTErrorMessage(msg) {
@@ -57,27 +58,27 @@ api.interceptors.response.use(
       localStorage.removeItem('token')
       localStorage.removeItem('user')
       if (window.$toast && !suppressToast) {
-        window.$toast('Sitzung abgelaufen. Bitte neu anmelden.', 'warning')
+        window.$toast(i18n.global.t('errors.sessionExpired'), 'warning')
       }
       window.location.href = '/login'
     } else if (error.response?.status === 403) {
       // Forbidden - show permission denied
       if (window.$toast && !suppressToast) {
-        window.$toast('Keine Berechtigung', 'error')
+        window.$toast(i18n.global.t('errors.forbidden'), 'error')
       }
     } else if (error.response?.status === 404) {
       // Not found
       if (window.$toast && !suppressToast) {
-        window.$toast('Nicht gefunden', 'error')
+        window.$toast(i18n.global.t('errors.notFound'), 'error')
       }
     } else if (error.response?.status >= 500) {
       // Server errors - always show unless suppressed
       if (window.$toast && !suppressToast) {
-        window.$toast('Serverfehler. Bitte später erneut versuchen.', 'error')
+        window.$toast(i18n.global.t('errors.serverError'), 'error')
       }
     } else if (error.response?.status === 400 || error.response?.status === 422) {
       // Validation errors - show specific message (translated if needed)
-      const rawMessage = error.response?.data?.error || 'Ungültige Eingabe'
+      const rawMessage = error.response?.data?.error || i18n.global.t('errors.invalidInput')
       const message = translateError(rawMessage)
       if (window.$toast && !suppressToast) {
         window.$toast(message, 'error')

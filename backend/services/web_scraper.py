@@ -1,11 +1,13 @@
 import json
 import logging
+import os
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
+import cloudscraper
 import requests
 from bs4 import BeautifulSoup, Tag
 
@@ -946,7 +948,7 @@ class SoftgardenParser(JobBoardParser):
                     result["salary"] = f"{min_val}-{max_val} {currency}"
                 elif min_val:
                     result["salary"] = f"ab {min_val} {currency}"
-            elif isinstance(value, (int, float)):
+            elif isinstance(value, int | float):
                 currency = salary.get("currency", "EUR")
                 result["salary"] = f"{value} {currency}"
 
@@ -1721,7 +1723,7 @@ class GenericJobParser:
                         result["salary"] = f"ab {min_val} {currency}"
                     elif max_val:
                         result["salary"] = f"bis {max_val} {currency}"
-                elif isinstance(value, (int, float)):
+                elif isinstance(value, int | float):
                     result["salary"] = f"{value} {currency}"
 
         return result
@@ -2249,12 +2251,116 @@ JOB_BOARD_PARSERS: list[type[JobBoardParser]] = [
 
 
 class WebScraper:
-    def __init__(self, timeout: int = 10):
+    SCRAPER_API_BASE = "https://api.scraperapi.com"
+
+    def __init__(self, timeout: int = 15):
         self.timeout = timeout
+        self.scraper_api_key = os.getenv("SCRAPER_API_KEY")
         self.session = requests.Session()
         self.session.headers.update(
-            {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"}
+            {
+                "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36",
+                "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                "Accept-Language": "de-DE,de;q=0.9,en;q=0.8",
+            }
         )
+
+    def _fetch_via_scraper_api(self, url: str) -> requests.Response | None:
+        """Fetch a page through ScraperAPI proxy. Returns None if not configured."""
+        if not self.scraper_api_key:
+            return None
+        proxy_url = f"{self.SCRAPER_API_BASE}?api_key={self.scraper_api_key}&url={url}&country_code=de"
+        try:
+            response = self.session.get(proxy_url, timeout=max(self.timeout, 30))
+            response.raise_for_status()
+            logger.info("ScraperAPI success for %s", urlparse(url).netloc)
+            return response
+        except Exception as e:
+            logger.warning("ScraperAPI failed for %s: %s", urlparse(url).netloc, e)
+            return None
+
+    def _fetch_page(self, url: str, headers: dict | None = None) -> requests.Response:
+        """Fetch a page with environment-aware fallback strategy.
+
+        Production (datacenter IP): ScraperAPI → cloudscraper → direct (last resort)
+        Development (residential IP): direct → ScraperAPI → cloudscraper
+        """
+        is_production = os.getenv("FLASK_ENV") == "production"
+
+        if is_production and self.scraper_api_key:
+            return self._fetch_page_production(url, headers)
+        return self._fetch_page_dev(url, headers)
+
+    def _fetch_via_cloudscraper(self, url: str) -> requests.Response | None:
+        """Fetch a page using cloudscraper for anti-bot bypass. Returns None on failure."""
+        logger.info("Trying cloudscraper for %s", urlparse(url).netloc)
+        try:
+            scraper = cloudscraper.create_scraper(browser={"browser": "chrome", "platform": "linux"})
+            response = scraper.get(url, timeout=self.timeout)
+            response.raise_for_status()
+            return response
+        except Exception:
+            return None
+
+    def _fetch_page_production(self, url: str, headers: dict | None = None) -> requests.Response:
+        """Production: ScraperAPI first (datacenter IP gets blocked by job boards)."""
+        # Attempt 1: ScraperAPI (residential IP rotation)
+        api_response = self._fetch_via_scraper_api(url)
+        if api_response is not None:
+            return api_response
+
+        # Attempt 2: cloudscraper (anti-bot bypass)
+        cs_response = self._fetch_via_cloudscraper(url)
+        if cs_response is not None:
+            return cs_response
+
+        # Attempt 3: Direct request (last resort)
+        logger.info("Trying direct request for %s", urlparse(url).netloc)
+        response = self.session.get(url, timeout=self.timeout, headers=headers)
+        response.raise_for_status()
+        return response
+
+    def _fetch_page_dev(self, url: str, headers: dict | None = None) -> requests.Response:
+        """Development: direct request first (residential IP usually works)."""
+        # Attempt 1: Direct request
+        try:
+            response = self.session.get(url, timeout=self.timeout, headers=headers)
+            response.raise_for_status()
+            return response
+        except (requests.HTTPError, requests.ConnectionError, requests.Timeout) as e:
+            is_403 = isinstance(e, requests.HTTPError) and e.response is not None and e.response.status_code == 403
+            is_retriable = isinstance(e, requests.ConnectionError | requests.Timeout) or is_403
+            if not is_retriable:
+                raise
+            logger.info("Direct request to %s failed (%s)", urlparse(url).netloc, type(e).__name__)
+
+            # Attempt 2: ScraperAPI (residential IP rotation)
+            api_response = self._fetch_via_scraper_api(url)
+            if api_response is not None:
+                return api_response
+
+            # Attempt 3: cloudscraper (anti-bot bypass)
+            cs_response = self._fetch_via_cloudscraper(url)
+            if cs_response is not None:
+                return cs_response
+
+            raise e from None  # Re-raise the original error if all attempts fail
+
+    @staticmethod
+    def _make_http_error(e: requests.HTTPError) -> Exception:
+        """Convert HTTPError to user-friendly German error message."""
+        status = e.response.status_code if e.response is not None else 0
+        if status == 403:
+            return Exception(
+                "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
+                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+            )
+        if status == 404:
+            return Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.")
+        if status == 429:
+            return Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.")
+        return Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {e}")
 
     def detect_job_board(self, url: str) -> str | None:
         """Detect which job board a URL belongs to."""
@@ -2271,8 +2377,7 @@ class WebScraper:
             Dict mit 'text', 'links', 'email_links', 'application_links'
         """
         try:
-            response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()
+            response = self._fetch_page(url)
             response.encoding = response.apparent_encoding
 
             soup = BeautifulSoup(response.text, "html.parser")
@@ -2323,20 +2428,12 @@ class WebScraper:
             }
 
         except requests.HTTPError as e:
-            if e.response.status_code == 403:
-                raise Exception(
-                    "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
-                ) from e
-            elif e.response.status_code == 404:
-                raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
-            elif e.response.status_code == 429:
-                raise Exception(
-                    "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
-                ) from e
-            else:
-                raise Exception(
-                    f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}"
-                ) from e
+            raise self._make_http_error(e) from e
+        except (requests.ConnectionError, requests.Timeout) as e:
+            raise Exception(
+                "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
+                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+            ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:
@@ -2381,8 +2478,7 @@ class WebScraper:
                     request_headers = parser_class.HEADERS
                     break
 
-            response = self.session.get(url, timeout=self.timeout, headers=request_headers)
-            response.raise_for_status()
+            response = self._fetch_page(url, headers=request_headers)
             response.encoding = response.apparent_encoding
 
             # Parse HTML - keep original soup for structured parsing
@@ -2478,20 +2574,12 @@ class WebScraper:
             return result
 
         except requests.HTTPError as e:
-            if e.response.status_code == 403:
-                raise Exception(
-                    "Die Stellenanzeige ist nicht zugänglich (403 Forbidden). Job-Portale blockieren oft automatisierte Zugriffe. Versuchen Sie es mit manueller Eingabe."
-                ) from e
-            elif e.response.status_code == 404:
-                raise Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.") from e
-            elif e.response.status_code == 429:
-                raise Exception(
-                    "Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut."
-                ) from e
-            else:
-                raise Exception(
-                    f"HTTP-Fehler beim Laden der Stellenanzeige ({e.response.status_code}): {str(e)}"
-                ) from e
+            raise self._make_http_error(e) from e
+        except (requests.ConnectionError, requests.Timeout) as e:
+            raise Exception(
+                "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
+                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+            ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
         except Exception as e:

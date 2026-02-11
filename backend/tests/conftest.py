@@ -12,6 +12,8 @@ os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["JWT_SECRET_KEY"] = "test-jwt-secret-key"
 os.environ["ANTHROPIC_API_KEY"] = "test-api-key"
+os.environ["MAIL_USERNAME"] = ""
+os.environ["MAIL_PASSWORD"] = ""
 
 from app import create_app
 from models import User, db
@@ -50,6 +52,7 @@ def test_user(app):
         user = User(
             email="test@example.com",
             full_name="Test User",
+            email_verified=True,
         )
         user.set_password("TestPass123")  # Meets new password requirements
         db.session.add(user)

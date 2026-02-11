@@ -20,7 +20,6 @@
               :state="ensoState"
               size="xl"
               :duration="4000"
-              @complete="onEnsoComplete"
             />
           </div>
 
@@ -28,7 +27,7 @@
           <div class="crafting-overlay__phase">
             <Transition name="phase-text" mode="out-in">
               <h2 :key="currentPhase" class="crafting-overlay__title">
-                {{ phases[currentPhase].title }}
+                {{ phases[currentPhase]?.title }}
               </h2>
             </Transition>
           </div>
@@ -76,11 +75,10 @@
                 <div class="typewriter-preview">
                   <TypewriterText
                     :text="previewText"
-                    :speed="60"
+                    :speed="35"
                     :delay="500"
-                    variant="default"
+                    variant="brush"
                     :show-cursor="true"
-                    @complete="onTypewriterComplete"
                   />
                 </div>
               </div>
@@ -153,7 +151,11 @@ const props = defineProps({
     type: String,
     default: ''
   },
-  previewContent: {
+  jobDescription: {
+    type: String,
+    default: ''
+  },
+  contactPerson: {
     type: String,
     default: ''
   }
@@ -161,14 +163,62 @@ const props = defineProps({
 
 const emit = defineEmits(['complete', 'phase-change'])
 
-// Phase definitions with timing
-const phases = [
-  { title: 'Sammle deine Dokumente', duration: 3000 },
-  { title: 'Verstehe die Anforderungen', duration: 5000 },
-  { title: 'Schreibe dein Anschreiben', duration: 12000 },
-  { title: 'Letzte Pinselstriche', duration: 5000 },
-  { title: '', duration: 1500 }
-]
+const MAX_KEYWORDS = 8
+const MIN_LENGTH = 5
+const MAX_LENGTH = 45
+
+// Collect all regex matches into a Set, trimmed and optionally length-filtered
+function addMatches(found, text, pattern, { minLength = 0, maxLength = Infinity } = {}) {
+  for (const match of text.matchAll(pattern)) {
+    const value = match[0].trim()
+    if (value.length >= minLength && value.length <= maxLength) {
+      found.add(value)
+    }
+  }
+}
+
+// Extract keywords from job description text
+function extractKeywords(text, jobTitle) {
+  const found = new Set()
+
+  // Tech skills
+  addMatches(found, text, /\b(Python|JavaScript|TypeScript|React|Vue|Angular|Node\.?js|Docker|Kubernetes|AWS|Azure|GCP|SAP|SQL|NoSQL|Git|CI\/CD|REST|GraphQL|Java|C\+\+|C#|\.NET|PHP|Ruby|Go|Rust|Swift|Kotlin|Flutter|Terraform|Jenkins|Linux|Scrum|Agile|Jira|Figma|Confluence)\b/gi)
+
+  // Degrees / qualifications
+  addMatches(found, text, /(?:Studium der \w+|Bachelor[\w\s]*|Master[\w\s]*|Ausbildung[\w\s]*|Diplom[\w\s]*)/gi, { minLength: MIN_LENGTH, maxLength: MAX_LENGTH })
+
+  // Experience patterns
+  addMatches(found, text, /\d\+?\s*(?:Jahre?|years?)\s*(?:Berufserfahrung|Erfahrung|experience)?/gi)
+
+  // Language skills
+  addMatches(found, text, /(?:fließend|verhandlungssicher|sehr gute?|gute?)\s+(?:Deutsch|Englisch|Französisch|Spanisch|Italienisch)(?:kenntnisse)?/gi)
+
+  // Bullet point items (first 3 lines starting with bullet characters)
+  const bullets = text.split('\n')
+    .map(l => l.replace(/^[\s•\-–]+/, '').trim())
+    .filter(l => l.length >= 8 && l.length <= MAX_LENGTH)
+  for (const b of bullets.slice(0, 3)) {
+    if (found.size < MAX_KEYWORDS) found.add(b)
+  }
+
+  if (jobTitle && found.size < MAX_KEYWORDS) found.add(jobTitle)
+
+  return [...found]
+    .filter(k => k.length >= MIN_LENGTH && k.length <= MAX_LENGTH)
+    .slice(0, MAX_KEYWORDS)
+}
+
+// Phase definitions with timing (personalized with company name when available)
+const phases = computed(() => {
+  const company = props.companyName
+  return [
+    { title: 'Sammle deine Dokumente', duration: 2500 },
+    { title: company ? `Analysiere ${company}` : 'Verstehe die Anforderungen', duration: 4000 },
+    { title: company ? `Schreibe dein Anschreiben an ${company}` : 'Schreibe dein Anschreiben', duration: 7000 },
+    { title: 'Letzte Pinselstriche', duration: 3500 },
+    { title: '', duration: 1000 }
+  ]
+})
 
 // State
 const isVisible = ref(false)
@@ -184,31 +234,34 @@ const documents = [
   { name: 'Profil', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' }
 ]
 
-// Keywords for phase 2 (dynamically populated)
+// Keywords for phase 2 — extract from real job description
 const keywords = computed(() => {
-  const baseKeywords = ['Erfahrung', 'Motivation', 'Qualifikation', 'Teamfähigkeit', 'Innovation']
-  if (props.jobTitle) {
-    return [props.jobTitle, ...baseKeywords.slice(0, 4)]
-  }
-  return baseKeywords
+  const text = props.jobDescription || ''
+  if (text.length > 50) return extractKeywords(text, props.jobTitle)
+  // Fallback
+  const base = ['Erfahrung', 'Motivation', 'Qualifikation', 'Teamfähigkeit']
+  return props.jobTitle ? [props.jobTitle, ...base.slice(0, 3)] : base
 })
 
-// Preview text for phase 3
+// Preview text for phase 3 — personalized with real data
 const previewText = computed(() => {
-  if (props.previewContent) {
-    return props.previewContent.slice(0, 150) + '...'
-  }
   const company = props.companyName || 'Ihr Unternehmen'
-  return `Sehr geehrte Damen und Herren,\n\nmit großem Interesse bewerbe ich mich bei ${company}...`
+  const position = props.jobTitle || 'die ausgeschriebene Position'
+  const contact = props.contactPerson
+  const greeting = contact ? `Sehr geehrte/r ${contact},` : 'Sehr geehrte Damen und Herren,'
+  return `${greeting}\n\nmit großem Interesse habe ich Ihre Stellenausschreibung als ${position} bei ${company} gelesen...`
 })
 
-// Checklist items for phase 4
-const checklist = [
-  'Persönliche Anrede',
-  'Relevante Erfahrungen',
-  'Motivation für die Stelle',
-  'Professioneller Abschluss'
-]
+// Checklist items for phase 4 -- personalized with real data when available
+const checklist = computed(() => {
+  const { contactPerson, jobTitle, companyName } = props
+  return [
+    contactPerson ? `Persönliche Anrede: ${contactPerson}` : 'Persönliche Anrede',
+    jobTitle ? `Relevante Erfahrungen für ${jobTitle}` : 'Relevante Erfahrungen',
+    companyName ? `Motivation für ${companyName}` : 'Motivation für die Stelle',
+    'Professioneller Abschluss'
+  ]
+})
 
 // Computed
 const ensoState = computed(() => {
@@ -218,21 +271,21 @@ const ensoState = computed(() => {
 })
 
 const overallProgress = computed(() => {
-  const totalDuration = phases.reduce((sum, p) => sum + p.duration, 0)
+  const totalDuration = phases.value.reduce((sum, p) => sum + p.duration, 0)
   let elapsed = 0
   for (let i = 0; i < currentPhase.value; i++) {
-    elapsed += phases[i].duration
+    elapsed += phases.value[i].duration
   }
   return Math.min(100, (elapsed / totalDuration) * 100)
 })
 
 const ariaLabel = computed(() => {
-  return `Bewerbung wird erstellt: ${phases[currentPhase.value].title}`
+  return `Bewerbung wird erstellt: ${phases.value[currentPhase.value].title}`
 })
 
 // Methods
 const startPhaseSequence = () => {
-  if (currentPhase.value >= phases.length - 1) {
+  if (currentPhase.value >= phases.value.length - 1) {
     completeOverlay()
     return
   }
@@ -247,15 +300,15 @@ const startPhaseSequence = () => {
   phaseTimer.value = setTimeout(() => {
     currentPhase.value++
     startPhaseSequence()
-  }, phases[currentPhase.value].duration)
+  }, phases.value[currentPhase.value].duration)
 }
 
 const startChecklistAnimation = () => {
   completedChecks.value = 0
-  const interval = phases[3].duration / (checklist.length + 1)
+  const interval = phases.value[3].duration / (checklist.value.length + 1)
 
   const animateCheck = () => {
-    if (completedChecks.value < checklist.length) {
+    if (completedChecks.value < checklist.value.length) {
       completedChecks.value++
       checklistTimer.value = setTimeout(animateCheck, interval)
     }
@@ -269,14 +322,6 @@ const completeOverlay = () => {
     isVisible.value = false
     emit('complete')
   }, 500)
-}
-
-const onEnsoComplete = () => {
-  // Enso completed its animation
-}
-
-const onTypewriterComplete = () => {
-  // Typewriter finished
 }
 
 const reset = () => {
@@ -477,11 +522,10 @@ defineExpose({ reset })
   min-height: 120px;
 }
 
-.typewriter-preview :deep(.typewriter) {
+.typewriter-preview :deep(.ink-reveal) {
   font-size: 0.9375rem;
   line-height: var(--leading-relaxed);
   color: var(--color-text-secondary);
-  white-space: pre-wrap;
 }
 
 /* Phase 4: Checklist */

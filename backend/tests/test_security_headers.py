@@ -101,7 +101,50 @@ class TestSecurityHeadersFunction:
 
         csp = result.headers["Content-Security-Policy"]
         assert "default-src 'self'" in csp
-        assert "frame-ancestors 'none'" in csp
+        assert "frame-ancestors 'self'" in csp
+
+    def test_csp_no_unsafe_eval(self):
+        """CSP script-src should NOT contain 'unsafe-eval'."""
+        response = MockResponse()
+        config = MockConfig(debug=False)
+
+        result = add_security_headers(response, config)
+
+        csp = result.headers["Content-Security-Policy"]
+        assert "unsafe-eval" not in csp
+
+    def test_csp_has_form_action(self):
+        """CSP should restrict form-action to 'self'."""
+        response = MockResponse()
+        config = MockConfig(debug=False)
+
+        result = add_security_headers(response, config)
+
+        csp = result.headers["Content-Security-Policy"]
+        assert "form-action 'self'" in csp
+
+    def test_csp_has_base_uri(self):
+        """CSP should restrict base-uri to 'self'."""
+        response = MockResponse()
+        config = MockConfig(debug=False)
+
+        result = add_security_headers(response, config)
+
+        csp = result.headers["Content-Security-Policy"]
+        assert "base-uri 'self'" in csp
+
+    def test_csp_allows_google_oauth(self):
+        """CSP should allow Google OAuth domains for script, frame, and connect."""
+        response = MockResponse()
+        config = MockConfig(debug=False)
+
+        result = add_security_headers(response, config)
+
+        csp = result.headers["Content-Security-Policy"]
+        assert "https://accounts.google.com" in csp
+        assert "https://apis.google.com" in csp
+        assert "frame-src https://accounts.google.com" in csp
+        assert "connect-src 'self' https://accounts.google.com" in csp
 
     def test_permissions_policy_content(self):
         """Permissions-Policy should restrict sensitive features."""

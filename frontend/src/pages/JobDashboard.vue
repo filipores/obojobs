@@ -399,21 +399,10 @@ onMounted(refresh)
   color: white;
 }
 
-.score-badge.sehr_gut {
-  background: var(--color-success);
-}
-
-.score-badge.gut {
-  background: var(--color-warning);
-}
-
-.score-badge.mittel {
-  background: var(--color-orange, #f57c00);
-}
-
-.score-badge.niedrig {
-  background: var(--color-error);
-}
+.score-badge.sehr_gut { background: var(--color-success); }
+.score-badge.gut { background: var(--color-warning); }
+.score-badge.mittel { background: var(--color-orange, #f57c00); }
+.score-badge.niedrig { background: var(--color-error); }
 
 .job-info {
   flex: 1;
@@ -564,13 +553,8 @@ onMounted(refresh)
   letter-spacing: 0.05em;
 }
 
-.stat-sehr-gut .stat-value {
-  color: var(--color-success);
-}
-
-.stat-gut .stat-value {
-  color: var(--color-warning);
-}
+.stat-sehr-gut .stat-value { color: var(--color-success); }
+.stat-gut .stat-value { color: var(--color-warning); }
 
 /* ========================================
    LOADING SKELETON
@@ -599,20 +583,9 @@ onMounted(refresh)
   gap: var(--space-sm);
 }
 
-.skeleton-title {
-  height: 1.25rem;
-  width: 70%;
-}
-
-.skeleton-text {
-  height: 1rem;
-  width: 50%;
-}
-
-.skeleton-text-short {
-  height: 0.875rem;
-  width: 30%;
-}
+.skeleton-title { height: 1.25rem; width: 70%; }
+.skeleton-text { height: 1rem; width: 50%; }
+.skeleton-text-short { height: 0.875rem; width: 30%; }
 
 .skeleton-card-body {
   display: flex;

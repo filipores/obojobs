@@ -3,6 +3,7 @@
 Database initialization script.
 Creates all tables and optionally seeds test data.
 """
+
 import os
 import sys
 
@@ -41,6 +42,10 @@ def init_database(app):
 
 def seed_test_data(app):
     """Seed database with test user for development/testing"""
+    if os.getenv("FLASK_ENV") == "production":
+        print("⚠ Skipping seed_test_data in production environment")
+        return None
+
     with app.app_context():
         # Check if test user exists
         existing_user = User.query.filter_by(email="test@example.com").first()
@@ -56,6 +61,7 @@ def seed_test_data(app):
             email_verified=True,  # Pre-verified for easier testing
         )
         test_user.set_password("Test1234!")
+        test_user.is_admin = True
 
         db.session.add(test_user)
         db.session.flush()  # Get user ID

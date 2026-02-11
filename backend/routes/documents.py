@@ -1,3 +1,4 @@
+import logging
 import os
 
 from flask import Blueprint, jsonify, request, send_file
@@ -8,6 +9,8 @@ from middleware.jwt_required import jwt_required_custom
 from models import Document, UserSkill, db
 from services.pdf_handler import extract_text_from_pdf
 from services.skill_extractor import SkillExtractor
+
+logger = logging.getLogger(__name__)
 
 documents_bp = Blueprint("documents", __name__)
 
@@ -72,8 +75,9 @@ def upload_document(current_user):
         with open(txt_path, "w", encoding="utf-8") as f:
             f.write(extracted_text)
 
-        # PDF löschen (nur Text behalten)
-        os.remove(pdf_path)
+        # Original-PDF behalten (umbenennen statt löschen)
+        permanent_pdf_path = os.path.join(user_dir, f"{doc_type}.pdf")
+        os.replace(pdf_path, permanent_pdf_path)
 
         # Prüfen ob bereits ein Dokument dieses Typs existiert
         existing_doc = Document.query.filter_by(user_id=current_user.id, doc_type=doc_type).first()
@@ -81,13 +85,18 @@ def upload_document(current_user):
         if existing_doc:
             # Altes Dokument aktualisieren
             existing_doc.file_path = txt_path
+            existing_doc.pdf_path = permanent_pdf_path
             existing_doc.original_filename = filename
             db.session.commit()
             document = existing_doc
         else:
             # Neues Dokument erstellen
             document = Document(
-                user_id=current_user.id, doc_type=doc_type, file_path=txt_path, original_filename=filename
+                user_id=current_user.id,
+                doc_type=doc_type,
+                file_path=txt_path,
+                pdf_path=permanent_pdf_path,
+                original_filename=filename,
             )
             db.session.add(document)
             db.session.commit()
@@ -130,8 +139,30 @@ def upload_document(current_user):
 
                 db.session.commit()
             except Exception as skill_error:
-                print(f"⚠ Skill-Extraktion fehlgeschlagen: {str(skill_error)}")
+                logger.warning("Skill-Extraktion fehlgeschlagen: %s", skill_error)
                 # Continue anyway, document upload was successful
+
+            # Profile data extraction from CV
+            profile_fields_updated = []
+            try:
+                from services.profile_extractor import ProfileExtractor
+
+                profile_extractor = ProfileExtractor()
+                profile_data = profile_extractor.extract_profile_from_cv(extracted_text)
+
+                # Only fill empty fields, never overwrite existing data
+                for field_name in ["full_name", "phone", "address", "city", "postal_code", "website"]:
+                    current_value = getattr(current_user, field_name, None)
+                    new_value = profile_data.get(field_name)
+                    if not current_value and new_value:
+                        setattr(current_user, field_name, new_value)
+                        profile_fields_updated.append(field_name)
+
+                if profile_fields_updated:
+                    db.session.commit()
+                    logger.info("Profildaten aus CV extrahiert: %s", profile_fields_updated)
+            except Exception as profile_err:
+                logger.warning("Profil-Extraktion fehlgeschlagen: %s", profile_err)
 
         response_data = {
             "success": True,
@@ -142,6 +173,9 @@ def upload_document(current_user):
 
         if doc_type == "lebenslauf":
             response_data["skills_extracted"] = skills_extracted
+            if profile_fields_updated:
+                response_data["profile_updated"] = True
+                response_data["profile_fields_updated"] = profile_fields_updated
 
         return jsonify(response_data), 201
 
@@ -166,7 +200,7 @@ def get_document(doc_id, current_user):
 
     # Download als .txt (extrahierter Text)
     txt_filename = f"{document.doc_type}.txt"
-    return send_file(document.file_path, as_attachment=True, download_name=txt_filename)
+    return send_file(os.path.abspath(document.file_path), as_attachment=True, download_name=txt_filename)
 
 
 @documents_bp.route("/<int:doc_id>", methods=["DELETE"])
@@ -187,9 +221,11 @@ def delete_document(doc_id, current_user):
         skills_deleted = UserSkill.query.filter_by(user_id=current_user.id, source_document_id=document.id).delete()
         db.session.flush()
 
-    # Delete file
+    # Delete files
     if os.path.exists(document.file_path):
         os.remove(document.file_path)
+    if document.pdf_path and os.path.exists(document.pdf_path):
+        os.remove(document.pdf_path)
 
     # Delete record
     db.session.delete(document)

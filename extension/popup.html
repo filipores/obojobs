@@ -11,13 +11,22 @@
     .template-section { margin-top: 12px; padding-top: 12px; border-top: 1px solid #ddd; }
     .template-section label { display: block; font-size: 12px; font-weight: bold; margin-bottom: 6px; color: #333; }
     .template-section select { width: 100%; padding: 6px; font-size: 13px; border: 1px solid #ccc; border-radius: 4px; }
-    button { width: 100%; padding: 8px; margin-top: 8px; cursor: pointer; }
+    button { width: 100%; padding: 8px; margin-top: 8px; cursor: pointer; border-radius: 4px; font-size: 13px; }
+    #extract-btn {
+      background: #007bff; color: white; border: none;
+      padding: 10px; font-size: 14px; font-weight: bold;
+      margin-top: 12px;
+    }
+    #extract-btn:hover { background: #0056b3; }
+    #extract-btn:disabled { background: #999; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <h1>obo Extension</h1>
   <div id="status" class="status">Checking...</div>
   <div id="credits" style="margin-top: 12px; font-weight: bold;"></div>
+
+  <button id="extract-btn" style="display: none;">Bewerbung von dieser Seite</button>
 
   <div id="template-section" class="template-section" style="display: none;">
     <label for="template-select">Anschreiben-Template:</label>
@@ -27,9 +36,9 @@
   </div>
 
   <p style="font-size: 12px; color: #666; margin-top: 12px;">
-    Select text → Right-click → "Generate Application"
+    Text markieren &rarr; Rechtsklick &rarr; "Generate Application"
   </p>
-  <button id="settings-btn">⚙️ Settings</button>
+  <button id="settings-btn">&#9881; Settings</button>
   <script src="popup.js"></script>
 </body>
 </html>

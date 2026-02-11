@@ -113,6 +113,73 @@
                   <p class="form-hint">Wird in der App-Oberfläche angezeigt</p>
                 </div>
 
+                <div class="form-divider"></div>
+                <p class="form-section-label">Kontaktdaten für Bewerbungen</p>
+
+                <div class="form-group">
+                  <label for="phone">Telefonnummer</label>
+                  <input
+                    id="phone"
+                    v-model="profileForm.phone"
+                    type="tel"
+                    class="zen-input"
+                    placeholder="+49 170 1234567"
+                    maxlength="50"
+                  />
+                  <p class="form-hint">Wird im Briefkopf und in E-Mail-Signaturen verwendet</p>
+                </div>
+
+                <div class="form-group">
+                  <label for="address">Straße und Hausnummer</label>
+                  <input
+                    id="address"
+                    v-model="profileForm.address"
+                    type="text"
+                    class="zen-input"
+                    placeholder="Musterstraße 42"
+                    maxlength="255"
+                  />
+                </div>
+
+                <div class="form-row">
+                  <div class="form-group">
+                    <label for="postal-code">PLZ</label>
+                    <input
+                      id="postal-code"
+                      v-model="profileForm.postalCode"
+                      type="text"
+                      class="zen-input"
+                      placeholder="80331"
+                      maxlength="20"
+                    />
+                  </div>
+
+                  <div class="form-group">
+                    <label for="city">Stadt</label>
+                    <input
+                      id="city"
+                      v-model="profileForm.city"
+                      type="text"
+                      class="zen-input"
+                      placeholder="München"
+                      maxlength="100"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label for="website">Website (optional)</label>
+                  <input
+                    id="website"
+                    v-model="profileForm.website"
+                    type="url"
+                    class="zen-input"
+                    placeholder="www.maxmustermann.de"
+                    maxlength="255"
+                  />
+                  <p class="form-hint">Persönliche Website oder Portfolio</p>
+                </div>
+
                 <div v-if="profileError" class="profile-error-message">
                   {{ profileError }}
                 </div>
@@ -496,7 +563,7 @@
 import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
-import { authStore } from '../store/auth'
+import { authStore } from '../stores/auth'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
 
@@ -528,32 +595,37 @@ const integrationStatus = ref({
   outlook: { configured: false }
 })
 
+// Profile field mapping: formKey -> API/user property key
+const profileFieldMap = {
+  fullName: 'full_name',
+  displayName: 'display_name',
+  phone: 'phone',
+  address: 'address',
+  city: 'city',
+  postalCode: 'postal_code',
+  website: 'website'
+}
+const profileFieldKeys = Object.keys(profileFieldMap)
+
 // Profile form state
-const profileForm = reactive({
-  fullName: '',
-  displayName: ''
-})
-const originalProfile = reactive({
-  fullName: '',
-  displayName: ''
-})
+const profileForm = reactive(Object.fromEntries(profileFieldKeys.map(k => [k, ''])))
+const originalProfile = reactive(Object.fromEntries(profileFieldKeys.map(k => [k, ''])))
 const isUpdatingProfile = ref(false)
 const profileError = ref('')
 const profileSuccess = ref('')
 
 const hasProfileChanges = computed(() => {
-  return (
-    profileForm.fullName !== originalProfile.fullName ||
-    profileForm.displayName !== originalProfile.displayName
-  )
+  return profileFieldKeys.some(key => profileForm[key] !== originalProfile[key])
 })
 
 const initProfileForm = () => {
   const user = authStore.user
-  profileForm.fullName = user?.full_name || ''
-  profileForm.displayName = user?.display_name || ''
-  originalProfile.fullName = user?.full_name || ''
-  originalProfile.displayName = user?.display_name || ''
+  for (const key of profileFieldKeys) {
+    const apiKey = profileFieldMap[key]
+    const value = user?.[apiKey] || ''
+    profileForm[key] = value
+    originalProfile[key] = value
+  }
 }
 
 const updateProfile = async () => {
@@ -564,21 +636,20 @@ const updateProfile = async () => {
   profileSuccess.value = ''
 
   try {
-    const { data } = await api.put('/auth/profile', {
-      full_name: profileForm.fullName,
-      display_name: profileForm.displayName
-    })
+    const payload = Object.fromEntries(
+      profileFieldKeys.map(key => [profileFieldMap[key], profileForm[key]])
+    )
+    const { data } = await api.put('/auth/profile', payload)
 
-    // Update auth store with new user data
     authStore.user = data.user
+    localStorage.setItem('user', JSON.stringify(data.user))
 
-    // Update original values to match current
-    originalProfile.fullName = profileForm.fullName
-    originalProfile.displayName = profileForm.displayName
+    for (const key of profileFieldKeys) {
+      originalProfile[key] = profileForm[key]
+    }
 
     profileSuccess.value = 'Profil erfolgreich aktualisiert'
 
-    // Clear success message after 3 seconds
     setTimeout(() => {
       profileSuccess.value = ''
     }, 3000)
@@ -713,7 +784,7 @@ const deleteKey = async (id) => {
     await api.delete(`/keys/${id}`)
     loadKeys()
   } catch (_e) {
-    alert('Fehler beim Löschen')
+    if (window.$toast) { window.$toast('Fehler beim Löschen', 'error') }
   }
 }
 
@@ -877,10 +948,11 @@ const requestAccountDeletion = async () => {
   }
 }
 
-onMounted(() => {
+onMounted(async () => {
   loadKeys()
   loadEmailAccounts()
   loadIntegrationStatus()
+  await authStore.fetchUser()
   initProfileForm()
 })
 
@@ -1061,11 +1133,22 @@ onUnmounted(() => {
   justify-content: space-between;
   align-items: center;
   padding: var(--space-md) 0;
+  gap: var(--space-md);
+}
+
+@media (max-width: 375px) {
+  .info-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
 }
 
 .info-label {
   font-size: 0.9375rem;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .info-value {
@@ -1481,6 +1564,27 @@ onUnmounted(() => {
   margin: var(--space-xs) 0 0 0;
 }
 
+.form-divider {
+  height: 1px;
+  background: var(--color-border-light);
+  margin: var(--space-sm) 0;
+}
+
+.form-section-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+  margin: 0;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: var(--space-md);
+}
+
 .profile-error-message {
   padding: var(--space-md);
   background: rgba(184, 122, 94, 0.1);
@@ -1611,6 +1715,7 @@ onUnmounted(() => {
   .nav-item {
     flex: 1 1 auto;
     min-width: fit-content;
+    min-height: 44px;
     justify-content: center;
     padding: var(--space-sm) var(--space-md);
   }

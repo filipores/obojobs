@@ -28,6 +28,9 @@ class Subscription(db.Model):
     status = db.Column(db.Enum(SubscriptionStatus), default=SubscriptionStatus.active, nullable=False)
     current_period_start = db.Column(db.DateTime, nullable=True)
     current_period_end = db.Column(db.DateTime, nullable=True)
+    cancel_at_period_end = db.Column(db.Boolean, default=False, nullable=False)
+    canceled_at = db.Column(db.DateTime, nullable=True)
+    trial_end = db.Column(db.DateTime, nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     # Relationship back to user
@@ -43,5 +46,8 @@ class Subscription(db.Model):
             "status": self.status.value if self.status else None,
             "current_period_start": self.current_period_start.isoformat() if self.current_period_start else None,
             "current_period_end": self.current_period_end.isoformat() if self.current_period_end else None,
+            "cancel_at_period_end": self.cancel_at_period_end,
+            "canceled_at": self.canceled_at.isoformat() if self.canceled_at else None,
+            "trial_end": self.trial_end.isoformat() if self.trial_end else None,
             "created_at": self.created_at.isoformat() if self.created_at else None,
         }

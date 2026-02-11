@@ -2,49 +2,30 @@ import stripe
 
 from config import config
 
+# Pin API version for stability
+stripe.api_version = "2024-12-18.acacia"
+
 
 class StripeService:
-    """
-    Service for Stripe payment operations.
-    Handles subscriptions, checkout sessions, and webhook processing.
-    """
+    """Service for Stripe payment operations."""
 
     def __init__(self):
-        """Initialize Stripe SDK with credentials from config"""
-        stripe.api_key = config.STRIPE_SECRET_KEY
-
-        # Verify API key is set (in test mode, key starts with sk_test_)
         if not config.STRIPE_SECRET_KEY:
             raise ValueError("STRIPE_SECRET_KEY is not configured")
+        stripe.api_key = config.STRIPE_SECRET_KEY
 
-    def create_customer(self, email: str, name: str | None = None) -> str:
-        """
-        Create a Stripe customer.
-
-        Args:
-            email: Customer email address
-            name: Optional customer name
-
-        Returns:
-            Stripe customer ID
-        """
+    def create_customer(self, email: str, name: str | None = None, metadata: dict | None = None) -> str:
+        """Create a Stripe customer and return the customer ID."""
         customer_data = {"email": email}
         if name:
             customer_data["name"] = name
+        if metadata:
+            customer_data["metadata"] = metadata
 
-        customer = stripe.Customer.create(**customer_data)
-        return customer.id
+        return stripe.Customer.create(**customer_data).id
 
     def get_customer(self, customer_id: str) -> stripe.Customer:
-        """
-        Retrieve a Stripe customer by ID.
-
-        Args:
-            customer_id: Stripe customer ID
-
-        Returns:
-            Stripe Customer object
-        """
+        """Retrieve a Stripe customer by ID."""
         return stripe.Customer.retrieve(customer_id)
 
     def create_checkout_session(
@@ -53,100 +34,63 @@ class StripeService:
         price_id: str,
         success_url: str,
         cancel_url: str,
+        metadata: dict | None = None,
     ) -> stripe.checkout.Session:
-        """
-        Create a Stripe Checkout session for subscription.
+        """Create a Stripe Checkout session for subscription purchase."""
+        session_params = {
+            "customer": customer_id,
+            "mode": "subscription",
+            "payment_method_types": ["card"],
+            "line_items": [{"price": price_id, "quantity": 1}],
+            "success_url": success_url,
+            "cancel_url": cancel_url,
+            "allow_promotion_codes": True,
+        }
+        if metadata:
+            session_params["metadata"] = metadata
 
-        Args:
-            customer_id: Stripe customer ID
-            price_id: Stripe price ID for the subscription plan
-            success_url: URL to redirect after successful payment
-            cancel_url: URL to redirect if user cancels
+        return stripe.checkout.Session.create(**session_params)
 
-        Returns:
-            Stripe Checkout Session object with URL
-        """
-        session = stripe.checkout.Session.create(
-            customer=customer_id,
-            mode="subscription",
-            payment_method_types=["card"],
-            line_items=[
-                {
-                    "price": price_id,
-                    "quantity": 1,
-                }
-            ],
-            success_url=success_url,
-            cancel_url=cancel_url,
-        )
-        return session
-
-    def create_portal_session(
-        self,
-        customer_id: str,
-        return_url: str,
-    ) -> stripe.billing_portal.Session:
-        """
-        Create a Stripe Customer Portal session for subscription management.
-
-        Args:
-            customer_id: Stripe customer ID
-            return_url: URL to return to after portal session
-
-        Returns:
-            Stripe Portal Session object with URL
-        """
-        session = stripe.billing_portal.Session.create(
+    def create_portal_session(self, customer_id: str, return_url: str) -> stripe.billing_portal.Session:
+        """Create a Stripe Customer Portal session for subscription management."""
+        return stripe.billing_portal.Session.create(
             customer=customer_id,
             return_url=return_url,
         )
-        return session
 
     def get_subscription(self, subscription_id: str) -> stripe.Subscription:
-        """
-        Retrieve a subscription by ID.
-
-        Args:
-            subscription_id: Stripe subscription ID
-
-        Returns:
-            Stripe Subscription object
-        """
+        """Retrieve a Stripe subscription by ID."""
         return stripe.Subscription.retrieve(subscription_id)
 
+    def modify_subscription(
+        self,
+        subscription_id: str,
+        new_price_id: str,
+        proration_behavior: str = "create_prorations",
+    ) -> stripe.Subscription:
+        """Modify a subscription to change plans (upgrade/downgrade)."""
+        subscription = stripe.Subscription.retrieve(subscription_id)
+
+        return stripe.Subscription.modify(
+            subscription_id,
+            items=[
+                {
+                    "id": subscription["items"]["data"][0]["id"],
+                    "price": new_price_id,
+                }
+            ],
+            proration_behavior=proration_behavior,
+        )
+
     def cancel_subscription(self, subscription_id: str) -> stripe.Subscription:
-        """
-        Cancel a subscription at the end of the billing period.
-
-        Args:
-            subscription_id: Stripe subscription ID
-
-        Returns:
-            Updated Stripe Subscription object
-        """
+        """Cancel a subscription at the end of the billing period."""
         return stripe.Subscription.modify(
             subscription_id,
             cancel_at_period_end=True,
         )
 
-    def construct_webhook_event(
-        self,
-        payload: bytes,
-        sig_header: str,
-    ) -> stripe.Event:
-        """
-        Construct and verify a webhook event from Stripe.
-
-        Args:
-            payload: Raw request body
-            sig_header: Stripe-Signature header value
-
-        Returns:
-            Verified Stripe Event object
-
-        Raises:
-            stripe.error.SignatureVerificationError: If signature is invalid
-        """
+    def construct_webhook_event(self, payload: bytes, sig_header: str) -> stripe.Event:
+        """Construct and verify a webhook event from Stripe."""
         return stripe.Webhook.construct_event(
             payload,
             sig_header,
@@ -154,25 +98,9 @@ class StripeService:
         )
 
     def list_prices(self, active_only: bool = True) -> list:
-        """
-        List all prices (subscription plans).
-
-        Args:
-            active_only: Only return active prices
-
-        Returns:
-            List of Stripe Price objects
-        """
+        """List all Stripe prices (subscription plans)."""
         return stripe.Price.list(active=active_only).data
 
     def get_price(self, price_id: str) -> stripe.Price:
-        """
-        Retrieve a price by ID.
-
-        Args:
-            price_id: Stripe price ID
-
-        Returns:
-            Stripe Price object
-        """
+        """Retrieve a Stripe price by ID with expanded product."""
         return stripe.Price.retrieve(price_id, expand=["product"])

@@ -23,7 +23,7 @@
               </svg>
             </div>
             <h3>Lebenslauf hochladen</h3>
-            <p>Laden Sie Ihren Lebenslauf als PDF hoch. Der Text wird automatisch extrahiert und fuer Bewerbungen verwendet.</p>
+            <p>Laden Sie Ihren Lebenslauf als PDF hoch. Der Text wird automatisch extrahiert und für Bewerbungen verwendet.</p>
           </div>
           <div v-else class="onboarding-step">
             <div class="onboarding-icon">
@@ -39,7 +39,7 @@
         </div>
         <div class="onboarding-actions">
           <button @click="dismissOnboarding" class="zen-btn zen-btn-sm">
-            Ueberspringen
+            Überspringen
           </button>
           <button @click="nextOnboardingStep" class="zen-btn zen-btn-ai zen-btn-sm">
             {{ onboardingStep < 2 ? 'Weiter' : 'Verstanden' }}
@@ -55,10 +55,10 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polyline points="15 18 9 12 15 6"/>
           </svg>
-          Zurueck zur Bewerbung
+          Zurück zur Bewerbung
         </router-link>
         <span class="breadcrumb-info">
-          Laden Sie Ihren Lebenslauf hoch und kehren Sie dann zur Bewerbungserstellung zurueck
+          Laden Sie Ihren Lebenslauf hoch und kehren Sie dann zur Bewerbungserstellung zurück
         </span>
       </div>
 
@@ -506,7 +506,7 @@ const deleteDoc = async (id, docType) => {
     await api.delete(url)
     await loadDocuments()
   } catch (e) {
-    alert('Fehler beim Löschen: ' + (e.response?.data?.error || 'Unbekannter Fehler'))
+    if (window.$toast) { window.$toast('Fehler beim Löschen: ' + (e.response?.data?.error || 'Unbekannter Fehler'), 'error') }
   }
 }
 
