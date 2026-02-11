@@ -5,16 +5,13 @@ Uses the free public API at rest.arbeitsagentur.de to search for jobs.
 API docs: https://jobsuche.api.bund.dev/
 """
 
-import time
 from dataclasses import dataclass, field
-from datetime import datetime
 
 import requests
 
 
 @dataclass
 class BundesagenturJob:
-    """A job listing from the Bundesagentur API."""
     refnr: str
     titel: str
     beruf: str = ""
@@ -30,7 +27,7 @@ class BundesagenturJob:
     extras: dict = field(default_factory=dict)
 
     def to_job_data(self) -> dict:
-        """Convert to the standard job data format used by JobRecommender."""
+        """Convert to the standard job data format used by the recommender."""
         return {
             "title": self.titel,
             "company": self.arbeitgeber,
@@ -50,10 +47,12 @@ class BundesagenturClient:
 
     def __init__(self):
         self.session = requests.Session()
-        self.session.headers.update({
-            "X-API-Key": self.API_KEY,
-            "User-Agent": "obojobs/1.0",
-        })
+        self.session.headers.update(
+            {
+                "X-API-Key": self.API_KEY,
+                "User-Agent": "obojobs/1.0",
+            }
+        )
 
     def search_jobs(
         self,
@@ -65,26 +64,12 @@ class BundesagenturClient:
         page: int = 1,
         size: int = 25,
     ) -> tuple[list[BundesagenturJob], int]:
-        """
-        Search for jobs on the Bundesagentur API.
-
-        Args:
-            keywords: Search keywords (e.g. "Python Developer")
-            location: City or region name
-            radius_km: Search radius in km (default 50)
-            working_time: Filter: "vz" (Vollzeit), "tz" (Teilzeit), "ho" (Homeoffice), or "" (all)
-            published_since_days: Only show jobs published within N days
-            page: Page number (1-based)
-            size: Results per page (max 100)
-
-        Returns:
-            Tuple of (list of BundesagenturJob, total_count)
-        """
+        """Search for jobs. working_time: 'vz' (Vollzeit), 'tz' (Teilzeit), 'ho' (Homeoffice)."""
         params = {
             "was": keywords,
             "page": page,
             "size": min(size, 100),
-            "pav": f"D{published_since_days}",  # published since: D7 = 7 days
+            "pav": f"D{published_since_days}",
         }
 
         if location:
@@ -128,15 +113,7 @@ class BundesagenturClient:
         return jobs, total
 
     def get_job_details(self, refnr: str) -> BundesagenturJob | None:
-        """
-        Get full details for a job listing including description.
-
-        Args:
-            refnr: The job reference number
-
-        Returns:
-            BundesagenturJob with full description, or None if not found
-        """
+        """Fetch full job details including description, or None if not found."""
         url = f"{self.BASE_URL}/{refnr}"
 
         try:
@@ -149,12 +126,7 @@ class BundesagenturClient:
         except ValueError:
             return None
 
-        # Build description from available fields
-        description_parts = []
-        if data.get("stellenbeschreibung"):
-            description_parts.append(data["stellenbeschreibung"])
-        if data.get("arbeitgeberdarstellung"):
-            description_parts.append(data["arbeitgeberdarstellung"])
+        description_parts = [data[key] for key in ("stellenbeschreibung", "arbeitgeberdarstellung") if data.get(key)]
 
         arbeitsort = data.get("arbeitsort", {})
 
@@ -177,11 +149,5 @@ class BundesagenturClient:
         """Parse location data into a readable string."""
         if not ort_data:
             return ""
-
-        parts = []
-        if ort_data.get("ort"):
-            parts.append(ort_data["ort"])
-        if ort_data.get("region"):
-            parts.append(ort_data["region"])
-
-        return ", ".join(parts) if parts else ""
+        parts = [ort_data[key] for key in ("ort", "region") if ort_data.get(key)]
+        return ", ".join(parts)

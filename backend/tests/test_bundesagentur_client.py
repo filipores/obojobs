@@ -1,14 +1,11 @@
 """Tests for the Bundesagentur API client."""
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 from services.bundesagentur_client import BundesagenturClient, BundesagenturJob
 
 
 class TestBundesagenturJob:
-    """Tests for the BundesagenturJob dataclass."""
-
     def test_to_job_data(self):
         job = BundesagenturJob(
             refnr="10000-1234567890-S",
@@ -34,8 +31,6 @@ class TestBundesagenturJob:
 
 
 class TestBundesagenturClient:
-    """Tests for the BundesagenturClient."""
-
     def setup_method(self):
         self.client = BundesagenturClient()
 
@@ -84,6 +79,7 @@ class TestBundesagenturClient:
     @patch("services.bundesagentur_client.requests.Session.get")
     def test_search_jobs_api_error(self, mock_get):
         import requests as req
+
         mock_get.side_effect = req.RequestException("Connection error")
 
         jobs, total = self.client.search_jobs("Python")
@@ -116,6 +112,7 @@ class TestBundesagenturClient:
     @patch("services.bundesagentur_client.requests.Session.get")
     def test_get_job_details_not_found(self, mock_get):
         import requests as req
+
         mock_get.side_effect = req.RequestException("404")
 
         job = self.client.get_job_details("nonexistent")

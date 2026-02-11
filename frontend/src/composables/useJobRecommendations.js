@@ -1,9 +1,3 @@
-/**
- * Job Recommendations Composable
- *
- * Handles job search, recommendations, and dashboard state.
- */
-
 import { ref, computed, readonly } from 'vue'
 import api from '../api/client'
 
@@ -21,10 +15,6 @@ const searchFilters = ref({
 
 const activeRecommendations = computed(() =>
   recommendations.value.filter(r => !r.dismissed && !r.applied)
-)
-
-const hasSkillsError = computed(() =>
-  error.value?.toLowerCase().includes('keine skills')
 )
 
 function extractErrorMessage(err) {
@@ -72,7 +62,6 @@ async function searchJobs(filters = {}) {
     const { data } = await api.post('/recommendations/search', payload)
     if (data.success) {
       searchResults.value = data.data.results || []
-      // Reload recommendations and stats after search (new ones may have been saved)
       await Promise.all([fetchRecommendations(), fetchStats()])
       return data.data
     }
@@ -126,7 +115,6 @@ export function useJobRecommendations() {
     error: readonly(error),
     searchFilters,
     activeRecommendations,
-    hasSkillsError,
     fetchRecommendations,
     fetchStats,
     searchJobs,

@@ -171,7 +171,7 @@
                   </svg>
                 </button>
                 <button
-                  @click="handleDismiss(rec.id)"
+                  @click="dismissRecommendation(rec.id)"
                   class="action-btn action-dismiss"
                   :title="$t('jobDashboard.dismiss')"
                 >
@@ -181,7 +181,7 @@
                   </svg>
                 </button>
                 <button
-                  @click="handleApply(rec.id)"
+                  @click="markAsApplied(rec.id)"
                   class="action-btn action-apply"
                   :title="$t('jobDashboard.markApplied')"
                 >
@@ -237,27 +237,19 @@ const {
   markAsApplied,
 } = useJobRecommendations()
 
-const handleSearch = async () => {
+async function handleSearch() {
   try {
     await searchJobs()
-  } catch (err) {
-    console.error('Search failed:', err)
+  } catch {
+    // Error already set in composable
   }
 }
 
-const handleDismiss = async (id) => {
-  await dismissRecommendation(id)
-}
-
-const handleApply = async (id) => {
-  await markAsApplied(id)
-}
-
-const openUrl = (url) => {
+function openUrl(url) {
   window.open(url, '_blank')
 }
 
-const formatDate = (dateStr) => {
+function formatDate(dateStr) {
   if (!dateStr) return ''
   return new Date(dateStr).toLocaleDateString(getFullLocale(), {
     day: '2-digit',
@@ -266,14 +258,15 @@ const formatDate = (dateStr) => {
   })
 }
 
-const getSourceLabel = (source) => {
-  const labels = {
-    'arbeitsagentur': 'Arbeitsagentur',
-    'indeed': 'Indeed',
-    'stepstone': 'StepStone',
-    'manual': 'Manuell',
-  }
-  return labels[source] || source
+const SOURCE_LABELS = {
+  arbeitsagentur: 'Arbeitsagentur',
+  indeed: 'Indeed',
+  stepstone: 'StepStone',
+  manual: 'Manuell',
+}
+
+function getSourceLabel(source) {
+  return SOURCE_LABELS[source] || source
 }
 
 onMounted(async () => {
@@ -282,7 +275,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* Use Wafu Design tokens for consistency */
 .job-dashboard {
   padding: var(--space-lg) var(--space-ma);
   max-width: var(--container-xl);
@@ -295,7 +287,6 @@ onMounted(async () => {
   gap: var(--space-lg);
 }
 
-/* Fade up animation */
 .animate-fade-up {
   animation: fadeUp 0.4s var(--ease-zen) both;
 }
@@ -311,7 +302,6 @@ onMounted(async () => {
   }
 }
 
-/* Page Header */
 .page-header {
   margin-bottom: var(--space-sm);
 }
@@ -331,7 +321,6 @@ onMounted(async () => {
   margin: 0;
 }
 
-/* Search Section */
 .search-section {
   padding: var(--space-lg);
 }
@@ -387,7 +376,6 @@ onMounted(async () => {
   height: fit-content;
 }
 
-/* Stats Row */
 .stats-row {
   display: flex;
   gap: var(--space-lg);
@@ -419,7 +407,6 @@ onMounted(async () => {
 .stat-sehr-gut .stat-value { color: var(--color-success); }
 .stat-gut .stat-value { color: var(--color-warning); }
 
-/* Section titles */
 .section-title {
   font-size: 1.25rem;
   font-weight: 500;
@@ -427,13 +414,11 @@ onMounted(async () => {
   color: var(--color-sumi);
 }
 
-/* Results Grid */
 .results-grid {
   display: grid;
   gap: var(--space-md);
 }
 
-/* Job Card */
 .job-card {
   padding: var(--space-lg);
   transition: all var(--transition-base);
@@ -550,7 +535,6 @@ onMounted(async () => {
   margin-top: var(--space-md);
 }
 
-/* Loading Skeleton */
 .loading-skeleton {
   display: grid;
   gap: var(--space-md);
@@ -596,7 +580,6 @@ onMounted(async () => {
   100% { background-position: -200% 0; }
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: var(--space-xl);
@@ -618,7 +601,6 @@ onMounted(async () => {
   margin: 0 auto;
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .job-dashboard {
     padding: var(--space-md);

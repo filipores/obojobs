@@ -1,13 +1,11 @@
 """
 Background Scheduler Service.
 
-Uses APScheduler to run periodic tasks:
-- cleanup_old_recommendations: Daily at 3:00 AM
-- auto_search_jobs: Every 6 hours
+Runs periodic tasks via APScheduler (cleanup daily at 3 AM, job search every 6 hours).
 """
 
-import os
 import logging
+import os
 
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
@@ -41,7 +39,6 @@ def auto_search_jobs(app):
 
             recommender = JobRecommender()
 
-            # Find users who have skills (they've uploaded a CV)
             users_with_skills = (
                 db.session.query(User.id)
                 .join(UserSkill, User.id == UserSkill.user_id)
@@ -52,24 +49,13 @@ def auto_search_jobs(app):
 
             for (user_id,) in users_with_skills:
                 try:
-                    jobs = recommender.find_jobs_for_user(
-                        user_id=user_id, max_results=5
-                    )
+                    jobs = recommender.find_jobs_for_user(user_id=user_id, max_results=5)
                     for job_data in jobs:
                         fit_score = job_data.get("fit_score", 50)
-                        if fit_score >= 80:
-                            fit_category = "sehr_gut"
-                        elif fit_score >= 60:
-                            fit_category = "gut"
-                        elif fit_score >= 40:
-                            fit_category = "mittel"
-                        else:
-                            fit_category = "niedrig"
+                        fit_category = JobRecommender.score_to_category(fit_score)
 
                         if fit_score >= JobRecommender.MIN_FIT_SCORE:
-                            if not job_data.get("url") or not recommender.check_duplicate(
-                                user_id, job_data["url"]
-                            ):
+                            if not job_data.get("url") or not recommender.check_duplicate(user_id, job_data["url"]):
                                 recommender.create_recommendation(
                                     user_id=user_id,
                                     job_data=job_data,
@@ -80,32 +66,21 @@ def auto_search_jobs(app):
                     logger.error(f"Error searching jobs for user {user_id}: {e}")
                     continue
 
-            logger.info(
-                f"Auto-search completed for {len(users_with_skills)} users"
-            )
+            logger.info(f"Auto-search completed for {len(users_with_skills)} users")
         except Exception as e:
             logger.error(f"Error in auto_search_jobs: {e}")
 
 
 def init_scheduler(app):
-    """
-    Initialize and start the background scheduler.
-
-    Guards:
-    - Skip in testing mode
-    - Skip if scheduler is already running (Flask debug reloader)
-    """
-    # Don't run scheduler during tests
+    """Initialize and start the background scheduler (skips in testing and debug reloader)."""
     if os.environ.get("TESTING") or app.config.get("TESTING"):
         logger.info("Scheduler disabled in testing mode")
         return
 
-    # Avoid double-start in Flask debug reloader
     if scheduler.running:
         logger.info("Scheduler already running, skipping init")
         return
 
-    # Add jobs
     scheduler.add_job(
         func=cleanup_old_recommendations,
         args=[app],
