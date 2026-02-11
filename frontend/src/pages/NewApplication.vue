@@ -1,13 +1,11 @@
 <template>
   <div class="new-application-page">
     <div class="container">
-      <!-- Header Section -->
       <section class="page-header animate-fade-up">
         <h1>Neue Bewerbung</h1>
         <p class="page-subtitle">Generiere ein Anschreiben aus einer Stellenanzeigen-URL</p>
       </section>
 
-      <!-- Zero-State: CV Invitation - transforms CV-missing from blocker to invitation -->
       <section v-if="!checkingResume && !hasResume" class="cv-invitation-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="cv-invitation-card zen-card">
           <div class="cv-invitation-enso">
@@ -30,7 +28,6 @@
         </div>
       </section>
 
-      <!-- Skills Missing Warning Banner - vor dem Formular -->
       <section v-if="!checkingSkills && !hasSkills && hasResume" class="skills-warning-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="skills-warning zen-card">
           <div class="warning-icon-box">
@@ -61,7 +58,6 @@
         </div>
       </section>
 
-      <!-- Profile Incomplete Warning Banner -->
       <section v-if="profileIncomplete && hasResume" class="profile-warning-section animate-fade-up" style="animation-delay: 120ms;">
         <div class="profile-warning zen-card">
           <div class="warning-icon-box profile-warning-icon">
@@ -90,7 +86,6 @@
         </div>
       </section>
 
-      <!-- Usage Indicator - Show prominently before form -->
       <section v-if="usage" class="usage-section animate-fade-up" style="animation-delay: 150ms;">
         <UsageIndicator
           :used="usage.used"
@@ -100,64 +95,31 @@
         />
       </section>
 
-      <!-- Form Section - subtly faded when no CV (anticipation) -->
       <section class="form-section animate-fade-up" :class="{ 'form-section--anticipation': !checkingResume && !hasResume }" style="animation-delay: 100ms;">
         <JobUrlInput
           v-model="url"
-          :loading="loading"
-          :generating="generating"
-          :error="error"
-          :quick-confirm-data="quickConfirmData"
-          :preview-data="previewData"
-          :show-manual-fallback="showManualFallback"
-          :analyzing-manual-text="analyzingManualText"
-          :recognition-complete="recognitionComplete"
-          :recognized-company="recognizedCompany"
-          :url-touched="urlTouched"
-          @url-input="onUrlInput"
-          @url-paste="onUrlPaste"
-          @url-enter="loadPreview"
-          @show-manual-fallback="showManualFallback = true"
-          @analyze-manual-text="analyzeManualText"
-          @reset-manual-fallback="resetManualFallback"
+          @submit="addJob"
         />
       </section>
 
-      <!-- Minimal Confirmation Section (quick flow) -->
-      <QuickExtract
-        v-if="quickConfirmData && !showFullPreview"
-        :quick-confirm-data="quickConfirmData"
-        :selected-tone="selectedTone"
-        :generating="generating"
-        :loading="loading"
-        :can-generate="canGenerate"
-        :usage="usage"
-        :error="error"
-        @generate="generateApplication"
-        @load-full-preview="loadFullPreview"
-        @reset="resetPreview"
-        @update:selected-tone="selectedTone = $event"
-      />
+      <section v-if="jobs.length > 0" class="jobs-section">
+        <TransitionGroup name="job-list" tag="div" class="jobs-list">
+          <JobCard
+            v-for="job in jobs"
+            :key="job.id"
+            :job="job"
+            @generate="generateJob(job.id)"
+            @remove="removeJob(job.id)"
+            @retry="retryJob(job.id)"
+            @download-pdf="downloadJobPDF(job.id)"
+            @download-email="downloadJobEmail(job.id)"
+            @view-application="viewJobApplication(job.id)"
+            @update:tone="job.tone = $event"
+          />
+        </TransitionGroup>
+      </section>
 
-      <!-- Preview Section (shown after loading full details) -->
-      <JobPreview
-        v-if="previewData && showFullPreview"
-        :preview-data="previewData"
-        :editable-data="editableData"
-        :selected-tone="selectedTone"
-        :generating="generating"
-        :can-generate="canGenerate"
-        :is-at-usage-limit="isAtUsageLimit"
-        :usage="usage"
-        :error="error"
-        @reset="resetPreview"
-        @generate="generateApplication"
-        @update:editable-data="editableData = $event"
-        @update:selected-tone="selectedTone = $event"
-      />
-
-      <!-- Info Box (show when no quick confirm or preview) -->
-      <section v-if="!quickConfirmData && !previewData" class="info-section animate-fade-up" style="animation-delay: 200ms;">
+      <section v-if="jobs.length === 0" class="info-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="info-box zen-card">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="12" cy="12" r="10"/>
@@ -184,197 +146,85 @@
           </div>
         </div>
       </section>
-
-      <!-- Crafting Overlay - Cinematic generation experience -->
-      <CraftingOverlay
-        :is-active="showCraftingOverlay"
-        :company-name="editableData.company"
-        :job-title="editableData.title"
-        :job-description="editableData.description"
-        :contact-person="editableData.contact_person"
-        @complete="onCraftingComplete"
-      />
-
-      <!-- Premium Reveal Success Modal -->
-      <GenerationResult
-        :generated-app="generatedApp"
-        :reveal-phase="revealPhase"
-        :enso-state="ensoState"
-        @close="closeModal"
-        @download-pdf="downloadPDF"
-        @go-to-applications="goToApplications"
-        @download-email-draft="downloadEmailDraft"
-      />
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../stores/auth'
 import UsageIndicator from '../components/UsageIndicator.vue'
 import EnsoCircle from '../components/application/EnsoCircle.vue'
-import CraftingOverlay from '../components/application/CraftingOverlay.vue'
 import JobUrlInput from '../components/NewApplication/JobUrlInput.vue'
-import QuickExtract from '../components/NewApplication/QuickExtract.vue'
-import JobPreview from '../components/NewApplication/JobPreview.vue'
-import GenerationResult from '../components/NewApplication/GenerationResult.vue'
+import JobCard from '../components/NewApplication/JobCard.vue'
 
 const router = useRouter()
-
-const handleKeydown = (e) => {
-  if (e.key === 'Escape' && generatedApp.value) {
-    closeModal()
-  }
-}
-
-onUnmounted(() => {
-  document.removeEventListener('keydown', handleKeydown)
-  if (pasteDebounceTimeout) {
-    clearTimeout(pasteDebounceTimeout)
-  }
-})
 
 const checkingSkills = ref(true)
 const hasSkills = ref(true)
 const checkingResume = ref(true)
 const hasResume = ref(true)
 const profileIncomplete = ref(false)
-const profileWarningDismissed = ref(false)
 
 const url = ref('')
-const urlTouched = ref(false)
-const selectedTone = ref('modern')
-const loading = ref(false)
-const generating = ref(false)
-const error = ref('')
 const usage = ref(null)
-const generatedApp = ref(null)
-const showCraftingOverlay = ref(false)
 
-const revealPhase = ref(0)
-const ensoState = ref('broken')
-
-const quickConfirmData = ref(null)
-const showFullPreview = ref(false)
-
-const recognitionComplete = ref(false)
-const recognizedCompany = ref('')
-let pasteDebounceTimeout = null
-
-const defaultEditableData = () => ({
-  company: '',
-  title: '',
-  location: '',
-  employment_type: '',
-  contact_person: '',
-  contact_email: '',
-  salary: '',
-  description: ''
-})
+const jobs = ref([])
+let nextJobId = 0
 
 const extractApiError = (e, fallbackMessage) => {
   return e.response?.data?.error || fallbackMessage
 }
 
-const previewData = ref(null)
-const editableData = ref(defaultEditableData())
-
-const showManualFallback = ref(false)
-const manualJobText = ref('')
-const manualCompany = ref('')
-const manualTitle = ref('')
-const manualTextError = ref('')
-const analyzingManualText = ref(false)
-const isManualEntry = ref(false)
-
-const isAtUsageLimit = computed(() => {
+const isAtUsageLimit = () => {
   if (!usage.value || usage.value.unlimited) return false
   return usage.value.used >= usage.value.limit
-})
-
-const canGenerate = computed(() => {
-  return editableData.value.company && editableData.value.title && !isAtUsageLimit.value
-})
-
-let urlInputTimeout = null
-const onUrlInput = () => {
-  urlTouched.value = true
-
-  if (urlInputTimeout) clearTimeout(urlInputTimeout)
-
-  if (previewData.value && url.value !== previewData.value.url) {
-    previewData.value = null
-    editableData.value = defaultEditableData()
-  }
 }
 
-const urlValidation = computed(() => {
-  const urlValue = url.value.trim()
-  if (!urlValue) return { isValid: null, message: '' }
-  if (!urlValue.match(/^https?:\/\//i)) {
-    return { isValid: false, message: 'URL muss mit http:// oder https:// beginnen' }
-  }
-  try {
-    const parsedUrl = new URL(urlValue)
-    if (!parsedUrl.hostname.includes('.')) return { isValid: false, message: 'Ungültige Domain' }
-    if (parsedUrl.hostname.endsWith('.')) return { isValid: false, message: 'Domain darf nicht mit einem Punkt enden' }
-    return { isValid: true, message: '' }
-  } catch {
-    return { isValid: false, message: 'Ungültiges URL-Format' }
-  }
-})
-
-const onUrlPaste = () => {
-  urlTouched.value = true
-
-  if (pasteDebounceTimeout) {
-    clearTimeout(pasteDebounceTimeout)
-  }
-
-  setTimeout(() => {
-    if (url.value && urlValidation.value.isValid === true && !loading.value && !generating.value && !quickConfirmData.value && !previewData.value) {
-      pasteDebounceTimeout = setTimeout(() => {
-        loadPreviewWithAnimation()
-      }, 500)
+const addJob = (submittedUrl) => {
+  if (!submittedUrl) return
+  if (isAtUsageLimit()) {
+    if (window.$toast) {
+      window.$toast('Bewerbungslimit erreicht. Bitte Abo upgraden.', 'warning')
     }
-  }, 0)
-}
-
-const loadPreviewWithAnimation = async () => {
-  recognitionComplete.value = false
-  recognizedCompany.value = ''
-
-  await loadPreview()
-
-  if (quickConfirmData.value) {
-    recognizedCompany.value = quickConfirmData.value.company || ''
-    recognitionComplete.value = true
-
-    await new Promise(resolve => setTimeout(resolve, 800))
+    return
   }
+
+  const jobId = nextJobId++
+  const job = {
+    id: jobId,
+    url: submittedUrl,
+    status: 'extracting',
+    quickData: null,
+    editableData: null,
+    tone: 'modern',
+    generatedApp: null,
+    error: null
+  }
+
+  jobs.value.unshift(job)
+  url.value = ''
+  extractJob(jobId)
 }
 
-const loadPreview = async () => {
-  if (!url.value) return
+const findJob = (jobId) => {
+  return jobs.value.find(j => j.id === jobId)
+}
 
-  error.value = ''
-  loading.value = true
-  quickConfirmData.value = null
-  showFullPreview.value = false
-  previewData.value = null
+const extractJob = async (jobId) => {
+  const job = findJob(jobId)
+  if (!job) return
 
   try {
     const { data } = await api.post('/applications/quick-extract', {
-      url: url.value
+      url: job.url
     })
 
     if (data.success) {
-      quickConfirmData.value = data.data
-
-      editableData.value = {
+      job.quickData = data.data
+      job.editableData = {
         company: data.data.company || '',
         title: data.data.title || '',
         location: '',
@@ -382,192 +232,53 @@ const loadPreview = async () => {
         contact_person: '',
         contact_email: '',
         salary: '',
-        description: data.data.description || '',
+        description: data.data.description || ''
       }
-
-      loading.value = false
+      job.status = 'extracted'
 
       if (window.$toast) {
         window.$toast('Stellenanzeige erkannt!', 'success')
       }
     } else {
-      error.value = data.error || 'Unbekannter Fehler'
-      loading.value = false
+      job.error = data.error || 'Stellenanzeige konnte nicht gelesen werden'
+      job.status = 'error'
     }
   } catch (e) {
-    error.value = extractApiError(e, 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.')
-    loading.value = false
+    job.error = extractApiError(e, 'Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut.')
+    job.status = 'error'
   }
 }
 
-const loadFullPreview = async () => {
-  if (!url.value) return
+const generateJob = async (jobId) => {
+  const job = findJob(jobId)
+  if (!job || !job.editableData) return
 
-  error.value = ''
-  loading.value = true
+  if (isAtUsageLimit()) {
+    job.error = 'Bewerbungslimit erreicht. Bitte Abo upgraden.'
+    job.status = 'error'
+    return
+  }
+
+  job.status = 'generating'
+  job.error = null
 
   try {
-    const { data } = await api.post('/applications/preview-job', {
-      url: url.value
+    const { data } = await api.post('/applications/generate-from-url', {
+      url: job.url,
+      tone: job.tone,
+      company: job.editableData.company,
+      title: job.editableData.title,
+      contact_person: job.editableData.contact_person,
+      contact_email: job.editableData.contact_email,
+      location: job.editableData.location,
+      description: job.editableData.description
     })
 
     if (data.success) {
-      previewData.value = data.data
-      showFullPreview.value = true
+      job.generatedApp = data.application
+      job.status = 'completed'
 
-      editableData.value = {
-        company: data.data.company || '',
-        title: data.data.title || '',
-        location: data.data.location || '',
-        employment_type: data.data.employment_type || '',
-        contact_person: data.data.contact_person || '',
-        contact_email: data.data.contact_email || '',
-        salary: data.data.salary || '',
-        description: data.data.description || ''
-      }
-
-      loading.value = false
-
-      if (window.$toast) {
-        window.$toast('Details geladen!', 'success')
-      }
-    } else {
-      error.value = data.error || 'Unbekannter Fehler'
-      loading.value = false
-    }
-  } catch (e) {
-    error.value = extractApiError(e, 'Fehler beim Laden der Details. Bitte versuche es erneut.')
-    loading.value = false
-  }
-}
-
-const resetPreview = () => {
-  quickConfirmData.value = null
-  showFullPreview.value = false
-  previewData.value = null
-  editableData.value = defaultEditableData()
-  error.value = ''
-  isManualEntry.value = false
-  showManualFallback.value = false
-  manualJobText.value = ''
-  manualCompany.value = ''
-  manualTitle.value = ''
-  urlTouched.value = false
-  recognitionComplete.value = false
-  recognizedCompany.value = ''
-  if (pasteDebounceTimeout) {
-    clearTimeout(pasteDebounceTimeout)
-    pasteDebounceTimeout = null
-  }
-}
-
-const resetManualFallback = () => {
-  showManualFallback.value = false
-  manualJobText.value = ''
-  manualCompany.value = ''
-  manualTitle.value = ''
-  manualTextError.value = ''
-}
-
-const analyzeManualText = async ({ jobText, company, title }) => {
-  if (jobText.trim().length < 100) return
-
-  analyzingManualText.value = true
-  manualTextError.value = ''
-
-  try {
-    const { data } = await api.post('/applications/analyze-manual-text', {
-      job_text: jobText,
-      company,
-      title
-    })
-
-    if (data.success) {
-      previewData.value = data.data
-      isManualEntry.value = true
-
-      editableData.value = {
-        company: data.data.company || company || '',
-        title: data.data.title || title || '',
-        location: data.data.location || '',
-        employment_type: data.data.employment_type || '',
-        contact_person: data.data.contact_person || '',
-        contact_email: data.data.contact_email || '',
-        salary: data.data.salary || '',
-        description: data.data.description || jobText
-      }
-
-      showFullPreview.value = true
-      showManualFallback.value = false
-      analyzingManualText.value = false
-      error.value = ''
-
-      if (window.$toast) {
-        window.$toast('Stellentext analysiert!', 'success')
-      }
-    } else {
-      manualTextError.value = data.error || 'Analyse fehlgeschlagen'
-      analyzingManualText.value = false
-    }
-  } catch (e) {
-    manualTextError.value = e.response?.data?.error || 'Fehler bei der Analyse'
-    analyzingManualText.value = false
-  }
-}
-
-const loadUsage = async () => {
-  try {
-    const { data } = await api.get('/stats')
-    usage.value = data.usage
-  } catch (e) {
-    console.error('Fehler beim Laden der Nutzung:', e)
-  }
-}
-
-const onCraftingComplete = () => {
-  showCraftingOverlay.value = false
-}
-
-const generateApplication = async () => {
-  if (!canGenerate.value) return
-
-  error.value = ''
-  generating.value = true
-  showCraftingOverlay.value = true
-
-  try {
-    let response
-
-    if (isManualEntry.value) {
-      response = await api.post('/applications/generate-from-text', {
-        job_text: editableData.value.description,
-        company: editableData.value.company,
-        title: editableData.value.title,
-        tone: selectedTone.value,
-        description: editableData.value.description
-      })
-    } else {
-      response = await api.post('/applications/generate-from-url', {
-        url: url.value,
-        tone: selectedTone.value,
-        company: editableData.value.company,
-        title: editableData.value.title,
-        contact_person: editableData.value.contact_person,
-        contact_email: editableData.value.contact_email,
-        location: editableData.value.location,
-        description: editableData.value.description
-      })
-    }
-
-    const { data } = response
-
-    if (data.success) {
-      generatedApp.value = data.application
-      showCraftingOverlay.value = false
-      startPremiumReveal()
       await loadUsage()
-      url.value = ''
-      resetPreview()
 
       if (window.$toast) {
         window.$toast('Bewerbung erfolgreich generiert!', 'success')
@@ -578,68 +289,75 @@ const generateApplication = async () => {
         }
       }
     } else {
-      showCraftingOverlay.value = false
-      error.value = data.error || 'Unbekannter Fehler'
+      job.error = data.error || 'Unbekannter Fehler'
+      job.status = 'error'
     }
   } catch (e) {
-    showCraftingOverlay.value = false
-    error.value = extractApiError(e, 'Fehler bei der Generierung. Bitte versuche es erneut.')
-  } finally {
-    generating.value = false
+    job.error = extractApiError(e, 'Fehler bei der Generierung. Bitte versuche es erneut.')
+    job.status = 'error'
   }
 }
 
-const downloadPDF = async () => {
-  if (!generatedApp.value?.id) return
+const removeJob = (jobId) => {
+  jobs.value = jobs.value.filter(j => j.id !== jobId)
+}
+
+const retryJob = (jobId) => {
+  const job = findJob(jobId)
+  if (!job) return
+
+  job.error = null
+  job.status = 'extracting'
+  job.quickData = null
+  job.editableData = null
+  job.generatedApp = null
+
+  extractJob(jobId)
+}
+
+const downloadBlob = (blobData, mimeType, filename) => {
+  const blob = new Blob([blobData], { type: mimeType })
+  const objectUrl = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = objectUrl
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(objectUrl)
+}
+
+const downloadJobPDF = async (jobId) => {
+  const job = findJob(jobId)
+  if (!job?.generatedApp?.id) return
 
   try {
-    const response = await api.get(`/applications/${generatedApp.value.id}/pdf`, {
+    const response = await api.get(`/applications/${job.generatedApp.id}/pdf`, {
       responseType: 'blob'
     })
-
-    const blob = new Blob([response.data], { type: 'application/pdf' })
-    const pdfUrl = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = pdfUrl
-    // Use filename from Content-Disposition header, fallback to dynamic name
     const disposition = response.headers['content-disposition']
     const match = disposition?.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/)
-    link.download = match ? decodeURIComponent(match[1]) : `Anschreiben_${generatedApp.value.firma || generatedApp.value.id}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(pdfUrl)
-  } catch (err) {
-    console.error('PDF download error:', err)
-    error.value = 'Fehler beim Herunterladen des PDF'
+    const filename = match
+      ? decodeURIComponent(match[1])
+      : `Anschreiben_${job.generatedApp.firma || job.generatedApp.id}.pdf`
+    downloadBlob(response.data, 'application/pdf', filename)
+  } catch (_err) {
+    if (window.$toast) {
+      window.$toast('Fehler beim Herunterladen des PDF', 'error')
+    }
   }
 }
 
-const goToApplications = () => {
-  router.push('/applications')
-}
-
-const downloadEmailDraft = async () => {
-  const id = generatedApp.value?.id
-  if (!id) return
+const downloadJobEmail = async (jobId) => {
+  const job = findJob(jobId)
+  if (!job?.generatedApp?.id) return
 
   try {
-    const response = await api.get(`/applications/${id}/email-draft`, {
+    const response = await api.get(`/applications/${job.generatedApp.id}/email-draft`, {
       responseType: 'blob'
     })
-    const blob = new Blob([response.data], { type: 'message/rfc822' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    const firma = generatedApp.value.firma || 'Bewerbung'
-    link.download = `Bewerbung_${firma}.eml`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-
-    // Try to open in default email client
-    window.location.href = window.URL.createObjectURL(new Blob([response.data], { type: 'message/rfc822' }))
+    const firma = job.generatedApp.firma || 'Bewerbung'
+    downloadBlob(response.data, 'message/rfc822', `Bewerbung_${firma}.eml`)
 
     if (window.$toast) {
       window.$toast('E-Mail-Entwurf heruntergeladen', 'success', 6000)
@@ -651,39 +369,26 @@ const downloadEmailDraft = async () => {
   }
 }
 
-const closeModal = () => {
-  generatedApp.value = null
-  revealPhase.value = 0
-  ensoState.value = 'broken'
+const viewJobApplication = (jobId) => {
+  const job = findJob(jobId)
+  if (!job?.generatedApp?.id) return
+  router.push('/applications')
 }
 
-const startPremiumReveal = async () => {
-  revealPhase.value = 0
-  ensoState.value = 'broken'
-
-  await nextTick()
-
-  revealPhase.value = 1
-
-  setTimeout(() => {
-    ensoState.value = 'complete'
-  }, 300)
-
-  setTimeout(() => {
-    revealPhase.value = 2
-  }, 900)
-
-  setTimeout(() => {
-    revealPhase.value = 3
-  }, 1400)
+const loadUsage = async () => {
+  try {
+    const { data } = await api.get('/stats')
+    usage.value = data.usage
+  } catch (e) {
+    console.error('Fehler beim Laden der Nutzung:', e)
+  }
 }
 
 const checkUserSkills = async () => {
   checkingSkills.value = true
   try {
     const { data } = await api.get('/users/me/skills')
-    const userSkills = data.skills || []
-    hasSkills.value = userSkills.length > 0
+    hasSkills.value = (data.skills || []).length > 0
   } catch {
     hasSkills.value = true
   } finally {
@@ -695,8 +400,7 @@ const checkUserResume = async () => {
   checkingResume.value = true
   try {
     const { data } = await api.get('/documents')
-    const documents = data.documents || []
-    hasResume.value = documents.some(doc => doc.doc_type === 'lebenslauf')
+    hasResume.value = (data.documents || []).some(doc => doc.doc_type === 'lebenslauf')
   } catch {
     hasResume.value = true
   } finally {
@@ -708,12 +412,10 @@ const checkProfileCompleteness = () => {
   const user = authStore.user
   if (!user) return
   const requiredFields = ['full_name', 'phone', 'address', 'city', 'postal_code']
-  const missing = requiredFields.filter(f => !user[f])
-  profileIncomplete.value = missing.length > 0 && !profileWarningDismissed.value
+  profileIncomplete.value = requiredFields.some(f => !user[f])
 }
 
 const dismissProfileWarning = () => {
-  profileWarningDismissed.value = true
   profileIncomplete.value = false
 }
 
@@ -722,7 +424,6 @@ onMounted(() => {
   checkUserSkills()
   checkUserResume()
   checkProfileCompleteness()
-  document.addEventListener('keydown', handleKeydown)
 })
 </script>
 
@@ -907,6 +608,39 @@ onMounted(() => {
 
 .usage-section {
   margin-bottom: var(--space-lg);
+}
+
+.jobs-section {
+  max-width: 640px;
+  margin-bottom: var(--space-xl);
+}
+
+.jobs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.job-list-enter-active {
+  transition: all 0.3s ease-out;
+}
+
+.job-list-leave-active {
+  transition: all 0.2s ease-in;
+}
+
+.job-list-enter-from {
+  opacity: 0;
+  transform: translateY(-12px);
+}
+
+.job-list-leave-to {
+  opacity: 0;
+  transform: translateX(-20px);
+}
+
+.job-list-move {
+  transition: transform 0.3s ease;
 }
 
 .info-section {

@@ -1,6 +1,5 @@
 <template>
   <div class="form-card zen-card">
-    <!-- URL Input with Portal Detection -->
     <div class="form-group">
       <label class="form-label">Stellenanzeigen-URL</label>
       <div class="url-input-wrapper">
@@ -17,12 +16,11 @@
             'url-valid': showUrlValidation && urlValidation.isValid === true,
             'url-invalid': showUrlValidation && urlValidation.isValid === false
           }"
-          :disabled="loading || generating"
+          :disabled="loading"
           @input="onUrlInput"
           @paste="onUrlPaste"
           @keydown.enter="onUrlEnterPressed"
         />
-        <!-- Validation Icon -->
         <span v-if="showUrlValidation && urlValidation.isValid === true" class="url-validation-icon url-validation-valid">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
             <polyline points="20 6 9 17 4 12"/>
@@ -34,95 +32,33 @@
             <line x1="6" y1="6" x2="18" y2="18"/>
           </svg>
         </span>
-        <!-- Portal Badge -->
         <span v-if="detectedPortal && urlValidation.isValid !== false" :class="['portal-badge', `portal-${detectedPortal.id}`]">
           {{ detectedPortal.name }}
         </span>
       </div>
-      <!-- Validation Error Message -->
       <p v-if="showUrlValidation && urlValidation.isValid === false" class="url-validation-message">
         {{ urlValidation.message }}
       </p>
       <p v-else class="form-hint">Kopiere die URL der Stellenanzeige und füge sie hier ein</p>
-      <!-- ARIA Live Region for Screenreaders -->
       <div class="sr-only" aria-live="polite" aria-atomic="true">
         {{ urlValidationAnnouncement }}
       </div>
     </div>
-
-    <!-- Enso Recognition Animation (shown during paste detection) -->
-    <div v-if="loading && !quickConfirmData && !previewData" class="enso-recognition-container">
-      <div class="enso-recognition" :class="{ 'enso-complete': recognitionComplete }">
-        <svg class="enso-circle" viewBox="0 0 100 100">
-          <circle
-            class="enso-path"
-            cx="50"
-            cy="50"
-            r="45"
-            fill="none"
-            stroke-width="3"
-            stroke-linecap="round"
-          />
-        </svg>
-        <div v-if="recognitionComplete && recognizedCompany" class="enso-company-name">
-          {{ recognizedCompany }}
-        </div>
-        <div v-else class="enso-status">
-          Erkenne Stellenanzeige...
-        </div>
-      </div>
-    </div>
-
-    <!-- Error State with Broken Enso - Graceful Fallback -->
-    <div v-if="error && !previewData && !showManualFallback" class="scrape-error-state">
-      <div class="scrape-error-enso">
-        <EnsoCircle state="broken" size="lg" color="var(--color-stone)" :duration="3000" />
-      </div>
-      <p class="scrape-error-message">Diese Seite spricht nicht mit uns.</p>
-      <p class="scrape-error-reassurance">Kein Problem.</p>
-      <button @click="$emit('show-manual-fallback')" class="zen-btn zen-btn-ai scrape-error-action">
-        Stellentext selbst einfügen
-      </button>
-    </div>
-
-    <!-- Manual Text Fallback Section - Expanding Flow -->
-    <ManualTextInput
-      v-if="showManualFallback && !previewData"
-      :analyzing-manual-text="analyzingManualText"
-      @analyze="$emit('analyze-manual-text', $event)"
-      @close="$emit('reset-manual-fallback')"
-    />
   </div>
 </template>
 
 <script setup>
-import { computed } from 'vue'
-import EnsoCircle from '../application/EnsoCircle.vue'
-import ManualTextInput from './ManualTextInput.vue'
+import { ref, computed } from 'vue'
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
-  loading: { type: Boolean, default: false },
-  generating: { type: Boolean, default: false },
-  error: { type: String, default: '' },
-  quickConfirmData: { type: Object, default: null },
-  previewData: { type: Object, default: null },
-  showManualFallback: { type: Boolean, default: false },
-  analyzingManualText: { type: Boolean, default: false },
-  recognitionComplete: { type: Boolean, default: false },
-  recognizedCompany: { type: String, default: '' },
-  urlTouched: { type: Boolean, default: false }
+  loading: { type: Boolean, default: false }
 })
 
-const emit = defineEmits([
-  'update:modelValue',
-  'url-input',
-  'url-paste',
-  'url-enter',
-  'show-manual-fallback',
-  'analyze-manual-text',
-  'reset-manual-fallback'
-])
+const emit = defineEmits(['update:modelValue', 'submit'])
+
+const urlTouched = ref(false)
+let pasteTimeout = null
 
 const localUrl = computed({
   get: () => props.modelValue,
@@ -136,7 +72,7 @@ const urlValidation = computed(() => {
     return { isValid: null, message: '' }
   }
 
-  if (!urlValue.match(/^https?:\/\//i)) {
+  if (!/^https?:\/\//i.test(urlValue)) {
     return { isValid: false, message: 'URL muss mit http:// oder https:// beginnen' }
   }
 
@@ -158,7 +94,7 @@ const urlValidation = computed(() => {
 })
 
 const showUrlValidation = computed(() => {
-  return props.urlTouched && props.modelValue.trim().length > 0
+  return urlTouched.value && props.modelValue.trim().length > 0
 })
 
 const urlValidationAnnouncement = computed(() => {
@@ -198,17 +134,24 @@ const detectedPortal = computed(() => {
 })
 
 const onUrlInput = () => {
-  emit('url-input')
+  urlTouched.value = true
 }
 
 const onUrlPaste = () => {
-  emit('url-paste')
+  urlTouched.value = true
+  if (pasteTimeout) clearTimeout(pasteTimeout)
+  // Delay to let v-model update from pasted content, then auto-submit if valid
+  pasteTimeout = setTimeout(() => {
+    if (props.modelValue && urlValidation.value.isValid === true && !props.loading) {
+      emit('submit', props.modelValue)
+    }
+  }, 300)
 }
 
 const onUrlEnterPressed = (event) => {
-  if (props.modelValue && urlValidation.value.isValid === true && !props.loading && !props.generating && !props.previewData) {
+  if (props.modelValue && urlValidation.value.isValid === true && !props.loading) {
     event.preventDefault()
-    emit('url-enter')
+    emit('submit', props.modelValue)
   }
 }
 </script>
@@ -219,7 +162,7 @@ const onUrlEnterPressed = (event) => {
 }
 
 .form-group {
-  margin-bottom: var(--space-lg);
+  margin-bottom: 0;
 }
 
 .form-label {
@@ -346,186 +289,6 @@ const onUrlEnterPressed = (event) => {
 .portal-badge.portal-generic {
   background: var(--color-washi-aged);
   color: var(--color-text-tertiary);
-}
-
-.enso-recognition-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: var(--space-xl) 0;
-  margin-top: var(--space-lg);
-}
-
-.enso-recognition {
-  position: relative;
-  width: 120px;
-  height: 120px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-}
-
-.enso-circle {
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  transform: rotate(-90deg);
-}
-
-.enso-path {
-  stroke: var(--color-ai);
-  stroke-dasharray: 283;
-  stroke-dashoffset: 283;
-  animation: enso-draw 1.5s ease-in-out forwards, enso-pulse 2s ease-in-out 1.5s infinite;
-  opacity: 0.8;
-}
-
-.enso-complete .enso-path {
-  stroke-dashoffset: 0;
-  animation: enso-complete-glow 0.6s ease-out forwards;
-}
-
-.enso-status {
-  font-size: 0.75rem;
-  color: var(--color-text-secondary);
-  text-align: center;
-  margin-top: var(--space-sm);
-  animation: enso-status-fade 1.5s ease-in-out infinite;
-}
-
-.enso-company-name {
-  font-size: 0.875rem;
-  font-weight: 500;
-  color: var(--color-ai);
-  text-align: center;
-  max-width: 100px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  animation: enso-materialize 0.6s ease-out forwards;
-  opacity: 0;
-  transform: scale(0.8);
-}
-
-@keyframes enso-draw {
-  0% {
-    stroke-dashoffset: 283;
-    opacity: 0.3;
-  }
-  50% {
-    opacity: 0.8;
-  }
-  100% {
-    stroke-dashoffset: 20;
-    opacity: 0.8;
-  }
-}
-
-@keyframes enso-pulse {
-  0%, 100% {
-    stroke-dashoffset: 20;
-    opacity: 0.6;
-  }
-  50% {
-    stroke-dashoffset: 40;
-    opacity: 1;
-  }
-}
-
-@keyframes enso-complete-glow {
-  0% {
-    stroke: var(--color-ai);
-    filter: none;
-  }
-  50% {
-    stroke: var(--color-koke);
-    filter: drop-shadow(0 0 8px var(--color-koke));
-  }
-  100% {
-    stroke: var(--color-koke);
-    filter: none;
-    opacity: 1;
-  }
-}
-
-@keyframes enso-status-fade {
-  0%, 100% {
-    opacity: 0.6;
-  }
-  50% {
-    opacity: 1;
-  }
-}
-
-@keyframes enso-materialize {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.scrape-error-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: var(--space-2xl) var(--space-lg);
-  margin-top: var(--space-lg);
-  animation: scrape-error-fade-in 0.6s var(--ease-zen) forwards;
-}
-
-.scrape-error-enso {
-  margin-bottom: var(--space-xl);
-  opacity: 0;
-  animation: scrape-error-enso-appear 0.8s var(--ease-zen) 0.2s forwards;
-}
-
-.scrape-error-message {
-  font-size: 1.25rem;
-  font-weight: 400;
-  color: var(--color-sumi);
-  margin: 0 0 var(--space-xs) 0;
-  opacity: 0;
-  animation: scrape-error-text-appear 0.6s var(--ease-zen) 0.5s forwards;
-}
-
-.scrape-error-reassurance {
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  margin: 0 0 var(--space-xl) 0;
-  font-style: italic;
-  opacity: 0;
-  animation: scrape-error-text-appear 0.6s var(--ease-zen) 0.7s forwards;
-}
-
-.scrape-error-action {
-  opacity: 0;
-  animation: scrape-error-action-appear 0.5s var(--ease-zen) 1s forwards;
-}
-
-@keyframes scrape-error-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-@keyframes scrape-error-enso-appear {
-  from { opacity: 0; transform: scale(0.8); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes scrape-error-text-appear {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-@keyframes scrape-error-action-appear {
-  from { opacity: 0; transform: translateY(12px); }
-  to { opacity: 1; transform: translateY(0); }
 }
 
 @media (max-width: 768px) {
