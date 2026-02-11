@@ -1,3 +1,10 @@
+# [1.48.0](https://github.com/filipores/obojobs/compare/v1.47.0...v1.48.0) (2026-02-11)
+
+
+### Features
+
+* **ui:** add 8 UX improvements for parallel job generation ([6bad88c](https://github.com/filipores/obojobs/commit/6bad88c0e07841d6b33fa0bc66700a1fd84a0d46))
+
 # [1.47.0](https://github.com/filipores/obojobs/compare/v1.46.2...v1.47.0) (2026-02-11)
 
 
