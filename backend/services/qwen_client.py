@@ -1,4 +1,5 @@
 import logging
+import re
 import time
 
 from openai import OpenAI
@@ -118,6 +119,68 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
                 if attempt < retry_count - 1:
                     logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
                     logger.info("Warte %d Sekunden vor erneutem Versuch...", RETRY_DELAY_SECONDS)
+                    time.sleep(RETRY_DELAY_SECONDS)
+                else:
+                    raise Exception(f"Qwen API Fehler nach {retry_count} Versuchen: {e!s}") from e
+
+    def generate_anschreiben(
+        self,
+        cv_text: str,
+        stellenanzeige_text: str,
+        firma_name: str,
+        position: str,
+        ansprechpartner: str,
+        quelle: str = "eure Website",
+        zeugnis_text: str | None = None,
+        bewerber_vorname: str | None = None,
+        bewerber_name: str | None = None,
+        user_skills: list | None = None,
+        tonalitaet: str = "modern",
+        retry_count: int = 3,
+    ) -> str:
+        """Generate a complete cover letter body (greeting through closing).
+
+        Unlike generate_einleitung() which only produces an intro paragraph,
+        this generates the full letter body for direct use in PDF generation.
+        """
+        # Use compact job description if available
+        if stellenanzeige_text and len(stellenanzeige_text) > 2000:
+            stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
+
+        system_prompt = self._build_anschreiben_system_prompt(
+            cv_text=cv_text,
+            position=position,
+            quelle=quelle,
+            ansprechpartner=ansprechpartner,
+            bewerber_vorname=bewerber_vorname,
+            bewerber_name=bewerber_name,
+            user_skills=user_skills,
+            tonalitaet=tonalitaet,
+        )
+
+        if zeugnis_text:
+            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}"
+
+        firma_info = f" (Firma: {firma_name})" if firma_name else ""
+        user_prompt = f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
+{stellenanzeige_text[:2000]}
+
+Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
+
+        for attempt in range(retry_count):
+            try:
+                raw = self._call_api(
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": user_prompt},
+                    ],
+                    max_tokens=config.QWEN_ANSCHREIBEN_MAX_TOKENS,
+                    temperature=config.QWEN_ANSCHREIBEN_TEMPERATURE,
+                )
+                return self._postprocess_anschreiben(raw)
+            except Exception as e:
+                if attempt < retry_count - 1:
+                    logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
                     time.sleep(RETRY_DELAY_SECONDS)
                 else:
                     raise Exception(f"Qwen API Fehler nach {retry_count} Versuchen: {e!s}") from e
@@ -387,3 +450,171 @@ Schreibe die Extraktion in Stichpunkten oder kurzen Sätzen:"""
 Schreibe NUR den Einleitungsabsatz {stil_schluss}. Keine Anrede, keine Erklärung, kein "Hier ist...".
 Beginne direkt mit dem ersten Satz. Ein fließender Absatz, KEINE Zeilenumbrüche.
 Der Text darf KEINE Bindestriche als Satzzeichen enthalten."""
+
+    def _postprocess_anschreiben(self, text: str) -> str:
+        """Clean up AI-generated cover letter text."""
+        # Remove preambles like "Hier ist das Anschreiben:" or "Gerne, hier..."
+        preamble_patterns = [
+            r"^(?:Hier ist|Gerne|Natürlich|Klar|Selbstverständlich)[^\n]*:\s*\n+",
+            r"^```[^\n]*\n",
+            r"\n```\s*$",
+        ]
+        for pattern in preamble_patterns:
+            text = re.sub(pattern, "", text, flags=re.IGNORECASE)
+
+        # Replace dashes used as punctuation (en-dash, em-dash)
+        text = text.replace(" – ", ", ").replace(" — ", ", ")
+        text = text.replace("–", ",").replace("—", ",")
+
+        # Normalize excessive line breaks
+        text = re.sub(r"\n{3,}", "\n\n", text)
+
+        # Strip surrounding quotes
+        text = text.strip()
+        if text.startswith('"') and text.endswith('"'):
+            text = text[1:-1].strip()
+
+        return text
+
+    def _build_anschreiben_system_prompt(
+        self,
+        cv_text: str,
+        position: str,
+        quelle: str,
+        ansprechpartner: str,
+        bewerber_vorname: str | None = None,
+        bewerber_name: str | None = None,
+        user_skills: list | None = None,
+        tonalitaet: str = "modern",
+    ) -> str:
+        """Build the system prompt for full cover letter generation."""
+        # Skills section
+        if user_skills:
+            skills_list = ", ".join(skill.skill_name for skill in user_skills)
+            skills_section = f"- Die Skills im CV sind: {skills_list}"
+        else:
+            skills_section = "- Lies die Skills direkt aus dem Lebenslauf"
+
+        # Tone configuration
+        if tonalitaet == "formal":
+            ton_beschreibung = "Formell und professionell. Siezen (Sie). Klassischer Geschäftsbriefstil."
+            anrede_stil = "Verwende die formelle Anrede."
+        elif tonalitaet == "kreativ":
+            ton_beschreibung = "Persönlich und kreativ. Storytelling-Elemente erlaubt. Zeige Persönlichkeit."
+            anrede_stil = "Die Anrede darf persönlicher sein, wenn ein Name bekannt ist."
+        else:  # modern (default)
+            ton_beschreibung = "Modern und authentisch. Locker aber respektvoll. 'Bei euch' statt 'bei Ihnen' ist OK."
+            anrede_stil = "Verwende eine moderne, freundliche Anrede."
+
+        # Persona
+        if bewerber_vorname:
+            persona = f"Schreibe aus der Perspektive von {bewerber_vorname}: authentisch und persönlich"
+        else:
+            persona = "Schreibe authentisch und persönlich"
+
+        # Bewerber name for closing
+        name_for_closing = ""
+        if bewerber_name:
+            name_for_closing = f"\n- Schließe mit dem Namen: {bewerber_name}"
+        elif bewerber_vorname:
+            name_for_closing = f"\n- Schließe mit dem Vornamen: {bewerber_vorname}"
+
+        # Short CV handling
+        length_guidance = ""
+        if not cv_text or len(cv_text) < 200:
+            length_guidance = (
+                "\n- ACHTUNG: Sehr kurzer Lebenslauf. Schreibe ein kürzeres Anschreiben (200-250 Wörter, 2-3 Absätze)."
+            )
+
+        return f"""Du schreibst ein vollständiges Bewerbungsanschreiben. Nur den Briefkörper: von der Anrede bis zur Grußformel mit Name.
+
+## TONALITÄT: {tonalitaet.upper()}
+{ton_beschreibung}
+{anrede_stil}
+
+## KONTEXT:
+- Position: {position}
+- Quelle: {quelle}
+- Ansprechpartner/Anrede: {ansprechpartner}
+
+## LEBENSLAUF:
+{cv_text[:2500]}
+
+## KRITISCHE REGEL — FAKTENTREUE:
+- Nenne NUR Skills, Tools und Erfahrungen die EXAKT im Lebenslauf stehen
+- ERFINDE KEINE Kenntnisse. Wenn ein Skill nicht im CV steht, erwähne ihn NICHT
+- Beispiele für VERBOTENE Erfindungen: React, Angular, Spring Boot, Python, C++, XSLT, Kubernetes — wenn es nicht im CV steht, NICHT verwenden
+{skills_section}
+- Wenn die Stelle Skills fordert die nicht im CV stehen: Sage ehrlich dass du dich einarbeiten willst, statt die Skills zu erfinden
+- Lieber eine ehrliche Lücke als eine erfundene Qualifikation
+- KEINE Pflegeerfahrung, Laborerfahrung oder andere fachfremde Erfahrung erfinden
+
+## POSITION KORREKT EXTRAHIEREN:
+- Lies die EXAKTE Positionsbezeichnung aus der Stellenanzeige
+- Verwende den genauen Titel, nicht eine vereinfachte Version
+
+## STRUKTUR DES ANSCHREIBENS:
+
+1. **Anrede**: "{ansprechpartner}," (genau so übernehmen)
+2. **Eröffnungsabsatz** (2-3 Sätze): Warum diese Stelle bei dieser Firma, wie gefunden, konkreter Bezug
+3. **Hauptteil** (4-6 Sätze): Relevante Erfahrungen aus dem CV, konkret auf Anforderungen bezogen
+4. **Optional Absatz 3** (2-3 Sätze): Ergänzende Stärken oder Arbeitszeugnis-Referenz (nur wenn relevant)
+5. **Schluss** (1-2 Sätze): Interesse an einem Gespräch, Verfügbarkeit
+6. **Grußformel**: "Mit freundlichen Grüßen" (bei formal) oder "Viele Grüße" (bei modern/kreativ)
+7. **Name**: Vollständiger Name des Bewerbers{name_for_closing}
+
+## REGELN:
+
+### Länge:
+- 250-400 Wörter, 3-5 Absätze (plus Anrede und Grußformel)
+- Absätze durch eine Leerzeile trennen{length_guidance}
+
+### VERBOTENE ZEICHEN:
+- Das Zeichen "–" (Gedankenstrich/En-Dash) ist VERBOTEN
+- Das Zeichen "—" (Em-Dash) ist VERBOTEN
+- Das Zeichen "-" als Satzzeichen ist VERBOTEN (als Bindestrich in Wörtern wie "Full-Stack" ist es OK)
+- Verwende stattdessen Kommas, Punkte oder Semikolons
+
+### VERBOTENE PHRASEN (NIEMALS verwenden):
+- "Hiermit bewerbe ich mich"
+- "mit großem Interesse"
+- "hochmotiviert"
+- "hat meine Aufmerksamkeit geweckt"
+- "vielfältige Herausforderungen"
+- "bin ich der ideale Kandidat"
+- "freue mich auf die Herausforderung"
+- "in einem dynamischen Umfeld"
+- "meine Leidenschaft für"
+- "hat mich sofort angesprochen"
+- "genau die Mischung aus"
+- "spricht mich besonders an"
+- "reizt mich besonders"
+- "passt genau zu meinen Erfahrungen"
+- "technische Tiefe"
+- "Lösungskompetenz"
+- "praktische Erfahrung mitbringen"
+- "bringe ich mit"
+- "konnte ich unter Beweis stellen"
+- "erfolgreich einsetzen"
+
+### Ton & Authentizität:
+- {persona}
+- NICHT wie ein Sprachmodell das "professionelle Bewerbungstexte" generiert
+- Echte Menschen schreiben unperfekt: Mal ein kurzer Satz, mal ein längerer
+- Variiere den Satzanfang (nicht jeder Satz mit "Ich" oder "Mit meiner")
+- Sei konkret. Nenne ein echtes Projekt, ein echtes Tool, eine echte Situation
+
+### AI-TYPISCHE MUSTER (VERMEIDE):
+- Immer gleiche Satzstruktur
+- Glatte Übergänge die zu perfekt klingen
+- Abstrakte Zusammenfassungen
+- Alles wirkt wie ein logischer Beweis statt wie ein persönlicher Text
+
+### ARBEITSZEUGNIS:
+- Nur erwähnen wenn relevant für die Stelle
+- Als eigene Erfahrung formulieren, NICHT als Zitat
+
+## AUSGABE:
+Schreibe NUR das Anschreiben. Keine Erklärung, kein "Hier ist...", kein Markdown.
+Beginne direkt mit der Anrede. Ende mit dem Namen nach der Grußformel.
+Jeder Absatz wird durch eine Leerzeile getrennt."""

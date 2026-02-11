@@ -122,10 +122,6 @@
               <div class="mini-stat-label">{{ $t('admin.userDetail.documents') }}</div>
             </div>
             <div class="mini-stat-card">
-              <div class="mini-stat-value">{{ userData.template_count ?? 0 }}</div>
-              <div class="mini-stat-label">{{ $t('admin.userDetail.templates') }}</div>
-            </div>
-            <div class="mini-stat-card">
               <div class="mini-stat-value">{{ userData.application_count ?? 0 }}</div>
               <div class="mini-stat-label">{{ $t('admin.userDetail.applications') }}</div>
             </div>
@@ -193,42 +189,6 @@
         </div>
       </section>
 
-      <!-- Templates -->
-      <section class="user-templates-section">
-        <div class="container">
-          <h2 class="section-title">{{ $t('admin.userDetail.templatesTitle') }}</h2>
-
-          <div v-if="templatesLoading" class="loading-hint">
-            {{ $t('admin.userDetail.loadingTemplates') }}
-          </div>
-
-          <div v-else-if="fullTemplates.length === 0" class="empty-hint">
-            {{ $t('admin.userDetail.noTemplates') }}
-          </div>
-
-          <div v-else class="templates-list">
-            <div v-for="tmpl in fullTemplates" :key="tmpl.id" class="template-item">
-              <div class="template-row" @click="toggleTemplate(tmpl.id)">
-                <div class="template-info">
-                  <span class="template-name">{{ tmpl.name }}</span>
-                  <span v-if="tmpl.is_default" class="template-default-badge">{{ $t('admin.userDetail.templateDefault') }}</span>
-                </div>
-                <div class="template-meta">
-                  <span class="template-date">{{ formatDateDE(tmpl.updated_at || tmpl.created_at) }}</span>
-                  <svg
-                    class="expand-icon"
-                    :class="{ 'expand-icon-open': expandedTemplates.has(tmpl.id) }"
-                    width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                  ><path d="M6 9l6 6 6-6"/></svg>
-                </div>
-              </div>
-              <div v-if="expandedTemplates.has(tmpl.id)" class="template-detail">
-                <pre class="template-content">{{ tmpl.content || $t('admin.userDetail.noContent') }}</pre>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
     </template>
 
     <!-- Error -->
@@ -258,11 +218,6 @@ const fullApplications = ref([])
 const applicationsLoading = ref(false)
 const applicationsLoaded = ref(false)
 const expandedApps = ref(new Set())
-
-const fullTemplates = ref([])
-const templatesLoading = ref(false)
-const templatesLoaded = ref(false)
-const expandedTemplates = ref(new Set())
 
 function toggleSetEntry(setRef, id) {
   const next = new Set(setRef.value)
@@ -304,17 +259,9 @@ function loadApplications() {
   return loadRelatedData(applicationsLoaded, applicationsLoading, fullApplications, 'applications', 'applications')
 }
 
-function loadTemplates() {
-  return loadRelatedData(templatesLoaded, templatesLoading, fullTemplates, 'templates', 'templates')
-}
-
 function toggleApplication(id) {
   if (!applicationsLoaded.value) loadApplications()
   toggleSetEntry(expandedApps, id)
-}
-
-function toggleTemplate(id) {
-  toggleSetEntry(expandedTemplates, id)
 }
 
 async function toggleField(field) {
@@ -338,7 +285,6 @@ onMounted(async () => {
   await loadUser()
   if (userData.value) {
     loadApplications()
-    loadTemplates()
   }
 })
 </script>
@@ -566,7 +512,7 @@ onMounted(async () => {
 
 .user-stats-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-lg);
 }
 
@@ -600,10 +546,6 @@ onMounted(async () => {
    APPLICATIONS (ACCORDION)
    ======================================== */
 .user-applications-section {
-  padding: 0 0 var(--space-ma);
-}
-
-.user-templates-section {
   padding: 0 0 var(--space-ma-xl);
 }
 
@@ -615,8 +557,7 @@ onMounted(async () => {
   font-size: 0.875rem;
 }
 
-.applications-list,
-.templates-list {
+.applications-list {
   background: var(--color-bg-elevated);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-paper);
@@ -624,18 +565,15 @@ onMounted(async () => {
   overflow: hidden;
 }
 
-.application-item,
-.template-item {
+.application-item {
   border-bottom: 1px solid var(--color-border-light);
 }
 
-.application-item:last-child,
-.template-item:last-child {
+.application-item:last-child {
   border-bottom: none;
 }
 
-.application-row,
-.template-row {
+.application-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -644,8 +582,7 @@ onMounted(async () => {
   transition: background var(--transition-base);
 }
 
-.application-row:hover,
-.template-row:hover {
+.application-row:hover {
   background: var(--color-bg-hover, rgba(0,0,0,0.02));
 }
 
@@ -666,8 +603,7 @@ onMounted(async () => {
   color: var(--color-text-tertiary);
 }
 
-.app-meta,
-.template-meta {
+.app-meta {
   display: flex;
   align-items: center;
   gap: var(--space-md);
@@ -702,8 +638,7 @@ onMounted(async () => {
   color: var(--color-success);
 }
 
-.app-date,
-.template-date {
+.app-date {
   font-size: 0.8125rem;
   color: var(--color-text-tertiary);
   white-space: nowrap;
@@ -720,8 +655,7 @@ onMounted(async () => {
 }
 
 /* Detail panels */
-.app-detail,
-.template-detail {
+.app-detail {
   padding: var(--space-md) var(--space-lg) var(--space-lg);
   background: var(--color-bg-subtle, var(--color-washi));
   border-top: 1px solid var(--color-border-light);
@@ -775,44 +709,6 @@ onMounted(async () => {
   font-style: italic;
 }
 
-/* Templates */
-.template-info {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.template-name {
-  font-size: 0.9375rem;
-  font-weight: 500;
-  color: var(--color-text-primary);
-}
-
-.template-default-badge {
-  font-size: 0.625rem;
-  font-weight: 500;
-  padding: 0.0625rem 0.375rem;
-  border-radius: var(--radius-full, 9999px);
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  background: var(--color-ai-subtle);
-  color: var(--color-ai);
-}
-
-.template-content {
-  font-family: var(--font-mono, monospace);
-  font-size: 0.8125rem;
-  white-space: pre-wrap;
-  word-break: break-word;
-  line-height: 1.6;
-  color: var(--color-text-primary);
-  margin: 0;
-  background: var(--color-bg-elevated);
-  padding: var(--space-md);
-  border-radius: var(--radius-md);
-  border: 1px solid var(--color-border-light);
-}
-
 /* ========================================
    ERROR
    ======================================== */
@@ -844,8 +740,7 @@ onMounted(async () => {
     width: 100%;
   }
 
-  .application-row,
-  .template-row {
+  .application-row {
     flex-direction: column;
     align-items: flex-start;
     gap: var(--space-sm);

@@ -43,9 +43,6 @@
               <router-link to="/documents" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Dokumente verwalten">
                 Dokumente
               </router-link>
-              <router-link to="/templates" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Bewerbungsvorlagen">
-                Templates
-              </router-link>
               <router-link to="/timeline" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Aktivitäten-Timeline">
                 Timeline
               </router-link>
@@ -165,14 +162,6 @@
               <line x1="16" y1="17" x2="8" y2="17"/>
             </svg>
             <span>Dokumente</span>
-          </router-link>
-
-          <router-link to="/templates" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/>
-              <polyline points="14.5 2 14.5 8 20.5 8"/>
-            </svg>
-            <span>Templates</span>
           </router-link>
 
           <router-link to="/applications" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
@@ -349,7 +338,7 @@ const isSidebarOpen = ref(false)
 const isResizing = ref(false)
 const isMoreDropdownOpen = ref(false)
 const moreDropdownRef = ref(null)
-const moreRoutes = ['/documents', '/templates', '/timeline', '/ats', '/company-insights', '/job-dashboard', '/admin']
+const moreRoutes = ['/documents', '/timeline', '/ats', '/company-insights', '/job-dashboard', '/admin']
 const isMoreRouteActive = computed(() => moreRoutes.some(r => route.path.startsWith(r)))
 
 const toggleMoreDropdown = () => {

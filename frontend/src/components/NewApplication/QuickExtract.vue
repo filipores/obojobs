@@ -22,14 +22,13 @@
         </p>
       </div>
 
-      <!-- Template Selection -->
-      <div class="form-group template-selection">
-        <label class="form-label">Anschreiben-Template</label>
-        <select v-model="localTemplateId" class="form-select" :disabled="generating || loadingTemplates">
-          <option :value="null">Standard-Template verwenden</option>
-          <option v-for="template in templates" :key="template.id" :value="template.id">
-            {{ template.name }}{{ template.is_default ? ' (Standard)' : '' }}
-          </option>
+      <!-- Tone Selection -->
+      <div class="form-group tone-selection">
+        <label class="form-label">Anschreiben-Stil</label>
+        <select v-model="localTone" class="form-select" :disabled="generating">
+          <option value="modern">Modern (Empfohlen)</option>
+          <option value="formal">Formal</option>
+          <option value="kreativ">Kreativ</option>
         </select>
       </div>
 
@@ -103,9 +102,7 @@ import { computed } from 'vue'
 
 const props = defineProps({
   quickConfirmData: { type: Object, required: true },
-  selectedTemplateId: { type: [Number, null], default: null },
-  templates: { type: Array, default: () => [] },
-  loadingTemplates: { type: Boolean, default: false },
+  selectedTone: { type: String, default: 'modern' },
   generating: { type: Boolean, default: false },
   loading: { type: Boolean, default: false },
   canGenerate: { type: Boolean, default: false },
@@ -113,11 +110,11 @@ const props = defineProps({
   error: { type: String, default: '' }
 })
 
-const emit = defineEmits(['generate', 'load-full-preview', 'reset', 'update:selectedTemplateId'])
+const emit = defineEmits(['generate', 'load-full-preview', 'reset', 'update:selectedTone'])
 
-const localTemplateId = computed({
-  get: () => props.selectedTemplateId,
-  set: (val) => emit('update:selectedTemplateId', val)
+const localTone = computed({
+  get: () => props.selectedTone,
+  set: (val) => emit('update:selectedTone', val)
 })
 
 const isDocumentMissingError = computed(() => {
@@ -212,7 +209,7 @@ const getPlanLabel = () => {
   color: var(--color-ai);
 }
 
-.template-selection {
+.tone-selection {
   text-align: left;
   margin-bottom: var(--space-lg);
 }

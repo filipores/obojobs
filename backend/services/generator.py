@@ -5,60 +5,21 @@ import re
 from datetime import datetime
 
 from config import config
-from models import Application, Document, JobRequirement, Template, User, UserSkill, db
+from models import Application, Document, JobRequirement, User, UserSkill, db
 
 from .contact_extractor import ContactExtractor
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
-from .pdf_template_modifier import PDFTemplateModifier
 from .qwen_client import QwenAPIClient
 from .requirement_analyzer import RequirementAnalyzer
-from .template_generator import get_or_create_default_template
 
 logger = logging.getLogger(__name__)
 
 
-def _convert_variable_positions_to_dict(variable_positions) -> dict:
-    """
-    Convert variable_positions from list format to dict format.
-
-    The PDFTemplateModifier expects a dict like:
-        {"FIRMA": {"x": 100, "y": 200, "width": 150, ...}, ...}
-
-    But the frontend may send a list like:
-        [{"variable_name": "FIRMA", "x": 100, "y": 200, ...}, ...]
-    """
-    if variable_positions is None:
-        return {}
-
-    if isinstance(variable_positions, dict):
-        return variable_positions
-
-    if isinstance(variable_positions, list):
-        result = {}
-        for item in variable_positions:
-            if not isinstance(item, dict):
-                continue
-            var_name = item.get("variable_name") or item.get("variable")
-            if not var_name:
-                continue
-            # Extract position data, excluding the variable name key
-            position_data = {
-                k: v for k, v in item.items() if k not in ("variable_name", "variable", "suggested_text", "text")
-            }
-            result[var_name] = position_data
-        return result
-
-    return {}
-
-
 class BewerbungsGenerator:
-    def __init__(self, user_id: int, template_id: int | None = None):
+    def __init__(self, user_id: int):
         self.user_id = user_id
-        self.template_id = template_id
         self.api_client = QwenAPIClient()
         self.cv_text = None
-        self.anschreiben_template = None
-        self.template = None  # Store template object for PDF template support
         self.zeugnis_text = None
         self.extracted_links = None
         self.user = None
@@ -98,30 +59,6 @@ class BewerbungsGenerator:
             self.zeugnis_text = None
             logger.info("Arbeitszeugnis nicht vorhanden (optional)")
 
-        # Load Anschreiben-Template
-        if self.template_id:
-            # Specific template requested
-            template = Template.query.filter_by(id=self.template_id, user_id=self.user_id).first()
-            if template:
-                self.template = template
-                self.anschreiben_template = template.content
-                logger.info("Template '%s' geladen (ID: %s)", template.name, self.template_id)
-                if template.is_pdf_template:
-                    logger.info("PDF-Template erkannt: %s", template.pdf_path)
-            else:
-                raise ValueError(f"Template mit ID {self.template_id} nicht gefunden.")
-        else:
-            # No specific template selected - use default template from DB
-            template = get_or_create_default_template(self.user_id)
-            self.template = template
-            self.anschreiben_template = template.content
-            if template.name == "Standard-Vorlage (automatisch erstellt)":
-                logger.info("Standard-Template automatisch erstellt")
-            else:
-                logger.info("Template geladen")
-            if template.is_pdf_template:
-                logger.info("PDF-Template erkannt: %s", template.pdf_path)
-
         logger.info("Dokumente geladen")
 
     def generate_bewerbung(
@@ -130,6 +67,7 @@ class BewerbungsGenerator:
         firma_name: str,
         output_filename: str | None = None,
         user_details: dict | None = None,
+        tonalitaet: str = "modern",
     ) -> str:
         """Generate a job application.
 
@@ -206,27 +144,29 @@ class BewerbungsGenerator:
         logger.info("Ansprechpartner: %s", details["ansprechpartner"])
         logger.info("Quelle: %s", details["quelle"])
 
-        logger.info("3/5 Generiere personalisierten Einleitungsabsatz...")
-        # Extract user's first name for personalized AI prompts
+        logger.info("3/5 Generiere vollständiges Anschreiben...")
         bewerber_vorname = None
+        bewerber_name = None
         if self.user and self.user.full_name:
             bewerber_vorname = self.user.full_name.split()[0]
+            bewerber_name = self.user.full_name
 
-        # Load user skills for dynamic prompt personalization
         user_skills = UserSkill.query.filter_by(user_id=self.user_id).all() if self.user_id else []
 
-        einleitung = self.api_client.generate_einleitung(
+        anschreiben_body = self.api_client.generate_anschreiben(
             cv_text=self.cv_text,
             stellenanzeige_text=stellenanzeige_text,
             firma_name=firma_name,
+            position=details["position"],
+            ansprechpartner=details["ansprechpartner"],
+            quelle=details["quelle"],
             zeugnis_text=self.zeugnis_text,
-            details=details,
-            use_extraction=config.USE_EXTRACTION,
             bewerber_vorname=bewerber_vorname,
+            bewerber_name=bewerber_name,
             user_skills=user_skills,
+            tonalitaet=tonalitaet,
         )
-        logger.info("Einleitung generiert (%d Zeichen)", len(einleitung))
-        logger.debug("Generierte Einleitung: %s", einleitung)
+        logger.info("Anschreiben generiert (%d Zeichen)", len(anschreiben_body))
 
         # Format current date in German
         german_months = [
@@ -246,102 +186,51 @@ class BewerbungsGenerator:
         now = datetime.now()
         datum_formatiert = f"{now.day:02d}. {german_months[now.month - 1]} {now.year}"
 
-        # Build smart composite values that handle empty fields gracefully
-        kontakt_zeile = " | ".join(filter(None, [self.user.phone, self.user.email]))
+        # Build briefkopf (header) programmatically
+        header_parts = []
+        if self.user.full_name:
+            header_parts.append(self.user.full_name)
+        if self.user.address:
+            header_parts.append(self.user.address)
+        if self.user.postal_code or self.user.city:
+            header_parts.append(f"{self.user.postal_code or ''} {self.user.city or ''}".strip())
 
+        contact_parts = []
+        if self.user.phone:
+            contact_parts.append(self.user.phone)
+        if self.user.email:
+            contact_parts.append(self.user.email)
+        if self.user.website:
+            contact_parts.append(self.user.website)
+        if contact_parts:
+            header_parts.append(" | ".join(contact_parts))
+
+        # Company + date
+        header_parts.append("")  # blank line
+        header_parts.append(firma_name)
         ort_datum = f"{self.user.city}, {datum_formatiert}" if self.user.city else datum_formatiert
+        header_parts.append(ort_datum)
+        header_parts.append("")  # blank line
+        header_parts.append(f"Bewerbung als {details['position']}")
+        header_parts.append("")  # blank line
 
-        # Check if template has text before {{ANSPRECHPARTNER}} on the same line
-        # e.g. "Moin Moin liebes {{ANSPRECHPARTNER}}," — needs only the name
-        # vs. "{{ANSPRECHPARTNER}}," — needs full salutation
-        ansprechpartner_value = details["ansprechpartner"]
-        template_text = self.anschreiben_template or ""
-        for line in template_text.split("\n"):
-            if "{{ANSPRECHPARTNER}}" in line:
-                prefix = line.split("{{ANSPRECHPARTNER}}")[0].strip()
-                if prefix:
-                    # Template already has greeting text — strip salutation prefix from value
-                    ansprechpartner_value = re.sub(
-                        r"^(Sehr geehrte/?r?\s*|Sehr geehrte Damen und Herren|Moin Moin liebes\s*)",
-                        "",
-                        ansprechpartner_value,
-                    ).strip()
-                    # If stripped to empty (was just "Sehr geehrte Damen und Herren"), use company fallback
-                    if not ansprechpartner_value:
-                        ansprechpartner_value = f"{firma_name} Team"
-                break
+        briefkopf = "\n".join(header_parts)
 
-        # Prepare variable replacements
-        replacements = {
-            "FIRMA": firma_name,
-            "ANSPRECHPARTNER": ansprechpartner_value,
-            "POSITION": details["position"],
-            "QUELLE": details["quelle"],
-            "EINLEITUNG": einleitung,
-            "NAME": self.user.full_name or "",
-            "EMAIL": self.user.email or "",
-            "TELEFON": self.user.phone or "",
-            "ADRESSE": self.user.address or "",
-            "PLZ_ORT": f"{self.user.postal_code or ''} {self.user.city or ''}".strip(),
-            "WEBSEITE": self.user.website or "",
-            "DATUM": datum_formatiert,
-            "STADT": self.user.city or "",
-            "KONTAKT_ZEILE": kontakt_zeile,
-            "ORT_DATUM": ort_datum,
-        }
+        # Combine briefkopf + AI-generated body
+        anschreiben_vollstaendig = briefkopf + anschreiben_body
 
-        # Create user-specific PDF directory
+        # Clean up excessive blank lines
+        anschreiben_vollstaendig = re.sub(r"\n{3,}", "\n\n", anschreiben_vollstaendig)
+        anschreiben_vollstaendig = anschreiben_vollstaendig.strip()
+
+        # Create PDF
         pdf_dir = os.path.join(config.UPLOAD_FOLDER, f"user_{self.user_id}", "pdfs")
         os.makedirs(pdf_dir, exist_ok=True)
         output_filename = output_filename or f"Anschreiben_{firma_name.replace(' ', '_')}.pdf"
         output_path = os.path.join(pdf_dir, output_filename)
 
-        # Check if using PDF template or text template
-        if self.template and self.template.is_pdf_template:
-            logger.info("4/5 PDF-Template wird verwendet...")
-
-            # Convert variable_positions to dict format if it's a list
-            positions_dict = _convert_variable_positions_to_dict(self.template.variable_positions)
-
-            if positions_dict:
-                logger.info("5/5 Erstelle PDF aus Template...")
-                # Use PDFTemplateModifier to generate PDF from template
-                modifier = PDFTemplateModifier()
-                pdf_bytes = modifier.generate_from_template(
-                    pdf_path=self.template.pdf_path,
-                    variable_positions=positions_dict,
-                    replacements=replacements,
-                )
-
-                # Write the PDF bytes to output file
-                with open(output_path, "wb") as f:
-                    f.write(pdf_bytes)
-            else:
-                logger.warning("PDF-Template hat keine Variable-Positionen, verwende Text-Fallback")
-                # Fall back to text-based substitution
-                anschreiben_vollstaendig = self.anschreiben_template
-                for var_name, value in replacements.items():
-                    placeholder = f"{{{{{var_name}}}}}"
-                    anschreiben_vollstaendig = anschreiben_vollstaendig.replace(placeholder, value)
-
-                anschreiben_vollstaendig = re.sub(r"\n{3,}", "\n\n", anschreiben_vollstaendig)
-                anschreiben_vollstaendig = anschreiben_vollstaendig.strip()
-
-                logger.info("5/5 Erstelle PDF (Text-Fallback)...")
-                create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
-        else:
-            logger.info("4/5 Erstelle vollstaendiges Anschreiben...")
-            anschreiben_vollstaendig = self.anschreiben_template
-            for var_name, value in replacements.items():
-                placeholder = f"{{{{{var_name}}}}}"
-                anschreiben_vollstaendig = anschreiben_vollstaendig.replace(placeholder, value)
-
-            # Clean up blank lines from empty variables (e.g. missing address/phone)
-            anschreiben_vollstaendig = re.sub(r"\n{3,}", "\n\n", anschreiben_vollstaendig)
-            anschreiben_vollstaendig = anschreiben_vollstaendig.strip()
-
-            logger.info("5/5 Erstelle PDF...")
-            create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
+        logger.info("4/5 Erstelle PDF...")
+        create_anschreiben_pdf(anschreiben_vollstaendig, output_path, firma_name)
 
         logger.info("Bewerbung erstellt: %s", output_path)
 
@@ -390,7 +279,7 @@ class BewerbungsGenerator:
             pdf_path=output_path,
             betreff=betreff,
             email_text=email_text,
-            einleitung=einleitung,
+            einleitung=anschreiben_body,
             links_json=json.dumps(extracted_info),
         )
         # Initialize status history with 'erstellt'

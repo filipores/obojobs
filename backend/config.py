@@ -47,6 +47,8 @@ class Config:
     QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://api.together.xyz/v1")
     QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
     QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))
+    QWEN_ANSCHREIBEN_MAX_TOKENS = int(os.getenv("QWEN_ANSCHREIBEN_MAX_TOKENS", "1200"))
+    QWEN_ANSCHREIBEN_TEMPERATURE = float(os.getenv("QWEN_ANSCHREIBEN_TEMPERATURE", "0.65"))
 
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")

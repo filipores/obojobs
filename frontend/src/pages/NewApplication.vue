@@ -127,9 +127,7 @@
       <QuickExtract
         v-if="quickConfirmData && !showFullPreview"
         :quick-confirm-data="quickConfirmData"
-        :selected-template-id="selectedTemplateId"
-        :templates="templates"
-        :loading-templates="loadingTemplates"
+        :selected-tone="selectedTone"
         :generating="generating"
         :loading="loading"
         :can-generate="canGenerate"
@@ -138,7 +136,7 @@
         @generate="generateApplication"
         @load-full-preview="loadFullPreview"
         @reset="resetPreview"
-        @update:selected-template-id="selectedTemplateId = $event"
+        @update:selected-tone="selectedTone = $event"
       />
 
       <!-- Preview Section (shown after loading full details) -->
@@ -146,9 +144,7 @@
         v-if="previewData && showFullPreview"
         :preview-data="previewData"
         :editable-data="editableData"
-        :selected-template-id="selectedTemplateId"
-        :templates="templates"
-        :loading-templates="loadingTemplates"
+        :selected-tone="selectedTone"
         :generating="generating"
         :can-generate="canGenerate"
         :is-at-usage-limit="isAtUsageLimit"
@@ -157,7 +153,7 @@
         @reset="resetPreview"
         @generate="generateApplication"
         @update:editable-data="editableData = $event"
-        @update:selected-template-id="selectedTemplateId = $event"
+        @update:selected-tone="selectedTone = $event"
       />
 
       <!-- Info Box (show when no quick confirm or preview) -->
@@ -250,9 +246,7 @@ const profileWarningDismissed = ref(false)
 
 const url = ref('')
 const urlTouched = ref(false)
-const selectedTemplateId = ref(null)
-const templates = ref([])
-const loadingTemplates = ref(false)
+const selectedTone = ref('modern')
 const loading = ref(false)
 const generating = ref(false)
 const error = ref('')
@@ -521,18 +515,6 @@ const analyzeManualText = async ({ jobText, company, title }) => {
   }
 }
 
-const loadTemplates = async () => {
-  loadingTemplates.value = true
-  try {
-    const { data } = await api.get('/templates')
-    templates.value = data.templates || []
-  } catch (e) {
-    console.error('Fehler beim Laden der Templates:', e)
-  } finally {
-    loadingTemplates.value = false
-  }
-}
-
 const loadUsage = async () => {
   try {
     const { data } = await api.get('/stats')
@@ -561,13 +543,13 @@ const generateApplication = async () => {
         job_text: editableData.value.description,
         company: editableData.value.company,
         title: editableData.value.title,
-        template_id: selectedTemplateId.value,
+        tone: selectedTone.value,
         description: editableData.value.description
       })
     } else {
       response = await api.post('/applications/generate-from-url', {
         url: url.value,
-        template_id: selectedTemplateId.value,
+        tone: selectedTone.value,
         company: editableData.value.company,
         title: editableData.value.title,
         contact_person: editableData.value.contact_person,
@@ -736,7 +718,6 @@ const dismissProfileWarning = () => {
 }
 
 onMounted(() => {
-  loadTemplates()
   loadUsage()
   checkUserSkills()
   checkUserResume()

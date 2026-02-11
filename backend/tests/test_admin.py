@@ -4,7 +4,7 @@ from datetime import datetime, timedelta
 
 import pytest
 
-from models import Application, Document, Subscription, Template, User, db
+from models import Application, Document, Subscription, User, db
 from models.subscription import SubscriptionPlan, SubscriptionStatus
 
 
@@ -455,14 +455,13 @@ class TestAdminUserDetail:
             user_id = user.id
 
             doc = Document(user_id=user.id, original_filename="cv.pdf", file_path="/tmp/cv.pdf", doc_type="lebenslauf")
-            tmpl = Template(user_id=user.id, name="Default", content="Hello {{FIRMA}}")
             app1 = Application(
                 user_id=user.id, firma="Corp A", position="Dev", datum=datetime.utcnow(), status="erstellt"
             )
             app2 = Application(
                 user_id=user.id, firma="Corp B", position="PM", datum=datetime.utcnow(), status="versendet"
             )
-            db.session.add_all([doc, tmpl, app1, app2])
+            db.session.add_all([doc, app1, app2])
             db.session.commit()
 
         response = client.get(f"/api/admin/users/{user_id}", headers=admin_headers)
@@ -471,7 +470,6 @@ class TestAdminUserDetail:
         user_data = data["user"]
         assert user_data["email"] == "detail@example.com"
         assert user_data["document_count"] == 1
-        assert user_data["template_count"] == 1
         assert user_data["application_count"] == 2
         assert len(user_data["recent_applications"]) == 2
         assert user_data["recent_applications"][0]["firma"] in ("Corp A", "Corp B")
@@ -735,49 +733,4 @@ class TestAdminUserApplications:
     def test_get_user_applications_not_found(self, client, admin_headers):
         """Returns 404 for non-existent user."""
         response = client.get("/api/admin/users/99999/applications", headers=admin_headers)
-        assert response.status_code == 404
-
-
-class TestAdminUserTemplates:
-    """Test GET /api/admin/users/<id>/templates."""
-
-    def test_get_user_templates(self, client, admin_headers, app):
-        """Returns full template data for a user."""
-        with app.app_context():
-            user = User(email="tmpl@example.com", full_name="Template User")
-            user.set_password("Pass1234!")
-            db.session.add(user)
-            db.session.flush()
-            user_id = user.id
-
-            t1 = Template(
-                user_id=user.id,
-                name="Mein Template",
-                content="Sehr geehrte(r) {{ANSPRECHPARTNER}},\n\n{{EINLEITUNG}}\n\nMit freundlichen Grüßen",
-                is_default=True,
-            )
-            t2 = Template(
-                user_id=user.id,
-                name="Zweites Template",
-                content="Hallo {{FIRMA}}",
-                is_default=False,
-            )
-            db.session.add_all([t1, t2])
-            db.session.commit()
-
-        response = client.get(f"/api/admin/users/{user_id}/templates", headers=admin_headers)
-        assert response.status_code == 200
-        data = response.get_json()
-        assert len(data["templates"]) == 2
-        names = [t["name"] for t in data["templates"]]
-        assert "Mein Template" in names
-        assert "Zweites Template" in names
-        # Check content is included
-        template_with_content = next(t for t in data["templates"] if t["name"] == "Mein Template")
-        assert "{{ANSPRECHPARTNER}}" in template_with_content["content"]
-        assert template_with_content["is_default"] is True
-
-    def test_get_user_templates_not_found(self, client, admin_headers):
-        """Returns 404 for non-existent user."""
-        response = client.get("/api/admin/users/99999/templates", headers=admin_headers)
         assert response.status_code == 404

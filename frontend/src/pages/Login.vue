@@ -185,10 +185,6 @@
               <span class="feature-marker"></span>
               <span>{{ $t('login.featureChromeExtension') }}</span>
             </li>
-            <li class="feature-item stagger-item">
-              <span class="feature-marker"></span>
-              <span>{{ $t('login.featureTemplateManagement') }}</span>
-            </li>
           </ul>
         </div>
 

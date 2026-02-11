@@ -22,8 +22,7 @@ const routes = [
   // Dashboard - protected route for authenticated users
   { path: '/dashboard', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true, titleKey: 'pages.dashboard' } },
   { path: '/documents', component: () => import('../pages/Documents.vue'), meta: { requiresAuth: true, titleKey: 'pages.documents' } },
-  { path: '/templates', component: () => import('../pages/Templates.vue'), meta: { requiresAuth: true, titleKey: 'pages.templates' } },
-  { path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true, titleKey: 'pages.applications' } },
+{ path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true, titleKey: 'pages.applications' } },
   { path: '/timeline', component: () => import('../pages/Timeline.vue'), meta: { requiresAuth: true, titleKey: 'pages.timeline' } },
   { path: '/company-insights', component: () => import('../pages/CompanyInsights.vue'), meta: { requiresAuth: true, titleKey: 'pages.companyInsights' } },
   { path: '/new-application', component: () => import('../pages/NewApplication.vue'), meta: { requiresAuth: true, titleKey: 'pages.newApplication' } },

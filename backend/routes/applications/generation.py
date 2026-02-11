@@ -11,13 +11,15 @@ from middleware.subscription_limit import (
     decrement_application_count,
     get_subscription_usage,
 )
-from models import Application, JobRequirement, Template, db
+from models import Application, JobRequirement, db
 from routes.applications import applications_bp
 from services.contact_extractor import ContactExtractor
 from services.generator import BewerbungsGenerator
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
 from services.web_scraper import WebScraper
+
+logger = logging.getLogger(__name__)
 
 # Display names for job portal identifiers returned by WebScraper
 PORTAL_DISPLAY_NAMES = {
@@ -103,7 +105,7 @@ def calculate_and_store_job_fit(app, job_description, user_id):
 
     except Exception as e:
         # Log but don't fail - job-fit is optional
-        logging.warning(f"Failed to calculate job-fit for app {app.id}: {e}")
+        logger.warning("Failed to calculate job-fit for app %s: %s", app.id, e)
 
 
 @applications_bp.route("/generate", methods=["POST"])
@@ -115,8 +117,6 @@ def generate_application(current_user):
     company = data.get("company")
     text = data.get("text")
     url = data.get("url", "")
-    template_id = data.get("template_id")  # Optional template selection
-
     if not company or not text:
         return jsonify({"error": "Company and text are required"}), 400
 
@@ -134,8 +134,8 @@ def generate_application(current_user):
                 f.write(text)
                 stellenanzeige_source = f.name
 
-        # Generate application with optional template
-        generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+        # Generate application
+        generator = BewerbungsGenerator(user_id=current_user.id)
         generator.prepare()
         pdf_path = generator.generate_bewerbung(stellenanzeige_source, company)
 
@@ -316,7 +316,7 @@ def preview_job(current_user):
         if _is_scraper_client_error(error_message):
             return jsonify({"success": False, "error": error_message}), 400
 
-        logging.warning(f"preview-job server error for {url}: {error_message}")
+        logger.warning("preview-job server error for %s: %s", url, error_message)
         return jsonify(
             {
                 "success": False,
@@ -434,7 +434,7 @@ def generate_from_url(current_user):
     """
     data = request.json
     url = data.get("url", "").strip()
-    template_id = data.get("template_id")
+    tone = data.get("tone", "modern")
 
     # Optional user-edited data from preview step
     user_company = data.get("company", "").strip()
@@ -472,12 +472,6 @@ def generate_from_url(current_user):
             company = job_data.get("company") or scraper.extract_company_name_from_url(url)
             job_text = job_data.get("text")
 
-        # Validate template if provided
-        if template_id:
-            template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
-            if not template:
-                return jsonify({"success": False, "error": "Template nicht gefunden"}), 404
-
         # Build user_details dict if user provided edited data
         user_details = None
         if user_company or user_description:
@@ -491,9 +485,9 @@ def generate_from_url(current_user):
             }
 
         # Generate application using existing generator
-        generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+        generator = BewerbungsGenerator(user_id=current_user.id)
         generator.prepare()
-        pdf_path = generator.generate_bewerbung(url, company, user_details=user_details)
+        pdf_path = generator.generate_bewerbung(url, company, user_details=user_details, tonalitaet=tone)
 
         # Get the newly created application
         latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
@@ -541,7 +535,7 @@ def generate_from_text(current_user):
     job_text = data.get("job_text", "").strip()
     company = data.get("company", "").strip()
     title = data.get("title", "").strip()
-    template_id = data.get("template_id")
+    tone = data.get("tone", "modern")
     description = data.get("description", "").strip()  # Structured description for interview prep
 
     if not job_text:
@@ -556,12 +550,6 @@ def generate_from_text(current_user):
         return jsonify({"success": False, "error": "Firmenname ist erforderlich"}), 400
 
     try:
-        # Validate template if provided
-        if template_id:
-            template = Template.query.filter_by(id=template_id, user_id=current_user.id).first()
-            if not template:
-                return jsonify({"success": False, "error": "Template nicht gefunden"}), 404
-
         # Save job text to temporary file for generator
         temp_dir = tempfile.mkdtemp()
         temp_file = os.path.join(temp_dir, "job_posting.txt")
@@ -570,9 +558,9 @@ def generate_from_text(current_user):
 
         try:
             # Generate application using existing generator with temp file
-            generator = BewerbungsGenerator(user_id=current_user.id, template_id=template_id)
+            generator = BewerbungsGenerator(user_id=current_user.id)
             generator.prepare()
-            pdf_path = generator.generate_bewerbung(temp_file, company)
+            pdf_path = generator.generate_bewerbung(temp_file, company, tonalitaet=tone)
 
             # Get the newly created application
             latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()

@@ -169,35 +169,15 @@
           </div>
         </div>
 
-        <!-- Template Variables Info -->
-        <div class="template-variables-info">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"/>
-            <line x1="12" y1="16" x2="12" y2="12"/>
-            <line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-          <div>
-            <strong>Template-Variablen werden automatisch befüllt:</strong>
-            <span class="variable-list">
-              <code
-                v-for="(value, key) in templateVariables"
-                :key="key"
-                :title="value || 'nicht verfügbar'"
-                :class="{ missing: !value }"
-              >{{ getVariableDisplay(key) }}</code>
-            </span>
-          </div>
-        </div>
       </div>
 
-      <!-- Template Selection -->
-      <div class="form-group template-selection">
-        <label class="form-label">Anschreiben-Template</label>
-        <select :value="selectedTemplateId" @change="$emit('update:selectedTemplateId', $event.target.value === 'null' ? null : Number($event.target.value))" class="form-select" :disabled="generating || loadingTemplates">
-          <option :value="null">Standard-Template verwenden</option>
-          <option v-for="template in templates" :key="template.id" :value="template.id">
-            {{ template.name }}{{ template.is_default ? ' (Standard)' : '' }}
-          </option>
+      <!-- Tone Selection -->
+      <div class="form-group tone-selection">
+        <label class="form-label">Anschreiben-Stil</label>
+        <select :value="selectedTone" @change="$emit('update:selectedTone', $event.target.value)" class="form-select" :disabled="generating">
+          <option value="modern">Modern (Empfohlen)</option>
+          <option value="formal">Formal</option>
+          <option value="kreativ">Kreativ</option>
         </select>
       </div>
 
@@ -272,9 +252,7 @@ import { ref, computed } from 'vue'
 const props = defineProps({
   previewData: { type: Object, required: true },
   editableData: { type: Object, required: true },
-  selectedTemplateId: { type: [Number, null], default: null },
-  templates: { type: Array, default: () => [] },
-  loadingTemplates: { type: Boolean, default: false },
+  selectedTone: { type: String, default: 'modern' },
   generating: { type: Boolean, default: false },
   canGenerate: { type: Boolean, default: false },
   isAtUsageLimit: { type: Boolean, default: false },
@@ -282,17 +260,9 @@ const props = defineProps({
   error: { type: String, default: '' }
 })
 
-defineEmits(['reset', 'generate', 'update:editableData', 'update:selectedTemplateId'])
+defineEmits(['reset', 'generate', 'update:editableData', 'update:selectedTone'])
 
 const showDescription = ref(false)
-
-const templateVariables = computed(() => ({
-  FIRMA: props.editableData.company,
-  POSITION: props.editableData.title,
-  ANSPRECHPARTNER: props.editableData.contact_person,
-  STANDORT: props.editableData.location,
-  QUELLE: props.previewData?.portal || ''
-}))
 
 const isDocumentMissingError = computed(() => {
   if (!props.error) return false
@@ -310,10 +280,6 @@ const isSubscriptionLimitError = computed(() => {
          errorLower.includes('abonnement') ||
          errorLower.includes('kontingent')
 })
-
-const getVariableDisplay = (key) => {
-  return `{{${key}}}`
-}
 
 const getPlanLabel = () => {
   const plan = props.usage?.plan || 'free'
@@ -497,48 +463,7 @@ const getPlanLabel = () => {
   margin-top: var(--space-md);
 }
 
-.template-variables-info {
-  display: flex;
-  gap: var(--space-md);
-  padding: var(--space-md);
-  background: var(--color-ai-subtle);
-  border-radius: var(--radius-md);
-  margin-top: var(--space-lg);
-}
-
-.template-variables-info svg {
-  flex-shrink: 0;
-  color: var(--color-ai);
-  margin-top: 2px;
-}
-
-.template-variables-info strong {
-  display: block;
-  font-size: 0.8125rem;
-  color: var(--color-sumi);
-  margin-bottom: var(--space-sm);
-}
-
-.variable-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-xs);
-}
-
-.variable-list code {
-  padding: 2px var(--space-xs);
-  background: var(--color-washi);
-  border-radius: var(--radius-xs);
-  font-size: 0.75rem;
-  color: var(--color-ai);
-}
-
-.variable-list code.missing {
-  color: var(--color-text-tertiary);
-  opacity: 0.6;
-}
-
-.template-selection {
+.tone-selection {
   padding-top: var(--space-lg);
   border-top: 1px solid var(--color-border-light);
 }

@@ -185,7 +185,6 @@ def get_user_detail(user_id, current_user):
         "stripe_customer_id": user.stripe_customer_id,
         "plan": sub.plan.value if sub else "free",
         "document_count": len(user.documents),
-        "template_count": len(user.templates),
         "application_count": len(user.applications),
         "recent_applications": [
             {
@@ -242,14 +241,3 @@ def get_user_applications(user_id, current_user):
 
     applications = sorted(user.applications, key=lambda a: a.datum or datetime.min, reverse=True)
     return jsonify({"applications": [app.to_dict() for app in applications]})
-
-
-@admin_bp.route("/users/<int:user_id>/templates", methods=["GET"])
-@admin_required
-def get_user_templates(user_id, current_user):
-    user, error = _get_user_or_404(user_id)
-    if error:
-        return error
-
-    templates = sorted(user.templates, key=lambda t: t.updated_at or datetime.min, reverse=True)
-    return jsonify({"templates": [t.to_dict() for t in templates]})
