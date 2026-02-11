@@ -64,7 +64,7 @@
         </div>
       </div>
 
-      <!-- Error Alert (Fix #5) -->
+      <!-- Error Alert -->
       <div v-if="error" class="error-alert animate-fade-up">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <circle cx="12" cy="12" r="10"/>
@@ -74,8 +74,8 @@
         <span>{{ $t('jobDashboard.errorOccurred') }}</span>
       </div>
 
-      <!-- Stats Row (Fix #10: hide when all zeros) -->
-      <div v-if="stats && (stats.active > 0 || stats.by_score?.sehr_gut > 0 || stats.by_score?.gut > 0 || stats.applied > 0)" class="stats-row animate-fade-up">
+      <!-- Stats Row -->
+      <div v-if="hasStats" class="stats-row animate-fade-up">
         <div class="stat-item">
           <span class="stat-value">{{ stats.active }}</span>
           <span class="stat-label">{{ $t('jobDashboard.statsActive') }}</span>
@@ -157,7 +157,7 @@
             </div>
           </div>
         </div>
-        <!-- Load More (Fix #9) -->
+        <!-- Load More -->
         <div v-if="searchResults.length < totalFound" class="load-more-section">
           <button
             @click="handleLoadMore"
@@ -170,7 +170,7 @@
         </div>
       </div>
 
-      <!-- No Results (Fix #5) -->
+      <!-- No Results -->
       <div v-if="hasSearched && !isSearching && !error && searchResults.length === 0" class="no-results-state animate-fade-up">
         <div class="empty-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -181,7 +181,7 @@
         <h3>{{ $t('jobDashboard.noResults') }}</h3>
       </div>
 
-      <!-- Loading Skeleton (Fix #4: also show when isSearching) -->
+      <!-- Loading Skeleton -->
       <div v-if="isLoading || isSearching" class="loading-skeleton">
         <div v-for="i in 3" :key="i" class="skeleton-card zen-card">
           <div class="skeleton-card-header">
@@ -266,7 +266,7 @@
         </div>
       </div>
 
-      <!-- Empty State (Fix #11: also check searchResults.length === 0) -->
+      <!-- Empty State -->
       <div v-else-if="!isLoading && !isSearching && searchResults.length === 0" class="empty-state animate-fade-up">
         <div class="empty-icon">
           <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -282,7 +282,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { computed, onMounted } from 'vue'
 import { useJobRecommendations } from '../composables/useJobRecommendations'
 import { getFullLocale } from '../i18n'
 
@@ -306,11 +306,15 @@ const {
   markAsApplied,
 } = useJobRecommendations()
 
+const hasStats = computed(() =>
+  stats.value && (stats.value.active > 0 || stats.value.by_score?.sehr_gut > 0 || stats.value.by_score?.gut > 0 || stats.value.applied > 0)
+)
+
 async function handleSearch() {
   try {
     await searchJobs()
   } catch {
-    // Error already set in composable
+    // handled by composable
   }
 }
 
@@ -318,7 +322,7 @@ async function handleLoadMore() {
   try {
     await loadMore()
   } catch {
-    // Error already set in composable
+    // handled by composable
   }
 }
 
@@ -326,7 +330,7 @@ async function handleSaveJob(job) {
   try {
     await saveJob(job)
   } catch {
-    // Error already set in composable
+    // handled by composable
   }
 }
 

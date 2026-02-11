@@ -93,22 +93,7 @@ class BundesagenturClient:
         total = data.get("maxErgebnisse", 0)
         stellenangebote = data.get("stellenangebote", [])
 
-        jobs = []
-        for item in stellenangebote:
-            job = BundesagenturJob(
-                refnr=item.get("refnr", ""),
-                titel=item.get("titel", ""),
-                beruf=item.get("beruf", ""),
-                arbeitgeber=item.get("arbeitgeber", ""),
-                arbeitsort=self._parse_arbeitsort(item.get("arbeitsort", {})),
-                arbeitsort_plz=item.get("arbeitsort", {}).get("plz", ""),
-                eintrittsdatum=item.get("eintrittsdatum", ""),
-                veroeffentlicht_am=item.get("aktuelleVeroeffentlichungsdatum", ""),
-                befristung=item.get("befristung", ""),
-                arbeitszeit=item.get("arbeitszeit", ""),
-                url=f"https://www.arbeitsagentur.de/jobsuche/suche?id={item.get('refnr', '')}",
-            )
-            jobs.append(job)
+        jobs = [self._parse_job(item) for item in stellenangebote]
 
         return jobs, total
 
@@ -128,21 +113,29 @@ class BundesagenturClient:
 
         description_parts = [data[key] for key in ("stellenbeschreibung", "arbeitgeberdarstellung") if data.get(key)]
 
-        arbeitsort = data.get("arbeitsort", {})
+        job = self._parse_job(data)
+        job.refnr = data.get("refnr", refnr)
+        job.beschreibung = "\n\n".join(description_parts)
+        return job
 
+    def _job_url(self, refnr: str) -> str:
+        return f"https://www.arbeitsagentur.de/jobsuche/suche?id={refnr}"
+
+    def _parse_job(self, item: dict) -> BundesagenturJob:
+        arbeitsort = item.get("arbeitsort", {})
+        refnr = item.get("refnr", "")
         return BundesagenturJob(
-            refnr=data.get("refnr", refnr),
-            titel=data.get("titel", ""),
-            beruf=data.get("beruf", ""),
-            arbeitgeber=data.get("arbeitgeber", ""),
+            refnr=refnr,
+            titel=item.get("titel", ""),
+            beruf=item.get("beruf", ""),
+            arbeitgeber=item.get("arbeitgeber", ""),
             arbeitsort=self._parse_arbeitsort(arbeitsort),
             arbeitsort_plz=arbeitsort.get("plz", ""),
-            eintrittsdatum=data.get("eintrittsdatum", ""),
-            veroeffentlicht_am=data.get("aktuelleVeroeffentlichungsdatum", ""),
-            befristung=data.get("befristung", ""),
-            arbeitszeit=data.get("arbeitszeit", ""),
-            beschreibung="\n\n".join(description_parts),
-            url=f"https://www.arbeitsagentur.de/jobsuche/suche?id={refnr}",
+            eintrittsdatum=item.get("eintrittsdatum", ""),
+            veroeffentlicht_am=item.get("aktuelleVeroeffentlichungsdatum", ""),
+            befristung=item.get("befristung", ""),
+            arbeitszeit=item.get("arbeitszeit", ""),
+            url=self._job_url(refnr),
         )
 
     def _parse_arbeitsort(self, ort_data: dict) -> str:

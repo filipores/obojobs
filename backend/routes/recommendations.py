@@ -47,16 +47,15 @@ def analyze_job(current_user):
 
     recommender = JobRecommender()
 
-    if recommender.check_duplicate(current_user.id, job_url):
-        existing = JobRecommendation.query.filter_by(user_id=current_user.id, job_url=job_url).first()
-        if existing:
-            return jsonify(
-                {
-                    "message": "Diese Stelle wurde bereits analysiert",
-                    "recommendation": existing.to_dict(),
-                    "is_duplicate": True,
-                }
-            )
+    existing = JobRecommendation.query.filter_by(user_id=current_user.id, job_url=job_url).first()
+    if existing:
+        return jsonify(
+            {
+                "message": "Diese Stelle wurde bereits analysiert",
+                "recommendation": existing.to_dict(),
+                "is_duplicate": True,
+            }
+        )
 
     result = recommender.analyze_job_for_user(current_user.id, job_url)
 
@@ -283,43 +282,21 @@ def save_recommendation(current_user):
 @jwt_required_custom
 def get_recommendation_stats(current_user):
     """Get recommendation statistics for the current user."""
+    is_dismissed = JobRecommendation.dismissed == True  # noqa: E712
+    is_applied = JobRecommendation.applied == True  # noqa: E712
+    is_active = ~is_dismissed & ~is_applied
+
+    def count_where(condition):
+        return func.sum(case((condition, 1), else_=0))
+
     stats = (
         db.session.query(
             func.count(JobRecommendation.id).label("total"),
-            func.sum(case((JobRecommendation.dismissed == True, 1), else_=0)).label(  # noqa: E712
-                "dismissed"
-            ),
-            func.sum(case((JobRecommendation.applied == True, 1), else_=0)).label(  # noqa: E712
-                "applied"
-            ),
-            func.sum(
-                case(
-                    (
-                        (JobRecommendation.dismissed == False)  # noqa: E712
-                        & (JobRecommendation.applied == False),  # noqa: E712
-                        1,
-                    ),
-                    else_=0,
-                )
-            ).label("active"),
-            func.sum(
-                case(
-                    (
-                        (JobRecommendation.fit_category == "sehr_gut") & (JobRecommendation.dismissed == False),  # noqa: E712
-                        1,
-                    ),
-                    else_=0,
-                )
-            ).label("sehr_gut"),
-            func.sum(
-                case(
-                    (
-                        (JobRecommendation.fit_category == "gut") & (JobRecommendation.dismissed == False),  # noqa: E712
-                        1,
-                    ),
-                    else_=0,
-                )
-            ).label("gut"),
+            count_where(is_dismissed).label("dismissed"),
+            count_where(is_applied).label("applied"),
+            count_where(is_active).label("active"),
+            count_where((JobRecommendation.fit_category == "sehr_gut") & ~is_dismissed).label("sehr_gut"),
+            count_where((JobRecommendation.fit_category == "gut") & ~is_dismissed).label("gut"),
         )
         .filter(JobRecommendation.user_id == current_user.id)
         .first()

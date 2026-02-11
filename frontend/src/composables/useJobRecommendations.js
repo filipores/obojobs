@@ -59,10 +59,8 @@ async function searchJobs(filters = {}) {
   searchResults.value = []
 
   const payload = {
-    keywords: filters.keywords || searchFilters.value.keywords,
-    location: filters.location || searchFilters.value.location,
-    working_time: filters.working_time || searchFilters.value.working_time,
-    max_results: filters.max_results || searchFilters.value.max_results,
+    ...searchFilters.value,
+    ...filters,
     page: 1,
   }
 
@@ -91,10 +89,7 @@ async function loadMore() {
   currentPage.value++
 
   const payload = {
-    keywords: searchFilters.value.keywords,
-    location: searchFilters.value.location,
-    working_time: searchFilters.value.working_time,
-    max_results: searchFilters.value.max_results,
+    ...searchFilters.value,
     page: currentPage.value,
   }
 
