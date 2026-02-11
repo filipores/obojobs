@@ -63,7 +63,7 @@
       <p class="card-position">{{ job.quickData?.title }}</p>
       <div class="generating-indicator">
         <span class="generating-spinner" />
-        <span class="generating-text">Anschreiben wird generiert...</span>
+        <span class="generating-text">{{ progressMessage || 'Anschreiben wird generiert...' }}</span>
       </div>
     </template>
 
@@ -119,6 +119,10 @@ const props = defineProps({
     required: true
     // Shape: { id, url, status, quickData, editableData, tone, generatedApp, error }
     // status: 'extracting' | 'extracted' | 'generating' | 'completed' | 'error'
+  },
+  progressMessage: {
+    type: String,
+    default: ''
   }
 })
 
@@ -437,6 +441,14 @@ const portalClass = computed(() => {
 
   .tone-select {
     width: 100%;
+  }
+
+  .skeleton-title {
+    width: 80%;
+  }
+
+  .skeleton-subtitle {
+    width: 55%;
   }
 }
 </style>

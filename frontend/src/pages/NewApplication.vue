@@ -103,11 +103,53 @@
       </section>
 
       <section v-if="jobs.length > 0" class="jobs-section">
+        <div class="jobs-header">
+          <div class="jobs-counter">
+            <span class="jobs-count">{{ jobs.length }} {{ jobs.length === 1 ? 'Bewerbung' : 'Bewerbungen' }}</span>
+            <span v-if="generatingCount > 0" class="status-badge status-badge--generating">
+              {{ generatingCount }} in Arbeit
+            </span>
+            <span v-if="completedJobs.length > 0" class="status-badge status-badge--completed">
+              {{ completedJobs.length }} fertig
+            </span>
+          </div>
+          <div class="jobs-header-actions">
+            <label class="auto-generate-toggle">
+              <input type="checkbox" v-model="autoGenerate" />
+              <span>Auto-Generierung</span>
+            </label>
+          </div>
+        </div>
+        <div v-if="extractedJobs.length >= 2 || completedJobs.length >= 2" class="batch-actions">
+          <button
+            v-if="extractedJobs.length >= 2"
+            class="zen-btn zen-btn-ai"
+            @click="generateAllJobs"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Alle generieren ({{ extractedJobs.length }})
+          </button>
+          <button
+            v-if="completedJobs.length >= 2"
+            class="zen-btn zen-btn-secondary"
+            @click="downloadAllPDFs"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Alle PDFs herunterladen ({{ completedJobs.length }})
+          </button>
+        </div>
         <TransitionGroup name="job-list" tag="div" class="jobs-list">
           <JobCard
             v-for="job in jobs"
             :key="job.id"
             :job="job"
+            :progress-message="job.progressMessage"
             @generate="generateJob(job.id)"
             @remove="removeJob(job.id)"
             @retry="retryJob(job.id)"
@@ -151,7 +193,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, watch, onMounted, onBeforeUnmount } from 'vue'
 import { useRouter } from 'vue-router'
 import api from '../api/client'
 import { authStore } from '../stores/auth'
@@ -174,20 +216,115 @@ const usage = ref(null)
 const jobs = ref([])
 let nextJobId = 0
 
-const extractApiError = (e, fallbackMessage) => {
+const JOBS_STORAGE_KEY = 'obo_jobs_pipeline'
+const progressTimers = new Map()
+
+const autoGenerate = ref(JSON.parse(localStorage.getItem('obo_auto_generate') ?? 'false'))
+watch(autoGenerate, (value) => localStorage.setItem('obo_auto_generate', JSON.stringify(value)))
+
+const extractedJobs = computed(() => jobs.value.filter(j => j.status === 'extracted'))
+const completedJobs = computed(() => jobs.value.filter(j => j.status === 'completed'))
+const generatingCount = computed(() => jobs.value.filter(j => j.status === 'generating').length)
+
+function normalizeUrl(url) {
+  try {
+    const parsed = new URL(url)
+    return (parsed.origin + parsed.pathname).replace(/\/$/, '')
+  } catch {
+    return url
+  }
+}
+
+function saveJobsToStorage() {
+  const serializable = jobs.value.map(j => ({
+    id: j.id,
+    url: j.url,
+    status: j.status,
+    quickData: j.quickData,
+    editableData: j.editableData,
+    tone: j.tone,
+    generatedApp: j.generatedApp,
+    error: j.error,
+    progressMessage: null
+  }))
+  sessionStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(serializable))
+}
+
+function loadJobsFromStorage() {
+  try {
+    const raw = sessionStorage.getItem(JOBS_STORAGE_KEY)
+    if (!raw) return
+    const loaded = JSON.parse(raw)
+    if (!Array.isArray(loaded) || loaded.length === 0) return
+
+    for (const j of loaded) {
+      if (j.status === 'extracting' || j.status === 'generating') {
+        j.status = 'error'
+        j.error = 'Sitzung unterbrochen. Bitte erneut versuchen.'
+      }
+      j.progressMessage = null
+    }
+
+    jobs.value = loaded
+    nextJobId = Math.max(...loaded.map(j => j.id)) + 1
+  } catch {
+    // Ignore corrupt storage
+  }
+}
+
+watch(jobs, saveJobsToStorage, { deep: true })
+
+function setProgressMessageAfterDelay(jobId, message, delayMs) {
+  return setTimeout(() => {
+    const job = findJob(jobId)
+    if (job?.status === 'generating') {
+      job.progressMessage = message
+    }
+  }, delayMs)
+}
+
+function startProgressTimers(jobId) {
+  const timers = [
+    setProgressMessageAfterDelay(jobId, 'Anschreiben wird formuliert...', 3000),
+    setProgressMessageAfterDelay(jobId, 'Feinschliff und Optimierung...', 8000)
+  ]
+  progressTimers.set(jobId, timers)
+}
+
+function clearProgressTimers(jobId) {
+  const timers = progressTimers.get(jobId)
+  if (timers) {
+    timers.forEach(t => clearTimeout(t))
+    progressTimers.delete(jobId)
+  }
+}
+
+function extractApiError(e, fallbackMessage) {
   return e.response?.data?.error || fallbackMessage
 }
 
-const isAtUsageLimit = () => {
+function isAtUsageLimit() {
   if (!usage.value || usage.value.unlimited) return false
   return usage.value.used >= usage.value.limit
 }
 
-const addJob = (submittedUrl) => {
+function findJob(jobId) {
+  return jobs.value.find(j => j.id === jobId)
+}
+
+async function addJob(submittedUrl) {
   if (!submittedUrl) return
   if (isAtUsageLimit()) {
     if (window.$toast) {
       window.$toast('Bewerbungslimit erreicht. Bitte Abo upgraden.', 'warning')
+    }
+    return
+  }
+
+  const normalizedInput = normalizeUrl(submittedUrl)
+  if (jobs.value.some(j => normalizeUrl(j.url) === normalizedInput)) {
+    if (window.$toast) {
+      window.$toast('Diese URL ist bereits in der Pipeline.', 'warning')
     }
     return
   }
@@ -201,19 +338,20 @@ const addJob = (submittedUrl) => {
     editableData: null,
     tone: 'modern',
     generatedApp: null,
-    error: null
+    error: null,
+    progressMessage: null
   }
 
   jobs.value.unshift(job)
   url.value = ''
-  extractJob(jobId)
+  await extractJob(jobId)
+
+  if (autoGenerate.value && job.status === 'extracted') {
+    generateJob(jobId)
+  }
 }
 
-const findJob = (jobId) => {
-  return jobs.value.find(j => j.id === jobId)
-}
-
-const extractJob = async (jobId) => {
+async function extractJob(jobId) {
   const job = findJob(jobId)
   if (!job) return
 
@@ -249,9 +387,9 @@ const extractJob = async (jobId) => {
   }
 }
 
-const generateJob = async (jobId) => {
+async function generateJob(jobId) {
   const job = findJob(jobId)
-  if (!job || !job.editableData) return
+  if (!job?.editableData) return
 
   if (isAtUsageLimit()) {
     job.error = 'Bewerbungslimit erreicht. Bitte Abo upgraden.'
@@ -261,6 +399,8 @@ const generateJob = async (jobId) => {
 
   job.status = 'generating'
   job.error = null
+  job.progressMessage = 'Stellenanzeige wird analysiert...'
+  startProgressTimers(jobId)
 
   try {
     const { data } = await api.post('/applications/generate-from-url', {
@@ -273,6 +413,9 @@ const generateJob = async (jobId) => {
       location: job.editableData.location,
       description: job.editableData.description
     })
+
+    clearProgressTimers(jobId)
+    job.progressMessage = null
 
     if (data.success) {
       job.generatedApp = data.application
@@ -293,16 +436,18 @@ const generateJob = async (jobId) => {
       job.status = 'error'
     }
   } catch (e) {
+    clearProgressTimers(jobId)
+    job.progressMessage = null
     job.error = extractApiError(e, 'Fehler bei der Generierung. Bitte versuche es erneut.')
     job.status = 'error'
   }
 }
 
-const removeJob = (jobId) => {
+function removeJob(jobId) {
   jobs.value = jobs.value.filter(j => j.id !== jobId)
 }
 
-const retryJob = (jobId) => {
+function retryJob(jobId) {
   const job = findJob(jobId)
   if (!job) return
 
@@ -315,7 +460,7 @@ const retryJob = (jobId) => {
   extractJob(jobId)
 }
 
-const downloadBlob = (blobData, mimeType, filename) => {
+function downloadBlob(blobData, mimeType, filename) {
   const blob = new Blob([blobData], { type: mimeType })
   const objectUrl = window.URL.createObjectURL(blob)
   const link = document.createElement('a')
@@ -327,7 +472,7 @@ const downloadBlob = (blobData, mimeType, filename) => {
   window.URL.revokeObjectURL(objectUrl)
 }
 
-const downloadJobPDF = async (jobId) => {
+async function downloadJobPDF(jobId) {
   const job = findJob(jobId)
   if (!job?.generatedApp?.id) return
 
@@ -348,7 +493,7 @@ const downloadJobPDF = async (jobId) => {
   }
 }
 
-const downloadJobEmail = async (jobId) => {
+async function downloadJobEmail(jobId) {
   const job = findJob(jobId)
   if (!job?.generatedApp?.id) return
 
@@ -369,13 +514,24 @@ const downloadJobEmail = async (jobId) => {
   }
 }
 
-const viewJobApplication = (jobId) => {
+function viewJobApplication(jobId) {
   const job = findJob(jobId)
   if (!job?.generatedApp?.id) return
   router.push('/applications')
 }
 
-const loadUsage = async () => {
+function generateAllJobs() {
+  extractedJobs.value.forEach(j => generateJob(j.id))
+}
+
+async function downloadAllPDFs() {
+  for (const job of completedJobs.value) {
+    await downloadJobPDF(job.id)
+    await new Promise(r => setTimeout(r, 500))
+  }
+}
+
+async function loadUsage() {
   try {
     const { data } = await api.get('/stats')
     usage.value = data.usage
@@ -384,7 +540,7 @@ const loadUsage = async () => {
   }
 }
 
-const checkUserSkills = async () => {
+async function checkUserSkills() {
   checkingSkills.value = true
   try {
     const { data } = await api.get('/users/me/skills')
@@ -396,7 +552,7 @@ const checkUserSkills = async () => {
   }
 }
 
-const checkUserResume = async () => {
+async function checkUserResume() {
   checkingResume.value = true
   try {
     const { data } = await api.get('/documents')
@@ -408,22 +564,28 @@ const checkUserResume = async () => {
   }
 }
 
-const checkProfileCompleteness = () => {
+function checkProfileCompleteness() {
   const user = authStore.user
   if (!user) return
   const requiredFields = ['full_name', 'phone', 'address', 'city', 'postal_code']
   profileIncomplete.value = requiredFields.some(f => !user[f])
 }
 
-const dismissProfileWarning = () => {
+function dismissProfileWarning() {
   profileIncomplete.value = false
 }
 
 onMounted(() => {
+  loadJobsFromStorage()
   loadUsage()
   checkUserSkills()
   checkUserResume()
   checkProfileCompleteness()
+})
+
+onBeforeUnmount(() => {
+  progressTimers.forEach((timers) => timers.forEach(t => clearTimeout(t)))
+  progressTimers.clear()
 })
 </script>
 
@@ -724,6 +886,87 @@ onMounted(() => {
   min-width: 240px;
 }
 
+/* Jobs header with counter + actions */
+.jobs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.jobs-counter {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  flex-wrap: wrap;
+}
+
+.jobs-count {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--color-sumi);
+}
+
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-sm);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.status-badge--generating {
+  background: hsla(217, 91%, 60%, 0.12);
+  color: var(--color-ai, hsl(217, 91%, 60%));
+}
+
+.status-badge--completed {
+  background: rgba(122, 139, 110, 0.15);
+  color: var(--color-koke, #7a8b6e);
+}
+
+.jobs-header-actions {
+  display: flex;
+  align-items: center;
+}
+
+.auto-generate-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.auto-generate-toggle input[type="checkbox"] {
+  accent-color: var(--color-ai, hsl(217, 91%, 60%));
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* Batch action buttons */
+.batch-actions {
+  display: flex;
+  gap: var(--space-sm);
+  justify-content: flex-end;
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
+}
+
+.batch-actions .zen-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.875rem;
+}
+
 @media (max-width: 768px) {
   .cv-invitation-card {
     padding: var(--space-xl) var(--space-lg);
@@ -759,6 +1002,21 @@ onMounted(() => {
   }
 
   .zen-btn-lg {
+    width: 100%;
+  }
+
+  .jobs-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .batch-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .batch-actions .zen-btn {
+    justify-content: center;
     width: 100%;
   }
 }
