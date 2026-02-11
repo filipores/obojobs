@@ -79,47 +79,6 @@ def create_app():
     def token_verification_failed_callback(jwt_header, jwt_payload):
         return jsonify({"error": "Ungültiger Token"}), 401
 
-    # Middleware to intercept JWT responses and change status code
-    @app.after_request
-    def after_request(response):
-        # Only process 422 responses with JSON content
-        if response.status_code == 422 and response.content_type and "application/json" in response.content_type:
-            try:
-                # Try to parse the response data
-                import json
-
-                response_data = json.loads(response.data.decode("utf-8"))
-                error_msg = response_data.get("msg", "")
-
-                # Common JWT error patterns that should return 401
-                jwt_error_patterns = [
-                    "Not enough segments",
-                    "Invalid header string",
-                    "Invalid token",
-                    "Token is invalid",
-                    "Signature verification failed",
-                    "Token has expired",
-                    "Insufficient segments",
-                ]
-
-                for pattern in jwt_error_patterns:
-                    if pattern in error_msg:
-                        # Create new response with 401 status and German error message
-                        from flask import Response
-
-                        new_response = Response(
-                            json.dumps({"error": "Ungültiger Token"}), status=401, mimetype="application/json"
-                        )
-                        # Copy headers from original response
-                        for key, value in response.headers:
-                            if key.lower() not in ["content-length", "content-type"]:
-                                new_response.headers[key] = value
-                        return new_response
-            except (json.JSONDecodeError, UnicodeDecodeError, AttributeError):
-                pass
-
-        return response
-
     # Custom key function that exempts whitelisted IPs
     def get_rate_limit_key():
         remote_addr = get_remote_address()
