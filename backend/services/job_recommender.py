@@ -85,15 +85,22 @@ class JobRecommender:
         if not keywords:
             return []
 
-        keyword_str = " ".join(keywords[:3])
-        jobs, total = self.ba_client.search_jobs(
-            keywords=keyword_str,
-            location=location,
-            size=max_results,
-        )
+        # Search per keyword individually (API uses AND logic)
+        seen_refnrs = set()
+        all_jobs = []
+        for keyword in keywords[:3]:
+            jobs, _ = self.ba_client.search_jobs(
+                keywords=keyword,
+                location=location,
+                size=max_results,
+            )
+            for job in jobs:
+                if job.refnr not in seen_refnrs:
+                    seen_refnrs.add(job.refnr)
+                    all_jobs.append(job)
 
         results = []
-        for job in jobs:
+        for job in all_jobs:
             job_data = job.to_job_data()
             if job_data.get("url") and self.check_duplicate(user_id, job_data["url"]):
                 continue
@@ -109,15 +116,25 @@ class JobRecommender:
         if not keywords:
             return {"results": [], "total_found": 0, "saved_count": 0}
 
-        keyword_str = " ".join(keywords[:3])
-        jobs, total = self.ba_client.search_jobs(
-            keywords=keyword_str,
-            location=location,
-            working_time=working_time,
-            size=min(max_results * 2, 50),
-        )
+        # Search per keyword individually (API uses AND logic, combining keywords returns too few results)
+        seen_refnrs = set()
+        all_jobs = []
+        total = 0
 
-        if not jobs:
+        for keyword in keywords[:3]:
+            jobs, found = self.ba_client.search_jobs(
+                keywords=keyword,
+                location=location,
+                working_time=working_time,
+                size=min(max_results, 25),
+            )
+            total += found
+            for job in jobs:
+                if job.refnr not in seen_refnrs:
+                    seen_refnrs.add(job.refnr)
+                    all_jobs.append(job)
+
+        if not all_jobs:
             return {"results": [], "total_found": total, "saved_count": 0}
 
         user_skills = UserSkill.query.filter_by(user_id=user_id).all()
@@ -127,7 +144,7 @@ class JobRecommender:
         results = []
         saved_count = 0
 
-        for job in jobs[: max_results * 2]:
+        for job in all_jobs[: max_results * 2]:
             job_data = job.to_job_data()
 
             if job_data.get("url") and self.check_duplicate(user_id, job_data["url"]):

@@ -69,7 +69,7 @@ class BundesagenturClient:
             "was": keywords,
             "page": page,
             "size": min(size, 100),
-            "pav": f"D{published_since_days}",
+            "veroeffentlichtseit": published_since_days,
         }
 
         if location:
