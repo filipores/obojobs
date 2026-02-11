@@ -4,10 +4,12 @@ Job Recommender Service - Finds and recommends jobs based on user skills and pro
 Scrapes job boards for relevant jobs and calculates Job-Fit scores.
 """
 
+import time
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 
 from models import JobRecommendation, UserSkill, db
+from services.bundesagentur_client import BundesagenturClient
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
 from services.web_scraper import WebScraper
@@ -45,6 +47,7 @@ class JobRecommender:
         self.scraper = WebScraper()
         self.fit_calculator = JobFitCalculator()
         self.requirement_analyzer = RequirementAnalyzer()
+        self.ba_client = BundesagenturClient()
 
     def get_user_search_keywords(self, user_id: int) -> list[str]:
         """
@@ -97,12 +100,106 @@ class JobRecommender:
         if not keywords:
             return []
 
-        # Note: This is a placeholder implementation.
-        # In production, you would integrate with job board APIs or
-        # use a more sophisticated scraping approach.
-        # For now, we support manual job URL input and analysis.
+        keyword_str = " ".join(keywords[:3])
+        jobs, total = self.ba_client.search_jobs(
+            keywords=keyword_str,
+            location=location,
+            size=max_results,
+        )
 
-        return []
+        results = []
+        for job in jobs:
+            job_data = job.to_job_data()
+            if job_data.get("url") and self.check_duplicate(user_id, job_data["url"]):
+                continue
+            results.append(job_data)
+
+        return results
+
+    def search_and_score_jobs(
+        self, user_id: int, location: str = "", working_time: str = "", max_results: int = 10
+    ) -> dict:
+        """
+        Search Bundesagentur API, fetch details, score each job, and return results.
+
+        Args:
+            user_id: User ID
+            location: Optional location filter
+            working_time: Optional working time filter (vz/tz/ho)
+            max_results: Maximum results to return
+
+        Returns:
+            Dict with results list, total_found, and saved_count
+        """
+        keywords = self.get_user_search_keywords(user_id)
+        if not keywords:
+            return {"results": [], "total_found": 0, "saved_count": 0}
+
+        keyword_str = " ".join(keywords[:3])  # Use top 3 keywords
+
+        # Search API
+        jobs, total = self.ba_client.search_jobs(
+            keywords=keyword_str,
+            location=location,
+            working_time=working_time,
+            size=min(max_results * 2, 50),  # Fetch more to account for duplicates
+        )
+
+        if not jobs:
+            return {"results": [], "total_found": total, "saved_count": 0}
+
+        # Get user skills for scoring
+        user_skills = UserSkill.query.filter_by(user_id=user_id).all()
+        if not user_skills:
+            return {"results": [], "total_found": total, "saved_count": 0}
+
+        results = []
+        saved_count = 0
+
+        for job in jobs[:max_results * 2]:
+            job_data = job.to_job_data()
+
+            # Skip duplicates
+            if job_data.get("url") and self.check_duplicate(user_id, job_data["url"]):
+                continue
+
+            # Fetch full description if not available
+            if not job.beschreibung and job.refnr:
+                detailed = self.ba_client.get_job_details(job.refnr)
+                if detailed and detailed.beschreibung:
+                    job_data["description"] = detailed.beschreibung
+                time.sleep(BundesagenturClient.DETAIL_DELAY)
+
+            # Score the job if we have a description
+            description = job_data.get("description", "")
+            if description and len(description) > 50:
+                requirements = self.requirement_analyzer.analyze_requirements(job_text=description)
+                if requirements:
+                    fit_result = self._calculate_fit_from_requirements(user_skills, requirements)
+                    job_data["fit_score"] = fit_result["score"]
+                    job_data["fit_category"] = fit_result["category"]
+                    job_data["matched_skills"] = fit_result["matched"]
+                    job_data["missing_skills"] = fit_result["missing"]
+                else:
+                    job_data["fit_score"] = 50
+                    job_data["fit_category"] = "mittel"
+            else:
+                job_data["fit_score"] = 50
+                job_data["fit_category"] = "mittel"
+
+            results.append(job_data)
+
+            if len(results) >= max_results:
+                break
+
+        # Sort by fit score descending
+        results.sort(key=lambda x: x.get("fit_score", 0), reverse=True)
+
+        return {
+            "results": results,
+            "total_found": total,
+            "saved_count": saved_count,
+        }
 
     def analyze_job_for_user(self, user_id: int, job_url: str) -> dict | None:
         """

@@ -150,6 +150,55 @@ def analyze_manual_job(current_user):
     return jsonify(result)
 
 
+@bp.route("/recommendations/search", methods=["POST"])
+@jwt_required_custom
+def search_jobs(current_user):
+    """
+    Search for jobs via Bundesagentur API and score them.
+
+    Request body:
+        {
+            "location": "Berlin",      # Optional
+            "working_time": "vz",      # Optional: vz, tz, ho
+            "max_results": 10          # Optional, default 10
+        }
+    """
+    data = request.get_json() or {}
+    location = data.get("location", "")
+    working_time = data.get("working_time", "")
+    max_results = min(int(data.get("max_results", 10)), 25)
+
+    recommender = JobRecommender()
+    result = recommender.search_and_score_jobs(
+        user_id=current_user.id,
+        location=location,
+        working_time=working_time,
+        max_results=max_results,
+    )
+
+    # Auto-save jobs with score >= 60
+    saved_count = 0
+    for job_data in result.get("results", []):
+        if job_data.get("fit_score", 0) >= JobRecommender.MIN_FIT_SCORE:
+            if not job_data.get("url") or not recommender.check_duplicate(current_user.id, job_data["url"]):
+                recommender.create_recommendation(
+                    user_id=current_user.id,
+                    job_data=job_data,
+                    fit_score=job_data["fit_score"],
+                    fit_category=job_data["fit_category"],
+                )
+                saved_count += 1
+
+    return jsonify({
+        "success": True,
+        "data": {
+            "results": result["results"],
+            "total_found": result["total_found"],
+            "saved_count": saved_count,
+        },
+    })
+
+
 @bp.route("/recommendations/<int:recommendation_id>", methods=["GET"])
 @jwt_required_custom
 def get_recommendation(current_user, recommendation_id):
