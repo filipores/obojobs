@@ -25,6 +25,7 @@ const routes = [
   { path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true, title: 'Bewerbungen' } },
   { path: '/timeline', component: () => import('../pages/Timeline.vue'), meta: { requiresAuth: true, title: 'Timeline' } },
   { path: '/company-insights', component: () => import('../pages/CompanyInsights.vue'), meta: { requiresAuth: true, title: 'Firmen-Insights' } },
+  { path: '/job-dashboard', component: () => import('../pages/JobDashboard.vue'), meta: { requiresAuth: true, title: 'Job-Vorschläge' } },
   { path: '/new-application', component: () => import('../pages/NewApplication.vue'), meta: { requiresAuth: true, title: 'Neue Bewerbung' } },
   { path: '/ats', component: () => import('../pages/ATSView.vue'), meta: { requiresAuth: true, title: 'ATS-Check' } },
   { path: '/settings', component: () => import('../pages/Settings.vue'), meta: { requiresAuth: true, title: 'Einstellungen' } },

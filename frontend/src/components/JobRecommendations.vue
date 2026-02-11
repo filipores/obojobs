@@ -5,13 +5,21 @@
         <h2>Job-Empfehlungen</h2>
         <p class="subtitle">Basierend auf Ihrem Profil und Ihren Skills</p>
       </div>
-      <button @click="openAnalyzeModal" class="zen-btn zen-btn-ai">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="11" cy="11" r="8"/>
-          <path d="M21 21l-4.35-4.35"/>
-        </svg>
-        Job analysieren
-      </button>
+      <div class="header-actions">
+        <router-link to="/job-dashboard" class="zen-btn zen-btn-sm zen-btn-ghost">
+          Alle Vorschläge
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </router-link>
+        <button @click="openAnalyzeModal" class="zen-btn zen-btn-ai">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"/>
+            <path d="M21 21l-4.35-4.35"/>
+          </svg>
+          Job analysieren
+        </button>
+      </div>
     </div>
 
     <!-- Stats Summary -->
@@ -71,10 +79,10 @@
       </button>
     </div>
 
-    <!-- Recommendations List -->
+    <!-- Recommendations List (Top 3) -->
     <div v-else class="recommendations-list">
       <div
-        v-for="rec in recommendations"
+        v-for="rec in recommendations.slice(0, 3)"
         :key="rec.id"
         class="recommendation-card zen-card"
         :class="[`score-${rec.fit_category}`]"
@@ -131,13 +139,23 @@
 
         <div class="card-footer">
           <router-link
-            :to="`/applications/new?url=${encodeURIComponent(rec.job_url)}`"
+            :to="`/new-application?url=${encodeURIComponent(rec.job_url)}`"
             class="zen-btn zen-btn-sm"
             @click="markAsApplied(rec.id)"
           >
             Bewerbung starten
           </router-link>
         </div>
+      </div>
+
+      <!-- View All Link -->
+      <div v-if="recommendations.length > 3" class="view-all-link">
+        <router-link to="/job-dashboard" class="zen-btn zen-btn-ghost">
+          Alle {{ recommendations.length }} Vorschläge ansehen
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </router-link>
       </div>
     </div>
 
@@ -362,6 +380,25 @@ const loadStats = async () => {
   }
 }
 
+// Shared error handler for analyze requests.
+// Server errors (500+) are already shown by the API client toast,
+// so we only surface client errors (400/422) in the component UI.
+const handleAnalyzeError = (error) => {
+  if (error.response?.status >= 500) {
+    analyzeError.value = ''
+  } else {
+    analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
+  }
+}
+
+const handleAnalyzeSuccess = async (data) => {
+  analyzeResult.value = data
+  if (data.saved) {
+    await loadRecommendations()
+    await loadStats()
+  }
+}
+
 const analyzeJob = async () => {
   if (!analyzeUrl.value) return
 
@@ -373,23 +410,9 @@ const analyzeJob = async () => {
     const { data } = await api.post('/recommendations/analyze', {
       job_url: analyzeUrl.value
     })
-    analyzeResult.value = data
-
-    // Reload recommendations if job was saved
-    if (data.saved) {
-      await loadRecommendations()
-      await loadStats()
-    }
+    await handleAnalyzeSuccess(data)
   } catch (error) {
-    // Only show component error message for client errors (400/422)
-    // Server errors (500+) are already handled by API client with toast
-    if (error.response?.status >= 500) {
-      // Server error - don't show duplicate error message
-      analyzeError.value = ''
-    } else {
-      // Client error - show specific error message
-      analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
-    }
+    handleAnalyzeError(error)
   } finally {
     analyzing.value = false
   }
@@ -408,30 +431,15 @@ const analyzeManualJob = async () => {
       company: manualCompany.value,
       title: manualTitle.value
     })
-    analyzeResult.value = data
-
-    // Reload recommendations if job was saved
-    if (data.saved) {
-      await loadRecommendations()
-      await loadStats()
-    }
+    await handleAnalyzeSuccess(data)
   } catch (error) {
-    // Only show component error message for client errors (400/422)
-    // Server errors (500+) are already handled by API client with toast
-    if (error.response?.status >= 500) {
-      // Server error - don't show duplicate error message
-      analyzeError.value = ''
-    } else {
-      // Client error - show specific error message
-      analyzeError.value = error.response?.data?.error || 'Analyse fehlgeschlagen'
-    }
+    handleAnalyzeError(error)
   } finally {
     analyzing.value = false
   }
 }
 
-const openAnalyzeModal = () => {
-  // Reset all modal state before opening
+const resetModalState = () => {
   analyzeUrl.value = ''
   analyzeResult.value = null
   analyzeError.value = ''
@@ -439,23 +447,21 @@ const openAnalyzeModal = () => {
   manualJobText.value = ''
   manualCompany.value = ''
   manualTitle.value = ''
+}
+
+const openAnalyzeModal = () => {
+  resetModalState()
   showAnalyzeModal.value = true
 }
 
 const switchToManualInput = () => {
   showManualInput.value = true
-  analyzeError.value = '' // Clear error message when switching to manual input
+  analyzeError.value = ''
 }
 
 const closeAnalyzeModal = () => {
   showAnalyzeModal.value = false
-  showManualInput.value = false
-  analyzeUrl.value = ''
-  analyzeResult.value = null
-  analyzeError.value = ''
-  manualJobText.value = ''
-  manualCompany.value = ''
-  manualTitle.value = ''
+  resetModalState()
 }
 
 const closeOnOverlayClick = (event) => {
@@ -513,26 +519,24 @@ const formatDate = (dateStr) => {
   })
 }
 
-const getSourceLabel = (source) => {
-  const labels = {
-    'indeed': 'Indeed',
-    'stepstone': 'StepStone',
-    'xing': 'XING',
-    'arbeitsagentur': 'Arbeitsagentur',
-    'generic': 'Web',
-  }
-  return labels[source] || source
+const SOURCE_LABELS = {
+  indeed: 'Indeed',
+  stepstone: 'StepStone',
+  xing: 'XING',
+  arbeitsagentur: 'Arbeitsagentur',
+  generic: 'Web',
 }
 
-const getScoreLabel = (category) => {
-  const labels = {
-    'sehr_gut': 'Sehr gut',
-    'gut': 'Gut',
-    'mittel': 'Mittel',
-    'niedrig': 'Niedrig',
-  }
-  return labels[category] || category
+const SCORE_LABELS = {
+  sehr_gut: 'Sehr gut',
+  gut: 'Gut',
+  mittel: 'Mittel',
+  niedrig: 'Niedrig',
 }
+
+const getSourceLabel = (source) => SOURCE_LABELS[source] || source
+
+const getScoreLabel = (category) => SCORE_LABELS[category] || category
 
 onMounted(() => {
   loadRecommendations()
@@ -562,6 +566,12 @@ onMounted(() => {
   color: var(--color-text-secondary);
   font-size: 0.9375rem;
   margin: 0;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
 }
 
 /* Stats Row */
@@ -821,6 +831,12 @@ onMounted(() => {
 
 .card-footer {
   margin-top: var(--space-md);
+}
+
+.view-all-link {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-lg);
 }
 
 /* Modal */
