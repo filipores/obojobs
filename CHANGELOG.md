@@ -1,3 +1,10 @@
+# [1.49.0](https://github.com/filipores/obojobs/compare/v1.48.0...v1.49.0) (2026-02-11)
+
+
+### Features
+
+* **jobs:** improve job dashboard with scoring, search, and ux fixes ([26f365f](https://github.com/filipores/obojobs/commit/26f365fb854316c5f0b20b4ef1ce7e601e0518c2))
+
 # [1.48.0](https://github.com/filipores/obojobs/compare/v1.47.0...v1.48.0) (2026-02-11)
 
 
