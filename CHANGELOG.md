@@ -1,3 +1,10 @@
+# [1.51.0](https://github.com/filipores/obojobs/compare/v1.50.0...v1.51.0) (2026-02-12)
+
+
+### Features
+
+* add harness engineering infrastructure (docs, arch tests, coverage) ([6281158](https://github.com/filipores/obojobs/commit/6281158665c30fb6ae9f9fad168d9a9063c63178))
+
 # [1.50.0](https://github.com/filipores/obojobs/compare/v1.49.0...v1.50.0) (2026-02-11)
 
 
