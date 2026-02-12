@@ -1,11 +1,10 @@
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
-from sqlalchemy import func
 
 from middleware.jwt_required import jwt_required_custom
 from middleware.subscription_limit import get_subscription_usage
-from models import Application, db
+from services import stats_service
 
 stats_bp = Blueprint("stats", __name__)
 
@@ -24,24 +23,10 @@ def get_week_boundaries():
 @stats_bp.route("/stats/weekly-goal", methods=["GET"])
 @jwt_required_custom
 def get_weekly_goal(current_user):
-    """Get user's weekly application goal and current progress.
-
-    Returns:
-        - goal: Target number of applications per week
-        - completed: Applications created this week
-        - progress: Percentage of goal completed (0-100)
-        - is_achieved: Whether goal has been met or exceeded
-        - week_start: Start of current week (Monday)
-        - week_end: End of current week (Sunday)
-    """
+    """Get user's weekly application goal and current progress."""
     week_start, week_end = get_week_boundaries()
 
-    # Count applications created this week
-    completed = Application.query.filter(
-        Application.user_id == current_user.id,
-        Application.datum >= week_start,
-        Application.datum < week_end,
-    ).count()
+    completed = stats_service.count_applications_in_range(current_user.id, week_start, week_end)
 
     goal = current_user.weekly_goal or 5
     progress = min(round((completed / goal) * 100) if goal > 0 else 100, 100)
@@ -65,14 +50,7 @@ def get_weekly_goal(current_user):
 @stats_bp.route("/stats/weekly-goal", methods=["PUT"])
 @jwt_required_custom
 def update_weekly_goal(current_user):
-    """Update user's weekly application goal.
-
-    Request body:
-        - goal: New weekly goal (1-50)
-
-    Returns:
-        - goal: Updated weekly goal
-    """
+    """Update user's weekly application goal."""
     data = request.json or {}
     new_goal = data.get("goal")
 
@@ -87,16 +65,11 @@ def update_weekly_goal(current_user):
     if new_goal < 1 or new_goal > 50:
         return jsonify({"success": False, "error": "goal muss zwischen 1 und 50 liegen"}), 400
 
-    current_user.weekly_goal = new_goal
-    db.session.commit()
+    stats_service.update_weekly_goal(current_user, new_goal)
 
     # Get updated progress
     week_start, week_end = get_week_boundaries()
-    completed = Application.query.filter(
-        Application.user_id == current_user.id,
-        Application.datum >= week_start,
-        Application.datum < week_end,
-    ).count()
+    completed = stats_service.count_applications_in_range(current_user.id, week_start, week_end)
 
     progress = min(round((completed / new_goal) * 100) if new_goal > 0 else 100, 100)
     is_achieved = completed >= new_goal
@@ -123,26 +96,21 @@ def get_stats(current_user):
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
 
     # Count applications by status
-    total = Application.query.filter_by(user_id=user_id).count()
-    erstellt = Application.query.filter_by(user_id=user_id, status="erstellt").count()
-    versendet = Application.query.filter_by(user_id=user_id, status="versendet").count()
-    antwort_erhalten = Application.query.filter_by(user_id=user_id, status="antwort_erhalten").count()
-    interviews = Application.query.filter_by(user_id=user_id, status="interview").count()
+    total = stats_service.count_by_status(user_id)
+    erstellt = stats_service.count_by_status(user_id, "erstellt")
+    versendet = stats_service.count_by_status(user_id, "versendet")
+    antwort_erhalten = stats_service.count_by_status(user_id, "antwort_erhalten")
+    interviews = stats_service.count_by_status(user_id, "interview")
 
     # Count today's sent applications (sent_at is today)
-    versendet_heute = Application.query.filter(
-        Application.user_id == user_id, Application.sent_at >= today_start
-    ).count()
+    versendet_heute = stats_service.count_sent_today(user_id, today_start)
 
     # Count today's responses and interviews by checking status_history
-    # We parse the JSON status_history to find status changes that happened today
     antworten_heute = 0
     interviews_heute = 0
     today_str = today_start.strftime("%Y-%m-%d")
 
-    apps_with_history = Application.query.filter(
-        Application.user_id == user_id, Application.status.in_(["antwort_erhalten", "interview"])
-    ).all()
+    apps_with_history = stats_service.get_apps_with_status_history(user_id, ["antwort_erhalten", "interview"])
 
     for app in apps_with_history:
         history = app.get_status_history()
@@ -185,7 +153,7 @@ def get_extended_stats(current_user):
     user_id = current_user.id
 
     # Get all applications for the user
-    applications = Application.query.filter_by(user_id=user_id).all()
+    applications = stats_service.get_all_applications(user_id)
     total = len(applications)
 
     # Count by status
@@ -254,11 +222,7 @@ def get_extended_stats(current_user):
     for i in range(11, -1, -1):
         week_start = now - timedelta(weeks=i + 1)
         week_end = now - timedelta(weeks=i)
-        count = Application.query.filter(
-            Application.user_id == user_id,
-            Application.datum >= week_start,
-            Application.datum < week_end,
-        ).count()
+        count = stats_service.count_applications_in_range(user_id, week_start, week_end)
         bewerbungen_pro_woche.append(
             {
                 "woche": (now - timedelta(weeks=i)).strftime("KW %W"),
@@ -284,11 +248,7 @@ def get_extended_stats(current_user):
         else:
             month_end = datetime(target_year, target_month + 1, 1)
 
-        count = Application.query.filter(
-            Application.user_id == user_id,
-            Application.datum >= month_start,
-            Application.datum < month_end,
-        ).count()
+        count = stats_service.count_applications_in_range(user_id, month_start, month_end)
         bewerbungen_pro_monat.append(
             {
                 "monat": month_start.strftime("%B %Y"),
@@ -298,15 +258,7 @@ def get_extended_stats(current_user):
         )
 
     # Top 5 companies by application count
-    top_firmen = (
-        db.session.query(Application.firma, func.count(Application.id).label("anzahl"))
-        .filter(Application.user_id == user_id)
-        .group_by(Application.firma)
-        .order_by(func.count(Application.id).desc())
-        .limit(5)
-        .all()
-    )
-
+    top_firmen = stats_service.get_top_companies(user_id, limit=5)
     top_firmen_list = [{"firma": firma, "anzahl": anzahl} for firma, anzahl in top_firmen]
 
     return jsonify(
@@ -337,7 +289,7 @@ def get_company_stats(current_user):
         sort_by = "bewerbungen"
 
     # Get all applications for the user grouped by company
-    applications = Application.query.filter_by(user_id=user_id).all()
+    applications = stats_service.get_all_applications(user_id)
 
     # Group applications by company
     company_data = {}

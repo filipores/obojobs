@@ -1,9 +1,12 @@
+import logging
 from datetime import datetime, timedelta
 
 from flask_jwt_extended import create_access_token, create_refresh_token
 
-from models import User, db
+from models import TokenBlacklist, User, db
 from services.password_validator import PasswordValidator
+
+logger = logging.getLogger(__name__)
 
 # Lockout configuration
 MAX_FAILED_ATTEMPTS = 5
@@ -156,3 +159,185 @@ class AuthService:
         db.session.commit()
 
         return {"success": True, "message": "Passwort erfolgreich geändert"}
+
+    @staticmethod
+    def check_email_verification_for_login(email: str) -> dict | None:
+        """Check if user needs email verification before login.
+
+        Returns:
+            dict with error info if login should be blocked, None if login is allowed.
+        """
+        user = User.query.filter_by(email=email).first()
+        if user and not user.google_id:
+            return {
+                "error": "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+                "email_not_verified": True,
+            }
+        return None
+
+    @staticmethod
+    def google_auth_login(
+        google_id: str, email: str, email_verified: bool, full_name: str | None, registration_enabled: bool
+    ) -> dict:
+        """Handle Google OAuth login/registration.
+
+        Args:
+            google_id: Google user ID
+            email: User email (lowercased)
+            email_verified: Whether Google says the email is verified
+            full_name: User's full name from Google
+            registration_enabled: Whether new registrations are allowed
+
+        Returns:
+            dict with access_token, refresh_token, and user data
+
+        Raises:
+            ValueError: If user is inactive or registration is disabled
+        """
+        # Check if user exists by Google ID
+        user = User.query.filter_by(google_id=google_id).first()
+
+        if not user:
+            # Check if user exists by email
+            user = User.query.filter_by(email=email).first()
+
+            if user:
+                # Link Google account to existing user
+                user.google_id = google_id
+                if email_verified and not user.email_verified:
+                    user.email_verified = True
+                db.session.commit()
+            else:
+                if not registration_enabled:
+                    raise ValueError("Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator.")
+                # Create new user
+                user = User(
+                    email=email,
+                    google_id=google_id,
+                    full_name=full_name,
+                    email_verified=email_verified,
+                )
+                db.session.add(user)
+                db.session.commit()
+
+        if not user.is_active:
+            raise ValueError("Konto ist deaktiviert")
+
+        access_token = create_access_token(identity=str(user.id))
+        refresh_token = create_refresh_token(identity=str(user.id))
+
+        return {"access_token": access_token, "refresh_token": refresh_token, "user": user.to_dict()}
+
+    @staticmethod
+    def logout_user(jti: str, token_type: str, user_id: int, expires_at) -> None:
+        """Add token to blacklist for logout."""
+        TokenBlacklist.add_token(jti=jti, token_type=token_type, user_id=user_id, expires_at=expires_at)
+
+    @staticmethod
+    def update_language(user_id: int, language: str) -> dict:
+        """Update user language preference.
+
+        Args:
+            user_id: User ID
+            language: Language code ('de' or 'en')
+
+        Returns:
+            dict with message and language
+
+        Raises:
+            ValueError: If user not found or invalid language
+        """
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError("Benutzer nicht gefunden")
+
+        if language not in ["de", "en"]:
+            raise ValueError("Ungültige Sprache. Muss 'de' oder 'en' sein.")
+
+        user.language = language
+        db.session.commit()
+
+        return {"message": "Spracheinstellung aktualisiert", "language": user.language}
+
+    @staticmethod
+    def update_profile(user_id: int, data: dict) -> dict:
+        """Update user profile fields.
+
+        Args:
+            user_id: User ID
+            data: dict with profile fields to update
+
+        Returns:
+            dict with message and user data
+
+        Raises:
+            ValueError: If user not found or validation fails
+        """
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError("Benutzer nicht gefunden")
+
+        profile_fields = [
+            ("full_name", "full_name", 255, "Name"),
+            ("display_name", "display_name", 100, "Anzeigename"),
+            ("phone", "phone", 50, "Telefonnummer"),
+            ("address", "address", 255, "Adresse"),
+            ("city", "city", 100, "Stadt"),
+            ("postal_code", "postal_code", 20, "PLZ"),
+            ("website", "website", 255, "Website"),
+        ]
+
+        for json_key, attr, max_length, label in profile_fields:
+            if json_key not in data:
+                continue
+            value = data[json_key]
+            if value and len(value) > max_length:
+                raise ValueError(f"{label} darf maximal {max_length} Zeichen haben")
+            setattr(user, attr, value.strip() if value else None)
+
+        db.session.commit()
+
+        return {"message": "Profil erfolgreich aktualisiert", "user": user.to_dict()}
+
+    @staticmethod
+    def delete_account(user_id: int) -> dict:
+        """Delete user account and all associated data (GDPR right to be forgotten).
+
+        Args:
+            user_id: User ID
+
+        Returns:
+            dict with success message
+
+        Raises:
+            ValueError: If user not found
+            RuntimeError: If deletion fails
+        """
+        user = User.query.get(user_id)
+        if not user:
+            raise ValueError("Benutzer nicht gefunden")
+
+        try:
+            # Cancel Stripe subscription if exists
+            if user.stripe_customer_id:
+                try:
+                    pass  # Stripe cancellation placeholder
+                except Exception as e:
+                    logger.warning("Could not cancel Stripe subscription for user %s: %s", user.id, e)
+
+            user_email = user.email
+
+            # Delete all TokenBlacklist entries for this user to avoid foreign key issues
+            TokenBlacklist.query.filter_by(user_id=user_id).delete()
+
+            # Delete user (cascade will handle all other related data)
+            db.session.delete(user)
+            db.session.commit()
+
+            logger.info("[GDPR] Account deleted for user %s (ID: %s)", user_email, user_id)
+
+            return {"message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}
+        except Exception as e:
+            db.session.rollback()
+            logger.error("Error deleting account for user %s: %s", user_id, e)
+            raise RuntimeError("Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support.") from e

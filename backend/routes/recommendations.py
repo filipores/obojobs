@@ -3,10 +3,9 @@ Recommendations Routes - API endpoints for job recommendations.
 """
 
 from flask import Blueprint, jsonify, request
-from sqlalchemy import case, func
 
 from middleware.jwt_required import jwt_required_custom
-from models import JobRecommendation, db
+from services import recommendation_service
 from services.job_recommender import JobRecommender
 
 bp = Blueprint("recommendations", __name__)
@@ -47,7 +46,7 @@ def analyze_job(current_user):
 
     recommender = JobRecommender()
 
-    existing = JobRecommendation.query.filter_by(user_id=current_user.id, job_url=job_url).first()
+    existing = recommendation_service.find_by_url(current_user.id, job_url)
     if existing:
         return jsonify(
             {
@@ -170,7 +169,7 @@ def search_jobs(current_user):
 @jwt_required_custom
 def get_recommendation(current_user, recommendation_id):
     """Get a specific recommendation by ID."""
-    recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=current_user.id).first()
+    recommendation = recommendation_service.get_recommendation(recommendation_id, current_user.id)
 
     if not recommendation:
         return jsonify({"error": "Empfehlung nicht gefunden"}), 404
@@ -211,13 +210,10 @@ def mark_applied(current_user, recommendation_id):
 @jwt_required_custom
 def delete_recommendation(current_user, recommendation_id):
     """Delete a job recommendation."""
-    recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=current_user.id).first()
+    recommendation = recommendation_service.delete_recommendation(recommendation_id, current_user.id)
 
     if not recommendation:
         return jsonify({"error": "Empfehlung nicht gefunden"}), 404
-
-    db.session.delete(recommendation)
-    db.session.commit()
 
     return jsonify({"message": "Empfehlung gelöscht", "success": True})
 
@@ -282,25 +278,7 @@ def save_recommendation(current_user):
 @jwt_required_custom
 def get_recommendation_stats(current_user):
     """Get recommendation statistics for the current user."""
-    is_dismissed = JobRecommendation.dismissed == True  # noqa: E712
-    is_applied = JobRecommendation.applied == True  # noqa: E712
-    is_active = ~is_dismissed & ~is_applied
-
-    def count_where(condition):
-        return func.sum(case((condition, 1), else_=0))
-
-    stats = (
-        db.session.query(
-            func.count(JobRecommendation.id).label("total"),
-            count_where(is_dismissed).label("dismissed"),
-            count_where(is_applied).label("applied"),
-            count_where(is_active).label("active"),
-            count_where((JobRecommendation.fit_category == "sehr_gut") & ~is_dismissed).label("sehr_gut"),
-            count_where((JobRecommendation.fit_category == "gut") & ~is_dismissed).label("gut"),
-        )
-        .filter(JobRecommendation.user_id == current_user.id)
-        .first()
-    )
+    stats = recommendation_service.get_recommendation_stats(current_user.id)
 
     return jsonify(
         {

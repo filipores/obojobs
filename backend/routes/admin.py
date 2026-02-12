@@ -1,62 +1,24 @@
-from datetime import datetime, timedelta
+from datetime import datetime
 
 from flask import Blueprint, jsonify, request
-from sqlalchemy import func
 
 from middleware.admin_required import admin_required
-from models import Application, Subscription, User, db
-from models.subscription import SubscriptionPlan, SubscriptionStatus
+from services import admin_service
 
 admin_bp = Blueprint("admin", __name__)
-
-
-def _get_user_or_404(user_id):
-    """Look up a user by id. Returns (user, None) on success or (None, error_response) on failure."""
-    user = User.query.get(user_id)
-    if not user:
-        return None, (jsonify({"error": "Benutzer nicht gefunden"}), 404)
-    return user, None
 
 
 @admin_bp.route("/stats", methods=["GET"])
 @admin_required
 def get_stats(current_user):
-    total_users = User.query.count()
-    total_applications = Application.query.count()
-
-    thirty_days_ago = datetime.utcnow() - timedelta(days=30)
-    seven_days_ago = datetime.utcnow() - timedelta(days=7)
-
-    # Active users: created in last 30 days OR have applications with datum in last 30 days
-    users_created_recently = db.session.query(User.id).filter(User.created_at >= thirty_days_ago)
-    users_with_recent_apps = (
-        db.session.query(Application.user_id).filter(Application.datum >= thirty_days_ago).distinct()
-    )
-    active_users_30d = User.query.filter(
-        db.or_(
-            User.id.in_(users_created_recently),
-            User.id.in_(users_with_recent_apps),
-        )
-    ).count()
-
-    # Applications this month: sum of all users' applications_this_month
-    applications_this_month = db.session.query(func.coalesce(func.sum(User.applications_this_month), 0)).scalar()
-
-    # Subscription counts
-    basic_count = Subscription.query.filter(
-        Subscription.plan == SubscriptionPlan.basic,
-        Subscription.status == SubscriptionStatus.active,
-    ).count()
-    pro_count = Subscription.query.filter(
-        Subscription.plan == SubscriptionPlan.pro,
-        Subscription.status == SubscriptionStatus.active,
-    ).count()
-
+    total_users = admin_service.get_total_users()
+    total_applications = admin_service.get_total_applications()
+    active_users_30d = admin_service.get_active_users_30d()
+    applications_this_month = admin_service.get_applications_this_month()
+    basic_count, pro_count = admin_service.get_subscription_counts()
     free_count = total_users - basic_count - pro_count
-
-    signups_last_7_days = User.query.filter(User.created_at >= seven_days_ago).count()
-    email_verified_count = User.query.filter(User.email_verified.is_(True)).count()
-
+    signups_last_7_days = admin_service.get_signups_last_7_days()
+    email_verified_count = admin_service.get_email_verified_count()
     revenue_estimate = round(basic_count * 9.99 + pro_count * 19.99, 2)
 
     return jsonify(
@@ -87,48 +49,9 @@ def list_users(current_user):
     sort = request.args.get("sort", "created_at")
     order = request.args.get("order", "desc")
 
-    query = User.query
-
-    # Search filter
-    if search:
-        search_term = f"%{search}%"
-        query = query.filter(db.or_(User.email.ilike(search_term), User.full_name.ilike(search_term)))
-
-    # Plan filter
-    if plan_filter:
-        if plan_filter == "free":
-            # Users with no subscription or free plan
-            subquery = db.session.query(Subscription.user_id).filter(
-                Subscription.plan.in_([SubscriptionPlan.basic, SubscriptionPlan.pro]),
-                Subscription.status == SubscriptionStatus.active,
-            )
-            query = query.filter(~User.id.in_(subquery))
-        elif plan_filter in ("basic", "pro"):
-            plan_enum = SubscriptionPlan.basic if plan_filter == "basic" else SubscriptionPlan.pro
-            subquery = db.session.query(Subscription.user_id).filter(
-                Subscription.plan == plan_enum,
-                Subscription.status == SubscriptionStatus.active,
-            )
-            query = query.filter(User.id.in_(subquery))
-
-    # Sorting — 'name' and 'application_count' are frontend aliases
-    sort_column = {
-        "created_at": User.created_at,
-        "email": User.email,
-        "name": User.full_name,
-        "application_count": User.applications_this_month,
-        "applications_this_month": User.applications_this_month,
-    }.get(sort, User.created_at)
-
-    if order == "asc":
-        query = query.order_by(sort_column.asc())
-    else:
-        query = query.order_by(sort_column.desc())
-
-    # Paginate
-    total = query.count()
-    pages = (total + per_page - 1) // per_page if per_page > 0 else 1
-    users = query.offset((page - 1) * per_page).limit(per_page).all()
+    users, total, pages = admin_service.list_users_paginated(
+        page, per_page, search=search, plan_filter=plan_filter, sort=sort, order=order
+    )
 
     users_list = []
     for user in users:
@@ -166,9 +89,9 @@ def list_users(current_user):
 @admin_bp.route("/users/<int:user_id>", methods=["GET"])
 @admin_required
 def get_user_detail(user_id, current_user):
-    user, error = _get_user_or_404(user_id)
-    if error:
-        return error
+    user = admin_service.get_user(user_id)
+    if not user:
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
     sub = user.subscription
     recent_apps = sorted(user.applications, key=lambda a: a.datum or datetime.min, reverse=True)[:10]
@@ -204,9 +127,9 @@ def get_user_detail(user_id, current_user):
 @admin_bp.route("/users/<int:user_id>", methods=["PATCH"])
 @admin_required
 def patch_user(user_id, current_user):
-    user, error = _get_user_or_404(user_id)
-    if error:
-        return error
+    user = admin_service.get_user(user_id)
+    if not user:
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
     data = request.get_json()
     if not data:
@@ -227,7 +150,7 @@ def patch_user(user_id, current_user):
     for field in allowed_fields & data.keys():
         setattr(user, field, bool(data[field]))
 
-    db.session.commit()
+    admin_service.commit()
 
     return jsonify({"user": user.to_dict()})
 
@@ -235,9 +158,9 @@ def patch_user(user_id, current_user):
 @admin_bp.route("/users/<int:user_id>/applications", methods=["GET"])
 @admin_required
 def get_user_applications(user_id, current_user):
-    user, error = _get_user_or_404(user_id)
-    if error:
-        return error
+    user = admin_service.get_user(user_id)
+    if not user:
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
     applications = sorted(user.applications, key=lambda a: a.datum or datetime.min, reverse=True)
     return jsonify({"applications": [app.to_dict() for app in applications]})

@@ -5,8 +5,8 @@ import re
 from flask import jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import Application, db
 from routes.applications import applications_bp
+from services import application_service
 from services.ats_optimizer import ATSOptimizer
 from services.web_scraper import WebScraper
 
@@ -49,7 +49,7 @@ def check_ats_compatibility(app_id, current_user):
         - format_issues: Formatting problems that may affect ATS parsing
         - keyword_density: Count of each keyword in the cover letter
     """
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
@@ -147,7 +147,7 @@ def optimize_cover_letter_for_ats(app_id, current_user):
 
     from config import config
 
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
@@ -259,8 +259,7 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         changes_made = result.get("changes_made", [])
 
         # Update the application's email_text with optimized version
-        app.email_text = optimized_text
-        db.session.commit()
+        application_service.save_application_email_text(app, optimized_text)
 
         return jsonify(
             {

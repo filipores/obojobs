@@ -6,12 +6,11 @@ Provides endpoints for analyzing CVs against job descriptions.
 
 import json
 import os
-from datetime import datetime, timedelta
 
 from flask import Blueprint, current_app, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import ATSAnalysis, Document, db
+from services import ats_analysis_service
 from services.ats_service import ATSService
 from services.web_scraper import WebScraper
 
@@ -31,16 +30,6 @@ def analyze_cv(current_user):
     Uses the user's uploaded CV (doc_type='lebenslauf').
 
     Rate limited to 20 requests per hour.
-
-    Request JSON:
-        job_url: str (optional) - URL of job posting to scrape
-        job_text: str (optional) - Direct job description text
-
-    Returns:
-        200: { success: true, data: { score, matched_keywords, missing_keywords, suggestions } }
-        400: Missing input or no CV uploaded
-        429: Rate limit exceeded
-        500: Server error
     """
     # Apply rate limit - 20 per hour for this endpoint
     limiter = current_app.limiter
@@ -58,16 +47,7 @@ def analyze_cv(current_user):
 
         # Check cache first (only for job_url, within 24 hours)
         if job_url:
-            cache_cutoff = datetime.utcnow() - timedelta(hours=CACHE_DURATION_HOURS)
-            cached_result = (
-                ATSAnalysis.query.filter(
-                    ATSAnalysis.user_id == current_user.id,
-                    ATSAnalysis.job_url == job_url,
-                    ATSAnalysis.created_at >= cache_cutoff,
-                )
-                .order_by(ATSAnalysis.created_at.desc())
-                .first()
-            )
+            cached_result = ats_analysis_service.find_cached_analysis(current_user.id, job_url, CACHE_DURATION_HOURS)
 
             if cached_result:
                 try:
@@ -80,7 +60,7 @@ def analyze_cv(current_user):
                     pass  # Continue with fresh analysis
 
         # Get user's CV
-        cv_document = Document.query.filter_by(user_id=current_user.id, doc_type="lebenslauf").first()
+        cv_document = ats_analysis_service.get_cv_document(current_user.id)
 
         if not cv_document:
             return jsonify(
@@ -134,7 +114,7 @@ def analyze_cv(current_user):
             analysis_title = None
 
             if job_text and not job_url:
-                job_text_hash = ATSAnalysis.hash_job_text(job_text)
+                job_text_hash = ats_analysis_service.hash_job_text(job_text)
                 # Extract title from first non-empty line of job text
                 lines = job_text.strip().split("\n")
                 for line in lines:
@@ -155,7 +135,7 @@ def analyze_cv(current_user):
                 except Exception:
                     analysis_title = scraped_url[:100]
 
-            ats_analysis = ATSAnalysis(
+            ats_analysis = ats_analysis_service.create_analysis(
                 user_id=current_user.id,
                 job_url=scraped_url,
                 job_text_hash=job_text_hash,
@@ -163,8 +143,6 @@ def analyze_cv(current_user):
                 score=response_data["score"],
                 result_json=json.dumps(response_data),
             )
-            db.session.add(ats_analysis)
-            db.session.commit()
 
             response_data["analysis_id"] = ats_analysis.id
             response_data["cached"] = False
@@ -177,7 +155,7 @@ def analyze_cv(current_user):
         except ValueError as e:
             return jsonify({"success": False, "error": str(e)}), 400
         except Exception as e:
-            db.session.rollback()
+            ats_analysis_service.rollback()
             return jsonify({"success": False, "error": f"Analyse fehlgeschlagen: {str(e)}"}), 500
 
     return rate_limited_analyze()
@@ -186,17 +164,8 @@ def analyze_cv(current_user):
 @ats_bp.route("/history", methods=["GET"])
 @jwt_required_custom
 def get_history(current_user):
-    """
-    Get the user's ATS analysis history.
-
-    Returns the last 20 analyses ordered by date (newest first).
-
-    Returns:
-        200: { success: true, data: { analyses: [...] } }
-    """
-    analyses = (
-        ATSAnalysis.query.filter_by(user_id=current_user.id).order_by(ATSAnalysis.created_at.desc()).limit(20).all()
-    )
+    """Get the user's ATS analysis history."""
+    analyses = ats_analysis_service.get_history(current_user.id)
 
     return jsonify({"success": True, "data": {"analyses": [a.to_summary_dict() for a in analyses]}}), 200
 
@@ -204,14 +173,8 @@ def get_history(current_user):
 @ats_bp.route("/history/<int:analysis_id>", methods=["GET"])
 @jwt_required_custom
 def get_analysis(current_user, analysis_id):
-    """
-    Get a specific ATS analysis by ID.
-
-    Returns:
-        200: { success: true, data: { ... full analysis result ... } }
-        404: Analysis not found
-    """
-    analysis = ATSAnalysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+    """Get a specific ATS analysis by ID."""
+    analysis = ats_analysis_service.get_analysis(analysis_id, current_user.id)
 
     if not analysis:
         return jsonify({"success": False, "error": "Analyse nicht gefunden"}), 404
@@ -222,19 +185,10 @@ def get_analysis(current_user, analysis_id):
 @ats_bp.route("/history/<int:analysis_id>", methods=["DELETE"])
 @jwt_required_custom
 def delete_analysis(current_user, analysis_id):
-    """
-    Delete a specific ATS analysis by ID.
-
-    Returns:
-        200: { success: true, message: "..." }
-        404: Analysis not found
-    """
-    analysis = ATSAnalysis.query.filter_by(id=analysis_id, user_id=current_user.id).first()
+    """Delete a specific ATS analysis by ID."""
+    analysis = ats_analysis_service.delete_analysis(analysis_id, current_user.id)
 
     if not analysis:
         return jsonify({"success": False, "error": "Analyse nicht gefunden"}), 404
-
-    db.session.delete(analysis)
-    db.session.commit()
 
     return jsonify({"success": True, "message": "Analyse gelöscht"}), 200

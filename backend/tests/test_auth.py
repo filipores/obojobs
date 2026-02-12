@@ -1297,7 +1297,7 @@ class TestDeleteAccount:
         """Test that account deletion is logged for GDPR compliance."""
         import logging
 
-        with caplog.at_level(logging.INFO, logger="routes.auth"):
+        with caplog.at_level(logging.INFO, logger="services.auth_service"):
             response = client.delete(
                 "/api/auth/delete-account",
                 headers=auth_headers,

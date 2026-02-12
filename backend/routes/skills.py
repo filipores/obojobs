@@ -7,7 +7,7 @@ import os
 from flask import Blueprint, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import Document, UserSkill, db
+from services import skill_service
 from services.skill_extractor import SkillExtractor
 
 skills_bp = Blueprint("skills", __name__)
@@ -17,11 +17,7 @@ skills_bp = Blueprint("skills", __name__)
 @jwt_required_custom
 def get_user_skills(current_user):
     """Get all skills for the current user."""
-    skills = (
-        UserSkill.query.filter_by(user_id=current_user.id)
-        .order_by(UserSkill.skill_category, UserSkill.skill_name)
-        .all()
-    )
+    skills = skill_service.get_user_skills(current_user.id)
 
     # Group by category for easier frontend consumption
     skills_by_category = {}
@@ -45,7 +41,7 @@ def get_user_skills(current_user):
 @jwt_required_custom
 def update_skill(skill_id, current_user):
     """Update a skill (edit name, category, or experience years)."""
-    skill = UserSkill.query.filter_by(id=skill_id, user_id=current_user.id).first()
+    skill = skill_service.get_skill(skill_id, current_user.id)
 
     if not skill:
         return jsonify({"error": "Skill nicht gefunden"}), 404
@@ -61,8 +57,8 @@ def update_skill(skill_id, current_user):
 
     if "skill_category" in data:
         skill_category = data["skill_category"].strip().lower()
-        if not UserSkill.validate_category(skill_category):
-            return jsonify({"error": f"Ungültige Kategorie. Erlaubt: {', '.join(UserSkill.VALID_CATEGORIES)}"}), 400
+        if not skill_service.validate_category(skill_category):
+            return jsonify({"error": f"Ungültige Kategorie. Erlaubt: {', '.join(skill_service.VALID_CATEGORIES)}"}), 400
         skill.skill_category = skill_category
 
     if "experience_years" in data:
@@ -76,7 +72,7 @@ def update_skill(skill_id, current_user):
                 return jsonify({"error": "Ungültiger Wert für Erfahrungsjahre"}), 400
         skill.experience_years = exp_years
 
-    db.session.commit()
+    skill_service.commit()
 
     return jsonify({"success": True, "message": "Skill aktualisiert", "skill": skill.to_dict()}), 200
 
@@ -85,13 +81,10 @@ def update_skill(skill_id, current_user):
 @jwt_required_custom
 def delete_skill(skill_id, current_user):
     """Delete a skill."""
-    skill = UserSkill.query.filter_by(id=skill_id, user_id=current_user.id).first()
+    skill = skill_service.delete_skill(skill_id, current_user.id)
 
     if not skill:
         return jsonify({"error": "Skill nicht gefunden"}), 404
-
-    db.session.delete(skill)
-    db.session.commit()
 
     return jsonify({"success": True, "message": "Skill gelöscht"}), 200
 
@@ -110,11 +103,11 @@ def add_skill(current_user):
     if not skill_name:
         return jsonify({"error": "Skill-Name ist erforderlich"}), 400
 
-    if not skill_category or not UserSkill.validate_category(skill_category):
-        return jsonify({"error": f"Gültige Kategorie erforderlich: {', '.join(UserSkill.VALID_CATEGORIES)}"}), 400
+    if not skill_category or not skill_service.validate_category(skill_category):
+        return jsonify({"error": f"Gültige Kategorie erforderlich: {', '.join(skill_service.VALID_CATEGORIES)}"}), 400
 
     # Check for duplicate
-    existing = UserSkill.query.filter_by(user_id=current_user.id, skill_name=skill_name).first()
+    existing = skill_service.find_skill_by_name(current_user.id, skill_name)
     if existing:
         return jsonify({"error": f"Skill '{skill_name}' existiert bereits"}), 409
 
@@ -127,16 +120,13 @@ def add_skill(current_user):
         except (ValueError, TypeError):
             return jsonify({"error": "Ungültiger Wert für Erfahrungsjahre"}), 400
 
-    skill = UserSkill(
+    skill = skill_service.create_skill(
         user_id=current_user.id,
         skill_name=skill_name,
         skill_category=skill_category,
         experience_years=experience_years,
-        source_document_id=None,  # Manual entry
+        source_document_id=None,
     )
-
-    db.session.add(skill)
-    db.session.commit()
 
     return jsonify({"success": True, "message": "Skill hinzugefügt", "skill": skill.to_dict()}), 201
 
@@ -145,7 +135,7 @@ def add_skill(current_user):
 @jwt_required_custom
 def extract_skills_from_document(doc_id, current_user):
     """Extract skills from a document using AI."""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first()
+    document = skill_service.get_document(doc_id, current_user.id)
 
     if not document:
         return jsonify({"error": "Dokument nicht gefunden"}), 404
@@ -172,38 +162,7 @@ def extract_skills_from_document(doc_id, current_user):
         if not extracted_skills:
             return jsonify({"error": "Keine Skills konnten extrahiert werden"}), 400
 
-        # Remove existing skills from this document
-        UserSkill.query.filter_by(user_id=current_user.id, source_document_id=doc_id).delete()
-
-        # Add new skills (avoid duplicates by skill_name)
-        added_skills = []
-        skipped_count = 0
-
-        for skill_data in extracted_skills:
-            # Check if skill already exists for user
-            existing = UserSkill.query.filter_by(user_id=current_user.id, skill_name=skill_data["skill_name"]).first()
-
-            if existing:
-                # Update experience years if new is higher
-                if skill_data["experience_years"] and (
-                    existing.experience_years is None or skill_data["experience_years"] > existing.experience_years
-                ):
-                    existing.experience_years = skill_data["experience_years"]
-                    existing.source_document_id = doc_id
-                skipped_count += 1
-                continue
-
-            skill = UserSkill(
-                user_id=current_user.id,
-                skill_name=skill_data["skill_name"],
-                skill_category=skill_data["skill_category"],
-                experience_years=skill_data["experience_years"],
-                source_document_id=doc_id,
-            )
-            db.session.add(skill)
-            added_skills.append(skill)
-
-        db.session.commit()
+        added_skills, skipped_count = skill_service.save_extracted_skills(current_user.id, extracted_skills, doc_id)
 
         return jsonify(
             {

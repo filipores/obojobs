@@ -1,14 +1,10 @@
 import os
 import secrets
-from datetime import datetime
 
 from flask import Blueprint, jsonify, request, session
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
-from models import db
-from models.application import Application
-from models.document import Document
-from models.email_account import EmailAccount
+from services import email_data_service
 from services.gmail_service import GmailService
 from services.outlook_service import OutlookService
 
@@ -65,7 +61,7 @@ def list_email_accounts():
     """
     user_id = get_jwt_identity()
 
-    accounts = EmailAccount.query.filter_by(user_id=int(user_id)).all()
+    accounts = email_data_service.get_email_accounts(user_id)
 
     return jsonify(
         {
@@ -89,7 +85,7 @@ def delete_email_account(account_id):
     """
     user_id = get_jwt_identity()
 
-    account = EmailAccount.query.filter_by(id=account_id, user_id=int(user_id)).first()
+    account = email_data_service.get_email_account(account_id, user_id)
 
     if not account:
         return jsonify(
@@ -99,8 +95,7 @@ def delete_email_account(account_id):
             }
         ), 404
 
-    db.session.delete(account)
-    db.session.commit()
+    email_data_service.delete_email_account(account)
 
     return jsonify(
         {
@@ -476,10 +471,7 @@ def send_email():
         ), 400
 
     # Get the application
-    application = Application.query.filter_by(
-        id=application_id,
-        user_id=int(user_id),
-    ).first()
+    application = email_data_service.get_application(application_id, user_id)
 
     if not application:
         return jsonify(
@@ -490,10 +482,7 @@ def send_email():
         ), 404
 
     # Get the email account
-    email_account = EmailAccount.query.filter_by(
-        id=email_account_id,
-        user_id=int(user_id),
-    ).first()
+    email_account = email_data_service.get_email_account(email_account_id, user_id)
 
     if not email_account:
         return jsonify(
@@ -523,14 +512,7 @@ def send_email():
 
     # Add Lebenslauf if requested
     if "lebenslauf" in attachment_types:
-        cv_doc = (
-            Document.query.filter_by(
-                user_id=int(user_id),
-                doc_type="cv_pdf",
-            )
-            .order_by(Document.uploaded_at.desc())
-            .first()
-        )
+        cv_doc = email_data_service.get_cv_document(user_id)
 
         if cv_doc and os.path.exists(cv_doc.file_path):
             file_size = os.path.getsize(cv_doc.file_path)
@@ -579,10 +561,7 @@ def send_email():
             ), 400
 
         # Update application: set sent_at, sent_via, and status
-        application.sent_at = datetime.utcnow()
-        application.sent_via = email_account.provider
-        application.status = "versendet"
-        db.session.commit()
+        email_data_service.mark_application_sent(application, email_account.provider)
 
         return jsonify(
             {

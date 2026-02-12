@@ -1,7 +1,7 @@
 from flask import Blueprint, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import APIKey, db
+from services import api_key_service
 
 api_keys_bp = Blueprint("api_keys", __name__)
 
@@ -10,7 +10,7 @@ api_keys_bp = Blueprint("api_keys", __name__)
 @jwt_required_custom
 def list_api_keys(current_user):
     """List user's API keys"""
-    keys = APIKey.query.filter_by(user_id=current_user.id).all()
+    keys = api_key_service.list_api_keys(current_user.id)
     return jsonify({"success": True, "api_keys": [key.to_dict() for key in keys]}), 200
 
 
@@ -21,15 +21,7 @@ def create_api_key(current_user):
     data = request.json
     name = data.get("name", "Chrome Extension")
 
-    # Generate new key
-    new_key = APIKey.generate_key()
-
-    # Create API key record
-    api_key_obj = APIKey(user_id=current_user.id, name=name)
-    api_key_obj.set_key(new_key)
-
-    db.session.add(api_key_obj)
-    db.session.commit()
+    api_key_obj, new_key = api_key_service.create_api_key(current_user.id, name=name)
 
     # Return plaintext key ONCE
     return jsonify(
@@ -47,12 +39,9 @@ def create_api_key(current_user):
 @jwt_required_custom
 def delete_api_key(key_id, current_user):
     """Revoke an API key"""
-    api_key = APIKey.query.filter_by(id=key_id, user_id=current_user.id).first()
+    api_key = api_key_service.delete_api_key(key_id, current_user.id)
 
     if not api_key:
         return jsonify({"error": "API-Schlüssel nicht gefunden"}), 404
-
-    db.session.delete(api_key)
-    db.session.commit()
 
     return jsonify({"success": True, "message": "API-Schlüssel widerrufen"}), 200

@@ -1,8 +1,8 @@
 from flask import jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import Application, JobRequirement, db
 from routes.applications import applications_bp
+from services import application_service
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
 from services.web_scraper import WebScraper
@@ -12,13 +12,13 @@ from services.web_scraper import WebScraper
 @jwt_required_custom
 def get_requirements(app_id, current_user):
     """Get job requirements for an application."""
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
 
     # Get requirements from database
-    requirements = JobRequirement.query.filter_by(application_id=app_id).all()
+    requirements = application_service.get_requirements(app_id)
 
     # Group requirements by type
     must_have = [r.to_dict() for r in requirements if r.requirement_type == "must_have"]
@@ -45,7 +45,7 @@ def analyze_requirements(app_id, current_user):
     This endpoint uses Claude API to extract requirements from the job posting text
     stored in the application's notizen field or from a provided URL.
     """
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
@@ -80,23 +80,8 @@ def analyze_requirements(app_id, current_user):
                 {"success": False, "error": "Keine Anforderungen gefunden. Bitte überprüfe den Stellentext."}
             ), 400
 
-        # Delete existing requirements for this application
-        JobRequirement.query.filter_by(application_id=app_id).delete()
-
-        # Save new requirements
-        for req_data in extracted_requirements:
-            requirement = JobRequirement(
-                application_id=app_id,
-                requirement_text=req_data["requirement_text"],
-                requirement_type=req_data["requirement_type"],
-                skill_category=req_data.get("skill_category"),
-            )
-            db.session.add(requirement)
-
-        db.session.commit()
-
-        # Get the saved requirements
-        requirements = JobRequirement.query.filter_by(application_id=app_id).all()
+        # Delete existing and save new requirements
+        requirements = application_service.save_requirements(app_id, extracted_requirements)
         must_have = [r.to_dict() for r in requirements if r.requirement_type == "must_have"]
         nice_to_have = [r.to_dict() for r in requirements if r.requirement_type == "nice_to_have"]
 
@@ -133,13 +118,13 @@ def get_job_fit(app_id, current_user):
     Query params:
     - include_recommendations: 'true' to include learning recommendations (default: true)
     """
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
 
     # Check if requirements exist
-    requirements = JobRequirement.query.filter_by(application_id=app_id).all()
+    requirements = application_service.get_requirements(app_id)
     if not requirements:
         return jsonify(
             {
@@ -191,32 +176,21 @@ def analyze_job_fit_preview(current_user):
 
     try:
         # Create a temporary application for analysis
-        app = Application(
+        app = application_service.create_application(
             user_id=current_user.id,
             firma=company or "Unbekannt",
             position=title or "Unbekannt",
             quelle=url,
             status="erstellt",
-            notizen=f"[Draft - Job-Fit Analyse]\n\n{description[:2000]}",  # Store description for reference
+            notizen=f"[Draft - Job-Fit Analyse]\n\n{description[:2000]}",
         )
-        db.session.add(app)
-        db.session.commit()
 
         # Analyze requirements using Claude
         analyzer = RequirementAnalyzer()
         extracted_requirements = analyzer.analyze_requirements(description)
 
         if extracted_requirements:
-            # Save requirements
-            for req_data in extracted_requirements:
-                requirement = JobRequirement(
-                    application_id=app.id,
-                    requirement_text=req_data["requirement_text"],
-                    requirement_type=req_data["requirement_type"],
-                    skill_category=req_data.get("skill_category"),
-                )
-                db.session.add(requirement)
-            db.session.commit()
+            application_service.save_requirements(app.id, extracted_requirements)
 
         return jsonify(
             {

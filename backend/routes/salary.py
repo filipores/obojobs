@@ -2,12 +2,10 @@
 Salary routes - Endpoints for salary research and negotiation coaching.
 """
 
-import json
-
 from flask import Blueprint, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import SalaryCoachData, db
+from services import salary_data_service
 from services.salary_coach import SalaryCoach
 
 salary_bp = Blueprint("salary", __name__)
@@ -210,7 +208,7 @@ def get_salary_data(current_user):
         }
     }
     """
-    salary_data = SalaryCoachData.query.filter_by(user_id=current_user.id).first()
+    salary_data = salary_data_service.get_salary_data(current_user.id)
 
     if not salary_data:
         return jsonify(
@@ -259,38 +257,8 @@ def save_salary_data(current_user):
     if not data:
         return jsonify({"success": False, "error": "Keine Daten übermittelt"}), 400
 
-    # Get or create salary data record for user
-    salary_data = SalaryCoachData.query.filter_by(user_id=current_user.id).first()
-
-    if not salary_data:
-        salary_data = SalaryCoachData(user_id=current_user.id)
-        db.session.add(salary_data)
-
-    # Update form data
-    form_data = data.get("formData", {})
-    salary_data.position = form_data.get("position", "").strip() or None
-    salary_data.region = form_data.get("region", "").strip() or None
-    salary_data.experience_years = form_data.get("experienceYears")
-    salary_data.target_salary = form_data.get("targetSalary")
-    salary_data.current_salary = form_data.get("currentSalary")
-    salary_data.industry = form_data.get("industry", "").strip() or None
-
-    # Update research (JSON)
-    research = data.get("research")
-    if research is not None:
-        salary_data.research_json = json.dumps(research)
-    else:
-        salary_data.research_json = None
-
-    # Update strategy (JSON)
-    strategy = data.get("strategy")
-    if strategy is not None:
-        salary_data.strategy_json = json.dumps(strategy)
-    else:
-        salary_data.strategy_json = None
-
     try:
-        db.session.commit()
+        salary_data_service.save_salary_data(current_user.id, data)
         return jsonify(
             {
                 "success": True,
@@ -298,7 +266,6 @@ def save_salary_data(current_user):
             }
         ), 200
     except Exception as e:
-        db.session.rollback()
         print(f"Error saving salary data: {str(e)}")
         return jsonify(
             {
@@ -320,21 +287,16 @@ def delete_salary_data(current_user):
         "message": "Daten gelöscht"
     }
     """
-    salary_data = SalaryCoachData.query.filter_by(user_id=current_user.id).first()
-
-    if salary_data:
-        db.session.delete(salary_data)
-        try:
-            db.session.commit()
-        except Exception as e:
-            db.session.rollback()
-            print(f"Error deleting salary data: {str(e)}")
-            return jsonify(
-                {
-                    "success": False,
-                    "error": "Fehler beim Löschen der Daten",
-                }
-            ), 500
+    try:
+        salary_data_service.delete_salary_data(current_user.id)
+    except Exception as e:
+        print(f"Error deleting salary data: {str(e)}")
+        return jsonify(
+            {
+                "success": False,
+                "error": "Fehler beim Löschen der Daten",
+            }
+        ), 500
 
     return jsonify(
         {

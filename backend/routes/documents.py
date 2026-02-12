@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 
 from config import config
 from middleware.jwt_required import jwt_required_custom
-from models import Document, UserSkill, db
+from services import document_service
 from services.pdf_handler import extract_text_from_pdf
 from services.skill_extractor import SkillExtractor
 
@@ -27,7 +27,7 @@ def allowed_file(filename):
 @jwt_required_custom
 def list_documents(current_user):
     """List user's documents"""
-    documents = Document.query.filter_by(user_id=current_user.id).all()
+    documents = document_service.list_documents(current_user.id)
     return jsonify({"success": True, "documents": [doc.to_dict() for doc in documents]}), 200
 
 
@@ -80,26 +80,24 @@ def upload_document(current_user):
         os.replace(pdf_path, permanent_pdf_path)
 
         # Prüfen ob bereits ein Dokument dieses Typs existiert
-        existing_doc = Document.query.filter_by(user_id=current_user.id, doc_type=doc_type).first()
+        existing_doc = document_service.get_document_by_type(current_user.id, doc_type)
 
         if existing_doc:
             # Altes Dokument aktualisieren
             existing_doc.file_path = txt_path
             existing_doc.pdf_path = permanent_pdf_path
             existing_doc.original_filename = filename
-            db.session.commit()
+            document_service.commit()
             document = existing_doc
         else:
             # Neues Dokument erstellen
-            document = Document(
+            document = document_service.create_document(
                 user_id=current_user.id,
                 doc_type=doc_type,
                 file_path=txt_path,
                 pdf_path=permanent_pdf_path,
                 original_filename=filename,
             )
-            db.session.add(document)
-            db.session.commit()
 
         # Automatische Skill-Extraktion für Lebensläufe
         skills_extracted = 0
@@ -108,36 +106,9 @@ def upload_document(current_user):
                 extractor = SkillExtractor()
                 extracted_skills = extractor.extract_skills_from_cv(extracted_text)
 
-                # Remove old skills from this document
-                UserSkill.query.filter_by(user_id=current_user.id, source_document_id=document.id).delete()
-
-                for skill_data in extracted_skills:
-                    # Check if skill already exists
-                    existing = UserSkill.query.filter_by(
-                        user_id=current_user.id, skill_name=skill_data["skill_name"]
-                    ).first()
-
-                    if existing:
-                        # Update if new experience is higher
-                        if skill_data["experience_years"] and (
-                            existing.experience_years is None
-                            or skill_data["experience_years"] > existing.experience_years
-                        ):
-                            existing.experience_years = skill_data["experience_years"]
-                            existing.source_document_id = document.id
-                        continue
-
-                    skill = UserSkill(
-                        user_id=current_user.id,
-                        skill_name=skill_data["skill_name"],
-                        skill_category=skill_data["skill_category"],
-                        experience_years=skill_data["experience_years"],
-                        source_document_id=document.id,
-                    )
-                    db.session.add(skill)
-                    skills_extracted += 1
-
-                db.session.commit()
+                skills_extracted = document_service.save_extracted_skills_for_upload(
+                    current_user.id, extracted_skills, document.id
+                )
             except Exception as skill_error:
                 logger.warning("Skill-Extraktion fehlgeschlagen: %s", skill_error)
                 # Continue anyway, document upload was successful
@@ -159,7 +130,7 @@ def upload_document(current_user):
                         profile_fields_updated.append(field_name)
 
                 if profile_fields_updated:
-                    db.session.commit()
+                    document_service.commit()
                     logger.info("Profildaten aus CV extrahiert: %s", profile_fields_updated)
             except Exception as profile_err:
                 logger.warning("Profil-Extraktion fehlgeschlagen: %s", profile_err)
@@ -190,7 +161,7 @@ def upload_document(current_user):
 @jwt_required_custom
 def get_document(doc_id, current_user):
     """Download a document (text file)"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first()
+    document = document_service.get_document(doc_id, current_user.id)
 
     if not document:
         return jsonify({"error": "Dokument nicht gefunden"}), 404
@@ -207,7 +178,7 @@ def get_document(doc_id, current_user):
 @jwt_required_custom
 def delete_document(doc_id, current_user):
     """Delete a document, optionally including extracted skills"""
-    document = Document.query.filter_by(id=doc_id, user_id=current_user.id).first()
+    document = document_service.get_document(doc_id, current_user.id)
 
     if not document:
         return jsonify({"error": "Document not found"}), 404
@@ -218,8 +189,8 @@ def delete_document(doc_id, current_user):
 
     if delete_skills and document.doc_type == "lebenslauf":
         # Delete all skills associated with this document
-        skills_deleted = UserSkill.query.filter_by(user_id=current_user.id, source_document_id=document.id).delete()
-        db.session.flush()
+        skills_deleted = document_service.delete_document_skills(current_user.id, document.id)
+        document_service.flush()
 
     # Delete files
     if os.path.exists(document.file_path):
@@ -228,8 +199,7 @@ def delete_document(doc_id, current_user):
         os.remove(document.pdf_path)
 
     # Delete record
-    db.session.delete(document)
-    db.session.commit()
+    document_service.delete_document(document)
 
     response = {"success": True, "message": "Dokument gelöscht"}
     if delete_skills and skills_deleted > 0:

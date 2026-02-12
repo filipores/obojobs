@@ -1,11 +1,10 @@
 from datetime import datetime
 
 from flask import jsonify, request
-from sqlalchemy import func
 
 from middleware.jwt_required import jwt_required_custom
-from models import Application, InterviewQuestion, UserSkill, db
 from routes.applications import applications_bp
+from services import application_service
 from services.interview_evaluator import InterviewEvaluator
 from services.interview_generator import InterviewGenerator
 from services.star_analyzer import STARAnalyzer
@@ -30,7 +29,7 @@ def generate_interview_questions(app_id, current_user):
     Returns:
         - questions: List of generated interview questions with sample answers
     """
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
@@ -63,7 +62,7 @@ def generate_interview_questions(app_id, current_user):
         ), 400
 
     # Get user skills for personalized questions
-    user_skills = UserSkill.query.filter_by(user_id=current_user.id).all()
+    user_skills = application_service.get_user_skills(current_user.id)
     skills_list = [{"skill_name": s.skill_name, "category": s.skill_category} for s in user_skills]
 
     try:
@@ -81,24 +80,8 @@ def generate_interview_questions(app_id, current_user):
                 {"success": False, "error": "Keine Interview-Fragen generiert. Bitte versuche es erneut."}
             ), 500
 
-        # Delete existing questions for this application
-        InterviewQuestion.query.filter_by(application_id=app_id).delete()
-
-        # Save generated questions
-        for q_data in questions:
-            question = InterviewQuestion(
-                application_id=app_id,
-                question_text=q_data["question_text"],
-                question_type=q_data["question_type"],
-                difficulty=q_data.get("difficulty", "medium"),
-                sample_answer=q_data.get("sample_answer"),
-            )
-            db.session.add(question)
-
-        db.session.commit()
-
-        # Get saved questions
-        saved_questions = InterviewQuestion.query.filter_by(application_id=app_id).all()
+        # Delete existing and save generated questions
+        saved_questions = application_service.save_interview_questions(app_id, questions)
 
         return jsonify(
             {
@@ -127,18 +110,13 @@ def get_interview_questions(app_id, current_user):
     Query params:
         - type: Filter by question type (optional)
     """
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
 
     question_type = request.args.get("type")
-
-    query = InterviewQuestion.query.filter_by(application_id=app_id)
-    if question_type and question_type in InterviewQuestion.VALID_TYPES:
-        query = query.filter_by(question_type=question_type)
-
-    questions = query.all()
+    questions = application_service.get_interview_questions(app_id, question_type=question_type)
 
     # Group by type
     grouped = {
@@ -199,12 +177,12 @@ def evaluate_interview_answer(current_user):
         ), 400
 
     # Get the question
-    question = InterviewQuestion.query.get(question_id)
+    question = application_service.get_interview_question(question_id)
     if not question:
         return jsonify({"success": False, "error": "Frage nicht gefunden"}), 404
 
     # Verify user has access to this question's application
-    app = Application.query.filter_by(id=question.application_id, user_id=current_user.id).first()
+    app = application_service.get_application(question.application_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Keine Berechtigung"}), 403
@@ -258,7 +236,7 @@ def get_interview_summary(current_user):
         return jsonify({"success": False, "error": "application_id ist erforderlich"}), 400
 
     # Verify user has access to this application
-    app = Application.query.filter_by(id=application_id, user_id=current_user.id).first()
+    app = application_service.get_application(application_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Bewerbung nicht gefunden"}), 404
@@ -318,7 +296,7 @@ def analyze_star_method(current_user):
 
     # Get question text from question_id if not provided
     if not question_text and question_id:
-        question = InterviewQuestion.query.get(question_id)
+        question = application_service.get_interview_question(question_id)
         if question:
             question_text = question.question_text
             if not application_id:
@@ -342,7 +320,7 @@ def analyze_star_method(current_user):
     position = None
     firma = None
     if application_id:
-        app = Application.query.filter_by(id=application_id, user_id=current_user.id).first()
+        app = application_service.get_application(application_id, current_user.id)
         if app:
             position = app.position
             firma = app.firma
@@ -406,7 +384,7 @@ def update_interview_result(app_id, current_user):
     Returns:
         - application: Updated application with interview fields
     """
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"success": False, "error": "Application not found"}), 404
@@ -453,7 +431,7 @@ def update_interview_result(app_id, current_user):
     if "interview_feedback" in data:
         app.interview_feedback = data["interview_feedback"]
 
-    db.session.commit()
+    application_service.commit()
 
     return jsonify({"success": True, "application": app.to_dict(), "message": "Interview-Ergebnis aktualisiert"}), 200
 
@@ -470,23 +448,10 @@ def get_interview_statistics(current_user):
         - upcoming_interviews: List of scheduled interviews
         - recent_results: List of recent interview outcomes
     """
-    # Base query for user's applications
-    base_query = Application.query.filter_by(user_id=current_user.id)
-
-    # Total applications with any interview result
-    total_with_results = base_query.filter(Application.interview_result.isnot(None)).count()
-
-    # Count per result status
-    result_counts = (
-        db.session.query(Application.interview_result, func.count(Application.id))
-        .filter_by(user_id=current_user.id)
-        .filter(Application.interview_result.isnot(None))
-        .group_by(Application.interview_result)
-        .all()
-    )
+    stats = application_service.get_interview_statistics(current_user.id)
 
     result_breakdown = dict.fromkeys(VALID_INTERVIEW_RESULTS, 0)
-    for result, count in result_counts:
+    for result, count in stats["result_counts"]:
         if result in result_breakdown:
             result_breakdown[result] = count
 
@@ -499,31 +464,11 @@ def get_interview_statistics(current_user):
     successful_outcomes = result_breakdown.get("passed", 0) + result_breakdown.get("offer_received", 0)
     success_rate = round((successful_outcomes / completed_outcomes * 100) if completed_outcomes > 0 else 0, 1)
 
-    # Upcoming interviews (scheduled with future date)
-    upcoming = (
-        base_query.filter(
-            Application.interview_result == "scheduled",
-            Application.interview_date.isnot(None),
-            Application.interview_date >= datetime.utcnow(),
-        )
-        .order_by(Application.interview_date.asc())
-        .limit(5)
-        .all()
-    )
-
-    # Recent results (last 10 completed interviews)
-    recent_results = (
-        base_query.filter(Application.interview_result.in_(["completed", "passed", "rejected", "offer_received"]))
-        .order_by(Application.interview_date.desc().nulls_last())
-        .limit(10)
-        .all()
-    )
-
     return jsonify(
         {
             "success": True,
             "data": {
-                "total_interviews": total_with_results,
+                "total_interviews": stats["total_with_results"],
                 "success_rate": success_rate,
                 "result_breakdown": result_breakdown,
                 "upcoming_interviews": [
@@ -533,7 +478,7 @@ def get_interview_statistics(current_user):
                         "position": app.position,
                         "interview_date": app.interview_date.isoformat() if app.interview_date else None,
                     }
-                    for app in upcoming
+                    for app in stats["upcoming"]
                 ],
                 "recent_results": [
                     {
@@ -544,7 +489,7 @@ def get_interview_statistics(current_user):
                         "interview_result": app.interview_result,
                         "interview_feedback": app.interview_feedback,
                     }
-                    for app in recent_results
+                    for app in stats["recent_results"]
                 ],
             },
         }

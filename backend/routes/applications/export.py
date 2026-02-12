@@ -16,8 +16,8 @@ from reportlab.lib.units import cm
 from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from middleware.jwt_required import jwt_required_custom
-from models import Application, Document, db
 from routes.applications import applications_bp
+from services import application_service
 
 
 def sanitize_filename(name: str) -> str:
@@ -221,7 +221,7 @@ def _export_as_pdf(applications, date_str):
 @jwt_required_custom
 def download_pdf(app_id, current_user):
     """Download application PDF"""
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"error": "Application not found"}), 404
@@ -238,7 +238,7 @@ def download_pdf(app_id, current_user):
 @jwt_required_custom
 def download_email_draft(app_id, current_user):
     """Generate and download a .eml email draft file with the Anschreiben PDF attached."""
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"error": "Application not found"}), 404
@@ -268,7 +268,7 @@ def download_email_draft(app_id, current_user):
 
     # Attach CV and Arbeitszeugnis if available
     for doc_type, default_name in [("lebenslauf", "Lebenslauf.pdf"), ("arbeitszeugnis", "Arbeitszeugnis.pdf")]:
-        doc = Document.query.filter_by(user_id=current_user.id, doc_type=doc_type).first()
+        doc = application_service.get_document(current_user.id, doc_type)
         if doc and doc.pdf_path and os.path.exists(doc.pdf_path):
             with open(doc.pdf_path, "rb") as f:
                 doc_part = MIMEBase("application", "pdf")
@@ -302,26 +302,13 @@ def export_applications(current_user):
     filter_firma = request.args.get("firma", "").strip()
     today = datetime.utcnow().strftime("%Y-%m-%d")
 
-    # Build query with filters
-    query = Application.query.filter_by(user_id=current_user.id)
-
-    # Apply search filter (firma or position)
-    if search_query:
-        search_pattern = f"%{search_query}%"
-        query = query.filter(
-            db.or_(Application.firma.ilike(search_pattern), Application.position.ilike(search_pattern))
-        )
-
-    # Apply status filter
-    if filter_status:
-        query = query.filter(Application.status == filter_status)
-
-    # Apply firma filter
-    if filter_firma:
-        query = query.filter(Application.firma == filter_firma)
-
     # Get filtered applications
-    applications = query.order_by(Application.datum.desc()).all()
+    applications = application_service.get_filtered_applications(
+        current_user.id,
+        search_query=search_query,
+        filter_status=filter_status,
+        filter_firma=filter_firma,
+    )
 
     if export_format == "pdf":
         return _export_as_pdf(applications, today)

@@ -2,12 +2,11 @@ import logging
 from datetime import datetime, timedelta
 
 from flask import Blueprint, jsonify, request
-from flask_jwt_extended import create_access_token, create_refresh_token, get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt, get_jwt_identity, jwt_required
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
 from config import Config
-from models import TokenBlacklist, User, db
 from services.auth_service import AuthService
 from services.email_service import send_password_reset_email, send_verification_email
 from services.email_verification_service import EmailVerificationService
@@ -64,14 +63,9 @@ def login():
         # for invalid passwords (security: prevents email enumeration).
         user_data = result["user"]
         if not user_data["email_verified"]:
-            user = User.query.filter_by(email=email).first()
-            if user and not user.google_id:
-                return jsonify(
-                    {
-                        "error": "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
-                        "email_not_verified": True,
-                    }
-                ), 403
+            block = AuthService.check_email_verification_for_login(email)
+            if block:
+                return jsonify(block), 403
 
         return jsonify(result), 200
     except ValueError as e:
@@ -114,48 +108,22 @@ def google_auth():
 
         email = email.lower()
 
-        # Check if user exists by Google ID
-        user = User.query.filter_by(google_id=google_id).first()
+        result = AuthService.google_auth_login(
+            google_id=google_id,
+            email=email,
+            email_verified=email_verified,
+            full_name=full_name,
+            registration_enabled=Config.REGISTRATION_ENABLED,
+        )
 
-        if not user:
-            # Check if user exists by email
-            user = User.query.filter_by(email=email).first()
+        return jsonify(result), 200
 
-            if user:
-                # Link Google account to existing user
-                user.google_id = google_id
-                # Mark email as verified if Google says it's verified
-                if email_verified and not user.email_verified:
-                    user.email_verified = True
-                db.session.commit()
-            else:
-                # Check if registration is enabled
-                if not Config.REGISTRATION_ENABLED:
-                    return jsonify(
-                        {"error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."}
-                    ), 403
-
-                # Create new user
-                user = User(
-                    email=email,
-                    google_id=google_id,
-                    full_name=full_name,
-                    email_verified=email_verified,  # Google-verified emails are trusted
-                )
-                db.session.add(user)
-                db.session.commit()
-
-        # Check if user is active
-        if not user.is_active:
-            return jsonify({"error": "Konto ist deaktiviert"}), 401
-
-        # Create JWT tokens
-        access_token = create_access_token(identity=str(user.id))
-        refresh_token = create_refresh_token(identity=str(user.id))
-
-        return jsonify({"access_token": access_token, "refresh_token": refresh_token, "user": user.to_dict()}), 200
-
-    except ValueError:
+    except ValueError as e:
+        error_msg = str(e)
+        if "deaktiviert" in error_msg and "Registrierung" in error_msg:
+            return jsonify({"error": error_msg}), 403
+        if "deaktiviert" in error_msg:
+            return jsonify({"error": error_msg}), 401
         # Token verification failed
         return jsonify({"error": "Ungültiges Google-Token"}), 401
     except Exception as e:
@@ -484,7 +452,7 @@ def logout():
     expires_at = datetime.utcfromtimestamp(exp_timestamp)
 
     # Add token to blacklist
-    TokenBlacklist.add_token(jti=jti, token_type=token_type, user_id=user_id, expires_at=expires_at)
+    AuthService.logout_user(jti=jti, token_type=token_type, user_id=user_id, expires_at=expires_at)
 
     return jsonify({"message": "Erfolgreich abgemeldet"}), 200
 
@@ -500,18 +468,16 @@ def update_language():
     current_user_id = get_jwt_identity()
     data = request.json or {}
 
-    user = AuthService.get_user_by_id(int(current_user_id))
-    if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
-
     language = data.get("language", "").strip().lower()
-    if language not in ["de", "en"]:
-        return jsonify({"error": "Ungültige Sprache. Muss 'de' oder 'en' sein."}), 400
 
-    user.language = language
-    db.session.commit()
-
-    return jsonify({"message": "Spracheinstellung aktualisiert", "language": user.language}), 200
+    try:
+        result = AuthService.update_language(int(current_user_id), language)
+        return jsonify(result), 200
+    except ValueError as e:
+        error_msg = str(e)
+        if "nicht gefunden" in error_msg:
+            return jsonify({"error": error_msg}), 404
+        return jsonify({"error": error_msg}), 400
 
 
 @auth_bp.route("/profile", methods=["PUT"])
@@ -525,32 +491,14 @@ def update_profile():
     current_user_id = get_jwt_identity()
     data = request.json or {}
 
-    user = AuthService.get_user_by_id(int(current_user_id))
-    if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
-
-    # Profile field definitions: (json_key, model_attr, max_length, label)
-    profile_fields = [
-        ("full_name", "full_name", 255, "Name"),
-        ("display_name", "display_name", 100, "Anzeigename"),
-        ("phone", "phone", 50, "Telefonnummer"),
-        ("address", "address", 255, "Adresse"),
-        ("city", "city", 100, "Stadt"),
-        ("postal_code", "postal_code", 20, "PLZ"),
-        ("website", "website", 255, "Website"),
-    ]
-
-    for json_key, attr, max_length, label in profile_fields:
-        if json_key not in data:
-            continue
-        value = data[json_key]
-        if value and len(value) > max_length:
-            return jsonify({"error": f"{label} darf maximal {max_length} Zeichen haben"}), 400
-        setattr(user, attr, value.strip() if value else None)
-
-    db.session.commit()
-
-    return jsonify({"message": "Profil erfolgreich aktualisiert", "user": user.to_dict()}), 200
+    try:
+        result = AuthService.update_profile(int(current_user_id), data)
+        return jsonify(result), 200
+    except ValueError as e:
+        error_msg = str(e)
+        if "nicht gefunden" in error_msg:
+            return jsonify({"error": error_msg}), 404
+        return jsonify({"error": error_msg}), 400
 
 
 @auth_bp.route("/delete-account", methods=["DELETE"])
@@ -568,44 +516,11 @@ def delete_account():
     GDPR compliance: This ensures the "right to be forgotten" is fulfilled.
     """
     current_user_id = get_jwt_identity()
-    user = AuthService.get_user_by_id(int(current_user_id))
-
-    if not user:
-        return jsonify({"error": "Benutzer nicht gefunden"}), 404
 
     try:
-        # Cancel Stripe subscription if exists
-        if user.stripe_customer_id:
-            try:
-                # Note: In a real implementation, you would cancel the Stripe subscription here
-                # import stripe
-                # stripe.Customer.delete(user.stripe_customer_id)
-                pass
-            except Exception as e:
-                # Log the error but don't fail the deletion
-                logger.warning("Could not cancel Stripe subscription for user %s: %s", user.id, e)
-
-        # Store info for logging before deletion
-        user_email = user.email
-        user_id = user.id
-
-        # Delete all TokenBlacklist entries for this user to avoid foreign key issues
-        TokenBlacklist.query.filter_by(user_id=user_id).delete()
-
-        # Delete user (cascade will handle all other related data)
-        db.session.delete(user)
-        db.session.commit()
-
-        # Note: We don't manually blacklist the current token because it would create
-        # a foreign key constraint violation. Since the user is deleted, any subsequent
-        # API calls with this token will fail during user lookup anyway.
-
-        # Log successful deletion (for compliance purposes)
-        logger.info("[GDPR] Account deleted for user %s (ID: %s)", user_email, current_user_id)
-
-        return jsonify({"message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}), 200
-
-    except Exception as e:
-        db.session.rollback()
-        logger.error("Error deleting account for user %s: %s", current_user_id, e)
-        return jsonify({"error": "Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support."}), 500
+        result = AuthService.delete_account(int(current_user_id))
+        return jsonify(result), 200
+    except ValueError:
+        return jsonify({"error": "Benutzer nicht gefunden"}), 404
+    except RuntimeError as e:
+        return jsonify({"error": str(e)}), 500

@@ -11,8 +11,8 @@ from middleware.subscription_limit import (
     decrement_application_count,
     get_subscription_usage,
 )
-from models import Application, JobRequirement, db
 from routes.applications import applications_bp
+from services import application_service
 from services.contact_extractor import ContactExtractor
 from services.generator import BewerbungsGenerator
 from services.job_fit_calculator import JobFitCalculator
@@ -81,27 +81,15 @@ def calculate_and_store_job_fit(app, job_description, user_id):
         if not extracted_requirements:
             return  # No requirements found, can't calculate job-fit
 
-        # Clear any existing requirements (shouldn't exist for new app, but be safe)
-        JobRequirement.query.filter_by(application_id=app.id).delete()
-
-        # Save requirements
-        for req_data in extracted_requirements:
-            requirement = JobRequirement(
-                application_id=app.id,
-                requirement_text=req_data["requirement_text"],
-                requirement_type=req_data["requirement_type"],
-                skill_category=req_data.get("skill_category"),
-            )
-            db.session.add(requirement)
-        db.session.commit()
+        # Save requirements (clears existing first)
+        application_service.save_requirements(app.id, extracted_requirements)
 
         # Calculate job-fit score
         calculator = JobFitCalculator()
         result = calculator.calculate_job_fit(user_id, app.id)
 
         # Store the overall score in the application
-        app.job_fit_score = result.overall_score
-        db.session.commit()
+        application_service.update_application_fields(app, job_fit_score=result.overall_score)
 
     except Exception as e:
         # Log but don't fail - job-fit is optional
@@ -140,7 +128,7 @@ def generate_application(current_user):
         pdf_path = generator.generate_bewerbung(stellenanzeige_source, company)
 
         # Get latest application
-        latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
+        latest = application_service.get_latest_application(current_user.id)
 
         # Cleanup temp file (if created)
         if not (url and url.startswith(("http://", "https://"))):
@@ -490,7 +478,7 @@ def generate_from_url(current_user):
         pdf_path = generator.generate_bewerbung(url, company, user_details=user_details, tonalitaet=tone)
 
         # Get the newly created application
-        latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
+        latest = application_service.get_latest_application(current_user.id)
 
         # Calculate and store job-fit score (non-blocking)
         if latest and job_text:
@@ -563,16 +551,17 @@ def generate_from_text(current_user):
             pdf_path = generator.generate_bewerbung(temp_file, company, tonalitaet=tone)
 
             # Get the newly created application
-            latest = Application.query.filter_by(user_id=current_user.id).order_by(Application.datum.desc()).first()
+            latest = application_service.get_latest_application(current_user.id)
 
             # Update application with title and description if provided
             if latest:
+                updates = {}
                 if title:
-                    latest.position = title
-                # Store the structured description in notizen for interview prep
+                    updates["position"] = title
                 if description:
-                    latest.notizen = description
-                db.session.commit()
+                    updates["notizen"] = description
+                if updates:
+                    application_service.update_application_fields(latest, **updates)
 
                 # Calculate and store job-fit score (non-blocking)
                 calculate_and_store_job_fit(latest, job_text, current_user.id)

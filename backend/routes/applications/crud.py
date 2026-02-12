@@ -1,11 +1,8 @@
-import os
-from datetime import datetime, timedelta
-
 from flask import jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
-from models import Application, db
 from routes.applications import applications_bp
+from services import application_service
 
 
 @applications_bp.route("", methods=["GET"])
@@ -16,11 +13,7 @@ def list_applications(current_user):
     per_page = request.args.get("per_page", 20, type=int)
     per_page = min(per_page, 100)
 
-    pagination = (
-        Application.query.filter_by(user_id=current_user.id)
-        .order_by(Application.datum.desc())
-        .paginate(page=page, per_page=per_page, error_out=False)
-    )
+    pagination = application_service.list_applications(current_user.id, page=page, per_page=per_page)
 
     return jsonify(
         {
@@ -41,19 +34,7 @@ def get_timeline(current_user):
     Supports filtering by time period: 7, 30, 90 days or all."""
     days_filter = request.args.get("days", "all")
 
-    query = Application.query.filter_by(user_id=current_user.id)
-
-    # Apply time filter
-    if days_filter != "all":
-        try:
-            days = int(days_filter)
-            cutoff_date = datetime.utcnow() - timedelta(days=days)
-            query = query.filter(Application.datum >= cutoff_date)
-        except ValueError:
-            pass  # Invalid filter, show all
-
-    # Order by date descending
-    applications = query.order_by(Application.datum.desc()).all()
+    applications = application_service.get_timeline_applications(current_user.id, days_filter)
 
     # Build timeline data
     timeline_data = []
@@ -82,7 +63,7 @@ def get_timeline(current_user):
 @jwt_required_custom
 def get_application(app_id, current_user):
     """Get application details"""
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"error": "Application not found"}), 404
@@ -94,23 +75,13 @@ def get_application(app_id, current_user):
 @jwt_required_custom
 def update_application(app_id, current_user):
     """Update application (status, notes)"""
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"error": "Application not found"}), 404
 
     data = request.json
-
-    if "status" in data:
-        new_status = data["status"]
-        # Only add to history if status actually changed
-        if new_status != app.status:
-            app.add_status_change(new_status)
-        app.status = new_status
-    if "notizen" in data:
-        app.notizen = data["notizen"]
-
-    db.session.commit()
+    application_service.update_application(app, data)
 
     return jsonify({"success": True, "application": app.to_dict()}), 200
 
@@ -119,16 +90,11 @@ def update_application(app_id, current_user):
 @jwt_required_custom
 def delete_application(app_id, current_user):
     """Delete application"""
-    app = Application.query.filter_by(id=app_id, user_id=current_user.id).first()
+    app = application_service.get_application(app_id, current_user.id)
 
     if not app:
         return jsonify({"error": "Application not found"}), 404
 
-    # Delete PDF file
-    if app.pdf_path and os.path.exists(app.pdf_path):
-        os.remove(app.pdf_path)
-
-    db.session.delete(app)
-    db.session.commit()
+    application_service.delete_application(app)
 
     return jsonify({"success": True, "message": "Application deleted"}), 200

@@ -4,7 +4,7 @@ from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from config import config
-from models import Subscription, User, db
+from services import subscription_data_service
 from services.stripe_service import StripeService
 
 logger = logging.getLogger(__name__)
@@ -137,7 +137,7 @@ def create_checkout():
 
     # Get current user
     user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
+    user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 
@@ -151,8 +151,7 @@ def create_checkout():
                 name=user.full_name,
                 metadata={"user_id": str(user.id)},
             )
-            user.stripe_customer_id = customer_id
-            db.session.commit()
+            subscription_data_service.save_stripe_customer_id(user, customer_id)
             logger.info(f"Created Stripe customer {customer_id} for user {user.id}")
         else:
             customer_id = user.stripe_customer_id
@@ -197,7 +196,7 @@ def create_portal_session():
 
     # Get current user
     user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
+    user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 
@@ -241,12 +240,12 @@ def change_plan():
 
     # Get current user
     user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
+    user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 
     # Check existing subscription
-    subscription = Subscription.query.filter_by(user_id=user.id).first()
+    subscription = subscription_data_service.get_subscription_by_user(user.id)
     if not subscription or not subscription.stripe_subscription_id:
         return jsonify(
             {"success": False, "error": "Kein aktives Abonnement vorhanden. Bitte zuerst ein Abo abschließen."}
@@ -307,7 +306,7 @@ def get_current_subscription():
     from middleware.subscription_limit import get_subscription_usage
 
     user_id = get_jwt_identity()
-    user = User.query.get(int(user_id))
+    user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 

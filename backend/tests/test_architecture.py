@@ -92,26 +92,7 @@ def _relative_path(filepath: Path) -> str:
 
 # Task 8: Routes that currently import models directly.
 # TODO: Refactor these routes to access data through service layer instead.
-_ROUTES_IMPORTING_MODELS_ALLOWLIST: set[str] = {
-    "routes/api_keys.py",
-    "routes/ats.py",
-    "routes/documents.py",
-    "routes/recommendations.py",
-    "routes/stats.py",
-    "routes/webhooks.py",
-    "routes/auth.py",
-    "routes/applications/crud.py",
-    "routes/skills.py",
-    "routes/subscriptions.py",
-    "routes/salary.py",
-    "routes/admin.py",
-    "routes/email.py",
-    "routes/applications/export.py",
-    "routes/applications/ats.py",
-    "routes/applications/interview.py",
-    "routes/applications/requirements.py",
-    "routes/applications/generation.py",
-}
+_ROUTES_IMPORTING_MODELS_ALLOWLIST: set[str] = set()
 
 # Task 10: Files outside services/ that currently use the Anthropic API.
 # TODO: Move Anthropic usage in routes/applications/ats.py into a service.
@@ -130,7 +111,6 @@ _FILE_SIZE_ALLOWLIST: set[str] = {
     "routes/email.py",
     "routes/auth.py",
     "routes/applications/generation.py",
-    "routes/applications/interview.py",
     "tests/test_auth.py",
     "tests/test_applications.py",
     "tests/test_ats_routes.py",
@@ -139,6 +119,7 @@ _FILE_SIZE_ALLOWLIST: set[str] = {
     "tests/test_ats_service.py",
     "tests/test_password_reset.py",
     "tests/test_documents.py",
+    "tests/test_generator_service.py",
 }
 
 
@@ -199,16 +180,10 @@ class TestRoutesDoNotImportModels:
             )
             pytest.fail("\n".join(msg_parts))
 
-    @pytest.mark.xfail(
-        reason="Known tech debt: existing routes import models directly. " "TODO: refactor to use service layer.",
-        strict=True,
-    )
     def test_all_existing_violations_are_tracked(self):
-        """Ensure the allowlist covers all current violations.
+        """Ensure no route files import models directly.
 
-        This test is xfail because the allowlisted violations exist.
-        Once all routes are refactored, remove the xfail marker and the
-        allowlist entirely.
+        All routes have been refactored to use the service layer.
         """
         all_violations = []
         for filepath in _python_files(ROUTES_DIR):
@@ -218,10 +193,7 @@ class TestRoutesDoNotImportModels:
             if model_imports:
                 all_violations.append(rel)
 
-        assert not all_violations, (
-            "All route-model import violations should have been resolved. "
-            "Remove this xfail marker and the allowlist."
-        )
+        assert not all_violations, "Route files must not import models directly. " "Use the service layer instead."
 
     def test_allowlist_has_no_stale_entries(self):
         """Allowlist entries must correspond to actual violations.
