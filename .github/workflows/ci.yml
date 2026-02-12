@@ -31,7 +31,7 @@ jobs:
       - name: Run backend tests with coverage
         working-directory: ./backend
         run: |
-          pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=40 --json-report --json-report-file=test-results.json
+          pytest --cov=. --cov-report=term-missing --cov-report=xml --cov-fail-under=60 --json-report --json-report-file=test-results.json
 
       - name: Upload coverage reports
         uses: codecov/codecov-action@v4

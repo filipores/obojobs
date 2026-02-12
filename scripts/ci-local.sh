@@ -187,7 +187,7 @@ if [ "$SKIP_BACKEND" = false ]; then
 
             # Pytest
             if $PYTHON_CMD -c "import pytest" 2>/dev/null; then
-                run_step "backend-tests" "pytest" "$PYTHON_CMD -m pytest --cov=. --cov-report=term-missing --cov-fail-under=55 -q" "$BACKEND_DIR"
+                run_step "backend-tests" "pytest" "$PYTHON_CMD -m pytest --cov=. --cov-report=term-missing --cov-fail-under=60 -q" "$BACKEND_DIR"
             else
                 echo -e "${YELLOW}  ⚠ pytest not installed, skipping tests${NC}"
             fi
