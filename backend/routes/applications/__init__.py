@@ -10,4 +10,5 @@ from routes.applications import (  # noqa: E402
     generation,  # noqa: F401
     interview,  # noqa: F401
     requirements,  # noqa: F401
+    scraping,  # noqa: F401
 )

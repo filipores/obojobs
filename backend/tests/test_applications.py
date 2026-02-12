@@ -248,7 +248,7 @@ class TestQuickExtract:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.generation.WebScraper")
+    @patch("routes.applications.scraping.WebScraper")
     def test_success(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = "stepstone"
@@ -270,7 +270,7 @@ class TestQuickExtract:
         assert data["data"]["title"] == "Python Developer"
         assert data["data"]["portal"] == "StepStone"
 
-    @patch("routes.applications.generation.WebScraper")
+    @patch("routes.applications.scraping.WebScraper")
     def test_empty_extraction(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = None
@@ -313,7 +313,7 @@ class TestPreviewJob:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.generation.WebScraper")
+    @patch("routes.applications.scraping.WebScraper")
     def test_success(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = "indeed"
@@ -335,7 +335,7 @@ class TestPreviewJob:
         assert data["company"] == "Startup AG"
         assert data["portal"] == "Indeed"
 
-    @patch("routes.applications.generation.WebScraper")
+    @patch("routes.applications.scraping.WebScraper")
     def test_empty_scrape(self, mock_scraper_class, client, auth_headers):
         mock_scraper = MagicMock()
         mock_scraper.detect_job_board.return_value = None
@@ -615,7 +615,7 @@ class TestAnalyzeManualText:
         )
         assert response.status_code == 400
 
-    @patch("routes.applications.generation.ContactExtractor")
+    @patch("routes.applications.scraping.ContactExtractor")
     def test_success(self, mock_extractor_class, client, auth_headers):
         mock_extractor = MagicMock()
         mock_extractor.extract_contact_data.return_value = {
@@ -642,7 +642,7 @@ class TestAnalyzeManualText:
         assert data["data"]["portal"] == "Manuell eingegeben"
         assert data["data"]["contact_email"] == "jobs@firma.de"
 
-    @patch("routes.applications.generation.ContactExtractor")
+    @patch("routes.applications.scraping.ContactExtractor")
     def test_with_company_and_title(self, mock_extractor_class, client, auth_headers):
         mock_extractor = MagicMock()
         mock_extractor.extract_contact_data.return_value = {}

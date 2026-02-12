@@ -89,7 +89,7 @@ def _setup_app_and_account(app, test_user, provider="gmail"):
 class TestSendEmailProviders:
     """Provider-specific tests for POST /api/email/send"""
 
-    @patch("routes.email.GmailService.send_email")
+    @patch("routes.email.send.GmailService.send_email")
     def test_send_gmail_success(self, mock_send, app, client, test_user, auth_headers):
         mock_send.return_value = {"message_id": "msg-123"}
         aid, eid = _setup_app_and_account(app, test_user, "gmail")
@@ -109,7 +109,7 @@ class TestSendEmailProviders:
         assert response.status_code == 200
         assert response.get_json()["data"]["provider"] == "gmail"
 
-    @patch("routes.email.OutlookService.send_email")
+    @patch("routes.email.send.OutlookService.send_email")
     def test_send_outlook_success(self, mock_send, app, client, test_user, auth_headers):
         mock_send.return_value = {"message_id": "msg-456"}
         aid, eid = _setup_app_and_account(app, test_user, "outlook")
@@ -146,7 +146,7 @@ class TestSendEmailProviders:
         )
         assert response.status_code == 400
 
-    @patch("routes.email.GmailService.send_email")
+    @patch("routes.email.send.GmailService.send_email")
     def test_send_value_error(self, mock_send, app, client, test_user, auth_headers):
         mock_send.side_effect = ValueError("Token expired")
         aid, eid = _setup_app_and_account(app, test_user, "gmail")
@@ -165,7 +165,7 @@ class TestSendEmailProviders:
         )
         assert response.status_code == 400
 
-    @patch("routes.email.GmailService.send_email")
+    @patch("routes.email.send.GmailService.send_email")
     def test_send_generic_error(self, mock_send, app, client, test_user, auth_headers):
         mock_send.side_effect = RuntimeError("Network error")
         aid, eid = _setup_app_and_account(app, test_user, "gmail")

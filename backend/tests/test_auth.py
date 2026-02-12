@@ -1415,7 +1415,7 @@ class TestGoogleOAuth:
         data = response.get_json()
         assert "Google credential ist erforderlich" in data["error"]
 
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.Config")
     def test_google_login_unconfigured_returns_500(self, mock_config, client):
         """Test that unconfigured Google OAuth returns 500."""
         mock_config.GOOGLE_CLIENT_ID = None
@@ -1429,8 +1429,8 @@ class TestGoogleOAuth:
         data = response.get_json()
         assert "nicht konfiguriert" in data["error"]
 
-    @patch("routes.auth.id_token")
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.id_token")
+    @patch("routes.auth.login.Config")
     def test_google_login_creates_new_user(self, mock_config, mock_id_token, app, client):
         """Test that Google login creates a new user if email doesn't exist."""
         mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
@@ -1462,8 +1462,8 @@ class TestGoogleOAuth:
             assert user.email_verified is True
             assert user.full_name == "Google User"
 
-    @patch("routes.auth.id_token")
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.id_token")
+    @patch("routes.auth.login.Config")
     def test_google_login_links_existing_user(self, mock_config, mock_id_token, app, client, test_user):
         """Test that Google login links Google account to existing user."""
         mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
@@ -1490,8 +1490,8 @@ class TestGoogleOAuth:
             assert user.google_id == "google-id-99999"
             assert user.email_verified is True
 
-    @patch("routes.auth.id_token")
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.id_token")
+    @patch("routes.auth.login.Config")
     def test_google_login_invalid_token_returns_401(self, mock_config, mock_id_token, client):
         """Test that invalid Google token returns 401."""
         mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
@@ -1506,8 +1506,8 @@ class TestGoogleOAuth:
         data = response.get_json()
         assert "Ungültiges Google-Token" in data["error"]
 
-    @patch("routes.auth.id_token")
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.id_token")
+    @patch("routes.auth.login.Config")
     def test_google_login_existing_google_user_returns_tokens(self, mock_config, mock_id_token, app, client):
         """Test that existing Google user can login and get tokens."""
         mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
@@ -1541,8 +1541,8 @@ class TestGoogleOAuth:
         assert "access_token" in data
         assert "refresh_token" in data
 
-    @patch("routes.auth.id_token")
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.id_token")
+    @patch("routes.auth.login.Config")
     def test_google_login_inactive_user_returns_401(self, mock_config, mock_id_token, app, client):
         """Test that inactive user cannot login via Google."""
         mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
@@ -1575,8 +1575,8 @@ class TestGoogleOAuth:
         data = response.get_json()
         assert "deaktiviert" in data["error"]
 
-    @patch("routes.auth.id_token")
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.id_token")
+    @patch("routes.auth.login.Config")
     def test_google_login_no_email_returns_400(self, mock_config, mock_id_token, client):
         """Test that Google token without email returns 400."""
         mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"
@@ -1595,8 +1595,8 @@ class TestGoogleOAuth:
         data = response.get_json()
         assert "Keine E-Mail-Adresse" in data["error"]
 
-    @patch("routes.auth.id_token")
-    @patch("routes.auth.Config")
+    @patch("routes.auth.login.id_token")
+    @patch("routes.auth.login.Config")
     def test_google_login_registration_disabled_returns_403(self, mock_config, mock_id_token, client):
         """Test that new user registration via Google is blocked when registration is disabled."""
         mock_config.GOOGLE_CLIENT_ID = "test-google-client-id"

@@ -1,0 +1,2 @@
+# Run architecture tests before push to catch constraint violations early
+cd backend && python3 -m pytest tests/test_architecture.py -v --tb=short

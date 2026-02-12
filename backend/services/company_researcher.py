@@ -8,62 +8,20 @@ and provides structured information for interview preparation.
 import hashlib
 import json
 import os
-import re
 import time
 from datetime import datetime, timedelta
 from urllib.parse import urljoin, urlparse
 
 import requests
-from bs4 import BeautifulSoup, Tag
+from bs4 import BeautifulSoup
 
-
-class CompanyResearchResult:
-    """Data class for company research results."""
-
-    def __init__(
-        self,
-        company_name: str,
-        website_url: str | None = None,
-        industry: str | None = None,
-        company_size: str | None = None,
-        locations: list[str] | None = None,
-        products_services: list[str] | None = None,
-        about_text: str | None = None,
-        mission_values: str | None = None,
-        founded_year: str | None = None,
-        interview_tips: list[str] | None = None,
-        source_urls: list[str] | None = None,
-        cached_at: str | None = None,
-    ):
-        self.company_name = company_name
-        self.website_url = website_url
-        self.industry = industry
-        self.company_size = company_size
-        self.locations = locations or []
-        self.products_services = products_services or []
-        self.about_text = about_text
-        self.mission_values = mission_values
-        self.founded_year = founded_year
-        self.interview_tips = interview_tips or []
-        self.source_urls = source_urls or []
-        self.cached_at = cached_at
-
-    def to_dict(self) -> dict:
-        """Convert to dictionary."""
-        return {
-            "company_name": self.company_name,
-            "website_url": self.website_url,
-            "industry": self.industry,
-            "company_size": self.company_size,
-            "locations": self.locations,
-            "products_services": self.products_services,
-            "about_text": self.about_text,
-            "mission_values": self.mission_values,
-            "founded_year": self.founded_year,
-            "interview_tips": self.interview_tips,
-            "source_urls": self.source_urls,
-            "cached_at": self.cached_at,
-        }
+from services.company_research_extraction import (
+    determine_industry,
+    extract_about_info,
+    extract_products_services,
+    generate_interview_tips,
+)
+from services.company_research_models import CompanyResearchResult
 
 
 class CompanyResearcher:
@@ -185,6 +143,8 @@ class CompanyResearcher:
 
     def _guess_company_website(self, company_name: str) -> str | None:
         """Try to guess the company website URL from the company name."""
+        import re
+
         # Normalize company name for URL guessing
         normalized = company_name.lower().strip()
 
@@ -217,7 +177,7 @@ class CompanyResearcher:
         return None
 
     def _find_about_page(self, base_url: str, soup: BeautifulSoup) -> str | None:
-        """Find the About/Über uns page URL from the homepage."""
+        """Find the About/Uber uns page URL from the homepage."""
         parsed = urlparse(base_url)
         base = f"{parsed.scheme}://{parsed.netloc}"
 
@@ -247,235 +207,6 @@ class CompanyResearcher:
                 continue
 
         return None
-
-    def _extract_about_info(self, soup: BeautifulSoup, url: str) -> dict[str, str | list[str] | None]:
-        """Extract company information from About page."""
-        about_text: str | None = None
-        mission_values: str | None = None
-        founded_year: str | None = None
-        company_size: str | None = None
-        locations: list[str] = []
-
-        # Remove navigation, header, footer for cleaner text
-        for element in soup(["nav", "header", "footer", "script", "style"]):
-            element.decompose()
-
-        # Get main text content
-        main_content = soup.find("main") or soup.find("article") or soup
-        text = main_content.get_text(separator="\n", strip=True)
-
-        # Clean up text (limit length)
-        lines = [line.strip() for line in text.splitlines() if line.strip()]
-        clean_text = "\n".join(lines[:100])  # Limit to first 100 lines
-
-        if clean_text and len(clean_text) > 50:
-            about_text = clean_text[:2000]  # Limit to 2000 chars
-
-        # Try to extract founded year
-        year_pattern = re.compile(r"(?:gegründet|founded|seit|since)[:\s]*(\d{4})", re.I)
-        year_match = year_pattern.search(text)
-        if year_match:
-            founded_year = year_match.group(1)
-
-        # Try to extract company size
-        size_patterns = [
-            (r"(\d+[\.\d]*)\s*(?:mitarbeiter|employees|beschäftigte)", re.I),
-            (r"(?:über|mehr als|more than)\s*(\d+[\.\d]*)\s*(?:mitarbeiter|employees)", re.I),
-        ]
-        for pattern, flags in size_patterns:
-            size_match = re.search(pattern, text, flags)
-            if size_match:
-                company_size = f"{size_match.group(1)} Mitarbeiter"
-                break
-
-        # Try to extract locations from text
-        german_cities = [
-            "Berlin",
-            "Hamburg",
-            "München",
-            "Köln",
-            "Frankfurt",
-            "Stuttgart",
-            "Düsseldorf",
-            "Leipzig",
-            "Dresden",
-            "Hannover",
-            "Nürnberg",
-            "Bremen",
-            "Essen",
-            "Dortmund",
-            "Bonn",
-        ]
-        for city in german_cities:
-            if city.lower() in text.lower():
-                locations.append(city)
-
-        # Look for mission/vision sections
-        mission_keywords = ["mission", "vision", "werte", "values", "philosophie", "leitbild"]
-        for keyword in mission_keywords:
-            # Find headers or sections with these keywords
-            mission_elem = soup.find(["h2", "h3", "h4", "section"], string=re.compile(keyword, re.I))
-            if mission_elem:
-                # Get the next sibling content
-                next_content = mission_elem.find_next(["p", "div", "ul"])
-                if next_content:
-                    mission_text_content = next_content.get_text(strip=True)
-                    if mission_text_content and len(mission_text_content) > 20:
-                        mission_values = mission_text_content[:500]
-                        break
-
-        return {
-            "about_text": about_text,
-            "mission_values": mission_values,
-            "founded_year": founded_year,
-            "company_size": company_size,
-            "locations": locations,
-        }
-
-    def _extract_products_services(self, soup: BeautifulSoup, text: str) -> list[str]:
-        """Extract products/services from page content."""
-        products = []
-
-        # Look for product/service sections
-        product_keywords = ["produkte", "products", "leistungen", "services", "lösungen", "solutions"]
-
-        for keyword in product_keywords:
-            section = soup.find(
-                ["h2", "h3", "section", "div"],
-                string=re.compile(keyword, re.I),
-            )
-            if section:
-                # Find list items or paragraphs in this section
-                parent = section.find_parent(["section", "div"]) or section
-                if not isinstance(parent, Tag):
-                    continue
-                items = parent.find_all(["li", "h4", "strong"])
-                for item in items[:8]:  # Limit to 8 items
-                    item_text = item.get_text(strip=True)
-                    if item_text and len(item_text) > 3 and len(item_text) < 100:
-                        products.append(item_text)
-
-        return products[:8] if products else []
-
-    def _determine_industry(self, text: str, about_text: str | None) -> str | None:
-        """Try to determine the industry from page content."""
-        combined = f"{text} {about_text or ''}"
-        combined_lower = combined.lower()
-
-        industry_keywords = {
-            "Software & IT": [
-                "software",
-                "it-dienstleistung",
-                "saas",
-                "cloud",
-                "digital",
-                "technologie",
-            ],
-            "E-Commerce": ["e-commerce", "online-shop", "online-handel", "webshop"],
-            "Finanzdienstleistungen": [
-                "bank",
-                "finanz",
-                "versicherung",
-                "investment",
-                "fintech",
-            ],
-            "Beratung": ["beratung", "consulting", "unternehmensberatung"],
-            "Industrie & Fertigung": [
-                "fertigung",
-                "produktion",
-                "maschinen",
-                "industrie",
-                "automotive",
-            ],
-            "Gesundheitswesen": [
-                "gesundheit",
-                "medizin",
-                "pharma",
-                "klinik",
-                "healthcare",
-            ],
-            "Einzelhandel": ["einzelhandel", "retail", "geschäft", "filiale"],
-            "Logistik": ["logistik", "transport", "spedition", "lieferung"],
-            "Medien & Marketing": ["medien", "marketing", "agentur", "werbung", "media"],
-            "Energie": ["energie", "strom", "erneuerbar", "solar", "wind"],
-            "Telekommunikation": ["telekommunikation", "telecom", "mobilfunk", "netz"],
-        }
-
-        for industry, keywords in industry_keywords.items():
-            if any(keyword in combined_lower for keyword in keywords):
-                return industry
-
-        return None
-
-    def _generate_interview_tips(self, result: CompanyResearchResult) -> list[str]:
-        """Generate interview tips based on gathered company information."""
-        tips = []
-
-        # Tip about company knowledge
-        tips.append(
-            f"Zeigen Sie, dass Sie sich über {result.company_name} informiert haben - "
-            "erwähnen Sie spezifische Fakten aus Ihrer Recherche."
-        )
-
-        # Industry-specific tip
-        if result.industry:
-            tips.append(
-                f"Die Firma ist in der Branche '{result.industry}' tätig. "
-                "Informieren Sie sich über aktuelle Trends und Herausforderungen in diesem Bereich."
-            )
-
-        # Products/Services tip
-        if result.products_services:
-            products_str = ", ".join(result.products_services[:3])
-            tips.append(
-                f"Das Unternehmen bietet folgende Produkte/Dienstleistungen: {products_str}. "
-                "Überlegen Sie, wie Ihre Fähigkeiten dazu beitragen können."
-            )
-
-        # Mission/Values tip
-        if result.mission_values:
-            tips.append(
-                "Das Unternehmen hat bestimmte Werte und eine Mission. "
-                "Beziehen Sie sich in Ihren Antworten auf diese Werte und zeigen Sie, dass Sie diese teilen."
-            )
-
-        # Company size tip
-        if result.company_size:
-            # Determine company size category
-            size_category = "mittelständisches"
-            if "über" in result.company_size.lower():
-                size_category = "größeres"
-            else:
-                size_match = re.search(r"\d+", result.company_size)
-                if size_match and int(size_match.group()) > 500:
-                    size_category = "größeres"
-            tips.append(
-                f"Mit {result.company_size} ist dies ein {size_category} Unternehmen. "
-                "Erwarten Sie entsprechende Strukturen und Prozesse."
-            )
-
-        # Founded year tip
-        if result.founded_year:
-            try:
-                year = int(result.founded_year)
-                age = datetime.now().year - year
-                if age > 50:
-                    tips.append(
-                        f"Das Unternehmen wurde {result.founded_year} gegründet und hat eine lange Tradition. "
-                        "Betonen Sie Ihre Wertschätzung für etablierte Prozesse und Unternehmenskultur."
-                    )
-                elif age < 10:
-                    tips.append(
-                        f"Als {age}-jähriges Unternehmen ist die Firma noch relativ jung. "
-                        "Zeigen Sie Flexibilität und Bereitschaft, in einem dynamischen Umfeld zu arbeiten."
-                    )
-            except ValueError:
-                pass
-
-        # Generic tips
-        tips.append("Bereiten Sie eigene Fragen zum Unternehmen vor - das zeigt echtes Interesse.")
-
-        return tips[:6]  # Limit to 6 tips
 
     def research_company(self, company_name: str, website_url: str | None = None) -> CompanyResearchResult:
         """
@@ -524,8 +255,8 @@ class CompanyResearcher:
 
                 # Extract basic info from homepage
                 homepage_text = soup.get_text(separator="\n", strip=True)
-                result.industry = self._determine_industry(homepage_text, None)
-                result.products_services = self._extract_products_services(soup, homepage_text)
+                result.industry = determine_industry(homepage_text, None)
+                result.products_services = extract_products_services(soup, homepage_text)
 
                 # Try to find and fetch About page
                 about_url = self._find_about_page(website_url, soup)
@@ -548,7 +279,7 @@ class CompanyResearcher:
 
                         about_soup = BeautifulSoup(about_response.text, "html.parser")
 
-                        about_info = self._extract_about_info(about_soup, about_url)
+                        about_info = extract_about_info(about_soup, about_url)
                         about_text_val = about_info.get("about_text")
                         if isinstance(about_text_val, str) or about_text_val is None:
                             result.about_text = about_text_val
@@ -567,14 +298,14 @@ class CompanyResearcher:
 
                         # Re-determine industry with about text
                         if not result.industry and result.about_text:
-                            result.industry = self._determine_industry(homepage_text, result.about_text)
+                            result.industry = determine_industry(homepage_text, result.about_text)
 
             except requests.RequestException:
                 # Website fetch failed - continue with limited data
                 pass
 
         # Generate interview tips based on gathered info
-        result.interview_tips = self._generate_interview_tips(result)
+        result.interview_tips = generate_interview_tips(result)
         result.source_urls = source_urls
 
         # Cache the result
@@ -620,18 +351,18 @@ class CompanyResearcher:
                         if any(
                             keyword in link_text
                             for keyword in ["website", "homepage", "zur firma", "unternehmenswebsite"]
-                        ):
-                            if href.startswith("http"):
-                                website_url = href
-                                break
+                        ) and href.startswith("http"):
+                            website_url = href
+                            break
 
                         # Check if href contains company name
-                        if company_name.lower().replace(" ", "").replace("-", "") in href.lower().replace("-", ""):
-                            if href.startswith("http") and not any(
-                                portal in href for portal in ["indeed", "stepstone", "xing", "linkedin"]
-                            ):
-                                website_url = href
-                                break
+                        if (
+                            company_name.lower().replace(" ", "").replace("-", "") in href.lower().replace("-", "")
+                            and href.startswith("http")
+                            and not any(portal in href for portal in ["indeed", "stepstone", "xing", "linkedin"])
+                        ):
+                            website_url = href
+                            break
 
             except requests.RequestException:
                 pass

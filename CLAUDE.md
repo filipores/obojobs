@@ -61,6 +61,45 @@ make lint           # Run all linters (ESLint + Ruff)
 | Basic | 20/month | 9.99 EUR/month |
 | Pro | Unlimited | 19.99 EUR/month |
 
+## Self-Validation Checklist
+
+**Run after every change** before committing. All checks must pass.
+
+### 1. Lint (both stacks)
+```bash
+cd frontend && npx eslint --max-warnings 100 src/   # 0 errors required
+cd backend && python3 -m ruff check .                # 0 errors on selected rules
+```
+
+### 2. Tests
+```bash
+cd frontend && npm run test                          # Vitest — all green
+cd backend && python3 -m pytest --tb=short           # Pytest — all green
+```
+
+### 3. Architecture constraints (backend)
+```bash
+cd backend && python3 -m pytest tests/test_architecture.py -v
+```
+Enforced rules:
+- Routes must NOT import models directly (use service layer)
+- Models must NOT import services or routes (no upward deps)
+- Services must NOT import routes (no circular deps)
+- Anthropic API only in services/ (centralized AI access)
+- No Python file > 500 lines (split into focused modules)
+
+### 4. Frontend architecture (manual check)
+- All API calls go through `src/api/client.js` (never import axios directly)
+- Composition API only (`<script setup>`), no Options API
+- No TypeScript (JS only, exception: `data/variableDescriptions.ts`)
+- German-first for UI text and DB field names
+
+### 5. Pre-commit (runs automatically)
+- `lint-staged` via husky pre-commit hook
+- `commitlint` via husky commit-msg hook (conventional commits)
+
+**Shortcut**: `make lint && make test` runs steps 1-2 for both stacks.
+
 ## Project Structure
 
 ```

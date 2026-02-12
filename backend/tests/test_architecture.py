@@ -103,14 +103,6 @@ _ANTHROPIC_OUTSIDE_SERVICES_ALLOWLIST: set[str] = {
 # Task 10: Files that currently exceed the line limit.
 # TODO: Split these files into smaller, focused modules.
 _FILE_SIZE_ALLOWLIST: set[str] = {
-    "services/web_scraper.py",
-    "services/qwen_client.py",
-    "services/salary_coach.py",
-    "services/company_researcher.py",
-    "services/job_fit_calculator.py",
-    "routes/email.py",
-    "routes/auth.py",
-    "routes/applications/generation.py",
     "tests/test_auth.py",
     "tests/test_applications.py",
     "tests/test_ats_routes.py",

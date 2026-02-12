@@ -28,6 +28,11 @@ jobs:
           ruff check . --output-format=json > ruff-results.json || true
           ruff check . --output-format=github
 
+      - name: Run architecture tests
+        working-directory: ./backend
+        run: |
+          pytest tests/test_architecture.py -v --tb=short --json-report --json-report-file=architecture-results.json
+
       - name: Run backend tests with coverage
         working-directory: ./backend
         run: |
@@ -49,6 +54,7 @@ jobs:
           path: |
             backend/test-results.json
             backend/ruff-results.json
+            backend/architecture-results.json
           retention-days: 7
 
   frontend-tests:

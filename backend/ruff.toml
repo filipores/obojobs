@@ -27,12 +27,24 @@ select = [
     "B",    # flake8-bugbear
     "C4",   # flake8-comprehensions
     "UP",   # pyupgrade
+    "SIM",  # flake8-simplify: simplifiable constructs (e.g. collapsible if, dict/list comprehensions)
+    "RET",  # flake8-return: unnecessary return/else-after-return patterns
+    "PIE",  # flake8-pie: misc. lints (no-unnecessary-pass, no-pointless-lambda, etc.)
+    "T20",  # flake8-print: flag print() statements (use logging in production code)
+    "ERA",  # eradicate: detect commented-out code
 ]
 
 # Ignore specific rules that may conflict or be too strict
 ignore = [
-    "E501",  # line too long (handled by formatter)
+    "E501",    # line too long (handled by formatter)
+    "RET504",  # unnecessary assignment before return (can aid readability)
+    "SIM108",  # use ternary operator — explicit if/else is often clearer
+    "ERA001",  # false positives on section header comments (e.g. "# Company (hiringOrganization)")
 ]
+
+[lint.per-file-ignores]
+# Tests may use print for debugging and have simpler control flow
+"tests/**" = ["T20", "SIM"]
 
 [lint.isort]
 # Combine as_ imports

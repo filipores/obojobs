@@ -84,7 +84,7 @@ class TestGmailAuthUrl:
             os.environ.pop(k, None)
         assert client.get("/api/email/gmail/auth-url", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.GmailService.get_authorization_url")
+    @patch("routes.email.oauth.GmailService.get_authorization_url")
     def test_success(self, mock_url, client, auth_headers):
         mock_url.return_value = ("https://accounts.google.com/auth", "s")
         env = {"GOOGLE_CLIENT_ID": "id", "GOOGLE_CLIENT_SECRET": "s", "GOOGLE_REDIRECT_URI": "http://x"}
@@ -92,14 +92,14 @@ class TestGmailAuthUrl:
             r = client.get("/api/email/gmail/auth-url", headers=auth_headers)
             assert r.status_code == 200 and "authorization_url" in r.get_json()
 
-    @patch("routes.email.GmailService.get_authorization_url")
+    @patch("routes.email.oauth.GmailService.get_authorization_url")
     def test_value_error(self, mock_url, client, auth_headers):
         mock_url.side_effect = ValueError("Missing")
         env = {"GOOGLE_CLIENT_ID": "id", "GOOGLE_CLIENT_SECRET": "s", "GOOGLE_REDIRECT_URI": "http://x"}
         with patch.dict(os.environ, env):
             assert client.get("/api/email/gmail/auth-url", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.GmailService.get_authorization_url")
+    @patch("routes.email.oauth.GmailService.get_authorization_url")
     def test_generic_error(self, mock_url, client, auth_headers):
         mock_url.side_effect = RuntimeError("boom")
         env = {"GOOGLE_CLIENT_ID": "id", "GOOGLE_CLIENT_SECRET": "s", "GOOGLE_REDIRECT_URI": "http://x"}
@@ -120,9 +120,9 @@ class TestGmailCallback:
     def test_missing_code(self, client, auth_headers):
         assert client.get("/api/email/gmail/callback", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.GmailService.save_tokens")
-    @patch("routes.email.GmailService.get_user_email")
-    @patch("routes.email.GmailService.exchange_code_for_tokens")
+    @patch("routes.email.oauth.GmailService.save_tokens")
+    @patch("routes.email.oauth.GmailService.get_user_email")
+    @patch("routes.email.oauth.GmailService.exchange_code_for_tokens")
     def test_success(self, mock_ex, mock_email, mock_save, client, auth_headers):
         mock_ex.return_value = {"access_token": "a", "refresh_token": "r"}
         mock_email.return_value = "u@g.com"
@@ -131,12 +131,12 @@ class TestGmailCallback:
         mock_save.return_value = m
         assert client.get("/api/email/gmail/callback?code=c", headers=auth_headers).status_code == 200
 
-    @patch("routes.email.GmailService.exchange_code_for_tokens")
+    @patch("routes.email.oauth.GmailService.exchange_code_for_tokens")
     def test_value_error(self, mock_ex, client, auth_headers):
         mock_ex.side_effect = ValueError("bad")
         assert client.get("/api/email/gmail/callback?code=c", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.GmailService.exchange_code_for_tokens")
+    @patch("routes.email.oauth.GmailService.exchange_code_for_tokens")
     def test_generic_error(self, mock_ex, client, auth_headers):
         mock_ex.side_effect = RuntimeError("net")
         assert client.get("/api/email/gmail/callback?code=c", headers=auth_headers).status_code == 500
@@ -153,21 +153,21 @@ class TestOutlookAuthUrl:
             os.environ.pop(k, None)
         assert client.get("/api/email/outlook/auth-url", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.OutlookService.get_authorization_url")
+    @patch("routes.email.oauth.OutlookService.get_authorization_url")
     def test_success(self, mock_url, client, auth_headers):
         mock_url.return_value = ("https://login.microsoft.com/auth", "s")
         env = {"MICROSOFT_CLIENT_ID": "id", "MICROSOFT_CLIENT_SECRET": "s", "MICROSOFT_REDIRECT_URI": "http://x"}
         with patch.dict(os.environ, env):
             assert client.get("/api/email/outlook/auth-url", headers=auth_headers).status_code == 200
 
-    @patch("routes.email.OutlookService.get_authorization_url")
+    @patch("routes.email.oauth.OutlookService.get_authorization_url")
     def test_value_error(self, mock_url, client, auth_headers):
         mock_url.side_effect = ValueError("Missing")
         env = {"MICROSOFT_CLIENT_ID": "id", "MICROSOFT_CLIENT_SECRET": "s", "MICROSOFT_REDIRECT_URI": "http://x"}
         with patch.dict(os.environ, env):
             assert client.get("/api/email/outlook/auth-url", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.OutlookService.get_authorization_url")
+    @patch("routes.email.oauth.OutlookService.get_authorization_url")
     def test_generic_error(self, mock_url, client, auth_headers):
         mock_url.side_effect = RuntimeError("boom")
         env = {"MICROSOFT_CLIENT_ID": "id", "MICROSOFT_CLIENT_SECRET": "s", "MICROSOFT_REDIRECT_URI": "http://x"}
@@ -187,9 +187,9 @@ class TestOutlookCallback:
     def test_missing_code(self, client, auth_headers):
         assert client.get("/api/email/outlook/callback", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.OutlookService.save_tokens")
-    @patch("routes.email.OutlookService.get_user_email")
-    @patch("routes.email.OutlookService.exchange_code_for_tokens")
+    @patch("routes.email.oauth.OutlookService.save_tokens")
+    @patch("routes.email.oauth.OutlookService.get_user_email")
+    @patch("routes.email.oauth.OutlookService.exchange_code_for_tokens")
     def test_success(self, mock_ex, mock_email, mock_save, client, auth_headers):
         mock_ex.return_value = {"access_token": "a", "refresh_token": "r"}
         mock_email.return_value = "u@o.com"
@@ -198,12 +198,12 @@ class TestOutlookCallback:
         mock_save.return_value = m
         assert client.get("/api/email/outlook/callback?code=c", headers=auth_headers).status_code == 200
 
-    @patch("routes.email.OutlookService.exchange_code_for_tokens")
+    @patch("routes.email.oauth.OutlookService.exchange_code_for_tokens")
     def test_value_error(self, mock_ex, client, auth_headers):
         mock_ex.side_effect = ValueError("bad")
         assert client.get("/api/email/outlook/callback?code=c", headers=auth_headers).status_code == 400
 
-    @patch("routes.email.OutlookService.exchange_code_for_tokens")
+    @patch("routes.email.oauth.OutlookService.exchange_code_for_tokens")
     def test_generic_error(self, mock_ex, client, auth_headers):
         mock_ex.side_effect = RuntimeError("net")
         assert client.get("/api/email/outlook/callback?code=c", headers=auth_headers).status_code == 500
