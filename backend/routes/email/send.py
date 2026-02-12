@@ -1,6 +1,6 @@
 import os
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from routes.email import email_bp
@@ -14,7 +14,7 @@ MAX_ATTACHMENT_SIZE = 10 * 1024 * 1024
 
 @email_bp.route("/send", methods=["POST"])
 @jwt_required()
-def send_email():
+def send_email() -> tuple[Response, int]:
     """
     Send an email with attachments via connected email account.
 

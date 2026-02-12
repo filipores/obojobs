@@ -24,7 +24,7 @@ class UserSkill(db.Model):  # type: ignore[name-defined]
     # Valid categories
     VALID_CATEGORIES = ["technical", "soft_skills", "languages", "tools", "certifications"]
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -37,5 +37,5 @@ class UserSkill(db.Model):  # type: ignore[name-defined]
         }
 
     @classmethod
-    def validate_category(cls, category):
+    def validate_category(cls, category: str) -> bool:
         return category in cls.VALID_CATEGORIES

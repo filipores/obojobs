@@ -21,7 +21,7 @@ class Template(db.Model):
     user = db.relationship("User", back_populates="templates")
     applications = db.relationship("Application", back_populates="template")
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": self.user_id,

@@ -20,10 +20,10 @@ class DemoGenerator:
     - Returns ephemeral data for display only
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.api_client = QwenAPIClient()
 
-    def generate_demo(self, job_url: str, cv_text: str) -> dict:
+    def generate_demo(self, job_url: str, cv_text: str) -> dict[str, str]:
         """Generate a demo application from a job URL.
 
         Args:

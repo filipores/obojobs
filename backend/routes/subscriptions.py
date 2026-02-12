@@ -1,6 +1,6 @@
 import logging
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from config import config
@@ -70,7 +70,7 @@ SUBSCRIPTION_PLANS = {
 
 
 @subscriptions_bp.route("/status", methods=["GET"])
-def get_payment_status():
+def get_payment_status() -> tuple[Response, int]:
     """Check if payment system is available (public endpoint)."""
     return jsonify(
         {
@@ -83,7 +83,7 @@ def get_payment_status():
 
 
 @subscriptions_bp.route("/plans", methods=["GET"])
-def get_plans():
+def get_plans() -> tuple[Response, int]:
     """Get available subscription plans (public endpoint)."""
     plans = list(SUBSCRIPTION_PLANS.values())
     return jsonify(
@@ -102,7 +102,7 @@ def get_plan_limits(plan_name: str) -> dict:
 
 @subscriptions_bp.route("/create-checkout", methods=["POST"])
 @jwt_required()
-def create_checkout():
+def create_checkout() -> tuple[Response, int]:
     """Create a Stripe Checkout Session for subscription purchase."""
     # Check if payments are available
     if not config.is_stripe_enabled():
@@ -176,7 +176,7 @@ def create_checkout():
 
 @subscriptions_bp.route("/portal", methods=["POST"])
 @jwt_required()
-def create_portal_session():
+def create_portal_session() -> tuple[Response, int]:
     """Create a Stripe Customer Portal session for subscription management."""
     # Check if payments are available
     if not config.is_stripe_enabled():
@@ -220,7 +220,7 @@ def create_portal_session():
 
 @subscriptions_bp.route("/change-plan", methods=["POST"])
 @jwt_required()
-def change_plan():
+def change_plan() -> tuple[Response, int]:
     """Change subscription plan (upgrade or downgrade via Stripe)."""
     if not config.is_stripe_enabled():
         return jsonify(
@@ -301,7 +301,7 @@ def change_plan():
 
 @subscriptions_bp.route("/current", methods=["GET"])
 @jwt_required()
-def get_current_subscription():
+def get_current_subscription() -> tuple[Response, int]:
     """Get the current user's subscription details and usage."""
     from middleware.subscription_limit import get_subscription_usage
 

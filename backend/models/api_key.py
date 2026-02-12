@@ -22,20 +22,20 @@ class APIKey(db.Model):
     user = db.relationship("User", back_populates="api_keys")
 
     @staticmethod
-    def generate_key():
+    def generate_key() -> str:
         """Generate a new API key with prefix mlr_"""
         return f"mlr_{secrets.token_urlsafe(32)}"
 
-    def set_key(self, key):
+    def set_key(self, key: str) -> None:
         """Hash and store the API key"""
         self.key_hash = generate_password_hash(key)
         self.key_prefix = key[:8]  # Store first 8 chars for display
 
-    def check_key(self, key):
+    def check_key(self, key: str) -> bool:
         """Verify an API key"""
         return check_password_hash(self.key_hash, key)
 
-    def to_dict(self, include_prefix=True):
+    def to_dict(self, include_prefix: bool = True) -> dict:
         result = {
             "id": self.id,
             "user_id": self.user_id,

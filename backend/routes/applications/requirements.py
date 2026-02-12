@@ -1,4 +1,6 @@
-from flask import jsonify, request
+from typing import Any
+
+from flask import Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from routes.applications import applications_bp
@@ -10,7 +12,7 @@ from services.web_scraper import WebScraper
 
 @applications_bp.route("/<int:app_id>/requirements", methods=["GET"])
 @jwt_required_custom
-def get_requirements(app_id, current_user):
+def get_requirements(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Get job requirements for an application."""
     app = application_service.get_application(app_id, current_user.id)
 
@@ -39,7 +41,7 @@ def get_requirements(app_id, current_user):
 
 @applications_bp.route("/<int:app_id>/analyze-requirements", methods=["POST"])
 @jwt_required_custom
-def analyze_requirements(app_id, current_user):
+def analyze_requirements(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Analyze and extract requirements from job posting for an application.
 
     This endpoint uses Claude API to extract requirements from the job posting text
@@ -104,7 +106,7 @@ def analyze_requirements(app_id, current_user):
 
 @applications_bp.route("/<int:app_id>/job-fit", methods=["GET"])
 @jwt_required_custom
-def get_job_fit(app_id, current_user):
+def get_job_fit(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Calculate and return the job-fit score for an application.
 
     Compares user skills against job requirements and returns:
@@ -154,7 +156,7 @@ def get_job_fit(app_id, current_user):
 
 @applications_bp.route("/analyze-job-fit", methods=["POST"])
 @jwt_required_custom
-def analyze_job_fit_preview(current_user):
+def analyze_job_fit_preview(current_user: Any) -> tuple[Response, int]:
     """Create a temporary application for job-fit analysis before generating.
 
     This endpoint:

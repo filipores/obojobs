@@ -1,5 +1,7 @@
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
+from typing import Any
 
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
@@ -16,7 +18,7 @@ PLAN_LIMITS = {
 }
 
 
-def _get_user_plan(user):
+def _get_user_plan(user: Any) -> SubscriptionPlan:
     """Get the user's current subscription plan."""
     if not user.subscription:
         return SubscriptionPlan.free
@@ -28,7 +30,7 @@ def _get_user_plan(user):
     return user.subscription.plan or SubscriptionPlan.free
 
 
-def _check_and_reset_monthly_counter(user):
+def _check_and_reset_monthly_counter(user: Any) -> None:
     """
     Check if the monthly counter needs to be reset.
     Resets at the beginning of each month.
@@ -43,7 +45,7 @@ def _check_and_reset_monthly_counter(user):
         db.session.commit()
 
 
-def get_subscription_usage(user):
+def get_subscription_usage(user: Any) -> dict:
     """
     Get the user's current subscription usage information.
 
@@ -67,7 +69,7 @@ def get_subscription_usage(user):
     }
 
 
-def try_increment_application_count(user, plan_limit):
+def try_increment_application_count(user: Any, plan_limit: int) -> bool:
     """Atomically check limit and increment counter.
 
     Uses a single UPDATE with a WHERE clause to prevent TOCTOU race conditions.
@@ -101,7 +103,7 @@ def try_increment_application_count(user, plan_limit):
     return result.rowcount > 0
 
 
-def decrement_application_count(user):
+def decrement_application_count(user: Any) -> None:
     """Decrement the user's monthly application counter (rollback on failure).
 
     Used when a generation fails after the atomic increment already happened,
@@ -126,7 +128,7 @@ def decrement_application_count(user):
     db.session.refresh(user)
 
 
-def check_subscription_limit(fn):
+def check_subscription_limit(fn: Callable) -> Callable:
     """
     Decorator that atomically checks the subscription limit AND increments the
     counter in one step, preventing TOCTOU race conditions.
@@ -142,7 +144,7 @@ def check_subscription_limit(fn):
     """
 
     @wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Get user from kwargs (if using jwt_required_custom) or fetch from JWT
         current_user = kwargs.get("current_user")
 
@@ -187,7 +189,7 @@ def check_subscription_limit(fn):
     return wrapper
 
 
-def increment_application_count(user):
+def increment_application_count(user: Any) -> None:
     """
     Increment the user's monthly application counter.
 

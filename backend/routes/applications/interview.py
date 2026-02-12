@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Any
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from routes.applications import applications_bp
@@ -15,7 +16,7 @@ VALID_INTERVIEW_RESULTS = ["scheduled", "completed", "passed", "rejected", "offe
 
 @applications_bp.route("/<int:app_id>/generate-questions", methods=["POST"])
 @jwt_required_custom
-def generate_interview_questions(app_id, current_user):
+def generate_interview_questions(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Generate interview questions for an application based on the job posting.
 
     Uses Claude API to generate personalized interview questions considering:
@@ -101,7 +102,7 @@ def generate_interview_questions(app_id, current_user):
 
 @applications_bp.route("/<int:app_id>/interview-questions", methods=["GET"])
 @jwt_required_custom
-def get_interview_questions(app_id, current_user):
+def get_interview_questions(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Get all interview questions for an application.
 
     Returns questions grouped by type (behavioral, technical, situational,
@@ -146,7 +147,7 @@ def get_interview_questions(app_id, current_user):
 
 @applications_bp.route("/interview/evaluate-answer", methods=["POST"])
 @jwt_required_custom
-def evaluate_interview_answer(current_user):
+def evaluate_interview_answer(current_user: Any) -> tuple[Response, int]:
     """Evaluate an interview answer and provide AI feedback.
 
     Request body:
@@ -215,7 +216,7 @@ def evaluate_interview_answer(current_user):
 
 @applications_bp.route("/interview/summary", methods=["POST"])
 @jwt_required_custom
-def get_interview_summary(current_user):
+def get_interview_summary(current_user: Any) -> tuple[Response, int]:
     """Generate a summary of all interview answers for a mock interview session.
 
     Request body:
@@ -266,7 +267,7 @@ def get_interview_summary(current_user):
 
 @applications_bp.route("/interview/analyze-star", methods=["POST"])
 @jwt_required_custom
-def analyze_star_method(current_user):
+def analyze_star_method(current_user: Any) -> tuple[Response, int]:
     """Perform detailed STAR method analysis on a behavioral interview answer.
 
     Provides specialized feedback for behavioral questions with detailed analysis
@@ -352,7 +353,7 @@ def analyze_star_method(current_user):
 
 @applications_bp.route("/interview/star-components", methods=["GET"])
 @jwt_required_custom
-def get_star_components(current_user):
+def get_star_components(current_user: Any) -> tuple[Response, int]:
     """Get descriptions of STAR method components.
 
     Returns detailed information about each STAR component for help/reference.
@@ -373,7 +374,7 @@ def get_star_components(current_user):
 
 @applications_bp.route("/<int:app_id>/interview-result", methods=["PUT"])
 @jwt_required_custom
-def update_interview_result(app_id, current_user):
+def update_interview_result(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Update interview result and feedback for an application.
 
     Request body:
@@ -438,7 +439,7 @@ def update_interview_result(app_id, current_user):
 
 @applications_bp.route("/interview-stats", methods=["GET"])
 @jwt_required_custom
-def get_interview_statistics(current_user):
+def get_interview_statistics(current_user: Any) -> tuple[Response, int]:
     """Get interview statistics for the current user.
 
     Returns aggregated interview data:

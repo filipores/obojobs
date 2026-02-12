@@ -150,15 +150,15 @@ class ContactExtractor:
         r"Bewerbung(?:en)?\s+(?:an|bei)[:\s]+(?:Frau|Herr)\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)",
     ]
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the contact extractor."""
-        self.api_key = config.ANTHROPIC_API_KEY
-        self.client = None
+        self.api_key: str | None = config.ANTHROPIC_API_KEY
+        self.client: Anthropic | None = None
         if self.api_key:
             self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+        self.model: str = config.CLAUDE_MODEL
 
-    def extract_contact_data(self, job_text: str) -> dict:
+    def extract_contact_data(self, job_text: str) -> dict[str, str | None]:
         """
         Extract contact information from job posting text.
 
@@ -199,7 +199,7 @@ class ContactExtractor:
 
         return result
 
-    def _extract_with_regex(self, text: str) -> dict:
+    def _extract_with_regex(self, text: str) -> dict[str, str | None]:
         """Extract contact data using regex patterns."""
         result = {
             "contact_person": None,
@@ -280,7 +280,7 @@ class ContactExtractor:
 
         return result
 
-    def _extract_with_nlp(self, text: str) -> dict:
+    def _extract_with_nlp(self, text: str) -> dict[str, str]:
         """Extract contact data using Claude NLP."""
         if not self.client:
             return {}
@@ -329,7 +329,7 @@ ANSTELLUNGSART: [Wert]"""
             logger.error("NLP extraction failed: %s", e)
             return {}
 
-    def _parse_nlp_response(self, response_text: str) -> dict:
+    def _parse_nlp_response(self, response_text: str) -> dict[str, str]:
         """Parse the NLP response into a structured dict."""
         result = {}
 
@@ -380,9 +380,9 @@ ANSTELLUNGSART: [Wert]"""
         # Already has salutation prefix
         if contact_lower.startswith("frau "):
             return f"Sehr geehrte {contact_person}"
-        elif contact_lower.startswith("herr "):
+        if contact_lower.startswith("herr "):
             return f"Sehr geehrter {contact_person}"
-        elif contact_lower.startswith("sehr geehrte"):
+        if contact_lower.startswith("sehr geehrte"):
             return contact_person
 
         # Try to determine gender from name (simple heuristic)

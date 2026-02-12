@@ -29,7 +29,7 @@ class JobRecommendation(db.Model):
     # Relationships
     user = db.relationship("User", back_populates="job_recommendations")
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -56,12 +56,12 @@ class JobRecommendation(db.Model):
         except (json.JSONDecodeError, TypeError):
             return {}
 
-    def set_job_data(self, data: dict):
+    def set_job_data(self, data: dict) -> None:
         """Serialize job data to JSON."""
         self.job_data_json = json.dumps(data, ensure_ascii=False)
 
     @classmethod
-    def from_job_data(cls, user_id: int, job_data: dict, fit_score: int, fit_category: str):
+    def from_job_data(cls, user_id: int, job_data: dict, fit_score: int, fit_category: str) -> "JobRecommendation":
         """Create a JobRecommendation from scraped job data."""
         recommendation = cls(
             user_id=user_id,

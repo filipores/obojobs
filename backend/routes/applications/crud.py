@@ -1,4 +1,6 @@
-from flask import jsonify, request
+from typing import Any
+
+from flask import Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from routes.applications import applications_bp
@@ -7,7 +9,7 @@ from services import application_service
 
 @applications_bp.route("", methods=["GET"])
 @jwt_required_custom
-def list_applications(current_user):
+def list_applications(current_user: Any) -> tuple[Response, int]:
     """List user's applications"""
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
@@ -29,7 +31,7 @@ def list_applications(current_user):
 
 @applications_bp.route("/timeline", methods=["GET"])
 @jwt_required_custom
-def get_timeline(current_user):
+def get_timeline(current_user: Any) -> tuple[Response, int]:
     """Get all applications with status history for timeline view.
     Supports filtering by time period: 7, 30, 90 days or all."""
     days_filter = request.args.get("days", "all")
@@ -61,7 +63,7 @@ def get_timeline(current_user):
 
 @applications_bp.route("/<int:app_id>", methods=["GET"])
 @jwt_required_custom
-def get_application(app_id, current_user):
+def get_application(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Get application details"""
     app = application_service.get_application(app_id, current_user.id)
 
@@ -73,7 +75,7 @@ def get_application(app_id, current_user):
 
 @applications_bp.route("/<int:app_id>", methods=["PUT"])
 @jwt_required_custom
-def update_application(app_id, current_user):
+def update_application(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Update application (status, notes)"""
     app = application_service.get_application(app_id, current_user.id)
 
@@ -88,7 +90,7 @@ def update_application(app_id, current_user):
 
 @applications_bp.route("/<int:app_id>", methods=["DELETE"])
 @jwt_required_custom
-def delete_application(app_id, current_user):
+def delete_application(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Delete application"""
     app = application_service.get_application(app_id, current_user.id)
 

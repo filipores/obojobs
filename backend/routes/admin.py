@@ -1,6 +1,7 @@
 from datetime import datetime
+from typing import Any
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from middleware.admin_required import admin_required
 from services import admin_service
@@ -10,7 +11,7 @@ admin_bp = Blueprint("admin", __name__)
 
 @admin_bp.route("/stats", methods=["GET"])
 @admin_required
-def get_stats(current_user):
+def get_stats(current_user: Any) -> Response:
     total_users = admin_service.get_total_users()
     total_applications = admin_service.get_total_applications()
     active_users_30d = admin_service.get_active_users_30d()
@@ -41,7 +42,7 @@ def get_stats(current_user):
 
 @admin_bp.route("/users", methods=["GET"])
 @admin_required
-def list_users(current_user):
+def list_users(current_user: Any) -> Response:
     page = request.args.get("page", 1, type=int)
     per_page = request.args.get("per_page", 20, type=int)
     search = request.args.get("search", "")
@@ -88,7 +89,7 @@ def list_users(current_user):
 
 @admin_bp.route("/users/<int:user_id>", methods=["GET"])
 @admin_required
-def get_user_detail(user_id, current_user):
+def get_user_detail(user_id: int, current_user: Any) -> Response | tuple[Response, int]:
     user = admin_service.get_user(user_id)
     if not user:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404
@@ -126,7 +127,7 @@ def get_user_detail(user_id, current_user):
 
 @admin_bp.route("/users/<int:user_id>", methods=["PATCH"])
 @admin_required
-def patch_user(user_id, current_user):
+def patch_user(user_id: int, current_user: Any) -> Response | tuple[Response, int]:
     user = admin_service.get_user(user_id)
     if not user:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404
@@ -157,7 +158,7 @@ def patch_user(user_id, current_user):
 
 @admin_bp.route("/users/<int:user_id>/applications", methods=["GET"])
 @admin_required
-def get_user_applications(user_id, current_user):
+def get_user_applications(user_id: int, current_user: Any) -> Response | tuple[Response, int]:
     user = admin_service.get_user(user_id)
     if not user:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404

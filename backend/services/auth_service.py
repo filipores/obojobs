@@ -17,7 +17,7 @@ class AuthService:
     """Authentication service for user management"""
 
     @staticmethod
-    def register_user(email, password, full_name=None):
+    def register_user(email: str, password: str, full_name: str | None = None) -> User:
         """
         Register a new user.
 
@@ -52,7 +52,7 @@ class AuthService:
         return user
 
     @staticmethod
-    def login_user(email, password):
+    def login_user(email: str, password: str) -> dict[str, str | dict]:
         """
         Login user and return tokens.
 
@@ -74,11 +74,10 @@ class AuthService:
                 remaining = user.locked_until - datetime.utcnow()
                 remaining_minutes = max(1, int(remaining.total_seconds() / 60))
                 raise ValueError(f"Konto vorübergehend gesperrt. Versuche es in {remaining_minutes} Minuten erneut.")
-            else:
-                # Lock expired, reset lockout
-                user.locked_until = None
-                user.failed_login_attempts = 0
-                db.session.commit()
+            # Lock expired, reset lockout
+            user.locked_until = None
+            user.failed_login_attempts = 0
+            db.session.commit()
 
         if not user or not user.check_password(password):
             # Increment failed attempts if user exists
@@ -112,12 +111,12 @@ class AuthService:
         return {"access_token": access_token, "refresh_token": refresh_token, "user": user.to_dict()}
 
     @staticmethod
-    def get_user_by_id(user_id):
+    def get_user_by_id(user_id: int) -> User | None:
         """Get user by ID"""
         return User.query.get(user_id)
 
     @staticmethod
-    def get_user_by_email(email: str):
+    def get_user_by_email(email: str) -> User | None:
         """Get user by email"""
         return User.query.filter_by(email=email.lower()).first()
 
@@ -229,7 +228,7 @@ class AuthService:
         return {"access_token": access_token, "refresh_token": refresh_token, "user": user.to_dict()}
 
     @staticmethod
-    def logout_user(jti: str, token_type: str, user_id: int, expires_at) -> None:
+    def logout_user(jti: str, token_type: str, user_id: int, expires_at: datetime) -> None:
         """Add token to blacklist for logout."""
         TokenBlacklist.add_token(jti=jti, token_type=token_type, user_id=user_id, expires_at=expires_at)
 

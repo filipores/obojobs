@@ -7,8 +7,9 @@ from email import encoders
 from email.mime.base import MIMEBase
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Any
 
-from flask import jsonify, make_response, request, send_file
+from flask import Response, jsonify, make_response, request, send_file
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
@@ -54,7 +55,7 @@ def sanitize_filename(name: str) -> str:
     return name if name else "Anschreiben"
 
 
-def _replace_template_vars(text, app):
+def _replace_template_vars(text: str | None, app: Any) -> str:
     """Replace template variables in text with actual application values."""
     if not text:
         return ""
@@ -66,7 +67,7 @@ def _replace_template_vars(text, app):
     )
 
 
-def _get_status_label(status):
+def _get_status_label(status: str | None) -> str:
     """Convert status code to readable label."""
     labels = {
         "erstellt": "Erstellt",
@@ -78,7 +79,7 @@ def _get_status_label(status):
     return labels.get(status, status or "")
 
 
-def _export_as_csv(applications, date_str):
+def _export_as_csv(applications: list[Any], date_str: str) -> Response:
     """Generate CSV export of applications."""
     output = io.StringIO()
     writer = csv.writer(output, delimiter=";", quoting=csv.QUOTE_ALL)
@@ -108,7 +109,7 @@ def _export_as_csv(applications, date_str):
     return response
 
 
-def _export_as_pdf(applications, date_str):
+def _export_as_pdf(applications: list[Any], date_str: str) -> Response:
     """Generate PDF export of applications with obojobs branding."""
     buffer = io.BytesIO()
 
@@ -219,7 +220,7 @@ def _export_as_pdf(applications, date_str):
 
 @applications_bp.route("/<int:app_id>/pdf", methods=["GET"])
 @jwt_required_custom
-def download_pdf(app_id, current_user):
+def download_pdf(app_id: int, current_user: Any) -> Response | tuple[Response, int]:
     """Download application PDF"""
     app = application_service.get_application(app_id, current_user.id)
 
@@ -236,7 +237,7 @@ def download_pdf(app_id, current_user):
 
 @applications_bp.route("/<int:app_id>/email-draft", methods=["GET"])
 @jwt_required_custom
-def download_email_draft(app_id, current_user):
+def download_email_draft(app_id: int, current_user: Any) -> Response | tuple[Response, int]:
     """Generate and download a .eml email draft file with the Anschreiben PDF attached."""
     app = application_service.get_application(app_id, current_user.id)
 
@@ -288,7 +289,7 @@ def download_email_draft(app_id, current_user):
 
 @applications_bp.route("/export", methods=["GET"])
 @jwt_required_custom
-def export_applications(current_user):
+def export_applications(current_user: Any) -> Response:
     """Export applications as CSV or PDF.
     Query params:
     - format: 'csv' (default) or 'pdf'
@@ -312,5 +313,4 @@ def export_applications(current_user):
 
     if export_format == "pdf":
         return _export_as_pdf(applications, today)
-    else:
-        return _export_as_csv(applications, today)
+    return _export_as_csv(applications, today)

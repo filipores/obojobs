@@ -8,7 +8,7 @@ Rate limited to prevent abuse.
 import os
 import tempfile
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 from flask_limiter.util import get_remote_address
 from werkzeug.utils import secure_filename
 
@@ -21,12 +21,12 @@ ALLOWED_EXTENSIONS = {"pdf"}
 MAX_FILE_SIZE = 10 * 1024 * 1024  # 10 MB
 
 
-def _allowed_file(filename):
+def _allowed_file(filename: str) -> bool:
     """Check if file extension is allowed."""
     return "." in filename and filename.rsplit(".", 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def _generate_demo_logic():
+def _generate_demo_logic() -> tuple[Response, int]:
     """Core demo generation logic.
 
     Requires multipart/form-data with cv_file and url.
@@ -89,7 +89,7 @@ def _generate_demo_logic():
 
 
 @demo_bp.route("/generate", methods=["POST"])
-def generate_demo():
+def generate_demo() -> Response | tuple[Response, int]:
     """
     Generate a demo application from a job URL and uploaded CV.
 

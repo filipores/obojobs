@@ -1,9 +1,10 @@
 """Stripe webhook handler -- public endpoint (no JWT), verifies Stripe signatures."""
 
 import logging
+from typing import Any
 
 import stripe
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from services import webhook_service
 from services.stripe_service import StripeService
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 webhooks_bp = Blueprint("webhooks", __name__)
 
 
-def _handle_checkout_completed(session):
+def _handle_checkout_completed(session: dict[str, Any]) -> None:
     """Handle checkout.session.completed: create/update subscription after checkout."""
     customer_id = session.get("customer")
     subscription_id = session.get("subscription")
@@ -32,7 +33,7 @@ def _handle_checkout_completed(session):
     webhook_service.upsert_subscription(user, customer_id, subscription_id, stripe_subscription)
 
 
-def _handle_subscription_created(subscription_data):
+def _handle_subscription_created(subscription_data: dict[str, Any]) -> None:
     """Handle customer.subscription.created event."""
     customer_id = subscription_data.get("customer")
     subscription_id = subscription_data.get("id")
@@ -49,7 +50,7 @@ def _handle_subscription_created(subscription_data):
     webhook_service.upsert_subscription(user, customer_id, subscription_id, subscription_data)
 
 
-def _handle_subscription_updated(subscription_data):
+def _handle_subscription_updated(subscription_data: dict[str, Any]) -> None:
     """Handle customer.subscription.updated: sync status, plan, billing period, and cancellation fields."""
     subscription_id = subscription_data.get("id")
     customer_id = subscription_data.get("customer")
@@ -76,7 +77,7 @@ def _handle_subscription_updated(subscription_data):
     )
 
 
-def _handle_subscription_deleted(subscription_data):
+def _handle_subscription_deleted(subscription_data: dict[str, Any]) -> None:
     """Handle customer.subscription.deleted: cancel and reset to free plan."""
     subscription_id = subscription_data.get("id")
 
@@ -94,7 +95,7 @@ def _handle_subscription_deleted(subscription_data):
     logger.info(f"Subscription {subscription_id} deleted, user reset to free plan")
 
 
-def _handle_invoice_payment_failed(invoice_data):
+def _handle_invoice_payment_failed(invoice_data: dict[str, Any]) -> None:
     """Handle invoice.payment_failed: set subscription status to past_due."""
     subscription_id = invoice_data.get("subscription")
 
@@ -112,7 +113,7 @@ def _handle_invoice_payment_failed(invoice_data):
     logger.info(f"Subscription {subscription_id} marked as past_due due to payment failure")
 
 
-def _handle_invoice_payment_succeeded(invoice_data):
+def _handle_invoice_payment_succeeded(invoice_data: dict[str, Any]) -> None:
     """Handle invoice.payment_succeeded: confirm active status and update billing period."""
     subscription_id = invoice_data.get("subscription")
 
@@ -131,7 +132,7 @@ def _handle_invoice_payment_succeeded(invoice_data):
 
 
 @webhooks_bp.route("/stripe", methods=["POST"])
-def stripe_webhook():
+def stripe_webhook() -> tuple[Response, int]:
     """Verify signature, check idempotency, and dispatch Stripe webhook events."""
     payload = request.get_data()
     sig_header = request.headers.get("Stripe-Signature")

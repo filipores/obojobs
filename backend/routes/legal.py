@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, Response, jsonify
 
 from config import config
 
@@ -6,7 +6,7 @@ legal_bp = Blueprint("legal", __name__)
 
 
 @legal_bp.route("/info", methods=["GET"])
-def legal_info():
+def legal_info() -> Response:
     """Return legal/company info from environment variables. Public endpoint."""
     return jsonify(
         {

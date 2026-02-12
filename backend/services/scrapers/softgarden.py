@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
@@ -46,7 +47,7 @@ class SoftgardenParser(JobBoardParser):
         is_job_page = "/job/" in parsed.path
         return is_softgarden and is_job_page
 
-    def parse(self, soup: BeautifulSoup, url: str) -> dict:
+    def parse(self, soup: BeautifulSoup, url: str) -> dict[str, Any]:
         """Parse Softgarden job posting."""
         result = {
             "source": "softgarden",
@@ -74,7 +75,7 @@ class SoftgardenParser(JobBoardParser):
 
         return result
 
-    def _parse_json_ld(self, data: dict, result: dict) -> dict:
+    def _parse_json_ld(self, data: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         """Parse JSON-LD JobPosting data into result dict."""
         result["title"] = data.get("title")
         result["description"] = data.get("description")
@@ -123,7 +124,7 @@ class SoftgardenParser(JobBoardParser):
 
         return result
 
-    def _parse_html(self, soup: BeautifulSoup, result: dict, url: str) -> dict:
+    def _parse_html(self, soup: BeautifulSoup, result: dict[str, Any], url: str) -> dict[str, Any]:
         """Parse HTML for Softgarden-specific elements."""
         # Title fallback
         if not result["title"]:

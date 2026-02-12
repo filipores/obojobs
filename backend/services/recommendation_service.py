@@ -1,21 +1,23 @@
 """Service layer for job recommendation data access."""
 
+from typing import Any
+
 from sqlalchemy import case, func
 
 from models import JobRecommendation, db
 
 
-def get_recommendation(recommendation_id, user_id):
+def get_recommendation(recommendation_id: int, user_id: int) -> JobRecommendation | None:
     """Return a single recommendation owned by user, or None."""
     return JobRecommendation.query.filter_by(id=recommendation_id, user_id=user_id).first()
 
 
-def find_by_url(user_id, job_url):
+def find_by_url(user_id: int, job_url: str) -> JobRecommendation | None:
     """Return an existing recommendation for the given URL, or None."""
     return JobRecommendation.query.filter_by(user_id=user_id, job_url=job_url).first()
 
 
-def delete_recommendation(recommendation_id, user_id):
+def delete_recommendation(recommendation_id: int, user_id: int) -> JobRecommendation | None:
     """Delete a recommendation. Returns the object or None if not found."""
     recommendation = JobRecommendation.query.filter_by(id=recommendation_id, user_id=user_id).first()
     if not recommendation:
@@ -25,7 +27,7 @@ def delete_recommendation(recommendation_id, user_id):
     return recommendation
 
 
-def get_recommendation_stats(user_id):
+def get_recommendation_stats(user_id: int) -> Any:
     """Return aggregated recommendation statistics for the user."""
     is_dismissed = JobRecommendation.dismissed == True  # noqa: E712
     is_applied = JobRecommendation.applied == True  # noqa: E712

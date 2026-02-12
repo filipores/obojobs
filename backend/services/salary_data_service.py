@@ -1,16 +1,17 @@
 """Service layer for salary coach data persistence."""
 
 import json
+from typing import Any
 
 from models import SalaryCoachData, db
 
 
-def get_salary_data(user_id):
+def get_salary_data(user_id: int) -> SalaryCoachData | None:
     """Return the SalaryCoachData record for the user, or None."""
     return SalaryCoachData.query.filter_by(user_id=user_id).first()
 
 
-def save_salary_data(user_id, data):
+def save_salary_data(user_id: int, data: dict[str, Any]) -> None:
     """Create or update salary coach data for the user.
 
     Args:
@@ -43,7 +44,7 @@ def save_salary_data(user_id, data):
     db.session.commit()
 
 
-def delete_salary_data(user_id):
+def delete_salary_data(user_id: int) -> None:
     """Delete salary coach data for the user.
 
     Raises:

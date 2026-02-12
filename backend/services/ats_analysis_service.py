@@ -1,11 +1,12 @@
 """Service layer for ATS analysis data access."""
 
 from datetime import datetime, timedelta
+from typing import Any
 
 from models import ATSAnalysis, Document, db
 
 
-def find_cached_analysis(user_id, job_url, cache_hours=24):
+def find_cached_analysis(user_id: int, job_url: str, cache_hours: int = 24) -> ATSAnalysis | None:
     """Return a cached analysis for the given URL within the cache window, or None."""
     cache_cutoff = datetime.utcnow() - timedelta(hours=cache_hours)
     return (
@@ -19,17 +20,19 @@ def find_cached_analysis(user_id, job_url, cache_hours=24):
     )
 
 
-def get_cv_document(user_id):
+def get_cv_document(user_id: int) -> Document | None:
     """Return the user's CV document, or None."""
     return Document.query.filter_by(user_id=user_id, doc_type="lebenslauf").first()
 
 
-def hash_job_text(job_text):
+def hash_job_text(job_text: str) -> str:
     """Return a hash of the job text for deduplication."""
     return ATSAnalysis.hash_job_text(job_text)
 
 
-def create_analysis(user_id, job_url, job_text_hash, title, score, result_json):
+def create_analysis(
+    user_id: int, job_url: str, job_text_hash: str, title: str, score: int, result_json: dict[str, Any]
+) -> ATSAnalysis:
     """Create and return a new ATSAnalysis record."""
     analysis = ATSAnalysis(
         user_id=user_id,
@@ -44,22 +47,22 @@ def create_analysis(user_id, job_url, job_text_hash, title, score, result_json):
     return analysis
 
 
-def rollback():
+def rollback() -> None:
     """Rollback the current database session."""
     db.session.rollback()
 
 
-def get_history(user_id, limit=20):
+def get_history(user_id: int, limit: int = 20) -> list[ATSAnalysis]:
     """Return ATS analysis history for a user."""
     return ATSAnalysis.query.filter_by(user_id=user_id).order_by(ATSAnalysis.created_at.desc()).limit(limit).all()
 
 
-def get_analysis(analysis_id, user_id):
+def get_analysis(analysis_id: int, user_id: int) -> ATSAnalysis | None:
     """Return a single analysis owned by user, or None."""
     return ATSAnalysis.query.filter_by(id=analysis_id, user_id=user_id).first()
 
 
-def delete_analysis(analysis_id, user_id):
+def delete_analysis(analysis_id: int, user_id: int) -> ATSAnalysis | None:
     """Delete an analysis. Returns the analysis or None if not found."""
     analysis = ATSAnalysis.query.filter_by(id=analysis_id, user_id=user_id).first()
     if not analysis:

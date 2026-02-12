@@ -63,15 +63,15 @@ class User(db.Model):  # type: ignore[name-defined]
     skills = db.relationship("UserSkill", back_populates="user", cascade="all, delete-orphan")
     job_recommendations = db.relationship("JobRecommendation", back_populates="user", cascade="all, delete-orphan")
 
-    def set_password(self, password):
+    def set_password(self, password: str) -> None:
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password: str) -> bool:
         if not self.password_hash:
             return False  # OAuth-only users cannot login with password
         return check_password_hash(self.password_hash, password)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "email": self.email,

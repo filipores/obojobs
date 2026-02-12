@@ -44,7 +44,7 @@ JOB_BOARD_PARSERS: list[type[JobBoardParser]] = [
 class WebScraper:
     SCRAPER_API_BASE = "https://api.scraperapi.com"
 
-    def __init__(self, timeout: int = 15):
+    def __init__(self, timeout: int = 15) -> None:
         self.timeout = timeout
         self.scraper_api_key = os.getenv("SCRAPER_API_KEY")
         self.session = requests.Session()

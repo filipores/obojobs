@@ -24,7 +24,7 @@ class BewerbungsTracker:
         else:
             self._save_json()
 
-    def _migrate_from_csv(self, csv_path: str):
+    def _migrate_from_csv(self, csv_path: str) -> None:
         with open(csv_path, newline="", encoding="utf-8") as csvfile:
             for row in csv.DictReader(csvfile):
                 self.bewerbungen.append(
@@ -44,11 +44,11 @@ class BewerbungsTracker:
                 )
         self._save_json()
 
-    def _load_json(self):
+    def _load_json(self) -> None:
         with open(self.json_path, encoding="utf-8") as f:
             self.bewerbungen = json.load(f)
 
-    def _save_json(self):
+    def _save_json(self) -> None:
         with open(self.json_path, "w", encoding="utf-8") as f:
             json.dump(self.bewerbungen, f, ensure_ascii=False, indent=2)
 
@@ -64,8 +64,8 @@ class BewerbungsTracker:
         notizen: str | None = None,
         betreff: str | None = None,
         email_text: str | None = None,
-        links: dict | None = None,
-    ):
+        links: dict[str, Any] | None = None,
+    ) -> None:
         bewerbung = {
             "datum": datetime.now().strftime("%Y-%m-%d %H:%M"),
             "firma": firma,
@@ -83,7 +83,7 @@ class BewerbungsTracker:
         self.bewerbungen.append(bewerbung)
         self._save_json()
 
-    def update_status(self, firma: str, datum: str, neuer_status: str):
+    def update_status(self, firma: str, datum: str, neuer_status: str) -> None:
         for bewerbung in self.bewerbungen:
             if bewerbung["firma"] == firma and bewerbung["datum"].startswith(datum):
                 bewerbung["status"] = neuer_status
@@ -98,7 +98,7 @@ class BewerbungsTracker:
                 stats[status] += 1
         return stats
 
-    def list_bewerbungen(self, limit: int = 10):
+    def list_bewerbungen(self, limit: int = 10) -> None:
         if not self.bewerbungen:
             logger.info("Noch keine Bewerbungen vorhanden")
             return
@@ -119,5 +119,5 @@ class BewerbungsTracker:
                 logger.info("Notizen: %s", bew["notizen"])
             logger.info("%s\n", "-" * 80)
 
-    def get_latest_bewerbung(self) -> dict | None:
+    def get_latest_bewerbung(self) -> dict[str, Any] | None:
         return self.bewerbungen[-1] if self.bewerbungen else None

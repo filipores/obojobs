@@ -6,8 +6,9 @@ Provides endpoints for analyzing CVs against job descriptions.
 
 import json
 import os
+from typing import Any
 
-from flask import Blueprint, current_app, jsonify, request
+from flask import Blueprint, Response, current_app, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from services import ats_analysis_service
@@ -22,7 +23,7 @@ CACHE_DURATION_HOURS = 24
 
 @ats_bp.route("/analyze", methods=["POST"])
 @jwt_required_custom
-def analyze_cv(current_user):
+def analyze_cv(current_user: Any) -> Response | tuple[Response, int]:
     """
     Analyze user's CV against a job description.
 
@@ -163,7 +164,7 @@ def analyze_cv(current_user):
 
 @ats_bp.route("/history", methods=["GET"])
 @jwt_required_custom
-def get_history(current_user):
+def get_history(current_user: Any) -> tuple[Response, int]:
     """Get the user's ATS analysis history."""
     analyses = ats_analysis_service.get_history(current_user.id)
 
@@ -172,7 +173,7 @@ def get_history(current_user):
 
 @ats_bp.route("/history/<int:analysis_id>", methods=["GET"])
 @jwt_required_custom
-def get_analysis(current_user, analysis_id):
+def get_analysis(current_user: Any, analysis_id: int) -> tuple[Response, int]:
     """Get a specific ATS analysis by ID."""
     analysis = ats_analysis_service.get_analysis(analysis_id, current_user.id)
 
@@ -184,7 +185,7 @@ def get_analysis(current_user, analysis_id):
 
 @ats_bp.route("/history/<int:analysis_id>", methods=["DELETE"])
 @jwt_required_custom
-def delete_analysis(current_user, analysis_id):
+def delete_analysis(current_user: Any, analysis_id: int) -> tuple[Response, int]:
     """Delete a specific ATS analysis by ID."""
     analysis = ats_analysis_service.delete_analysis(analysis_id, current_user.id)
 

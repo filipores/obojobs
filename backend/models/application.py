@@ -43,7 +43,7 @@ class Application(db.Model):
         "InterviewQuestion", back_populates="application", cascade="all, delete-orphan"
     )
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": self.user_id,
@@ -70,7 +70,7 @@ class Application(db.Model):
             "job_fit_score": self.job_fit_score,
         }
 
-    def get_status_history(self):
+    def get_status_history(self) -> list[dict]:
         """Parse status_history JSON or return empty list."""
         if not self.status_history:
             return []
@@ -79,7 +79,7 @@ class Application(db.Model):
         except (json.JSONDecodeError, TypeError):
             return []
 
-    def add_status_change(self, new_status, timestamp=None):
+    def add_status_change(self, new_status: str, timestamp: datetime | None = None) -> None:
         """Add a status change to the history."""
         history = self.get_status_history()
         if timestamp is None:

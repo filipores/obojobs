@@ -2,7 +2,9 @@
 Recommendations Routes - API endpoints for job recommendations.
 """
 
-from flask import Blueprint, jsonify, request
+from typing import Any
+
+from flask import Blueprint, Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from services import recommendation_service
@@ -13,7 +15,7 @@ bp = Blueprint("recommendations", __name__)
 
 @bp.route("/recommendations", methods=["GET"])
 @jwt_required_custom
-def get_recommendations(current_user):
+def get_recommendations(current_user: Any) -> Response:
     """Get job recommendations for the current user."""
     include_dismissed = request.args.get("include_dismissed", "false").lower() == "true"
     try:
@@ -36,7 +38,7 @@ def get_recommendations(current_user):
 
 @bp.route("/recommendations/analyze", methods=["POST"])
 @jwt_required_custom
-def analyze_job(current_user):
+def analyze_job(current_user: Any) -> Response | tuple[Response, int]:
     """Analyze a job URL and calculate fit score."""
     data = request.get_json()
     if not data or not data.get("job_url"):
@@ -70,7 +72,7 @@ def analyze_job(current_user):
 
 @bp.route("/recommendations/analyze-manual", methods=["POST"])
 @jwt_required_custom
-def analyze_manual_job(current_user):
+def analyze_manual_job(current_user: Any) -> Response | tuple[Response, int]:
     """Analyze manually pasted job text and calculate fit score."""
     data = request.get_json()
     if not data or not data.get("job_text"):
@@ -96,7 +98,7 @@ def analyze_manual_job(current_user):
     return jsonify(result)
 
 
-def _maybe_save_recommendation(recommender, user_id, result):
+def _maybe_save_recommendation(recommender: Any, user_id: int, result: dict[str, Any]) -> None:
     """Save the recommendation if it meets the minimum score threshold, mutates result in-place."""
     if result.get("fit_score", 0) >= JobRecommender.MIN_FIT_SCORE:
         recommendation = recommender.create_recommendation(
@@ -117,7 +119,7 @@ def _maybe_save_recommendation(recommender, user_id, result):
 
 @bp.route("/recommendations/search", methods=["POST"])
 @jwt_required_custom
-def search_jobs(current_user):
+def search_jobs(current_user: Any) -> Response:
     """Search for jobs via Bundesagentur API, score them, and auto-save good matches."""
     data = request.get_json() or {}
     location = data.get("location", "")
@@ -141,15 +143,16 @@ def search_jobs(current_user):
 
     saved_count = 0
     for job_data in result.get("results", []):
-        if job_data.get("fit_score", 0) >= JobRecommender.MIN_FIT_SCORE:
-            if not job_data.get("url") or not recommender.check_duplicate(current_user.id, job_data["url"]):
-                recommender.create_recommendation(
-                    user_id=current_user.id,
-                    job_data=job_data,
-                    fit_score=job_data["fit_score"],
-                    fit_category=job_data["fit_category"],
-                )
-                saved_count += 1
+        if job_data.get("fit_score", 0) >= JobRecommender.MIN_FIT_SCORE and (
+            not job_data.get("url") or not recommender.check_duplicate(current_user.id, job_data["url"])
+        ):
+            recommender.create_recommendation(
+                user_id=current_user.id,
+                job_data=job_data,
+                fit_score=job_data["fit_score"],
+                fit_category=job_data["fit_category"],
+            )
+            saved_count += 1
 
     return jsonify(
         {
@@ -167,7 +170,7 @@ def search_jobs(current_user):
 
 @bp.route("/recommendations/<int:recommendation_id>", methods=["GET"])
 @jwt_required_custom
-def get_recommendation(current_user, recommendation_id):
+def get_recommendation(current_user: Any, recommendation_id: int) -> Response | tuple[Response, int]:
     """Get a specific recommendation by ID."""
     recommendation = recommendation_service.get_recommendation(recommendation_id, current_user.id)
 
@@ -179,7 +182,7 @@ def get_recommendation(current_user, recommendation_id):
 
 @bp.route("/recommendations/<int:recommendation_id>/dismiss", methods=["POST"])
 @jwt_required_custom
-def dismiss_recommendation(current_user, recommendation_id):
+def dismiss_recommendation(current_user: Any, recommendation_id: int) -> Response | tuple[Response, int]:
     """Dismiss a job recommendation."""
     recommender = JobRecommender()
     success = recommender.dismiss_recommendation(recommendation_id, current_user.id)
@@ -192,7 +195,7 @@ def dismiss_recommendation(current_user, recommendation_id):
 
 @bp.route("/recommendations/<int:recommendation_id>/apply", methods=["POST"])
 @jwt_required_custom
-def mark_applied(current_user, recommendation_id):
+def mark_applied(current_user: Any, recommendation_id: int) -> Response | tuple[Response, int]:
     """Mark a recommendation as applied."""
     data = request.get_json() or {}
     application_id = data.get("application_id")
@@ -208,7 +211,7 @@ def mark_applied(current_user, recommendation_id):
 
 @bp.route("/recommendations/<int:recommendation_id>", methods=["DELETE"])
 @jwt_required_custom
-def delete_recommendation(current_user, recommendation_id):
+def delete_recommendation(current_user: Any, recommendation_id: int) -> Response | tuple[Response, int]:
     """Delete a job recommendation."""
     recommendation = recommendation_service.delete_recommendation(recommendation_id, current_user.id)
 
@@ -220,7 +223,7 @@ def delete_recommendation(current_user, recommendation_id):
 
 @bp.route("/recommendations/save", methods=["POST"])
 @jwt_required_custom
-def save_recommendation(current_user):
+def save_recommendation(current_user: Any) -> Response | tuple[Response, int]:
     """Manually save a job as recommendation."""
     data = request.get_json()
     if not data:
@@ -276,7 +279,7 @@ def save_recommendation(current_user):
 
 @bp.route("/recommendations/stats", methods=["GET"])
 @jwt_required_custom
-def get_recommendation_stats(current_user):
+def get_recommendation_stats(current_user: Any) -> Response:
     """Get recommendation statistics for the current user."""
     stats = recommendation_service.get_recommendation_stats(current_user.id)
 

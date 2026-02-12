@@ -2,7 +2,9 @@
 Companies routes - Endpoints for company research and information.
 """
 
-from flask import Blueprint, jsonify, request
+from typing import Any
+
+from flask import Blueprint, Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from services.company_researcher import CompanyResearcher
@@ -12,7 +14,7 @@ companies_bp = Blueprint("companies", __name__)
 
 @companies_bp.route("/<path:company_name>/research", methods=["GET"])
 @jwt_required_custom
-def research_company(company_name, current_user):
+def research_company(company_name: str, current_user: Any) -> tuple[Response, int]:
     """Research a company and gather public information for interview preparation.
 
     Path params:
@@ -72,7 +74,7 @@ def research_company(company_name, current_user):
 
 @companies_bp.route("/<path:company_name>/cache-status", methods=["GET"])
 @jwt_required_custom
-def get_cache_status(company_name, current_user):
+def get_cache_status(company_name: str, current_user: Any) -> tuple[Response, int]:
     """Check if company research data is cached and when it expires.
 
     Path params:

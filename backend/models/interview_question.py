@@ -25,7 +25,7 @@ class InterviewQuestion(db.Model):
     # Valid difficulty levels
     VALID_DIFFICULTIES = ["easy", "medium", "hard"]
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "application_id": self.application_id,
@@ -37,9 +37,9 @@ class InterviewQuestion(db.Model):
         }
 
     @classmethod
-    def validate_type(cls, question_type):
+    def validate_type(cls, question_type: str) -> bool:
         return question_type in cls.VALID_TYPES
 
     @classmethod
-    def validate_difficulty(cls, difficulty):
+    def validate_difficulty(cls, difficulty: str) -> bool:
         return difficulty in cls.VALID_DIFFICULTIES

@@ -10,13 +10,14 @@ import os
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
+from flask import Flask
 
 logger = logging.getLogger(__name__)
 
 scheduler = BackgroundScheduler()
 
 
-def cleanup_old_recommendations(app):
+def cleanup_old_recommendations(app: Flask) -> None:
     """Remove recommendations older than 30 days."""
     with app.app_context():
         try:
@@ -30,7 +31,7 @@ def cleanup_old_recommendations(app):
             logger.error(f"Error cleaning up recommendations: {e}")
 
 
-def auto_search_jobs(app):
+def auto_search_jobs(app: Flask) -> None:
     """Automatically search for jobs for all users with skills."""
     with app.app_context():
         try:
@@ -54,14 +55,15 @@ def auto_search_jobs(app):
                         fit_score = job_data.get("fit_score", 50)
                         fit_category = JobRecommender.score_to_category(fit_score)
 
-                        if fit_score >= JobRecommender.MIN_FIT_SCORE:
-                            if not job_data.get("url") or not recommender.check_duplicate(user_id, job_data["url"]):
-                                recommender.create_recommendation(
-                                    user_id=user_id,
-                                    job_data=job_data,
-                                    fit_score=fit_score,
-                                    fit_category=fit_category,
-                                )
+                        if fit_score >= JobRecommender.MIN_FIT_SCORE and (
+                            not job_data.get("url") or not recommender.check_duplicate(user_id, job_data["url"])
+                        ):
+                            recommender.create_recommendation(
+                                user_id=user_id,
+                                job_data=job_data,
+                                fit_score=fit_score,
+                                fit_category=fit_category,
+                            )
                 except Exception as e:
                     logger.error(f"Error searching jobs for user {user_id}: {e}")
                     continue
@@ -71,7 +73,7 @@ def auto_search_jobs(app):
             logger.error(f"Error in auto_search_jobs: {e}")
 
 
-def init_scheduler(app):
+def init_scheduler(app: Flask) -> None:
     """Initialize and start the background scheduler (skips in testing and debug reloader)."""
     if os.environ.get("TESTING") or app.config.get("TESTING"):
         logger.info("Scheduler disabled in testing mode")
@@ -103,7 +105,7 @@ def init_scheduler(app):
     logger.info("Background scheduler started with 2 jobs")
 
 
-def shutdown_scheduler():
+def shutdown_scheduler() -> None:
     """Gracefully shut down the scheduler."""
     if scheduler.running:
         scheduler.shutdown(wait=False)

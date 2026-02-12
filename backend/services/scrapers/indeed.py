@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
@@ -49,7 +50,7 @@ class IndeedParser(JobBoardParser):
         )
         return is_indeed and is_job_page
 
-    def parse(self, soup: BeautifulSoup, url: str) -> dict:
+    def parse(self, soup: BeautifulSoup, url: str) -> dict[str, Any]:
         """Parse Indeed job posting."""
         result = {
             "source": "indeed",
@@ -76,7 +77,7 @@ class IndeedParser(JobBoardParser):
 
         return result
 
-    def _parse_json_ld(self, data: dict, result: dict) -> dict:
+    def _parse_json_ld(self, data: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         """Parse JSON-LD JobPosting data into result dict."""
         result["title"] = data.get("title")
         result["description"] = data.get("description")
@@ -100,7 +101,7 @@ class IndeedParser(JobBoardParser):
 
         return result
 
-    def _parse_html(self, soup: BeautifulSoup, result: dict) -> dict:
+    def _parse_html(self, soup: BeautifulSoup, result: dict[str, Any]) -> dict[str, Any]:
         """Parse HTML for Indeed-specific elements."""
         # Title - Indeed uses specific selectors
         if not result["title"]:

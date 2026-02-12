@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
 
 from routes.auth import auth_bp
@@ -9,7 +9,7 @@ from services.auth_service import AuthService
 
 @auth_bp.route("/logout", methods=["POST"])
 @jwt_required()
-def logout():
+def logout() -> tuple[Response, int]:
     """
     Logout user by adding current token to blacklist.
 
@@ -33,7 +33,7 @@ def logout():
 
 @auth_bp.route("/language", methods=["PUT"])
 @jwt_required()
-def update_language():
+def update_language() -> tuple[Response, int]:
     """
     Update user language preference.
 
@@ -56,7 +56,7 @@ def update_language():
 
 @auth_bp.route("/profile", methods=["PUT"])
 @jwt_required()
-def update_profile():
+def update_profile() -> tuple[Response, int]:
     """
     Update user profile information.
 
@@ -77,7 +77,7 @@ def update_profile():
 
 @auth_bp.route("/delete-account", methods=["DELETE"])
 @jwt_required()
-def delete_account():
+def delete_account() -> tuple[Response, int]:
     """
     Delete user account and all associated data.
 

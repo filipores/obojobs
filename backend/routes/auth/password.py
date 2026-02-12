@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from routes.auth import auth_bp
@@ -49,7 +49,7 @@ def _record_password_reset_request(email: str) -> None:
 
 
 @auth_bp.route("/forgot-password", methods=["POST"])
-def forgot_password():
+def forgot_password() -> tuple[Response, int]:
     """
     Request a password reset token.
 
@@ -86,7 +86,7 @@ def forgot_password():
 
 
 @auth_bp.route("/reset-password", methods=["POST"])
-def reset_password():
+def reset_password() -> tuple[Response, int]:
     """
     Reset password using the provided token.
 
@@ -118,7 +118,7 @@ def reset_password():
 
 @auth_bp.route("/change-password", methods=["PUT"])
 @jwt_required()
-def change_password():
+def change_password() -> tuple[Response, int]:
     """
     Change password for authenticated user.
 

@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup
@@ -50,7 +51,7 @@ class ArbeitsagenturParser(JobBoardParser):
         )
         return is_arbeitsagentur and is_job_page
 
-    def parse(self, soup: BeautifulSoup, url: str) -> dict:
+    def parse(self, soup: BeautifulSoup, url: str) -> dict[str, Any]:
         """Parse Arbeitsagentur job posting."""
         result = {
             "source": "arbeitsagentur",
@@ -80,7 +81,7 @@ class ArbeitsagenturParser(JobBoardParser):
 
         return result
 
-    def _parse_json_ld(self, data: dict, result: dict) -> dict:
+    def _parse_json_ld(self, data: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         """Parse JSON-LD JobPosting data into result dict."""
         result["title"] = data.get("title")
         result["description"] = data.get("description")
@@ -112,7 +113,7 @@ class ArbeitsagenturParser(JobBoardParser):
 
         return result
 
-    def _parse_html(self, soup: BeautifulSoup, result: dict) -> dict:
+    def _parse_html(self, soup: BeautifulSoup, result: dict[str, Any]) -> dict[str, Any]:
         """Parse HTML for Arbeitsagentur-specific elements."""
         # Title - look for various patterns
         if not result["title"]:

@@ -1,4 +1,5 @@
 import re
+from typing import Any
 from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup, Tag
@@ -43,7 +44,7 @@ class XingParser(JobBoardParser):
         is_job_page = "/jobs/" in parsed.path
         return is_xing and is_job_page
 
-    def parse(self, soup: BeautifulSoup, url: str) -> dict:
+    def parse(self, soup: BeautifulSoup, url: str) -> dict[str, Any]:
         """Parse XING job posting."""
         result = {
             "source": "xing",
@@ -72,7 +73,7 @@ class XingParser(JobBoardParser):
 
         return result
 
-    def _parse_json_ld(self, data: dict, result: dict) -> dict:
+    def _parse_json_ld(self, data: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         """Parse JSON-LD JobPosting data into result dict."""
         result["title"] = data.get("title")
         result["description"] = data.get("description")
@@ -102,7 +103,7 @@ class XingParser(JobBoardParser):
 
         return result
 
-    def _parse_html(self, soup: BeautifulSoup, result: dict, url: str) -> dict:
+    def _parse_html(self, soup: BeautifulSoup, result: dict[str, Any], url: str) -> dict[str, Any]:
         """Parse HTML for XING-specific elements."""
         # Title fallback
         if not result["title"]:

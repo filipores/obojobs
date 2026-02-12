@@ -169,7 +169,7 @@ Beispiel-Format:
 
 Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
 
-    def _parse_questions_response(self, response_text: str) -> list[dict]:
+    def _parse_questions_response(self, response_text: str) -> list[dict[str, str]]:
         """Parse the Claude response into a list of question dictionaries."""
         text = response_text.strip()
 
@@ -240,7 +240,7 @@ Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
             logger.error("JSON Parse Error: %s", e)
             return []
 
-    def _get_fallback_questions(self, firma: str, position: str) -> list[dict]:
+    def _get_fallback_questions(self, firma: str, position: str) -> list[dict[str, str]]:
         """Return fallback questions if API call fails."""
         return [
             {

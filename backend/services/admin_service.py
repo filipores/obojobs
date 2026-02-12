@@ -1,6 +1,7 @@
 """Service layer for admin data access."""
 
 from datetime import datetime, timedelta
+from typing import Any
 
 from sqlalchemy import func
 
@@ -8,22 +9,22 @@ from models import Application, Subscription, User, db
 from models.subscription import SubscriptionPlan, SubscriptionStatus
 
 
-def get_user(user_id):
+def get_user(user_id: int) -> User | None:
     """Return a user by ID, or None."""
     return User.query.get(user_id)
 
 
-def get_total_users():
+def get_total_users() -> int:
     """Return total user count."""
     return User.query.count()
 
 
-def get_total_applications():
+def get_total_applications() -> int:
     """Return total application count."""
     return Application.query.count()
 
 
-def get_active_users_30d():
+def get_active_users_30d() -> int:
     """Return count of users active in the last 30 days."""
     thirty_days_ago = datetime.utcnow() - timedelta(days=30)
     users_created_recently = db.session.query(User.id).filter(User.created_at >= thirty_days_ago)
@@ -38,12 +39,12 @@ def get_active_users_30d():
     ).count()
 
 
-def get_applications_this_month():
+def get_applications_this_month() -> Any:
     """Return sum of all users' applications_this_month."""
     return db.session.query(func.coalesce(func.sum(User.applications_this_month), 0)).scalar()
 
 
-def get_subscription_counts():
+def get_subscription_counts() -> tuple[int, int]:
     """Return counts of basic and pro active subscriptions."""
     basic_count = Subscription.query.filter(
         Subscription.plan == SubscriptionPlan.basic,
@@ -56,18 +57,20 @@ def get_subscription_counts():
     return basic_count, pro_count
 
 
-def get_signups_last_7_days():
+def get_signups_last_7_days() -> int:
     """Return count of users signed up in the last 7 days."""
     seven_days_ago = datetime.utcnow() - timedelta(days=7)
     return User.query.filter(User.created_at >= seven_days_ago).count()
 
 
-def get_email_verified_count():
+def get_email_verified_count() -> int:
     """Return count of users with verified emails."""
     return User.query.filter(User.email_verified.is_(True)).count()
 
 
-def list_users_paginated(page, per_page, search="", plan_filter="", sort="created_at", order="desc"):
+def list_users_paginated(
+    page: int, per_page: int, search: str = "", plan_filter: str = "", sort: str = "created_at", order: str = "desc"
+) -> tuple[list[User], int, int]:
     """Return paginated user list with filtering and sorting."""
     query = User.query
 
@@ -110,6 +113,6 @@ def list_users_paginated(page, per_page, search="", plan_filter="", sort="create
     return users, total, pages
 
 
-def commit():
+def commit() -> None:
     """Commit the current database session."""
     db.session.commit()

@@ -2,18 +2,23 @@
 Salary routes - Endpoints for salary research and negotiation coaching.
 """
 
-from flask import Blueprint, jsonify, request
+import logging
+from typing import Any
+
+from flask import Blueprint, Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from services import salary_data_service
 from services.salary_coach import SalaryCoach
+
+logger = logging.getLogger(__name__)
 
 salary_bp = Blueprint("salary", __name__)
 
 
 @salary_bp.route("/research", methods=["POST"])
 @jwt_required_custom
-def research_salary(current_user):
+def research_salary(current_user: Any) -> tuple[Response, int]:
     """
     Research salary range for a position in a specific region.
 
@@ -80,8 +85,8 @@ def research_salary(current_user):
 
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
-    except Exception as e:
-        print(f"Error in salary research: {str(e)}")
+    except Exception:
+        logger.exception("Error in salary research")
         return jsonify(
             {
                 "success": False,
@@ -92,7 +97,7 @@ def research_salary(current_user):
 
 @salary_bp.route("/negotiation-tips", methods=["POST"])
 @jwt_required_custom
-def get_negotiation_tips(current_user):
+def get_negotiation_tips(current_user: Any) -> tuple[Response, int]:
     """
     Generate personalized salary negotiation tips and strategy.
 
@@ -181,8 +186,8 @@ def get_negotiation_tips(current_user):
 
     except ValueError as e:
         return jsonify({"success": False, "error": str(e)}), 400
-    except Exception as e:
-        print(f"Error in negotiation tips: {str(e)}")
+    except Exception:
+        logger.exception("Error in negotiation tips")
         return jsonify(
             {
                 "success": False,
@@ -193,7 +198,7 @@ def get_negotiation_tips(current_user):
 
 @salary_bp.route("/data", methods=["GET"])
 @jwt_required_custom
-def get_salary_data(current_user):
+def get_salary_data(current_user: Any) -> tuple[Response, int]:
     """
     Get saved salary coach data for the current user.
 
@@ -228,7 +233,7 @@ def get_salary_data(current_user):
 
 @salary_bp.route("/data", methods=["POST"])
 @jwt_required_custom
-def save_salary_data(current_user):
+def save_salary_data(current_user: Any) -> tuple[Response, int]:
     """
     Save salary coach data for the current user.
 
@@ -265,8 +270,8 @@ def save_salary_data(current_user):
                 "message": "Daten gespeichert",
             }
         ), 200
-    except Exception as e:
-        print(f"Error saving salary data: {str(e)}")
+    except Exception:
+        logger.exception("Error saving salary data")
         return jsonify(
             {
                 "success": False,
@@ -277,7 +282,7 @@ def save_salary_data(current_user):
 
 @salary_bp.route("/data", methods=["DELETE"])
 @jwt_required_custom
-def delete_salary_data(current_user):
+def delete_salary_data(current_user: Any) -> tuple[Response, int]:
     """
     Delete saved salary coach data for the current user.
 
@@ -289,8 +294,8 @@ def delete_salary_data(current_user):
     """
     try:
         salary_data_service.delete_salary_data(current_user.id)
-    except Exception as e:
-        print(f"Error deleting salary data: {str(e)}")
+    except Exception:
+        logger.exception("Error deleting salary data")
         return jsonify(
             {
                 "success": False,

@@ -1,4 +1,6 @@
+from collections.abc import Callable
 from functools import wraps
+from typing import Any
 
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
@@ -6,7 +8,7 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from models import User
 
 
-def jwt_required_custom(fn):
+def jwt_required_custom(fn: Callable) -> Callable:
     """
     Custom JWT required decorator that also loads the current user.
     Usage: @jwt_required_custom
@@ -14,7 +16,7 @@ def jwt_required_custom(fn):
     """
 
     @wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         verify_jwt_in_request()
         user_id = get_jwt_identity()
 

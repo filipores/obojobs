@@ -1,7 +1,7 @@
 import os
 import secrets
 
-from flask import jsonify, request, session
+from flask import Response, jsonify, request, session
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from routes.email import email_bp
@@ -11,7 +11,7 @@ from services.outlook_service import OutlookService
 
 @email_bp.route("/gmail/auth-url", methods=["GET"])
 @jwt_required()
-def gmail_auth_url():
+def gmail_auth_url() -> tuple[Response, int]:
     """
     Generate Gmail OAuth authorization URL.
 
@@ -71,7 +71,7 @@ def gmail_auth_url():
 
 @email_bp.route("/gmail/callback", methods=["GET"])
 @jwt_required()
-def gmail_callback():
+def gmail_callback() -> tuple[Response, int]:
     """
     Handle Gmail OAuth callback.
 
@@ -160,7 +160,7 @@ def gmail_callback():
 
 @email_bp.route("/outlook/auth-url", methods=["GET"])
 @jwt_required()
-def outlook_auth_url():
+def outlook_auth_url() -> tuple[Response, int]:
     """
     Generate Outlook OAuth authorization URL.
 
@@ -220,7 +220,7 @@ def outlook_auth_url():
 
 @email_bp.route("/outlook/callback", methods=["GET"])
 @jwt_required()
-def outlook_callback():
+def outlook_callback() -> tuple[Response, int]:
     """
     Handle Outlook OAuth callback.
 

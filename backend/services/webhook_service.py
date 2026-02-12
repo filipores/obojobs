@@ -1,16 +1,17 @@
 """Service layer for Stripe webhook data access."""
 
 from datetime import datetime
+from typing import Any
 
 from models import Subscription, SubscriptionPlan, SubscriptionStatus, User, WebhookEvent, db
 
 
-def check_idempotency(event_id):
+def check_idempotency(event_id: str) -> bool:
     """Return True if this webhook event has already been processed."""
     return WebhookEvent.query.filter_by(stripe_event_id=event_id).first() is not None
 
 
-def record_event(event_id, event_type, status="success", error_message=None):
+def record_event(event_id: str, event_type: str, status: str = "success", error_message: str | None = None) -> None:
     """Record a webhook event for idempotency tracking."""
     event_record = WebhookEvent(
         stripe_event_id=event_id,
@@ -22,22 +23,22 @@ def record_event(event_id, event_type, status="success", error_message=None):
     db.session.commit()
 
 
-def get_user_by_stripe_customer(customer_id):
+def get_user_by_stripe_customer(customer_id: str) -> User | None:
     """Return a user by their Stripe customer ID, or None."""
     return User.query.filter_by(stripe_customer_id=customer_id).first()
 
 
-def get_subscription_by_user(user_id):
+def get_subscription_by_user(user_id: int) -> Subscription | None:
     """Return a subscription by user ID, or None."""
     return Subscription.query.filter_by(user_id=user_id).first()
 
 
-def get_subscription_by_stripe_id(stripe_subscription_id):
+def get_subscription_by_stripe_id(stripe_subscription_id: str) -> Subscription | None:
     """Return a subscription by Stripe subscription ID, or None."""
     return Subscription.query.filter_by(stripe_subscription_id=stripe_subscription_id).first()
 
 
-def get_plan_from_price_id(price_id):
+def get_plan_from_price_id(price_id: str) -> SubscriptionPlan:
     """Map Stripe price ID to subscription plan."""
     from config import config
 
@@ -48,7 +49,7 @@ def get_plan_from_price_id(price_id):
     return price_to_plan.get(price_id, SubscriptionPlan.free)
 
 
-def map_stripe_status(stripe_status):
+def map_stripe_status(stripe_status: str) -> SubscriptionStatus:
     """Map Stripe subscription status string to SubscriptionStatus enum."""
     status_map = {
         "active": SubscriptionStatus.active,
@@ -62,7 +63,9 @@ def map_stripe_status(stripe_status):
     return status_map.get(stripe_status, SubscriptionStatus.active)
 
 
-def upsert_subscription(user, customer_id, subscription_id, subscription_data):
+def upsert_subscription(
+    user: User, customer_id: str, subscription_id: str, subscription_data: dict[str, Any]
+) -> Subscription:
     """Create or update a subscription record from Stripe subscription data."""
     price_id = _extract_price_id(subscription_data)
     plan = get_plan_from_price_id(price_id) if price_id else SubscriptionPlan.basic
@@ -95,7 +98,7 @@ def upsert_subscription(user, customer_id, subscription_id, subscription_data):
     return subscription
 
 
-def update_subscription_from_stripe(subscription, subscription_data):
+def update_subscription_from_stripe(subscription: Subscription, subscription_data: dict[str, Any]) -> None:
     """Update an existing subscription with data from Stripe."""
     price_id = _extract_price_id(subscription_data)
     if price_id:
@@ -115,7 +118,7 @@ def update_subscription_from_stripe(subscription, subscription_data):
     db.session.commit()
 
 
-def cancel_subscription(subscription):
+def cancel_subscription(subscription: Subscription) -> None:
     """Mark a subscription as canceled and reset to free plan."""
     subscription.status = SubscriptionStatus.canceled
     subscription.plan = SubscriptionPlan.free
@@ -125,13 +128,13 @@ def cancel_subscription(subscription):
     db.session.commit()
 
 
-def mark_subscription_past_due(subscription):
+def mark_subscription_past_due(subscription: Subscription) -> None:
     """Set subscription status to past_due."""
     subscription.status = SubscriptionStatus.past_due
     db.session.commit()
 
 
-def confirm_subscription_active(subscription, invoice_data):
+def confirm_subscription_active(subscription: Subscription, invoice_data: dict[str, Any]) -> None:
     """Confirm active status and update billing period from invoice data."""
     subscription.status = SubscriptionStatus.active
 
@@ -146,12 +149,12 @@ def confirm_subscription_active(subscription, invoice_data):
     db.session.commit()
 
 
-def rollback():
+def rollback() -> None:
     """Rollback the current database session."""
     db.session.rollback()
 
 
-def _extract_price_id(data):
+def _extract_price_id(data: dict[str, Any]) -> str | None:
     """Extract the first price ID from Stripe subscription item data."""
     items = data.get("items", {})
     item_list = items.get("data") if isinstance(items, dict) else None

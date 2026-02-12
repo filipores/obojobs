@@ -3,6 +3,7 @@ Data models for Job-Fit Calculator Service.
 """
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -48,7 +49,7 @@ class JobFitResult:
     matched_nice_to_have: int
     learning_recommendations: list[LearningRecommendation] = field(default_factory=list)
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "overall_score": self.overall_score,
             "score_category": self.score_category,
@@ -77,7 +78,7 @@ class JobFitResult:
         return labels.get(self.score_category, self.score_category)
 
     @staticmethod
-    def _skill_match_to_dict(match: SkillMatch) -> dict:
+    def _skill_match_to_dict(match: SkillMatch) -> dict[str, Any]:
         return {
             "requirement_text": match.requirement_text,
             "requirement_type": match.requirement_type,
@@ -90,7 +91,7 @@ class JobFitResult:
         }
 
     @staticmethod
-    def _recommendation_to_dict(rec: LearningRecommendation) -> dict:
+    def _recommendation_to_dict(rec: LearningRecommendation) -> dict[str, Any]:
         return {
             "skill_name": rec.skill_name,
             "category": rec.category,

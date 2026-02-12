@@ -7,8 +7,9 @@ Handles generate, generate-from-url, and generate-from-text endpoints.
 import logging
 import os
 import tempfile
+from typing import Any
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
@@ -31,7 +32,7 @@ logger = logging.getLogger(__name__)
 _PROFILE_FIELDS = ["full_name", "phone", "address", "city", "postal_code"]
 
 
-def _get_profile_warning(user):
+def _get_profile_warning(user: Any) -> dict[str, Any] | None:
     """Check if user profile is missing key contact fields.
 
     Returns a dict with 'incomplete' and 'missing_fields' if any fields
@@ -43,7 +44,7 @@ def _get_profile_warning(user):
     return None
 
 
-def calculate_and_store_job_fit(app, job_description, user_id):
+def calculate_and_store_job_fit(app: Any, job_description: str, user_id: int) -> None:
     """Calculate job-fit score after generation and store it in the application.
 
     This runs in the background and doesn't block the generation response.
@@ -75,7 +76,7 @@ def calculate_and_store_job_fit(app, job_description, user_id):
 @applications_bp.route("/generate", methods=["POST"])
 @api_key_required  # Extension uses API key
 @check_subscription_limit
-def generate_application(current_user):
+def generate_application(current_user: Any) -> tuple[Response, int]:
     """Generate a new application (FROM EXTENSION ONLY)"""
     data = request.json
     company = data.get("company")
@@ -138,7 +139,7 @@ def generate_application(current_user):
 @applications_bp.route("/generate-from-url", methods=["POST"])
 @jwt_required_custom
 @check_subscription_limit
-def generate_from_url(current_user):
+def generate_from_url(current_user: Any) -> tuple[Response, int]:
     """Generate a new application from URL (Web App)
 
     Accepts optional user-edited data from the preview step. If provided,
@@ -237,7 +238,7 @@ def generate_from_url(current_user):
 @applications_bp.route("/generate-from-text", methods=["POST"])
 @jwt_required_custom
 @check_subscription_limit
-def generate_from_text(current_user):
+def generate_from_text(current_user: Any) -> tuple[Response, int]:
     """Generate a new application from manually pasted job posting text.
 
     This is a fallback when URL scraping fails. The user pastes the job

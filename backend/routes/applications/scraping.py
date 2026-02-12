@@ -5,8 +5,9 @@ Handles quick-extract, preview-job, and analyze-manual-text endpoints.
 """
 
 import logging
+from typing import Any
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from routes.applications import applications_bp
@@ -48,7 +49,7 @@ def _is_scraper_client_error(error_message: str) -> bool:
 
 @applications_bp.route("/quick-extract", methods=["POST"])
 @jwt_required_custom
-def quick_extract(current_user):
+def quick_extract(current_user: Any) -> tuple[Response, int]:
     """Quick extraction of job data from URL for minimal confirmation flow.
 
     Returns the essential fields (company, title, description) needed for
@@ -118,7 +119,7 @@ def quick_extract(current_user):
 
 @applications_bp.route("/preview-job", methods=["POST"])
 @jwt_required_custom
-def preview_job(current_user):
+def preview_job(current_user: Any) -> tuple[Response, int]:
     """Preview job posting data from URL before generating application.
 
     Returns structured job data including detected portal and all extracted fields.
@@ -202,7 +203,7 @@ def preview_job(current_user):
 
 @applications_bp.route("/analyze-manual-text", methods=["POST"])
 @jwt_required_custom
-def analyze_manual_text(current_user):
+def analyze_manual_text(current_user: Any) -> tuple[Response, int]:
     """Analyze manually pasted job posting text as fallback when scraping fails.
 
     This endpoint allows users to paste job posting text directly when

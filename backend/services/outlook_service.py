@@ -1,6 +1,7 @@
 import base64
 import os
 from datetime import datetime, timedelta
+from typing import Any
 
 import msal
 import requests
@@ -18,7 +19,7 @@ class OutlookService:
     """Service for Microsoft/Outlook OAuth 2.0 authentication and token management."""
 
     @staticmethod
-    def get_client_config():
+    def get_client_config() -> dict[str, str]:
         """Get Microsoft OAuth client configuration from environment variables."""
         client_id = os.environ.get("MICROSOFT_CLIENT_ID")
         client_secret = os.environ.get("MICROSOFT_CLIENT_SECRET")
@@ -38,7 +39,7 @@ class OutlookService:
         }
 
     @staticmethod
-    def get_msal_app():
+    def get_msal_app() -> msal.ConfidentialClientApplication:
         """Create an MSAL ConfidentialClientApplication instance."""
         config = OutlookService.get_client_config()
         return msal.ConfidentialClientApplication(
@@ -48,7 +49,7 @@ class OutlookService:
         )
 
     @staticmethod
-    def get_authorization_url(state=None):
+    def get_authorization_url(state: str | None = None) -> tuple[str, str | None]:
         """
         Generate the Microsoft OAuth authorization URL.
 
@@ -70,7 +71,7 @@ class OutlookService:
         return auth_url, state
 
     @staticmethod
-    def exchange_code_for_tokens(code):
+    def exchange_code_for_tokens(code: str) -> dict[str, Any]:
         """
         Exchange authorization code for access and refresh tokens.
 
@@ -104,7 +105,7 @@ class OutlookService:
         }
 
     @staticmethod
-    def get_user_email(access_token):
+    def get_user_email(access_token: str) -> str | None:
         """
         Get the user's email address using the access token.
 
@@ -125,7 +126,7 @@ class OutlookService:
         return user_info.get("mail") or user_info.get("userPrincipalName")
 
     @staticmethod
-    def refresh_access_token(email_account):
+    def refresh_access_token(email_account: EmailAccount) -> str:
         """
         Refresh the access token for an email account.
 
@@ -162,7 +163,7 @@ class OutlookService:
         return result["access_token"]
 
     @staticmethod
-    def get_valid_access_token(email_account):
+    def get_valid_access_token(email_account: EmailAccount) -> str:
         """
         Get a valid access token, refreshing if necessary.
 
@@ -177,7 +178,7 @@ class OutlookService:
         return email_account.get_access_token()
 
     @staticmethod
-    def save_tokens(user_id, email, token_data):
+    def save_tokens(user_id: int, email: str, token_data: dict[str, Any]) -> EmailAccount:
         """
         Save or update OAuth tokens for a user.
 
@@ -222,7 +223,13 @@ class OutlookService:
         return account
 
     @staticmethod
-    def send_email(email_account, to_email, subject, body, attachments=None):
+    def send_email(
+        email_account: EmailAccount,
+        to_email: str,
+        subject: str,
+        body: str,
+        attachments: list[dict[str, str]] | None = None,
+    ) -> dict[str, str | int]:
         """
         Send an email via Microsoft Graph API.
 

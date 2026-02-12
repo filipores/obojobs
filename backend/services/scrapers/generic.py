@@ -33,7 +33,7 @@ class GenericJobParser:
     requiring all fields to be present.
     """
 
-    def parse(self, soup: BeautifulSoup, url: str) -> dict:
+    def parse(self, soup: BeautifulSoup, url: str) -> dict[str, Any]:
         """Parse job posting using multiple fallback strategies."""
         result = {
             "source": "generic",
@@ -109,7 +109,7 @@ class GenericJobParser:
 
         return result
 
-    def _extract_json_ld(self, soup: BeautifulSoup) -> dict | None:
+    def _extract_json_ld(self, soup: BeautifulSoup) -> dict[str, Any] | None:
         """Extract JSON-LD structured data with @type JobPosting."""
         scripts = soup.find_all("script", type="application/ld+json")
         for script in scripts:
@@ -143,7 +143,7 @@ class GenericJobParser:
                 continue
         return None
 
-    def _parse_json_ld(self, data: dict, result: dict) -> dict:
+    def _parse_json_ld(self, data: dict[str, Any], result: dict[str, Any]) -> dict[str, Any]:
         """Parse JSON-LD JobPosting schema into result dict."""
         if not result["title"] and data.get("title"):
             result["title"] = clean_text(data["title"])

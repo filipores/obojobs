@@ -4,6 +4,7 @@ from datetime import datetime, timedelta
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from typing import Any
 
 import requests
 from google_auth_oauthlib.flow import Flow
@@ -22,7 +23,7 @@ class GmailService:
     """Service for Gmail OAuth 2.0 authentication and token management."""
 
     @staticmethod
-    def get_client_config():
+    def get_client_config() -> dict[str, Any]:
         """Get Google OAuth client configuration from environment variables."""
         client_id = os.environ.get("GOOGLE_CLIENT_ID")
         client_secret = os.environ.get("GOOGLE_CLIENT_SECRET")
@@ -45,7 +46,7 @@ class GmailService:
         }
 
     @staticmethod
-    def get_authorization_url(state=None):
+    def get_authorization_url(state: str | None = None) -> tuple[str, str]:
         """
         Generate the Google OAuth authorization URL.
 
@@ -74,7 +75,7 @@ class GmailService:
         return authorization_url, state
 
     @staticmethod
-    def exchange_code_for_tokens(code):
+    def exchange_code_for_tokens(code: str) -> dict[str, Any]:
         """
         Exchange authorization code for access and refresh tokens.
 
@@ -108,7 +109,7 @@ class GmailService:
         }
 
     @staticmethod
-    def get_user_email(access_token):
+    def get_user_email(access_token: str) -> str | None:
         """
         Get the user's email address using the access token.
 
@@ -128,7 +129,7 @@ class GmailService:
         return user_info.get("email")
 
     @staticmethod
-    def refresh_access_token(email_account):
+    def refresh_access_token(email_account: EmailAccount) -> str:
         """
         Refresh the access token for an email account.
 
@@ -166,7 +167,7 @@ class GmailService:
         return token_data["access_token"]
 
     @staticmethod
-    def get_valid_access_token(email_account):
+    def get_valid_access_token(email_account: EmailAccount) -> str:
         """
         Get a valid access token, refreshing if necessary.
 
@@ -181,7 +182,7 @@ class GmailService:
         return email_account.get_access_token()
 
     @staticmethod
-    def save_tokens(user_id, email, token_data):
+    def save_tokens(user_id: int, email: str, token_data: dict[str, Any]) -> EmailAccount:
         """
         Save or update OAuth tokens for a user.
 
@@ -226,7 +227,13 @@ class GmailService:
         return account
 
     @staticmethod
-    def send_email(email_account, to_email, subject, body, attachments=None):
+    def send_email(
+        email_account: EmailAccount,
+        to_email: str,
+        subject: str,
+        body: str,
+        attachments: list[dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
         """
         Send an email via Gmail API.
 

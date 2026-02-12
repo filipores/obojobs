@@ -2,6 +2,8 @@
 Data models for Company Researcher Service.
 """
 
+from typing import Any
+
 
 class CompanyResearchResult:
     """Data class for company research results."""
@@ -34,7 +36,7 @@ class CompanyResearchResult:
         self.source_urls = source_urls or []
         self.cached_at = cached_at
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary."""
         return {
             "company_name": self.company_name,

@@ -18,12 +18,12 @@ logger = logging.getLogger(__name__)
 FRONTEND_URL = config.CORS_ORIGINS[0] if config.CORS_ORIGINS else "http://localhost:3000"
 
 
-def _is_configured():
+def _is_configured() -> bool:
     """Check if email sending is configured."""
     return bool(config.MAIL_USERNAME and config.MAIL_PASSWORD)
 
 
-def _send_email(to_email, subject, html_body):
+def _send_email(to_email: str, subject: str, html_body: str) -> bool:
     """Send an email via SMTP."""
     if not _is_configured():
         logger.warning("Email not configured - logging instead of sending")
@@ -49,7 +49,7 @@ def _send_email(to_email, subject, html_body):
         return False
 
 
-def send_verification_email(to_email, token):
+def send_verification_email(to_email: str, token: str) -> bool:
     """Send email verification link."""
     verify_url = f"{FRONTEND_URL}/verify-email?token={token}"
     subject = "obo – E-Mail-Adresse bestätigen"
@@ -91,7 +91,7 @@ def send_verification_email(to_email, token):
     return _send_email(to_email, subject, html)
 
 
-def send_password_reset_email(to_email, token):
+def send_password_reset_email(to_email: str, token: str) -> bool:
     """Send password reset link."""
     reset_url = f"{FRONTEND_URL}/reset-password?token={token}"
     subject = "obo – Passwort zurücksetzen"

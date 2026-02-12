@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
+from typing import Any
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from middleware.subscription_limit import get_subscription_usage
@@ -9,7 +10,7 @@ from services import stats_service
 stats_bp = Blueprint("stats", __name__)
 
 
-def get_week_boundaries():
+def get_week_boundaries() -> tuple[datetime, datetime]:
     """Get the start and end of the current week (Monday to Sunday)."""
     now = datetime.utcnow()
     # Get Monday of current week (weekday() returns 0 for Monday)
@@ -22,7 +23,7 @@ def get_week_boundaries():
 
 @stats_bp.route("/stats/weekly-goal", methods=["GET"])
 @jwt_required_custom
-def get_weekly_goal(current_user):
+def get_weekly_goal(current_user: Any) -> tuple[Response, int]:
     """Get user's weekly application goal and current progress."""
     week_start, week_end = get_week_boundaries()
 
@@ -49,7 +50,7 @@ def get_weekly_goal(current_user):
 
 @stats_bp.route("/stats/weekly-goal", methods=["PUT"])
 @jwt_required_custom
-def update_weekly_goal(current_user):
+def update_weekly_goal(current_user: Any) -> tuple[Response, int]:
     """Update user's weekly application goal."""
     data = request.json or {}
     new_goal = data.get("goal")
@@ -90,7 +91,7 @@ def update_weekly_goal(current_user):
 
 @stats_bp.route("/stats", methods=["GET"])
 @jwt_required_custom
-def get_stats(current_user):
+def get_stats(current_user: Any) -> tuple[Response, int]:
     """Get user statistics"""
     user_id = current_user.id
     today_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -121,7 +122,7 @@ def get_stats(current_user):
                 if status == "antwort_erhalten":
                     antworten_heute += 1
                     break
-                elif status == "interview":
+                if status == "interview":
                     interviews_heute += 1
                     break
 
@@ -148,7 +149,7 @@ def get_stats(current_user):
 
 @stats_bp.route("/stats/extended", methods=["GET"])
 @jwt_required_custom
-def get_extended_stats(current_user):
+def get_extended_stats(current_user: Any) -> tuple[Response, int]:
     """Get extended user statistics for analytics dashboard"""
     user_id = current_user.id
 
@@ -278,7 +279,7 @@ def get_extended_stats(current_user):
 
 @stats_bp.route("/stats/companies", methods=["GET"])
 @jwt_required_custom
-def get_company_stats(current_user):
+def get_company_stats(current_user: Any) -> tuple[Response, int]:
     """Get statistics grouped by company"""
     user_id = current_user.id
 
@@ -317,14 +318,11 @@ def get_company_stats(current_user):
             for entry in history:
                 if entry.get("status") == "versendet" and not sent_timestamp:
                     sent_timestamp = entry.get("timestamp")
-                elif entry.get("status") in [
-                    "antwort_erhalten",
-                    "interview",
-                    "absage",
-                    "zusage",
-                ]:
-                    if not response_timestamp:
-                        response_timestamp = entry.get("timestamp")
+                elif (
+                    entry.get("status") in ["antwort_erhalten", "interview", "absage", "zusage"]
+                    and not response_timestamp
+                ):
+                    response_timestamp = entry.get("timestamp")
 
             if sent_timestamp and response_timestamp:
                 try:

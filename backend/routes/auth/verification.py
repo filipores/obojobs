@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from routes.auth import auth_bp
@@ -52,7 +52,7 @@ _RESEND_VERIFICATION_RESPONSE = "Falls ein Konto mit dieser E-Mail existiert, wu
 
 
 @auth_bp.route("/resend-verification", methods=["POST"])
-def resend_verification():
+def resend_verification() -> tuple[Response, int]:
     """
     Resend email verification for unverified users who cannot log in.
 
@@ -87,7 +87,7 @@ def resend_verification():
 
 @auth_bp.route("/send-verification", methods=["POST"])
 @jwt_required()
-def send_verification():
+def send_verification() -> tuple[Response, int]:
     """
     Send a new email verification token.
 
@@ -122,7 +122,7 @@ def send_verification():
 
 
 @auth_bp.route("/verify-email", methods=["POST"])
-def verify_email():
+def verify_email() -> tuple[Response, int]:
     """
     Verify email using the provided token.
 

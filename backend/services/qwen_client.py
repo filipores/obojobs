@@ -30,7 +30,7 @@ class QwenAPIClient:
 
     def extract_bewerbung_details(
         self, stellenanzeige_text: str, firma_name: str, retry_count: int = 3
-    ) -> dict[str, str]:
+    ) -> dict[str, str] | None:
         prompt = create_details_extraction_prompt(stellenanzeige_text, firma_name)
 
         for attempt in range(retry_count):
@@ -55,7 +55,7 @@ class QwenAPIClient:
                     return self._get_default_details(firma_name)
         return None
 
-    def extract_key_information(self, stellenanzeige_text: str, retry_count: int = 3) -> str:
+    def extract_key_information(self, stellenanzeige_text: str, retry_count: int = 3) -> str | None:
         prompt = create_extraction_prompt(stellenanzeige_text)
 
         for attempt in range(retry_count):
@@ -89,7 +89,7 @@ class QwenAPIClient:
         retry_count: int = 3,
         bewerber_vorname: str | None = None,
         user_skills: list | None = None,
-    ) -> str:
+    ) -> str | None:
         if details and details.get("stellenanzeige_kompakt"):
             stellenanzeige_text = details["stellenanzeige_kompakt"]
         elif use_extraction:
@@ -147,7 +147,7 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         user_skills: list | None = None,
         tonalitaet: str = "modern",
         retry_count: int = 3,
-    ) -> str:
+    ) -> str | None:
         """Generate a complete cover letter body (greeting through closing).
 
         Unlike generate_einleitung() which only produces an intro paragraph,

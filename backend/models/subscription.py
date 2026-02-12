@@ -36,7 +36,7 @@ class Subscription(db.Model):
     # Relationship back to user
     user = db.relationship("User", back_populates="subscription")
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": self.user_id,

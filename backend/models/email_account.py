@@ -6,7 +6,7 @@ from cryptography.fernet import Fernet
 from . import db
 
 
-def get_fernet():
+def get_fernet() -> Fernet:
     """Get Fernet instance using EMAIL_ENCRYPTION_KEY from environment."""
     key = os.environ.get("EMAIL_ENCRYPTION_KEY")
     if not key:
@@ -14,7 +14,7 @@ def get_fernet():
     return Fernet(key.encode() if isinstance(key, str) else key)
 
 
-def encrypt_token(token):
+def encrypt_token(token: str | None) -> str | None:
     """Encrypt a token string using Fernet encryption."""
     if token is None:
         return None
@@ -22,7 +22,7 @@ def encrypt_token(token):
     return fernet.encrypt(token.encode()).decode()
 
 
-def decrypt_token(encrypted_token):
+def decrypt_token(encrypted_token: str | None) -> str | None:
     """Decrypt an encrypted token string using Fernet encryption."""
     if encrypted_token is None:
         return None
@@ -45,29 +45,29 @@ class EmailAccount(db.Model):
     # Relationship
     user = db.relationship("User", back_populates="email_accounts")
 
-    def set_access_token(self, token):
+    def set_access_token(self, token: str | None) -> None:
         """Encrypt and store the access token."""
         self.access_token_encrypted = encrypt_token(token)
 
-    def get_access_token(self):
+    def get_access_token(self) -> str | None:
         """Decrypt and return the access token."""
         return decrypt_token(self.access_token_encrypted)
 
-    def set_refresh_token(self, token):
+    def set_refresh_token(self, token: str | None) -> None:
         """Encrypt and store the refresh token."""
         self.refresh_token_encrypted = encrypt_token(token)
 
-    def get_refresh_token(self):
+    def get_refresh_token(self) -> str | None:
         """Decrypt and return the refresh token."""
         return decrypt_token(self.refresh_token_encrypted)
 
-    def is_token_expired(self):
+    def is_token_expired(self) -> bool:
         """Check if the access token is expired."""
         if self.token_expires_at is None:
             return True
         return datetime.utcnow() >= self.token_expires_at
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": self.user_id,

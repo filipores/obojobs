@@ -6,6 +6,7 @@ Provides feedback on structure, content, length, and STAR method compliance.
 import json
 import logging
 import time
+from typing import Any
 
 from anthropic import Anthropic
 
@@ -32,7 +33,7 @@ class InterviewEvaluator:
         position: str | None = None,
         firma: str | None = None,
         retry_count: int = 3,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Evaluate an interview answer and provide structured feedback.
 
@@ -167,7 +168,7 @@ Antworte NUR mit einem JSON-Objekt im folgenden Format:
 
 Gib jetzt das JSON-Objekt aus:"""
 
-    def _parse_evaluation_response(self, response_text: str, question_type: str) -> dict:
+    def _parse_evaluation_response(self, response_text: str, question_type: str) -> dict[str, Any]:
         """Parse the Claude response into a structured evaluation."""
         text = response_text.strip()
 
@@ -226,7 +227,7 @@ Gib jetzt das JSON-Objekt aus:"""
             logger.error("JSON Parse Error: %s", e)
             return self._get_fallback_evaluation(question_type)
 
-    def _validate_star_analysis(self, star_data: dict) -> dict:
+    def _validate_star_analysis(self, star_data: dict[str, Any]) -> dict[str, Any]:
         """Validate and clean STAR analysis data."""
         valid_qualities = ["strong", "adequate", "weak", "missing"]
         default_component = {"present": False, "quality": "missing", "feedback": "Keine Analyse verfügbar."}
@@ -249,7 +250,7 @@ Gib jetzt das JSON-Objekt aus:"""
 
         return result
 
-    def _get_default_star_analysis(self) -> dict:
+    def _get_default_star_analysis(self) -> dict[str, dict[str, str | bool]]:
         """Return default STAR analysis when not provided."""
         return {
             "situation": {"present": False, "quality": "missing", "feedback": "Konnte nicht analysiert werden."},
@@ -258,7 +259,7 @@ Gib jetzt das JSON-Objekt aus:"""
             "result": {"present": False, "quality": "missing", "feedback": "Konnte nicht analysiert werden."},
         }
 
-    def _get_fallback_evaluation(self, question_type: str) -> dict:
+    def _get_fallback_evaluation(self, question_type: str) -> dict[str, Any]:
         """Return fallback evaluation when API call fails."""
         result = {
             "overall_score": 50,
@@ -284,7 +285,7 @@ Gib jetzt das JSON-Objekt aus:"""
 
     def generate_interview_summary(
         self, answers: list[dict], position: str | None = None, firma: str | None = None, retry_count: int = 3
-    ) -> dict:
+    ) -> dict[str, Any]:
         """
         Generate a summary of all interview answers.
 

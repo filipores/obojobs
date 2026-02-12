@@ -1,6 +1,6 @@
 import os
 
-from flask import jsonify
+from flask import Response, jsonify
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
 from routes.email import email_bp
@@ -9,7 +9,7 @@ from services import email_data_service
 
 @email_bp.route("/integration-status", methods=["GET"])
 @jwt_required()
-def integration_status():
+def integration_status() -> tuple[Response, int]:
     """
     Check which email integrations are properly configured.
 
@@ -45,7 +45,7 @@ def integration_status():
 
 @email_bp.route("/accounts", methods=["GET"])
 @jwt_required()
-def list_email_accounts():
+def list_email_accounts() -> tuple[Response, int]:
     """
     List all connected email accounts for the current user.
 
@@ -66,7 +66,7 @@ def list_email_accounts():
 
 @email_bp.route("/accounts/<int:account_id>", methods=["DELETE"])
 @jwt_required()
-def delete_email_account(account_id):
+def delete_email_account(account_id: int) -> tuple[Response, int]:
     """
     Disconnect an email account.
 

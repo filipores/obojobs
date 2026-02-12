@@ -1,24 +1,26 @@
 """Service layer for document data access."""
 
+from typing import Any
+
 from models import Document, UserSkill, db
 
 
-def list_documents(user_id):
+def list_documents(user_id: int) -> list[Document]:
     """Return all documents for a user."""
     return Document.query.filter_by(user_id=user_id).all()
 
 
-def get_document(doc_id, user_id):
+def get_document(doc_id: int, user_id: int) -> Document | None:
     """Return a single document owned by user, or None."""
     return Document.query.filter_by(id=doc_id, user_id=user_id).first()
 
 
-def get_document_by_type(user_id, doc_type):
+def get_document_by_type(user_id: int, doc_type: str) -> Document | None:
     """Return a document of a specific type for a user, or None."""
     return Document.query.filter_by(user_id=user_id, doc_type=doc_type).first()
 
 
-def create_document(user_id, doc_type, file_path, pdf_path, original_filename):
+def create_document(user_id: int, doc_type: str, file_path: str, pdf_path: str, original_filename: str) -> Document:
     """Create and return a new Document."""
     document = Document(
         user_id=user_id,
@@ -32,28 +34,28 @@ def create_document(user_id, doc_type, file_path, pdf_path, original_filename):
     return document
 
 
-def delete_document_skills(user_id, document_id):
+def delete_document_skills(user_id: int, document_id: int) -> int:
     """Delete all skills associated with a document. Returns count deleted."""
     return UserSkill.query.filter_by(user_id=user_id, source_document_id=document_id).delete()
 
 
-def delete_document(document):
+def delete_document(document: Document) -> None:
     """Delete a document record from the database."""
     db.session.delete(document)
     db.session.commit()
 
 
-def flush():
+def flush() -> None:
     """Flush the current database session."""
     db.session.flush()
 
 
-def commit():
+def commit() -> None:
     """Commit the current database session."""
     db.session.commit()
 
 
-def save_extracted_skills_for_upload(user_id, extracted_skills, document_id):
+def save_extracted_skills_for_upload(user_id: int, extracted_skills: list[dict[str, Any]], document_id: int) -> int:
     """Save extracted skills during document upload. Returns count of new skills added."""
     UserSkill.query.filter_by(user_id=user_id, source_document_id=document_id).delete()
 

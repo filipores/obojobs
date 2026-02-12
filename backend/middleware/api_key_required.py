@@ -1,12 +1,14 @@
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
+from typing import Any
 
 from flask import jsonify, request
 
 from models import APIKey, User, db
 
 
-def api_key_required(fn):
+def api_key_required(fn: Callable) -> Callable:
     """
     API Key authentication decorator for extension requests.
     Usage: @api_key_required
@@ -14,7 +16,7 @@ def api_key_required(fn):
     """
 
     @wraps(fn)
-    def wrapper(*args, **kwargs):
+    def wrapper(*args: Any, **kwargs: Any) -> Any:
         # Get API key from header
         api_key = request.headers.get("X-API-Key")
 

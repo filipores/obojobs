@@ -3,6 +3,7 @@ import logging
 import os
 import re
 from datetime import datetime
+from typing import Any
 
 from config import config
 from models import Application, Document, JobRequirement, User, UserSkill, db
@@ -25,7 +26,7 @@ class BewerbungsGenerator:
         self.user = None
         self._prepared = False
 
-    def prepare(self):
+    def prepare(self) -> None:
         """Load user data and documents from database.
 
         Performs all I/O operations: DB queries and file reads.
@@ -38,7 +39,7 @@ class BewerbungsGenerator:
         self.load_user_documents()
         self._prepared = True
 
-    def load_user_documents(self):
+    def load_user_documents(self) -> None:
         """Load documents from database for this user"""
         logger.info("Lade Dokumente für User %s...", self.user_id)
 
@@ -66,7 +67,7 @@ class BewerbungsGenerator:
         stellenanzeige_path: str,
         firma_name: str,
         output_filename: str | None = None,
-        user_details: dict | None = None,
+        user_details: dict[str, Any] | None = None,
         tonalitaet: str = "modern",
     ) -> str:
         """Generate a job application.

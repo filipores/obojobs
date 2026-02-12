@@ -22,7 +22,7 @@ class JobRequirement(db.Model):
     # Valid skill categories (same as UserSkill)
     VALID_CATEGORIES = ["technical", "soft_skills", "languages", "tools", "certifications"]
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "application_id": self.application_id,
@@ -33,9 +33,9 @@ class JobRequirement(db.Model):
         }
 
     @classmethod
-    def validate_type(cls, requirement_type):
+    def validate_type(cls, requirement_type: str) -> bool:
         return requirement_type in cls.VALID_TYPES
 
     @classmethod
-    def validate_category(cls, category):
+    def validate_category(cls, category: str | None) -> bool:
         return category is None or category in cls.VALID_CATEGORIES

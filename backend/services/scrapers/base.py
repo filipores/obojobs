@@ -2,6 +2,7 @@ import json
 import re
 from abc import ABC, abstractmethod
 from datetime import datetime
+from typing import Any
 
 from bs4 import BeautifulSoup
 
@@ -15,11 +16,11 @@ class JobBoardParser(ABC):
         """Check if this parser can handle the given URL."""
 
     @abstractmethod
-    def parse(self, soup: BeautifulSoup, url: str) -> dict:
+    def parse(self, soup: BeautifulSoup, url: str) -> dict[str, Any]:
         """Parse the job posting and return structured data."""
 
 
-def extract_json_ld(soup: BeautifulSoup) -> dict | None:
+def extract_json_ld(soup: BeautifulSoup) -> dict[str, Any] | None:
     """Extract JSON-LD structured data with @type JobPosting from page."""
     scripts = soup.find_all("script", type="application/ld+json")
     for script in scripts:
@@ -70,7 +71,7 @@ def parse_json_ld_location(job_location) -> str | None:
     return None
 
 
-def parse_json_ld_salary(data: dict) -> str | None:
+def parse_json_ld_salary(data: dict[str, Any]) -> str | None:
     """Parse baseSalary from JSON-LD data."""
     salary = data.get("baseSalary", {})
     if isinstance(salary, dict):
@@ -89,7 +90,7 @@ def parse_json_ld_salary(data: dict) -> str | None:
     return None
 
 
-def parse_json_ld_employment_type(data: dict) -> str | None:
+def parse_json_ld_employment_type(data: dict[str, Any]) -> str | None:
     """Parse employmentType from JSON-LD data."""
     emp_type = data.get("employmentType")
     if emp_type:

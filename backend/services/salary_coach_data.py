@@ -1,6 +1,7 @@
 """Data models and fallback strategies for salary negotiation coaching."""
 
 from dataclasses import dataclass, field
+from typing import Any
 
 
 @dataclass
@@ -18,7 +19,7 @@ class SalaryResearch:
     factors: list[str] = field(default_factory=list)
     notes: str = ""
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "position": self.position,
             "region": self.region,
@@ -43,7 +44,7 @@ class NegotiationTip:
     example_script: str
     priority: str = "medium"  # high, medium, low
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "category": self.category,
             "title": self.title,
@@ -67,7 +68,7 @@ class NegotiationStrategy:
     german_culture_notes: list[str]
     common_objections: list[dict]
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "target_salary": self.target_salary,
             "current_salary": self.current_salary,

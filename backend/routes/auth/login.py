@@ -1,6 +1,6 @@
 import logging
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
@@ -14,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 
 @auth_bp.route("/register", methods=["POST"])
-def register():
+def register() -> tuple[Response, int]:
     """Register a new user"""
     # Check if registration is enabled
     if not Config.REGISTRATION_ENABLED:
@@ -39,7 +39,7 @@ def register():
 
 
 @auth_bp.route("/login", methods=["POST"])
-def login():
+def login() -> tuple[Response, int]:
     """Login user"""
     data = request.json
 
@@ -68,7 +68,7 @@ def login():
 
 
 @auth_bp.route("/google", methods=["POST"])
-def google_auth():
+def google_auth() -> tuple[Response, int]:
     """
     Authenticate with Google OAuth.
 
@@ -128,7 +128,7 @@ def google_auth():
 
 @auth_bp.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
-def refresh():
+def refresh() -> tuple[Response, int]:
     """Refresh access token"""
     current_user_id = get_jwt_identity()
     access_token = create_access_token(identity=current_user_id)
@@ -137,7 +137,7 @@ def refresh():
 
 @auth_bp.route("/me", methods=["GET"])
 @jwt_required()
-def me():
+def me() -> Response | tuple[Response, int]:
     """Get current user info"""
     current_user_id = get_jwt_identity()
     user = AuthService.get_user_by_id(int(current_user_id))
@@ -149,13 +149,13 @@ def me():
 
 
 @auth_bp.route("/password-requirements", methods=["GET"])
-def password_requirements():
+def password_requirements() -> tuple[Response, int]:
     """Get password requirements for frontend display"""
     return jsonify({"requirements": PasswordValidator.get_requirements()}), 200
 
 
 @auth_bp.route("/validate-password", methods=["POST"])
-def validate_password():
+def validate_password() -> tuple[Response, int]:
     """Validate password strength"""
     data = request.json
     password = data.get("password", "")

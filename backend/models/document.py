@@ -17,7 +17,7 @@ class Document(db.Model):
     # Relationship
     user = db.relationship("User", back_populates="documents")
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
         return {
             "id": self.id,
             "user_id": self.user_id,

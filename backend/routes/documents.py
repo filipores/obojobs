@@ -1,7 +1,8 @@
 import logging
 import os
+from typing import Any
 
-from flask import Blueprint, jsonify, request, send_file
+from flask import Blueprint, Response, jsonify, request, send_file
 from werkzeug.utils import secure_filename
 
 from config import config
@@ -18,14 +19,14 @@ documents_bp = Blueprint("documents", __name__)
 ALLOWED_DOC_TYPES = ["lebenslauf", "anschreiben", "arbeitszeugnis"]
 
 
-def allowed_file(filename):
+def allowed_file(filename: str) -> bool:
     # Nur PDFs erlaubt
     return "." in filename and filename.rsplit(".", 1)[1].lower() == "pdf"
 
 
 @documents_bp.route("", methods=["GET"])
 @jwt_required_custom
-def list_documents(current_user):
+def list_documents(current_user: Any) -> tuple[Response, int]:
     """List user's documents"""
     documents = document_service.list_documents(current_user.id)
     return jsonify({"success": True, "documents": [doc.to_dict() for doc in documents]}), 200
@@ -33,7 +34,7 @@ def list_documents(current_user):
 
 @documents_bp.route("", methods=["POST"])
 @jwt_required_custom
-def upload_document(current_user):
+def upload_document(current_user: Any) -> tuple[Response, int]:
     """Upload a document (PDF only) - extracts text and saves as .txt"""
     if "file" not in request.files:
         return jsonify({"error": "Keine Datei hochgeladen"}), 400
@@ -159,7 +160,7 @@ def upload_document(current_user):
 
 @documents_bp.route("/<int:doc_id>", methods=["GET"])
 @jwt_required_custom
-def get_document(doc_id, current_user):
+def get_document(doc_id: int, current_user: Any) -> Response | tuple[Response, int]:
     """Download a document (text file)"""
     document = document_service.get_document(doc_id, current_user.id)
 
@@ -176,7 +177,7 @@ def get_document(doc_id, current_user):
 
 @documents_bp.route("/<int:doc_id>", methods=["DELETE"])
 @jwt_required_custom
-def delete_document(doc_id, current_user):
+def delete_document(doc_id: int, current_user: Any) -> tuple[Response, int]:
     """Delete a document, optionally including extracted skills"""
     document = document_service.get_document(doc_id, current_user.id)
 

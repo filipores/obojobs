@@ -1,8 +1,9 @@
 import json
 import os
 import re
+from typing import Any
 
-from flask import jsonify, request
+from flask import Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from routes.applications import applications_bp
@@ -11,7 +12,7 @@ from services.ats_optimizer import ATSOptimizer
 from services.web_scraper import WebScraper
 
 
-def _extract_cover_letter_text(app):
+def _extract_cover_letter_text(app: Any) -> str:
     """Try to get cover letter text from email_text or PDF."""
     if app.email_text:
         return app.email_text
@@ -30,7 +31,7 @@ def _extract_cover_letter_text(app):
 
 @applications_bp.route("/<int:app_id>/ats-check", methods=["POST"])
 @jwt_required_custom
-def check_ats_compatibility(app_id, current_user):
+def check_ats_compatibility(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Check ATS compatibility of a generated cover letter against the job posting.
 
     This endpoint analyzes the GENERATED application text against the original
@@ -124,7 +125,7 @@ def check_ats_compatibility(app_id, current_user):
 
 @applications_bp.route("/<int:app_id>/ats-optimize", methods=["POST"])
 @jwt_required_custom
-def optimize_cover_letter_for_ats(app_id, current_user):
+def optimize_cover_letter_for_ats(app_id: int, current_user: Any) -> tuple[Response, int]:
     """Optimize a cover letter for ATS compatibility using AI.
 
     Takes the current cover letter and missing keywords, and returns

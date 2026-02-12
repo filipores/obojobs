@@ -25,8 +25,12 @@ CSP Notes:
   so a unique nonce can be injected per request.
 """
 
+from typing import Any
 
-def add_security_headers(response, config):
+from flask import Flask, Response
+
+
+def add_security_headers(response: Response, config: Any) -> Response:
     """
     Add security headers to response.
 
@@ -102,7 +106,7 @@ def add_security_headers(response, config):
     return response
 
 
-def init_security_headers(app):
+def init_security_headers(app: Flask) -> None:
     """
     Initialize security headers middleware for Flask app.
 
@@ -111,7 +115,7 @@ def init_security_headers(app):
     """
 
     @app.after_request
-    def apply_security_headers(response):
+    def apply_security_headers(response: Response) -> Response:
         from config import config
 
         return add_security_headers(response, config)

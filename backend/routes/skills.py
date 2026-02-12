@@ -3,8 +3,9 @@ Skills API Routes - Manage user skills extracted from CV documents.
 """
 
 import os
+from typing import Any
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, Response, jsonify, request
 
 from middleware.jwt_required import jwt_required_custom
 from services import skill_service
@@ -15,7 +16,7 @@ skills_bp = Blueprint("skills", __name__)
 
 @skills_bp.route("/users/me/skills", methods=["GET"])
 @jwt_required_custom
-def get_user_skills(current_user):
+def get_user_skills(current_user: Any) -> tuple[Response, int]:
     """Get all skills for the current user."""
     skills = skill_service.get_user_skills(current_user.id)
 
@@ -39,7 +40,7 @@ def get_user_skills(current_user):
 
 @skills_bp.route("/users/me/skills/<int:skill_id>", methods=["PUT"])
 @jwt_required_custom
-def update_skill(skill_id, current_user):
+def update_skill(skill_id: int, current_user: Any) -> tuple[Response, int]:
     """Update a skill (edit name, category, or experience years)."""
     skill = skill_service.get_skill(skill_id, current_user.id)
 
@@ -79,7 +80,7 @@ def update_skill(skill_id, current_user):
 
 @skills_bp.route("/users/me/skills/<int:skill_id>", methods=["DELETE"])
 @jwt_required_custom
-def delete_skill(skill_id, current_user):
+def delete_skill(skill_id: int, current_user: Any) -> tuple[Response, int]:
     """Delete a skill."""
     skill = skill_service.delete_skill(skill_id, current_user.id)
 
@@ -91,7 +92,7 @@ def delete_skill(skill_id, current_user):
 
 @skills_bp.route("/users/me/skills", methods=["POST"])
 @jwt_required_custom
-def add_skill(current_user):
+def add_skill(current_user: Any) -> tuple[Response, int]:
     """Manually add a skill."""
     data = request.get_json()
 
@@ -133,7 +134,7 @@ def add_skill(current_user):
 
 @skills_bp.route("/documents/<int:doc_id>/extract-skills", methods=["POST"])
 @jwt_required_custom
-def extract_skills_from_document(doc_id, current_user):
+def extract_skills_from_document(doc_id: int, current_user: Any) -> tuple[Response, int]:
     """Extract skills from a document using AI."""
     document = skill_service.get_document(doc_id, current_user.id)
 
