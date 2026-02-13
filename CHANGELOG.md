@@ -1,3 +1,10 @@
+# [1.53.0](https://github.com/filipores/obojobs/compare/v1.52.0...v1.53.0) (2026-02-13)
+
+
+### Features
+
+* restrict document uploads to cv and zeugnisse only ([6d79980](https://github.com/filipores/obojobs/commit/6d79980769c3223db4c3866847ed76d298fcce3e))
+
 # [1.52.0](https://github.com/filipores/obojobs/compare/v1.51.0...v1.52.0) (2026-02-13)
 
 
