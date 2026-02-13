@@ -1,3 +1,10 @@
+## [1.54.1](https://github.com/filipores/obojobs/compare/v1.54.0...v1.54.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* **tests:** align assertions with actual implementation behavior ([385f74f](https://github.com/filipores/obojobs/commit/385f74f632cacfd0ac10255962d455fb6d4eb7ee))
+
 # [1.54.0](https://github.com/filipores/obojobs/compare/v1.53.0...v1.54.0) (2026-02-13)
 
 
