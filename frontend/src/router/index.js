@@ -15,9 +15,10 @@ const routes = [
   { path: '/reset-password', component: () => import('../pages/ResetPassword.vue'), meta: { titleKey: 'pages.resetPassword', public: true } },
   { path: '/impressum', component: () => import('../pages/Impressum.vue'), meta: { titleKey: 'pages.impressum', public: true } },
   { path: '/datenschutz', component: () => import('../pages/Datenschutz.vue'), meta: { titleKey: 'pages.datenschutz', public: true } },
+  { path: '/pricing', component: () => import('../pages/PricingView.vue'), meta: { titleKey: 'pages.pricing', public: true, hideFooter: true } },
 
   // Landing page - shows for unauthenticated users, redirects authenticated users to dashboard
-  { path: '/', component: () => import('../pages/Landing.vue'), meta: { titleKey: 'pages.landing', public: true, landing: true } },
+  { path: '/', component: () => import('../pages/Landing.vue'), meta: { titleKey: 'pages.landing', public: true, landing: true, hideFooter: true } },
 
   // Dashboard - protected route for authenticated users
   { path: '/dashboard', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true, titleKey: 'pages.dashboard' } },

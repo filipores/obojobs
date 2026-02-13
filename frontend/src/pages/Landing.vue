@@ -237,8 +237,10 @@
             <span>obo</span>
           </router-link>
           <div class="nav-links">
-            <router-link to="/login" class="nav-link">Anmelden</router-link>
-            <router-link to="/register" class="nav-link nav-link-cta">Registrieren</router-link>
+            <a href="#features" class="nav-link" @click.prevent="scrollToSection('features')">{{ $t('landing.nav.features') }}</a>
+            <router-link to="/pricing" class="nav-link">{{ $t('landing.nav.pricing') }}</router-link>
+            <router-link to="/login" class="nav-link">{{ $t('landing.nav.login') }}</router-link>
+            <router-link to="/register" class="nav-link nav-link-cta">{{ $t('landing.nav.register') }}</router-link>
           </div>
         </div>
       </nav>
@@ -335,10 +337,91 @@
         </div>
       </section>
 
+      <!-- Features Grid -->
+      <section id="features" class="features-section">
+        <div class="container">
+          <div class="section-header" data-reveal>
+            <span class="section-label">{{ $t('landing.features.label') }}</span>
+            <h2 class="section-title">{{ $t('landing.features.title') }}</h2>
+          </div>
+
+          <div class="features-grid">
+            <div class="feature-card" data-reveal>
+              <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                </svg>
+              </div>
+              <h3>{{ $t('landing.features.aiCoverLetter') }}</h3>
+              <p>{{ $t('landing.features.aiCoverLetterDesc') }}</p>
+            </div>
+
+            <div class="feature-card" data-reveal>
+              <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                </svg>
+              </div>
+              <h3>{{ $t('landing.features.pdfExport') }}</h3>
+              <p>{{ $t('landing.features.pdfExportDesc') }}</p>
+            </div>
+
+            <div class="feature-card" data-reveal>
+              <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <path d="M12 16v-4"/>
+                  <path d="M12 8h.01"/>
+                </svg>
+              </div>
+              <h3>{{ $t('landing.features.atsOptimization') }}</h3>
+              <p>{{ $t('landing.features.atsOptimizationDesc') }}</p>
+            </div>
+
+            <div class="feature-card" data-reveal>
+              <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+              </div>
+              <h3>{{ $t('landing.features.emailDraft') }}</h3>
+              <p>{{ $t('landing.features.emailDraftDesc') }}</p>
+            </div>
+
+            <div class="feature-card" data-reveal>
+              <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+              </div>
+              <h3>{{ $t('landing.features.interviewPrep') }}</h3>
+              <p>{{ $t('landing.features.interviewPrepDesc') }}</p>
+            </div>
+
+            <div class="feature-card" data-reveal>
+              <div class="feature-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="7" height="7"/>
+                  <rect x="14" y="3" width="7" height="7"/>
+                  <rect x="14" y="14" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/>
+                </svg>
+              </div>
+              <h3>{{ $t('landing.features.tracker') }}</h3>
+              <p>{{ $t('landing.features.trackerDesc') }}</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <!-- Social Proof -->
       <section class="social-proof-section">
         <div class="container">
-          <div class="proof-content animate-fade-up">
+          <div class="proof-content" data-reveal>
             <div class="proof-stats">
               <div class="proof-stat">
                 <span class="stat-value">5.000+</span>
@@ -359,16 +442,162 @@
         </div>
       </section>
 
-      <!-- Pricing Preview -->
+      <!-- Comparison Table -->
+      <section class="comparison-section">
+        <div class="container">
+          <div class="section-header" data-reveal>
+            <span class="section-label">Vergleich</span>
+            <h2 class="section-title">{{ $t('landing.comparison.title') }}</h2>
+          </div>
+
+          <div class="comparison-table-wrapper" data-reveal>
+            <table class="comparison-table">
+              <thead>
+                <tr>
+                  <th>{{ $t('landing.comparison.feature') }}</th>
+                  <th>{{ $t('landing.comparison.manual') }}</th>
+                  <th>{{ $t('landing.comparison.chatgpt') }}</th>
+                  <th class="comparison-highlight">{{ $t('landing.comparison.obo') }}</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>{{ $t('landing.comparison.time') }}</td>
+                  <td>{{ $t('landing.comparison.timeManual') }}</td>
+                  <td>{{ $t('landing.comparison.timeChatgpt') }}</td>
+                  <td class="comparison-highlight"><strong>{{ $t('landing.comparison.timeObo') }}</strong></td>
+                </tr>
+                <tr>
+                  <td>{{ $t('landing.comparison.personalized') }}</td>
+                  <td>
+                    <svg class="icon-partial" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+                  </td>
+                  <td>
+                    <svg class="icon-partial" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+                  </td>
+                  <td class="comparison-highlight">
+                    <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('landing.comparison.pdfReady') }}</td>
+                  <td>
+                    <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </td>
+                  <td>
+                    <svg class="icon-cross" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </td>
+                  <td class="comparison-highlight">
+                    <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('landing.comparison.atsOptimized') }}</td>
+                  <td>
+                    <svg class="icon-cross" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </td>
+                  <td>
+                    <svg class="icon-cross" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </td>
+                  <td class="comparison-highlight">
+                    <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('landing.comparison.jobAnalysis') }}</td>
+                  <td>
+                    <svg class="icon-cross" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </td>
+                  <td>
+                    <svg class="icon-partial" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14"/></svg>
+                  </td>
+                  <td class="comparison-highlight">
+                    <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </td>
+                </tr>
+                <tr>
+                  <td>{{ $t('landing.comparison.tracking') }}</td>
+                  <td>
+                    <svg class="icon-cross" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </td>
+                  <td>
+                    <svg class="icon-cross" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                  </td>
+                  <td class="comparison-highlight">
+                    <svg class="icon-check" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- Testimonials -->
+      <section class="testimonials-section">
+        <div class="container">
+          <div class="section-header" data-reveal>
+            <span class="section-label">Erfahrungen</span>
+            <h2 class="section-title">{{ $t('landing.testimonials.title') }}</h2>
+          </div>
+
+          <div class="testimonials-grid">
+            <div class="testimonial-card" data-reveal>
+              <svg class="testimonial-quote-icon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+              </svg>
+              <p class="testimonial-text">{{ $t('landing.testimonials.t1Quote') }}</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">SM</div>
+                <div>
+                  <div class="testimonial-name">{{ $t('landing.testimonials.t1Name') }}</div>
+                  <div class="testimonial-role">{{ $t('landing.testimonials.t1Role') }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="testimonial-card" data-reveal>
+              <svg class="testimonial-quote-icon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+              </svg>
+              <p class="testimonial-text">{{ $t('landing.testimonials.t2Quote') }}</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">TK</div>
+                <div>
+                  <div class="testimonial-name">{{ $t('landing.testimonials.t2Name') }}</div>
+                  <div class="testimonial-role">{{ $t('landing.testimonials.t2Role') }}</div>
+                </div>
+              </div>
+            </div>
+
+            <div class="testimonial-card" data-reveal>
+              <svg class="testimonial-quote-icon" width="32" height="32" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M14.017 21v-7.391c0-5.704 3.731-9.57 8.983-10.609l.995 2.151c-2.432.917-3.995 3.638-3.995 5.849h4v10h-9.983zm-14.017 0v-7.391c0-5.704 3.748-9.57 9-10.609l.996 2.151c-2.433.917-3.996 3.638-3.996 5.849h3.983v10h-9.983z"/>
+              </svg>
+              <p class="testimonial-text">{{ $t('landing.testimonials.t3Quote') }}</p>
+              <div class="testimonial-author">
+                <div class="testimonial-avatar">LW</div>
+                <div>
+                  <div class="testimonial-name">{{ $t('landing.testimonials.t3Name') }}</div>
+                  <div class="testimonial-role">{{ $t('landing.testimonials.t3Role') }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pricing Preview (3 tiers) -->
       <section class="pricing-section">
         <div class="container">
-          <div class="section-header animate-fade-up">
+          <div class="section-header" data-reveal>
             <span class="section-label">Preise</span>
             <h2 class="section-title">Starte kostenlos</h2>
           </div>
 
-          <div class="pricing-grid">
-            <div class="pricing-card animate-fade-up" style="animation-delay: 100ms;">
+          <div class="pricing-grid-3">
+            <!-- Free -->
+            <div class="pricing-card" data-reveal>
               <div class="pricing-header">
                 <h3>Free</h3>
                 <div class="pricing-price">
@@ -379,21 +608,15 @@
               </div>
               <ul class="pricing-features">
                 <li>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   3 Anschreiben pro Monat
                 </li>
                 <li>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   Basis-Vorlagen
                 </li>
                 <li>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   PDF-Export
                 </li>
               </ul>
@@ -402,40 +625,74 @@
               </router-link>
             </div>
 
-            <div class="pricing-card pricing-card-featured animate-fade-up" style="animation-delay: 200ms;">
-              <div class="pricing-badge">Beliebt</div>
+            <!-- Basic -->
+            <div class="pricing-card" data-reveal>
               <div class="pricing-header">
-                <h3>Pro</h3>
+                <h3>Basic</h3>
                 <div class="pricing-price">
-                  <span class="price-amount">9</span>
+                  <span class="price-amount">9,99</span>
                   <span class="price-currency">EUR</span>
                   <span class="price-period">/Monat</span>
                 </div>
               </div>
               <ul class="pricing-features">
                 <li>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  20 Anschreiben pro Monat
+                </li>
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Alle Vorlagen
+                </li>
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  PDF-Export
+                </li>
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  ATS-Check
+                </li>
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  E-Mail-Entwurf
+                </li>
+              </ul>
+              <router-link to="/register?plan=basic" class="pricing-cta zen-btn zen-btn-filled">
+                Basic wählen
+              </router-link>
+            </div>
+
+            <!-- Pro -->
+            <div class="pricing-card pricing-card-featured" data-reveal>
+              <div class="pricing-badge">Beliebt</div>
+              <div class="pricing-header">
+                <h3>Pro</h3>
+                <div class="pricing-price">
+                  <span class="price-amount">19,99</span>
+                  <span class="price-currency">EUR</span>
+                  <span class="price-period">/Monat</span>
+                </div>
+              </div>
+              <ul class="pricing-features">
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   Unbegrenzte Anschreiben
                 </li>
                 <li>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
-                  Alle Premium-Vorlagen
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Premium-Vorlagen
                 </li>
                 <li>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   Job-Fit Score
                 </li>
                 <li>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <polyline points="20 6 9 17 4 12"/>
-                  </svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   Interview-Vorbereitung
+                </li>
+                <li>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+                  Prioritäts-Support
                 </li>
               </ul>
               <router-link to="/register?plan=pro" class="pricing-cta zen-btn zen-btn-ai">
@@ -443,39 +700,109 @@
               </router-link>
             </div>
           </div>
+
+          <div class="pricing-compare-link" data-reveal>
+            <router-link to="/pricing">
+              Alle Features vergleichen
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </router-link>
+          </div>
+        </div>
+      </section>
+
+      <!-- Trust Badges -->
+      <section class="trust-section">
+        <div class="container">
+          <div class="trust-badges" data-reveal>
+            <div class="trust-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+              <span>{{ $t('landing.trust.gdpr') }}</span>
+            </div>
+            <div class="trust-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                <circle cx="12" cy="10" r="3"/>
+              </svg>
+              <span>{{ $t('landing.trust.madeInGermany') }}</span>
+            </div>
+            <div class="trust-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+              </svg>
+              <span>{{ $t('landing.trust.noDataSharing') }}</span>
+            </div>
+            <div class="trust-badge">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                <path d="M9 12l2 2 4-4"/>
+              </svg>
+              <span>{{ $t('landing.trust.sslEncrypted') }}</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ -->
+      <section class="faq-section">
+        <div class="container">
+          <div class="section-header" data-reveal>
+            <span class="section-label">FAQ</span>
+            <h2 class="section-title">{{ $t('landing.faq.title') }}</h2>
+          </div>
+          <FaqAccordion :items="landingFaqItems" />
         </div>
       </section>
 
       <!-- Final CTA -->
       <section class="final-cta-section">
         <div class="container">
-          <div class="cta-content animate-fade-up">
-            <h2>Bereit für deine nächste Bewerbung?</h2>
-            <p>Probiere es jetzt aus - kostenlos und ohne Anmeldung.</p>
+          <div class="cta-content" data-reveal>
+            <h2>{{ $t('landing.cta.title') }}</h2>
+            <p>{{ $t('landing.cta.subtitle') }}</p>
             <button @click="scrollToTop" class="zen-btn zen-btn-ai zen-btn-lg">
-              Jetzt Anschreiben erstellen
+              {{ $t('landing.cta.button') }}
             </button>
           </div>
         </div>
       </section>
 
-      <!-- Footer Links -->
+      <!-- Footer -->
       <footer class="landing-footer">
         <div class="container">
-          <div class="footer-content">
-            <div class="footer-brand">
-              <div class="footer-enso"></div>
-              <span>obo</span>
+          <div class="footer-grid">
+            <div class="footer-brand-col">
+              <div class="footer-brand">
+                <div class="footer-enso"></div>
+                <span>obo</span>
+              </div>
+              <p class="footer-tagline">{{ $t('landing.footer.tagline') }}</p>
+              <div class="footer-micro-badges">
+                <span class="micro-badge">DSGVO</span>
+                <span class="micro-badge">Germany</span>
+              </div>
             </div>
-            <div class="footer-links">
-              <router-link to="/login">{{ $t('auth.login') }}</router-link>
-              <router-link to="/register">{{ $t('auth.register') }}</router-link>
+            <div class="footer-col">
+              <h4>{{ $t('landing.footer.product') }}</h4>
+              <a href="#features" @click.prevent="scrollToSection('features')">{{ $t('landing.footer.features') }}</a>
+              <router-link to="/pricing">{{ $t('landing.footer.pricing') }}</router-link>
+              <a href="#" @click.prevent="scrollToTop">{{ $t('landing.footer.demo') }}</a>
+            </div>
+            <div class="footer-col">
+              <h4>{{ $t('landing.footer.legal') }}</h4>
               <router-link to="/impressum">{{ $t('pages.impressum') }}</router-link>
               <router-link to="/datenschutz">{{ $t('pages.datenschutz') }}</router-link>
             </div>
-            <div class="footer-copyright">
-              &copy; {{ currentYear }} obo
+            <div class="footer-col">
+              <h4>Konto</h4>
+              <router-link to="/login">{{ $t('auth.login') }}</router-link>
+              <router-link to="/register">{{ $t('auth.register') }}</router-link>
             </div>
+          </div>
+          <div class="footer-bottom">
+            <span>&copy; {{ currentYear }} obo</span>
           </div>
         </div>
       </footer>
@@ -486,14 +813,36 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useI18n } from 'vue-i18n'
 import DemoGenerator from '../components/landing/DemoGenerator.vue'
 import CraftingOverlay from '../components/application/CraftingOverlay.vue'
+import FaqAccordion from '../components/landing/FaqAccordion.vue'
+import { useScrollReveal } from '../composables/useScrollReveal.js'
 import { demoStore } from '../stores/demo'
 import { authStore } from '../stores/auth'
 import api from '../api/client'
 
 const router = useRouter()
+const { t } = useI18n()
 const currentYear = computed(() => new Date().getFullYear())
+
+useScrollReveal()
+
+const landingFaqItems = computed(() => [
+  { question: t('landing.faq.q1'), answer: t('landing.faq.a1') },
+  { question: t('landing.faq.q2'), answer: t('landing.faq.a2') },
+  { question: t('landing.faq.q3'), answer: t('landing.faq.a3') },
+  { question: t('landing.faq.q4'), answer: t('landing.faq.a4') },
+  { question: t('landing.faq.q5'), answer: t('landing.faq.a5') },
+  { question: t('landing.faq.q6'), answer: t('landing.faq.a6') }
+])
+
+function scrollToSection(id) {
+  const el = document.getElementById(id)
+  if (el) {
+    el.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+}
 
 const demoGeneratorRef = ref(null)
 
@@ -531,35 +880,35 @@ function handleFileSelection(file) {
   }
 }
 
-const triggerFileSelect = () => {
+function triggerFileSelect() {
   fileInput.value?.click()
 }
 
-const onFileSelect = (event) => {
+function onFileSelect(event) {
   handleFileSelection(event.target.files?.[0])
 }
 
-const onDragOver = () => {
+function onDragOver() {
   isDragging.value = true
 }
 
-const onDragLeave = () => {
+function onDragLeave() {
   isDragging.value = false
 }
 
-const onDrop = (event) => {
+function onDrop(event) {
   isDragging.value = false
   handleFileSelection(event.dataTransfer.files?.[0])
 }
 
-const clearFile = () => {
+function clearFile() {
   selectedFile.value = null
   if (fileInput.value) {
     fileInput.value.value = ''
   }
 }
 
-const uploadCvAndRegenerate = async () => {
+async function uploadCvAndRegenerate() {
   if (!selectedFile.value || isUploading.value) return
 
   isUploading.value = true
@@ -624,12 +973,12 @@ const uploadCvAndRegenerate = async () => {
   }
 }
 
-const skipToDashboard = () => {
+function skipToDashboard() {
   demoStore.clear()
   router.push('/dashboard')
 }
 
-const downloadPdf = async () => {
+async function downloadPdf() {
   if (!createdApplicationId.value) {
     router.push('/dashboard')
     return
@@ -655,7 +1004,7 @@ const downloadPdf = async () => {
   }
 }
 
-const onDemoStarted = () => {
+function onDemoStarted() {
   showCraftingScreen.value = true
   apiComplete.value = false
   demoResultData.value = null
@@ -668,7 +1017,7 @@ const onDemoStarted = () => {
   }
 }
 
-const onDemoComplete = (result) => {
+function onDemoComplete(result) {
   apiComplete.value = true
 
   if (result.result?.data) {
@@ -699,7 +1048,7 @@ const onDemoComplete = (result) => {
   }
 }
 
-const onCraftingComplete = () => {
+function onCraftingComplete() {
   showCraftingScreen.value = false
 
   if (apiComplete.value && demoResultData.value) {
@@ -707,12 +1056,12 @@ const onCraftingComplete = () => {
   }
 }
 
-const onDemoRegister = () => {
+function onDemoRegister() {
   showDemoResult.value = false
   router.push('/register')
 }
 
-const scrollToTop = () => {
+function scrollToTop() {
   window.scrollTo({ top: 0, behavior: 'smooth' })
 }
 
@@ -1542,11 +1891,11 @@ onMounted(() => {
   background: var(--color-washi-warm);
 }
 
-.pricing-grid {
+.pricing-grid-3 {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: var(--space-xl);
-  max-width: 800px;
+  max-width: 1000px;
   margin: 0 auto;
 }
 
@@ -1645,6 +1994,254 @@ onMounted(() => {
   justify-content: center;
 }
 
+.pricing-compare-link {
+  text-align: center;
+  margin-top: var(--space-xl);
+}
+
+.pricing-compare-link a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  color: var(--color-ai);
+  text-decoration: none;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: gap var(--transition-base);
+}
+
+.pricing-compare-link a:hover {
+  gap: var(--space-sm);
+}
+
+/* ========================================
+   FEATURES SECTION
+   ======================================== */
+.features-section {
+  padding: var(--space-ma-2xl) 0;
+  background: var(--color-washi);
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xl);
+  max-width: var(--container-xl);
+  margin: 0 auto;
+}
+
+.feature-card {
+  padding: var(--space-xl);
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  transition: all var(--transition-base);
+}
+
+.feature-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lifted);
+}
+
+.feature-icon {
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-ai-subtle);
+  border-radius: var(--radius-md);
+  color: var(--color-ai);
+  margin-bottom: var(--space-lg);
+}
+
+.feature-card h3 {
+  font-size: 1.125rem;
+  margin-bottom: var(--space-sm);
+  color: var(--color-sumi);
+}
+
+.feature-card p {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin: 0;
+}
+
+/* ========================================
+   COMPARISON SECTION
+   ======================================== */
+.comparison-section {
+  padding: var(--space-ma-2xl) 0;
+  background: var(--color-washi-warm);
+}
+
+.comparison-table-wrapper {
+  max-width: 800px;
+  margin: 0 auto;
+  overflow-x: auto;
+}
+
+.comparison-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+}
+
+.comparison-table th,
+.comparison-table td {
+  padding: var(--space-md) var(--space-lg);
+  text-align: center;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.comparison-table th:first-child,
+.comparison-table td:first-child {
+  text-align: left;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.comparison-table th {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-text-tertiary);
+  padding-bottom: var(--space-lg);
+}
+
+.comparison-table th.comparison-highlight {
+  color: var(--color-ai);
+}
+
+.comparison-table td.comparison-highlight {
+  background: var(--color-ai-subtle);
+}
+
+.comparison-table td.comparison-highlight strong {
+  color: var(--color-ai);
+}
+
+.icon-check {
+  color: var(--color-koke);
+}
+
+.icon-cross {
+  color: var(--color-text-ghost);
+}
+
+.icon-partial {
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   TESTIMONIALS SECTION
+   ======================================== */
+.testimonials-section {
+  padding: var(--space-ma-2xl) 0;
+  background: var(--color-washi);
+}
+
+.testimonials-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-xl);
+  max-width: var(--container-xl);
+  margin: 0 auto;
+}
+
+.testimonial-card {
+  background: var(--color-bg-elevated);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border-light);
+  padding: var(--space-xl);
+  position: relative;
+}
+
+.testimonial-quote-icon {
+  color: var(--color-ai);
+  opacity: 0.15;
+  margin-bottom: var(--space-md);
+}
+
+.testimonial-text {
+  font-size: 0.9375rem;
+  font-style: italic;
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-lg);
+}
+
+.testimonial-author {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+}
+
+.testimonial-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.testimonial-name {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.testimonial-role {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   TRUST SECTION
+   ======================================== */
+.trust-section {
+  padding: var(--space-ma-lg) 0;
+  background: var(--color-washi);
+}
+
+.trust-badges {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: var(--space-xl);
+}
+
+.trust-badge {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.trust-badge svg {
+  color: var(--color-koke);
+  opacity: 0.7;
+}
+
+/* ========================================
+   FAQ SECTION
+   ======================================== */
+.faq-section {
+  padding: var(--space-ma-2xl) 0;
+  background: var(--color-washi-warm);
+}
+
 /* ========================================
    FINAL CTA SECTION
    ======================================== */
@@ -1679,17 +2276,22 @@ onMounted(() => {
    FOOTER
    ======================================== */
 .landing-footer {
-  padding: var(--space-xl) 0;
+  padding: var(--space-ma-lg) 0 var(--space-xl);
   background: var(--color-washi-warm);
   border-top: 1px solid var(--color-border-light);
 }
 
-.footer-content {
+.footer-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 1fr;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-xl);
+}
+
+.footer-brand-col {
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: var(--space-md);
+  flex-direction: column;
+  gap: var(--space-sm);
 }
 
 .footer-brand {
@@ -1698,7 +2300,7 @@ onMounted(() => {
   gap: var(--space-sm);
   font-family: var(--font-display);
   font-size: 1.125rem;
-  color: var(--color-text-tertiary);
+  color: var(--color-sumi);
 }
 
 .footer-enso {
@@ -1709,23 +2311,59 @@ onMounted(() => {
   opacity: 0.6;
 }
 
-.footer-links {
-  display: flex;
-  gap: var(--space-lg);
-}
-
-.footer-links a {
+.footer-tagline {
   font-size: 0.875rem;
   color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+.footer-micro-badges {
+  display: flex;
+  gap: var(--space-xs);
+  margin-top: var(--space-xs);
+}
+
+.micro-badge {
+  padding: 2px var(--space-sm);
+  background: var(--color-washi-aged);
+  border-radius: var(--radius-full);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  color: var(--color-text-ghost);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.footer-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.footer-col h4 {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+  color: var(--color-text-tertiary);
+  margin-bottom: var(--space-xs);
+}
+
+.footer-col a {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
   text-decoration: none;
   transition: color var(--transition-base);
 }
 
-.footer-links a:hover {
+.footer-col a:hover {
   color: var(--color-ai);
 }
 
-.footer-copyright {
+.footer-bottom {
+  text-align: center;
+  padding-top: var(--space-lg);
+  border-top: 1px solid var(--color-border-light);
   font-size: 0.8125rem;
   color: var(--color-text-ghost);
 }
@@ -1761,9 +2399,25 @@ onMounted(() => {
    RESPONSIVE
    ======================================== */
 @media (max-width: 1024px) {
-  .steps-grid {
+  .steps-grid,
+  .features-grid,
+  .testimonials-grid {
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 700px;
+  }
+
+  .pricing-grid-3 {
     grid-template-columns: 1fr;
-    max-width: 500px;
+    max-width: 400px;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-lg);
+  }
+
+  .footer-brand-col {
+    grid-column: 1 / -1;
   }
 }
 
@@ -1772,12 +2426,7 @@ onMounted(() => {
     padding: var(--space-sm) var(--space-md);
   }
 
-  .nav-link:not(.nav-link-cta) {
-    padding: var(--space-xs) var(--space-sm);
-    font-size: 0.875rem;
-  }
-
-  .nav-link-cta {
+  .nav-link {
     padding: var(--space-xs) var(--space-sm);
     font-size: 0.875rem;
   }
@@ -1809,18 +2458,37 @@ onMounted(() => {
     height: 1px;
   }
 
-  .pricing-grid {
+  .steps-grid,
+  .features-grid,
+  .testimonials-grid {
     grid-template-columns: 1fr;
+    max-width: 500px;
   }
 
-  .footer-content {
-    flex-direction: column;
+  .comparison-table th:nth-child(2),
+  .comparison-table td:nth-child(2) {
+    display: none;
+  }
+
+  .footer-grid {
+    grid-template-columns: 1fr;
     text-align: center;
   }
 
-  .footer-links {
-    flex-wrap: wrap;
+  .footer-brand-col {
+    align-items: center;
+  }
+
+  .footer-micro-badges {
     justify-content: center;
+  }
+
+  .footer-col {
+    align-items: center;
+  }
+
+  .trust-badges {
+    gap: var(--space-lg);
   }
 
   .result-actions {
@@ -1839,6 +2507,15 @@ onMounted(() => {
 
   .site-badges {
     justify-content: center;
+  }
+
+  .nav-links {
+    gap: var(--space-xs);
+  }
+
+  .trust-badges {
+    flex-direction: column;
+    gap: var(--space-md);
   }
 }
 </style>

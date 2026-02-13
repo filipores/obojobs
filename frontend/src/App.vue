@@ -300,8 +300,8 @@
       </router-link>
     </nav>
 
-    <!-- Footer - hidden on landing page which has its own -->
-    <footer v-if="!isLandingPage" class="zen-footer">
+    <!-- Footer - hidden on pages with hideFooter route meta (landing, pricing) -->
+    <footer v-if="!hideAppFooter" class="zen-footer">
       <div class="footer-container">
         <div class="footer-brand">
           <div class="footer-enso"></div>
@@ -350,7 +350,7 @@ const closeMoreDropdown = () => {
 }
 
 const currentYear = computed(() => new Date().getFullYear())
-const isLandingPage = computed(() => route.meta?.landing === true)
+const hideAppFooter = computed(() => route.meta?.hideFooter === true)
 
 const THEME_KEY = 'obojobs-theme'
 

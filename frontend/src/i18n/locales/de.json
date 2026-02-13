@@ -331,7 +331,8 @@
     "jobDashboard": "Job-Vorschläge",
     "admin": "Admin",
     "adminUsers": "Admin - Benutzer",
-    "adminUserDetail": "Admin - Benutzerdetails"
+    "adminUserDetail": "Admin - Benutzerdetails",
+    "pricing": "Preise"
   },
   "mockInterview": {
     "backToPrep": "Zurück zur Interview-Vorbereitung",
@@ -555,6 +556,151 @@
       "retry": "Erneut versuchen",
       "updateSuccess": "Benutzer aktualisiert",
       "updateError": "Fehler beim Aktualisieren"
+    }
+  },
+  "landing": {
+    "nav": {
+      "features": "Features",
+      "pricing": "Preise",
+      "login": "Anmelden",
+      "register": "Kostenlos starten"
+    },
+    "features": {
+      "label": "Features",
+      "title": "Alles, was du für deine Bewerbung brauchst",
+      "aiCoverLetter": "KI-Anschreiben",
+      "aiCoverLetterDesc": "Professionelle, personalisierte Anschreiben in Sekunden — powered by modernster KI-Technologie.",
+      "pdfExport": "PDF-Export",
+      "pdfExportDesc": "Professionell formatierte Anschreiben als PDF — druckfertig und bereit zum Versenden.",
+      "atsOptimization": "ATS-Optimierung",
+      "atsOptimizationDesc": "Optimiere deine Bewerbung für Applicant Tracking Systems und erhöhe deine Sichtbarkeit.",
+      "emailDraft": "E-Mail-Entwurf",
+      "emailDraftDesc": "Fertige Betreffzeile und E-Mail-Text — kopieren, einfügen, absenden.",
+      "interviewPrep": "Interview-Vorbereitung",
+      "interviewPrepDesc": "KI-gestützte Fragen und Antworten, zugeschnitten auf die Stelle und dein Profil.",
+      "tracker": "Bewerbungs-Tracker",
+      "trackerDesc": "Behalte den Überblick über alle Bewerbungen mit Status-Tracking und Timeline."
+    },
+    "comparison": {
+      "title": "Warum obo?",
+      "subtitle": "Der direkte Vergleich zeigt den Unterschied",
+      "feature": "Feature",
+      "manual": "Manuell",
+      "chatgpt": "ChatGPT",
+      "obo": "obo",
+      "time": "Zeit pro Bewerbung",
+      "timeManual": "30–60 Min.",
+      "timeChatgpt": "10–15 Min.",
+      "timeObo": "Unter 2 Min.",
+      "personalized": "Personalisiert",
+      "pdfReady": "PDF-fertig",
+      "atsOptimized": "ATS-optimiert",
+      "jobAnalysis": "Stellenanalyse",
+      "tracking": "Tracking"
+    },
+    "testimonials": {
+      "title": "Das sagen unsere Nutzer",
+      "t1Quote": "Mit obo habe ich in einer Woche mehr Bewerbungen verschickt als sonst in einem Monat. Die Qualität der Anschreiben ist beeindruckend.",
+      "t1Name": "Sarah M.",
+      "t1Role": "Marketing Managerin",
+      "t2Quote": "Als Berufseinsteiger war das Schreiben von Anschreiben meine größte Hürde. obo hat das komplett verändert.",
+      "t2Name": "Lukas K.",
+      "t2Role": "Software-Entwickler",
+      "t3Quote": "Die ATS-Optimierung hat einen echten Unterschied gemacht. Ich bekomme deutlich mehr Einladungen zu Gesprächen.",
+      "t3Name": "Anna W.",
+      "t3Role": "Projektleiterin"
+    },
+    "trust": {
+      "gdpr": "DSGVO-konform",
+      "madeInGermany": "Made in Germany",
+      "noDataSharing": "Keine Datenweitergabe",
+      "sslEncrypted": "SSL-verschlüsselt"
+    },
+    "faq": {
+      "title": "Häufig gestellte Fragen",
+      "q1": "Wie funktioniert die KI-Generierung?",
+      "a1": "Lade deinen Lebenslauf hoch und füge die Stellenanzeige ein. Unsere KI analysiert beides und erstellt ein maßgeschneidertes Anschreiben, das deine Qualifikationen optimal mit den Anforderungen verbindet.",
+      "q2": "Ist mein Lebenslauf sicher?",
+      "a2": "Absolut. Alle Daten werden verschlüsselt übertragen und in Deutschland gespeichert. Wir geben keine Daten an Dritte weiter und du kannst dein Konto jederzeit vollständig löschen.",
+      "q3": "Kann ich das Anschreiben bearbeiten?",
+      "a3": "Ja, jedes generierte Anschreiben kann vor dem Export vollständig bearbeitet und angepasst werden. Du hast die volle Kontrolle über den finalen Text.",
+      "q4": "Welche Dateiformate werden unterstützt?",
+      "a4": "Lebensläufe können als PDF hochgeladen werden. Anschreiben werden als professionell formatierte PDFs exportiert, bereit zum Versenden.",
+      "q5": "Wie viele Bewerbungen kann ich erstellen?",
+      "a5": "Mit dem kostenlosen Plan kannst du 3 Bewerbungen pro Monat erstellen. Der Basic-Plan bietet 20 pro Monat, und mit Pro gibt es keine Begrenzung.",
+      "q6": "Gibt es eine Chrome-Extension?",
+      "a6": "Ja! Mit unserer Chrome-Extension kannst du direkt von Stellenportalen wie Indeed, StepStone oder LinkedIn mit einem Klick eine Bewerbung erstellen."
+    },
+    "cta": {
+      "title": "Bereit für bessere Bewerbungen?",
+      "subtitle": "Starte kostenlos und erlebe, wie KI deine Bewerbungen auf das nächste Level hebt.",
+      "button": "Jetzt kostenlos starten"
+    },
+    "footer": {
+      "product": "Produkt",
+      "features": "Features",
+      "pricing": "Preise",
+      "demo": "Demo",
+      "legal": "Rechtliches",
+      "about": "Über obo",
+      "tagline": "Bewerbungen, die sich selbst schreiben."
+    }
+  },
+  "pricing": {
+    "pageTitle": "Preise",
+    "title": "Einfache, transparente Preise",
+    "subtitle": "Wählen Sie den Plan, der zu Ihnen passt. Jederzeit kündbar.",
+    "free": {
+      "name": "Free",
+      "price": "0",
+      "period": "kostenlos",
+      "description": "Perfekt zum Ausprobieren",
+      "cta": "Kostenlos starten"
+    },
+    "basic": {
+      "name": "Basic",
+      "price": "9,99",
+      "period": "pro Monat",
+      "description": "Für aktive Jobsucher",
+      "cta": "Basic wählen",
+      "popular": "Beliebt"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "19,99",
+      "period": "pro Monat",
+      "description": "Für Power-Bewerber",
+      "cta": "Pro wählen"
+    },
+    "features": {
+      "applicationsPerMonth": "Bewerbungen pro Monat",
+      "aiCoverLetters": "KI-Anschreiben",
+      "pdfExport": "PDF-Export",
+      "emailDrafts": "E-Mail-Entwürfe",
+      "atsOptimization": "ATS-Optimierung",
+      "companyInsights": "Firmen-Insights",
+      "interviewPrep": "Interview-Vorbereitung",
+      "jobMatching": "Job-Matching",
+      "prioritySupport": "Prioritäts-Support",
+      "chromeExtension": "Chrome-Extension",
+      "applicationTracking": "Bewerbungs-Tracking",
+      "skillAnalysis": "Skill-Analyse"
+    },
+    "faq": {
+      "title": "Fragen zu den Preisen",
+      "q1": "Kann ich jederzeit kündigen?",
+      "a1": "Ja, Sie können Ihr Abonnement jederzeit kündigen. Sie behalten den Zugang bis zum Ende des Abrechnungszeitraums.",
+      "q2": "Gibt es eine Geld-zurück-Garantie?",
+      "a2": "Testen Sie obo kostenlos mit dem Free-Plan. Bei kostenpflichtigen Plänen können Sie innerhalb von 14 Tagen ohne Angabe von Gründen kündigen.",
+      "q3": "Kann ich den Plan wechseln?",
+      "a3": "Ja, Sie können jederzeit upgraden oder downgraden. Bei einem Upgrade wird der Differenzbetrag anteilig berechnet.",
+      "q4": "Welche Zahlungsmethoden werden akzeptiert?",
+      "a4": "Wir akzeptieren alle gängigen Kreditkarten, SEPA-Lastschrift und weitere Zahlungsmethoden über unseren Zahlungspartner Stripe."
+    },
+    "cta": {
+      "title": "Bereit loszulegen?",
+      "subtitle": "Starten Sie kostenlos und upgraden Sie, wenn Sie bereit sind.",
+      "button": "Kostenlos registrieren"
     }
   }
 }
