@@ -1,8 +1,9 @@
 from datetime import datetime
 
 from flask import Response, jsonify, request
-from flask_jwt_extended import get_jwt, get_jwt_identity, jwt_required
+from flask_jwt_extended import get_jwt, jwt_required
 
+from middleware.jwt_required import get_current_user_id
 from routes.auth import auth_bp
 from services.auth_service import AuthService
 
@@ -19,7 +20,7 @@ def logout() -> tuple[Response, int]:
     jwt = get_jwt()
     jti = jwt["jti"]
     token_type = jwt.get("type", "access")
-    user_id = int(get_jwt_identity())
+    user_id = get_current_user_id()
 
     # Get token expiration time
     exp_timestamp = jwt["exp"]
@@ -39,13 +40,13 @@ def update_language() -> tuple[Response, int]:
 
     Requires authentication. Allows updating language preference (de or en).
     """
-    current_user_id = get_jwt_identity()
+    current_user_id = get_current_user_id()
     data = request.json or {}
 
     language = data.get("language", "").strip().lower()
 
     try:
-        result = AuthService.update_language(int(current_user_id), language)
+        result = AuthService.update_language(current_user_id, language)
         return jsonify(result), 200
     except ValueError as e:
         error_msg = str(e)
@@ -62,11 +63,11 @@ def update_profile() -> tuple[Response, int]:
 
     Requires authentication. Allows updating full_name and display_name.
     """
-    current_user_id = get_jwt_identity()
+    current_user_id = get_current_user_id()
     data = request.json or {}
 
     try:
-        result = AuthService.update_profile(int(current_user_id), data)
+        result = AuthService.update_profile(current_user_id, data)
         return jsonify(result), 200
     except ValueError as e:
         error_msg = str(e)
@@ -89,10 +90,10 @@ def delete_account() -> tuple[Response, int]:
 
     GDPR compliance: This ensures the "right to be forgotten" is fulfilled.
     """
-    current_user_id = get_jwt_identity()
+    current_user_id = get_current_user_id()
 
     try:
-        result = AuthService.delete_account(int(current_user_id))
+        result = AuthService.delete_account(current_user_id)
         return jsonify(result), 200
     except ValueError:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404

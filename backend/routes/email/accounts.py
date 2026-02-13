@@ -1,8 +1,9 @@
 import os
 
 from flask import Response, jsonify
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
+from middleware.jwt_required import get_current_user_id
 from routes.email import email_bp
 from services import email_data_service
 
@@ -52,7 +53,7 @@ def list_email_accounts() -> tuple[Response, int]:
     Returns:
         JSON with list of email accounts
     """
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
 
     accounts = email_data_service.get_email_accounts(user_id)
 
@@ -76,7 +77,7 @@ def delete_email_account(account_id: int) -> tuple[Response, int]:
     Returns:
         JSON with success status
     """
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
 
     account = email_data_service.get_email_account(account_id, user_id)
 

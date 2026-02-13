@@ -8,6 +8,16 @@ from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 from models import User
 
 
+def get_current_user_id() -> int:
+    """Return the current JWT identity as an integer.
+
+    JWT spec requires the ``sub`` claim to be a string, so
+    ``get_jwt_identity()`` always returns a string.  This helper
+    centralises the ``int()`` conversion so callers don't have to.
+    """
+    return int(get_jwt_identity())
+
+
 def jwt_required_custom(fn: Callable) -> Callable:
     """
     Custom JWT required decorator that also loads the current user.
@@ -18,10 +28,9 @@ def jwt_required_custom(fn: Callable) -> Callable:
     @wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
         verify_jwt_in_request()
-        user_id = get_jwt_identity()
+        user_id = get_current_user_id()
 
-        # Convert string identity back to int
-        user = User.query.get(int(user_id))
+        user = User.query.get(user_id)
         if not user or not user.is_active:
             return jsonify({"error": "Ungültiger oder inaktiver Benutzer"}), 401
 

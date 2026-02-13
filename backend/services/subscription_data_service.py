@@ -7,7 +7,7 @@ from models import Subscription, User, db
 
 def get_user(user_id: int) -> User | None:
     """Return a user by ID, or None."""
-    return User.query.get(int(user_id))
+    return User.query.get(user_id)
 
 
 def get_subscription_by_user(user_id: int) -> Subscription | None:

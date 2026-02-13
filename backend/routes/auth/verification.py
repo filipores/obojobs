@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
 from flask import Response, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
+from middleware.jwt_required import get_current_user_id
 from routes.auth import auth_bp
 from services.auth_service import AuthService
 from services.email_service import send_verification_email
@@ -94,8 +95,8 @@ def send_verification() -> tuple[Response, int]:
     Requires authentication. Rate limited to 3 requests per hour.
     In development mode, logs the token instead of sending email.
     """
-    current_user_id = get_jwt_identity()
-    user = AuthService.get_user_by_id(int(current_user_id))
+    current_user_id = get_current_user_id()
+    user = AuthService.get_user_by_id(current_user_id)
 
     if not user:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404

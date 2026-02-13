@@ -2,8 +2,9 @@ import os
 import secrets
 
 from flask import Response, jsonify, request, session
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
+from middleware.jwt_required import get_current_user_id
 from routes.email import email_bp
 from services.gmail_service import GmailService
 from services.outlook_service import OutlookService
@@ -41,7 +42,7 @@ def gmail_auth_url() -> tuple[Response, int]:
         state = secrets.token_urlsafe(32)
 
         # Store state in session for verification
-        user_id = get_jwt_identity()
+        user_id = get_current_user_id()
         session[f"gmail_oauth_state_{user_id}"] = state
 
         authorization_url, _ = GmailService.get_authorization_url(state=state)
@@ -105,7 +106,7 @@ def gmail_callback() -> tuple[Response, int]:
             }
         ), 400
 
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
 
     # Verify state for CSRF protection
     stored_state = session.get(f"gmail_oauth_state_{user_id}")
@@ -129,7 +130,7 @@ def gmail_callback() -> tuple[Response, int]:
 
         # Save tokens to database
         email_account = GmailService.save_tokens(
-            user_id=int(user_id),
+            user_id=user_id,
             email=email,
             token_data=token_data,
         )
@@ -190,7 +191,7 @@ def outlook_auth_url() -> tuple[Response, int]:
         state = secrets.token_urlsafe(32)
 
         # Store state in session for verification
-        user_id = get_jwt_identity()
+        user_id = get_current_user_id()
         session[f"outlook_oauth_state_{user_id}"] = state
 
         authorization_url, _ = OutlookService.get_authorization_url(state=state)
@@ -254,7 +255,7 @@ def outlook_callback() -> tuple[Response, int]:
             }
         ), 400
 
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
 
     # Verify state for CSRF protection
     stored_state = session.get(f"outlook_oauth_state_{user_id}")
@@ -278,7 +279,7 @@ def outlook_callback() -> tuple[Response, int]:
 
         # Save tokens to database
         email_account = OutlookService.save_tokens(
-            user_id=int(user_id),
+            user_id=user_id,
             email=email,
             token_data=token_data,
         )

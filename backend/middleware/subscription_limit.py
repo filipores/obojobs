@@ -4,9 +4,10 @@ from functools import wraps
 from typing import Any
 
 from flask import jsonify
-from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
+from flask_jwt_extended import verify_jwt_in_request
 from sqlalchemy import text
 
+from middleware.jwt_required import get_current_user_id
 from models import User, db
 from models.subscription import SubscriptionPlan, SubscriptionStatus
 
@@ -150,8 +151,8 @@ def check_subscription_limit(fn: Callable) -> Callable:
 
         if not current_user:
             verify_jwt_in_request()
-            user_id = get_jwt_identity()
-            current_user = User.query.get(int(user_id))
+            user_id = get_current_user_id()
+            current_user = User.query.get(user_id)
 
             if not current_user or not current_user.is_active:
                 return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 401

@@ -1,8 +1,9 @@
 import os
 
 from flask import Response, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
+from middleware.jwt_required import get_current_user_id
 from routes.email import email_bp
 from services import email_data_service
 from services.gmail_service import GmailService
@@ -28,7 +29,7 @@ def send_email() -> tuple[Response, int]:
     Returns:
         JSON with success status and message ID
     """
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
     data = request.get_json()
 
     # Validate required fields

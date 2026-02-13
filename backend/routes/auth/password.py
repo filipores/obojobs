@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
 
 from flask import Response, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
+from middleware.jwt_required import get_current_user_id
 from routes.auth import auth_bp
 from services.auth_service import AuthService
 from services.email_service import send_password_reset_email
@@ -124,7 +125,7 @@ def change_password() -> tuple[Response, int]:
 
     Requires authentication. Validates current password and new password strength.
     """
-    current_user_id = get_jwt_identity()
+    current_user_id = get_current_user_id()
     data = request.json or {}
 
     current_password = data.get("current_password")
@@ -137,7 +138,7 @@ def change_password() -> tuple[Response, int]:
         return jsonify({"error": "Neues Passwort ist erforderlich"}), 400
 
     try:
-        result = AuthService.change_password(int(current_user_id), current_password, new_password)
+        result = AuthService.change_password(current_user_id, current_password, new_password)
         return jsonify(result), 200
     except ValueError as e:
         return jsonify({"error": str(e)}), 400

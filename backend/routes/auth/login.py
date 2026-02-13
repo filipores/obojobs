@@ -6,6 +6,7 @@ from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token
 
 from config import Config
+from middleware.jwt_required import get_current_user_id
 from routes.auth import auth_bp
 from services.auth_service import AuthService
 from services.password_validator import PasswordValidator
@@ -139,8 +140,8 @@ def refresh() -> tuple[Response, int]:
 @jwt_required()
 def me() -> Response | tuple[Response, int]:
     """Get current user info"""
-    current_user_id = get_jwt_identity()
-    user = AuthService.get_user_by_id(int(current_user_id))
+    current_user_id = get_current_user_id()
+    user = AuthService.get_user_by_id(current_user_id)
 
     if not user:
         return jsonify({"error": "Benutzer nicht gefunden"}), 404

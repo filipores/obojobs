@@ -2,9 +2,10 @@ import logging
 
 import stripe
 from flask import Blueprint, Response, jsonify, request
-from flask_jwt_extended import get_jwt_identity, jwt_required
+from flask_jwt_extended import jwt_required
 
 from config import config
+from middleware.jwt_required import get_current_user_id
 from services import subscription_data_service
 from services.stripe_service import StripeService
 
@@ -137,7 +138,7 @@ def create_checkout() -> tuple[Response, int]:
     price_id = plan_data["stripe_price_id"]
 
     # Get current user
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
     user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
@@ -196,7 +197,7 @@ def create_portal_session() -> tuple[Response, int]:
         return jsonify({"success": False, "error": "return_url ist erforderlich"}), 400
 
     # Get current user
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
     user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
@@ -240,7 +241,7 @@ def preview_change() -> tuple[Response, int]:
         return jsonify({"success": False, "error": "Ungültiger Plan. Muss 'basic' oder 'pro' sein."}), 400
 
     # Get current user
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
     user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
@@ -275,17 +276,22 @@ def preview_change() -> tuple[Response, int]:
         # Retrieve the current subscription to get the item ID
         stripe_sub = stripe_service.get_subscription(subscription.stripe_subscription_id)
 
-        # Use Stripe's upcoming invoice API to preview proration
-        upcoming_invoice = stripe.Invoice.upcoming(
+        # Ensure Stripe API key is set
+        stripe.api_key = config.STRIPE_SECRET_KEY
+
+        # Use Stripe's invoice preview API (create_preview in stripe v14+)
+        upcoming_invoice = stripe.Invoice.create_preview(
             customer=stripe_sub["customer"],
             subscription=subscription.stripe_subscription_id,
-            subscription_items=[
-                {
-                    "id": stripe_sub["items"]["data"][0]["id"],
-                    "price": new_price_id,
-                }
-            ],
-            subscription_proration_behavior="create_prorations",
+            subscription_details={
+                "items": [
+                    {
+                        "id": stripe_sub["items"]["data"][0]["id"],
+                        "price": new_price_id,
+                    }
+                ],
+                "proration_behavior": "create_prorations",
+            },
         )
 
         # Calculate proration from invoice line items
@@ -338,7 +344,7 @@ def change_plan() -> tuple[Response, int]:
         return jsonify({"success": False, "error": "Ungültiger Plan. Muss 'basic' oder 'pro' sein."}), 400
 
     # Get current user
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
     user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
@@ -411,7 +417,7 @@ def cancel_subscription() -> tuple[Response, int]:
             }
         ), 503
 
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
     user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
@@ -456,7 +462,7 @@ def get_current_subscription() -> tuple[Response, int]:
     """Get the current user's subscription details and usage."""
     from middleware.subscription_limit import get_subscription_usage
 
-    user_id = get_jwt_identity()
+    user_id = get_current_user_id()
     user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
