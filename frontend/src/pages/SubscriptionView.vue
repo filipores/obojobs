@@ -13,8 +13,29 @@
         <p>Lade Abo-Details...</p>
       </div>
 
+      <!-- Content (visible after loading) -->
+      <template v-else>
+
+      <!-- Payment Failed Banner -->
+      <div v-if="subscription?.status === 'past_due'" class="payment-failed-banner animate-fade-up" style="animation-delay: 75ms;">
+        <div class="banner-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+            <line x1="12" y1="9" x2="12" y2="13"/>
+            <line x1="12" y1="17" x2="12.01" y2="17"/>
+          </svg>
+        </div>
+        <div class="banner-content">
+          <strong>Ihre letzte Zahlung ist fehlgeschlagen.</strong>
+          <p>Bitte aktualisieren Sie Ihre Zahlungsmethode, um Ihr Abonnement fortzusetzen.</p>
+        </div>
+        <button @click="handleOpenPortal" class="zen-btn zen-btn-filled banner-action" :disabled="isPortalLoading">
+          {{ isPortalLoading ? t('common.loading') : 'Zahlungsmethode aktualisieren' }}
+        </button>
+      </div>
+
       <!-- Current Plan Section -->
-      <section v-else class="subscription-section animate-fade-up" style="animation-delay: 100ms;">
+      <section class="subscription-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="section-header">
           <div class="section-icon">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -40,7 +61,10 @@
           <div class="plan-details">
             <div class="detail-row">
               <span class="detail-label">{{ t('subscription.monthlyPrice') }}</span>
-              <span class="detail-value">{{ subscription?.plan_details?.price_formatted || '0 EUR/Monat' }}</span>
+              <span class="detail-value">
+                {{ subscription?.plan_details?.price_formatted || '0 EUR/Monat' }}
+                <span v-if="subscription?.plan !== 'free'" class="mwst-hint">(inkl. 19% MwSt)</span>
+              </span>
             </div>
             <div class="detail-divider"></div>
             <div class="detail-row">
@@ -187,7 +211,7 @@
                 :disabled="isUpgrading || !paymentsAvailable"
               >
                 <span v-if="upgradingPlan === 'basic'" class="btn-spinner"></span>
-                {{ upgradingPlan === 'basic' ? t('common.loading') : 'Basic - 9,99 EUR/Monat' }}
+                {{ upgradingPlan === 'basic' ? t('common.loading') : 'Basic - 9,99 EUR/Monat (inkl. MwSt)' }}
               </button>
               <button
                 @click="handleUpgrade('pro')"
@@ -196,7 +220,7 @@
                 :disabled="isUpgrading || !paymentsAvailable"
               >
                 <span v-if="upgradingPlan === 'pro'" class="btn-spinner"></span>
-                {{ upgradingPlan === 'pro' ? t('common.loading') : 'Pro - 19,99 EUR/Monat' }}
+                {{ upgradingPlan === 'pro' ? t('common.loading') : 'Pro - 19,99 EUR/Monat (inkl. MwSt)' }}
               </button>
             </div>
           </div>
@@ -235,6 +259,7 @@
                     <span class="plan-name">{{ plan.name }}</span>
                     <span class="plan-price-cell">
                       {{ plan.price === 0 ? 'Kostenlos' : plan.price.toFixed(2).replace('.', ',') + ' EUR/Monat' }}
+                      <span v-if="plan.price > 0" class="mwst-hint">(inkl. MwSt)</span>
                     </span>
                   </div>
                 </th>
@@ -377,6 +402,7 @@
             <div class="plan-price">
               <span class="price-amount">{{ plan.price === 0 ? 'Kostenlos' : plan.price.toFixed(2).replace('.', ',') + ' EUR' }}</span>
               <span v-if="plan.price > 0" class="price-period">/ Monat</span>
+              <span v-if="plan.price > 0" class="mwst-hint">(inkl. MwSt)</span>
             </div>
 
             <div class="plan-limit-badge">
@@ -415,10 +441,58 @@
         </div>
       </section>
 
+      <!-- Cancellation Section -->
+      <section v-if="isPaidActive" class="subscription-section animate-fade-up" style="animation-delay: 275ms;">
+        <div class="section-header">
+          <div class="section-icon cancel-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="15" y1="9" x2="9" y2="15"/>
+              <line x1="9" y1="9" x2="15" y2="15"/>
+            </svg>
+          </div>
+          <div>
+            <h2>Abonnement kuendigen</h2>
+            <p class="section-description">Sie koennen Ihr Abonnement jederzeit kuendigen. Der Zugriff bleibt bis zum Ende des aktuellen Abrechnungszeitraums bestehen.</p>
+          </div>
+        </div>
+
+        <div class="settings-card zen-card cancel-card">
+          <button @click="showCancelModal = true" class="zen-btn zen-btn-danger">
+            Abonnement kuendigen
+          </button>
+        </div>
+      </section>
+
+      <!-- Cancel Confirmation Modal -->
+      <Teleport to="body">
+        <div v-if="showCancelModal" class="modal-overlay" @click.self="showCancelModal = false">
+          <div class="modal-content zen-card cancel-modal">
+            <h3>Abonnement wirklich kuendigen?</h3>
+            <p class="modal-description">
+              Ihr Zugriff auf den <strong>{{ getPlanDisplayName(subscription?.plan) }}</strong>-Plan bleibt bis zum
+              <strong>{{ formatDate(subscription?.next_billing_date) }}</strong> bestehen.
+              Danach wird Ihr Konto auf den kostenlosen Plan zurueckgestuft.
+            </p>
+            <div class="modal-actions">
+              <button @click="showCancelModal = false" class="zen-btn zen-btn-ghost" :disabled="isCanceling">
+                Abbrechen
+              </button>
+              <button @click="handleCancelSubscription" class="zen-btn zen-btn-danger" :disabled="isCanceling">
+                <span v-if="isCanceling" class="btn-spinner"></span>
+                {{ isCanceling ? 'Wird gekuendigt...' : 'Jetzt kuendigen' }}
+              </button>
+            </div>
+          </div>
+        </div>
+      </Teleport>
+
       <!-- Error Message -->
       <div v-if="errorMessage" class="error-message animate-fade-up">
         {{ errorMessage }}
       </div>
+
+      </template>
     </div>
   </div>
 </template>
@@ -430,7 +504,7 @@ import { useSubscription } from '../composables/useSubscription'
 import { getFullLocale } from '../i18n'
 
 const { t } = useI18n()
-const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, changePlan, isLoading, paymentsAvailable } = useSubscription()
+const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, changePlan, cancelSubscription, isLoading, paymentsAvailable } = useSubscription()
 
 const subscription = ref(null)
 const availablePlans = ref([])
@@ -438,6 +512,8 @@ const isPortalLoading = ref(false)
 const isUpgrading = ref(false)
 const upgradingPlan = ref(null)
 const errorMessage = ref('')
+const showCancelModal = ref(false)
+const isCanceling = ref(false)
 
 const PLAN_ORDER = { free: 0, basic: 1, pro: 2 }
 
@@ -574,6 +650,31 @@ const handleUpgrade = async (planId) => {
   } finally {
     isUpgrading.value = false
     upgradingPlan.value = null
+  }
+}
+
+const isPaidActive = computed(() => {
+  return subscription.value &&
+    ['basic', 'pro'].includes(subscription.value.plan) &&
+    subscription.value.status === 'active' &&
+    !subscription.value.cancel_at_period_end
+})
+
+const handleCancelSubscription = async () => {
+  isCanceling.value = true
+  errorMessage.value = ''
+
+  try {
+    await cancelSubscription()
+    showCancelModal.value = false
+    if (window.$toast) {
+      window.$toast('Abonnement wurde gekuendigt', 'success')
+    }
+    subscription.value = await fetchCurrentSubscription()
+  } catch (err) {
+    errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Kuendigen des Abonnements'
+  } finally {
+    isCanceling.value = false
   }
 }
 
@@ -1304,6 +1405,165 @@ onMounted(() => {
 }
 
 /* ========================================
+   MWST HINT
+   ======================================== */
+.mwst-hint {
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: var(--color-text-tertiary);
+  margin-left: var(--space-xs);
+}
+
+.plan-price .mwst-hint {
+  display: block;
+  margin-left: 0;
+  margin-top: var(--space-xs);
+}
+
+/* ========================================
+   PAYMENT FAILED BANNER
+   ======================================== */
+.payment-failed-banner {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  padding: var(--space-lg) var(--space-xl);
+  background: rgba(184, 80, 60, 0.08);
+  border: 1px solid rgba(184, 80, 60, 0.3);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-ma);
+}
+
+.payment-failed-banner .banner-icon {
+  color: var(--color-terra);
+  flex-shrink: 0;
+}
+
+.payment-failed-banner .banner-content {
+  flex: 1;
+}
+
+.payment-failed-banner .banner-content strong {
+  display: block;
+  color: var(--color-terra);
+  margin-bottom: var(--space-xs);
+}
+
+.payment-failed-banner .banner-content p {
+  margin: 0;
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+.payment-failed-banner .banner-action {
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ========================================
+   CANCEL SECTION
+   ======================================== */
+.cancel-icon {
+  background: rgba(184, 122, 94, 0.1);
+  color: var(--color-terra);
+}
+
+.cancel-card {
+  text-align: center;
+}
+
+.zen-btn-danger {
+  background: transparent;
+  color: var(--color-terra);
+  border: 1px solid var(--color-terra);
+  padding: var(--space-sm) var(--space-lg);
+  border-radius: var(--radius-md);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background var(--transition-base), color var(--transition-base);
+}
+
+.zen-btn-danger:hover {
+  background: var(--color-terra);
+  color: white;
+}
+
+.zen-btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.zen-btn-danger .btn-spinner {
+  border-color: currentColor;
+  border-top-color: transparent;
+}
+
+/* ========================================
+   CANCEL MODAL
+   ======================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--space-lg);
+}
+
+.cancel-modal {
+  max-width: 480px;
+  width: 100%;
+  padding: var(--space-xl);
+}
+
+.cancel-modal h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0 0 var(--space-md) 0;
+  color: var(--color-sumi);
+}
+
+.modal-description {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+  margin: 0 0 var(--space-xl) 0;
+}
+
+.modal-actions {
+  display: flex;
+  gap: var(--space-md);
+  justify-content: flex-end;
+}
+
+/* ========================================
+   DARK MODE
+   ======================================== */
+:global(.dark-mode) .payment-failed-banner {
+  background: rgba(184, 80, 60, 0.12);
+  border-color: rgba(184, 80, 60, 0.35);
+}
+
+:global(.dark-mode) .cancel-modal {
+  background: var(--color-washi);
+}
+
+:global(.dark-mode) .modal-overlay {
+  background: rgba(0, 0, 0, 0.7);
+}
+
+:global(.dark-mode) .zen-btn-danger:hover {
+  background: var(--color-terra);
+  color: white;
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
@@ -1326,6 +1586,23 @@ onMounted(() => {
 
   .plans-grid {
     grid-template-columns: 1fr;
+  }
+
+  .payment-failed-banner {
+    flex-direction: column;
+    text-align: center;
+  }
+
+  .payment-failed-banner .banner-action {
+    width: 100%;
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .zen-btn {
+    width: 100%;
   }
 
   /* Hide table on mobile, show cards */
