@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 
 documents_bp = Blueprint("documents", __name__)
 
-# Nur 3 Dokumenttypen erlaubt
-ALLOWED_DOC_TYPES = ["lebenslauf", "anschreiben", "arbeitszeugnis"]
+# Nur 2 Dokumenttypen erlaubt
+ALLOWED_DOC_TYPES = ["lebenslauf", "arbeitszeugnis"]
 
 
 def allowed_file(filename: str) -> bool:

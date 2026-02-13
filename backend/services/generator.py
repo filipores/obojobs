@@ -245,7 +245,7 @@ class BewerbungsGenerator:
         for doc in user_docs:
             if doc.doc_type == "arbeitszeugnis":
                 attachments.append(doc.original_filename or "Arbeitszeugnis")
-            elif doc.doc_type not in ("lebenslauf", "anschreiben"):
+            elif doc.doc_type != "lebenslauf":
                 attachments.append(doc.original_filename or doc.doc_type)
         email_text = self.api_client.generate_email_text(
             position=details["position"],

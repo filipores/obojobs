@@ -173,86 +173,6 @@
             </div>
           </div>
 
-          <!-- Anschreiben -->
-          <div class="document-card zen-card stagger-item" :class="{ 'is-complete': documents.anschreiben }">
-            <div class="document-header">
-              <div class="document-icon" :class="{ 'icon-complete': documents.anschreiben }">
-                <svg v-if="documents.anschreiben" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <polyline points="20 6 9 17 4 12"/>
-                </svg>
-                <svg v-else width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-                  <polyline points="22,6 12,13 2,6"/>
-                </svg>
-              </div>
-              <div class="document-title-group">
-                <h3>Anschreiben</h3>
-                <span class="badge badge-optional">Optional</span>
-              </div>
-            </div>
-
-            <p class="document-description">Vorgefertigtes Anschreiben als Vorlage</p>
-
-            <div
-              class="upload-zone"
-              :class="{
-                'has-file': files.anschreiben,
-                'is-uploading': uploading.anschreiben,
-                'is-complete': documents.anschreiben
-              }"
-              @dragover.prevent="handleDragOver($event, 'anschreiben')"
-              @dragleave.prevent="handleDragLeave"
-              @drop.prevent="handleDrop($event, 'anschreiben')"
-            >
-              <input
-                type="file"
-                accept=".pdf"
-                @change="handleFile($event, 'anschreiben')"
-                :id="'upload-anschreiben'"
-                class="file-input"
-              />
-
-              <div v-if="!documents.anschreiben" class="upload-content">
-                <div class="upload-icon">
-                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-                    <polyline points="17 8 12 3 7 8"/>
-                    <line x1="12" y1="3" x2="12" y2="15"/>
-                  </svg>
-                </div>
-                <label :for="'upload-anschreiben'" class="upload-label">
-                  <span v-if="!files.anschreiben" class="upload-text">
-                    <strong>PDF auswählen</strong> oder hierher ziehen
-                  </span>
-                  <span v-else class="upload-filename">
-                    {{ files.anschreiben.name }}
-                  </span>
-                </label>
-                <button
-                  @click="upload('anschreiben')"
-                  :disabled="!files.anschreiben || uploading.anschreiben"
-                  class="zen-btn zen-btn-ai zen-btn-sm"
-                >
-                  {{ uploading.anschreiben ? 'Wird hochgeladen...' : 'Hochladen' }}
-                </button>
-              </div>
-
-              <div v-else class="uploaded-status">
-                <div class="uploaded-info">
-                  <p class="uploaded-filename">{{ documents.anschreiben.original_filename }}</p>
-                  <p class="uploaded-date">{{ formatDate(documents.anschreiben.uploaded_at) }}</p>
-                </div>
-                <button @click="deleteDoc(documents.anschreiben.id, 'anschreiben')" class="zen-btn zen-btn-sm" aria-label="Anschreiben löschen" title="Anschreiben löschen">
-                  Löschen
-                </button>
-              </div>
-            </div>
-
-            <div v-if="messages.anschreiben" :class="['alert', `alert-${messageClass.anschreiben}`]">
-              {{ messages.anschreiben }}
-            </div>
-          </div>
-
           <!-- Arbeitszeugnis -->
           <div class="document-card zen-card stagger-item" :class="{ 'is-complete': documents.arbeitszeugnis }">
             <div class="document-header">
@@ -381,31 +301,26 @@ const uploadType = computed(() => route.query.upload)
 
 const documents = ref({
   lebenslauf: null,
-  anschreiben: null,
   arbeitszeugnis: null
 })
 
 const files = ref({
   lebenslauf: null,
-  anschreiben: null,
   arbeitszeugnis: null
 })
 
 const uploading = ref({
   lebenslauf: false,
-  anschreiben: false,
   arbeitszeugnis: false
 })
 
 const messages = ref({
   lebenslauf: '',
-  anschreiben: '',
   arbeitszeugnis: ''
 })
 
 const messageClass = ref({
   lebenslauf: '',
-  anschreiben: '',
   arbeitszeugnis: ''
 })
 
@@ -517,7 +432,6 @@ const loadDocuments = async () => {
     // Reset
     documents.value = {
       lebenslauf: null,
-      anschreiben: null,
       arbeitszeugnis: null
     }
 
@@ -737,7 +651,7 @@ onMounted(async () => {
 
 .documents-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: var(--space-lg);
 }
 
@@ -970,12 +884,6 @@ onMounted(async () => {
 /* ========================================
    RESPONSIVE
    ======================================== */
-@media (max-width: 1024px) {
-  .documents-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-}
-
 @media (max-width: 768px) {
   .documents-grid {
     grid-template-columns: 1fr;

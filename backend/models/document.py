@@ -8,7 +8,7 @@ class Document(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("users.id"), nullable=False, index=True)
-    doc_type = db.Column(db.String(50), nullable=False)  # lebenslauf, anschreiben, arbeitszeugnis
+    doc_type = db.Column(db.String(50), nullable=False)  # lebenslauf, arbeitszeugnis
     file_path = db.Column(db.String(500), nullable=False)
     pdf_path = db.Column(db.String(500), nullable=True)
     original_filename = db.Column(db.String(255))
