@@ -1,3 +1,18 @@
+# [1.54.0](https://github.com/filipores/obojobs/compare/v1.53.0...v1.54.0) (2026-02-13)
+
+
+### Bug Fixes
+
+* **stripe:** fix checkout redirect and upgrade flow ([9717178](https://github.com/filipores/obojobs/commit/971717843634e28240de87880a8b5055e094f248))
+
+
+### Features
+
+* **subscription:** add cancel button, MwSt display, and payment-failed banner ([ae4cf76](https://github.com/filipores/obojobs/commit/ae4cf76ca81d37f67b2c3d913951ec1a861ddf96))
+* **subscription:** add confirmation dialog with proration preview for plan changes ([fe20844](https://github.com/filipores/obojobs/commit/fe208446bb975ed75832cfe11dabd34ad302ba6e))
+* **subscriptions:** add POST /cancel endpoint for direct subscription cancellation ([e028499](https://github.com/filipores/obojobs/commit/e028499bbf498fda3f9a143c7f7155f33803bc52))
+* **subscriptions:** add preview-change endpoint for proration preview ([33ad32e](https://github.com/filipores/obojobs/commit/33ad32e11168515caa2753d6a892a78df24914af))
+
 # [1.53.0](https://github.com/filipores/obojobs/compare/v1.52.0...v1.53.0) (2026-02-13)
 
 
