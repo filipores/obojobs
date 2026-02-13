@@ -5,7 +5,7 @@ from typing import Any
 from flask import jsonify
 from flask_jwt_extended import get_jwt_identity, verify_jwt_in_request
 
-from models import User
+from models import User, db
 
 
 def get_current_user_id() -> int:
@@ -30,11 +30,10 @@ def jwt_required_custom(fn: Callable) -> Callable:
         verify_jwt_in_request()
         user_id = get_current_user_id()
 
-        user = User.query.get(user_id)
+        user = db.session.get(User, user_id)
         if not user or not user.is_active:
             return jsonify({"error": "Ungültiger oder inaktiver Benutzer"}), 401
 
-        # Inject current_user into kwargs
         kwargs["current_user"] = user
         return fn(*args, **kwargs)
 
