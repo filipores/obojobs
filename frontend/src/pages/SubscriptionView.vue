@@ -420,6 +420,85 @@
         {{ errorMessage }}
       </div>
     </div>
+
+    <!-- Plan Change Confirmation Modal -->
+    <Teleport to="body">
+      <div v-if="showConfirmation" class="modal-overlay" @click.self="cancelConfirmation">
+        <div class="modal zen-card" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
+          <div class="modal-header">
+            <h3 id="confirm-title">Planwechsel bestaetigen</h3>
+            <button @click="cancelConfirmation" class="modal-close" aria-label="Schliessen">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </div>
+
+          <div class="modal-body">
+            <!-- Plan transition -->
+            <div class="plan-transition">
+              <div class="plan-transition-item">
+                <span class="plan-transition-label">Aktueller Plan</span>
+                <span class="plan-transition-name">{{ getPlanDisplayName(subscription?.plan) }}</span>
+              </div>
+              <div class="plan-transition-arrow">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <line x1="5" y1="12" x2="19" y2="12"/>
+                  <polyline points="12 5 19 12 12 19"/>
+                </svg>
+              </div>
+              <div class="plan-transition-item">
+                <span class="plan-transition-label">Neuer Plan</span>
+                <span class="plan-transition-name highlight">{{ getPlanDisplayName(pendingPlanChange) }}</span>
+              </div>
+            </div>
+
+            <!-- Proration details -->
+            <div v-if="prorationPreview" class="proration-details">
+              <div class="proration-row">
+                <span class="proration-label">Sofort faellig</span>
+                <span class="proration-value">{{ prorationPreview.immediate_amount_formatted || (prorationPreview.immediate_amount / 100).toFixed(2).replace('.', ',') + ' EUR' }}</span>
+              </div>
+              <div class="proration-divider"></div>
+              <div class="proration-row">
+                <span class="proration-label">Naechste Abrechnung</span>
+                <span class="proration-value">{{ formatDate(prorationPreview.next_billing_date) }}</span>
+              </div>
+              <div v-if="prorationPreview.next_amount" class="proration-row">
+                <span class="proration-label">Naechster Betrag</span>
+                <span class="proration-value">{{ prorationPreview.next_amount_formatted || (prorationPreview.next_amount / 100).toFixed(2).replace('.', ',') + ' EUR' }}</span>
+              </div>
+            </div>
+
+            <!-- Explanation -->
+            <div class="proration-explanation">
+              <p v-if="isUpgradeDirection(pendingPlanChange)">
+                Sie werden sofort anteilig belastet. Der Betrag wird auf Basis der verbleibenden Tage im aktuellen Abrechnungszeitraum berechnet.
+              </p>
+              <p v-else>
+                Sie erhalten eine Gutschrift fuer die verbleibende Zeit Ihres aktuellen Plans. Diese wird mit der naechsten Rechnung verrechnet.
+              </p>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button @click="cancelConfirmation" class="zen-btn zen-btn-ghost">
+              Abbrechen
+            </button>
+            <button
+              @click="confirmPlanChange"
+              class="zen-btn"
+              :class="isUpgradeDirection(pendingPlanChange) ? 'zen-btn-ai' : 'zen-btn-filled'"
+              :disabled="isUpgrading"
+            >
+              <span v-if="isUpgrading" class="btn-spinner"></span>
+              {{ isUpgrading ? 'Wird geaendert...' : 'Bestaetigen' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </Teleport>
   </div>
 </template>
 
@@ -430,7 +509,7 @@ import { useSubscription } from '../composables/useSubscription'
 import { getFullLocale } from '../i18n'
 
 const { t } = useI18n()
-const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, changePlan, isLoading, paymentsAvailable } = useSubscription()
+const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, changePlan, previewPlanChange, isLoading, paymentsAvailable } = useSubscription()
 
 const subscription = ref(null)
 const availablePlans = ref([])
@@ -438,6 +517,10 @@ const isPortalLoading = ref(false)
 const isUpgrading = ref(false)
 const upgradingPlan = ref(null)
 const errorMessage = ref('')
+const showConfirmation = ref(false)
+const prorationPreview = ref(null)
+const pendingPlanChange = ref(null)
+const isPreviewLoading = ref(false)
 
 const PLAN_ORDER = { free: 0, basic: 1, pro: 2 }
 
@@ -554,27 +637,74 @@ const handleOpenPortal = async () => {
   }
 }
 
+const isUpgradeDirection = (planId) => {
+  const targetOrder = PLAN_ORDER[planId] || 0
+  const currentOrder = PLAN_ORDER[subscription.value?.plan] || 0
+  return targetOrder > currentOrder
+}
+
 const handleUpgrade = async (planId) => {
-  isUpgrading.value = true
-  upgradingPlan.value = planId
   errorMessage.value = ''
 
-  try {
-    if (subscription.value?.has_stripe_customer && subscription.value?.plan !== 'free' && subscription.value?.status === 'active') {
-      await changePlan(planId)
-      if (window.$toast) {
-        window.$toast(t('subscription.planChanged'), 'success')
-      }
-      subscription.value = await fetchCurrentSubscription()
-    } else {
-      await startCheckout(planId)
+  // For paid users with active subscription, show confirmation dialog with proration preview
+  if (subscription.value?.has_stripe_customer && subscription.value?.plan !== 'free' && subscription.value?.status === 'active') {
+    isPreviewLoading.value = true
+    upgradingPlan.value = planId
+    try {
+      const preview = await previewPlanChange(planId)
+      prorationPreview.value = preview
+      pendingPlanChange.value = planId
+      showConfirmation.value = true
+    } catch (err) {
+      errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Laden der Vorschau'
+    } finally {
+      isPreviewLoading.value = false
+      upgradingPlan.value = null
     }
+    return
+  }
+
+  // For free users, go straight to checkout
+  isUpgrading.value = true
+  upgradingPlan.value = planId
+  try {
+    await startCheckout(planId)
   } catch (err) {
     errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Starten des Checkouts'
   } finally {
     isUpgrading.value = false
     upgradingPlan.value = null
   }
+}
+
+const confirmPlanChange = async () => {
+  if (!pendingPlanChange.value) return
+
+  isUpgrading.value = true
+  upgradingPlan.value = pendingPlanChange.value
+  errorMessage.value = ''
+
+  try {
+    await changePlan(pendingPlanChange.value)
+    showConfirmation.value = false
+    prorationPreview.value = null
+    pendingPlanChange.value = null
+    if (window.$toast) {
+      window.$toast(t('subscription.planChanged'), 'success')
+    }
+    subscription.value = await fetchCurrentSubscription()
+  } catch (err) {
+    errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Wechsel des Plans'
+  } finally {
+    isUpgrading.value = false
+    upgradingPlan.value = null
+  }
+}
+
+const cancelConfirmation = () => {
+  showConfirmation.value = false
+  prorationPreview.value = null
+  pendingPlanChange.value = null
 }
 
 const loadData = async () => {
@@ -1304,6 +1434,165 @@ onMounted(() => {
 }
 
 /* ========================================
+   CONFIRMATION MODAL
+   ======================================== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--space-md);
+}
+
+.modal {
+  width: 100%;
+  max-width: 480px;
+  padding: var(--space-xl);
+  animation: modal-enter 0.2s var(--easing-zen);
+}
+
+.modal:hover {
+  transform: none;
+  box-shadow: var(--shadow-paper);
+}
+
+@keyframes modal-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--space-lg);
+}
+
+.modal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+}
+
+.modal-close {
+  padding: var(--space-xs);
+  background: transparent;
+  border: none;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+  transition: all var(--transition-base);
+}
+
+.modal-close:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-sumi);
+}
+
+.modal-body {
+  margin-bottom: var(--space-lg);
+}
+
+.plan-transition {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-md);
+  padding: var(--space-lg);
+  background: var(--color-washi-warm);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-lg);
+}
+
+.plan-transition-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.plan-transition-label {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wider);
+}
+
+.plan-transition-name {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.plan-transition-name.highlight {
+  color: var(--color-ai);
+}
+
+.plan-transition-arrow {
+  color: var(--color-text-ghost);
+  flex-shrink: 0;
+}
+
+.proration-details {
+  background: var(--color-washi-warm);
+  border-radius: var(--radius-md);
+  padding: var(--space-md) var(--space-lg);
+  margin-bottom: var(--space-lg);
+}
+
+.proration-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-sm) 0;
+}
+
+.proration-label {
+  font-size: 0.9375rem;
+  color: var(--color-text-secondary);
+}
+
+.proration-value {
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.proration-divider {
+  height: 1px;
+  background: var(--color-border-light);
+}
+
+.proration-explanation {
+  margin-bottom: var(--space-md);
+}
+
+.proration-explanation p {
+  font-size: 0.875rem;
+  color: var(--color-text-tertiary);
+  line-height: var(--leading-normal);
+  margin: 0;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-md);
+}
+
+/* ========================================
    RESPONSIVE
    ======================================== */
 @media (max-width: 768px) {
@@ -1353,6 +1642,33 @@ onMounted(() => {
 
   .usage-limit {
     font-size: 1.5rem;
+  }
+
+  .modal {
+    max-width: 100%;
+    padding: var(--space-lg);
+  }
+
+  .modal-body {
+    max-height: 60vh;
+    overflow-y: auto;
+  }
+
+  .plan-transition {
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .plan-transition-arrow {
+    transform: rotate(90deg);
+  }
+
+  .modal-actions {
+    flex-direction: column-reverse;
+  }
+
+  .modal-actions .zen-btn {
+    width: 100%;
   }
 }
 </style>
