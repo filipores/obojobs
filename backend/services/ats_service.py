@@ -85,6 +85,7 @@ class ATSService:
                 if attempt < retry_count - 1:
                     continue
                 raise Exception(f"ATS analysis failed after {retry_count} attempts: {str(e)}") from e
+        return {}
 
     def _create_analysis_prompt(self, cv_text: str, job_description: str) -> str:
         """Create the prompt for ATS analysis."""

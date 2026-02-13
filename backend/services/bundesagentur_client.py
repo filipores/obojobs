@@ -5,9 +5,12 @@ Uses the free public API at rest.arbeitsagentur.de to search for jobs.
 API docs: https://jobsuche.api.bund.dev/
 """
 
+import logging
 from dataclasses import dataclass, field
 
 import requests
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -84,10 +87,10 @@ class BundesagenturClient:
             response.raise_for_status()
             data = response.json()
         except requests.RequestException as e:
-            print(f"Bundesagentur API error: {e}")
+            logger.error("Bundesagentur API error: %s", e)
             return [], 0
         except ValueError:
-            print("Bundesagentur API returned invalid JSON")
+            logger.error("Bundesagentur API returned invalid JSON")
             return [], 0
 
         total = data.get("maxErgebnisse", 0)
@@ -106,7 +109,7 @@ class BundesagenturClient:
             response.raise_for_status()
             data = response.json()
         except requests.RequestException as e:
-            print(f"Bundesagentur detail API error for {refnr}: {e}")
+            logger.error("Bundesagentur detail API error for %s: %s", refnr, e)
             return None
         except ValueError:
             return None

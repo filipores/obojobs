@@ -67,6 +67,7 @@ class ATSOptimizer:
                 if attempt < retry_count - 1:
                     continue
                 raise Exception(f"ATS optimization analysis failed after {retry_count} attempts: {str(e)}") from e
+        return {}
 
     def _create_analysis_prompt(self, cover_letter: str, job_description: str) -> str:
         """Create the prompt for ATS optimization analysis."""

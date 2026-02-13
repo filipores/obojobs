@@ -10,6 +10,7 @@ target-version = "py311"
 # Exclude directories
 exclude = [
     "migrations/",
+    "migrations_legacy/",
     "__pycache__/",
     "venv/",
     ".venv/",
@@ -45,6 +46,11 @@ ignore = [
 [lint.per-file-ignores]
 # Tests may use print for debugging and have simpler control flow
 "tests/**" = ["T20", "SIM"]
+# Standalone test scripts use print for output
+"test_*.py" = ["T20", "I", "E741"]
+# Startup banner prints are intentional
+"app.py" = ["T20"]
+"config.py" = ["T20"]
 
 [lint.isort]
 # Combine as_ imports

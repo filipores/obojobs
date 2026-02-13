@@ -5,6 +5,7 @@ Provides translation functionality using JSON locale files.
 Supports German (default) and English.
 """
 
+import contextlib
 import json
 import os
 from functools import lru_cache
@@ -107,18 +108,15 @@ def t(key: str, **kwargs: Any) -> str:
                     else:
                         return key  # Return key as fallback
                 break
-            else:
-                return key  # Return key as fallback
+            return key  # Return key as fallback
 
     if not isinstance(value, str):
         return key
 
     # Interpolate variables (e.g., {minutes})
     if kwargs:
-        try:
+        with contextlib.suppress(KeyError):
             value = value.format(**kwargs)
-        except KeyError:
-            pass  # Return string without interpolation if key missing
 
     return value
 

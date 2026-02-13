@@ -64,6 +64,7 @@ class RequirementAnalyzer:
                 else:
                     logger.error("Requirement-Analyse fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
                     return []
+        return []
 
     def _create_extraction_prompt(self, job_text: str) -> str:
         """Create the prompt for requirement extraction."""

@@ -4,6 +4,7 @@ ATSAnalysis Model.
 Stores ATS analysis results for caching and history functionality.
 """
 
+import contextlib
 import hashlib
 from datetime import datetime
 
@@ -37,10 +38,8 @@ class ATSAnalysis(db.Model):
         import json
 
         result = {}
-        try:
+        with contextlib.suppress(json.JSONDecodeError, TypeError):
             result = json.loads(self.result_json)
-        except (json.JSONDecodeError, TypeError):
-            pass
 
         return {
             "id": self.id,
@@ -57,10 +56,8 @@ class ATSAnalysis(db.Model):
         import json
 
         result = {}
-        try:
+        with contextlib.suppress(json.JSONDecodeError, TypeError):
             result = json.loads(self.result_json)
-        except (json.JSONDecodeError, TypeError):
-            pass
 
         # Extract matched/missing counts for summary
         matched_count = len(result.get("matched_keywords", []))

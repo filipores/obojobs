@@ -44,7 +44,7 @@ def read_text_file(file_path: str) -> str:
 
 
 def is_url(path: str) -> bool:
-    return path.startswith("http://") or path.startswith("https://")
+    return path.startswith(("http://", "https://"))
 
 
 def read_document(file_path: str, return_links: bool = False) -> str | dict:
@@ -64,19 +64,17 @@ def read_document(file_path: str, return_links: bool = False) -> str | dict:
 
         if return_links:
             return result
-        else:
-            text: str = result["text"]
-            return text
-    elif file_path.lower().endswith(".pdf"):
+        text: str = result["text"]
+        return text
+    if file_path.lower().endswith(".pdf"):
         text = extract_text_from_pdf(file_path)
         if return_links:
             return {"text": text, "all_links": [], "email_links": [], "application_links": []}
         return text
-    else:
-        text = read_text_file(file_path)
-        if return_links:
-            return {"text": text, "all_links": [], "email_links": [], "application_links": []}
-        return text
+    text = read_text_file(file_path)
+    if return_links:
+        return {"text": text, "all_links": [], "email_links": [], "application_links": []}
+    return text
 
 
 def _is_header_line(line: str) -> bool:

@@ -58,6 +58,7 @@ class ProfileExtractor:
                 else:
                     logger.error("Profil-Extraktion fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
                     return dict.fromkeys(self.PROFILE_FIELDS)
+        return dict.fromkeys(self.PROFILE_FIELDS)
 
     def _create_extraction_prompt(self, cv_text: str) -> str:
         """Create the prompt for profile data extraction."""
