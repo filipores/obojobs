@@ -1,5 +1,6 @@
 import logging
 
+import stripe
 from flask import Blueprint, Response, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 
@@ -216,6 +217,104 @@ def create_portal_session() -> tuple[Response, int]:
     except Exception as e:
         logger.error(f"Failed to create portal session: {e}")
         return jsonify({"success": False, "error": "Fehler beim Erstellen der Portal-Sitzung"}), 500
+
+
+@subscriptions_bp.route("/preview-change", methods=["POST"])
+@jwt_required()
+def preview_change() -> tuple[Response, int]:
+    """Preview proration costs before changing subscription plan."""
+    if not config.is_stripe_enabled():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Zahlungssystem wird eingerichtet",
+                "payments_available": False,
+            }
+        ), 503
+
+    data = request.json or {}
+    new_plan = data.get("plan")
+
+    # Validate plan
+    if new_plan not in ["basic", "pro"]:
+        return jsonify({"success": False, "error": "Ungültiger Plan. Muss 'basic' oder 'pro' sein."}), 400
+
+    # Get current user
+    user_id = get_jwt_identity()
+    user = subscription_data_service.get_user(user_id)
+    if not user:
+        return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
+
+    # Check existing subscription
+    subscription = subscription_data_service.get_subscription_by_user(user.id)
+    if not subscription or not subscription.stripe_subscription_id:
+        return jsonify(
+            {"success": False, "error": "Kein aktives Abonnement vorhanden. Bitte zuerst ein Abo abschließen."}
+        ), 400
+
+    # Check if same plan
+    current_plan = subscription.plan.value if subscription.plan else "free"
+    if current_plan == new_plan:
+        return jsonify({"success": False, "error": "Sie haben bereits diesen Plan."}), 400
+
+    # Get new price ID
+    plan_data = SUBSCRIPTION_PLANS.get(new_plan)
+    if not plan_data or not plan_data.get("stripe_price_id"):
+        return jsonify({"success": False, "error": "Plan nicht konfiguriert"}), 400
+
+    new_price_id = plan_data["stripe_price_id"]
+
+    # Determine if upgrade or downgrade
+    current_order = PLAN_ORDER.get(current_plan, 0)
+    new_order = PLAN_ORDER.get(new_plan, 0)
+    is_upgrade = new_order > current_order
+
+    try:
+        stripe_service = StripeService()
+
+        # Retrieve the current subscription to get the item ID
+        stripe_sub = stripe_service.get_subscription(subscription.stripe_subscription_id)
+
+        # Use Stripe's upcoming invoice API to preview proration
+        upcoming_invoice = stripe.Invoice.upcoming(
+            customer=stripe_sub["customer"],
+            subscription=subscription.stripe_subscription_id,
+            subscription_items=[
+                {
+                    "id": stripe_sub["items"]["data"][0]["id"],
+                    "price": new_price_id,
+                }
+            ],
+            subscription_proration_behavior="create_prorations",
+        )
+
+        # Calculate proration from invoice line items
+        proration_amount = 0
+        for line in upcoming_invoice["lines"]["data"]:
+            if line.get("proration"):
+                proration_amount += line["amount"]
+
+        # Convert from cents to euros
+        immediate_charge = max(0, proration_amount / 100) if is_upgrade else 0
+        proration_display = proration_amount / 100
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "immediate_charge": round(immediate_charge, 2),
+                    "proration_amount": round(proration_display, 2),
+                    "next_billing_date": upcoming_invoice["period_end"],
+                    "is_upgrade": is_upgrade,
+                    "new_plan_name": plan_data["name"],
+                    "new_plan_price": plan_data["price_formatted"],
+                },
+            }
+        ), 200
+
+    except Exception as e:
+        logger.error(f"Failed to preview plan change for user {user.id}: {e}")
+        return jsonify({"success": False, "error": "Fehler bei der Vorschau des Planwechsels"}), 500
 
 
 @subscriptions_bp.route("/change-plan", methods=["POST"])
