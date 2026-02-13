@@ -49,6 +49,24 @@ def get_plan_from_price_id(price_id: str) -> SubscriptionPlan:
     return price_to_plan.get(price_id, SubscriptionPlan.free)
 
 
+def _extract_period(subscription_data: dict[str, Any]) -> tuple[datetime, datetime]:
+    """Extract current_period_start/end from Stripe subscription data.
+
+    In Stripe API v14+, these fields moved from the top-level subscription
+    object to subscription items. Try top-level first, fall back to items.
+    """
+    start_ts = subscription_data.get("current_period_start")
+    end_ts = subscription_data.get("current_period_end")
+
+    if not start_ts or not end_ts:
+        items = subscription_data.get("items", {}).get("data", [])
+        if items:
+            start_ts = start_ts or items[0].get("current_period_start", 0)
+            end_ts = end_ts or items[0].get("current_period_end", 0)
+
+    return datetime.fromtimestamp(start_ts or 0), datetime.fromtimestamp(end_ts or 0)
+
+
 def map_stripe_status(stripe_status: str) -> SubscriptionStatus:
     """Map Stripe subscription status string to SubscriptionStatus enum."""
     status_map = {
@@ -70,8 +88,7 @@ def upsert_subscription(
     price_id = _extract_price_id(subscription_data)
     plan = get_plan_from_price_id(price_id) if price_id else SubscriptionPlan.basic
     status = map_stripe_status(subscription_data.get("status", "active"))
-    period_start = datetime.fromtimestamp(subscription_data.get("current_period_start", 0))
-    period_end = datetime.fromtimestamp(subscription_data.get("current_period_end", 0))
+    period_start, period_end = _extract_period(subscription_data)
 
     subscription = Subscription.query.filter_by(user_id=user.id).first()
 
@@ -105,8 +122,9 @@ def update_subscription_from_stripe(subscription: Subscription, subscription_dat
         subscription.plan = get_plan_from_price_id(price_id)
 
     subscription.status = map_stripe_status(subscription_data.get("status", "active"))
-    subscription.current_period_start = datetime.fromtimestamp(subscription_data.get("current_period_start", 0))
-    subscription.current_period_end = datetime.fromtimestamp(subscription_data.get("current_period_end", 0))
+    period_start, period_end = _extract_period(subscription_data)
+    subscription.current_period_start = period_start
+    subscription.current_period_end = period_end
     subscription.cancel_at_period_end = subscription_data.get("cancel_at_period_end", False)
 
     canceled_at_ts = subscription_data.get("canceled_at")

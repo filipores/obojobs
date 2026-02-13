@@ -3,14 +3,14 @@
     <div class="container">
       <!-- Header Section -->
       <section class="page-header animate-fade-up">
-        <h1>Abonnement</h1>
-        <p class="page-subtitle">Verwalten Sie Ihr Abo und Ihre Nutzung</p>
+        <h1>{{ t('subscription.pageTitle') }}</h1>
+        <p class="page-subtitle">{{ t('subscription.pageSubtitle') }}</p>
       </section>
 
       <!-- Loading State -->
       <div v-if="isLoading && !subscription" class="loading-state">
         <div class="loading-spinner"></div>
-        <p>Lade Abo-Details...</p>
+        <p>{{ t('subscription.loadingDetails') }}</p>
       </div>
 
       <!-- Content (visible after loading) -->
@@ -26,11 +26,11 @@
           </svg>
         </div>
         <div class="banner-content">
-          <strong>Ihre letzte Zahlung ist fehlgeschlagen.</strong>
-          <p>Bitte aktualisieren Sie Ihre Zahlungsmethode, um Ihr Abonnement fortzusetzen.</p>
+          <strong>{{ t('subscription.paymentFailedTitle') }}</strong>
+          <p>{{ t('subscription.paymentFailedMessage') }}</p>
         </div>
         <button @click="handleOpenPortal" class="zen-btn zen-btn-filled banner-action" :disabled="isPortalLoading">
-          {{ isPortalLoading ? t('common.loading') : 'Zahlungsmethode aktualisieren' }}
+          {{ isPortalLoading ? t('common.loading') : t('subscription.updatePaymentMethod') }}
         </button>
       </div>
 
@@ -53,17 +53,17 @@
               {{ getPlanDisplayName(subscription?.plan) }}
             </div>
             <span v-if="subscription?.status === 'active'" class="status-badge active">{{ t('subscription.active') }}</span>
-            <span v-else-if="subscription?.status === 'canceled'" class="status-badge canceled">Gekuendigt</span>
-            <span v-else-if="subscription?.status === 'past_due'" class="status-badge past-due">Zahlung ausstehend</span>
-            <span v-else-if="subscription?.status === 'trialing'" class="status-badge trialing">Testphase</span>
+            <span v-else-if="subscription?.status === 'canceled'" class="status-badge canceled">{{ t('subscription.statusCanceled') }}</span>
+            <span v-else-if="subscription?.status === 'past_due'" class="status-badge past-due">{{ t('subscription.statusPastDue') }}</span>
+            <span v-else-if="subscription?.status === 'trialing'" class="status-badge trialing">{{ t('subscription.statusTrialing') }}</span>
           </div>
 
           <div class="plan-details">
             <div class="detail-row">
               <span class="detail-label">{{ t('subscription.monthlyPrice') }}</span>
               <span class="detail-value">
-                {{ subscription?.plan_details?.price_formatted || '0 EUR/Monat' }}
-                <span v-if="subscription?.plan !== 'free'" class="mwst-hint">(inkl. 19% MwSt)</span>
+                {{ subscription?.plan_details?.price_formatted || t('subscription.freePriceFormatted') }}
+                <span v-if="subscription?.plan !== 'free'" class="mwst-hint">{{ t('subscription.includingVat') }}</span>
               </span>
             </div>
             <div class="detail-divider"></div>
@@ -132,8 +132,8 @@
               <div class="progress-fill" :style="{ width: usagePercentage + '%' }"></div>
             </div>
             <div class="progress-info">
-              <span>{{ subscription.usage?.remaining || 0 }} verbleibend</span>
-              <span>{{ usagePercentage }}% genutzt</span>
+              <span>{{ subscription.usage?.remaining || 0 }} {{ t('subscription.remaining') }}</span>
+              <span>{{ usagePercentage }}% {{ t('subscription.used') }}</span>
             </div>
           </div>
 
@@ -211,7 +211,7 @@
                 :disabled="isUpgrading || !paymentsAvailable"
               >
                 <span v-if="upgradingPlan === 'basic'" class="btn-spinner"></span>
-                {{ upgradingPlan === 'basic' ? t('common.loading') : 'Basic - 9,99 EUR/Monat (inkl. MwSt)' }}
+                {{ upgradingPlan === 'basic' ? t('common.loading') : `Basic - 9,99 ${t('subscription.perMonth')} ${t('subscription.includingVatShort')}` }}
               </button>
               <button
                 @click="handleUpgrade('pro')"
@@ -220,7 +220,7 @@
                 :disabled="isUpgrading || !paymentsAvailable"
               >
                 <span v-if="upgradingPlan === 'pro'" class="btn-spinner"></span>
-                {{ upgradingPlan === 'pro' ? t('common.loading') : 'Pro - 19,99 EUR/Monat (inkl. MwSt)' }}
+                {{ upgradingPlan === 'pro' ? t('common.loading') : `Pro - 19,99 ${t('subscription.perMonth')} ${t('subscription.includingVatShort')}` }}
               </button>
             </div>
           </div>
@@ -254,12 +254,12 @@
                   :class="{ 'current-plan': plan.plan_id === subscription.plan, 'recommended-plan': plan.plan_id === 'pro' }"
                 >
                   <div class="plan-header-cell">
-                    <span v-if="plan.plan_id === subscription.plan" class="table-badge current">Aktuell</span>
-                    <span v-else-if="plan.plan_id === 'pro'" class="table-badge recommended">Empfohlen</span>
+                    <span v-if="plan.plan_id === subscription.plan" class="table-badge current">{{ t('subscription.badgeCurrent') }}</span>
+                    <span v-else-if="plan.plan_id === 'pro'" class="table-badge recommended">{{ t('subscription.badgeRecommended') }}</span>
                     <span class="plan-name">{{ plan.name }}</span>
                     <span class="plan-price-cell">
-                      {{ plan.price === 0 ? 'Kostenlos' : plan.price.toFixed(2).replace('.', ',') + ' EUR/Monat' }}
-                      <span v-if="plan.price > 0" class="mwst-hint">(inkl. MwSt)</span>
+                      {{ plan.price === 0 ? t('subscription.freeLabel') : plan.price.toFixed(2).replace('.', ',') + ' ' + t('subscription.perMonth') }}
+                      <span v-if="plan.price > 0" class="mwst-hint">{{ t('subscription.includingVatShort') }}</span>
                     </span>
                   </div>
                 </th>
@@ -267,7 +267,7 @@
             </thead>
             <tbody>
               <tr>
-                <td class="feature-name">Bewerbungen pro Monat</td>
+                <td class="feature-name">{{ t('subscription.applicationsPerMonth') }}</td>
                 <td
                   v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
@@ -279,7 +279,7 @@
                 </td>
               </tr>
               <tr>
-                <td class="feature-name">AI-Bewerbungsgenerator</td>
+                <td class="feature-name">{{ t('subscription.aiGenerator') }}</td>
                 <td
                   v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
@@ -291,7 +291,7 @@
                 </td>
               </tr>
               <tr>
-                <td class="feature-name">Template-Verwaltung</td>
+                <td class="feature-name">{{ t('subscription.templateManagement') }}</td>
                 <td
                   v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
@@ -303,7 +303,7 @@
                 </td>
               </tr>
               <tr>
-                <td class="feature-name">ATS-Analyse</td>
+                <td class="feature-name">{{ t('subscription.atsAnalysis') }}</td>
                 <td
                   v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
@@ -315,20 +315,20 @@
                 </td>
               </tr>
               <tr>
-                <td class="feature-name">Email-Vorschlaege</td>
+                <td class="feature-name">{{ t('subscription.emailSuggestions') }}</td>
                 <td
                   v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
                   :class="{ 'current-plan': plan.plan_id === subscription.plan }"
                 >
-                  <span v-if="plan.plan_id === 'free'" class="feature-limited">Begrenzt</span>
+                  <span v-if="plan.plan_id === 'free'" class="feature-limited">{{ t('subscription.emailSuggestionsLimited') }}</span>
                   <svg v-else class="check-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
                     <polyline points="20 6 9 17 4 12"/>
                   </svg>
                 </td>
               </tr>
               <tr>
-                <td class="feature-name">Gehalts-Coach</td>
+                <td class="feature-name">{{ t('subscription.salaryCoach') }}</td>
                 <td
                   v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
@@ -341,7 +341,7 @@
                 </td>
               </tr>
               <tr>
-                <td class="feature-name">Prioritaets-Support</td>
+                <td class="feature-name">{{ t('subscription.prioritySupport') }}</td>
                 <td
                   v-for="plan in getAvailablePlans"
                   :key="plan.plan_id"
@@ -395,18 +395,18 @@
             class="plan-card zen-card"
             :class="{ 'current': plan.plan_id === subscription.plan, 'recommended': plan.plan_id === 'pro' }"
           >
-            <div v-if="plan.plan_id === 'pro' && plan.plan_id !== subscription.plan" class="recommended-badge">Empfohlen</div>
+            <div v-if="plan.plan_id === 'pro' && plan.plan_id !== subscription.plan" class="recommended-badge">{{ t('subscription.badgeRecommended') }}</div>
             <div v-if="plan.plan_id === subscription.plan" class="current-badge">{{ t('subscription.currentPlan') }}</div>
 
             <h3>{{ plan.name }}</h3>
             <div class="plan-price">
-              <span class="price-amount">{{ plan.price === 0 ? 'Kostenlos' : plan.price.toFixed(2).replace('.', ',') + ' EUR' }}</span>
-              <span v-if="plan.price > 0" class="price-period">/ Monat</span>
-              <span v-if="plan.price > 0" class="mwst-hint">(inkl. MwSt)</span>
+              <span class="price-amount">{{ plan.price === 0 ? t('subscription.freeLabel') : plan.price.toFixed(2).replace('.', ',') + ' EUR' }}</span>
+              <span v-if="plan.price > 0" class="price-period">/ {{ t('pricing.basic.period') }}</span>
+              <span v-if="plan.price > 0" class="mwst-hint">{{ t('subscription.includingVatShort') }}</span>
             </div>
 
             <div class="plan-limit-badge">
-              {{ getApplicationLimit(plan.plan_id) }} Bewerbungen/Monat
+              {{ getApplicationLimit(plan.plan_id) }} {{ t('subscription.applicationsPerMonthShort') }}
             </div>
 
             <ul class="plan-features-list">
@@ -452,14 +452,14 @@
             </svg>
           </div>
           <div>
-            <h2>Abonnement kuendigen</h2>
-            <p class="section-description">Sie koennen Ihr Abonnement jederzeit kuendigen. Der Zugriff bleibt bis zum Ende des aktuellen Abrechnungszeitraums bestehen.</p>
+            <h2>{{ t('subscription.cancelTitle') }}</h2>
+            <p class="section-description">{{ t('subscription.cancelDescription') }}</p>
           </div>
         </div>
 
         <div class="settings-card zen-card cancel-card">
           <button @click="showCancelModal = true" class="zen-btn zen-btn-danger">
-            Abonnement kuendigen
+            {{ t('subscription.cancelButton') }}
           </button>
         </div>
       </section>
@@ -468,19 +468,16 @@
       <Teleport to="body">
         <div v-if="showCancelModal" class="modal-overlay" @click.self="showCancelModal = false">
           <div class="modal-content zen-card cancel-modal">
-            <h3>Abonnement wirklich kuendigen?</h3>
-            <p class="modal-description">
-              Ihr Zugriff auf den <strong>{{ getPlanDisplayName(subscription?.plan) }}</strong>-Plan bleibt bis zum
-              <strong>{{ formatDate(subscription?.next_billing_date) }}</strong> bestehen.
-              Danach wird Ihr Konto auf den kostenlosen Plan zurueckgestuft.
+            <h3>{{ t('subscription.confirmCancelTitle') }}</h3>
+            <p class="modal-description" v-html="t('subscription.confirmCancelMessage', { plan: getPlanDisplayName(subscription?.plan), date: formatDate(subscription?.next_billing_date) })">
             </p>
             <div class="modal-actions">
               <button @click="showCancelModal = false" class="zen-btn zen-btn-ghost" :disabled="isCanceling">
-                Abbrechen
+                {{ t('common.cancel') }}
               </button>
               <button @click="handleCancelSubscription" class="zen-btn zen-btn-danger" :disabled="isCanceling">
                 <span v-if="isCanceling" class="btn-spinner"></span>
-                {{ isCanceling ? 'Wird gekuendigt...' : 'Jetzt kuendigen' }}
+                {{ isCanceling ? t('subscription.canceling') : t('subscription.cancelNow') }}
               </button>
             </div>
           </div>
@@ -500,8 +497,8 @@
       <div v-if="showConfirmation" class="modal-overlay" @click.self="cancelConfirmation">
         <div class="modal zen-card" role="dialog" aria-modal="true" aria-labelledby="confirm-title">
           <div class="modal-header">
-            <h3 id="confirm-title">Planwechsel bestaetigen</h3>
-            <button @click="cancelConfirmation" class="modal-close" aria-label="Schliessen">
+            <h3 id="confirm-title">{{ t('subscription.confirmChangeTitle') }}</h3>
+            <button @click="cancelConfirmation" class="modal-close" :aria-label="t('common.close')">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <line x1="18" y1="6" x2="6" y2="18"/>
                 <line x1="6" y1="6" x2="18" y2="18"/>
@@ -513,7 +510,7 @@
             <!-- Plan transition -->
             <div class="plan-transition">
               <div class="plan-transition-item">
-                <span class="plan-transition-label">Aktueller Plan</span>
+                <span class="plan-transition-label">{{ t('subscription.currentPlanLabel') }}</span>
                 <span class="plan-transition-name">{{ getPlanDisplayName(subscription?.plan) }}</span>
               </div>
               <div class="plan-transition-arrow">
@@ -523,7 +520,7 @@
                 </svg>
               </div>
               <div class="plan-transition-item">
-                <span class="plan-transition-label">Neuer Plan</span>
+                <span class="plan-transition-label">{{ t('subscription.newPlanLabel') }}</span>
                 <span class="plan-transition-name highlight">{{ getPlanDisplayName(pendingPlanChange) }}</span>
               </div>
             </div>
@@ -531,34 +528,34 @@
             <!-- Proration details -->
             <div v-if="prorationPreview" class="proration-details">
               <div class="proration-row">
-                <span class="proration-label">Sofort faellig</span>
-                <span class="proration-value">{{ prorationPreview.immediate_amount_formatted || (prorationPreview.immediate_amount / 100).toFixed(2).replace('.', ',') + ' EUR' }}</span>
+                <span class="proration-label">{{ t('subscription.immediateCharge') }}</span>
+                <span class="proration-value">{{ formatEUR(prorationPreview.immediate_charge) }}</span>
               </div>
               <div class="proration-divider"></div>
               <div class="proration-row">
-                <span class="proration-label">Naechste Abrechnung</span>
-                <span class="proration-value">{{ formatDate(prorationPreview.next_billing_date) }}</span>
+                <span class="proration-label">{{ t('subscription.nextBillingDate') }}</span>
+                <span class="proration-value">{{ formatTimestamp(prorationPreview.next_billing_date) }}</span>
               </div>
-              <div v-if="prorationPreview.next_amount" class="proration-row">
-                <span class="proration-label">Naechster Betrag</span>
-                <span class="proration-value">{{ prorationPreview.next_amount_formatted || (prorationPreview.next_amount / 100).toFixed(2).replace('.', ',') + ' EUR' }}</span>
+              <div class="proration-row">
+                <span class="proration-label">{{ t('subscription.newPrice') }}</span>
+                <span class="proration-value">{{ prorationPreview.new_plan_price }}</span>
               </div>
             </div>
 
             <!-- Explanation -->
             <div class="proration-explanation">
               <p v-if="isUpgradeDirection(pendingPlanChange)">
-                Sie werden sofort anteilig belastet. Der Betrag wird auf Basis der verbleibenden Tage im aktuellen Abrechnungszeitraum berechnet.
+                {{ t('subscription.upgradeExplanation') }}
               </p>
               <p v-else>
-                Sie erhalten eine Gutschrift fuer die verbleibende Zeit Ihres aktuellen Plans. Diese wird mit der naechsten Rechnung verrechnet.
+                {{ t('subscription.downgradeExplanation') }}
               </p>
             </div>
           </div>
 
           <div class="modal-actions">
             <button @click="cancelConfirmation" class="zen-btn zen-btn-ghost">
-              Abbrechen
+              {{ t('common.cancel') }}
             </button>
             <button
               @click="confirmPlanChange"
@@ -567,7 +564,7 @@
               :disabled="isUpgrading"
             >
               <span v-if="isUpgrading" class="btn-spinner"></span>
-              {{ isUpgrading ? 'Wird geaendert...' : 'Bestaetigen' }}
+              {{ isUpgrading ? t('subscription.changingPlan') : t('subscription.confirmButton') }}
             </button>
           </div>
         </div>
@@ -600,46 +597,46 @@ const isCanceling = ref(false)
 
 const PLAN_ORDER = { free: 0, basic: 1, pro: 2 }
 
-const FALLBACK_PLANS = [
+const fallbackPlans = computed(() => [
   {
     plan_id: 'free',
     name: 'Free',
     price: 0,
-    price_formatted: '€0/Monat',
+    price_formatted: t('subscription.freePriceFormatted'),
     features: [
-      '3 Bewerbungen pro Monat',
-      'Basis-Templates',
-      'PDF Export'
+      `3 ${t('subscription.applicationsPerMonth')}`,
+      t('subscription.basicTemplates'),
+      t('subscription.pdfExport')
     ]
   },
   {
     plan_id: 'basic',
     name: 'Basic',
     price: 9.99,
-    price_formatted: '€9,99/Monat',
+    price_formatted: t('subscription.basicPriceFormatted'),
     features: [
-      '20 Bewerbungen pro Monat',
-      'Alle Templates',
-      'PDF Export',
-      'ATS-Optimierung',
-      'E-Mail Support'
+      `20 ${t('subscription.applicationsPerMonth')}`,
+      t('subscription.allTemplates'),
+      t('subscription.pdfExport'),
+      t('subscription.atsOptimization'),
+      t('subscription.emailSupport')
     ]
   },
   {
     plan_id: 'pro',
     name: 'Pro',
     price: 19.99,
-    price_formatted: '€19,99/Monat',
+    price_formatted: t('subscription.proPriceFormatted'),
     features: [
-      'Unbegrenzte Bewerbungen',
-      'Alle Templates',
-      'PDF Export',
-      'ATS-Optimierung',
-      'Prioritäts-Support',
-      'Erweiterte Analyse'
+      t('subscription.unlimitedApplications'),
+      t('subscription.allTemplates'),
+      t('subscription.pdfExport'),
+      t('subscription.atsOptimization'),
+      t('subscription.prioritySupport'),
+      t('subscription.advancedAnalysis')
     ]
   }
-]
+])
 
 const usagePercentage = computed(() => {
   if (!subscription.value?.usage || subscription.value.usage.unlimited) return 0
@@ -660,7 +657,7 @@ const getCurrentPlanFeatures = computed(() => {
 })
 
 const getAvailablePlans = computed(() => {
-  return availablePlans.value?.length > 0 ? availablePlans.value : FALLBACK_PLANS
+  return availablePlans.value?.length > 0 ? availablePlans.value : fallbackPlans.value
 })
 
 const getPlanDisplayName = (plan) => {
@@ -681,12 +678,26 @@ const formatDate = (dateString) => {
   })
 }
 
+const formatTimestamp = (ts) => {
+  if (!ts) return null
+  return new Date(ts * 1000).toLocaleDateString(getFullLocale(), {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+const formatEUR = (amount) => {
+  if (amount == null || isNaN(amount)) return '0,00 EUR'
+  return amount.toFixed(2).replace('.', ',') + ' EUR'
+}
+
 const getUpgradeButtonText = (planId) => {
-  if (!subscription.value) return 'Upgraden'
+  if (!subscription.value) return t('subscription.upgrade')
   const targetOrder = PLAN_ORDER[planId] || 0
   const currentOrder = PLAN_ORDER[subscription.value.plan] || 0
 
-  if (targetOrder > currentOrder) return 'Upgraden'
+  if (targetOrder > currentOrder) return t('subscription.upgrade')
   if (targetOrder < currentOrder) return t('subscription.downgrade')
   return t('subscription.currentPlan')
 }
@@ -732,7 +743,7 @@ const handleUpgrade = async (planId) => {
       pendingPlanChange.value = planId
       showConfirmation.value = true
     } catch (err) {
-      errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Laden der Vorschau'
+      errorMessage.value = err.response?.data?.error || err.message || t('subscription.previewError')
     } finally {
       isPreviewLoading.value = false
       upgradingPlan.value = null
@@ -746,7 +757,7 @@ const handleUpgrade = async (planId) => {
   try {
     await startCheckout(planId)
   } catch (err) {
-    errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Starten des Checkouts'
+    errorMessage.value = err.response?.data?.error || err.message || t('subscription.checkoutError')
   } finally {
     isUpgrading.value = false
     upgradingPlan.value = null
@@ -770,7 +781,7 @@ const confirmPlanChange = async () => {
     }
     subscription.value = await fetchCurrentSubscription()
   } catch (err) {
-    errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Wechsel des Plans'
+    errorMessage.value = err.response?.data?.error || err.message || t('subscription.planChangeError')
   } finally {
     isUpgrading.value = false
     upgradingPlan.value = null
@@ -798,11 +809,11 @@ const handleCancelSubscription = async () => {
     await cancelSubscription()
     showCancelModal.value = false
     if (window.$toast) {
-      window.$toast('Abonnement wurde gekuendigt', 'success')
+      window.$toast(t('subscription.cancelSuccess'), 'success')
     }
     subscription.value = await fetchCurrentSubscription()
   } catch (err) {
-    errorMessage.value = err.response?.data?.error || err.message || 'Fehler beim Kuendigen des Abonnements'
+    errorMessage.value = err.response?.data?.error || err.message || t('subscription.cancelError')
   } finally {
     isCanceling.value = false
   }
@@ -817,7 +828,7 @@ const loadData = async () => {
     subscription.value = subscriptionData
     availablePlans.value = plansData
   } catch (err) {
-    errorMessage.value = err.message || 'Fehler beim Laden der Daten'
+    errorMessage.value = err.message || t('subscription.loadError')
   }
 }
 

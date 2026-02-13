@@ -104,7 +104,7 @@ class AuthService:
             user.locked_until = None
             db.session.commit()
 
-        # Create tokens (identity must be a string)
+        # Create tokens (JWT spec requires string subject)
         access_token = create_access_token(identity=str(user.id))
         refresh_token = create_refresh_token(identity=str(user.id))
 
