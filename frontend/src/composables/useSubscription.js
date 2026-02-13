@@ -115,6 +115,25 @@ async function changePlan(plan) {
   }
 }
 
+async function previewPlanChange(plan) {
+  validatePaidPlan(plan)
+  isLoading.value = true
+  error.value = null
+
+  try {
+    const { data } = await api.post('/subscriptions/preview-change', { plan })
+    if (data.success) {
+      return data.data
+    }
+    throw new Error(data.error || 'Failed to preview plan change')
+  } catch (err) {
+    error.value = extractErrorMessage(err)
+    throw err
+  } finally {
+    isLoading.value = false
+  }
+}
+
 async function openBillingPortal() {
   isLoading.value = true
   error.value = null
@@ -150,6 +169,7 @@ export function useSubscription() {
     fetchPlans,
     startCheckout,
     changePlan,
+    previewPlanChange,
     fetchCurrentSubscription,
     openBillingPortal
   }
