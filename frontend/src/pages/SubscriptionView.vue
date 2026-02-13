@@ -560,7 +560,7 @@ const handleUpgrade = async (planId) => {
   errorMessage.value = ''
 
   try {
-    if (subscription.value?.has_stripe_customer && subscription.value?.status === 'active') {
+    if (subscription.value?.has_stripe_customer && subscription.value?.plan !== 'free' && subscription.value?.status === 'active') {
       await changePlan(planId)
       if (window.$toast) {
         window.$toast(t('subscription.planChanged'), 'success')
