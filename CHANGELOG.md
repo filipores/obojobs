@@ -1,3 +1,10 @@
+## [1.55.1](https://github.com/filipores/obojobs/compare/v1.55.0...v1.55.1) (2026-02-13)
+
+
+### Bug Fixes
+
+* **lint:** resolve all ruff linter errors breaking ci ([1b97bf7](https://github.com/filipores/obojobs/commit/1b97bf7dc398560f136f066c528047d6de7a0f58))
+
 # [1.55.0](https://github.com/filipores/obojobs/compare/v1.54.1...v1.55.0) (2026-02-13)
 
 
