@@ -299,6 +299,58 @@ def change_plan() -> tuple[Response, int]:
         return jsonify({"success": False, "error": "Fehler beim Planwechsel"}), 500
 
 
+@subscriptions_bp.route("/cancel", methods=["POST"])
+@jwt_required()
+def cancel_subscription() -> tuple[Response, int]:
+    """Cancel the current subscription at end of billing period (§312k BGB)."""
+    if not config.is_stripe_enabled():
+        return jsonify(
+            {
+                "success": False,
+                "error": "Zahlungssystem wird eingerichtet",
+                "payments_available": False,
+            }
+        ), 503
+
+    user_id = get_jwt_identity()
+    user = subscription_data_service.get_user(user_id)
+    if not user:
+        return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
+
+    subscription = subscription_data_service.get_subscription_by_user(user.id)
+    if not subscription or not subscription.stripe_subscription_id:
+        return jsonify({"success": False, "error": "Kein aktives Abonnement vorhanden."}), 400
+
+    if subscription.cancel_at_period_end:
+        return jsonify({"success": False, "error": "Abonnement wurde bereits gekündigt."}), 400
+
+    try:
+        stripe_service = StripeService()
+        stripe_service.cancel_subscription(subscription.stripe_subscription_id)
+
+        subscription_data_service.mark_subscription_canceled(subscription)
+
+        access_until = subscription.current_period_end.isoformat() if subscription.current_period_end else None
+        plan = subscription.plan.value if subscription.plan else "free"
+
+        logger.info(f"User {user.id} canceled subscription {subscription.stripe_subscription_id}")
+
+        return jsonify(
+            {
+                "success": True,
+                "data": {
+                    "message": "Abonnement wird zum Ende der Laufzeit gekündigt.",
+                    "access_until": access_until,
+                    "plan": plan,
+                },
+            }
+        ), 200
+
+    except Exception as e:
+        logger.error(f"Failed to cancel subscription for user {user.id}: {e}")
+        return jsonify({"success": False, "error": "Fehler beim Kündigen des Abonnements"}), 500
+
+
 @subscriptions_bp.route("/current", methods=["GET"])
 @jwt_required()
 def get_current_subscription() -> tuple[Response, int]:
