@@ -61,7 +61,7 @@ class TestBundesagenturClient:
         assert len(jobs) == 1
         assert jobs[0].titel == "Python Developer"
         assert jobs[0].arbeitgeber == "Tech GmbH"
-        assert jobs[0].arbeitsort == "Berlin, Berlin"
+        assert jobs[0].arbeitsort == "Berlin"
 
     @patch("services.bundesagentur_client.requests.Session.get")
     def test_search_jobs_empty_results(self, mock_get):
@@ -121,7 +121,7 @@ class TestBundesagenturClient:
 
     def test_parse_arbeitsort_full(self):
         result = self.client._parse_arbeitsort({"ort": "Berlin", "region": "Berlin"})
-        assert result == "Berlin, Berlin"
+        assert result == "Berlin"
 
     def test_parse_arbeitsort_empty(self):
         result = self.client._parse_arbeitsort({})

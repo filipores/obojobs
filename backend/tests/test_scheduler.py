@@ -5,17 +5,19 @@ from unittest.mock import MagicMock, patch
 
 
 class TestSchedulerInit:
-    def test_scheduler_disabled_in_testing(self):
+    @patch("services.scheduler.scheduler")
+    def test_scheduler_disabled_in_testing(self, mock_scheduler):
         os.environ["TESTING"] = "1"
         try:
-            from services.scheduler import init_scheduler, scheduler
+            from services.scheduler import init_scheduler
 
+            mock_scheduler.running = False
             app = MagicMock()
             app.config.get.return_value = False
 
             init_scheduler(app)
 
-            assert not scheduler.running
+            mock_scheduler.start.assert_not_called()
         finally:
             os.environ.pop("TESTING", None)
 
