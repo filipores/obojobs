@@ -134,6 +134,24 @@ async function previewPlanChange(plan) {
   }
 }
 
+async function cancelSubscription() {
+  isLoading.value = true
+  error.value = null
+
+  try {
+    const { data } = await api.post('/subscriptions/cancel')
+    if (data.success) {
+      return data.data
+    }
+    throw new Error(data.error || 'Failed to cancel subscription')
+  } catch (err) {
+    error.value = extractErrorMessage(err)
+    throw err
+  } finally {
+    isLoading.value = false
+  }
+}
+
 async function openBillingPortal() {
   isLoading.value = true
   error.value = null
@@ -170,6 +188,7 @@ export function useSubscription() {
     startCheckout,
     changePlan,
     previewPlanChange,
+    cancelSubscription,
     fetchCurrentSubscription,
     openBillingPortal
   }
