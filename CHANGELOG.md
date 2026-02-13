@@ -1,3 +1,10 @@
+# [1.55.0](https://github.com/filipores/obojobs/compare/v1.54.1...v1.55.0) (2026-02-13)
+
+
+### Features
+
+* **subscription:** add i18n, cancel flow, mwst display, and stripe period extraction ([d80e5ba](https://github.com/filipores/obojobs/commit/d80e5bafb8bf6519121e43c097fd9d715243cb71))
+
 ## [1.54.1](https://github.com/filipores/obojobs/compare/v1.54.0...v1.54.1) (2026-02-13)
 
 
