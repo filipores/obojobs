@@ -7,7 +7,6 @@
 
 import { ref, readonly } from 'vue'
 import api from '../api/client'
-import { useStripe } from './useStripe'
 
 const PAID_PLANS = ['basic', 'pro']
 
@@ -63,9 +62,8 @@ async function startCheckout(plan) {
       cancel_url: cancelUrl
     })
 
-    if (data.success && data.data.session_id) {
-      const { redirectToCheckout } = useStripe()
-      await redirectToCheckout(data.data.session_id)
+    if (data.success && data.data.checkout_url) {
+      window.location.href = data.data.checkout_url
     } else {
       throw new Error(data.error || 'Failed to create checkout session')
     }
