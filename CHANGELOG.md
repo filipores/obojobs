@@ -1,3 +1,10 @@
+## [1.55.4](https://github.com/filipores/obojobs/compare/v1.55.3...v1.55.4) (2026-02-14)
+
+
+### Bug Fixes
+
+* **jobs:** auto-search tailored jobs after cv upload, remove search modal ([0551ded](https://github.com/filipores/obojobs/commit/0551ded9544f23af59bf186f2a9fc7b5dbb21b2e))
+
 ## [1.55.3](https://github.com/filipores/obojobs/compare/v1.55.2...v1.55.3) (2026-02-14)
 
 
