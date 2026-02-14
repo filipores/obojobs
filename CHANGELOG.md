@@ -1,3 +1,10 @@
+## [1.55.2](https://github.com/filipores/obojobs/compare/v1.55.1...v1.55.2) (2026-02-14)
+
+
+### Bug Fixes
+
+* **ci:** lower frontend function coverage threshold to 60% ([7f6876f](https://github.com/filipores/obojobs/commit/7f6876f14bb50dd1770e28a40b3f6f36441f9380))
+
 ## [1.55.1](https://github.com/filipores/obojobs/compare/v1.55.0...v1.55.1) (2026-02-13)
 
 
