@@ -380,6 +380,11 @@ const upload = async (docType) => {
 
     await loadDocuments()
     skillsRefreshKey.value++
+
+    // Trigger auto-search for matching jobs after CV upload with skills
+    if (docType === 'lebenslauf' && data.skills_extracted > 0) {
+      api.post('/recommendations/search', {}).catch(() => {})
+    }
   } catch (e) {
     messages.value[docType] = e.response?.data?.error || 'Upload fehlgeschlagen'
     messageClass.value[docType] = 'error'

@@ -34,8 +34,8 @@
               <option value="remote">Remote</option>
             </select>
           </div>
-          <button @click="refresh" class="refresh-btn" :title="$t('jobDashboard.refresh')">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" :class="{ spinning: loading }">
+          <button @click="refresh" class="refresh-btn" :disabled="searching" :title="$t('jobDashboard.refresh')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" :class="{ spinning: loading || searching }">
               <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/>
               <path d="M21 3v5h-5"/>
               <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
@@ -99,8 +99,14 @@
               <line x1="12" y1="17" x2="12" y2="21"/>
             </svg>
           </div>
-          <h3>{{ $t('jobDashboard.noSuggestionsTitle') }}</h3>
-          <p>{{ $t('jobDashboard.noSuggestions') }}</p>
+          <h3 v-if="searching">Suche passende Jobs...</h3>
+          <template v-else>
+            <h3>{{ $t('jobDashboard.noSuggestionsTitle') }}</h3>
+            <p>{{ $t('jobDashboard.noSuggestions') }}</p>
+            <button @click="refresh" class="zen-btn zen-btn-ai">
+              Jetzt suchen
+            </button>
+          </template>
         </div>
       </div>
     </section>
@@ -216,16 +222,17 @@ const {
   hasMore,
   filters,
   hasSkills,
+  searching,
   loadSuggestions,
   loadMore,
   loadStats,
+  searchJobs,
   dismissSuggestion,
   markAsApplied
 } = useJobRecommendations()
 
-const refresh = () => {
-  loadSuggestions()
-  loadStats()
+const refresh = async () => {
+  await searchJobs()
 }
 
 const openJobUrl = (url) => {
@@ -252,7 +259,15 @@ const SOURCE_LABELS = {
 
 const getSourceLabel = (source) => SOURCE_LABELS[source] || source
 
-onMounted(refresh)
+onMounted(async () => {
+  await loadSuggestions()
+  await loadStats()
+
+  // Auto-search if no suggestions exist yet
+  if (filteredSuggestions.value.length === 0 && hasSkills.value) {
+    await searchJobs()
+  }
+})
 </script>
 
 <style scoped>

@@ -108,6 +108,21 @@ export function useJobRecommendations() {
     }
   }
 
+  const searching = ref(false)
+
+  const searchJobs = async () => {
+    searching.value = true
+    try {
+      await api.post('/recommendations/search', {})
+      await loadSuggestions()
+      await loadStats()
+    } catch (error) {
+      console.error('Failed to search jobs:', error)
+    } finally {
+      searching.value = false
+    }
+  }
+
   return {
     suggestions,
     filteredSuggestions,
@@ -117,9 +132,11 @@ export function useJobRecommendations() {
     hasMore,
     filters,
     hasSkills,
+    searching,
     loadSuggestions,
     loadMore,
     loadStats,
+    searchJobs,
     dismissSuggestion,
     markAsApplied
   }
