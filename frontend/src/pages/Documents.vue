@@ -140,20 +140,16 @@
                   </svg>
                 </div>
                 <label :for="'upload-lebenslauf'" class="upload-label">
-                  <span v-if="!files.lebenslauf" class="upload-text">
+                  <span v-if="uploading.lebenslauf" class="upload-filename">
+                    Wird hochgeladen...
+                  </span>
+                  <span v-else-if="!files.lebenslauf" class="upload-text">
                     <strong>PDF auswählen</strong> oder hierher ziehen
                   </span>
                   <span v-else class="upload-filename">
                     {{ files.lebenslauf.name }}
                   </span>
                 </label>
-                <button
-                  @click="upload('lebenslauf')"
-                  :disabled="!files.lebenslauf || uploading.lebenslauf"
-                  class="zen-btn zen-btn-ai zen-btn-sm"
-                >
-                  {{ uploading.lebenslauf ? 'Wird hochgeladen...' : 'Hochladen' }}
-                </button>
               </div>
 
               <div v-else class="uploaded-status">
@@ -224,20 +220,16 @@
                   </svg>
                 </div>
                 <label :for="'upload-arbeitszeugnis'" class="upload-label">
-                  <span v-if="!files.arbeitszeugnis" class="upload-text">
+                  <span v-if="uploading.arbeitszeugnis" class="upload-filename">
+                    Wird hochgeladen...
+                  </span>
+                  <span v-else-if="!files.arbeitszeugnis" class="upload-text">
                     <strong>PDF auswählen</strong> oder hierher ziehen
                   </span>
                   <span v-else class="upload-filename">
                     {{ files.arbeitszeugnis.name }}
                   </span>
                 </label>
-                <button
-                  @click="upload('arbeitszeugnis')"
-                  :disabled="!files.arbeitszeugnis || uploading.arbeitszeugnis"
-                  class="zen-btn zen-btn-ai zen-btn-sm"
-                >
-                  {{ uploading.arbeitszeugnis ? 'Wird hochgeladen...' : 'Hochladen' }}
-                </button>
               </div>
 
               <div v-else class="uploaded-status">
@@ -263,10 +255,10 @@
         <div class="success-banner zen-card zen-card-featured">
           <div class="success-content">
             <h3>Alle Pflicht-Dokumente hochgeladen</h3>
-            <p>Sie können jetzt Templates erstellen und Bewerbungen generieren.</p>
+            <p>Sie können jetzt personalisierte Bewerbungen generieren.</p>
           </div>
-          <router-link to="/templates" class="zen-btn zen-btn-filled">
-            Zu den Templates
+          <router-link to="/new-application" class="zen-btn zen-btn-filled">
+            Neue Bewerbung
           </router-link>
         </div>
       </section>
@@ -275,7 +267,7 @@
       <section id="skills" ref="skillsSection" class="skills-section animate-fade-up" style="animation-delay: 200ms;">
         <div class="ink-stroke"></div>
         <h2 class="section-title">Extrahierte Skills</h2>
-        <SkillsOverview />
+        <SkillsOverview :key="skillsRefreshKey" />
       </section>
     </div>
   </div>
@@ -303,6 +295,8 @@ const documents = ref({
   lebenslauf: null,
   arbeitszeugnis: null
 })
+
+const skillsRefreshKey = ref(0)
 
 const files = ref({
   lebenslauf: null,
@@ -343,6 +337,7 @@ const uploadProgress = computed(() => {
 const handleFile = (e, docType) => {
   files.value[docType] = e.target.files[0]
   messages.value[docType] = ''
+  upload(docType)
 }
 
 const handleDragOver = (e, docType) => {
@@ -359,6 +354,7 @@ const handleDrop = (e, docType) => {
   if (droppedFiles.length > 0 && droppedFiles[0].type === 'application/pdf') {
     files.value[docType] = droppedFiles[0]
     messages.value[docType] = ''
+    upload(docType)
   }
 }
 
@@ -383,6 +379,7 @@ const upload = async (docType) => {
     if (input) input.value = ''
 
     await loadDocuments()
+    skillsRefreshKey.value++
   } catch (e) {
     messages.value[docType] = e.response?.data?.error || 'Upload fehlgeschlagen'
     messageClass.value[docType] = 'error'
