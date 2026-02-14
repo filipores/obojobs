@@ -1,3 +1,10 @@
+## [1.55.3](https://github.com/filipores/obojobs/compare/v1.55.2...v1.55.3) (2026-02-14)
+
+
+### Bug Fixes
+
+* **documents:** auto-upload on file select, remove template references, refresh skills ([df73619](https://github.com/filipores/obojobs/commit/df73619d6ccadd4e7ed7dbc45432327f423026c5))
+
 ## [1.55.2](https://github.com/filipores/obojobs/compare/v1.55.1...v1.55.2) (2026-02-14)
 
 
