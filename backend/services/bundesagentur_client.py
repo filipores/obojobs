@@ -63,7 +63,7 @@ class BundesagenturClient:
         location: str = "",
         radius_km: int = 50,
         working_time: str = "",
-        published_since_days: int = 7,
+        published_since_days: int = 14,
         page: int = 1,
         size: int = 25,
     ) -> tuple[list[BundesagenturJob], int]:
@@ -101,7 +101,11 @@ class BundesagenturClient:
         return jobs, total
 
     def get_job_details(self, refnr: str) -> BundesagenturJob | None:
-        """Fetch full job details including description, or None if not found."""
+        """Fetch full job details including description, or None if not found.
+
+        NOTE: This endpoint currently returns 403 (deprecated by Bundesagentur).
+        Kept for backwards compatibility; callers should handle None gracefully.
+        """
         url = f"{self.BASE_URL}/{refnr}"
 
         try:

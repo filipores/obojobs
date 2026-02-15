@@ -1,6 +1,12 @@
 import { ref, computed } from 'vue'
 import api from '../api/client'
 
+const WORK_TYPE_MAP = {
+  vollzeit: 'vz',
+  teilzeit: 'tz',
+  remote: 'ho',
+}
+
 export function useJobRecommendations() {
   const suggestions = ref([])
   const stats = ref(null)
@@ -110,10 +116,14 @@ export function useJobRecommendations() {
 
   const searching = ref(false)
 
-  const searchJobs = async () => {
+  const searchJobs = async ({ location, workType, keywords } = {}) => {
     searching.value = true
     try {
-      await api.post('/recommendations/search', {})
+      const body = {}
+      if (location) body.location = location
+      if (workType) body.working_time = WORK_TYPE_MAP[workType] || workType
+      if (keywords) body.keywords = keywords
+      await api.post('/recommendations/search', body)
       await loadSuggestions()
       await loadStats()
     } catch (error) {

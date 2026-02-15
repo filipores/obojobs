@@ -232,7 +232,10 @@ const {
 } = useJobRecommendations()
 
 const refresh = async () => {
-  await searchJobs()
+  await searchJobs({
+    location: filters.value.location,
+    workType: filters.value.workType,
+  })
 }
 
 const openJobUrl = (url) => {
@@ -263,9 +266,8 @@ onMounted(async () => {
   await loadSuggestions()
   await loadStats()
 
-  // Auto-search if no suggestions exist yet
   if (filteredSuggestions.value.length === 0 && hasSkills.value) {
-    await searchJobs()
+    await refresh()
   }
 })
 </script>

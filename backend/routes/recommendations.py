@@ -124,8 +124,11 @@ def search_jobs(current_user: Any) -> Response:
     data = request.get_json() or {}
     location = data.get("location", "")
     working_time = data.get("working_time", "")
-    max_results = min(int(data.get("max_results", 10)), 25)
     keywords = data.get("keywords", "")
+    try:
+        max_results = min(int(data.get("max_results", 10)), 25)
+    except (ValueError, TypeError):
+        max_results = 10
     try:
         page = max(1, int(data.get("page", 1)))
     except (ValueError, TypeError):

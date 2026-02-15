@@ -2,7 +2,6 @@
 Job Recommender Service - Finds and recommends jobs based on user skills and profile.
 """
 
-import time
 from datetime import datetime, timedelta
 
 from models import JobRecommendation, UserSkill, db
@@ -46,7 +45,7 @@ class JobRecommender:
             return []
 
         # Prioritize technical skills and tools for search
-        priority_categories = ["technical", "tools", "certifications"]
+        priority_categories = ["technical", "tools", "certifications", "soft_skills"]
         keywords = []
 
         for category in priority_categories:
@@ -63,7 +62,7 @@ class JobRecommender:
             for skill in remaining[: (5 - len(keywords))]:
                 keywords.append(skill.skill_name)
 
-        return keywords[:5]  # Limit to 5 keywords
+        return keywords[:5]
 
     def find_jobs_for_user(self, user_id: int, location: str = "Deutschland", max_results: int = 20) -> list[dict]:
         """Search for jobs matching user's skill profile via Bundesagentur API."""
@@ -75,7 +74,7 @@ class JobRecommender:
         # Search per keyword individually (API uses AND logic)
         seen_refnrs = set()
         all_jobs = []
-        for keyword in keywords[:3]:
+        for keyword in keywords[:5]:
             jobs, _ = self.ba_client.search_jobs(
                 keywords=keyword,
                 location=location,
@@ -117,7 +116,7 @@ class JobRecommender:
         all_jobs = []
         total = 0
 
-        for keyword in search_keywords[:3]:
+        for keyword in search_keywords[:5]:
             jobs, found = self.ba_client.search_jobs(
                 keywords=keyword,
                 location=location,
@@ -154,12 +153,6 @@ class JobRecommender:
 
             if job_data.get("url") and self.check_duplicate(user_id, job_data["url"]):
                 continue
-
-            if not job.beschreibung and job.refnr:
-                detailed = self.ba_client.get_job_details(job.refnr)
-                if detailed and detailed.beschreibung:
-                    job_data["description"] = detailed.beschreibung
-                time.sleep(BundesagenturClient.DETAIL_DELAY)
 
             description = job_data.get("description", "")
             fit_result = None
@@ -324,11 +317,31 @@ class JobRecommender:
             return True
 
         variations = {
-            "javascript": ["js", "node", "react", "vue", "angular"],
-            "python": ["py", "django", "flask", "pandas"],
-            "java": ["spring", "maven", "gradle"],
-            "sql": ["mysql", "postgresql", "postgres", "oracle", "database"],
-            "css": ["sass", "scss", "less", "tailwind"],
+            "javascript": ["js", "node", "react", "vue", "angular", "next.js", "nuxt"],
+            "typescript": ["ts", "angular", "next.js", "nuxt"],
+            "python": ["py", "django", "flask", "pandas", "fastapi"],
+            "java": ["spring", "maven", "gradle", "jvm"],
+            "c#": ["csharp", ".net", "dotnet", "asp.net"],
+            "php": ["laravel", "symfony", "wordpress"],
+            "ruby": ["rails", "ruby on rails"],
+            "go": ["golang"],
+            "rust": ["cargo", "rustlang"],
+            "sql": ["mysql", "postgresql", "postgres", "oracle", "database", "mariadb"],
+            "css": ["sass", "scss", "less", "tailwind", "bootstrap"],
+            "react": ["next.js", "redux", "jsx"],
+            "vue": ["nuxt", "vuex", "pinia"],
+            "angular": ["rxjs", "ngrx"],
+            "node": ["express", "nestjs", "npm"],
+            "docker": ["kubernetes", "k8s", "container"],
+            "aws": ["amazon web services", "ec2", "s3", "lambda"],
+            "azure": ["microsoft cloud", "az-"],
+            "gcp": ["google cloud", "firebase"],
+            "cloud": ["aws", "azure", "gcp"],
+            "devops": ["ci/cd", "ci-cd", "pipeline", "jenkins", "github actions"],
+            "agile": ["scrum", "kanban", "sprint"],
+            "sap": ["abap", "hana", "s/4hana"],
+            "marketing": ["seo", "sem", "google ads", "social media"],
+            "projektmanagement": ["project management", "pmp", "prince2", "jira"],
         }
 
         for base_skill, alts in variations.items():
@@ -351,10 +364,9 @@ class JobRecommender:
             if skill_name in text or self._fuzzy_match(skill_name, text):
                 matched.append({"requirement": job.titel, "skill": skill.skill_name, "type": "title_match"})
 
-        considered = min(len(user_skills), 5)
-        match_ratio = len(matched) / considered
-        # Scale: 0 matches -> 30, all match -> 90
-        score = int(30 + match_ratio * 60)
+        # Score based on number of matches (title-only has limited signal)
+        score_tiers = (30, 50, 65, 78, 85)
+        score = score_tiers[min(len(matched), len(score_tiers) - 1)]
         return {"score": score, "category": self.score_to_category(score), "matched": matched}
 
     @staticmethod
