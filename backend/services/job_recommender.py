@@ -15,7 +15,7 @@ from services.web_scraper import WebScraper
 class JobRecommender:
     """Service to find and recommend jobs based on user profile."""
 
-    MIN_FIT_SCORE = 60
+    MIN_FIT_SCORE = 40
     MAX_RECOMMENDATIONS = 10
     SEARCH_URLS = {
         "indeed": "https://de.indeed.com/jobs?q={query}&l={location}&sort=date",
