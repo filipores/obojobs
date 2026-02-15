@@ -4,11 +4,11 @@ Requirement Analyzer Service - Extracts job requirements from job posting text u
 
 import json
 import logging
-import time
 
 from anthropic import Anthropic
 
 from config import config
+from services.retry import retry_with_backoff
 
 logger = logging.getLogger(__name__)
 
@@ -26,13 +26,12 @@ class RequirementAnalyzer:
         self.client = Anthropic(api_key=self.api_key)
         self.model = config.CLAUDE_MODEL
 
-    def analyze_requirements(self, job_text: str, retry_count: int = 3) -> list[dict]:
+    def analyze_requirements(self, job_text: str) -> list[dict]:
         """
         Extract requirements from job posting text using Claude API.
 
         Args:
             job_text: The text content of the job posting
-            retry_count: Number of retries on failure
 
         Returns:
             List of requirement dictionaries with keys:
@@ -42,29 +41,23 @@ class RequirementAnalyzer:
         """
         prompt = self._create_extraction_prompt(job_text)
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=2000,
-                    temperature=0.2,
-                    messages=[{"role": "user", "content": prompt}],
-                )
+        try:
+            response = self._call_api_with_retry(prompt)
+            return self._parse_requirements_response(response)
+        except Exception as e:
+            logger.error("Requirement-Analyse fehlgeschlagen: %s", e)
+            return []
 
-                response_text = response.content[0].text.strip()
-                requirements = self._parse_requirements_response(response_text)
-                return requirements
-
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning(
-                        "Requirement-Analyse fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e
-                    )
-                    time.sleep(2)
-                else:
-                    logger.error("Requirement-Analyse fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
-                    return []
-        return []
+    @retry_with_backoff(max_attempts=3, base_delay=2.0)
+    def _call_api_with_retry(self, prompt: str) -> str:
+        """Send a message to the Claude API with automatic retry on failure."""
+        response = self.client.messages.create(
+            model=self.model,
+            max_tokens=2000,
+            temperature=0.2,
+            messages=[{"role": "user", "content": prompt}],
+        )
+        return response.content[0].text.strip()
 
     def _create_extraction_prompt(self, job_text: str) -> str:
         """Create the prompt for requirement extraction."""
