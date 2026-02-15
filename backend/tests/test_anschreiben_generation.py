@@ -112,7 +112,7 @@ class TestGenerateAnschreiben:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Sehr geehrte Damen und Herren,\n\nText."
 
-        # Fail twice, succeed on third attempt
+        # Fail twice, succeed on third attempt (handled by _call_api_with_retry)
         mock_client.chat.completions.create.side_effect = [
             Exception("API error"),
             Exception("API error"),
@@ -121,7 +121,7 @@ class TestGenerateAnschreiben:
 
         from services.qwen_client import QwenAPIClient
 
-        with patch("services.qwen_client.time.sleep"):
+        with patch("services.retry.time.sleep"), patch("services.qwen_client.time.sleep"):
             client = QwenAPIClient(api_key="test-key")
             result = client.generate_anschreiben(
                 cv_text="CV",
@@ -144,7 +144,7 @@ class TestGenerateAnschreiben:
 
         from services.qwen_client import QwenAPIClient
 
-        with patch("services.qwen_client.time.sleep"):
+        with patch("services.retry.time.sleep"), patch("services.qwen_client.time.sleep"):
             client = QwenAPIClient(api_key="test-key")
             with pytest.raises(Exception, match="Qwen API Fehler"):
                 client.generate_anschreiben(
@@ -296,8 +296,6 @@ class TestDemoGeneratorNoTemplate:
         mock_api.generate_anschreiben.return_value = (
             "Sehr geehrte Damen und Herren,\n\nAnschreiben text.\n\n" "Mit freundlichen Grüßen\nMax"
         )
-        mock_api.generate_betreff.return_value = "Bewerbung als Developer"
-        mock_api.generate_email_text.return_value = "Email text"
 
         from services.demo_generator import DemoGenerator
 
@@ -332,8 +330,6 @@ class TestDemoGeneratorNoTemplate:
             "stellenanzeige_kompakt": "kompakt",
         }
         mock_api.generate_anschreiben.return_value = "Anschreiben body"
-        mock_api.generate_betreff.return_value = "Bewerbung als Developer"
-        mock_api.generate_email_text.return_value = "Email text"
 
         from services.demo_generator import DemoGenerator
 
@@ -377,6 +373,7 @@ class TestGenerationRouteTone:
 
         mock_gen = MagicMock()
         mock_gen.generate_bewerbung.return_value = "/tmp/test.pdf"
+        mock_gen.warnings = []
         mock_gen_cls.return_value = mock_gen
 
         mock_usage.return_value = {

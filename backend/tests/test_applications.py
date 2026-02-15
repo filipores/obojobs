@@ -401,6 +401,7 @@ class TestGenerateFromUrl:
 
         mock_gen = MagicMock()
         mock_gen.generate_bewerbung.return_value = "/tmp/test.pdf"
+        mock_gen.warnings = []
         mock_gen_class.return_value = mock_gen
 
         mock_usage.return_value = {
@@ -462,6 +463,7 @@ class TestGenerateFromUrl:
 
         mock_gen = MagicMock()
         mock_gen.generate_bewerbung.return_value = "/tmp/scraped.pdf"
+        mock_gen.warnings = []
         mock_gen_class.return_value = mock_gen
 
         mock_usage.return_value = {
@@ -554,6 +556,7 @@ class TestGenerateFromText:
     ):
         mock_gen = MagicMock()
         mock_gen.generate_bewerbung.return_value = "/tmp/text.pdf"
+        mock_gen.warnings = []
         mock_gen_class.return_value = mock_gen
 
         mock_usage.return_value = {

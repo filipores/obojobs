@@ -12,10 +12,9 @@ from services.qwen_prompts import (
     create_details_extraction_prompt,
     create_extraction_prompt,
 )
+from services.retry import retry_with_backoff
 
 logger = logging.getLogger(__name__)
-
-RETRY_DELAY_SECONDS = 2
 
 
 class QwenAPIClient:
@@ -28,55 +27,40 @@ class QwenAPIClient:
         self.max_tokens = config.QWEN_MAX_TOKENS
         self.temperature = config.QWEN_TEMPERATURE
 
-    def extract_bewerbung_details(
-        self, stellenanzeige_text: str, firma_name: str, retry_count: int = 3
-    ) -> dict[str, str] | None:
+    @retry_with_backoff(max_attempts=3, base_delay=2.0)
+    def _call_api_with_retry(self, messages, max_tokens, temperature):
+        """Send a chat completion request with automatic retry on failure."""
+        return self._call_api(messages=messages, max_tokens=max_tokens, temperature=temperature)
+
+    def extract_bewerbung_details(self, stellenanzeige_text: str, firma_name: str) -> dict[str, str]:
         prompt = create_details_extraction_prompt(stellenanzeige_text, firma_name)
 
-        for attempt in range(retry_count):
-            try:
-                response = self._call_api(
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=500,
-                    temperature=0.3,
-                )
-                return self._parse_extracted_details(response, firma_name)
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning(
-                        "Detail-Extraktion fehlgeschlagen (Versuch %d/%d): %s",
-                        attempt + 1,
-                        retry_count,
-                        e,
-                    )
-                    time.sleep(RETRY_DELAY_SECONDS)
-                else:
-                    logger.warning("Detail-Extraktion fehlgeschlagen, verwende Defaults")
-                    return self._get_default_details(firma_name)
-        return None
+        try:
+            response = self._call_api_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=500,
+                temperature=0.3,
+            )
+            return self._parse_extracted_details(response, firma_name)
+        except Exception:
+            logger.warning("Detail-Extraktion fehlgeschlagen, verwende Defaults")
+            defaults = self._get_default_details(firma_name)
+            defaults["warnings"] = [
+                "Detail-Extraktion fehlgeschlagen. Position und Ansprechpartner wurden auf Standardwerte gesetzt."
+            ]
+            return defaults
 
-    def extract_key_information(self, stellenanzeige_text: str, retry_count: int = 3) -> str | None:
+    def extract_key_information(self, stellenanzeige_text: str) -> str | None:
         prompt = create_extraction_prompt(stellenanzeige_text)
 
-        for attempt in range(retry_count):
-            try:
-                return self._call_api(
-                    messages=[{"role": "user", "content": prompt}],
-                    max_tokens=400,
-                    temperature=0.3,
-                )
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning(
-                        "Extraktion fehlgeschlagen (Versuch %d/%d): %s",
-                        attempt + 1,
-                        retry_count,
-                        e,
-                    )
-                    time.sleep(RETRY_DELAY_SECONDS)
-                else:
-                    raise Exception(f"Informationsextraktion fehlgeschlagen: {e!s}") from e
-        return None
+        try:
+            return self._call_api_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=400,
+                temperature=0.3,
+            )
+        except Exception as e:
+            raise Exception(f"Informationsextraktion fehlgeschlagen: {e!s}") from e
 
     def generate_einleitung(
         self,
@@ -86,7 +70,6 @@ class QwenAPIClient:
         zeugnis_text: str | None = None,
         details: dict[str, str] | None = None,
         use_extraction: bool = True,
-        retry_count: int = 3,
         bewerber_vorname: str | None = None,
         user_skills: list | None = None,
     ) -> str | None:
@@ -111,27 +94,20 @@ class QwenAPIClient:
 
 Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Lebenslauf und der Stellenanzeige:"""
 
-        for attempt in range(retry_count):
-            try:
-                einleitung = self._call_api(
-                    messages=[
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                    ],
-                    max_tokens=self.max_tokens,
-                    temperature=self.temperature,
-                )
-                if einleitung.startswith('"') and einleitung.endswith('"'):
-                    einleitung = einleitung[1:-1]
-                return einleitung
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
-                    logger.info("Warte %d Sekunden vor erneutem Versuch...", RETRY_DELAY_SECONDS)
-                    time.sleep(RETRY_DELAY_SECONDS)
-                else:
-                    raise Exception(f"Qwen API Fehler nach {retry_count} Versuchen: {e!s}") from e
-        return None
+        try:
+            einleitung = self._call_api_with_retry(
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                max_tokens=self.max_tokens,
+                temperature=self.temperature,
+            )
+            if einleitung.startswith('"') and einleitung.endswith('"'):
+                einleitung = einleitung[1:-1]
+            return einleitung
+        except Exception as e:
+            raise Exception(f"Qwen API Fehler: {e!s}") from e
 
     def generate_anschreiben(
         self,
@@ -152,6 +128,9 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
 
         Unlike generate_einleitung() which only produces an intro paragraph,
         this generates the full letter body for direct use in PDF generation.
+
+        The retry_count controls the number of attempts for forbidden-phrase
+        retries. API-level retries are handled separately by _call_api_with_retry.
         """
         # Use compact job description if available
         if stellenanzeige_text and len(stellenanzeige_text) > 2000:
@@ -183,106 +162,53 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         ]
 
         for attempt in range(retry_count):
+            is_last_attempt = attempt >= retry_count - 1
+
             try:
-                raw = self._call_api(
+                raw = self._call_api_with_retry(
                     messages=messages,
                     max_tokens=config.QWEN_ANSCHREIBEN_MAX_TOKENS,
                     temperature=config.QWEN_ANSCHREIBEN_TEMPERATURE,
                 )
-                result = self._postprocess_anschreiben(raw)
-
-                # Check for forbidden phrases and retry with correction prompt
-                violations = self._find_forbidden_phrases(result)
-                if violations and attempt < retry_count - 1:
-                    logger.warning(
-                        "Verbotene Phrasen gefunden (Versuch %d/%d): %s",
-                        attempt + 1,
-                        retry_count,
-                        violations,
-                    )
-                    phrases_str = ", ".join(f'"{p}"' for p in violations)
-                    messages = [
-                        {"role": "system", "content": system_prompt},
-                        {"role": "user", "content": user_prompt},
-                        {"role": "assistant", "content": raw},
-                        {
-                            "role": "user",
-                            "content": f"Dein Text enthält verbotene Phrasen: {phrases_str}. "
-                            "Schreibe das Anschreiben KOMPLETT NEU ohne diese Phrasen. "
-                            "Formuliere die betroffenen Stellen völlig anders.",
-                        },
-                    ]
-                    time.sleep(RETRY_DELAY_SECONDS)
-                    continue
-
-                return result
             except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
-                    time.sleep(RETRY_DELAY_SECONDS)
-                else:
+                if is_last_attempt:
                     raise Exception(f"Qwen API Fehler nach {retry_count} Versuchen: {e!s}") from e
+                logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
+                time.sleep(2)
+                continue
+
+            result = self._postprocess_anschreiben(raw)
+
+            # Accept result if no forbidden phrases or no retries left
+            violations = self._find_forbidden_phrases(result)
+            if not violations or is_last_attempt:
+                return result
+
+            # Retry with a correction prompt that includes the violating output
+            logger.warning(
+                "Verbotene Phrasen gefunden (Versuch %d/%d): %s",
+                attempt + 1,
+                retry_count,
+                violations,
+            )
+            phrases_str = ", ".join(f'"{p}"' for p in violations)
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_prompt},
+                {"role": "assistant", "content": raw},
+                {
+                    "role": "user",
+                    "content": f"Dein Text enthält verbotene Phrasen: {phrases_str}. "
+                    "Schreibe das Anschreiben KOMPLETT NEU ohne diese Phrasen. "
+                    "Formuliere die betroffenen Stellen völlig anders.",
+                },
+            ]
+            time.sleep(2)
+
         return None
 
     def chat_complete(self, messages: list[dict], max_tokens: int = 2000, temperature: float = 0.7) -> str:
         return self._call_api(messages=messages, max_tokens=max_tokens, temperature=temperature)
-
-    def generate_email_text(
-        self,
-        position: str,
-        ansprechperson: str,
-        firma_name: str | None = None,
-        attachments: list[str] | None = None,
-        user_name: str | None = None,
-        user_email: str | None = None,
-        user_phone: str | None = None,
-        user_city: str | None = None,
-        user_website: str | None = None,
-    ) -> str:
-        """Generate personalized email text for job application"""
-        if attachments is None:
-            attachments = ["Anschreiben", "Lebenslauf"]
-
-        position_text = f"die Position als {position}"
-        if firma_name:
-            position_text = f"die Position als {position} bei {firma_name}"
-
-        name = user_name or "Ihr Name"
-        signature_parts = [name]
-        contact_line = " | ".join(filter(None, [user_city, user_phone]))
-        if contact_line:
-            signature_parts.append(contact_line)
-        if user_email:
-            signature_parts.append(user_email)
-        if user_website:
-            signature_parts.append(user_website)
-
-        signature = "\n".join(signature_parts)
-
-        return f"""{ansprechperson},
-
-anbei finden Sie meine Bewerbungsunterlagen für {position_text}.
-
-Ich freue mich auf Ihre Rückmeldung.
-
-Mit freundlichen Grüßen
-{signature}"""
-
-    def generate_betreff(
-        self, position: str, firma_name: str | None = None, style: str = "professional", user_name: str | None = None
-    ) -> str:
-        """Generate professional email subject line"""
-        name = user_name or "Bewerber"
-        if style == "professional":
-            return f"Bewerbung als {position} - {name}" if firma_name else f"Bewerbung als {position}"
-        if style == "informal":
-            return f"Bewerbung: {position}"
-        # formal style
-        return (
-            f"Bewerbung um die Position als {position} bei {firma_name}"
-            if firma_name
-            else f"Bewerbung um die Position als {position}"
-        )
 
     # --- Private helpers ---
 
@@ -297,14 +223,8 @@ Mit freundlichen Grüßen
         return response.choices[0].message.content.strip()
 
     def _parse_extracted_details(self, text: str, firma_name: str) -> dict[str, str]:
-        details = {
-            "firma": firma_name,
-            "ansprechpartner": "Sehr geehrte Damen und Herren",
-            "position": "Softwareentwickler",
-            "quelle": "eure Website",
-            "email": "",
-            "stellenanzeige_kompakt": text,
-        }
+        details = self._get_default_details(firma_name)
+        details["stellenanzeige_kompakt"] = text
 
         ignored_values = {"keine angabe", "nicht vorhanden", "n/a"}
 
@@ -337,6 +257,7 @@ Mit freundlichen Grüßen
             "quelle": "eure Website",
             "email": "",
             "stellenanzeige_kompakt": "",
+            "warnings": [],
         }
 
     def _postprocess_anschreiben(self, text: str) -> str:

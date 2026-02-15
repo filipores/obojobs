@@ -44,6 +44,15 @@ def _get_profile_warning(user: Any) -> dict[str, Any] | None:
     return None
 
 
+def _add_generation_warnings(result: dict, generator: BewerbungsGenerator, user: Any) -> None:
+    """Attach pipeline warnings and profile completeness warnings to the response."""
+    if generator.warnings:
+        result["warnings"] = generator.warnings
+    profile_warning = _get_profile_warning(user)
+    if profile_warning:
+        result["profile_warning"] = profile_warning
+
+
 def calculate_and_store_job_fit(app: Any, job_description: str, user_id: int) -> None:
     """Calculate job-fit score after generation and store it in the application.
 
@@ -126,9 +135,7 @@ def generate_application(current_user: Any) -> tuple[Response, int]:
             "usage": usage,
             "message": f"Bewerbung für {company} erstellt",
         }
-        profile_warning = _get_profile_warning(current_user)
-        if profile_warning:
-            result["profile_warning"] = profile_warning
+        _add_generation_warnings(result, generator, current_user)
 
         return jsonify(result), 200
 
@@ -219,9 +226,7 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
             "usage": usage,
             "message": f"Bewerbung für {company} erstellt",
         }
-        profile_warning = _get_profile_warning(current_user)
-        if profile_warning:
-            result["profile_warning"] = profile_warning
+        _add_generation_warnings(result, generator, current_user)
 
         return jsonify(result), 200
 
@@ -301,9 +306,7 @@ def generate_from_text(current_user: Any) -> tuple[Response, int]:
                 "usage": usage,
                 "message": f"Bewerbung für {company} erstellt",
             }
-            profile_warning = _get_profile_warning(current_user)
-            if profile_warning:
-                result["profile_warning"] = profile_warning
+            _add_generation_warnings(result, generator, current_user)
 
             return jsonify(result), 200
 
