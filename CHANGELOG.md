@@ -1,3 +1,10 @@
+## [1.55.6](https://github.com/filipores/obojobs/compare/v1.55.5...v1.55.6) (2026-02-15)
+
+
+### Bug Fixes
+
+* **jobs:** improve recommendation scoring, keyword diversity, and filter pass-through ([3a3f788](https://github.com/filipores/obojobs/commit/3a3f788c09c2ed1baa5d7308dc1559619a853483))
+
 ## [1.55.5](https://github.com/filipores/obojobs/compare/v1.55.4...v1.55.5) (2026-02-15)
 
 
