@@ -24,6 +24,8 @@ FORBIDDEN_PHRASES = [
     "ich bewerbe mich auf die Stelle",
 ]
 
+FORBIDDEN_PHRASES_BLOCK = "\n".join(f'- "{phrase}"' for phrase in FORBIDDEN_PHRASES)
+
 
 def create_details_extraction_prompt(stellenanzeige_text: str, firma_name: str) -> str:
     return f"""Extrahiere folgende Informationen aus dieser Stellenanzeige für eine Bewerbung:
@@ -138,23 +140,7 @@ def build_einleitung_system_prompt(
 - Verwende stattdessen Kommas, Punkte oder Semikolons
 
 ### VERBOTENE PHRASEN (NIEMALS verwenden):
-- "Hiermit bewerbe ich mich" — das ist der langweiligste Einstieg überhaupt
-- "mit großem Interesse"
-- "hochmotiviert"
-- "hat meine Aufmerksamkeit geweckt"
-- "vielfältige Herausforderungen"
-- "bin ich der ideale Kandidat"
-- "freue mich auf die Herausforderung"
-- "in einem dynamischen Umfeld"
-- "meine Leidenschaft für"
-- "hat mich sofort angesprochen"
-- "genau die Mischung aus"
-- "spricht mich besonders an"
-- "reizt mich besonders"
-- "passt genau zu meinen Erfahrungen"
-- "technische Tiefe"
-- "Lösungskompetenz"
-- "praktische Erfahrung mitbringen"
+{FORBIDDEN_PHRASES_BLOCK}
 
 ### Ton & Authentizität:
 - {persona}
@@ -277,26 +263,7 @@ def build_anschreiben_system_prompt(
 - Verwende stattdessen Kommas, Punkte oder Semikolons
 
 ### VERBOTENE PHRASEN (NIEMALS verwenden):
-- "Hiermit bewerbe ich mich"
-- "mit großem Interesse"
-- "hochmotiviert"
-- "hat meine Aufmerksamkeit geweckt"
-- "vielfältige Herausforderungen"
-- "bin ich der ideale Kandidat"
-- "freue mich auf die Herausforderung"
-- "in einem dynamischen Umfeld"
-- "meine Leidenschaft für"
-- "hat mich sofort angesprochen"
-- "genau die Mischung aus"
-- "spricht mich besonders an"
-- "reizt mich besonders"
-- "passt genau zu meinen Erfahrungen"
-- "technische Tiefe"
-- "Lösungskompetenz"
-- "praktische Erfahrung mitbringen"
-- "bringe ich mit"
-- "konnte ich unter Beweis stellen"
-- "erfolgreich einsetzen"
+{FORBIDDEN_PHRASES_BLOCK}
 
 ### Ton & Authentizität:
 - {persona}
