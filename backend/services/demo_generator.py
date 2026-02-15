@@ -7,6 +7,7 @@ No database persistence - results are returned directly.
 
 from urllib.parse import urlparse
 
+from .email_formatter import EmailFormatter
 from .pdf_handler import read_document
 from .qwen_client import QwenAPIClient
 
@@ -63,8 +64,8 @@ class DemoGenerator:
         )
 
         # Phase 4: Generate email content (no PDF for demo)
-        betreff = self.api_client.generate_betreff(details["position"], firma_name, style="professional")
-        email_text = self.api_client.generate_email_text(
+        betreff = EmailFormatter.generate_betreff(details["position"], firma_name, style="professional")
+        email_text = EmailFormatter.generate_email_text(
             position=details["position"],
             ansprechperson=details["ansprechpartner"],
             firma_name=firma_name,

@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from models import Application, Document, JobRequirement, User, UserSkill, db
+from models import Application, Document, User, UserSkill, db
 
 
 class TestBewerbungsGeneratorInit:
@@ -246,25 +246,20 @@ class TestGenerateBewerbung:
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req_analyzer:
-                mock_req_analyzer.return_value.analyze_requirements.return_value = []
-
-                result = gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com/job",
-                    firma_name="Test GmbH",
-                    user_details={
-                        "position": "Senior Developer",
-                        "contact_person": "Frau Schmidt",
-                        "contact_email": "hr@test.de",
-                        "description": "A job posting about development",
-                        "quelle": "LinkedIn",
-                    },
-                )
+            result = gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com/job",
+                firma_name="Test GmbH",
+                user_details={
+                    "position": "Senior Developer",
+                    "contact_person": "Frau Schmidt",
+                    "contact_email": "hr@test.de",
+                    "description": "A job posting about development",
+                    "quelle": "LinkedIn",
+                },
+            )
 
             assert result.endswith(".pdf")
             mock_api.generate_anschreiben.assert_called_once()
-            mock_api.generate_betreff.assert_called_once()
-            mock_api.generate_email_text.assert_called_once()
             mock_pdf.assert_called_once()
 
             # Verify application was saved
@@ -273,7 +268,7 @@ class TestGenerateBewerbung:
             assert app_record.firma == "Test GmbH"
             assert app_record.position == "Senior Developer"
             assert app_record.status == "erstellt"
-            assert app_record.betreff == "Bewerbung als Developer"
+            assert app_record.betreff == "Bewerbung als Senior Developer - Max Mustermann"
 
     @patch("services.generator.create_anschreiben_pdf")
     @patch("services.generator.QwenAPIClient")
@@ -305,12 +300,10 @@ class TestGenerateBewerbung:
                 },
             ):
                 with patch("services.generator.is_url", return_value=True):
-                    with patch("services.generator.RequirementAnalyzer") as mock_req:
-                        mock_req.return_value.analyze_requirements.return_value = []
-                        result = gen.generate_bewerbung(
-                            stellenanzeige_path="https://example.com/job",
-                            firma_name="Test GmbH",
-                        )
+                    result = gen.generate_bewerbung(
+                        stellenanzeige_path="https://example.com/job",
+                        firma_name="Test GmbH",
+                    )
 
             assert result.endswith(".pdf")
             mock_api.extract_bewerbung_details.assert_called_once()
@@ -337,12 +330,10 @@ class TestGenerateBewerbung:
 
             with patch("services.generator.read_document", return_value="File content"):
                 with patch("services.generator.is_url", return_value=False):
-                    with patch("services.generator.RequirementAnalyzer") as mock_req:
-                        mock_req.return_value.analyze_requirements.return_value = []
-                        result = gen.generate_bewerbung(
-                            stellenanzeige_path="/path/to/job.pdf",
-                            firma_name="Firma AG",
-                        )
+                    result = gen.generate_bewerbung(
+                        stellenanzeige_path="/path/to/job.pdf",
+                        firma_name="Firma AG",
+                    )
 
             assert result.endswith(".pdf")
             # For file path, extracted_links should be None
@@ -387,17 +378,15 @@ class TestGenerateBewerbung:
                         {"text": "Job text", "email_links": [], "application_links": [], "all_links": []},  # URL read
                     ]
                     with patch("services.generator.is_url", return_value=True):
-                        with patch("services.generator.RequirementAnalyzer") as mock_req:
-                            mock_req.return_value.analyze_requirements.return_value = []
-                            mock_api.extract_bewerbung_details.return_value = {
-                                "firma": "F",
-                                "position": "P",
-                                "ansprechpartner": "Sehr geehrte Damen und Herren",
-                                "quelle": "Web",
-                                "email": "",
-                                "stellenanzeige_kompakt": "k",
-                            }
-                            result = gen.generate_bewerbung("https://example.com", "Firma")
+                        mock_api.extract_bewerbung_details.return_value = {
+                            "firma": "F",
+                            "position": "P",
+                            "ansprechpartner": "Sehr geehrte Damen und Herren",
+                            "quelle": "Web",
+                            "email": "",
+                            "stellenanzeige_kompakt": "k",
+                        }
+                        result = gen.generate_bewerbung("https://example.com", "Firma")
 
                 assert gen._prepared is True
                 assert result.endswith(".pdf")
@@ -416,18 +405,15 @@ class TestGenerateBewerbung:
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="Firma GmbH",
-                    user_details={
-                        "position": "Developer",
-                        "contact_person": "",
-                        "description": "Job desc",
-                    },
-                )
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Firma GmbH",
+                user_details={
+                    "position": "Developer",
+                    "contact_person": "",
+                    "description": "Job desc",
+                },
+            )
 
             # Check what was passed to create_anschreiben_pdf
             call_args = mock_pdf.call_args
@@ -452,15 +438,12 @@ class TestGenerateBewerbung:
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                result = gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="Test",
-                    output_filename="custom_name.pdf",
-                    user_details={"description": "Job", "position": "Dev"},
-                )
+            result = gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Test",
+                output_filename="custom_name.pdf",
+                user_details={"description": "Job", "position": "Dev"},
+            )
 
             assert result.endswith("custom_name.pdf")
 
@@ -476,22 +459,19 @@ class TestGenerateBewerbung:
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="SaveTest GmbH",
-                    user_details={"description": "Job desc", "position": "Tester", "quelle": "Indeed"},
-                )
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="SaveTest GmbH",
+                user_details={"description": "Job desc", "position": "Tester", "quelle": "Indeed"},
+            )
 
             app_record = Application.query.filter_by(firma="SaveTest GmbH").first()
             assert app_record is not None
             assert app_record.user_id == test_user["id"]
             assert app_record.position == "Tester"
             assert app_record.status == "erstellt"
-            assert app_record.betreff == "Bewerbung als Dev"
-            assert app_record.email_text == "Email text here"
+            assert app_record.betreff == "Bewerbung als Tester - Max Mustermann"
+            assert "Bewerbungsunterlagen" in app_record.email_text
 
             # Check status_history was initialized
             history = app_record.get_status_history()
@@ -510,15 +490,12 @@ class TestGenerateBewerbung:
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="Test",
-                    user_details={"description": "Job", "position": "Dev"},
-                    tonalitaet="kreativ",
-                )
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Test",
+                user_details={"description": "Job", "position": "Dev"},
+                tonalitaet="kreativ",
+            )
 
             call_kwargs = mock_api.generate_anschreiben.call_args
             assert call_kwargs[1]["tonalitaet"] == "kreativ"
@@ -549,14 +526,11 @@ class TestGenerateBewerbung:
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="Test",
-                    user_details={"description": "Job", "position": "Dev"},
-                )
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Test",
+                user_details={"description": "Job", "position": "Dev"},
+            )
 
             call_kwargs = mock_api.generate_anschreiben.call_args[1]
             user_skills = call_kwargs["user_skills"]
@@ -577,23 +551,21 @@ class TestGenerateBewerbung:
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="Test",
-                    user_details={"description": "Job", "position": "Dev"},
-                )
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Test",
+                user_details={"description": "Job", "position": "Dev"},
+            )
 
             # Verify the text passed to PDF doesn't have >2 consecutive newlines
             call_args = mock_pdf.call_args
             full_text = call_args[0][0]
             assert "\n\n\n" not in full_text
 
+    @patch("services.generator.EmailFormatter")
     @patch("services.generator.create_anschreiben_pdf")
     @patch("services.generator.QwenAPIClient")
-    def test_generate_builds_attachments_list(self, mock_api_cls, mock_pdf, app, test_user):
+    def test_generate_builds_attachments_list(self, mock_api_cls, mock_pdf, mock_email_fmt, app, test_user):
         """Test that attachments list includes uploaded documents."""
         with app.app_context():
             # Add an Arbeitszeugnis document
@@ -606,24 +578,22 @@ class TestGenerateBewerbung:
             db.session.add(zeugnis_doc)
             db.session.commit()
 
+            mock_email_fmt.generate_betreff.return_value = "Betreff"
+            mock_email_fmt.generate_email_text.return_value = "Email"
+
             mock_api = MagicMock()
             mock_api.generate_anschreiben.return_value = "Body."
-            mock_api.generate_betreff.return_value = "Betreff"
-            mock_api.generate_email_text.return_value = "Email"
 
             gen = self._make_generator(app, test_user, mock_api)
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="Test",
-                    user_details={"description": "Job", "position": "Dev"},
-                )
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Test",
+                user_details={"description": "Job", "position": "Dev"},
+            )
 
             # Check that generate_email_text received attachments with Arbeitszeugnis
-            call_kwargs = mock_api.generate_email_text.call_args[1]
+            call_kwargs = mock_email_fmt.generate_email_text.call_args[1]
             attachments = call_kwargs["attachments"]
             assert "Anschreiben" in attachments
             assert "Lebenslauf" in attachments
@@ -683,99 +653,6 @@ class TestProcessFirma:
             assert result is None
 
 
-class TestExtractRequirements:
-    """Tests for BewerbungsGenerator._extract_requirements()."""
-
-    @patch("services.generator.QwenAPIClient")
-    def test_extract_requirements_success(self, mock_api_cls, app, test_user):
-        """Test that requirements are saved to the database."""
-        with app.app_context():
-            # Create an application to attach requirements to
-            application = Application(
-                user_id=test_user["id"],
-                firma="Test GmbH",
-                position="Developer",
-                status="erstellt",
-            )
-            db.session.add(application)
-            db.session.commit()
-            app_id = application.id
-
-            mock_requirements = [
-                {"requirement_text": "5 Jahre Python", "requirement_type": "must_have", "skill_category": "technical"},
-                {
-                    "requirement_text": "Teamfähigkeit",
-                    "requirement_type": "nice_to_have",
-                    "skill_category": "soft_skills",
-                },
-            ]
-
-            with patch("services.generator.RequirementAnalyzer") as mock_analyzer_cls:
-                mock_analyzer = MagicMock()
-                mock_analyzer.analyze_requirements.return_value = mock_requirements
-                mock_analyzer_cls.return_value = mock_analyzer
-
-                from services.generator import BewerbungsGenerator
-
-                gen = BewerbungsGenerator(user_id=test_user["id"])
-                gen._extract_requirements(app_id, "Job posting text")
-
-            reqs = JobRequirement.query.filter_by(application_id=app_id).all()
-            assert len(reqs) == 2
-            assert reqs[0].requirement_text == "5 Jahre Python"
-            assert reqs[0].requirement_type == "must_have"
-            assert reqs[1].requirement_text == "Teamfähigkeit"
-
-    @patch("services.generator.QwenAPIClient")
-    def test_extract_requirements_empty_results(self, mock_api_cls, app, test_user):
-        """Test that no requirements are saved when analyzer returns empty list."""
-        with app.app_context():
-            application = Application(
-                user_id=test_user["id"],
-                firma="Test GmbH",
-                position="Developer",
-                status="erstellt",
-            )
-            db.session.add(application)
-            db.session.commit()
-            app_id = application.id
-
-            with patch("services.generator.RequirementAnalyzer") as mock_analyzer_cls:
-                mock_analyzer = MagicMock()
-                mock_analyzer.analyze_requirements.return_value = []
-                mock_analyzer_cls.return_value = mock_analyzer
-
-                from services.generator import BewerbungsGenerator
-
-                gen = BewerbungsGenerator(user_id=test_user["id"])
-                gen._extract_requirements(app_id, "Job text")
-
-            reqs = JobRequirement.query.filter_by(application_id=app_id).all()
-            assert len(reqs) == 0
-
-    @patch("services.generator.QwenAPIClient")
-    def test_extract_requirements_handles_error(self, mock_api_cls, app, test_user):
-        """Test that errors in requirement extraction don't propagate."""
-        with app.app_context():
-            application = Application(
-                user_id=test_user["id"],
-                firma="Test GmbH",
-                position="Developer",
-                status="erstellt",
-            )
-            db.session.add(application)
-            db.session.commit()
-
-            with patch("services.generator.RequirementAnalyzer") as mock_analyzer_cls:
-                mock_analyzer_cls.side_effect = Exception("Analyzer init failed")
-
-                from services.generator import BewerbungsGenerator
-
-                gen = BewerbungsGenerator(user_id=test_user["id"])
-                # Should not raise
-                gen._extract_requirements(application.id, "Job text")
-
-
 class TestContactPersonFormatting:
     """Tests for contact person salutation formatting in generate_bewerbung."""
 
@@ -799,21 +676,18 @@ class TestContactPersonFormatting:
             gen.user.full_name = "Max Mustermann"
             db.session.commit()
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
+            with patch("services.generator.ContactExtractor") as mock_ce:
+                mock_ce.return_value.format_contact_person_salutation.return_value = "Sehr geehrte Frau Schmidt"
 
-                with patch("services.generator.ContactExtractor") as mock_ce:
-                    mock_ce.return_value.format_contact_person_salutation.return_value = "Sehr geehrte Frau Schmidt"
-
-                    gen.generate_bewerbung(
-                        stellenanzeige_path="https://example.com",
-                        firma_name="Test GmbH",
-                        user_details={
-                            "description": "Job",
-                            "position": "Dev",
-                            "contact_person": "Frau Schmidt",
-                        },
-                    )
+                gen.generate_bewerbung(
+                    stellenanzeige_path="https://example.com",
+                    firma_name="Test GmbH",
+                    user_details={
+                        "description": "Job",
+                        "position": "Dev",
+                        "contact_person": "Frau Schmidt",
+                    },
+                )
 
             # Verify the formatted salutation was passed to generate_anschreiben
             call_kwargs = mock_api.generate_anschreiben.call_args[1]
@@ -839,18 +713,15 @@ class TestContactPersonFormatting:
             gen.user.full_name = "Max Mustermann"
             db.session.commit()
 
-            with patch("services.generator.RequirementAnalyzer") as mock_req:
-                mock_req.return_value.analyze_requirements.return_value = []
-
-                gen.generate_bewerbung(
-                    stellenanzeige_path="https://example.com",
-                    firma_name="Test GmbH",
-                    user_details={
-                        "description": "Job",
-                        "position": "Dev",
-                        "contact_person": "",
-                    },
-                )
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Test GmbH",
+                user_details={
+                    "description": "Job",
+                    "position": "Dev",
+                    "contact_person": "",
+                },
+            )
 
             # When contact_person is empty, ContactExtractor should get None
             call_kwargs = mock_api.generate_anschreiben.call_args[1]
