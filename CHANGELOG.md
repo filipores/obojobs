@@ -1,3 +1,10 @@
+## [1.55.5](https://github.com/filipores/obojobs/compare/v1.55.4...v1.55.5) (2026-02-15)
+
+
+### Bug Fixes
+
+* **jobs:** lower min fit score to 40 for title-based matches ([13ba5c4](https://github.com/filipores/obojobs/commit/13ba5c458e18e88cb0d86202f6f212afb6de6d1f))
+
 ## [1.55.4](https://github.com/filipores/obojobs/compare/v1.55.3...v1.55.4) (2026-02-14)
 
 
