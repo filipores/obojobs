@@ -43,6 +43,9 @@ export default [
         NodeFilter: 'readonly',
         Range: 'readonly',
         Selection: 'readonly',
+        // Encoding API globals
+        TextDecoder: 'readonly',
+        TextEncoder: 'readonly',
         // Node globals (for config files)
         process: 'readonly',
       }

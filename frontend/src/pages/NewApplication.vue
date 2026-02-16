@@ -387,6 +387,102 @@ async function extractJob(jobId) {
   }
 }
 
+function getPayloadForJob(job) {
+  return {
+    url: job.url,
+    tone: job.tone,
+    company: job.editableData.company,
+    title: job.editableData.title,
+    contact_person: job.editableData.contact_person,
+    contact_email: job.editableData.contact_email,
+    location: job.editableData.location,
+    description: job.editableData.description
+  }
+}
+
+function handleGenerationSuccess(job, data) {
+  job.generatedApp = data.application
+  job.status = 'completed'
+
+  loadUsage()
+
+  if (window.$toast) {
+    window.$toast('Bewerbung erfolgreich generiert!', 'success')
+    if (data.profile_warning?.incomplete) {
+      setTimeout(() => {
+        window.$toast('Profil unvollständig — ergänze fehlende Angaben in den Einstellungen.', 'warning')
+      }, 1500)
+    }
+  }
+}
+
+async function generateJobWithSSE(job) {
+  const token = localStorage.getItem('token')
+  const payload = getPayloadForJob(job)
+
+  const response = await fetch('/api/applications/generate-from-url-stream', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('text/event-stream')) {
+    const errorData = await response.json()
+    const err = new Error(errorData.error || 'Unbekannter Fehler')
+    err.isServerError = true
+    throw err
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) throw new Error('Stream ended without result')
+
+    buffer += decoder.decode(value, { stream: true })
+    const chunks = buffer.split('\n\n')
+    buffer = chunks.pop()
+
+    for (const chunk of chunks) {
+      if (!chunk.startsWith('data: ')) continue
+
+      let event
+      try { event = JSON.parse(chunk.slice(6)) } catch { continue }
+
+      if (event.type === 'complete') return event
+      if (event.type === 'error') {
+        const err = new Error(event.error)
+        err.isServerError = true
+        throw err
+      }
+      if (event.step && event.message) {
+        job.progressMessage = `${event.step}/${event.total_steps}: ${event.message}`
+      }
+    }
+  }
+}
+
+async function generateJobFallback(job) {
+  const payload = getPayloadForJob(job)
+  startProgressTimers(job.id)
+
+  const { data } = await api.post('/applications/generate-from-url', payload)
+
+  clearProgressTimers(job.id)
+
+  if (data.success) {
+    return data
+  } else {
+    throw new Error(data.error || 'Unbekannter Fehler')
+  }
+}
+
 async function generateJob(jobId) {
   const job = findJob(jobId)
   if (!job?.editableData) return
@@ -400,46 +496,32 @@ async function generateJob(jobId) {
   job.status = 'generating'
   job.error = null
   job.progressMessage = 'Stellenanzeige wird analysiert...'
-  startProgressTimers(jobId)
 
   try {
-    const { data } = await api.post('/applications/generate-from-url', {
-      url: job.url,
-      tone: job.tone,
-      company: job.editableData.company,
-      title: job.editableData.title,
-      contact_person: job.editableData.contact_person,
-      contact_email: job.editableData.contact_email,
-      location: job.editableData.location,
-      description: job.editableData.description
-    })
-
-    clearProgressTimers(jobId)
+    const data = await generateJobWithSSE(job)
     job.progressMessage = null
+    handleGenerationSuccess(job, data)
+  } catch (sseError) {
+    // Server-reported errors (validation, generation failures) should not trigger fallback
+    if (sseError.isServerError) {
+      job.progressMessage = null
+      job.error = sseError.message
+      job.status = 'error'
+      return
+    }
 
-    if (data.success) {
-      job.generatedApp = data.application
-      job.status = 'completed'
-
-      await loadUsage()
-
-      if (window.$toast) {
-        window.$toast('Bewerbung erfolgreich generiert!', 'success')
-        if (data.profile_warning?.incomplete) {
-          setTimeout(() => {
-            window.$toast('Profil unvollständig — ergänze fehlende Angaben in den Einstellungen.', 'warning')
-          }, 1500)
-        }
-      }
-    } else {
-      job.error = data.error || 'Unbekannter Fehler'
+    // Network/stream failures: fall back to the non-streaming endpoint
+    try {
+      job.progressMessage = 'Stellenanzeige wird analysiert...'
+      const data = await generateJobFallback(job)
+      job.progressMessage = null
+      handleGenerationSuccess(job, data)
+    } catch (fallbackError) {
+      clearProgressTimers(jobId)
+      job.progressMessage = null
+      job.error = extractApiError(fallbackError, 'Fehler bei der Generierung. Bitte versuche es erneut.')
       job.status = 'error'
     }
-  } catch (e) {
-    clearProgressTimers(jobId)
-    job.progressMessage = null
-    job.error = extractApiError(e, 'Fehler bei der Generierung. Bitte versuche es erneut.')
-    job.status = 'error'
   }
 }
 

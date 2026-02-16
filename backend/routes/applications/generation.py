@@ -1,15 +1,18 @@
 """
 Route handlers for application generation.
 
-Handles generate, generate-from-url, and generate-from-text endpoints.
+Handles generate, generate-from-url, generate-from-url-stream, and generate-from-text endpoints.
 """
 
+import json
 import logging
 import os
+import queue
 import tempfile
+import threading
 from typing import Any
 
-from flask import Response, jsonify, request
+from flask import Response, current_app, jsonify, request
 
 from middleware.api_key_required import api_key_required
 from middleware.jwt_required import jwt_required_custom
@@ -19,11 +22,11 @@ from middleware.subscription_limit import (
     get_subscription_usage,
 )
 from routes.applications import applications_bp
-from routes.applications.scraping import PORTAL_DISPLAY_NAMES  # noqa: F401
 from services import application_service
 from services.generator import BewerbungsGenerator
 from services.job_fit_calculator import JobFitCalculator
 from services.requirement_analyzer import RequirementAnalyzer
+from services.subscription_data_service import get_user as get_user_by_id
 from services.web_scraper import WebScraper
 
 logger = logging.getLogger(__name__)
@@ -51,6 +54,70 @@ def _add_generation_warnings(result: dict, generator: BewerbungsGenerator, user:
     profile_warning = _get_profile_warning(user)
     if profile_warning:
         result["profile_warning"] = profile_warning
+
+
+def _resolve_job_data(
+    url: str,
+    user_company: str,
+    user_description: str,
+) -> tuple[str, str]:
+    """Resolve company name and job text from user-provided data or by scraping.
+
+    Returns (company, job_text). Raises ValueError if scraping yields no text.
+    """
+    scraper = WebScraper()
+
+    if user_company or user_description:
+        company = user_company or scraper.extract_company_name_from_url(url)
+        return company, user_description
+
+    job_data = scraper.fetch_job_posting(url)
+    if not job_data.get("text"):
+        raise ValueError("Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL.")
+
+    company = job_data.get("company") or scraper.extract_company_name_from_url(url)
+    return company, job_data["text"]
+
+
+def _build_user_details(data: dict[str, Any]) -> dict[str, Any] | None:
+    """Build user_details dict from request data if user provided edited preview data.
+
+    Returns None if no user-edited data is present.
+    """
+    user_company = data.get("company", "").strip()
+    user_description = data.get("description", "").strip()
+
+    if not user_company and not user_description:
+        return None
+
+    return {
+        "position": data.get("title", "").strip(),
+        "contact_person": data.get("contact_person", "").strip(),
+        "contact_email": data.get("contact_email", "").strip(),
+        "location": data.get("location", "").strip(),
+        "description": user_description,
+        "quelle": data.get("quelle", "").strip() or None,
+    }
+
+
+def _build_generation_result(
+    latest: Any,
+    pdf_path: str,
+    usage: dict,
+    generator: BewerbungsGenerator,
+    user: Any,
+    company: str,
+) -> dict[str, Any]:
+    """Build the standard generation response dict."""
+    result = {
+        "success": True,
+        "application": latest.to_dict() if latest else None,
+        "pdf_path": pdf_path,
+        "usage": usage,
+        "message": f"Bewerbung für {company} erstellt",
+    }
+    _add_generation_warnings(result, generator, user)
+    return result
 
 
 def calculate_and_store_job_fit(app: Any, job_description: str, user_id: int) -> None:
@@ -238,6 +305,109 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
         # Generation failed -- rollback the counter
         decrement_application_count(current_user)
         return jsonify({"success": False, "error": f"Fehler bei der Generierung: {str(e)}"}), 500
+
+
+@applications_bp.route("/generate-from-url-stream", methods=["POST"])
+@jwt_required_custom
+@check_subscription_limit
+def generate_from_url_stream(current_user: Any) -> Response:
+    """Generate a new application from URL with SSE progress streaming.
+
+    Streams progress events as Server-Sent Events (SSE) while the generation
+    pipeline runs in a background thread. Falls back gracefully -- the original
+    generate-from-url endpoint remains available as a non-streaming alternative.
+    """
+    data = request.json
+    url = data.get("url", "").strip()
+    tone = data.get("tone", "modern")
+
+    if not url:
+        return jsonify({"success": False, "error": "URL ist erforderlich"}), 400
+
+    if not url.startswith(("http://", "https://")):
+        return jsonify({"success": False, "error": "Ungültige URL. Bitte mit http:// oder https:// beginnen."}), 400
+
+    # Capture Flask app and user_id for the background thread (avoids detached instances)
+    flask_app = current_app._get_current_object()
+    user_id = current_user.id
+    user_company = data.get("company", "").strip()
+    user_description = data.get("description", "").strip()
+    user_details = _build_user_details(data)
+
+    progress_queue = queue.Queue()
+    result_holder = {"result": None, "error": None}
+
+    def run_generation():
+        with flask_app.app_context():
+            user = get_user_by_id(user_id)
+            try:
+                company, job_text = _resolve_job_data(url, user_company, user_description)
+
+                generator = BewerbungsGenerator(
+                    user_id=user_id,
+                    progress_callback=progress_queue.put,
+                )
+                generator.prepare()
+                pdf_path = generator.generate_bewerbung(
+                    url,
+                    company,
+                    user_details=user_details,
+                    tonalitaet=tone,
+                )
+
+                latest = application_service.get_latest_application(user_id)
+                if latest and job_text:
+                    calculate_and_store_job_fit(latest, job_text, user_id)
+
+                usage = get_subscription_usage(user)
+                result_holder["result"] = _build_generation_result(
+                    latest,
+                    pdf_path,
+                    usage,
+                    generator,
+                    user,
+                    company,
+                )
+
+            except ValueError as e:
+                decrement_application_count(user)
+                result_holder["error"] = str(e)
+            except Exception as e:
+                decrement_application_count(user)
+                logger.exception("SSE generation failed for user %s", user_id)
+                result_holder["error"] = f"Fehler bei der Generierung: {str(e)}"
+            finally:
+                progress_queue.put(None)  # Signal: generation complete
+
+    def generate_events():
+        gen_thread = threading.Thread(target=run_generation, daemon=True)
+        gen_thread.start()
+
+        while True:
+            try:
+                event = progress_queue.get(timeout=120)
+                if event is None:
+                    break
+                yield f"data: {json.dumps(event)}\n\n"
+            except queue.Empty:
+                yield f"data: {json.dumps({'type': 'keepalive'})}\n\n"
+
+        gen_thread.join(timeout=5)
+
+        if result_holder["error"]:
+            yield f"data: {json.dumps({'type': 'error', 'error': result_holder['error']})}\n\n"
+        elif result_holder["result"]:
+            yield f"data: {json.dumps({'type': 'complete', **result_holder['result']})}\n\n"
+
+    return Response(
+        generate_events(),
+        mimetype="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
 
 
 @applications_bp.route("/generate-from-text", methods=["POST"])
