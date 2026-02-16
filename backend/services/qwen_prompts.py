@@ -70,9 +70,15 @@ def _build_faktentreue_block(skills_section: str) -> str:
 {skills_section}
 - Wenn die Stelle Skills fordert die nicht im CV stehen: Sage ehrlich dass du dich einarbeiten willst, statt die Skills zu erfinden
 - Lieber eine ehrliche Lücke als eine erfundene Qualifikation
-- Sage NICHT dass du einen Skill "kennst", "Konzepte verstehst", "die Konzepte kenne ich aus", "erste Erfahrung hast", "Grundlagen kenne ich", "in kleinen Projekten genutzt hast" oder "aus der Praxis vertraut" wenn er NICHT im CV steht
-- Verwende KEINE Umschreibungen wie "die Arbeit mit X ist mir nicht fremd" oder "ich verstehe wie X funktioniert" für Skills die NICHT im CV stehen
-- Einzige erlaubte Formulierung für fehlende Skills: "[Skill] habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein." — KEINE andere Formulierung, KEIN Relativieren, KEIN "aber die Konzepte kenne ich"
+- Sage NICHT dass du einen Skill "kennst" oder "erste Erfahrung hast" wenn er NICHT im CV steht. Verbotene Formulierungen:
+  - "Konzepte verstehst" / "die Konzepte kenne ich aus"
+  - "Grundlagen kenne ich" / "in kleinen Projekten genutzt"
+  - "aus der Praxis vertraut"
+  - "die Arbeit mit X ist mir nicht fremd"
+  - "ich verstehe wie X funktioniert"
+- Einzige erlaubte Formulierung für fehlende Skills:
+  "[Skill] habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein."
+  KEINE andere Formulierung, KEIN Relativieren, KEIN "aber die Konzepte kenne ich"
 - KEINE Pflegeerfahrung, Laborerfahrung oder andere fachfremde Erfahrung erfinden"""
 
 
@@ -263,8 +269,12 @@ def build_anschreiben_system_prompt(
   - Absatz 1: Ehrlich sagen dass du quereinsteigen möchtest und warum dich die Branche interessiert
   - Absatz 2: Was du mitbringst (Soft Skills, Lernbereitschaft) OHNE absurde Kompetenz-Transfers
   - Optional Absatz 3: Verfügbarkeit und Gesprächswunsch
-- VERBOTENE Kompetenz-Transfers: Software-Dokumentation ≠ Pflege-Dokumentation, Textanalyse ≠ Patienteneinschätzung, Parse-Algorithmus ≠ Triage, Code-Review ≠ medizinische Befundung
-- Übertrage KEINE IT-Fähigkeiten auf fachfremde Tätigkeiten. "Systematisch denken" und "unter Druck arbeiten" sind OK, aber KEINE technischen Parallelen ziehen
+- VERBOTENE Kompetenz-Transfers (KEINE technischen Parallelen ziehen):
+  - Software-Dokumentation ≠ Pflege-Dokumentation
+  - Textanalyse ≠ Patienteneinschätzung
+  - Parse-Algorithmus ≠ Triage
+  - Code-Review ≠ medizinische Befundung
+- Erlaubte Übertragungen: "Systematisch denken", "unter Druck arbeiten" und ähnliche allgemeine Soft Skills
 
 ## POSITION KORREKT EXTRAHIEREN:
 - Lies die EXAKTE Positionsbezeichnung aus der Stellenanzeige
@@ -281,10 +291,10 @@ def build_anschreiben_system_prompt(
 7. **Name**: Vollständiger Name des Bewerbers{name_for_closing}
 
 ### EINSTIEG VARIIEREN:
-- Beginne NICHT mit "habe ich auf eurer Website entdeckt/gestoßen"
-- Beginne NICHT mit "Die Möglichkeit bei..." oder "Die Aussicht bei..."
-- Beginne NICHT mit "was mich an [Firma] reizt" oder "was mich an [Firma] besonders reizt"
-- Beginne NICHT mit "was mich reizt" oder "was mich besonders anspricht"
+- Beginne NICHT mit diesen Mustern:
+  - "habe ich auf eurer Website entdeckt/gestoßen"
+  - "Die Möglichkeit bei..." / "Die Aussicht bei..."
+  - "was mich (an [Firma]) reizt/besonders anspricht"
 - Starte stattdessen mit EINER dieser Varianten (wechsle ab):
   - Ein konkretes Detail über die Firma oder ihr Produkt, das dich anspricht
   - Eine spezifische eigene Erfahrung, die direkt zur Stelle passt

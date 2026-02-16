@@ -184,14 +184,9 @@ class OutputValidator:
         Returns a dict mapping lowercase skill name to its original-case form
         as it appeared in the text (e.g. {"react": "React"}).
         """
-        known_skills = set()
-        if user_skills:
-            for skill in user_skills:
-                known_skills.add(skill.skill_name.lower())
-
+        known_skills = {s.skill_name.lower() for s in (user_skills or [])}
         cv_lower = cv_text.lower() if cv_text else ""
 
-        # Collect mentioned skills with original casing
         mentioned: dict[str, str] = {}
         for pattern in self.TECH_PATTERNS:
             for match in re.finditer(pattern, text, re.IGNORECASE):
@@ -258,9 +253,8 @@ class OutputValidator:
             # If we removed gray-zone sentences and no honest disclaimer
             # exists in the remaining text, add standard disclaimers
             if removed_any and not has_honest_disclaimer:
-                for _skill_lower, skill_original in mentioned_in_para.items():
-                    disclaimer = f"{skill_original} habe ich bisher nicht eingesetzt," " arbeite mich aber gerne ein."
-                    kept.append(disclaimer)
+                for skill_original in mentioned_in_para.values():
+                    kept.append(f"{skill_original} habe ich bisher nicht eingesetzt," " arbeite mich aber gerne ein.")
 
             fixed_paragraphs.append(" ".join(kept))
 
