@@ -1,3 +1,11 @@
+# [1.56.0](https://github.com/filipores/obojobs/compare/v1.55.6...v1.56.0) (2026-02-16)
+
+
+### Features
+
+* **generator:** add output validation pipeline for cover letters ([a35e70c](https://github.com/filipores/obojobs/commit/a35e70c567fc58d4b8822f35110875a57e0c8d06))
+* **generator:** add sse progress streaming for generation pipeline ([8ec8e8e](https://github.com/filipores/obojobs/commit/8ec8e8e0bede938050457d36f7d7418078875c4f))
+
 ## [1.55.6](https://github.com/filipores/obojobs/compare/v1.55.5...v1.55.6) (2026-02-15)
 
 
