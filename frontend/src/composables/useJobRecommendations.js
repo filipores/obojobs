@@ -132,7 +132,9 @@ export function useJobRecommendations() {
     try {
       const { data } = await api.post('/applications/generate-from-url', {
         url: rec.job_url,
-        tone: 'modern'
+        tone: 'modern',
+        company: rec.company_name || '',
+        title: rec.job_title || ''
       })
 
       if (data.success) {

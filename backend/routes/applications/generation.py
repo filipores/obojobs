@@ -67,15 +67,16 @@ def _resolve_job_data(
     """
     scraper = WebScraper()
 
-    if user_company or user_description:
+    if user_description:
         company = user_company or scraper.extract_company_name_from_url(url)
         return company, user_description
 
+    # Always scrape when no description provided (even if company is known)
     job_data = scraper.fetch_job_posting(url)
     if not job_data.get("text"):
         raise ValueError("Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL.")
 
-    company = job_data.get("company") or scraper.extract_company_name_from_url(url)
+    company = user_company or job_data.get("company") or scraper.extract_company_name_from_url(url)
     return company, job_data["text"]
 
 
@@ -240,14 +241,12 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
     try:
         scraper = WebScraper()
 
-        # If user provided edited data from preview, use it
-        # Otherwise fall back to scraping
-        if user_company or user_description:
-            # Use user's edited data
+        # If user provided description, use it; otherwise scrape
+        if user_description:
             company = user_company if user_company else scraper.extract_company_name_from_url(url)
             job_text = user_description
         else:
-            # Scrape the job posting (legacy flow)
+            # Scrape the job posting
             job_data = scraper.fetch_job_posting(url)
 
             if not job_data.get("text"):
@@ -255,8 +254,8 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
                     {"success": False, "error": "Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL."}
                 ), 400
 
-            # Extract company name - prefer scraped, fallback to URL extraction
-            company = job_data.get("company") or scraper.extract_company_name_from_url(url)
+            # Prefer user-provided company, then scraped, then URL extraction
+            company = user_company or job_data.get("company") or scraper.extract_company_name_from_url(url)
             job_text = job_data.get("text")
 
         # Build user_details dict if user provided edited data
