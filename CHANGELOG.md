@@ -1,3 +1,15 @@
+## [1.59.3](https://github.com/filipores/obojobs/compare/v1.59.2...v1.59.3) (2026-02-16)
+
+
+### Bug Fixes
+
+* **scraper:** use jobdetail url format for arbeitsagentur job postings ([0ece2a7](https://github.com/filipores/obojobs/commit/0ece2a77a81b0d05ec9b35929cffd2f1a7035b33))
+
+
+### Performance Improvements
+
+* **pipeline:** add db indexes, document caching, eager loading, and background job-fit ([1c50add](https://github.com/filipores/obojobs/commit/1c50add6ab7b3906d5100fede476a7191a44b339))
+
 ## [1.59.2](https://github.com/filipores/obojobs/compare/v1.59.1...v1.59.2) (2026-02-16)
 
 
