@@ -22,34 +22,6 @@
       </div>
     </div>
 
-    <!-- Skills Onboarding Hint -->
-    <div v-if="showSkillsHint" class="skills-hint-banner">
-      <div class="container">
-        <div class="skills-hint-content">
-          <div class="skills-hint-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-              <path d="M2 17l10 5 10-5"/>
-              <path d="M2 12l10 5 10-5"/>
-            </svg>
-          </div>
-          <div class="skills-hint-text">
-            <strong>Skills fehlen noch</strong>
-            <span>Laden Sie einen Lebenslauf hoch, um Skills automatisch zu extrahieren. Dies verbessert die Job-Analyse und Bewerbungserstellung.</span>
-          </div>
-          <router-link to="/documents" class="zen-btn zen-btn-ai zen-btn-sm">
-            Lebenslauf hochladen
-          </router-link>
-          <button @click="dismissSkillsHint" class="skills-hint-dismiss" :aria-label="t('dashboard.closeHint')">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-              <line x1="18" y1="6" x2="6" y2="18"/>
-              <line x1="6" y1="6" x2="18" y2="18"/>
-            </svg>
-          </button>
-        </div>
-      </div>
-    </div>
-
     <!-- Hero Section with Ma (negative space) -->
     <section class="hero-section">
       <div class="container">
@@ -65,6 +37,70 @@
 
         <!-- Decorative enso -->
         <div class="hero-enso"></div>
+      </div>
+    </section>
+
+    <!-- Onboarding Steps (for new users) -->
+    <section v-if="showOnboarding" class="onboarding-section">
+      <div class="container">
+        <div class="onboarding-card zen-card">
+          <div class="onboarding-header">
+            <h2>Erste Schritte</h2>
+            <span class="onboarding-progress">{{ completedSteps }}/3</span>
+          </div>
+          <div class="onboarding-steps">
+            <!-- Step 1: CV Upload -->
+            <div class="onboarding-step" :class="{ completed: hasSkills, active: !hasSkills }">
+              <div class="step-indicator">
+                <svg v-if="hasSkills" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span v-else>1</span>
+              </div>
+              <div class="step-content">
+                <h4>Lebenslauf hochladen</h4>
+                <p>Skills werden automatisch extrahiert</p>
+                <router-link v-if="!hasSkills" to="/documents" class="zen-btn zen-btn-sm zen-btn-ai">
+                  Hochladen
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Step 2: Email Verification -->
+            <div class="onboarding-step" :class="{ completed: hasVerifiedEmail, active: hasSkills && !hasVerifiedEmail }">
+              <div class="step-indicator">
+                <svg v-if="hasVerifiedEmail" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span v-else>2</span>
+              </div>
+              <div class="step-content">
+                <h4>E-Mail verifizieren</h4>
+                <p>Benachrichtigungen und Sicherheit</p>
+                <router-link v-if="!hasVerifiedEmail" to="/email-verification" class="zen-btn zen-btn-sm zen-btn-ghost">
+                  Verifizieren
+                </router-link>
+              </div>
+            </div>
+
+            <!-- Step 3: First Application -->
+            <div class="onboarding-step" :class="{ completed: hasApplications, active: hasSkills && hasVerifiedEmail && !hasApplications }">
+              <div class="step-indicator">
+                <svg v-if="hasApplications" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <polyline points="20 6 9 17 4 12"/>
+                </svg>
+                <span v-else>3</span>
+              </div>
+              <div class="step-content">
+                <h4>Erste Bewerbung erstellen</h4>
+                <p>KI generiert Ihr Anschreiben</p>
+                <router-link v-if="!hasApplications" to="/new-application" class="zen-btn zen-btn-sm zen-btn-ghost">
+                  Erstellen
+                </router-link>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -249,63 +285,184 @@
         <h2 class="section-title">Schnellzugriff</h2>
 
         <div class="actions-grid">
-          <router-link to="/documents" class="action-card stagger-item">
-            <div class="action-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                <polyline points="14 2 14 8 20 8"/>
-                <line x1="16" y1="13" x2="8" y2="13"/>
-                <line x1="16" y1="17" x2="8" y2="17"/>
-                <polyline points="10 9 9 9 8 9"/>
-              </svg>
-            </div>
-            <div class="action-content">
-              <h3>Dokumente</h3>
-              <p>CV, Zeugnisse und Dokumente verwalten</p>
-            </div>
-            <div class="action-arrow">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </div>
-          </router-link>
+          <!-- State: No skills (CV not uploaded) -->
+          <template v-if="!hasSkills">
+            <router-link to="/documents" class="action-card action-card-prominent stagger-item">
+              <div class="action-icon action-icon-ai">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Lebenslauf hochladen</h3>
+                <p>Skills werden automatisch per KI extrahiert</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </router-link>
 
-          <router-link to="/templates" class="action-card stagger-item">
-            <div class="action-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
-                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
-              </svg>
-            </div>
-            <div class="action-content">
-              <h3>Templates</h3>
-              <p>Anschreiben-Vorlagen erstellen</p>
-            </div>
-            <div class="action-arrow">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </div>
-          </router-link>
+            <router-link to="/settings" class="action-card stagger-item">
+              <div class="action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Extension einrichten</h3>
+                <p>Chrome Extension installieren</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </router-link>
 
-          <router-link to="/applications" class="action-card stagger-item">
-            <div class="action-icon">
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
-                <line x1="3" y1="9" x2="21" y2="9"/>
-                <line x1="9" y1="21" x2="9" y2="9"/>
-              </svg>
+            <div class="action-card action-card-disabled stagger-item" title="Erst Lebenslauf hochladen">
+              <div class="action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Jobs entdecken</h3>
+                <p>Erst Lebenslauf hochladen</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
             </div>
-            <div class="action-content">
-              <h3>Bewerbungen</h3>
-              <p>Übersicht aller Bewerbungen</p>
+          </template>
+
+          <!-- State: Has skills but no applications -->
+          <template v-else-if="!hasApplications">
+            <router-link to="/new-application" class="action-card action-card-prominent stagger-item">
+              <div class="action-icon action-icon-ai">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                  <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Erste Bewerbung erstellen</h3>
+                <p>KI generiert Ihr personalisiertes Anschreiben</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </router-link>
+
+            <router-link to="/job-dashboard" class="action-card stagger-item">
+              <div class="action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Jobs entdecken</h3>
+                <p>Passende Stellenangebote finden</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </router-link>
+
+            <div class="action-card action-card-disabled stagger-item" title="Erst eine Bewerbung erstellen">
+              <div class="action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Bewerbungen verwalten</h3>
+                <p>Erst eine Bewerbung erstellen</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
             </div>
-            <div class="action-arrow">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M5 12h14M12 5l7 7-7 7"/>
-              </svg>
-            </div>
-          </router-link>
+          </template>
+
+          <!-- State: Has applications (normal) -->
+          <template v-else>
+            <router-link to="/documents" class="action-card stagger-item">
+              <div class="action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Dokumente</h3>
+                <p>CV, Zeugnisse und Dokumente verwalten</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </router-link>
+
+            <router-link to="/job-dashboard" class="action-card stagger-item">
+              <div class="action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Jobs entdecken</h3>
+                <p>Passende Stellenangebote finden</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </router-link>
+
+            <router-link to="/applications" class="action-card stagger-item">
+              <div class="action-icon">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <line x1="3" y1="9" x2="21" y2="9"/>
+                  <line x1="9" y1="21" x2="9" y2="9"/>
+                </svg>
+              </div>
+              <div class="action-content">
+                <h3>Bewerbungen</h3>
+                <p>Übersicht aller Bewerbungen</p>
+              </div>
+              <div class="action-arrow">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M5 12h14M12 5l7 7-7 7"/>
+                </svg>
+              </div>
+            </router-link>
+          </template>
         </div>
       </div>
     </section>
@@ -476,24 +633,14 @@ const getRelativeTime = (dateStr) => {
   return `in ${diffDays} Tagen`
 }
 
-// Show skills hint if no skills and not dismissed for 7 days
-const showSkillsHint = computed(() => {
-  if (!skillsLoaded.value) return false
-  if (skills.value.length > 0) return false
-  const dismissed = localStorage.getItem('skillsHintDismissedAt')
-  if (dismissed) {
-    const dismissedAt = new Date(dismissed)
-    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    if (dismissedAt > sevenDaysAgo) return false
-  }
-  return true
-})
-
-const dismissSkillsHint = () => {
-  localStorage.setItem('skillsHintDismissedAt', new Date().toISOString())
-  skillsLoaded.value = false // Force recompute
-  setTimeout(() => { skillsLoaded.value = true }, 0)
-}
+// Onboarding step computeds
+const hasSkills = computed(() => skills.value.length > 0)
+const hasVerifiedEmail = computed(() => authStore.user?.email_verified === true)
+const hasApplications = computed(() => (stats.value?.gesamt || 0) > 0)
+const completedSteps = computed(() =>
+  [hasSkills.value, hasVerifiedEmail.value, hasApplications.value].filter(Boolean).length
+)
+const showOnboarding = computed(() => skillsLoaded.value && completedSteps.value < 3)
 
 const retryLoadStats = () => {
   stats.value = null
@@ -569,71 +716,108 @@ onMounted(async () => {
 }
 
 /* ========================================
-   SKILLS HINT BANNER
+   ONBOARDING SECTION
    ======================================== */
-.skills-hint-banner {
-  background: var(--color-ai-subtle, #e8eef3);
-  border-bottom: 1px solid var(--color-ai, #3d5a6c);
-  padding: var(--space-md) 0;
+.onboarding-section {
+  padding: 0 0 var(--space-lg);
 }
 
-.skills-hint-content {
+.onboarding-card {
+  padding: var(--space-lg) var(--space-xl);
+  background: var(--color-bg-elevated);
+  border: 1px solid var(--color-border-light);
+}
+
+.onboarding-header {
   display: flex;
+  justify-content: space-between;
   align-items: center;
-  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
-.skills-hint-icon {
-  color: var(--color-ai, #3d5a6c);
-  flex-shrink: 0;
+.onboarding-header h2 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  margin: 0;
+  color: var(--color-sumi);
 }
 
-.skills-hint-text {
+.onboarding-progress {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-ai);
+  background: var(--color-ai-subtle);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-full, 9999px);
+}
+
+.onboarding-steps {
+  display: flex;
+  gap: var(--space-xl);
+}
+
+.onboarding-step {
   flex: 1;
   display: flex;
-  flex-direction: column;
-  gap: var(--space-xs);
-}
-
-.skills-hint-text strong {
-  color: var(--color-sumi);
-  font-size: 0.9375rem;
-}
-
-.skills-hint-text span {
-  color: var(--color-text-secondary);
-  font-size: 0.875rem;
-}
-
-.skills-hint-dismiss {
-  padding: var(--space-xs);
-  background: transparent;
-  border: none;
-  color: var(--color-text-tertiary);
-  cursor: pointer;
-  border-radius: var(--radius-sm);
+  gap: var(--space-md);
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
   transition: all var(--transition-base);
-  flex-shrink: 0;
 }
 
-.skills-hint-dismiss:hover {
-  background: rgba(0, 0, 0, 0.05);
+.onboarding-step.active {
+  background: var(--color-ai-subtle);
+  border: 1px solid rgba(61, 90, 108, 0.2);
+}
+
+.onboarding-step.completed {
+  opacity: 0.7;
+}
+
+.step-indicator {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: all var(--transition-base);
+}
+
+.onboarding-step.active .step-indicator {
+  background: var(--color-ai);
+  color: var(--color-text-inverse);
+}
+
+.onboarding-step.completed .step-indicator {
+  background: var(--color-koke);
+  color: var(--color-text-inverse);
+}
+
+.onboarding-step:not(.active):not(.completed) .step-indicator {
+  background: var(--color-border-light);
+  color: var(--color-text-ghost);
+}
+
+.step-content h4 {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  margin: 0 0 var(--space-xs) 0;
   color: var(--color-sumi);
 }
 
-@media (max-width: 768px) {
-  .skills-hint-content {
-    flex-wrap: wrap;
-  }
+.step-content p {
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-sm) 0;
+}
 
-  .skills-hint-text {
-    flex-basis: calc(100% - 60px);
-  }
-
-  .skills-hint-banner .zen-btn {
-    width: 100%;
-    margin-top: var(--space-sm);
-  }
+.onboarding-step.completed .step-content h4 {
+  text-decoration: line-through;
+  color: var(--color-text-tertiary);
 }
 
 /* ========================================
@@ -989,6 +1173,29 @@ onMounted(async () => {
   transform: translateX(0);
 }
 
+/* Prominent action card (primary CTA) */
+.action-card-prominent {
+  border-color: var(--color-ai);
+  background: var(--color-ai-subtle);
+}
+
+.action-card-prominent .action-icon,
+.action-icon-ai {
+  background: var(--color-ai);
+  color: var(--color-text-inverse);
+}
+
+.action-card-prominent:hover .action-icon {
+  background: var(--color-sumi);
+}
+
+/* Disabled action card */
+.action-card-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+  cursor: not-allowed;
+}
+
 /* ========================================
    INFO SECTION
    ======================================== */
@@ -1071,6 +1278,15 @@ onMounted(async () => {
 }
 
 @media (max-width: 768px) {
+  .onboarding-steps {
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .onboarding-card {
+    padding: var(--space-md) var(--space-lg);
+  }
+
   .hero-section {
     padding: var(--space-ma) 0 var(--space-lg);
   }

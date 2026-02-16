@@ -23,44 +23,15 @@
           <router-link to="/dashboard" class="nav-link" exact-active-class="active" title="Dashboard">
             <span class="nav-text">Dashboard</span>
           </router-link>
+          <router-link to="/job-dashboard" class="nav-link" active-class="active" title="Jobsuche">
+            <span class="nav-text">Jobs</span>
+          </router-link>
           <router-link to="/applications" class="nav-link" active-class="active" title="Meine Bewerbungen">
             <span class="nav-text">Bewerbungen</span>
           </router-link>
-          <!-- Mehr Dropdown -->
-          <div class="mehr-dropdown-wrapper" ref="moreDropdownRef">
-            <button
-              class="nav-link mehr-toggle"
-              :class="{ 'active': isMoreDropdownOpen || isMoreRouteActive }"
-              @click="toggleMoreDropdown"
-              title="Mehr anzeigen"
-            >
-              <span class="nav-text">Mehr</span>
-              <svg class="mehr-chevron" :class="{ 'mehr-chevron-open': isMoreDropdownOpen }" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <polyline points="6 9 12 15 18 9"/>
-              </svg>
-            </button>
-            <div v-if="isMoreDropdownOpen" class="mehr-dropdown">
-              <router-link to="/documents" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Dokumente verwalten">
-                Dokumente
-              </router-link>
-              <router-link to="/timeline" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Aktivitäten-Timeline">
-                Timeline
-              </router-link>
-              <router-link to="/ats" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="ATS-Optimierung">
-                ATS
-              </router-link>
-              <router-link to="/company-insights" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Firmen-Insights">
-                Insights
-              </router-link>
-              <router-link to="/job-dashboard" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Job-Dashboard">
-                Jobsuche
-              </router-link>
-              <div v-if="authStore.user?.is_admin" class="mehr-dropdown-divider"></div>
-              <router-link v-if="authStore.user?.is_admin" to="/admin" class="mehr-dropdown-item" active-class="mehr-item-active" @click="closeMoreDropdown" title="Admin Dashboard">
-                Admin
-              </router-link>
-            </div>
-          </div>
+          <router-link to="/documents" class="nav-link" active-class="active" title="Dokumente verwalten">
+            <span class="nav-text">Dokumente</span>
+          </router-link>
           <router-link to="/new-application" class="nav-link nav-link-cta" active-class="active" title="Neue Bewerbung erstellen">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="12" y1="5" x2="12" y2="19"/>
@@ -146,6 +117,14 @@
 
         <!-- Sidebar Navigation -->
         <nav class="sidebar-nav">
+          <router-link to="/new-application" class="sidebar-link sidebar-cta" @click="closeMobileSidebar">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span>Neue Bewerbung</span>
+          </router-link>
+
           <router-link to="/dashboard" class="sidebar-link" exact-active-class="active" @click="closeMobileSidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -174,7 +153,7 @@
             <span>Bewerbungen</span>
           </router-link>
 
-          <router-link to="/timeline" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
+          <router-link to="/applications?view=timeline" class="sidebar-link" active-class="active" @click="closeMobileSidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
               <circle cx="12" cy="12" r="10"/>
               <polyline points="12 6 12 12 16 14"/>
@@ -247,6 +226,13 @@
       </div>
     </div>
 
+    <!-- Breadcrumbs -->
+    <div v-if="authStore.isAuthenticated() && showBreadcrumbs" class="breadcrumb-container">
+      <div class="container">
+        <BreadcrumbNav />
+      </div>
+    </div>
+
     <!-- Main Content -->
     <main class="main-content" :class="{ 'with-nav': authStore.isAuthenticated() }">
       <router-view v-slot="{ Component }">
@@ -263,16 +249,14 @@
           <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
           <polyline points="9 22 9 12 15 12 15 22"/>
         </svg>
-        <span class="bottom-nav-label">Start</span>
+        <span class="bottom-nav-label">Home</span>
       </router-link>
-      <router-link to="/applications" class="bottom-nav-item" active-class="active" title="Bewerbungen">
+      <router-link to="/job-dashboard" class="bottom-nav-item" active-class="active" title="Jobsuche">
         <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-          <polyline points="14 2 14 8 20 8"/>
-          <line x1="16" y1="13" x2="8" y2="13"/>
-          <line x1="16" y1="17" x2="8" y2="17"/>
+          <circle cx="11" cy="11" r="8"/>
+          <path d="M21 21l-4.35-4.35"/>
         </svg>
-        <span class="bottom-nav-label">Bewerbungen</span>
+        <span class="bottom-nav-label">Jobs</span>
       </router-link>
       <router-link to="/new-application" class="bottom-nav-item bottom-nav-cta" active-class="active" title="Neue Bewerbung">
         <div class="bottom-nav-cta-circle">
@@ -283,20 +267,21 @@
         </div>
         <span class="bottom-nav-label">Neu</span>
       </router-link>
-      <router-link to="/ats" class="bottom-nav-item" active-class="active" title="ATS-Optimierung">
+      <router-link to="/applications" class="bottom-nav-item" active-class="active" title="Bewerbungen">
         <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <path d="M12 20V10"/>
-          <path d="M18 20V4"/>
-          <path d="M6 20v-4"/>
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+          <line x1="16" y1="13" x2="8" y2="13"/>
+          <line x1="16" y1="17" x2="8" y2="17"/>
         </svg>
-        <span class="bottom-nav-label">ATS</span>
+        <span class="bottom-nav-label">Bewerbungen</span>
       </router-link>
-      <router-link to="/timeline" class="bottom-nav-item" active-class="active" title="Timeline">
+      <router-link to="/settings" class="bottom-nav-item" active-class="active" title="Profil">
         <svg class="bottom-nav-icon" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-          <circle cx="12" cy="12" r="10"/>
-          <polyline points="12 6 12 12 16 14"/>
+          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+          <circle cx="12" cy="7" r="4"/>
         </svg>
-        <span class="bottom-nav-label">Timeline</span>
+        <span class="bottom-nav-label">Profil</span>
       </router-link>
     </nav>
 
@@ -329,6 +314,7 @@ import { authStore } from './stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import Toast from './components/Toast.vue'
 import LanguageSwitcher from './components/LanguageSwitcher.vue'
+import BreadcrumbNav from './components/BreadcrumbNav.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -336,21 +322,13 @@ const toastRef = ref(null)
 const isDarkMode = ref(false)
 const isSidebarOpen = ref(false)
 const isResizing = ref(false)
-const isMoreDropdownOpen = ref(false)
-const moreDropdownRef = ref(null)
-const moreRoutes = ['/documents', '/timeline', '/ats', '/company-insights', '/job-dashboard', '/admin']
-const isMoreRouteActive = computed(() => moreRoutes.some(r => route.path.startsWith(r)))
-
-const toggleMoreDropdown = () => {
-  isMoreDropdownOpen.value = !isMoreDropdownOpen.value
-}
-
-const closeMoreDropdown = () => {
-  isMoreDropdownOpen.value = false
-}
 
 const currentYear = computed(() => new Date().getFullYear())
 const hideAppFooter = computed(() => route.meta?.hideFooter === true)
+const showBreadcrumbs = computed(() => {
+  // Only show breadcrumbs on authenticated pages that benefit from them (not dashboard itself)
+  return route.path !== '/dashboard' && route.path !== '/' && route.meta.requiresAuth
+})
 
 const THEME_KEY = 'obojobs-theme'
 
@@ -424,15 +402,8 @@ const handleEscapeKey = (event) => {
   }
 }
 
-const handleClickOutside = (e) => {
-  if (moreDropdownRef.value && !moreDropdownRef.value.contains(e.target)) {
-    isMoreDropdownOpen.value = false
-  }
-}
-
 // Close sidebar on route change
 const handleRouteChange = () => {
-  isMoreDropdownOpen.value = false
   if (isSidebarOpen.value) {
     closeMobileSidebar()
   }
@@ -491,15 +462,12 @@ onMounted(() => {
 
   // Watch for route changes to close sidebar
   router.afterEach(handleRouteChange)
-
-  document.addEventListener('click', handleClickOutside)
 })
 
 onUnmounted(() => {
   // Clean up event listeners
   document.removeEventListener('keydown', handleEscapeKey)
   window.removeEventListener('resize', handleResize)
-  document.removeEventListener('click', handleClickOutside)
   clearTimeout(resizeTimer)
   document.body.classList.remove('sidebar-open')
 })
@@ -698,82 +666,6 @@ onUnmounted(() => {
   background: var(--color-ai);
 }
 
-/* Mehr Dropdown */
-.mehr-dropdown-wrapper {
-  position: relative;
-}
-
-.mehr-toggle {
-  display: flex;
-  align-items: center;
-  gap: var(--space-xs);
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-family: inherit;
-}
-
-.mehr-chevron {
-  transition: transform var(--transition-base);
-  flex-shrink: 0;
-}
-
-.mehr-chevron-open {
-  transform: rotate(180deg);
-}
-
-.mehr-dropdown {
-  position: absolute;
-  top: calc(100% + var(--space-xs));
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 180px;
-  background: var(--color-washi);
-  border: 1px solid var(--color-border-light);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-lifted);
-  padding: var(--space-xs) 0;
-  z-index: calc(var(--z-nav) + 1);
-  animation: dropdownFade 0.15s var(--ease-zen);
-}
-
-.mehr-dropdown-item {
-  display: block;
-  padding: var(--space-sm) var(--space-lg);
-  color: var(--color-text-tertiary);
-  text-decoration: none;
-  font-size: 0.9375rem;
-  transition: all var(--transition-base);
-  white-space: nowrap;
-}
-
-.mehr-dropdown-item:hover {
-  background: var(--color-washi-aged);
-  color: var(--color-text-primary);
-}
-
-.mehr-dropdown-item.mehr-item-active {
-  color: var(--color-ai);
-  font-weight: 500;
-}
-
-.mehr-dropdown-divider {
-  height: 1px;
-  background: var(--color-border-light);
-  margin: var(--space-xs) 0;
-}
-
-@keyframes dropdownFade {
-  from {
-    opacity: 0;
-    transform: translateX(-50%) translateY(-4px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(-50%) translateY(0);
-  }
-}
-
 /* Actions */
 .nav-actions {
   display: flex;
@@ -863,6 +755,20 @@ onUnmounted(() => {
     var(--color-sand) 85%,
     transparent 100%
   );
+}
+
+/* ========================================
+   BREADCRUMB CONTAINER
+   ======================================== */
+.breadcrumb-container {
+  background: var(--color-washi);
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+.breadcrumb-container .container {
+  max-width: var(--container-xl);
+  margin: 0 auto;
+  padding: 0 var(--space-ma);
 }
 
 /* ========================================
@@ -1333,6 +1239,27 @@ onUnmounted(() => {
   background: var(--color-ai-subtle);
   color: var(--color-ai);
   font-weight: 500;
+}
+
+/* Sidebar CTA */
+.sidebar-cta {
+  background: var(--color-ai);
+  color: var(--color-washi) !important;
+  border-radius: var(--radius-md);
+  margin: var(--space-xs) var(--space-md) var(--space-md);
+  padding: var(--space-sm) var(--space-md);
+  font-weight: 500;
+  width: auto;
+  justify-content: center;
+}
+
+.sidebar-cta:hover {
+  background: var(--color-ai-light);
+  color: var(--color-washi) !important;
+}
+
+.sidebar-cta svg {
+  stroke: currentColor;
 }
 
 .sidebar-link.active::before {
