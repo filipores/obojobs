@@ -1,3 +1,10 @@
+## [1.59.2](https://github.com/filipores/obojobs/compare/v1.59.1...v1.59.2) (2026-02-16)
+
+
+### Performance Improvements
+
+* **pipeline:** optimize generation with fast model, streaming, and phrase post-processing ([7eedbc2](https://github.com/filipores/obojobs/commit/7eedbc2cb39dd521e60319b9499a94b81ed597a4))
+
 ## [1.59.1](https://github.com/filipores/obojobs/compare/v1.59.0...v1.59.1) (2026-02-16)
 
 
