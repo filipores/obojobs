@@ -1,3 +1,10 @@
+# [1.58.0](https://github.com/filipores/obojobs/compare/v1.57.0...v1.58.0) (2026-02-16)
+
+
+### Features
+
+* **generator:** harden prompt pipeline against hallucination and repetition ([6827880](https://github.com/filipores/obojobs/commit/68278808f99f62822ec36b8c37ed2ee9ddd40bde))
+
 # [1.57.0](https://github.com/filipores/obojobs/compare/v1.56.0...v1.57.0) (2026-02-16)
 
 
