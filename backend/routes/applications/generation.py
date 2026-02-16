@@ -150,6 +150,21 @@ def calculate_and_store_job_fit(app: Any, job_description: str, user_id: int) ->
         logger.warning("Failed to calculate job-fit for app %s: %s", app.id, e)
 
 
+def start_job_fit_calculation(application: Any, job_description: str, user_id: int) -> None:
+    """Start job-fit calculation in a background thread.
+
+    The calculation runs asynchronously and doesn't block the response.
+    """
+    flask_app = current_app._get_current_object()
+
+    def run_with_context():
+        with flask_app.app_context():
+            calculate_and_store_job_fit(application, job_description, user_id)
+
+    thread = threading.Thread(target=run_with_context, daemon=True)
+    thread.start()
+
+
 @applications_bp.route("/generate", methods=["POST"])
 @api_key_required  # Extension uses API key
 @check_subscription_limit
@@ -223,13 +238,7 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
     data = request.json
     url = data.get("url", "").strip()
     tone = data.get("tone", "modern")
-
-    # Optional user-edited data from preview step
     user_company = data.get("company", "").strip()
-    user_title = data.get("title", "").strip()
-    user_contact_person = data.get("contact_person", "").strip()
-    user_contact_email = data.get("contact_email", "").strip()
-    user_location = data.get("location", "").strip()
     user_description = data.get("description", "").strip()
 
     if not url:
@@ -239,60 +248,19 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
         return jsonify({"success": False, "error": "Ungültige URL. Bitte mit http:// oder https:// beginnen."}), 400
 
     try:
-        scraper = WebScraper()
+        company, job_text = _resolve_job_data(url, user_company, user_description)
+        user_details = _build_user_details(data)
 
-        # If user provided description, use it; otherwise scrape
-        if user_description:
-            company = user_company if user_company else scraper.extract_company_name_from_url(url)
-            job_text = user_description
-        else:
-            # Scrape the job posting
-            job_data = scraper.fetch_job_posting(url)
-
-            if not job_data.get("text"):
-                return jsonify(
-                    {"success": False, "error": "Konnte keine Stellenanzeige von der URL laden. Bitte prüfe die URL."}
-                ), 400
-
-            # Prefer user-provided company, then scraped, then URL extraction
-            company = user_company or job_data.get("company") or scraper.extract_company_name_from_url(url)
-            job_text = job_data.get("text")
-
-        # Build user_details dict if user provided edited data
-        user_details = None
-        if user_company or user_description:
-            user_details = {
-                "position": user_title,
-                "contact_person": user_contact_person,
-                "contact_email": user_contact_email,
-                "location": user_location,
-                "description": user_description,
-                "quelle": data.get("quelle", "").strip() or None,
-            }
-
-        # Generate application using existing generator
         generator = BewerbungsGenerator(user_id=current_user.id)
         generator.prepare()
         pdf_path = generator.generate_bewerbung(url, company, user_details=user_details, tonalitaet=tone)
 
-        # Get the newly created application
         latest = application_service.get_latest_application(current_user.id)
-
-        # Calculate and store job-fit score (non-blocking)
         if latest and job_text:
-            calculate_and_store_job_fit(latest, job_text, current_user.id)
+            start_job_fit_calculation(latest, job_text, current_user.id)
 
-        # Get updated usage info (increment already done by @check_subscription_limit)
         usage = get_subscription_usage(current_user)
-
-        result = {
-            "success": True,
-            "application": latest.to_dict() if latest else None,
-            "pdf_path": pdf_path,
-            "usage": usage,
-            "message": f"Bewerbung für {company} erstellt",
-        }
-        _add_generation_warnings(result, generator, current_user)
+        result = _build_generation_result(latest, pdf_path, usage, generator, current_user, company)
 
         return jsonify(result), 200
 
@@ -462,8 +430,8 @@ def generate_from_text(current_user: Any) -> tuple[Response, int]:
                 if updates:
                     application_service.update_application_fields(latest, **updates)
 
-                # Calculate and store job-fit score (non-blocking)
-                calculate_and_store_job_fit(latest, job_text, current_user.id)
+                # Calculate and store job-fit score (non-blocking background thread)
+                start_job_fit_calculation(latest, job_text, current_user.id)
 
             # Get updated usage info (increment already done by @check_subscription_limit)
             usage = get_subscription_usage(current_user)
