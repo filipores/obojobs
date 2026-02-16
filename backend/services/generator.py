@@ -210,6 +210,21 @@ class BewerbungsGenerator:
         logger.info("Quelle: %s", details["quelle"])
         return details
 
+    def _extract_user_inputs(self) -> tuple[str | None, str | None, list]:
+        """Extract user data for cover letter generation.
+
+        Returns:
+            Tuple of (full_name, first_name, user_skills)
+        """
+        if not self.user:
+            return None, None, []
+
+        full_name = self.user.full_name
+        first_name = full_name.split()[0] if full_name else None
+        user_skills = UserSkill.query.filter_by(user_id=self.user_id).all()
+
+        return full_name, first_name, user_skills or []
+
     def _generate_letter_body(
         self,
         stellenanzeige_text: str,
@@ -219,10 +234,11 @@ class BewerbungsGenerator:
     ) -> str:
         """Generate the AI-written cover letter body via Qwen."""
         logger.info("3/5 Generiere vollständiges Anschreiben...")
-        full_name = self.user.full_name if self.user else None
-        bewerber_vorname = full_name.split()[0] if full_name else None
-        user_skills = UserSkill.query.filter_by(user_id=self.user_id).all() if self.user_id else []
 
+        # Prepare user inputs
+        full_name, bewerber_vorname, user_skills = self._extract_user_inputs()
+
+        # Generate body via API
         anschreiben_body = self.api_client.generate_anschreiben(
             cv_text=self.cv_text,
             stellenanzeige_text=stellenanzeige_text,
@@ -235,8 +251,16 @@ class BewerbungsGenerator:
             bewerber_name=full_name,
             user_skills=user_skills,
             tonalitaet=tonalitaet,
+            details=details,
         )
         logger.info("Anschreiben generiert (%d Zeichen)", len(anschreiben_body))
+
+        # Fix gray-zone skill claims before validation
+        anschreiben_body = self.validator.fix_gray_zone_claims(
+            text=anschreiben_body,
+            cv_text=self.cv_text,
+            user_skills=user_skills,
+        )
 
         # Validate generated output
         validation = self.validator.validate(
@@ -245,13 +269,14 @@ class BewerbungsGenerator:
             user_skills=user_skills,
         )
 
+        # Collect validation feedback
         if validation.warnings:
             self.warnings.extend(validation.warnings)
             logger.info("Validierung: %d Warnings", len(validation.warnings))
 
         if validation.errors:
             self.warnings.extend(validation.errors)
-            logger.warning("Validierung: %d Errors: %s", len(validation.errors), validation.errors)
+            logger.warning("Validierung: %d Errors", len(validation.errors))
 
         logger.info("Validierung Metriken: %s", validation.metrics)
 

@@ -1,30 +1,79 @@
 """Prompt templates and constants for Qwen AI cover letter generation."""
 
 FORBIDDEN_PHRASES = [
-    "genau die Mischung aus",
+    # Generic application openers
+    "Hiermit bewerbe ich mich",
+    "ich bewerbe mich auf die Stelle",
+    "mit großem Interesse",
+    # Flattery / excitement
     "spricht mich besonders an",
     "reizt mich besonders",
     "hat mich sofort angesprochen",
     "hat meine Aufmerksamkeit geweckt",
-    "mit großem Interesse",
-    "Hiermit bewerbe ich mich",
+    # Buzzwords
     "hochmotiviert",
     "vielfältige Herausforderungen",
-    "bin ich der ideale Kandidat",
-    "freue mich auf die Herausforderung",
     "in einem dynamischen Umfeld",
     "meine Leidenschaft für",
+    "freue mich auf die Herausforderung",
+    # Self-aggrandizing
+    "bin ich der ideale Kandidat",
+    "einen wertvollen Beitrag leisten",
+    # AI-sounding connectors
+    "genau die Mischung aus",
     "passt genau zu meinen Erfahrungen",
+    "hat mir nicht nur",
+    "was sich überraschend gut auf",
+    # Vague skill claims
     "technische Tiefe",
     "Lösungskompetenz",
     "praktische Erfahrung mitbringen",
     "bringe ich mit",
     "konnte ich unter Beweis stellen",
     "erfolgreich einsetzen",
-    "ich bewerbe mich auf die Stelle",
+    # Website discovery cliches
+    "habe ich auf eurer Website entdeckt",
+    "habe ich auf eurer Website gestoßen",
+    "bin ich auf die Stelle gestoßen",
+    # "direkt" filler
+    "direkt neugierig",
+    "direkt interessiert",
+    "direkt angesprochen",
+    # Teaching-pattern cliches
+    "Das hat mich gelehrt",
+    "Diese Erfahrung hat mich gelehrt",
 ]
 
 FORBIDDEN_PHRASES_BLOCK = "\n".join(f'- "{phrase}"' for phrase in FORBIDDEN_PHRASES)
+
+VERBOTENE_ZEICHEN_BLOCK = """### VERBOTENE ZEICHEN:
+- Das Zeichen "–" (Gedankenstrich/En-Dash) ist VERBOTEN
+- Das Zeichen "—" (Em-Dash) ist VERBOTEN
+- Das Zeichen "-" als Satzzeichen ist VERBOTEN (als Bindestrich in Wörtern wie "Full-Stack" ist es OK)
+- Verwende stattdessen Kommas, Punkte oder Semikolons"""
+
+
+def _build_skills_section(user_skills: list | None) -> str:
+    """Format user skills into a prompt line for skill references."""
+    if user_skills:
+        skills_list = ", ".join(skill.skill_name for skill in user_skills)
+        return f"- Die Skills im CV sind: {skills_list}"
+    return "- Lies die Skills direkt aus dem Lebenslauf"
+
+
+def _build_faktentreue_block(skills_section: str) -> str:
+    """Build the FAKTENTREUE (factual accuracy) rules block used in both prompts."""
+    return f"""## KRITISCHE REGEL — FAKTENTREUE:
+- Nenne NUR Skills, Tools und Erfahrungen die EXAKT im Lebenslauf stehen
+- ERFINDE KEINE Kenntnisse. Wenn ein Skill nicht im CV steht, erwähne ihn NICHT
+- Beispiele für VERBOTENE Erfindungen: React, Angular, Spring Boot, Python, C++, XSLT, Kubernetes — wenn es nicht im CV steht, NICHT verwenden
+{skills_section}
+- Wenn die Stelle Skills fordert die nicht im CV stehen: Sage ehrlich dass du dich einarbeiten willst, statt die Skills zu erfinden
+- Lieber eine ehrliche Lücke als eine erfundene Qualifikation
+- Sage NICHT dass du einen Skill "kennst", "Konzepte verstehst", "die Konzepte kenne ich aus", "erste Erfahrung hast", "Grundlagen kenne ich", "in kleinen Projekten genutzt hast" oder "aus der Praxis vertraut" wenn er NICHT im CV steht
+- Verwende KEINE Umschreibungen wie "die Arbeit mit X ist mir nicht fremd" oder "ich verstehe wie X funktioniert" für Skills die NICHT im CV stehen
+- Einzige erlaubte Formulierung für fehlende Skills: "[Skill] habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein." — KEINE andere Formulierung, KEIN Relativieren, KEIN "aber die Konzepte kenne ich"
+- KEINE Pflegeerfahrung, Laborerfahrung oder andere fachfremde Erfahrung erfinden"""
 
 
 def create_details_extraction_prompt(stellenanzeige_text: str, firma_name: str) -> str:
@@ -77,12 +126,7 @@ def build_einleitung_system_prompt(
     bewerber_vorname: str | None = None,
     user_skills: list | None = None,
 ) -> str:
-    # Skills section - dynamic based on user_skills
-    if user_skills:
-        skills_list = ", ".join(skill.skill_name for skill in user_skills)
-        skills_section = f"- Die Skills im CV sind: {skills_list}"
-    else:
-        skills_section = "- Lies die Skills direkt aus dem Lebenslauf"
+    skills_section = _build_skills_section(user_skills)
 
     # Persona personalization
     if bewerber_vorname:
@@ -91,6 +135,8 @@ def build_einleitung_system_prompt(
     else:
         persona = "Schreibe locker und authentisch: 'bei euch' statt 'bei Ihnen'"
         stil_schluss = "im lockeren, authentischen Stil"
+
+    faktentreue = _build_faktentreue_block(skills_section)
 
     return f"""Du schreibst den Einleitungsabsatz eines Bewerbungsanschreibens. Nur diesen einen Absatz, nicht das ganze Anschreiben.
 
@@ -101,14 +147,7 @@ def build_einleitung_system_prompt(
 ## LEBENSLAUF:
 {cv_text[:2000]}
 
-## KRITISCHE REGEL — FAKTENTREUE:
-- Nenne NUR Skills, Tools und Erfahrungen die EXAKT im Lebenslauf stehen
-- ERFINDE KEINE Kenntnisse. Wenn ein Skill nicht im CV steht, erwähne ihn NICHT
-- Beispiele für VERBOTENE Erfindungen: React, Angular, Spring Boot, Python, C++, XSLT, Kubernetes — wenn es nicht im CV steht, NICHT verwenden
-{skills_section}
-- Wenn die Stelle Skills fordert die nicht im CV stehen: Sage ehrlich dass du dich einarbeiten willst, statt die Skills zu erfinden
-- Lieber eine ehrliche Lücke als eine erfundene Qualifikation
-- KEINE Pflegeerfahrung, Laborerfahrung oder andere fachfremde Erfahrung erfinden
+{faktentreue}
 
 ## POSITION KORREKT EXTRAHIEREN:
 - Lies die EXAKTE Positionsbezeichnung aus der Stellenanzeige
@@ -129,11 +168,7 @@ def build_einleitung_system_prompt(
 - KEINE Bindestriche, Gedankenstriche oder Spiegelstriche verwenden
 - KEINE Zeilenumbrüche innerhalb des Absatzes — schreibe einen fließenden Absatz
 
-### VERBOTENE ZEICHEN:
-- Das Zeichen "–" (Gedankenstrich/En-Dash) ist VERBOTEN
-- Das Zeichen "—" (Em-Dash) ist VERBOTEN
-- Das Zeichen "-" als Satzzeichen ist VERBOTEN (als Bindestrich in Wörtern wie "Full-Stack" ist es OK)
-- Verwende stattdessen Kommas, Punkte oder Semikolons
+{VERBOTENE_ZEICHEN_BLOCK}
 
 ### VERBOTENE PHRASEN (NIEMALS verwenden):
 {FORBIDDEN_PHRASES_BLOCK}
@@ -171,12 +206,7 @@ def build_anschreiben_system_prompt(
     tonalitaet: str = "modern",
 ) -> str:
     """Build the system prompt for full cover letter generation."""
-    # Skills section
-    if user_skills:
-        skills_list = ", ".join(skill.skill_name for skill in user_skills)
-        skills_section = f"- Die Skills im CV sind: {skills_list}"
-    else:
-        skills_section = "- Lies die Skills direkt aus dem Lebenslauf"
+    skills_section = _build_skills_section(user_skills)
 
     # Tone configuration
     if tonalitaet == "formal":
@@ -209,6 +239,8 @@ def build_anschreiben_system_prompt(
             "\n- ACHTUNG: Sehr kurzer Lebenslauf. Schreibe ein kürzeres Anschreiben (200-250 Wörter, 2-3 Absätze)."
         )
 
+    faktentreue = _build_faktentreue_block(skills_section)
+
     return f"""Du schreibst ein vollständiges Bewerbungsanschreiben. Nur den Briefkörper: von der Anrede bis zur Grußformel mit Name.
 
 ## TONALITÄT: {tonalitaet.upper()}
@@ -223,14 +255,16 @@ def build_anschreiben_system_prompt(
 ## LEBENSLAUF:
 {cv_text[:2500]}
 
-## KRITISCHE REGEL — FAKTENTREUE:
-- Nenne NUR Skills, Tools und Erfahrungen die EXAKT im Lebenslauf stehen
-- ERFINDE KEINE Kenntnisse. Wenn ein Skill nicht im CV steht, erwähne ihn NICHT
-- Beispiele für VERBOTENE Erfindungen: React, Angular, Spring Boot, Python, C++, XSLT, Kubernetes — wenn es nicht im CV steht, NICHT verwenden
-{skills_section}
-- Wenn die Stelle Skills fordert die nicht im CV stehen: Sage ehrlich dass du dich einarbeiten willst, statt die Skills zu erfinden
-- Lieber eine ehrliche Lücke als eine erfundene Qualifikation
-- KEINE Pflegeerfahrung, Laborerfahrung oder andere fachfremde Erfahrung erfinden
+{faktentreue}
+
+## BRANCHENKOMPATIBILITÄT:
+- Wenn die Stelle eine komplett andere Ausbildung erfordert (Pflege, Medizin, Handwerk, Ingenieurwesen) und dein CV das nicht hergibt:
+  - STRIKT MAXIMAL 200 Wörter und 2-3 Absätze. NICHT mehr. Zähle die Wörter.
+  - Absatz 1: Ehrlich sagen dass du quereinsteigen möchtest und warum dich die Branche interessiert
+  - Absatz 2: Was du mitbringst (Soft Skills, Lernbereitschaft) OHNE absurde Kompetenz-Transfers
+  - Optional Absatz 3: Verfügbarkeit und Gesprächswunsch
+- VERBOTENE Kompetenz-Transfers: Software-Dokumentation ≠ Pflege-Dokumentation, Textanalyse ≠ Patienteneinschätzung, Parse-Algorithmus ≠ Triage, Code-Review ≠ medizinische Befundung
+- Übertrage KEINE IT-Fähigkeiten auf fachfremde Tätigkeiten. "Systematisch denken" und "unter Druck arbeiten" sind OK, aber KEINE technischen Parallelen ziehen
 
 ## POSITION KORREKT EXTRAHIEREN:
 - Lies die EXAKTE Positionsbezeichnung aus der Stellenanzeige
@@ -246,17 +280,25 @@ def build_anschreiben_system_prompt(
 6. **Grußformel**: "Mit freundlichen Grüßen" (bei formal) oder "Viele Grüße" (bei modern/kreativ)
 7. **Name**: Vollständiger Name des Bewerbers{name_for_closing}
 
+### EINSTIEG VARIIEREN:
+- Beginne NICHT mit "habe ich auf eurer Website entdeckt/gestoßen"
+- Beginne NICHT mit "Die Möglichkeit bei..." oder "Die Aussicht bei..."
+- Beginne NICHT mit "was mich an [Firma] reizt" oder "was mich an [Firma] besonders reizt"
+- Beginne NICHT mit "was mich reizt" oder "was mich besonders anspricht"
+- Starte stattdessen mit EINER dieser Varianten (wechsle ab):
+  - Ein konkretes Detail über die Firma oder ihr Produkt, das dich anspricht
+  - Eine spezifische eigene Erfahrung, die direkt zur Stelle passt
+  - Eine Beobachtung über die Branche oder Technologie der Firma
+  - Ein persönlicher Moment, der dein Interesse an der Stelle erklärt
+- Wähle die RELEVANTESTE CV-Erfahrung als erstes, nicht immer chronologisch
+
 ## REGELN:
 
 ### Länge:
 - 250-400 Wörter, 3-5 Absätze (plus Anrede und Grußformel)
 - Absätze durch eine Leerzeile trennen{length_guidance}
 
-### VERBOTENE ZEICHEN:
-- Das Zeichen "–" (Gedankenstrich/En-Dash) ist VERBOTEN
-- Das Zeichen "—" (Em-Dash) ist VERBOTEN
-- Das Zeichen "-" als Satzzeichen ist VERBOTEN (als Bindestrich in Wörtern wie "Full-Stack" ist es OK)
-- Verwende stattdessen Kommas, Punkte oder Semikolons
+{VERBOTENE_ZEICHEN_BLOCK}
 
 ### VERBOTENE PHRASEN (NIEMALS verwenden):
 {FORBIDDEN_PHRASES_BLOCK}

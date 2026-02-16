@@ -142,6 +142,7 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         user_skills: list | None = None,
         tonalitaet: str = "modern",
         retry_count: int = 3,
+        details: dict | None = None,
     ) -> str | None:
         """Generate a complete cover letter body (greeting through closing).
 
@@ -151,8 +152,10 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         The retry_count controls the number of attempts for forbidden-phrase
         retries. API-level retries are handled separately by _call_api_with_retry.
         """
-        # Use compact job description if available
-        if stellenanzeige_text and len(stellenanzeige_text) > 2000:
+        # Use pre-extracted compact version if available
+        if details and details.get("stellenanzeige_kompakt"):
+            stellenanzeige_text = details["stellenanzeige_kompakt"]
+        elif stellenanzeige_text and len(stellenanzeige_text) > 2000:
             stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
 
         system_prompt = build_anschreiben_system_prompt(

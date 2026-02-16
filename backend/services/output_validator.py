@@ -25,7 +25,6 @@ class OutputValidator:
     MIN_PARAGRAPHS = 2
     MAX_PARAGRAPHS = 8
 
-    # Greetings that indicate a proper salutation
     VALID_GREETINGS = [
         "sehr geehrte",
         "sehr geehrter",
@@ -36,13 +35,65 @@ class OutputValidator:
         "guten tag",
     ]
 
-    # Closings that indicate a proper sign-off
     VALID_CLOSINGS = [
         "mit freundlichen grüßen",
         "viele grüße",
         "beste grüße",
         "herzliche grüße",
         "freundliche grüße",
+    ]
+
+    TECH_PATTERNS = [
+        r"\b(React|Angular|Vue\.?js|Next\.?js|Svelte)\b",
+        r"\b(Python|Java|Kotlin|Swift|Go|Rust|Ruby|PHP|C\+\+|C#)\b",
+        r"\b(TypeScript|JavaScript|Node\.?js)\b",
+        r"\b(Docker|Kubernetes|AWS|Azure|GCP)\b",
+        r"\b(PostgreSQL|MySQL|MongoDB|Redis)\b",
+        r"\b(Spring Boot|Django|Flask|Express|FastAPI)\b",
+        r"\b(TensorFlow|PyTorch|Scikit-learn)\b",
+        r"\b(Git|Jenkins|GitHub Actions|CI/CD)\b",
+        r"\b(Scrum|Kanban|Agile|SAFe)\b",
+        r"\b(SAP|Salesforce|Jira|Confluence)\b",
+    ]
+
+    # Phrases that softly claim familiarity with a skill without outright stating it
+    GRAY_ZONE_INDICATORS = [
+        "konzepte kenne",
+        "konzepte sind mir",
+        "konzepte versteh",
+        "aus der praxis vertraut",
+        "aus der praxis bekannt",
+        "aus der praxis geläufig",
+        "ist mir vertraut",
+        "ist mir bekannt",
+        "ist mir nicht fremd",
+        "sind mir vertraut",
+        "sind mir bekannt",
+        "sind mir nicht fremd",
+        "grundlagen kenne",
+        "grundlagen versteh",
+        "grundlagen beherrsch",
+        "erste erfahrung",
+        "erste berührungspunkte",
+        "in kleinen projekten",
+        "in kleineren projekten",
+        "bereits kennengelernt",
+        "schon kennengelernt",
+        "nicht ganz neu",
+        "nicht ganz unbekannt",
+        "nicht unbekannt",
+        "verständnis mitbringe",
+        "verständnis habe ich",
+    ]
+
+    # Markers that indicate an honest disclaimer (should be kept)
+    HONEST_MARKERS = [
+        "habe ich bisher nicht eingesetzt",
+        "bisher nicht eingesetzt",
+        "bisher nicht genutzt",
+        "noch nicht eingesetzt",
+        "noch nicht genutzt",
+        "kenne ich bisher nicht",
     ]
 
     def validate(self, text: str, cv_text: str | None = None, user_skills: list | None = None) -> ValidationResult:
@@ -127,52 +178,90 @@ class OutputValidator:
                 f"{ich_starts} von {len(sentences)} Sätzen beginnen mit 'Ich' — mehr Variation empfohlen"
             )
 
-    def _check_skill_hallucination(
-        self, text: str, cv_text: str | None, user_skills: list | None, result: ValidationResult
-    ) -> None:
-        """Check if mentioned technical skills actually exist in the CV.
+    def _find_non_cv_skills(self, text: str, cv_text: str | None, user_skills: list | None) -> dict[str, str]:
+        """Find tech skills mentioned in text but absent from CV.
 
-        This is a heuristic check — it looks for common tech skills mentioned
-        in the cover letter and verifies they appear in the CV or user skills.
+        Returns a dict mapping lowercase skill name to its original-case form
+        as it appeared in the text (e.g. {"react": "React"}).
         """
-        # Build set of known skills from CV and user_skills
         known_skills = set()
-
         if user_skills:
             for skill in user_skills:
                 known_skills.add(skill.skill_name.lower())
 
         cv_lower = cv_text.lower() if cv_text else ""
 
-        # Common tech skills to check (only flag if mentioned but not in CV)
-        tech_patterns = [
-            r"\b(React|Angular|Vue\.?js|Next\.?js|Svelte)\b",
-            r"\b(Python|Java|Kotlin|Swift|Go|Rust|Ruby|PHP|C\+\+|C#)\b",
-            r"\b(TypeScript|JavaScript|Node\.?js)\b",
-            r"\b(Docker|Kubernetes|AWS|Azure|GCP)\b",
-            r"\b(PostgreSQL|MySQL|MongoDB|Redis)\b",
-            r"\b(Spring Boot|Django|Flask|Express|FastAPI)\b",
-            r"\b(TensorFlow|PyTorch|Scikit-learn)\b",
-            r"\b(Git|Jenkins|GitHub Actions|CI/CD)\b",
-            r"\b(Scrum|Kanban|Agile|SAFe)\b",
-            r"\b(SAP|Salesforce|Jira|Confluence)\b",
-        ]
+        # Collect mentioned skills with original casing
+        mentioned: dict[str, str] = {}
+        for pattern in self.TECH_PATTERNS:
+            for match in re.finditer(pattern, text, re.IGNORECASE):
+                name = match.group(1)
+                mentioned.setdefault(name.lower(), name)
 
-        mentioned_skills = set()
-        for pattern in tech_patterns:
-            matches = re.findall(pattern, text, re.IGNORECASE)
-            mentioned_skills.update(m.lower() for m in matches)
+        return {k: v for k, v in mentioned.items() if k not in known_skills and k not in cv_lower}
 
-        # Check each mentioned skill against CV and user skills.
-        # mentioned_skills is already lowercased, so direct comparison works.
-        hallucinated = []
-        for skill in mentioned_skills:
-            if skill in known_skills:
+    def _check_skill_hallucination(
+        self, text: str, cv_text: str | None, user_skills: list | None, result: ValidationResult
+    ) -> None:
+        """Check if mentioned technical skills actually exist in the CV."""
+        non_cv = self._find_non_cv_skills(text, cv_text, user_skills)
+        if non_cv:
+            result.metrics["potentially_hallucinated_skills"] = list(non_cv.keys())
+            result.warnings.append(
+                f"Möglicherweise erfundene Skills: {', '.join(non_cv.keys())} — nicht im CV gefunden"
+            )
+
+    def fix_gray_zone_claims(self, text: str, cv_text: str | None = None, user_skills: list | None = None) -> str:
+        """Remove sentences that softly claim familiarity with non-CV skills.
+
+        The model often generates a correct disclaimer like
+        "React habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein."
+        but then immediately undermines it with a gray-zone sentence like
+        "Die Konzepte sind mir aus der Praxis vertraut."
+
+        This filter removes such undermining sentences from paragraphs that
+        discuss non-CV skills. If no honest disclaimer remains after removal,
+        a standard one is inserted.
+        """
+        non_cv = self._find_non_cv_skills(text, cv_text, user_skills)
+        if not non_cv:
+            return text
+
+        paragraphs = text.split("\n\n")
+        fixed_paragraphs = []
+
+        for para in paragraphs:
+            para_lower = para.lower()
+
+            # Only process paragraphs that mention a non-CV skill
+            mentioned_in_para = {k: v for k, v in non_cv.items() if k in para_lower}
+            if not mentioned_in_para:
+                fixed_paragraphs.append(para)
                 continue
-            if cv_lower and skill in cv_lower:
-                continue
-            hallucinated.append(skill)
 
-        if hallucinated:
-            result.metrics["potentially_hallucinated_skills"] = hallucinated
-            result.warnings.append(f"Möglicherweise erfundene Skills: {', '.join(hallucinated)} — nicht im CV gefunden")
+            has_honest_disclaimer = any(m in para_lower for m in self.HONEST_MARKERS)
+
+            # Split into sentences preserving paragraph structure
+            sentences = re.split(r"(?<=[.!?])\s+", para)
+            kept = []
+            removed_any = False
+
+            for sentence in sentences:
+                sentence_lower = sentence.lower()
+                has_gray_zone = any(indicator in sentence_lower for indicator in self.GRAY_ZONE_INDICATORS)
+                if has_gray_zone:
+                    logger.info("Gray-zone claim removed: %s", sentence[:80])
+                    removed_any = True
+                    continue
+                kept.append(sentence)
+
+            # If we removed gray-zone sentences and no honest disclaimer
+            # exists in the remaining text, add standard disclaimers
+            if removed_any and not has_honest_disclaimer:
+                for _skill_lower, skill_original in mentioned_in_para.items():
+                    disclaimer = f"{skill_original} habe ich bisher nicht eingesetzt," " arbeite mich aber gerne ein."
+                    kept.append(disclaimer)
+
+            fixed_paragraphs.append(" ".join(kept))
+
+        return "\n\n".join(fixed_paragraphs)
