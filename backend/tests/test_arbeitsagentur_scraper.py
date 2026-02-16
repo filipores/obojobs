@@ -320,6 +320,67 @@ class TestArbeitsagenturHTMLParsing:
 
         assert result["posted_date"] == "2026-01-15"
 
+    def test_extracts_title_from_h2_when_h1_is_generic(self, parser):
+        """Should skip generic 'Detailansicht' h1 and use h2 for title."""
+        html = """
+        <html>
+        <body>
+            <h1>Detailansicht des Stellenangebots</h1>
+            <h2>Python Backend Developer (m/w/d)</h2>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
+
+        assert result["title"] == "Python Backend Developer (m/w/d)"
+
+    def test_cleans_arbeitgeber_prefix_from_company(self, parser):
+        """Should strip 'Arbeitgeber:' prefix from company name."""
+        html = """
+        <html>
+        <body>
+            <h1>Developer</h1>
+            <h3>Arbeitgeber: TechFirma Berlin GmbH</h3>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
+
+        assert result["company"] == "TechFirma Berlin GmbH"
+
+    def test_extracts_kooperationspartner_url_when_no_description(self, parser):
+        """Should extract Kooperationspartner link as fallback when description is empty."""
+        html = """
+        <html>
+        <body>
+            <h1>Developer</h1>
+            <a href="https://external-portal.de/job/123">Kooperationspartner</a>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
+
+        assert result.get("kooperationspartner_url") == "https://external-portal.de/job/123"
+
+    def test_no_kooperationspartner_when_description_exists(self, parser):
+        """Should not set kooperationspartner_url when description is present."""
+        html = """
+        <html>
+        <body>
+            <h1>Developer</h1>
+            <div class="stellenbeschreibung">Full job description here.</div>
+            <a href="https://external-portal.de/job/123">Kooperationspartner</a>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
+
+        assert result.get("kooperationspartner_url") is None
+
 
 class TestArbeitsagenturHeaders:
     """Test anti-bot headers for Arbeitsagentur scraper."""
@@ -363,3 +424,31 @@ class TestWebScraperArbeitsagenturIntegration:
         scraper = WebScraper()
         url = "https://www.arbeitsagentur.de/arbeitslos-arbeit-finden"
         assert scraper.detect_job_board(url) is None
+
+
+class TestArbeitsagenturURLNormalization:
+    """Test URL normalization from suche?id= to jobdetail/ format."""
+
+    def test_normalizes_suche_id_to_jobdetail(self):
+        """Should convert suche?id= URL to jobdetail/ URL."""
+        url = "https://www.arbeitsagentur.de/jobsuche/suche?id=10000-1234567890-S"
+        result = WebScraper._normalize_arbeitsagentur_url(url)
+        assert result == "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-1234567890-S"
+
+    def test_normalizes_suche_with_extra_params(self):
+        """Should extract refnr even with extra query params."""
+        url = "https://www.arbeitsagentur.de/jobsuche/suche?id=10000-123&was=Python"
+        result = WebScraper._normalize_arbeitsagentur_url(url)
+        assert result == "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-123"
+
+    def test_leaves_jobdetail_url_unchanged(self):
+        """Should not modify already-correct jobdetail URLs."""
+        url = "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-123"
+        result = WebScraper._normalize_arbeitsagentur_url(url)
+        assert result == url
+
+    def test_leaves_non_arbeitsagentur_url_unchanged(self):
+        """Should not modify URLs from other domains."""
+        url = "https://www.stepstone.de/stellenangebote--Developer--12345.html"
+        result = WebScraper._normalize_arbeitsagentur_url(url)
+        assert result == url

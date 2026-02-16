@@ -1,5 +1,6 @@
 import logging
 import os
+import re
 from typing import Any
 from urllib.parse import urljoin, urlparse
 
@@ -153,6 +154,20 @@ class WebScraper:
             return Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.")
         return Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {e}")
 
+    @staticmethod
+    def _normalize_arbeitsagentur_url(url: str) -> str:
+        """Convert Arbeitsagentur search URLs to direct detail URLs.
+
+        The /jobsuche/suche?id={refnr} format loads a JS-based search modal
+        that BeautifulSoup cannot parse. The /jobsuche/jobdetail/{refnr} format
+        returns a full server-rendered detail page.
+        """
+        match = re.search(r"arbeitsagentur\.de/jobsuche/suche\?.*?(?:id|refnr)=([^&]+)", url)
+        if match:
+            refnr = match.group(1)
+            return f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{refnr}"
+        return url
+
     def detect_job_board(self, url: str) -> str | None:
         """Detect which job board a URL belongs to."""
         for parser_class in JOB_BOARD_PARSERS:
@@ -167,6 +182,7 @@ class WebScraper:
         Returns:
             Dict mit 'text', 'links', 'email_links', 'application_links'
         """
+        url = self._normalize_arbeitsagentur_url(url)
         try:
             response = self._fetch_page(url)
             response.encoding = response.apparent_encoding
@@ -261,6 +277,7 @@ class WebScraper:
             - text: Volltext der Seite (für Kompatibilität)
             - all_links, email_links, application_links: Extrahierte Links
         """
+        url = self._normalize_arbeitsagentur_url(url)
         try:
             # Use job-board-specific headers if available
             request_headers = None
