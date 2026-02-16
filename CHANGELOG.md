@@ -1,3 +1,10 @@
+## [1.59.1](https://github.com/filipores/obojobs/compare/v1.59.0...v1.59.1) (2026-02-16)
+
+
+### Bug Fixes
+
+* **generation:** pass company name from recommendations to avoid wrong extraction ([d802373](https://github.com/filipores/obojobs/commit/d8023732f0e8c584a6a4f1d9f78a7309e7dd34cc))
+
 # [1.59.0](https://github.com/filipores/obojobs/compare/v1.58.0...v1.59.0) (2026-02-16)
 
 
