@@ -10,6 +10,7 @@ from models import Application, Document, User, UserSkill, db
 
 from .contact_extractor import ContactExtractor
 from .email_formatter import EmailFormatter
+from .output_validator import OutputValidator
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
 from .qwen_client import QwenAPIClient
 
@@ -32,15 +33,29 @@ _GERMAN_MONTHS = [
 
 
 class BewerbungsGenerator:
-    def __init__(self, user_id: int):
+    def __init__(self, user_id: int, progress_callback=None):
         self.user_id = user_id
         self.api_client = QwenAPIClient()
+        self.validator = OutputValidator()
         self.cv_text = None
         self.zeugnis_text = None
         self.extracted_links = None
         self.user = None
         self._prepared = False
         self.warnings = []
+        self.progress_callback = progress_callback
+
+    def _emit_progress(self, step, total_steps, message):
+        """Emit progress event if callback is set."""
+        if self.progress_callback:
+            self.progress_callback(
+                {
+                    "step": step,
+                    "total_steps": total_steps,
+                    "message": message,
+                    "progress": round(step / total_steps * 100),
+                }
+            )
 
     def prepare(self) -> None:
         """Load user data and documents from database.
@@ -105,24 +120,31 @@ class BewerbungsGenerator:
         logger.info("Generiere Bewerbung fuer: %s", firma_name)
 
         # Step 1: Load job posting
+        self._emit_progress(1, 7, "Stellenanzeige wird geladen...")
         stellenanzeige_text = self._load_job_posting(stellenanzeige_path, user_details)
 
         # Step 2: Extract details
+        self._emit_progress(2, 7, "Details werden extrahiert...")
         details = self._extract_details(stellenanzeige_text, firma_name, user_details)
 
         # Step 3: Generate cover letter body
+        self._emit_progress(3, 7, "Anschreiben wird generiert...")
         anschreiben_body = self._generate_letter_body(stellenanzeige_text, firma_name, details, tonalitaet)
 
         # Step 4: Build complete letter with header
+        self._emit_progress(4, 7, "Anschreiben wird formatiert...")
         anschreiben_vollstaendig = self._build_complete_letter(firma_name, details, anschreiben_body)
 
         # Step 5: Create PDF
+        self._emit_progress(5, 7, "PDF wird erstellt...")
         output_path = self._create_pdf(firma_name, anschreiben_vollstaendig, output_filename)
 
         # Step 6: Generate email data
+        self._emit_progress(6, 7, "E-Mail-Daten werden vorbereitet...")
         betreff, email_text = self._generate_email_data(firma_name, details)
 
         # Step 7: Save to database
+        self._emit_progress(7, 7, "Bewerbung wird gespeichert...")
         self._save_application(
             firma_name, details, output_path, betreff, email_text, anschreiben_body, stellenanzeige_text
         )
@@ -215,6 +237,24 @@ class BewerbungsGenerator:
             tonalitaet=tonalitaet,
         )
         logger.info("Anschreiben generiert (%d Zeichen)", len(anschreiben_body))
+
+        # Validate generated output
+        validation = self.validator.validate(
+            text=anschreiben_body,
+            cv_text=self.cv_text,
+            user_skills=user_skills,
+        )
+
+        if validation.warnings:
+            self.warnings.extend(validation.warnings)
+            logger.info("Validierung: %d Warnings", len(validation.warnings))
+
+        if validation.errors:
+            self.warnings.extend(validation.errors)
+            logger.warning("Validierung: %d Errors: %s", len(validation.errors), validation.errors)
+
+        logger.info("Validierung Metriken: %s", validation.metrics)
+
         return anschreiben_body
 
     def _build_complete_letter(
