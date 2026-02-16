@@ -8,6 +8,67 @@ const WORK_TYPE_MAP = {
   remote: 'ho',
 }
 
+function showToast(message, type, duration) {
+  if (window.$toast) {
+    window.$toast(message, type, duration)
+  }
+}
+
+/**
+ * Streams a cover letter generation via SSE from the backend.
+ * Returns the complete event payload on success, or throws on error.
+ */
+async function streamGeneration(payload) {
+  const token = localStorage.getItem('token')
+  const response = await fetch('/api/applications/generate-from-url-stream', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const contentType = response.headers.get('content-type') || ''
+  if (!contentType.includes('text/event-stream')) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || 'Fehler bei der Generierung')
+  }
+
+  const reader = response.body.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  while (true) {
+    const { done, value } = await reader.read()
+    if (done) throw new Error('Fehler bei der Generierung')
+
+    buffer += decoder.decode(value, { stream: true })
+    const chunks = buffer.split('\n\n')
+    buffer = chunks.pop()
+
+    for (const chunk of chunks) {
+      if (!chunk.startsWith('data: ')) continue
+
+      let event
+      try { event = JSON.parse(chunk.slice(6)) } catch { continue }
+
+      if (event.type === 'complete') {
+        if (event.success === false) {
+          throw new Error(event.error || 'Fehler bei der Generierung')
+        }
+        return event
+      }
+      if (event.type === 'error') {
+        throw new Error(event.error || 'Fehler bei der Generierung')
+      }
+      if (event.step && event.message) {
+        showToast(event.message, 'info', 60000)
+      }
+    }
+  }
+}
+
 export function useJobRecommendations() {
   const suggestions = ref([])
   const stats = ref(null)
@@ -124,37 +185,22 @@ export function useJobRecommendations() {
     if (!rec.job_url || generatingIds.value.has(rec.id)) return
 
     generatingIds.value = new Set([...generatingIds.value, rec.id])
-
-    if (window.$toast) {
-      window.$toast(`Bewerbung für ${rec.company_name || 'diese Stelle'} wird erstellt...`, 'info', 30000)
-    }
+    showToast('Stellenanzeige wird geladen...', 'info', 60000)
 
     try {
-      const { data } = await api.post('/applications/generate-from-url', {
+      const result = await streamGeneration({
         url: rec.job_url,
         tone: 'modern',
         company: rec.company_name || '',
         title: rec.job_title || ''
       })
 
-      if (data.success) {
-        await markAsApplied(rec.id, data.application?.id)
-        suggestions.value = suggestions.value.filter(r => r.id !== rec.id)
-        await loadStats()
-
-        if (window.$toast) {
-          window.$toast('Bewerbung erstellt! Unter "Bewerbungen" einsehen.', 'success', 5000)
-        }
-      } else {
-        if (window.$toast) {
-          window.$toast(data.error || 'Fehler bei der Generierung', 'error')
-        }
-      }
+      await markAsApplied(rec.id, result.application?.id)
+      suggestions.value = suggestions.value.filter(r => r.id !== rec.id)
+      await loadStats()
+      showToast('Bewerbung erstellt! Unter "Bewerbungen" einsehen.', 'success', 5000)
     } catch (e) {
-      const errorMsg = e.response?.data?.error || 'Fehler bei der Generierung. Bitte versuche es erneut.'
-      if (window.$toast) {
-        window.$toast(errorMsg, 'error')
-      }
+      showToast(e.message || 'Fehler bei der Generierung. Bitte versuche es erneut.', 'error')
     } finally {
       const next = new Set(generatingIds.value)
       next.delete(rec.id)

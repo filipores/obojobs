@@ -104,7 +104,7 @@ class TestGenerateAnschreiben:
 
     @patch("services.qwen_client.OpenAI")
     def test_generate_anschreiben_retries_on_error(self, mock_openai_cls, app):
-        """Test that generate_anschreiben retries on API errors."""
+        """Test that generate_anschreiben retries on API errors via _call_api_with_retry."""
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
 
@@ -112,7 +112,7 @@ class TestGenerateAnschreiben:
         mock_response.choices = [MagicMock()]
         mock_response.choices[0].message.content = "Sehr geehrte Damen und Herren,\n\nText."
 
-        # Fail twice, succeed on third attempt (handled by _call_api_with_retry)
+        # Fail twice, succeed on third attempt (handled by retry_with_backoff decorator)
         mock_client.chat.completions.create.side_effect = [
             Exception("API error"),
             Exception("API error"),
@@ -121,7 +121,7 @@ class TestGenerateAnschreiben:
 
         from services.qwen_client import QwenAPIClient
 
-        with patch("services.retry.time.sleep"), patch("services.qwen_client.time.sleep"):
+        with patch("services.retry.time.sleep"):
             client = QwenAPIClient(api_key="test-key")
             result = client.generate_anschreiben(
                 cv_text="CV",
@@ -129,7 +129,6 @@ class TestGenerateAnschreiben:
                 firma_name="Firma",
                 position="Dev",
                 ansprechpartner="Sehr geehrte Damen und Herren",
-                retry_count=3,
             )
 
         assert "Sehr geehrte Damen und Herren" in result
@@ -144,16 +143,15 @@ class TestGenerateAnschreiben:
 
         from services.qwen_client import QwenAPIClient
 
-        with patch("services.retry.time.sleep"), patch("services.qwen_client.time.sleep"):
+        with patch("services.retry.time.sleep"):
             client = QwenAPIClient(api_key="test-key")
-            with pytest.raises(Exception, match="Qwen API Fehler"):
+            with pytest.raises(Exception, match="API down"):
                 client.generate_anschreiben(
                     cv_text="CV",
                     stellenanzeige_text="Job",
                     firma_name="Firma",
                     position="Dev",
                     ansprechpartner="Sehr geehrte Damen und Herren",
-                    retry_count=2,
                 )
 
 

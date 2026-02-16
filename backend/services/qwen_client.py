@@ -1,7 +1,6 @@
 import json
 import logging
 import re
-import time
 
 from openai import OpenAI
 
@@ -27,18 +26,21 @@ class QwenAPIClient:
             raise ValueError("TOGETHER_API_KEY nicht gesetzt")
         self.client = OpenAI(api_key=self.api_key, base_url=config.QWEN_API_BASE)
         self.model = config.QWEN_MODEL
+        self.fast_model = config.QWEN_FAST_MODEL
         self.max_tokens = config.QWEN_MAX_TOKENS
         self.temperature = config.QWEN_TEMPERATURE
 
     @retry_with_backoff(max_attempts=3, base_delay=2.0)
-    def _call_api_with_retry(self, messages, max_tokens, temperature):
+    def _call_api_with_retry(self, messages, max_tokens, temperature, model=None):
         """Send a chat completion request with automatic retry on failure."""
-        return self._call_api(messages=messages, max_tokens=max_tokens, temperature=temperature)
+        return self._call_api(messages=messages, max_tokens=max_tokens, temperature=temperature, model=model)
 
-    def _call_api_json(self, messages: list[dict], max_tokens: int, temperature: float) -> dict:
+    def _call_api_json(
+        self, messages: list[dict], max_tokens: int, temperature: float, model: str | None = None
+    ) -> dict:
         """Send a chat completion request expecting JSON response."""
         response = self.client.chat.completions.create(
-            model=self.model,
+            model=model or self.model,
             max_tokens=max_tokens,
             temperature=temperature,
             messages=messages,
@@ -47,9 +49,9 @@ class QwenAPIClient:
         return json.loads(response.choices[0].message.content.strip())
 
     @retry_with_backoff(max_attempts=3, base_delay=2.0)
-    def _call_api_json_with_retry(self, messages, max_tokens, temperature):
+    def _call_api_json_with_retry(self, messages, max_tokens, temperature, model=None):
         """Send a JSON chat completion request with automatic retry on failure."""
-        return self._call_api_json(messages=messages, max_tokens=max_tokens, temperature=temperature)
+        return self._call_api_json(messages=messages, max_tokens=max_tokens, temperature=temperature, model=model)
 
     def extract_bewerbung_details(self, stellenanzeige_text: str, firma_name: str) -> dict:
         prompt = create_details_extraction_prompt(stellenanzeige_text, firma_name)
@@ -59,6 +61,7 @@ class QwenAPIClient:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=500,
                 temperature=0.3,
+                model=self.fast_model,
             )
             return self._normalize_extracted_details(data, firma_name)
         except Exception:
@@ -77,6 +80,7 @@ class QwenAPIClient:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=400,
                 temperature=0.3,
+                model=self.fast_model,
             )
         except Exception as e:
             raise Exception(f"Informationsextraktion fehlgeschlagen: {e!s}") from e
@@ -141,7 +145,6 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         bewerber_name: str | None = None,
         user_skills: list | None = None,
         tonalitaet: str = "modern",
-        retry_count: int = 3,
         details: dict | None = None,
     ) -> str | None:
         """Generate a complete cover letter body (greeting through closing).
@@ -149,8 +152,8 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         Unlike generate_einleitung() which only produces an intro paragraph,
         this generates the full letter body for direct use in PDF generation.
 
-        The retry_count controls the number of attempts for forbidden-phrase
-        retries. API-level retries are handled separately by _call_api_with_retry.
+        API-level retries are handled by _call_api_with_retry. Forbidden phrases
+        are removed via post-processing instead of re-generation.
         """
         # Use pre-extracted compact version if available
         if details and details.get("stellenanzeige_kompakt"):
@@ -178,66 +181,28 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
 
 Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
 
-        messages = [
-            {"role": "system", "content": system_prompt},
-            {"role": "user", "content": user_prompt},
-        ]
-
-        for attempt in range(retry_count):
-            is_last_attempt = attempt >= retry_count - 1
-
-            try:
-                raw = self._call_api_with_retry(
-                    messages=messages,
-                    max_tokens=config.QWEN_ANSCHREIBEN_MAX_TOKENS,
-                    temperature=config.QWEN_ANSCHREIBEN_TEMPERATURE,
-                )
-            except Exception as e:
-                if is_last_attempt:
-                    raise Exception(f"Qwen API Fehler nach {retry_count} Versuchen: {e!s}") from e
-                logger.warning("API-Fehler (Versuch %d/%d): %s", attempt + 1, retry_count, e)
-                time.sleep(2)
-                continue
-
-            result = self._postprocess_anschreiben(raw)
-
-            # Accept result if no forbidden phrases or no retries left
-            violations = self._find_forbidden_phrases(result)
-            if not violations or is_last_attempt:
-                return result
-
-            # Retry with a correction prompt that includes the violating output
-            logger.warning(
-                "Verbotene Phrasen gefunden (Versuch %d/%d): %s",
-                attempt + 1,
-                retry_count,
-                violations,
-            )
-            phrases_str = ", ".join(f'"{p}"' for p in violations)
-            messages = [
+        raw = self._call_api_with_retry(
+            messages=[
                 {"role": "system", "content": system_prompt},
                 {"role": "user", "content": user_prompt},
-                {"role": "assistant", "content": raw},
-                {
-                    "role": "user",
-                    "content": f"Dein Text enthält verbotene Phrasen: {phrases_str}. "
-                    "Schreibe das Anschreiben KOMPLETT NEU ohne diese Phrasen. "
-                    "Formuliere die betroffenen Stellen völlig anders.",
-                },
-            ]
-            time.sleep(2)
+            ],
+            max_tokens=config.QWEN_ANSCHREIBEN_MAX_TOKENS,
+            temperature=config.QWEN_ANSCHREIBEN_TEMPERATURE,
+        )
 
-        return None
+        result = self._postprocess_anschreiben(raw)
+        result = self._remove_forbidden_phrases(result)
+        return result
 
     def chat_complete(self, messages: list[dict], max_tokens: int = 2000, temperature: float = 0.7) -> str:
         return self._call_api(messages=messages, max_tokens=max_tokens, temperature=temperature)
 
     # --- Private helpers ---
 
-    def _call_api(self, messages: list[dict], max_tokens: int, temperature: float) -> str:
+    def _call_api(self, messages: list[dict], max_tokens: int, temperature: float, model: str | None = None) -> str:
         """Send a chat completion request and return the stripped response text."""
         response = self.client.chat.completions.create(
-            model=self.model,
+            model=model or self.model,
             max_tokens=max_tokens,
             temperature=temperature,
             messages=messages,
@@ -296,7 +261,35 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
 
         return text
 
-    def _find_forbidden_phrases(self, text: str) -> list[str]:
-        """Return list of forbidden phrases found in the text."""
-        text_lower = text.lower()
-        return [phrase for phrase in FORBIDDEN_PHRASES if phrase.lower() in text_lower]
+    def _remove_forbidden_phrases(self, text: str) -> str:
+        """Remove sentences containing forbidden phrases from the text."""
+        # Split into sentences by ". " or ".\n" while preserving paragraph structure
+        paragraphs = text.split("\n")
+        cleaned_paragraphs = []
+
+        removed = []
+        for paragraph in paragraphs:
+            if not paragraph.strip():
+                cleaned_paragraphs.append(paragraph)
+                continue
+
+            # Split paragraph into sentences
+            sentences = re.split(r"(?<=\.)\s+", paragraph)
+            kept = []
+            for sentence in sentences:
+                sentence_lower = sentence.lower()
+                matched_phrases = [p for p in FORBIDDEN_PHRASES if p.lower() in sentence_lower]
+                if matched_phrases:
+                    removed.extend(matched_phrases)
+                else:
+                    kept.append(sentence)
+
+            cleaned_paragraphs.append(" ".join(kept))
+
+        if removed:
+            logger.warning("Verbotene Phrasen entfernt: %s", removed)
+
+        # Clean up empty paragraphs that resulted from removal
+        result = "\n".join(cleaned_paragraphs)
+        result = re.sub(r"\n{3,}", "\n\n", result)
+        return result.strip()

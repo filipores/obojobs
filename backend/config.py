@@ -44,6 +44,7 @@ class Config:
     # Together.xyz / Qwen API
     TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
     QWEN_MODEL = os.getenv("QWEN_MODEL", "Qwen/Qwen3-235B-A22B-Instruct-2507-tput")
+    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "Qwen/Qwen3-Next-80B-A3B-Instruct")
     QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://api.together.xyz/v1")
     QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
     QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))
