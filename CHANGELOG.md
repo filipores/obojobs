@@ -1,3 +1,10 @@
+## [1.59.5](https://github.com/filipores/obojobs/compare/v1.59.4...v1.59.5) (2026-02-16)
+
+
+### Bug Fixes
+
+* **applications:** store job_url for source links, pass fit_score ([219f4dc](https://github.com/filipores/obojobs/commit/219f4dcbc7f0ac681d078c8f346ce8a5f120a86c))
+
 ## [1.59.4](https://github.com/filipores/obojobs/compare/v1.59.3...v1.59.4) (2026-02-16)
 
 
