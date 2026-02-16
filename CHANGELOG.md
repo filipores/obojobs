@@ -1,3 +1,10 @@
+# [1.59.0](https://github.com/filipores/obojobs/compare/v1.58.0...v1.59.0) (2026-02-16)
+
+
+### Features
+
+* **recommendations:** direct application generation from job suggestions ([d730b9c](https://github.com/filipores/obojobs/commit/d730b9c7b1a9b0b9532130193d185eb8a0d620bc))
+
 # [1.58.0](https://github.com/filipores/obojobs/compare/v1.57.0...v1.58.0) (2026-02-16)
 
 
