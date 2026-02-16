@@ -130,6 +130,138 @@ describe('Auth Store', () => {
     })
   })
 
+  describe('login', () => {
+    it('should store token and user on successful login', async () => {
+      vi.resetModules()
+      const api = (await import('../api/client')).default
+      const { authStore } = await import('../stores/auth.js')
+
+      const mockResponse = {
+        data: {
+          access_token: 'new-token',
+          user: { id: 1, email: 'test@example.com' }
+        }
+      }
+      api.silent.post.mockResolvedValue(mockResponse)
+
+      await authStore.login('test@example.com', 'password')
+
+      expect(api.silent.post).toHaveBeenCalledWith('/auth/login', {
+        email: 'test@example.com',
+        password: 'password'
+      })
+      expect(authStore.token).toBe('new-token')
+      expect(authStore.user).toEqual({ id: 1, email: 'test@example.com' })
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('token', 'new-token')
+    })
+  })
+
+  describe('register', () => {
+    it('should call register endpoint and store pending email', async () => {
+      vi.resetModules()
+      const api = (await import('../api/client')).default
+      const { authStore } = await import('../stores/auth.js')
+
+      api.post.mockResolvedValue({ data: { message: 'ok' } })
+
+      const result = await authStore.register('test@example.com', 'pass', 'Test User')
+
+      expect(api.post).toHaveBeenCalledWith('/auth/register', {
+        email: 'test@example.com',
+        password: 'pass',
+        full_name: 'Test User'
+      })
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('pendingVerificationEmail', 'test@example.com')
+      expect(result).toEqual({ message: 'ok' })
+    })
+  })
+
+  describe('loginWithGoogle', () => {
+    it('should store token and user from Google auth', async () => {
+      vi.resetModules()
+      const api = (await import('../api/client')).default
+      const { authStore } = await import('../stores/auth.js')
+
+      const mockResponse = {
+        data: {
+          access_token: 'google-token',
+          user: { id: 2, email: 'google@example.com' }
+        }
+      }
+      api.silent.post.mockResolvedValue(mockResponse)
+
+      await authStore.loginWithGoogle('google-credential')
+
+      expect(api.silent.post).toHaveBeenCalledWith('/auth/google', { credential: 'google-credential' })
+      expect(authStore.token).toBe('google-token')
+      expect(authStore.user).toEqual({ id: 2, email: 'google@example.com' })
+    })
+  })
+
+  describe('sendVerificationEmail', () => {
+    it('should call send-verification endpoint', async () => {
+      vi.resetModules()
+      const api = (await import('../api/client')).default
+      const { authStore } = await import('../stores/auth.js')
+
+      api.post.mockResolvedValue({})
+
+      await authStore.sendVerificationEmail()
+
+      expect(api.post).toHaveBeenCalledWith('/auth/send-verification')
+    })
+  })
+
+  describe('fetchUser', () => {
+    it('should fetch and store user data', async () => {
+      vi.resetModules()
+      const api = (await import('../api/client')).default
+      const { authStore } = await import('../stores/auth.js')
+
+      const userData = { id: 1, email: 'test@example.com', full_name: 'Test' }
+      api.get.mockResolvedValue({ data: userData })
+
+      await authStore.fetchUser()
+
+      expect(api.get).toHaveBeenCalledWith('/auth/me')
+      expect(authStore.user).toEqual(userData)
+      expect(localStorageMock.setItem).toHaveBeenCalledWith('user', JSON.stringify(userData))
+    })
+  })
+
+  describe('logout', () => {
+    it('should call logout endpoint and clear state', async () => {
+      vi.resetModules()
+      const api = (await import('../api/client')).default
+      const { authStore } = await import('../stores/auth.js')
+
+      authStore.token = 'some-token'
+      authStore.user = { id: 1 }
+      api.post.mockResolvedValue({})
+
+      await authStore.logout()
+
+      expect(api.post).toHaveBeenCalledWith('/auth/logout')
+      expect(authStore.token).toBeNull()
+      expect(authStore.user).toBeNull()
+    })
+
+    it('should clear state even if server logout fails', async () => {
+      vi.resetModules()
+      const api = (await import('../api/client')).default
+      const { authStore } = await import('../stores/auth.js')
+
+      authStore.token = 'some-token'
+      authStore.user = { id: 1 }
+      api.post.mockRejectedValue(new Error('Network error'))
+
+      await authStore.logout()
+
+      expect(authStore.token).toBeNull()
+      expect(authStore.user).toBeNull()
+    })
+  })
+
   describe('clearAuthState', () => {
     it('should clear user and token from store and localStorage', async () => {
       vi.resetModules()

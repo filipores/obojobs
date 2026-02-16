@@ -204,5 +204,51 @@ describe('API Client', () => {
       await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
       expect(window.location.href).not.toBe('/login')
     })
+
+    it('should handle 422 with JWT error message as auth error', async () => {
+      expect(capturedResponseInterceptor?.error).toBeDefined()
+
+      delete window.location
+      window.location = { href: '' }
+
+      const error = {
+        response: { status: 422, data: { msg: 'Not enough segments' } },
+        config: { url: '/some/endpoint' }
+      }
+
+      await expect(capturedResponseInterceptor.error(error)).rejects.toEqual(error)
+      expect(localStorage.removeItem).toHaveBeenCalledWith('token')
+      expect(window.location.href).toBe('/login')
+    })
+  })
+
+  describe('Silent API wrapper', () => {
+    it('should pass suppressToast for all methods', async () => {
+      vi.resetModules()
+      const { default: apiClient } = await import('../api/client.js')
+
+      // api.silent methods should exist
+      expect(apiClient.silent.get).toBeDefined()
+      expect(apiClient.silent.post).toBeDefined()
+      expect(apiClient.silent.put).toBeDefined()
+      expect(apiClient.silent.delete).toBeDefined()
+      expect(apiClient.silent.patch).toBeDefined()
+
+      // Call each and verify suppressToast is passed
+      apiClient.silent.get('/test')
+      expect(apiClient.get).toHaveBeenCalledWith('/test', { suppressToast: true })
+
+      apiClient.silent.post('/test', { foo: 'bar' })
+      expect(apiClient.post).toHaveBeenCalledWith('/test', { foo: 'bar' }, { suppressToast: true })
+
+      apiClient.silent.put('/test', { foo: 'bar' })
+      expect(apiClient.put).toHaveBeenCalledWith('/test', { foo: 'bar' }, { suppressToast: true })
+
+      apiClient.silent.delete('/test')
+      expect(apiClient.delete).toHaveBeenCalledWith('/test', { suppressToast: true })
+
+      apiClient.silent.patch('/test', { foo: 'bar' })
+      expect(apiClient.patch).toHaveBeenCalledWith('/test', { foo: 'bar' }, { suppressToast: true })
+    })
   })
 })
