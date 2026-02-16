@@ -27,7 +27,7 @@ class TestBundesagenturJob:
     def test_to_job_data_generates_url(self):
         job = BundesagenturJob(refnr="10000-123", titel="Test")
         data = job.to_job_data()
-        assert data["url"] == "https://www.arbeitsagentur.de/jobsuche/suche?id=10000-123"
+        assert data["url"] == "https://www.arbeitsagentur.de/jobsuche/jobdetail/10000-123"
 
 
 class TestBundesagenturClient:

@@ -35,7 +35,7 @@ class BundesagenturJob:
             "title": self.titel,
             "company": self.arbeitgeber,
             "location": self.arbeitsort,
-            "url": self.url or f"https://www.arbeitsagentur.de/jobsuche/suche?id={self.refnr}",
+            "url": self.url or f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{self.refnr}",
             "source": "arbeitsagentur",
             "description": self.beschreibung,
         }
@@ -126,7 +126,7 @@ class BundesagenturClient:
         return job
 
     def _job_url(self, refnr: str) -> str:
-        return f"https://www.arbeitsagentur.de/jobsuche/suche?id={refnr}"
+        return f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{refnr}"
 
     def _parse_job(self, item: dict) -> BundesagenturJob:
         arbeitsort = item.get("arbeitsort", {})

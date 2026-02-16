@@ -2,11 +2,15 @@ import json
 import logging
 import os
 import re
+import threading
+import time
 from datetime import datetime
 from typing import Any
 
+from sqlalchemy.orm import joinedload
+
 from config import config
-from models import Application, Document, User, UserSkill, db
+from models import Application, Document, User, db
 
 from .contact_extractor import ContactExtractor
 from .email_formatter import EmailFormatter
@@ -15,6 +19,39 @@ from .pdf_handler import create_anschreiben_pdf, is_url, read_document
 from .qwen_client import QwenAPIClient
 
 logger = logging.getLogger(__name__)
+
+# Pre-compiled regex
+_TRIPLE_NEWLINE_RE = re.compile(r"\n{3,}")
+
+# --- Document text cache ---
+# Key: (user_id, doc_id, updated_at_str) -> (text, monotonic_timestamp)
+_doc_cache: dict[tuple[int, int, str], tuple[str, float]] = {}
+_doc_cache_lock = threading.Lock()
+_DOC_CACHE_MAX = 100
+_DOC_CACHE_TTL = 600  # 10 minutes
+
+
+def _get_cached_doc_text(file_path: str, user_id: int, doc_id: int, updated_at) -> str:
+    """Return cached document text or read from disk and cache it."""
+    key = (user_id, doc_id, str(updated_at))
+    now = time.monotonic()
+
+    with _doc_cache_lock:
+        entry = _doc_cache.get(key)
+        if entry and (now - entry[1]) < _DOC_CACHE_TTL:
+            return entry[0]
+
+    text = read_document(file_path)
+
+    with _doc_cache_lock:
+        if len(_doc_cache) >= _DOC_CACHE_MAX:
+            # Evict oldest entry
+            oldest_key = min(_doc_cache, key=lambda k: _doc_cache[k][1])
+            del _doc_cache[oldest_key]
+        _doc_cache[key] = (text, now)
+
+    return text
+
 
 _GERMAN_MONTHS = [
     "Januar",
@@ -66,7 +103,7 @@ class BewerbungsGenerator:
         """
         if self._prepared:
             return
-        self.user = User.query.get(self.user_id)
+        self.user = User.query.options(joinedload(User.documents), joinedload(User.skills)).get(self.user_id)
         self.load_user_documents()
         self._prepared = True
 
@@ -74,15 +111,24 @@ class BewerbungsGenerator:
         """Load documents from database for this user."""
         logger.info("Lade Dokumente für User %s...", self.user_id)
 
-        cv_doc = Document.query.filter_by(user_id=self.user_id, doc_type="lebenslauf").first()
+        # Use eager-loaded documents from user if available, else query
+        if self.user and hasattr(self.user, "documents") and self.user.documents:
+            docs = self.user.documents
+            cv_doc = next((d for d in docs if d.doc_type == "lebenslauf"), None)
+            zeugnis_doc = next((d for d in docs if d.doc_type == "arbeitszeugnis"), None)
+        else:
+            cv_doc = Document.query.filter_by(user_id=self.user_id, doc_type="lebenslauf").first()
+            zeugnis_doc = Document.query.filter_by(user_id=self.user_id, doc_type="arbeitszeugnis").first()
+
         if not cv_doc or not os.path.exists(cv_doc.file_path):
             raise ValueError("Lebenslauf nicht gefunden. Bitte lade deinen Lebenslauf hoch.")
-        self.cv_text = read_document(cv_doc.file_path)
+        self.cv_text = _get_cached_doc_text(cv_doc.file_path, self.user_id, cv_doc.id, cv_doc.uploaded_at)
         logger.info("Lebenslauf geladen")
 
-        zeugnis_doc = Document.query.filter_by(user_id=self.user_id, doc_type="arbeitszeugnis").first()
         if zeugnis_doc and os.path.exists(zeugnis_doc.file_path):
-            self.zeugnis_text = read_document(zeugnis_doc.file_path)
+            self.zeugnis_text = _get_cached_doc_text(
+                zeugnis_doc.file_path, self.user_id, zeugnis_doc.id, zeugnis_doc.uploaded_at
+            )
             logger.info("Arbeitszeugnis geladen")
         else:
             self.zeugnis_text = None
@@ -221,9 +267,10 @@ class BewerbungsGenerator:
 
         full_name = self.user.full_name
         first_name = full_name.split()[0] if full_name else None
-        user_skills = UserSkill.query.filter_by(user_id=self.user_id).all()
+        # Use eager-loaded skills from prepare() if available
+        user_skills = self.user.skills if hasattr(self.user, "skills") and self.user.skills else []
 
-        return full_name, first_name, user_skills or []
+        return full_name, first_name, user_skills
 
     def _generate_letter_body(
         self,
@@ -320,7 +367,7 @@ class BewerbungsGenerator:
 
         briefkopf = "\n".join(header_parts)
         anschreiben_vollstaendig = briefkopf + anschreiben_body
-        anschreiben_vollstaendig = re.sub(r"\n{3,}", "\n\n", anschreiben_vollstaendig)
+        anschreiben_vollstaendig = _TRIPLE_NEWLINE_RE.sub("\n\n", anschreiben_vollstaendig)
         return anschreiben_vollstaendig.strip()
 
     def _create_pdf(

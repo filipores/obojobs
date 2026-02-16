@@ -6,6 +6,23 @@ from dataclasses import dataclass, field
 
 logger = logging.getLogger(__name__)
 
+# Pre-compile regex patterns at module level
+_SENTENCE_SPLIT_RE = re.compile(r"[.!?]\s+")
+_TECH_PATTERN_STRINGS = [
+    r"\b(React|Angular|Vue\.?js|Next\.?js|Svelte)\b",
+    r"\b(Python|Java|Kotlin|Swift|Go|Rust|Ruby|PHP|C\+\+|C#)\b",
+    r"\b(TypeScript|JavaScript|Node\.?js)\b",
+    r"\b(Docker|Kubernetes|AWS|Azure|GCP)\b",
+    r"\b(PostgreSQL|MySQL|MongoDB|Redis)\b",
+    r"\b(Spring Boot|Django|Flask|Express|FastAPI)\b",
+    r"\b(TensorFlow|PyTorch|Scikit-learn)\b",
+    r"\b(Git|Jenkins|GitHub Actions|CI/CD)\b",
+    r"\b(Scrum|Kanban|Agile|SAFe)\b",
+    r"\b(SAP|Salesforce|Jira|Confluence)\b",
+]
+_COMPILED_TECH_PATTERNS = [re.compile(p, re.IGNORECASE) for p in _TECH_PATTERN_STRINGS]
+_GRAY_ZONE_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+
 
 @dataclass
 class ValidationResult:
@@ -41,19 +58,6 @@ class OutputValidator:
         "beste grüße",
         "herzliche grüße",
         "freundliche grüße",
-    ]
-
-    TECH_PATTERNS = [
-        r"\b(React|Angular|Vue\.?js|Next\.?js|Svelte)\b",
-        r"\b(Python|Java|Kotlin|Swift|Go|Rust|Ruby|PHP|C\+\+|C#)\b",
-        r"\b(TypeScript|JavaScript|Node\.?js)\b",
-        r"\b(Docker|Kubernetes|AWS|Azure|GCP)\b",
-        r"\b(PostgreSQL|MySQL|MongoDB|Redis)\b",
-        r"\b(Spring Boot|Django|Flask|Express|FastAPI)\b",
-        r"\b(TensorFlow|PyTorch|Scikit-learn)\b",
-        r"\b(Git|Jenkins|GitHub Actions|CI/CD)\b",
-        r"\b(Scrum|Kanban|Agile|SAFe)\b",
-        r"\b(SAP|Salesforce|Jira|Confluence)\b",
     ]
 
     # Phrases that softly claim familiarity with a skill without outright stating it
@@ -162,7 +166,7 @@ class OutputValidator:
 
     def _check_repetition(self, text: str, result: ValidationResult) -> None:
         """Check for repetitive sentence starters."""
-        sentences = re.split(r"[.!?]\s+", text)
+        sentences = _SENTENCE_SPLIT_RE.split(text)
         sentences = [s.strip() for s in sentences if len(s.strip()) > 10]
 
         if len(sentences) < 3:
@@ -188,8 +192,8 @@ class OutputValidator:
         cv_lower = cv_text.lower() if cv_text else ""
 
         mentioned: dict[str, str] = {}
-        for pattern in self.TECH_PATTERNS:
-            for match in re.finditer(pattern, text, re.IGNORECASE):
+        for compiled_pattern in _COMPILED_TECH_PATTERNS:
+            for match in compiled_pattern.finditer(text):
                 name = match.group(1)
                 mentioned.setdefault(name.lower(), name)
 
@@ -237,7 +241,7 @@ class OutputValidator:
             has_honest_disclaimer = any(m in para_lower for m in self.HONEST_MARKERS)
 
             # Split into sentences preserving paragraph structure
-            sentences = re.split(r"(?<=[.!?])\s+", para)
+            sentences = _GRAY_ZONE_SENTENCE_SPLIT_RE.split(para)
             kept = []
             removed_any = False
 
@@ -254,7 +258,7 @@ class OutputValidator:
             # exists in the remaining text, add standard disclaimers
             if removed_any and not has_honest_disclaimer:
                 for skill_original in mentioned_in_para.values():
-                    kept.append(f"{skill_original} habe ich bisher nicht eingesetzt," " arbeite mich aber gerne ein.")
+                    kept.append(f"{skill_original} habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein.")
 
             fixed_paragraphs.append(" ".join(kept))
 

@@ -113,6 +113,34 @@ class ArbeitsagenturParser(JobBoardParser):
 
         return result
 
+    def _find_by_label(
+        self, soup: BeautifulSoup, label_pattern: str, parent_tags: list[str] | None = None
+    ) -> str | None:
+        """Find a value adjacent to a label like 'Arbeitgeber:' in the HTML.
+
+        Searches for text matching '{label_pattern}:' then navigates to the parent
+        element and returns the next sibling's text, or strips the label prefix from
+        the parent text if no sibling is found.
+        """
+        if parent_tags is None:
+            parent_tags = ["div", "p", "span", "dt", "li"]
+
+        label = soup.find(string=re.compile(label_pattern + r"\s*:", re.I))
+        if not label:
+            return None
+
+        parent = label.find_parent(parent_tags)
+        if not parent:
+            return None
+
+        next_sibling = parent.find_next_sibling(["div", "p", "span", "dd"])
+        if next_sibling:
+            return next_sibling.get_text(strip=True)
+
+        text = parent.get_text(strip=True)
+        cleaned = re.sub(r"^" + label_pattern + r"\s*:\s*", "", text, flags=re.I)
+        return cleaned or None
+
     def _parse_html(self, soup: BeautifulSoup, result: dict[str, Any]) -> dict[str, Any]:
         """Parse HTML for Arbeitsagentur-specific elements."""
         # Title - look for various patterns
@@ -121,7 +149,13 @@ class ArbeitsagenturParser(JobBoardParser):
             if not title_elem:
                 title_elem = soup.find(class_=re.compile(r"job-title|jobtitle|stellentitel", re.I))
             if not title_elem:
-                title_elem = soup.find("h1")
+                # On jobdetail pages, h1 is generic ("Detailansicht des Stellenangebots")
+                # The actual job title is in h2
+                h1 = soup.find("h1")
+                if h1 and "detailansicht" in h1.get_text(strip=True).lower():
+                    title_elem = soup.find("h2")
+                else:
+                    title_elem = h1
             if title_elem:
                 result["title"] = title_elem.get_text(strip=True)
 
@@ -131,21 +165,11 @@ class ArbeitsagenturParser(JobBoardParser):
             if not company_elem:
                 company_elem = soup.find(class_=re.compile(r"arbeitgeber|employer|company|firma", re.I))
             if not company_elem:
-                # Search for "Arbeitgeber:" label
-                arbeitgeber_label = soup.find(string=re.compile(r"Arbeitgeber\s*:", re.I))
-                if arbeitgeber_label:
-                    parent = arbeitgeber_label.find_parent(["div", "p", "span", "dt", "li"])
-                    if parent:
-                        next_sibling = parent.find_next_sibling(["div", "p", "span", "dd"])
-                        if next_sibling:
-                            company_elem = next_sibling
-                        else:
-                            text = parent.get_text(strip=True)
-                            company_text = re.sub(r"^Arbeitgeber\s*:\s*", "", text, flags=re.I)
-                            if company_text:
-                                result["company"] = company_text
+                result["company"] = self._find_by_label(soup, r"Arbeitgeber", ["div", "p", "span", "dt", "li", "h3"])
             if company_elem and not result["company"]:
-                result["company"] = company_elem.get_text(strip=True)
+                # Clean "Arbeitgeber:" prefix from the extracted text
+                raw = company_elem.get_text(strip=True)
+                result["company"] = re.sub(r"^Arbeitgeber\s*:\s*", "", raw, flags=re.I)
 
         # Location - "Arbeitsort"
         if not result["location"]:
@@ -153,18 +177,7 @@ class ArbeitsagenturParser(JobBoardParser):
             if not location_elem:
                 location_elem = soup.find(class_=re.compile(r"arbeitsort|location|standort", re.I))
             if not location_elem:
-                arbeitsort_label = soup.find(string=re.compile(r"Arbeitsort\s*:", re.I))
-                if arbeitsort_label:
-                    parent = arbeitsort_label.find_parent(["div", "p", "span", "dt", "li"])
-                    if parent:
-                        next_sibling = parent.find_next_sibling(["div", "p", "span", "dd"])
-                        if next_sibling:
-                            location_elem = next_sibling
-                        else:
-                            text = parent.get_text(strip=True)
-                            location_text = re.sub(r"^Arbeitsort\s*:\s*", "", text, flags=re.I)
-                            if location_text:
-                                result["location"] = location_text
+                result["location"] = self._find_by_label(soup, r"Arbeitsort")
             if location_elem and not result["location"]:
                 result["location"] = location_elem.get_text(strip=True)
 
@@ -172,25 +185,15 @@ class ArbeitsagenturParser(JobBoardParser):
         if not result["reference_number"]:
             ref_elem = soup.find(class_=re.compile(r"referenz|reference|stellennummer", re.I))
             if not ref_elem:
-                ref_label = soup.find(string=re.compile(r"(Referenz|Stellen)nummer\s*:", re.I))
-                if ref_label:
-                    parent = ref_label.find_parent(["div", "p", "span", "dt", "li"])
-                    if parent:
-                        next_sibling = parent.find_next_sibling(["div", "p", "span", "dd"])
-                        if next_sibling:
-                            ref_elem = next_sibling
-                        else:
-                            text = parent.get_text(strip=True)
-                            ref_text = re.sub(r"^(Referenz|Stellen)nummer\s*:\s*", "", text, flags=re.I)
-                            if ref_text:
-                                result["reference_number"] = ref_text.strip()
+                result["reference_number"] = self._find_by_label(soup, r"(?:Referenz|Stellen)nummer")
             if ref_elem and not result["reference_number"]:
                 result["reference_number"] = ref_elem.get_text(strip=True)
-            # Fallback: search for common reference number patterns
+            # Fallback: search for common reference number patterns in page text
             if not result["reference_number"]:
                 page_text = soup.get_text()
-                ref_pattern = re.compile(r"(?:Referenz(?:nummer)?|Stellen(?:nummer)?)[:\s]+([A-Z0-9\-/]+)", re.I)
-                ref_match = ref_pattern.search(page_text)
+                ref_match = re.search(
+                    r"(?:Referenz(?:nummer)?|Stellen(?:nummer)?)[:\s]+([A-Z0-9\-/]+)", page_text, re.I
+                )
                 if ref_match:
                     result["reference_number"] = ref_match.group(1).strip()
 
@@ -198,18 +201,7 @@ class ArbeitsagenturParser(JobBoardParser):
         if not result["contact_person"]:
             contact_elem = soup.find(class_=re.compile(r"ansprechpartner|kontakt|contact-person", re.I))
             if not contact_elem:
-                ansprech_label = soup.find(string=re.compile(r"Ansprechpartner\s*:", re.I))
-                if ansprech_label:
-                    parent = ansprech_label.find_parent(["div", "p", "span", "dt", "li"])
-                    if parent:
-                        next_sibling = parent.find_next_sibling(["div", "p", "span", "dd"])
-                        if next_sibling:
-                            contact_elem = next_sibling
-                        else:
-                            text = parent.get_text(strip=True)
-                            contact_text = re.sub(r"^Ansprechpartner\s*:\s*", "", text, flags=re.I)
-                            if contact_text:
-                                result["contact_person"] = contact_text
+                result["contact_person"] = self._find_by_label(soup, r"Ansprechpartner")
             if contact_elem and not result["contact_person"]:
                 result["contact_person"] = contact_elem.get_text(strip=True)
 
@@ -217,30 +209,19 @@ class ArbeitsagenturParser(JobBoardParser):
         if not result["contact_phone"]:
             phone_elem = soup.find(class_=re.compile(r"telefon|phone", re.I))
             if not phone_elem:
-                telefon_label = soup.find(string=re.compile(r"Telefon\s*:", re.I))
-                if telefon_label:
-                    parent = telefon_label.find_parent(["div", "p", "span", "dt", "li"])
-                    if parent:
-                        next_sibling = parent.find_next_sibling(["div", "p", "span", "dd"])
-                        if next_sibling:
-                            phone_elem = next_sibling
-                        else:
-                            text = parent.get_text(strip=True)
-                            phone_text = re.sub(r"^Telefon\s*:\s*", "", text, flags=re.I)
-                            if phone_text:
-                                result["contact_phone"] = phone_text
+                result["contact_phone"] = self._find_by_label(soup, r"Telefon")
             if phone_elem and not result["contact_phone"]:
                 result["contact_phone"] = phone_elem.get_text(strip=True)
-            # Fallback: search for German phone number patterns
+            # Fallback: search for German phone number patterns in page text
             if not result["contact_phone"]:
                 page_text = soup.get_text()
-                phone_pattern = re.compile(
-                    r"(?:Tel(?:efon)?\.?\s*:?\s*)?((?:\+49|0)[\s\-/]*(?:\(\d+\)|\d+)[\s\-/]*[\d\s\-/]{6,})", re.I
+                phone_match = re.search(
+                    r"(?:Tel(?:efon)?\.?\s*:?\s*)?((?:\+49|0)[\s\-/]*(?:\(\d+\)|\d+)[\s\-/]*[\d\s\-/]{6,})",
+                    page_text,
+                    re.I,
                 )
-                phone_match = phone_pattern.search(page_text)
                 if phone_match:
-                    phone = phone_match.group(1).strip()
-                    phone = re.sub(r"\s+", " ", phone)
+                    phone = re.sub(r"\s+", " ", phone_match.group(1).strip())
                     if len(phone) >= 8:
                         result["contact_phone"] = phone
 
@@ -311,5 +292,14 @@ class ArbeitsagenturParser(JobBoardParser):
                 soup,
                 ["@arbeitsagentur.de", "support@", "info@arbeitsagentur"],
             )
+
+        # Fallback: if description is empty, look for Kooperationspartner
+        # external link that may contain the full job posting
+        if not result.get("description"):
+            koop_link = soup.find(
+                "a", href=re.compile(r"https?://", re.I), string=re.compile(r"Kooperationspartner", re.I)
+            )
+            if koop_link:
+                result["kooperationspartner_url"] = koop_link["href"]
 
         return result
