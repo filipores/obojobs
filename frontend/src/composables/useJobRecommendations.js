@@ -8,17 +8,11 @@ const WORK_TYPE_MAP = {
   remote: 'ho',
 }
 
-function showToast(message, type, duration) {
-  if (window.$toast) {
-    window.$toast(message, type, duration)
-  }
-}
-
 /**
  * Streams a cover letter generation via SSE from the backend.
  * Returns the complete event payload on success, or throws on error.
  */
-async function streamGeneration(payload) {
+async function streamGeneration(payload, onProgress) {
   const token = localStorage.getItem('token')
   const response = await fetch('/api/applications/generate-from-url-stream', {
     method: 'POST',
@@ -62,8 +56,8 @@ async function streamGeneration(payload) {
       if (event.type === 'error') {
         throw new Error(event.error || 'Fehler bei der Generierung')
       }
-      if (event.step && event.message) {
-        showToast(event.message, 'info', 60000)
+      if (event.step && event.message && typeof onProgress === 'function') {
+        onProgress(event.message)
       }
     }
   }
@@ -185,22 +179,37 @@ export function useJobRecommendations() {
     if (!rec.job_url || generatingIds.value.has(rec.id)) return
 
     generatingIds.value = new Set([...generatingIds.value, rec.id])
-    showToast('Stellenanzeige wird geladen...', 'info', 60000)
+    const toastId = window.$toast?.('Stellenanzeige wird geladen...', 'info', 0)
+    const updateToast = (msg, type, opts) => {
+      if (toastId != null && window.$toast?.update) {
+        window.$toast.update(toastId, msg, type, opts)
+      }
+    }
 
     try {
-      const result = await streamGeneration({
-        url: rec.job_url,
-        tone: 'modern',
-        company: rec.company_name || '',
-        title: rec.job_title || ''
-      })
+      const result = await streamGeneration(
+        {
+          url: rec.job_url,
+          tone: 'modern',
+          company: rec.company_name || '',
+          title: rec.job_title || ''
+        },
+        (message) => updateToast(message)
+      )
 
       await markAsApplied(rec.id, result.application?.id)
       suggestions.value = suggestions.value.filter(r => r.id !== rec.id)
       await loadStats()
-      showToast('Bewerbung erstellt! Unter "Bewerbungen" einsehen.', 'success', 5000)
+
+      const firma = rec.company_name || 'das Unternehmen'
+      const appId = result.application?.id
+      updateToast(`Bewerbung für ${firma} erstellt!`, 'success', {
+        action: appId ? { label: 'Details ansehen', route: `/applications/${appId}` } : undefined,
+        duration: 8000,
+      })
     } catch (e) {
-      showToast(e.message || 'Fehler bei der Generierung. Bitte versuche es erneut.', 'error')
+      const errorMsg = e.message || 'Fehler bei der Generierung. Bitte versuche es erneut.'
+      updateToast(errorMsg, 'error', { duration: 5000 })
     } finally {
       const next = new Set(generatingIds.value)
       next.delete(rec.id)

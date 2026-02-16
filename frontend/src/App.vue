@@ -445,7 +445,10 @@ const watchSystemTheme = () => {
 onMounted(() => {
   // Make toast globally available
   if (toastRef.value) {
-    window.$toast = toastRef.value.add
+    window.$toast = Object.assign(toastRef.value.add, {
+      update: toastRef.value.update,
+      remove: toastRef.value.remove,
+    })
   }
 
   // Initialize theme

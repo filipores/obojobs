@@ -14,7 +14,15 @@
       :aria-live="getAriaLive(toast.type)"
     >
       <span class="toast-icon" aria-hidden="true">{{ getIcon(toast.type) }}</span>
-      <span class="toast-message">{{ toast.message }}</span>
+      <div class="toast-body">
+        <span class="toast-message">{{ toast.message }}</span>
+        <router-link
+          v-if="toast.action"
+          :to="toast.action.route"
+          class="toast-action"
+          @click="remove(toast.id)"
+        >{{ toast.action.label }}</router-link>
+      </div>
       <button
         @click="remove(toast.id)"
         class="toast-close"
@@ -26,6 +34,8 @@
 
 <script setup>
 import { ref } from 'vue'
+
+let nextId = 1
 
 const toasts = ref([])
 const recentMessages = ref(new Map()) // Track recent messages for deduplication
@@ -93,11 +103,25 @@ const add = (message, type = 'info', duration = 3000) => {
     }
   }
 
-  const id = now
+  const id = nextId++
   toasts.value.push({ id, message, type })
 
   if (duration > 0) {
     setTimeout(() => remove(id), duration)
+  }
+
+  return id
+}
+
+const update = (id, message, type, options = {}) => {
+  const toast = toasts.value.find(t => t.id === id)
+  if (!toast) return
+
+  toast.message = message
+  if (type) toast.type = type
+  if (options.action) toast.action = options.action
+  if (options.duration > 0) {
+    setTimeout(() => remove(id), options.duration)
   }
 }
 
@@ -125,7 +149,7 @@ const getAriaLive = (type) => {
   return (type === 'error' || type === 'warning') ? 'assertive' : 'polite'
 }
 
-defineExpose({ add, remove })
+defineExpose({ add, update, remove })
 </script>
 
 <style scoped>
@@ -189,9 +213,28 @@ defineExpose({ add, remove })
   color: #17a2b8;
 }
 
-.toast-message {
+.toast-body {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.toast-message {
   font-size: 0.95em;
+}
+
+.toast-action {
+  font-size: 0.85em;
+  font-weight: 500;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+  opacity: 0.9;
+}
+
+.toast-action:hover {
+  opacity: 1;
 }
 
 .toast-close {
