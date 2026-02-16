@@ -1,3 +1,11 @@
+# [1.57.0](https://github.com/filipores/obojobs/compare/v1.56.0...v1.57.0) (2026-02-16)
+
+
+### Features
+
+* **applications:** add timeline view-toggle and dedicated detail page ([82ac648](https://github.com/filipores/obojobs/commit/82ac648961deda43b560b4e6856982e810c4cd27))
+* **nav:** restructure navigation, add onboarding and breadcrumbs ([c14708e](https://github.com/filipores/obojobs/commit/c14708eb3dfe8ec1710d01bf3b7d07850ed88905))
+
 # [1.56.0](https://github.com/filipores/obojobs/compare/v1.55.6...v1.56.0) (2026-02-16)
 
 
