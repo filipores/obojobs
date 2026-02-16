@@ -93,9 +93,10 @@
                   <label>{{ t('applications.email') }}</label>
                   <a :href="`mailto:${application.email}`">{{ application.email }}</a>
                 </div>
-                <div v-if="application.quelle" class="info-item">
+                <div v-if="application.quelle || application.job_url" class="info-item">
                   <label>{{ t('applicationDetail.source') }}</label>
-                  <a :href="application.quelle" target="_blank" rel="noopener noreferrer">{{ getDomain(application.quelle) }}</a>
+                  <a v-if="application.job_url" :href="application.job_url" target="_blank" rel="noopener noreferrer">{{ application.quelle || getDomain(application.job_url) }}</a>
+                  <p v-else>{{ application.quelle }}</p>
                 </div>
                 <div class="info-item">
                   <label>{{ t('applicationDetail.created') }}</label>

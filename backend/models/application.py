@@ -16,6 +16,7 @@ class Application(db.Model):
     ansprechpartner = db.Column(db.Text)
     email = db.Column(db.String(255))
     quelle = db.Column(db.String(255))
+    job_url = db.Column(db.String(500), nullable=True)
     status = db.Column(db.String(50), default="erstellt", index=True)
     pdf_path = db.Column(db.String(500))
     betreff = db.Column(db.Text)
@@ -54,6 +55,7 @@ class Application(db.Model):
             "ansprechpartner": self.ansprechpartner,
             "email": self.email,
             "quelle": self.quelle,
+            "job_url": self.job_url,
             "status": self.status,
             "pdf_path": self.pdf_path,
             "betreff": self.betreff,

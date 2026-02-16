@@ -52,10 +52,11 @@
               </p>
             </div>
 
-            <div v-if="selectedApp.quelle" class="detail-group">
+            <div v-if="selectedApp.quelle || selectedApp.job_url" class="detail-group">
               <label class="detail-label">{{ t('applications.source') }}</label>
               <p class="detail-value">
-                <a :href="selectedApp.quelle" target="_blank" class="detail-link">{{ getDomain(selectedApp.quelle) }}</a>
+                <a v-if="selectedApp.job_url" :href="selectedApp.job_url" target="_blank" class="detail-link">{{ selectedApp.quelle || getDomain(selectedApp.job_url) }}</a>
+                <span v-else>{{ selectedApp.quelle }}</span>
               </p>
             </div>
 
@@ -213,8 +214,7 @@ const formatDateTime = (date) => {
 
 const getDomain = (url) => {
   try {
-    const domain = new URL(url).hostname
-    return domain.replace('www.', '')
+    return new URL(url).hostname.replace('www.', '')
   } catch {
     return url
   }

@@ -192,7 +192,8 @@ export function useJobRecommendations() {
           url: rec.job_url,
           tone: 'modern',
           company: rec.company_name || '',
-          title: rec.job_title || ''
+          title: rec.job_title || '',
+          fit_score: rec.fit_score ?? undefined,
         },
         (message) => updateToast(message)
       )

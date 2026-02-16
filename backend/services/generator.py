@@ -191,8 +191,16 @@ class BewerbungsGenerator:
 
         # Step 7: Save to database
         self._emit_progress(7, 7, "Bewerbung wird gespeichert...")
+        job_url = stellenanzeige_path if is_url(stellenanzeige_path) else None
         self._save_application(
-            firma_name, details, output_path, betreff, email_text, anschreiben_body, stellenanzeige_text
+            firma_name,
+            details,
+            output_path,
+            betreff,
+            email_text,
+            anschreiben_body,
+            stellenanzeige_text,
+            job_url=job_url,
         )
 
         return output_path
@@ -422,6 +430,7 @@ class BewerbungsGenerator:
         email_text: str,
         anschreiben_body: str,
         stellenanzeige_text: str,
+        job_url: str | None = None,
     ) -> None:
         """Save application record to database and log results."""
         links = self.extracted_links or {}
@@ -439,6 +448,7 @@ class BewerbungsGenerator:
             ansprechpartner=details["ansprechpartner"],
             email=details.get("email", ""),
             quelle=details["quelle"],
+            job_url=job_url,
             status="erstellt",
             pdf_path=output_path,
             betreff=betreff,

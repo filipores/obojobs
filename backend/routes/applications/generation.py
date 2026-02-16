@@ -256,8 +256,12 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
         pdf_path = generator.generate_bewerbung(url, company, user_details=user_details, tonalitaet=tone)
 
         latest = application_service.get_latest_application(current_user.id)
-        if latest and job_text:
-            start_job_fit_calculation(latest, job_text, current_user.id)
+        if latest:
+            fit_score = data.get("fit_score")
+            if fit_score is not None:
+                application_service.update_application_fields(latest, job_fit_score=int(fit_score))
+            elif job_text:
+                start_job_fit_calculation(latest, job_text, current_user.id)
 
         usage = get_subscription_usage(current_user)
         result = _build_generation_result(latest, pdf_path, usage, generator, current_user, company)
@@ -300,6 +304,7 @@ def generate_from_url_stream(current_user: Any) -> Response:
     user_company = data.get("company", "").strip()
     user_description = data.get("description", "").strip()
     user_details = _build_user_details(data)
+    fit_score = data.get("fit_score")
 
     progress_queue = queue.Queue()
     result_holder = {"result": None, "error": None}
@@ -323,8 +328,11 @@ def generate_from_url_stream(current_user: Any) -> Response:
                 )
 
                 latest = application_service.get_latest_application(user_id)
-                if latest and job_text:
-                    calculate_and_store_job_fit(latest, job_text, user_id)
+                if latest:
+                    if fit_score is not None:
+                        application_service.update_application_fields(latest, job_fit_score=int(fit_score))
+                    elif job_text:
+                        calculate_and_store_job_fit(latest, job_text, user_id)
 
                 usage = get_subscription_usage(user)
                 result_holder["result"] = _build_generation_result(

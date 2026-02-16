@@ -79,9 +79,10 @@
               <span v-else class="text-muted">–</span>
             </td>
             <td class="cell-quelle">
-              <a v-if="app.quelle" :href="app.quelle" target="_blank" @click.stop class="table-link">
-                {{ getDomain(app.quelle) }}
+              <a v-if="app.job_url" :href="app.job_url" target="_blank" @click.stop class="table-link">
+                {{ app.quelle || getDomain(app.job_url) }}
               </a>
+              <span v-else-if="app.quelle">{{ app.quelle }}</span>
               <span v-else class="text-muted">–</span>
             </td>
             <td class="cell-actions" @click.stop>
@@ -201,8 +202,7 @@ const formatDate = (date) => {
 
 const getDomain = (url) => {
   try {
-    const domain = new URL(url).hostname
-    return domain.replace('www.', '')
+    return new URL(url).hostname.replace('www.', '')
   } catch {
     return url
   }
