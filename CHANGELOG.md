@@ -1,3 +1,10 @@
+## [1.59.4](https://github.com/filipores/obojobs/compare/v1.59.3...v1.59.4) (2026-02-16)
+
+
+### Bug Fixes
+
+* **toast:** replace toast stacking with single updating toast for sofortbewerbung ([98e8fab](https://github.com/filipores/obojobs/commit/98e8fabb5839a8ed17a089df7176ede1051ba96c))
+
 ## [1.59.3](https://github.com/filipores/obojobs/compare/v1.59.2...v1.59.3) (2026-02-16)
 
 
