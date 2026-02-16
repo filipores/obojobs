@@ -4,6 +4,7 @@ Requirement Analyzer Service - Extracts job requirements from job posting text u
 
 import json
 import logging
+import re
 
 from anthropic import Anthropic
 
@@ -18,6 +19,20 @@ class RequirementAnalyzer:
 
     VALID_TYPES = ["must_have", "nice_to_have"]
     VALID_CATEGORIES = ["technical", "soft_skills", "languages", "tools", "certifications"]
+    CATEGORY_ALIASES = {
+        "programming": "technical",
+        "programmierung": "technical",
+        "sprachen": "languages",
+        "language": "languages",
+        "soft_skill": "soft_skills",
+        "softskills": "soft_skills",
+        "tool": "tools",
+        "certification": "certifications",
+        "zertifikat": "certifications",
+        "zertifikate": "certifications",
+        "ausbildung": "certifications",
+        "education": "certifications",
+    }
 
     def __init__(self, api_key: str | None = None):
         self.api_key = api_key or config.ANTHROPIC_API_KEY
@@ -98,73 +113,66 @@ Beispiel-Antwort:
 Extrahiere jetzt alle Anforderungen als JSON-Array:"""
 
     def _parse_requirements_response(self, response_text: str) -> list[dict]:
-        """Parse the Claude response into a list of requirement dictionaries."""
-        # Clean up the response - find JSON array
+        """Parse Claude response, extracting JSON from potentially wrapped text."""
         text = response_text.strip()
 
-        # Find JSON array bounds
+        # Try direct JSON parse first
+        try:
+            return self._validate_requirements(json.loads(text))
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        # Find JSON array in ```json ... ``` or ``` ... ``` code blocks
+        json_block = re.search(r"```(?:json)?\s*(\[.*?\])\s*```", text, re.DOTALL)
+        if json_block:
+            try:
+                return self._validate_requirements(json.loads(json_block.group(1)))
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        # Fallback: find bare JSON array
         start_idx = text.find("[")
         end_idx = text.rfind("]")
+        if start_idx != -1 and end_idx != -1:
+            try:
+                return self._validate_requirements(json.loads(text[start_idx : end_idx + 1]))
+            except (json.JSONDecodeError, TypeError):
+                pass
 
-        if start_idx == -1 or end_idx == -1:
-            logger.warning("Keine JSON-Struktur in der Antwort gefunden")
-            return []
+        logger.warning("Keine JSON-Struktur in der Antwort gefunden")
+        return []
 
-        json_text = text[start_idx : end_idx + 1]
+    def _validate_requirements(self, raw_list: list) -> list[dict]:
+        """Validate and clean requirement dicts."""
+        valid_requirements = []
+        for req in raw_list:
+            if not isinstance(req, dict):
+                continue
 
-        try:
-            requirements = json.loads(json_text)
+            requirement_text = req.get("requirement_text", "").strip()
+            requirement_type = req.get("requirement_type", "").strip().lower()
+            skill_category = req.get("skill_category")
 
-            # Validate and clean requirements
-            valid_requirements = []
-            for req in requirements:
-                if not isinstance(req, dict):
-                    continue
+            # Skip invalid entries
+            if not requirement_text:
+                continue
 
-                requirement_text = req.get("requirement_text", "").strip()
-                requirement_type = req.get("requirement_type", "").strip().lower()
-                skill_category = req.get("skill_category")
+            # Validate requirement type
+            if requirement_type not in self.VALID_TYPES:
+                requirement_type = "must_have"
 
-                # Skip invalid entries
-                if not requirement_text:
-                    continue
+            # Validate skill category
+            if skill_category:
+                skill_category = skill_category.strip().lower()
+                if skill_category not in self.VALID_CATEGORIES:
+                    skill_category = self.CATEGORY_ALIASES.get(skill_category)
 
-                # Validate requirement type
-                if requirement_type not in self.VALID_TYPES:
-                    # Default to must_have for unknown types
-                    requirement_type = "must_have"
+            valid_requirements.append(
+                {
+                    "requirement_text": requirement_text,
+                    "requirement_type": requirement_type,
+                    "skill_category": skill_category,
+                }
+            )
 
-                # Validate skill category
-                if skill_category:
-                    skill_category = skill_category.strip().lower()
-                    if skill_category not in self.VALID_CATEGORIES:
-                        # Try to map common variations
-                        category_mapping = {
-                            "programming": "technical",
-                            "programmierung": "technical",
-                            "sprachen": "languages",
-                            "language": "languages",
-                            "soft_skill": "soft_skills",
-                            "softskills": "soft_skills",
-                            "tool": "tools",
-                            "certification": "certifications",
-                            "zertifikat": "certifications",
-                            "zertifikate": "certifications",
-                            "ausbildung": "certifications",
-                            "education": "certifications",
-                        }
-                        skill_category = category_mapping.get(skill_category)
-
-                valid_requirements.append(
-                    {
-                        "requirement_text": requirement_text,
-                        "requirement_type": requirement_type,
-                        "skill_category": skill_category,
-                    }
-                )
-
-            return valid_requirements
-
-        except json.JSONDecodeError as e:
-            logger.error("JSON Parse Error: %s", e)
-            return []
+        return valid_requirements

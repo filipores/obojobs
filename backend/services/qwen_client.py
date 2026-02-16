@@ -1,3 +1,4 @@
+import json
 import logging
 import re
 import time
@@ -18,6 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 class QwenAPIClient:
+    IGNORED_VALUES = {"keine angabe", "nicht vorhanden", "n/a", ""}
+
     def __init__(self, api_key: str | None = None):
         self.api_key = api_key or config.TOGETHER_API_KEY
         if not self.api_key:
@@ -32,16 +35,32 @@ class QwenAPIClient:
         """Send a chat completion request with automatic retry on failure."""
         return self._call_api(messages=messages, max_tokens=max_tokens, temperature=temperature)
 
-    def extract_bewerbung_details(self, stellenanzeige_text: str, firma_name: str) -> dict[str, str]:
+    def _call_api_json(self, messages: list[dict], max_tokens: int, temperature: float) -> dict:
+        """Send a chat completion request expecting JSON response."""
+        response = self.client.chat.completions.create(
+            model=self.model,
+            max_tokens=max_tokens,
+            temperature=temperature,
+            messages=messages,
+            response_format={"type": "json_object"},
+        )
+        return json.loads(response.choices[0].message.content.strip())
+
+    @retry_with_backoff(max_attempts=3, base_delay=2.0)
+    def _call_api_json_with_retry(self, messages, max_tokens, temperature):
+        """Send a JSON chat completion request with automatic retry on failure."""
+        return self._call_api_json(messages=messages, max_tokens=max_tokens, temperature=temperature)
+
+    def extract_bewerbung_details(self, stellenanzeige_text: str, firma_name: str) -> dict:
         prompt = create_details_extraction_prompt(stellenanzeige_text, firma_name)
 
         try:
-            response = self._call_api_with_retry(
+            data = self._call_api_json_with_retry(
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=500,
                 temperature=0.3,
             )
-            return self._parse_extracted_details(response, firma_name)
+            return self._normalize_extracted_details(data, firma_name)
         except Exception:
             logger.warning("Detail-Extraktion fehlgeschlagen, verwende Defaults")
             defaults = self._get_default_details(firma_name)
@@ -222,34 +241,23 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         )
         return response.choices[0].message.content.strip()
 
-    def _parse_extracted_details(self, text: str, firma_name: str) -> dict[str, str]:
-        details = self._get_default_details(firma_name)
-        details["stellenanzeige_kompakt"] = text
+    def _normalize_extracted_details(self, data: dict, firma_name: str) -> dict:
+        """Normalize JSON response from API into standard details dict."""
+        defaults = self._get_default_details(firma_name)
 
-        ignored_values = {"keine angabe", "nicht vorhanden", "n/a"}
+        for key in ["ansprechpartner", "position", "quelle", "email"]:
+            value = str(data.get(key, "")).strip()
+            if value and value.lower() not in self.IGNORED_VALUES:
+                if key == "position" and value.lower() == "initiativ":
+                    continue
+                defaults[key] = value
 
-        for line in text.split("\n"):
-            line = line.strip()
-            if line.startswith("ANSPRECHPARTNER:"):
-                anrede = line.replace("ANSPRECHPARTNER:", "").strip()
-                if anrede and anrede.lower() not in ignored_values:
-                    details["ansprechpartner"] = anrede
-            elif line.startswith("POSITION:"):
-                pos = line.replace("POSITION:", "").strip()
-                if pos and pos.lower() not in ignored_values and pos.lower() != "initiativ":
-                    details["position"] = pos
-            elif line.startswith("QUELLE:"):
-                quelle = line.replace("QUELLE:", "").strip()
-                if quelle and quelle.lower() not in ignored_values:
-                    details["quelle"] = quelle
-            elif line.startswith("EMAIL:"):
-                email = line.replace("EMAIL:", "").strip()
-                if email and email.lower() not in ignored_values:
-                    details["email"] = email
+        if data.get("zusammenfassung"):
+            defaults["stellenanzeige_kompakt"] = str(data["zusammenfassung"])
 
-        return details
+        return defaults
 
-    def _get_default_details(self, firma_name: str) -> dict[str, str]:
+    def _get_default_details(self, firma_name: str) -> dict:
         return {
             "firma": firma_name,
             "ansprechpartner": "Sehr geehrte Damen und Herren",

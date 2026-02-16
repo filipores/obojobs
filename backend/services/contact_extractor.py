@@ -7,6 +7,7 @@ using a combination of regex patterns and AI-based NLP extraction.
 UX-004: Automatische Extraktion von Kontaktdaten aus manuellem Text
 """
 
+import json
 import logging
 import re
 
@@ -140,6 +141,9 @@ class ContactExtractor:
         r"postmaster",
     ]
 
+    # Sentinel values indicating "not found" in AI responses
+    NOT_FOUND_VALUES = {"nicht_gefunden", "nicht gefunden", "n/a", "keine angabe", "null", "none", ""}
+
     # German salutation patterns for contact person detection
     SALUTATION_PATTERNS = [
         r"Ansprechpartner(?:in)?[:\s]+(?:Frau|Herr)\s+([A-ZÄÖÜ][a-zäöüß]+(?:\s+[A-ZÄÖÜ][a-zäöüß]+)?)",
@@ -248,7 +252,7 @@ class ContactExtractor:
             city_pattern = rf"\b{re.escape(city)}\b"
             if re.search(city_pattern, text_lower):
                 # Capitalize properly
-                result["location"] = city.title() if city not in ["nrw", "nrw"] else city.upper()
+                result["location"] = city.upper() if city == "nrw" else city.title()
                 break
 
         # Also check for "Standort:" pattern
@@ -297,22 +301,13 @@ class ContactExtractor:
         else:
             text_truncated = text[:5000]
 
-        prompt = f"""Extrahiere die folgenden Kontaktdaten aus diesem Stellentext. Antworte NUR im angegebenen Format.
+        prompt = f"""Extrahiere Kontaktdaten aus diesem Stellentext als JSON.
 
 STELLENTEXT:
 {text_truncated}
 
-Extrahiere folgende Informationen:
-1. ANSPRECHPARTNER: Name der Kontaktperson (z.B. "Frau Schmidt", "Herr Müller"). Falls kein Name erkennbar, schreibe "NICHT_GEFUNDEN".
-2. EMAIL: E-Mail-Adresse für Bewerbungen. Falls keine erkennbar, schreibe "NICHT_GEFUNDEN".
-3. STANDORT: Stadt/Region des Arbeitsplatzes (z.B. "Berlin", "München", "Remote"). Falls nicht erkennbar, schreibe "NICHT_GEFUNDEN".
-4. ANSTELLUNGSART: Art der Anstellung (z.B. "Vollzeit", "Teilzeit", "Remote", "Hybrid"). Falls nicht erkennbar, schreibe "NICHT_GEFUNDEN".
-
-WICHTIG: Antworte EXAKT in diesem Format (eine Zeile pro Feld):
-ANSPRECHPARTNER: [Wert]
-EMAIL: [Wert]
-STANDORT: [Wert]
-ANSTELLUNGSART: [Wert]"""
+Antworte NUR als JSON-Objekt mit diesen Keys:
+{{"ansprechpartner": "Name der Kontaktperson oder null", "email": "E-Mail-Adresse oder null", "standort": "Stadt/Region oder null", "anstellungsart": "Vollzeit/Teilzeit/Remote/Hybrid oder null"}}"""
 
         try:
             response = self.client.messages.create(
@@ -321,41 +316,55 @@ ANSTELLUNGSART: [Wert]"""
                 temperature=0.1,
                 messages=[{"role": "user", "content": prompt}],
             )
-
             response_text = response.content[0].text.strip()
-            return self._parse_nlp_response(response_text)
-
+            data = self._parse_json_object(response_text)
+            if data is None:
+                return {}
+            return self._normalize_nlp_response(data)
         except Exception as e:
             logger.error("NLP extraction failed: %s", e)
             return {}
 
-    def _parse_nlp_response(self, response_text: str) -> dict[str, str]:
-        """Parse the NLP response into a structured dict."""
+    def _parse_json_object(self, text: str) -> dict | None:
+        """Parse a JSON object from potentially wrapped text (e.g. markdown code blocks)."""
+        try:
+            return json.loads(text)
+        except (json.JSONDecodeError, TypeError):
+            pass
+
+        json_match = re.search(r"\{.*\}", text, re.DOTALL)
+        if json_match:
+            try:
+                return json.loads(json_match.group())
+            except (json.JSONDecodeError, TypeError):
+                pass
+
+        logger.warning("Keine JSON-Struktur in NLP-Antwort gefunden")
+        return None
+
+    def _normalize_nlp_response(self, data: dict) -> dict[str, str]:
+        """Normalize JSON response from Claude NLP into contact data dict."""
         result = {}
 
-        for line in response_text.split("\n"):
-            line = line.strip()
-            if ":" not in line:
-                continue
+        ansprechpartner = str(data.get("ansprechpartner") or "").strip()
+        if ansprechpartner and ansprechpartner.lower() not in self.NOT_FOUND_VALUES:
+            result["contact_person"] = ansprechpartner
 
-            key, value = line.split(":", 1)
-            key = key.strip().upper()
-            value = value.strip()
+        email = str(data.get("email") or "").strip()
+        if (
+            email
+            and email.lower() not in self.NOT_FOUND_VALUES
+            and re.match(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", email)
+        ):
+            result["contact_email"] = email
 
-            # Skip "not found" values
-            if value.upper() in ["NICHT_GEFUNDEN", "NICHT GEFUNDEN", "N/A", "KEINE ANGABE", ""]:
-                continue
+        standort = str(data.get("standort") or "").strip()
+        if standort and standort.lower() not in self.NOT_FOUND_VALUES:
+            result["location"] = standort
 
-            if key == "ANSPRECHPARTNER":
-                result["contact_person"] = value
-            elif key == "EMAIL":
-                # Validate email format
-                if re.match(r"[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}", value):
-                    result["contact_email"] = value
-            elif key == "STANDORT":
-                result["location"] = value
-            elif key == "ANSTELLUNGSART":
-                result["employment_type"] = value
+        anstellungsart = str(data.get("anstellungsart") or "").strip()
+        if anstellungsart and anstellungsart.lower() not in self.NOT_FOUND_VALUES:
+            result["employment_type"] = anstellungsart
 
         return result
 

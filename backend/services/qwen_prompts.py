@@ -28,33 +28,29 @@ FORBIDDEN_PHRASES_BLOCK = "\n".join(f'- "{phrase}"' for phrase in FORBIDDEN_PHRA
 
 
 def create_details_extraction_prompt(stellenanzeige_text: str, firma_name: str) -> str:
-    return f"""Extrahiere folgende Informationen aus dieser Stellenanzeige für eine Bewerbung:
+    return f"""Extrahiere folgende Informationen aus dieser Stellenanzeige für eine Bewerbung bei {firma_name}.
 
 STELLENANZEIGE:
 {stellenanzeige_text}
 
 Extrahiere präzise folgende Informationen:
 
-1. ANSPRECHPARTNER: Wenn ein konkreter Name genannt wird (z.B. "Frau Schmidt", "Herr Müller"), gib "Sehr geehrte/r [Name]" zurück. Wenn kein Name vorhanden ist, gib "Sehr geehrte Damen und Herren" zurück.
+1. ansprechpartner: Wenn ein konkreter Name genannt wird (z.B. "Frau Schmidt", "Herr Müller"), gib "Sehr geehrte/r [Name]" zurück. Wenn kein Name vorhanden ist, gib "Sehr geehrte Damen und Herren" zurück.
 
-2. POSITION: Die Stellenbezeichnung/Position (z.B. "Fullstack Developer", "Frontend Engineer"). Falls keine konkrete Position genannt wird, gib "Softwareentwickler" zurück.
+2. position: Die Stellenbezeichnung/Position (z.B. "Fullstack Developer", "Frontend Engineer"). Falls keine konkrete Position genannt wird, gib "Softwareentwickler" zurück.
 
-3. QUELLE: Wo wurde die Anzeige gefunden/wo ist das Unternehmen präsent? (z.B. "LinkedIn", "eure Website", "StepStone"). Falls nicht erkennbar, gib "eure Website" zurück.
+3. quelle: Wo wurde die Anzeige gefunden/wo ist das Unternehmen präsent? (z.B. "LinkedIn", "eure Website", "StepStone"). Falls nicht erkennbar, gib "eure Website" zurück.
 
-4. EMAIL: Die E-Mail-Adresse für Bewerbungen (z.B. "bewerbung@firma.de", "jobs@company.com"). Falls keine E-Mail-Adresse erkennbar ist, gib "keine Angabe" zurück.
+4. email: Die E-Mail-Adresse für Bewerbungen (z.B. "bewerbung@firma.de", "jobs@company.com"). Falls keine E-Mail-Adresse erkennbar ist, gib "" zurück.
 
-5. Danach: Schreibe eine kompakte Zusammenfassung der wichtigsten Infos (Firma, Branche, Kernaufgaben, Skills) in Stichpunkten.
+5. zusammenfassung: Eine kompakte Zusammenfassung der wichtigsten Infos (Firma, Branche, Kernaufgaben, Skills) in Stichpunkten.
 
-WICHTIG: Formatiere deine Antwort genau so:
+Antworte NUR als JSON-Objekt mit den Keys: ansprechpartner, position, quelle, email, zusammenfassung
 
-ANSPRECHPARTNER: [Anrede]
-POSITION: [Position]
-QUELLE: [Quelle]
-EMAIL: [E-Mail oder "keine Angabe"]
+Beispiel:
+{{"ansprechpartner": "Sehr geehrte Frau Schmidt", "position": "Frontend Developer", "quelle": "LinkedIn", "email": "bewerbung@firma.de", "zusammenfassung": "- IT-Unternehmen\\n- Webentwicklung mit React\\n- Teamarbeit"}}
 
-[Kompakte Zusammenfassung in Stichpunkten]
-
-Extrahiere jetzt die Informationen:"""
+Extrahiere jetzt die Informationen als JSON:"""
 
 
 def create_extraction_prompt(stellenanzeige_text: str) -> str:
