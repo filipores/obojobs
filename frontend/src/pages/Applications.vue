@@ -65,6 +65,38 @@
         </div>
       </section>
 
+      <!-- View Tabs -->
+      <section class="view-tabs-section animate-fade-up" style="animation-delay: 150ms;">
+        <div class="view-tabs">
+          <button
+            class="view-tab"
+            :class="{ active: activeTab === 'liste' }"
+            @click="switchToListe"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+              <line x1="3" y1="9" x2="21" y2="9"/>
+              <line x1="9" y1="21" x2="9" y2="9"/>
+            </svg>
+            Liste
+          </button>
+          <button
+            class="view-tab"
+            :class="{ active: activeTab === 'timeline' }"
+            @click="switchToTimeline"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"/>
+              <polyline points="12 6 12 12 16 14"/>
+            </svg>
+            Timeline
+          </button>
+        </div>
+      </section>
+
+      <!-- Liste Tab Content -->
+      <template v-if="activeTab === 'liste'">
+
       <!-- Filters -->
       <ApplicationFilters
         :status-options="statusOptions"
@@ -164,20 +196,145 @@
         </button>
       </section>
 
-      <!-- Detail Modal -->
-      <ApplicationDetail
-        :selected-app="selectedApp"
-        :job-fit-data="jobFitData"
-        :job-fit-loading="jobFitLoading"
-        @close="closeDetails"
-        @update-status="updateStatus"
-        @update-notes="updateNotes"
-        @download-pdf="downloadPDF"
-        @download-email-draft="downloadEmailDraft"
-        @delete="deleteApp"
-        @interview-updated="onInterviewUpdated"
-        @ats-optimized="onATSOptimized"
-      />
+      </template>
+
+      <!-- Timeline Tab Content -->
+      <template v-else>
+
+        <!-- Days filter -->
+        <div class="timeline-filter animate-fade-up" style="animation-delay: 200ms;">
+          <div class="timeline-filter-row">
+            <div class="timeline-filter-group">
+              <label class="filter-label">Zeitraum</label>
+              <select v-model="daysFilter" @change="loadTimeline" class="form-select form-select-sm">
+                <option value="7">Letzte 7 Tage</option>
+                <option value="30">Letzte 30 Tage</option>
+                <option value="90">Letzte 90 Tage</option>
+                <option value="all">Alle</option>
+              </select>
+            </div>
+            <div class="timeline-stats-summary">
+              <span class="timeline-stat-count">{{ timelineApps.length }}</span>
+              <span class="timeline-stat-label">Bewerbungen</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ink Stroke -->
+        <div class="ink-stroke"></div>
+
+        <!-- Timeline loading -->
+        <div v-if="timelineLoading" class="loading-state">
+          <div class="loading-enso"></div>
+          <p>Lade Timeline...</p>
+        </div>
+
+        <!-- Timeline grouped view -->
+        <section v-else-if="groupedApplications.length > 0" class="timeline-section">
+          <div class="timeline-axis">
+            <div
+              v-for="(group, groupIndex) in groupedApplications"
+              :key="group.label"
+              class="timeline-group"
+            >
+              <!-- Date Group Header -->
+              <div class="timeline-group-header">
+                <div class="timeline-axis-marker">
+                  <div class="axis-dot"></div>
+                </div>
+                <div class="timeline-group-label">{{ group.label }}</div>
+              </div>
+
+              <!-- Applications in Group -->
+              <div class="timeline-group-items">
+                <div
+                  v-for="(app, appIndex) in group.items"
+                  :key="app.id"
+                  class="timeline-item-wrapper"
+                  :class="{
+                    'timeline-item-latest': groupIndex === 0 && appIndex === 0,
+                    'timeline-item-last-in-group': appIndex === group.items.length - 1 && groupIndex < groupedApplications.length - 1
+                  }"
+                >
+                  <!-- Vertical Line Connector -->
+                  <div class="timeline-axis-line">
+                    <div class="axis-line"></div>
+                  </div>
+
+                  <!-- Timeline Card -->
+                  <div class="timeline-item zen-card">
+                    <div class="timeline-item-header">
+                      <div class="timeline-company">
+                        <h3>{{ app.firma }}</h3>
+                        <p class="timeline-position">{{ app.position || 'Position nicht angegeben' }}</p>
+                      </div>
+                      <span :class="['status-badge', `status-${app.status}`]">
+                        {{ getStatusLabel(app.status) }}
+                      </span>
+                    </div>
+
+                    <!-- Status History Timeline -->
+                    <div v-if="app.status_history && app.status_history.length > 0" class="status-history">
+                      <div
+                        v-for="(event, index) in app.status_history"
+                        :key="index"
+                        class="history-event"
+                        :class="{ 'history-event-latest': index === app.status_history.length - 1 }"
+                      >
+                        <div class="history-marker">
+                          <div class="history-dot"></div>
+                          <div v-if="index < app.status_history.length - 1" class="history-line"></div>
+                        </div>
+                        <div class="history-content">
+                          <span class="history-status">{{ getStatusLabel(event.status) }}</span>
+                          <span class="history-time">{{ formatTimelineDateTime(event.timestamp) }}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="timeline-item-meta">
+                      <span v-if="app.quelle" class="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+                          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+                        </svg>
+                        {{ getDomain(app.quelle) }}
+                      </span>
+                      <span class="meta-item">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
+                          <line x1="16" y1="2" x2="16" y2="6"/>
+                          <line x1="8" y1="2" x2="8" y2="6"/>
+                          <line x1="3" y1="10" x2="21" y2="10"/>
+                        </svg>
+                        {{ formatTimelineDate(app.datum) }}
+                      </span>
+                    </div>
+
+                    <div class="timeline-actions">
+                      <button @click="openDetails(app)" class="zen-btn zen-btn-sm">
+                        Details
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Timeline empty -->
+        <section v-else class="empty-state">
+          <div class="empty-enso" aria-hidden="true"></div>
+          <h3>Keine Bewerbungen im Zeitraum</h3>
+          <p>Im ausgewaehlten Zeitraum wurden keine Bewerbungen gefunden.</p>
+          <button @click="daysFilter = 'all'; loadTimeline()" class="zen-btn">
+            Alle anzeigen
+          </button>
+        </section>
+
+      </template>
+
     </div>
   </div>
 </template>
@@ -186,11 +343,10 @@
 import { ref, onMounted, onUnmounted, computed, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '../api/client'
-import { confirm } from '../composables/useConfirm'
 import { useI18n } from 'vue-i18n'
+import { getFullLocale } from '../i18n'
 import ApplicationFilters from '../components/Applications/ApplicationFilters.vue'
 import ApplicationList from '../components/Applications/ApplicationList.vue'
-import ApplicationDetail from '../components/Applications/ApplicationDetail.vue'
 
 const { t } = useI18n()
 
@@ -198,7 +354,6 @@ const route = useRoute()
 const router = useRouter()
 
 const applications = ref([])
-const selectedApp = ref(null)
 const loading = ref(false)
 const loadError = ref(false)
 const searchInput = ref('')
@@ -210,13 +365,15 @@ const sortBy = ref('datum_desc')
 const exportFilteredOnly = ref(false)
 const viewMode = ref(localStorage.getItem('applications_view_mode') || 'grid')
 
+const activeTab = ref('liste')
+const timelineLoading = ref(false)
+const timelineApps = ref([])
+const daysFilter = ref('30')
+
 const currentPage = ref(1)
 const totalPages = ref(1)
 const totalApplications = ref(0)
 const perPage = ref(15)
-
-const jobFitData = ref(null)
-const jobFitLoading = ref(false)
 
 const stats = computed(() => {
   return {
@@ -302,6 +459,108 @@ const exportDisabledReason = computed(() => {
   return ''
 })
 
+// Timeline: group applications by date
+const groupedApplications = computed(() => {
+  if (!timelineApps.value.length) return []
+
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const yesterday = new Date(today)
+  yesterday.setDate(yesterday.getDate() - 1)
+  const lastWeekStart = new Date(today)
+  lastWeekStart.setDate(lastWeekStart.getDate() - 7)
+
+  const groupMap = new Map()
+
+  timelineApps.value.forEach(app => {
+    const appDate = new Date(app.datum)
+    const appDateOnly = new Date(appDate.getFullYear(), appDate.getMonth(), appDate.getDate())
+
+    let label
+    if (appDateOnly.getTime() === today.getTime()) {
+      label = 'Heute'
+    } else if (appDateOnly.getTime() === yesterday.getTime()) {
+      label = 'Gestern'
+    } else if (appDateOnly >= lastWeekStart) {
+      label = 'Diese Woche'
+    } else {
+      label = appDate.toLocaleDateString(getFullLocale(), { month: 'long', year: 'numeric' })
+    }
+
+    if (!groupMap.has(label)) {
+      groupMap.set(label, { label, items: [], sortDate: appDate })
+    }
+    groupMap.get(label).items.push(app)
+  })
+
+  return Array.from(groupMap.values()).sort((a, b) => b.sortDate - a.sortDate)
+})
+
+const switchToTimeline = async () => {
+  activeTab.value = 'timeline'
+  router.replace({ path: '/applications', query: { ...route.query, view: 'timeline' } })
+  if (timelineApps.value.length === 0) await loadTimeline()
+}
+
+const switchToListe = () => {
+  activeTab.value = 'liste'
+  const query = { ...route.query }
+  delete query.view
+  router.replace({ path: '/applications', query })
+}
+
+const loadTimeline = async () => {
+  timelineLoading.value = true
+  try {
+    const { data } = await api.get('/applications/timeline', {
+      params: { days: daysFilter.value }
+    })
+    timelineApps.value = data.data?.applications || []
+  } catch (err) {
+    console.error('Fehler beim Laden der Timeline:', err)
+  } finally {
+    timelineLoading.value = false
+  }
+}
+
+const getStatusLabel = (status) => {
+  const labels = {
+    'erstellt': 'Erstellt',
+    'versendet': 'Versendet',
+    'antwort_erhalten': 'Antwort erhalten',
+    'interview': 'Interview',
+    'absage': 'Absage',
+    'zusage': 'Zusage'
+  }
+  return labels[status] || status
+}
+
+const getDomain = (url) => {
+  try {
+    return new URL(url).hostname.replace('www.', '')
+  } catch {
+    return url
+  }
+}
+
+const formatTimelineDate = (date) => {
+  return new Date(date).toLocaleDateString(getFullLocale(), {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric'
+  })
+}
+
+const formatTimelineDateTime = (date) => {
+  return new Date(date).toLocaleString(getFullLocale(), {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
 const loadApplications = async (page = 1) => {
   loading.value = true
   loadError.value = false
@@ -355,85 +614,7 @@ const downloadPDF = async (id) => {
 }
 
 const openDetails = (app) => {
-  selectedApp.value = { ...app }
-  loadJobFitData(app.id)
-}
-
-const loadJobFitData = async (appId) => {
-  jobFitData.value = null
-  jobFitLoading.value = true
-  try {
-    const { data } = await api.get(`/applications/${appId}/job-fit?include_recommendations=true`)
-    if (data.success) {
-      jobFitData.value = data.job_fit
-    }
-  } catch {
-    // Silently fail - job fit data is optional
-  } finally {
-    jobFitLoading.value = false
-  }
-}
-
-const closeDetails = () => {
-  selectedApp.value = null
-}
-
-const updateStatus = async (app) => {
-  try {
-    await api.put(`/applications/${app.id}`, {
-      status: app.status
-    })
-    const index = applications.value.findIndex(a => a.id === app.id)
-    if (index !== -1) {
-      applications.value[index].status = app.status
-    }
-    if (selectedApp.value) {
-      selectedApp.value.status = app.status
-    }
-    if (window.$toast) {
-      window.$toast(t('applications.statusChangedSuccess'), 'success')
-    }
-  } catch (_e) {
-    if (window.$toast) { window.$toast(t('applications.statusChangeError'), 'error') }
-  }
-}
-
-const updateNotes = async (app) => {
-  try {
-    await api.put(`/applications/${app.id}`, {
-      notizen: app.notizen
-    })
-    const index = applications.value.findIndex(a => a.id === app.id)
-    if (index !== -1) {
-      applications.value[index].notizen = app.notizen
-    }
-  } catch (_e) {
-    if (window.$toast) { window.$toast(t('applications.noteSaveError'), 'error') }
-  }
-}
-
-const deleteApp = async (id) => {
-  const confirmed = await confirm({
-    title: t('applications.deleteConfirmTitle'),
-    message: t('applications.deleteConfirmMessage'),
-    confirmText: t('common.delete'),
-    cancelText: t('common.cancel'),
-    type: 'danger'
-  })
-  if (!confirmed) return
-
-  try {
-    await api.delete(`/applications/${id}`)
-    if (selectedApp.value && selectedApp.value.id === id) {
-      selectedApp.value = null
-    }
-    const pageToLoad = applications.value.length === 1 && currentPage.value > 1
-      ? currentPage.value - 1
-      : currentPage.value
-    loadApplications(pageToLoad)
-  } catch (_e) {
-    if (window.$toast) { window.$toast(t('applications.deleteError'), 'error') }
-  }
+  router.push(`/applications/${app.id}`)
 }
 
 const clearFilters = () => {
@@ -453,24 +634,6 @@ const toggleTableSort = (field) => {
     sortBy.value = sortBy.value === 'datum_desc' ? 'datum_asc' : 'datum_desc'
   } else if (field === 'status') {
     sortBy.value = 'status'
-  }
-}
-
-const onATSOptimized = (data) => {
-  if (selectedApp.value && data.optimized_text) {
-    selectedApp.value.email_text = data.optimized_text
-  }
-}
-
-const onInterviewUpdated = (updatedApp) => {
-  if (selectedApp.value) {
-    selectedApp.value.interview_date = updatedApp.interview_date
-    selectedApp.value.interview_result = updatedApp.interview_result
-    selectedApp.value.interview_feedback = updatedApp.interview_feedback
-  }
-  const index = applications.value.findIndex(a => a.id === updatedApp.id)
-  if (index !== -1) {
-    applications.value[index] = { ...applications.value[index], ...updatedApp }
   }
 }
 
@@ -505,51 +668,30 @@ const exportApplications = async (format) => {
   }
 }
 
-const downloadEmailDraft = async (app) => {
-  try {
-    const response = await api.get(`/applications/${app.id}/email-draft`, {
-      responseType: 'blob'
-    })
-    const blob = new Blob([response.data], { type: 'message/rfc822' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
-    const firma = app.firma || 'Bewerbung'
-    link.download = `Bewerbung_${firma}.eml`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-
-    if (window.$toast) {
-      window.$toast(t('applications.emlDownloaded'), 'success', 6000)
-    }
-  } catch (_e) {
-    if (window.$toast) { window.$toast(t('applications.emailDraftError'), 'error') }
-  }
-}
-
-const handleEscapeKey = (event) => {
-  if (event.key === 'Escape' && selectedApp.value) {
-    closeDetails()
-  }
-}
-
 onMounted(() => {
   if (route.query.firma) {
     filterFirma.value = route.query.firma
   }
+  if (route.query.view === 'timeline') {
+    switchToTimeline()
+  }
   loadApplications()
-  document.addEventListener('keydown', handleEscapeKey)
 })
 
 onUnmounted(() => {
   if (searchTimeout) clearTimeout(searchTimeout)
-  document.removeEventListener('keydown', handleEscapeKey)
 })
 
 watch(() => route.query.firma, (newFirma) => {
   filterFirma.value = newFirma || ''
+})
+
+watch(() => route.query.view, (newView) => {
+  if (newView === 'timeline' && activeTab.value !== 'timeline') {
+    switchToTimeline()
+  } else if (!newView && activeTab.value !== 'liste') {
+    activeTab.value = 'liste'
+  }
 })
 
 watch(searchInput, (newVal) => {
@@ -809,6 +951,399 @@ watch(viewMode, (newMode) => {
   margin-bottom: var(--space-lg);
 }
 
+/* ========================================
+   VIEW TABS
+   ======================================== */
+.view-tabs-section {
+  margin-bottom: var(--space-md);
+}
+
+.view-tabs {
+  display: inline-flex;
+  background: var(--color-bg-elevated, var(--color-washi));
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  padding: 2px;
+  gap: 2px;
+}
+
+.view-tab {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  background: transparent;
+  border: none;
+  border-radius: var(--radius-sm);
+  color: var(--color-text-tertiary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.view-tab:hover {
+  color: var(--color-text-primary);
+}
+
+.view-tab.active {
+  background: var(--color-ai);
+  color: var(--color-text-inverse, #fff);
+}
+
+/* ========================================
+   TIMELINE FILTER
+   ======================================== */
+.timeline-filter {
+  margin-bottom: var(--space-md);
+}
+
+.timeline-filter-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-lg);
+}
+
+.timeline-filter-group {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+}
+
+.timeline-filter .filter-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.timeline-stats-summary {
+  display: flex;
+  align-items: baseline;
+  gap: var(--space-xs);
+}
+
+.timeline-stat-count {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
+  font-weight: 500;
+  color: var(--color-ai);
+  line-height: 1;
+}
+
+.timeline-stat-label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-text-ghost);
+}
+
+/* ========================================
+   TIMELINE LOADING
+   ======================================== */
+.loading-state {
+  text-align: center;
+  padding: var(--space-ma-xl) 0;
+}
+
+.loading-enso {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto var(--space-lg);
+  border: 2px solid var(--color-sand);
+  border-top-color: var(--color-ai);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.loading-state p {
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   TIMELINE AXIS
+   ======================================== */
+.timeline-section {
+  margin-top: var(--space-ma);
+}
+
+.timeline-axis {
+  position: relative;
+  padding-left: var(--space-xl);
+}
+
+.timeline-group {
+  position: relative;
+}
+
+.timeline-group-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-md);
+  margin-bottom: var(--space-md);
+  position: relative;
+}
+
+.timeline-axis-marker {
+  position: absolute;
+  left: calc(-1 * var(--space-xl));
+  width: var(--space-xl);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.axis-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--color-ai);
+  border: 3px solid var(--color-washi);
+  box-shadow: 0 0 0 2px var(--color-ai);
+  z-index: 2;
+  position: relative;
+}
+
+.timeline-group-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  color: var(--color-ai);
+  background: var(--color-washi);
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+}
+
+.timeline-group-items {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.timeline-item-wrapper {
+  position: relative;
+  display: flex;
+  gap: 0;
+}
+
+.timeline-axis-line {
+  position: absolute;
+  left: calc(-1 * var(--space-xl));
+  top: 0;
+  bottom: 0;
+  width: var(--space-xl);
+  display: flex;
+  justify-content: center;
+}
+
+.axis-line {
+  width: 2px;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    var(--color-sand) 0%,
+    var(--color-stone) 50%,
+    var(--color-sand) 100%
+  );
+}
+
+.timeline-item-last-in-group .axis-line {
+  height: calc(100% + var(--space-lg));
+}
+
+/* Latest item highlighting */
+.timeline-item-latest .timeline-item {
+  border-left: 3px solid var(--color-ai);
+  box-shadow: var(--shadow-lifted), 0 0 0 1px var(--color-ai-subtle);
+}
+
+.timeline-item-latest .axis-line {
+  background: linear-gradient(
+    to bottom,
+    var(--color-ai) 0%,
+    var(--color-ai-light) 30%,
+    var(--color-sand) 100%
+  );
+  width: 3px;
+}
+
+/* ========================================
+   TIMELINE CARDS
+   ======================================== */
+.timeline-item {
+  flex: 1;
+  padding: var(--space-lg);
+  transition: transform var(--transition-base), box-shadow var(--transition-base);
+}
+
+.timeline-item:hover {
+  transform: translateX(4px);
+}
+
+.timeline-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
+}
+
+.timeline-company h3 {
+  font-size: 1.25rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+  margin: 0 0 var(--space-xs) 0;
+}
+
+.timeline-position {
+  font-size: 0.875rem;
+  color: var(--color-text-tertiary);
+  margin: 0;
+}
+
+/* ========================================
+   STATUS BADGES (Timeline)
+   ======================================== */
+.status-badge {
+  padding: var(--space-xs) var(--space-sm);
+  border-radius: var(--radius-sm);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.status-erstellt {
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+}
+
+.status-versendet {
+  background: rgba(184, 122, 94, 0.15);
+  color: var(--color-terra);
+}
+
+.status-antwort_erhalten {
+  background: rgba(122, 139, 110, 0.15);
+  color: var(--color-koke);
+}
+
+.status-interview {
+  background: rgba(61, 90, 108, 0.15);
+  color: var(--color-ai);
+}
+
+.status-absage {
+  background: rgba(180, 80, 80, 0.15);
+  color: #b45050;
+}
+
+.status-zusage {
+  background: var(--color-koke);
+  color: var(--color-washi);
+}
+
+/* ========================================
+   STATUS HISTORY (Timeline)
+   ======================================== */
+.status-history {
+  padding: var(--space-md) 0;
+  border-top: 1px solid var(--color-border-light);
+  border-bottom: 1px solid var(--color-border-light);
+  margin-bottom: var(--space-md);
+}
+
+.history-event {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.history-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 20px;
+}
+
+.history-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-stone);
+  flex-shrink: 0;
+}
+
+.history-event-latest .history-dot {
+  background: var(--color-ai);
+  box-shadow: 0 0 0 4px var(--color-ai-subtle);
+}
+
+.history-line {
+  width: 2px;
+  flex: 1;
+  min-height: 24px;
+  background: var(--color-sand);
+}
+
+.history-content {
+  flex: 1;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: var(--space-md);
+}
+
+.history-status {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-sumi);
+}
+
+.history-time {
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+}
+
+/* ========================================
+   TIMELINE META
+   ======================================== */
+.timeline-item-meta {
+  display: flex;
+  gap: var(--space-lg);
+  margin-bottom: var(--space-md);
+}
+
+.meta-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+}
+
+.meta-item svg {
+  color: var(--color-stone);
+}
+
+/* ========================================
+   TIMELINE ACTIONS
+   ======================================== */
+.timeline-actions {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+/* ========================================
+   RESPONSIVE
+   ======================================== */
 @media (max-width: 768px) {
   .page-header-content {
     flex-direction: column;
@@ -826,11 +1361,79 @@ watch(viewMode, (newMode) => {
   .stats-grid {
     flex-wrap: wrap;
   }
+
+  .timeline-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .timeline-filter-group {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .timeline-stats-summary {
+    justify-content: flex-start;
+  }
+
+  .timeline-axis {
+    padding-left: var(--space-lg);
+  }
+
+  .timeline-axis-marker {
+    left: calc(-1 * var(--space-lg));
+    width: var(--space-lg);
+  }
+
+  .timeline-axis-line {
+    left: calc(-1 * var(--space-lg));
+    width: var(--space-lg);
+  }
+
+  .axis-dot {
+    width: 10px;
+    height: 10px;
+    border-width: 2px;
+  }
+
+  .history-content {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-xs);
+  }
 }
 
 @media (max-width: 480px) {
   .page-header h1 {
     font-size: 2rem;
+  }
+
+  .timeline-item-header {
+    flex-direction: column;
+  }
+
+  .timeline-axis {
+    padding-left: var(--space-md);
+  }
+
+  .timeline-axis-marker {
+    left: calc(-1 * var(--space-md));
+    width: var(--space-md);
+  }
+
+  .timeline-axis-line {
+    left: calc(-1 * var(--space-md));
+    width: var(--space-md);
+  }
+
+  .axis-dot {
+    width: 8px;
+    height: 8px;
+  }
+
+  .timeline-group-label {
+    font-size: 0.75rem;
+    padding: var(--space-xs);
   }
 }
 </style>

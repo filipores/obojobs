@@ -24,21 +24,22 @@ const routes = [
   { path: '/dashboard', component: () => import('../pages/Dashboard.vue'), meta: { requiresAuth: true, titleKey: 'pages.dashboard' } },
   { path: '/documents', component: () => import('../pages/Documents.vue'), meta: { requiresAuth: true, titleKey: 'pages.documents' } },
   { path: '/applications', component: () => import('../pages/Applications.vue'), meta: { requiresAuth: true, titleKey: 'pages.applications' } },
-  { path: '/timeline', component: () => import('../pages/Timeline.vue'), meta: { requiresAuth: true, titleKey: 'pages.timeline' } },
+  { path: '/timeline', redirect: { path: '/applications', query: { view: 'timeline' } } },
   { path: '/company-insights', component: () => import('../pages/CompanyInsights.vue'), meta: { requiresAuth: true, titleKey: 'pages.companyInsights' } },
   { path: '/new-application', component: () => import('../pages/NewApplication.vue'), meta: { requiresAuth: true, titleKey: 'pages.newApplication' } },
   { path: '/ats', component: () => import('../pages/ATSView.vue'), meta: { requiresAuth: true, titleKey: 'pages.ats' } },
   { path: '/settings', component: () => import('../pages/Settings.vue'), meta: { requiresAuth: true, titleKey: 'pages.settings' } },
   { path: '/subscription', component: () => import('../pages/SubscriptionView.vue'), meta: { requiresAuth: true, titleKey: 'pages.subscription' } },
   { path: '/subscription/success', component: () => import('../pages/SubscriptionSuccess.vue'), meta: { requiresAuth: true, titleKey: 'pages.subscriptionSuccess' } },
-  { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true, titleKey: 'pages.interviewPrep' } },
-  { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, titleKey: 'pages.mockInterview' } },
+  { path: '/applications/:id', component: () => import('../pages/ApplicationDetail.vue'), meta: { requiresAuth: true, titleKey: 'pages.applicationDetail', breadcrumbs: [{ path: '/applications', labelKey: 'pages.applications' }, { label: 'Details' }] } },
+  { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true, titleKey: 'pages.interviewPrep', breadcrumbs: [{ path: '/applications', labelKey: 'pages.applications' }, { label: 'Interview-Vorbereitung' }] } },
+  { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, titleKey: 'pages.mockInterview', breadcrumbs: [{ path: '/applications', labelKey: 'pages.applications' }, { label: 'Mock-Interview' }] } },
   { path: '/job-dashboard', component: () => import('../pages/JobDashboard.vue'), meta: { requiresAuth: true, titleKey: 'pages.jobDashboard' } },
 
   // Admin routes
   { path: '/admin', component: () => import('../pages/AdminDashboard.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.admin' } },
-  { path: '/admin/users', component: () => import('../pages/AdminUsers.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.adminUsers' } },
-  { path: '/admin/users/:id', component: () => import('../pages/AdminUserDetail.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.adminUserDetail' } },
+  { path: '/admin/users', component: () => import('../pages/AdminUsers.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.adminUsers', breadcrumbs: [{ path: '/admin', labelKey: 'pages.admin' }, { label: 'Benutzer' }] } },
+  { path: '/admin/users/:id', component: () => import('../pages/AdminUserDetail.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.adminUserDetail', breadcrumbs: [{ path: '/admin', labelKey: 'pages.admin' }, { path: '/admin/users', label: 'Benutzer' }, { label: 'Details' }] } },
 
   // Catch-all route for 404 - must be last
   { path: '/:pathMatch(.*)*', component: () => import('../pages/NotFound.vue'), meta: { titleKey: 'pages.notFound' } }
