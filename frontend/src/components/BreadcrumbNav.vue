@@ -26,22 +26,23 @@ import { useI18n } from 'vue-i18n'
 const route = useRoute()
 const { t } = useI18n()
 
+function resolveBreadcrumbLabel(bc) {
+  if (typeof bc.label === 'function') return bc.label(route)
+  if (bc.labelKey) return t(bc.labelKey)
+  return bc.label
+}
+
 const breadcrumbs = computed(() => {
-  const crumbs = []
+  const crumbs = [{ path: '/dashboard', label: 'Dashboard' }]
 
-  // Always start with Dashboard
-  crumbs.push({ path: '/dashboard', label: 'Dashboard' })
-
-  // Build crumbs from route meta
-  if (route.meta.breadcrumbs) {
-    route.meta.breadcrumbs.forEach(bc => {
+  if (route.meta?.breadcrumbs) {
+    for (const bc of route.meta.breadcrumbs) {
       crumbs.push({
         path: bc.path || route.path,
-        label: typeof bc.label === 'function' ? bc.label(route) : (bc.labelKey ? t(bc.labelKey) : bc.label)
+        label: resolveBreadcrumbLabel(bc)
       })
-    })
-  } else if (route.meta.titleKey && route.path !== '/dashboard') {
-    // Fallback: use titleKey for routes without explicit breadcrumbs
+    }
+  } else if (route.meta?.titleKey && route.path !== '/dashboard') {
     crumbs.push({
       path: route.path,
       label: t(route.meta.titleKey)

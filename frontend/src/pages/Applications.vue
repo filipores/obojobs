@@ -504,8 +504,7 @@ const switchToTimeline = async () => {
 
 const switchToListe = () => {
   activeTab.value = 'liste'
-  const query = { ...route.query }
-  delete query.view
+  const { view: _view, ...query } = route.query
   router.replace({ path: '/applications', query })
 }
 
@@ -575,7 +574,6 @@ const loadApplications = async (page = 1) => {
     currentPage.value = data.page || 1
     totalPages.value = data.pages || 1
     totalApplications.value = data.total || 0
-    loadError.value = false
   } catch (err) {
     console.error('Fehler beim Laden:', err)
     loadError.value = true

@@ -528,23 +528,19 @@ const skills = ref([])
 const skillsLoaded = ref(false)
 const interviewStats = ref(null)
 
-// Check if user needs to see the verification reminder
-const needsVerification = computed(() => {
-  if (!authStore.user) return false
-  return authStore.user.email_verified === false
-})
+const needsVerification = computed(() => authStore.user?.email_verified === false)
 
-const dismissVerificationBanner = () => {
+function dismissVerificationBanner() {
   verificationBannerDismissed.value = true
   localStorage.setItem('verificationBannerDismissed', 'true')
 }
 
-const getPlanLabel = () => {
+function getPlanLabel() {
   const plan = usage.value?.plan || 'free'
   return plan.charAt(0).toUpperCase() + plan.slice(1)
 }
 
-const getSubscriptionAriaLabel = () => {
+function getSubscriptionAriaLabel() {
   if (usage.value?.unlimited) {
     return `Diesen Monat: Unbegrenzte Bewerbungen im ${getPlanLabel()} Plan`
   }
@@ -552,10 +548,9 @@ const getSubscriptionAriaLabel = () => {
   return `Diesen Monat: ${remaining} Bewerbungen verbleibend im ${getPlanLabel()} Plan`
 }
 
-const loadStats = async () => {
+async function loadStats() {
   loadError.value = false
   try {
-    // Fetch fresh user data to get current email_verified status
     await authStore.fetchUser()
     const { data } = await api.silent.get('/stats')
     stats.value = data.stats
@@ -566,7 +561,7 @@ const loadStats = async () => {
   }
 }
 
-const loadSkills = async () => {
+async function loadSkills() {
   try {
     const { data } = await api.silent.get('/users/me/skills')
     skills.value = data.skills || []
@@ -577,7 +572,7 @@ const loadSkills = async () => {
   }
 }
 
-const loadInterviewStats = async () => {
+async function loadInterviewStats() {
   try {
     const { data } = await api.silent.get('/applications/interview-stats')
     if (data.success) {
@@ -588,45 +583,36 @@ const loadInterviewStats = async () => {
   }
 }
 
-// Get count of upcoming interviews
 const upcomingInterviewCount = computed(() => {
   return interviewStats.value?.upcoming_interviews?.length || 0
 })
 
-// Get the next upcoming interview
 const nextInterview = computed(() => {
-  const upcoming = interviewStats.value?.upcoming_interviews
-  return upcoming?.length > 0 ? upcoming[0] : null
+  return interviewStats.value?.upcoming_interviews?.[0] || null
 })
 
-// Format interview date for display in stat card
-const formatInterviewDate = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffDays = Math.ceil((date - now) / (1000 * 60 * 60 * 24))
+const MS_PER_DAY = 1000 * 60 * 60 * 24
 
-  // Format day/time
-  const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
-  const dayName = dayNames[date.getDay()]
-  const time = date.toLocaleTimeString(getFullLocale(), { hour: '2-digit', minute: '2-digit' })
-
-  if (diffDays === 0) {
-    return `Heute ${time}`
-  } else if (diffDays === 1) {
-    return `Morgen ${time}`
-  } else {
-    return `${dayName} ${time}`
-  }
+function daysFromNow(dateStr) {
+  return Math.ceil((new Date(dateStr) - new Date()) / MS_PER_DAY)
 }
 
-// Get relative time description (e.g., "in 2 Tagen")
-const getRelativeTime = (dateStr) => {
+function formatInterviewDate(dateStr) {
   if (!dateStr) return ''
   const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = date - now
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+  const diffDays = daysFromNow(dateStr)
+  const time = date.toLocaleTimeString(getFullLocale(), { hour: '2-digit', minute: '2-digit' })
+
+  if (diffDays === 0) return `Heute ${time}`
+  if (diffDays === 1) return `Morgen ${time}`
+
+  const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+  return `${dayNames[date.getDay()]} ${time}`
+}
+
+function getRelativeTime(dateStr) {
+  if (!dateStr) return ''
+  const diffDays = daysFromNow(dateStr)
 
   if (diffDays === 0) return 'heute'
   if (diffDays === 1) return 'morgen'
@@ -642,7 +628,7 @@ const completedSteps = computed(() =>
 )
 const showOnboarding = computed(() => skillsLoaded.value && completedSteps.value < 3)
 
-const retryLoadStats = () => {
+function retryLoadStats() {
   stats.value = null
   loadStats()
 }

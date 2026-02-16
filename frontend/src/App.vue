@@ -326,8 +326,7 @@ const isResizing = ref(false)
 const currentYear = computed(() => new Date().getFullYear())
 const hideAppFooter = computed(() => route.meta?.hideFooter === true)
 const showBreadcrumbs = computed(() => {
-  // Only show breadcrumbs on authenticated pages that benefit from them (not dashboard itself)
-  return route.path !== '/dashboard' && route.path !== '/' && route.meta.requiresAuth
+  return route.path !== '/dashboard' && route.path !== '/' && route.meta?.requiresAuth
 })
 
 const THEME_KEY = 'obojobs-theme'
@@ -373,9 +372,9 @@ const logout = async () => {
 }
 
 const getPlanLabel = () => {
-  const subscription = authStore.user?.subscription
-  if (!subscription) return 'Free'
-  return subscription.plan?.charAt(0).toUpperCase() + subscription.plan?.slice(1) || 'Free'
+  const plan = authStore.user?.subscription?.plan
+  if (!plan) return 'Free'
+  return plan.charAt(0).toUpperCase() + plan.slice(1)
 }
 
 // Mobile sidebar functions
@@ -402,7 +401,6 @@ const handleEscapeKey = (event) => {
   }
 }
 
-// Close sidebar on route change
 const handleRouteChange = () => {
   if (isSidebarOpen.value) {
     closeMobileSidebar()

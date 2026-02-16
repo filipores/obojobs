@@ -245,7 +245,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import api from '../api/client'
@@ -265,11 +265,11 @@ const loading = ref(true)
 const activeTab = ref('overview')
 const jobFitData = ref(null)
 
-const tabs = [
+const tabs = computed(() => [
   { id: 'overview', label: t('applicationDetail.tabOverview') },
   { id: 'ats', label: t('applicationDetail.tabATS') },
   { id: 'interview', label: t('applicationDetail.tabInterview') }
-]
+])
 
 // --- Data loading ---
 
@@ -321,8 +321,7 @@ const formatDateTime = (date) => {
 
 const getDomain = (url) => {
   try {
-    const domain = new URL(url).hostname
-    return domain.replace('www.', '')
+    return new URL(url).hostname.replace('www.', '')
   } catch {
     return url
   }
@@ -333,6 +332,17 @@ const getFitCategory = (score) => {
   if (score >= 60) return 'fit-good'
   if (score >= 40) return 'fit-medium'
   return 'fit-low'
+}
+
+function triggerBlobDownload(blob, filename) {
+  const url = window.URL.createObjectURL(blob)
+  const link = document.createElement('a')
+  link.href = url
+  link.download = filename
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+  window.URL.revokeObjectURL(url)
 }
 
 // --- Actions ---
@@ -369,17 +379,10 @@ const downloadPDF = async () => {
     const response = await api.get(`/applications/${application.value.id}/pdf`, {
       responseType: 'blob'
     })
-    const blob = new Blob([response.data], { type: 'application/pdf' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
     const disposition = response.headers['content-disposition']
     const match = disposition?.match(/filename\*?=(?:UTF-8''|"?)([^";]+)/)
-    link.download = match ? decodeURIComponent(match[1]) : `Anschreiben_${application.value.id}.pdf`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
+    const filename = match ? decodeURIComponent(match[1]) : `Anschreiben_${application.value.id}.pdf`
+    triggerBlobDownload(new Blob([response.data], { type: 'application/pdf' }), filename)
   } catch {
     if (window.$toast) {
       window.$toast(t('applications.pdfDownloadError'), 'error')
@@ -392,17 +395,8 @@ const downloadEmailDraft = async () => {
     const response = await api.get(`/applications/${application.value.id}/email-draft`, {
       responseType: 'blob'
     })
-    const blob = new Blob([response.data], { type: 'message/rfc822' })
-    const url = window.URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    link.href = url
     const firma = application.value.firma || 'Bewerbung'
-    link.download = `Bewerbung_${firma}.eml`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-    window.URL.revokeObjectURL(url)
-
+    triggerBlobDownload(new Blob([response.data], { type: 'message/rfc822' }), `Bewerbung_${firma}.eml`)
     if (window.$toast) {
       window.$toast(t('applications.emlDownloaded'), 'success', 6000)
     }
