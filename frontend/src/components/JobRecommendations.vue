@@ -134,13 +134,14 @@
         </div>
 
         <div class="card-footer">
-          <router-link
-            :to="`/new-application?url=${encodeURIComponent(rec.job_url)}`"
+          <button
+            @click="applyToJob(rec)"
             class="zen-btn zen-btn-sm"
-            @click="markAsApplied(rec.id)"
+            :disabled="isGenerating(rec.id)"
           >
-            Bewerbung starten
-          </router-link>
+            <span v-if="isGenerating(rec.id)" class="btn-spinner"></span>
+            {{ isGenerating(rec.id) ? 'Wird erstellt...' : 'Bewerben' }}
+          </button>
         </div>
       </div>
 
@@ -159,96 +160,29 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import api from '../api/client'
-import { getFullLocale } from '../i18n'
+import { onMounted } from 'vue'
+import { useJobRecommendations } from '../composables/useJobRecommendations'
 
-const recommendations = ref([])
-const stats = ref(null)
-const loading = ref(true)
-const searching = ref(false)
-
-const loadRecommendations = async () => {
-  try {
-    loading.value = true
-    const { data } = await api.get('/recommendations')
-    recommendations.value = data.recommendations || []
-  } catch (error) {
-    console.error('Failed to load recommendations:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-const loadStats = async () => {
-  try {
-    const { data } = await api.get('/recommendations/stats')
-    stats.value = data
-  } catch (error) {
-    console.error('Failed to load stats:', error)
-  }
-}
-
-const searchJobs = async () => {
-  searching.value = true
-  try {
-    await api.post('/recommendations/search', {})
-    await loadRecommendations()
-    await loadStats()
-  } catch (error) {
-    console.error('Failed to search jobs:', error)
-  } finally {
-    searching.value = false
-  }
-}
-
-const dismissRecommendation = async (id) => {
-  try {
-    await api.post(`/recommendations/${id}/dismiss`)
-    recommendations.value = recommendations.value.filter(r => r.id !== id)
-    await loadStats()
-  } catch (error) {
-    console.error('Failed to dismiss:', error)
-  }
-}
-
-const markAsApplied = async (id) => {
-  try {
-    await api.post(`/recommendations/${id}/apply`)
-  } catch (error) {
-    console.error('Failed to mark as applied:', error)
-  }
-}
-
-const openJobUrl = (url) => {
-  window.open(url, '_blank')
-}
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString(getFullLocale(), {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
-
-const SOURCE_LABELS = {
-  indeed: 'Indeed',
-  stepstone: 'StepStone',
-  xing: 'XING',
-  arbeitsagentur: 'Arbeitsagentur',
-  generic: 'Web',
-}
-
-const getSourceLabel = (source) => SOURCE_LABELS[source] || source
+const {
+  suggestions: recommendations,
+  stats,
+  loading,
+  searching,
+  loadSuggestions,
+  loadStats,
+  searchJobs,
+  dismissSuggestion: dismissRecommendation,
+  isGenerating,
+  applyToJob,
+  formatDate,
+  getSourceLabel,
+  openJobUrl
+} = useJobRecommendations()
 
 onMounted(async () => {
-  await loadRecommendations()
+  await loadSuggestions()
   await loadStats()
 
-  // Auto-search if no recommendations exist yet
   if (recommendations.value.length === 0) {
     await searchJobs()
   }
@@ -542,6 +476,22 @@ onMounted(async () => {
 
 .card-footer {
   margin-top: var(--space-md);
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+  margin-right: var(--space-xs);
+  vertical-align: middle;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
 }
 
 .view-all-link {

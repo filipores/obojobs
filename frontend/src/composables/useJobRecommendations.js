@@ -1,5 +1,6 @@
 import { ref, computed } from 'vue'
 import api from '../api/client'
+import { getFullLocale } from '../i18n'
 
 const WORK_TYPE_MAP = {
   vollzeit: 'vz',
@@ -106,12 +107,80 @@ export function useJobRecommendations() {
     }
   }
 
-  const markAsApplied = async (id) => {
+  const markAsApplied = async (id, applicationId) => {
     try {
-      await api.post(`/recommendations/${id}/apply`)
+      const body = applicationId ? { application_id: applicationId } : {}
+      await api.post(`/recommendations/${id}/apply`, body)
     } catch (error) {
       console.error('Failed to mark as applied:', error)
     }
+  }
+
+  const generatingIds = ref(new Set())
+
+  const isGenerating = (id) => generatingIds.value.has(id)
+
+  const applyToJob = async (rec) => {
+    if (!rec.job_url || generatingIds.value.has(rec.id)) return
+
+    generatingIds.value = new Set([...generatingIds.value, rec.id])
+
+    if (window.$toast) {
+      window.$toast(`Bewerbung für ${rec.company_name || 'diese Stelle'} wird erstellt...`, 'info', 30000)
+    }
+
+    try {
+      const { data } = await api.post('/applications/generate-from-url', {
+        url: rec.job_url,
+        tone: 'modern'
+      })
+
+      if (data.success) {
+        await markAsApplied(rec.id, data.application?.id)
+        suggestions.value = suggestions.value.filter(r => r.id !== rec.id)
+        await loadStats()
+
+        if (window.$toast) {
+          window.$toast('Bewerbung erstellt! Unter "Bewerbungen" einsehen.', 'success', 5000)
+        }
+      } else {
+        if (window.$toast) {
+          window.$toast(data.error || 'Fehler bei der Generierung', 'error')
+        }
+      }
+    } catch (e) {
+      const errorMsg = e.response?.data?.error || 'Fehler bei der Generierung. Bitte versuche es erneut.'
+      if (window.$toast) {
+        window.$toast(errorMsg, 'error')
+      }
+    } finally {
+      const next = new Set(generatingIds.value)
+      next.delete(rec.id)
+      generatingIds.value = next
+    }
+  }
+
+  const SOURCE_LABELS = {
+    indeed: 'Indeed',
+    stepstone: 'StepStone',
+    xing: 'XING',
+    arbeitsagentur: 'Arbeitsagentur',
+    generic: 'Web',
+  }
+
+  const getSourceLabel = (source) => SOURCE_LABELS[source] || source
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return ''
+    return new Date(dateStr).toLocaleDateString(getFullLocale(), {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    })
+  }
+
+  const openJobUrl = (url) => {
+    window.open(url, '_blank')
   }
 
   const searching = ref(false)
@@ -148,7 +217,13 @@ export function useJobRecommendations() {
     loadStats,
     searchJobs,
     dismissSuggestion,
-    markAsApplied
+    markAsApplied,
+    generatingIds,
+    isGenerating,
+    applyToJob,
+    formatDate,
+    getSourceLabel,
+    openJobUrl
   }
 }
 

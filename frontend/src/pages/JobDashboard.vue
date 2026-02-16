@@ -144,14 +144,15 @@
             </div>
 
             <div class="card-actions">
-              <router-link
+              <button
                 v-if="rec.job_url"
-                :to="`/new-application?url=${encodeURIComponent(rec.job_url)}`"
+                @click="applyToJob(rec)"
                 class="zen-btn zen-btn-sm zen-btn-ai"
-                @click="markAsApplied(rec.id)"
+                :disabled="isGenerating(rec.id)"
               >
-                {{ $t('jobDashboard.apply') }}
-              </router-link>
+                <span v-if="isGenerating(rec.id)" class="btn-spinner"></span>
+                {{ isGenerating(rec.id) ? 'Wird erstellt...' : $t('jobDashboard.apply') }}
+              </button>
               <button
                 v-if="rec.job_url"
                 @click="openJobUrl(rec.job_url)"
@@ -212,7 +213,6 @@
 <script setup>
 import { onMounted } from 'vue'
 import { useJobRecommendations } from '../composables/useJobRecommendations'
-import { getFullLocale } from '../i18n'
 
 const {
   filteredSuggestions,
@@ -228,7 +228,11 @@ const {
   loadStats,
   searchJobs,
   dismissSuggestion,
-  markAsApplied
+  isGenerating,
+  applyToJob,
+  formatDate,
+  getSourceLabel,
+  openJobUrl
 } = useJobRecommendations()
 
 const refresh = async () => {
@@ -237,30 +241,6 @@ const refresh = async () => {
     workType: filters.value.workType,
   })
 }
-
-const openJobUrl = (url) => {
-  window.open(url, '_blank')
-}
-
-const formatDate = (dateStr) => {
-  if (!dateStr) return ''
-  const date = new Date(dateStr)
-  return date.toLocaleDateString(getFullLocale(), {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
-}
-
-const SOURCE_LABELS = {
-  indeed: 'Indeed',
-  stepstone: 'StepStone',
-  xing: 'XING',
-  arbeitsagentur: 'Arbeitsagentur',
-  generic: 'Web',
-}
-
-const getSourceLabel = (source) => SOURCE_LABELS[source] || source
 
 onMounted(async () => {
   await loadSuggestions()
@@ -498,6 +478,22 @@ onMounted(async () => {
 .action-dismiss:hover {
   border-color: var(--color-error);
   color: var(--color-error);
+}
+
+.btn-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  border-radius: 50%;
+  animation: btn-spin 0.6s linear infinite;
+  margin-right: var(--space-xs);
+  vertical-align: middle;
+}
+
+@keyframes btn-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ========================================
