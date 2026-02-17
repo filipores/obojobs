@@ -1,3 +1,16 @@
+# [1.60.0](https://github.com/filipores/obojobs/compare/v1.59.5...v1.60.0) (2026-02-17)
+
+
+### Bug Fixes
+
+* **recommendations:** deprecate bundesagentur detail endpoint, extract descriptions from search ([a5bd8ce](https://github.com/filipores/obojobs/commit/a5bd8ced39ef0200914fa6209486a326da9e34d9))
+* **recommendations:** use real fit scoring in scheduler, add user location preferences ([feb56b8](https://github.com/filipores/obojobs/commit/feb56b8ad486e86c704434a4e2aa63369949c48c))
+
+
+### Features
+
+* **profile:** add location and working time preferences to api and ui ([9892f1d](https://github.com/filipores/obojobs/commit/9892f1d98ecb62ac08ab936526e4c08e8e75a2fe))
+
 ## [1.59.5](https://github.com/filipores/obojobs/compare/v1.59.4...v1.59.5) (2026-02-16)
 
 
