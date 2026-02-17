@@ -253,98 +253,16 @@ class JobRecommender:
         }
 
     def _calculate_fit_from_requirements(self, user_skills: list[UserSkill], requirements: list[dict]) -> dict:
-        """Calculate fit score from requirements and user skills."""
-        must_haves = [r for r in requirements if r.get("requirement_type") == "must_have"]
-        nice_to_haves = [r for r in requirements if r.get("requirement_type") == "nice_to_have"]
-
-        matched = []
-        missing = []
-
-        for req in requirements:
-            req_text = req.get("requirement_text", "").lower()
-            found = False
-
-            for skill in user_skills:
-                skill_name = skill.skill_name.lower()
-                if skill_name in req_text or self._fuzzy_match(skill_name, req_text):
-                    matched.append(
-                        {
-                            "requirement": req.get("requirement_text"),
-                            "skill": skill.skill_name,
-                            "type": req.get("requirement_type"),
-                        }
-                    )
-                    found = True
-                    break
-
-            if not found:
-                missing.append(
-                    {
-                        "requirement": req.get("requirement_text"),
-                        "type": req.get("requirement_type"),
-                    }
-                )
-
-        must_have_matched = len([m for m in matched if m["type"] == "must_have"])
-        nice_to_have_matched = len([m for m in matched if m["type"] == "nice_to_have"])
-
-        total_must_have = len(must_haves)
-        total_nice_to_have = len(nice_to_haves)
-
-        must_have_pct = (must_have_matched / total_must_have * 100) if total_must_have else 100
-        nice_to_have_pct = (nice_to_have_matched / total_nice_to_have * 100) if total_nice_to_have else 100
-
-        # Weighted score: 70% must-have, 30% nice-to-have
-        if total_must_have == 0 and total_nice_to_have == 0:
-            score = 50
-        elif total_must_have == 0:
-            score = int(nice_to_have_pct)
-        elif total_nice_to_have == 0:
-            score = int(must_have_pct)
-        else:
-            score = int(must_have_pct * 0.7 + nice_to_have_pct * 0.3)
-
-        return {
-            "score": score,
-            "category": self.score_to_category(score),
-            "matched": matched,
-            "missing": missing,
-        }
+        """Calculate fit score from requirements and user skills via JobFitCalculator."""
+        return self.fit_calculator.calculate_fit_from_dicts(user_skills, requirements)
 
     def _fuzzy_match(self, skill: str, text: str) -> bool:
         """Simple fuzzy matching for skills using word overlap and known variations."""
         if any(len(word) >= 3 and word in text for word in skill.split()):
             return True
 
-        variations = {
-            "javascript": ["js", "node", "react", "vue", "angular", "next.js", "nuxt"],
-            "typescript": ["ts", "angular", "next.js", "nuxt"],
-            "python": ["py", "django", "flask", "pandas", "fastapi"],
-            "java": ["spring", "maven", "gradle", "jvm"],
-            "c#": ["csharp", ".net", "dotnet", "asp.net"],
-            "php": ["laravel", "symfony", "wordpress"],
-            "ruby": ["rails", "ruby on rails"],
-            "go": ["golang"],
-            "rust": ["cargo", "rustlang"],
-            "sql": ["mysql", "postgresql", "postgres", "oracle", "database", "mariadb"],
-            "css": ["sass", "scss", "less", "tailwind", "bootstrap"],
-            "react": ["next.js", "redux", "jsx"],
-            "vue": ["nuxt", "vuex", "pinia"],
-            "angular": ["rxjs", "ngrx"],
-            "node": ["express", "nestjs", "npm"],
-            "docker": ["kubernetes", "k8s", "container"],
-            "aws": ["amazon web services", "ec2", "s3", "lambda"],
-            "azure": ["microsoft cloud", "az-"],
-            "gcp": ["google cloud", "firebase"],
-            "cloud": ["aws", "azure", "gcp"],
-            "devops": ["ci/cd", "ci-cd", "pipeline", "jenkins", "github actions"],
-            "agile": ["scrum", "kanban", "sprint"],
-            "sap": ["abap", "hana", "s/4hana"],
-            "marketing": ["seo", "sem", "google ads", "social media"],
-            "projektmanagement": ["project management", "pmp", "prince2", "jira"],
-        }
-
-        for base_skill, alts in variations.items():
+        # Reuse the canonical skill variations from JobFitCalculator
+        for base_skill, alts in JobFitCalculator.SKILL_VARIATIONS.items():
             if base_skill in skill and any(alt in text for alt in alts):
                 return True
             if skill in alts and base_skill in text:

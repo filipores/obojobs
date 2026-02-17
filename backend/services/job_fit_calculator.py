@@ -23,8 +23,34 @@ class JobFitCalculator:
     SCORE_GUT = 60
     SCORE_MITTEL = 40
 
-    def __init__(self):
-        pass
+    # Known skill variations for fuzzy matching
+    SKILL_VARIATIONS = {
+        "javascript": ["js", "node", "react", "vue", "angular", "next.js", "nuxt"],
+        "typescript": ["ts", "angular", "next.js", "nuxt"],
+        "python": ["py", "django", "flask", "pandas", "fastapi"],
+        "java": ["spring", "maven", "gradle", "jvm"],
+        "c#": ["csharp", ".net", "dotnet", "asp.net"],
+        "php": ["laravel", "symfony", "wordpress"],
+        "ruby": ["rails", "ruby on rails"],
+        "go": ["golang"],
+        "rust": ["cargo", "rustlang"],
+        "sql": ["mysql", "postgresql", "postgres", "oracle", "database", "mariadb"],
+        "css": ["sass", "scss", "less", "tailwind", "bootstrap"],
+        "react": ["next.js", "redux", "jsx"],
+        "vue": ["nuxt", "vuex", "pinia"],
+        "angular": ["rxjs", "ngrx"],
+        "node": ["express", "nestjs", "npm"],
+        "docker": ["kubernetes", "k8s", "container"],
+        "aws": ["amazon web services", "ec2", "s3", "lambda"],
+        "azure": ["microsoft cloud", "az-"],
+        "gcp": ["google cloud", "firebase"],
+        "cloud": ["aws", "azure", "gcp"],
+        "devops": ["ci/cd", "ci-cd", "pipeline", "jenkins", "github actions"],
+        "agile": ["scrum", "kanban", "sprint"],
+        "sap": ["abap", "hana", "s/4hana"],
+        "marketing": ["seo", "sem", "google ads", "social media"],
+        "projektmanagement": ["project management", "pmp", "prince2", "jira"],
+    }
 
     def calculate_job_fit(self, user_id: int, application_id: int) -> JobFitResult:
         """
@@ -126,6 +152,116 @@ class JobFitCalculator:
             matched_nice_to_have=int(nice_to_have_matched),
         )
 
+    def calculate_fit_from_dicts(self, user_skills: list[UserSkill], requirements: list[dict]) -> dict:
+        """Calculate fit score from requirement dicts (from RequirementAnalyzer) and UserSkill objects.
+
+        Same matching logic as calculate_job_fit but works with dicts instead of DB models.
+        Returns dict with keys: score, category, matched, missing.
+        """
+        must_haves = [r for r in requirements if r.get("requirement_type") == "must_have"]
+        nice_to_haves = [r for r in requirements if r.get("requirement_type") == "nice_to_have"]
+
+        matched = []
+        missing = []
+
+        must_have_matched = 0
+        nice_to_have_matched = 0
+
+        for req in requirements:
+            req_text = req.get("requirement_text", "")
+            req_type = req.get("requirement_type", "nice_to_have")
+            req_category = req.get("skill_category")
+
+            match_result = self._match_requirement_from_text(req_text, req_type, req_category, user_skills)
+
+            if match_result["match_type"] == "full":
+                matched.append(
+                    {
+                        "requirement": req_text,
+                        "skill": match_result["skill_name"],
+                        "type": req_type,
+                    }
+                )
+                if req_type == "must_have":
+                    must_have_matched += 1
+                else:
+                    nice_to_have_matched += 1
+            elif match_result["match_type"] == "partial":
+                matched.append(
+                    {
+                        "requirement": req_text,
+                        "skill": match_result["skill_name"],
+                        "type": req_type,
+                        "partial": True,
+                    }
+                )
+                if req_type == "must_have":
+                    must_have_matched += 0.5
+                else:
+                    nice_to_have_matched += 0.5
+            else:
+                missing.append(
+                    {
+                        "requirement": req_text,
+                        "type": req_type,
+                    }
+                )
+
+        total_must_have = len(must_haves)
+        total_nice_to_have = len(nice_to_haves)
+
+        must_have_pct = self._calculate_percentage(must_have_matched, total_must_have)
+        nice_to_have_pct = self._calculate_percentage(nice_to_have_matched, total_nice_to_have)
+
+        if total_must_have == 0 and total_nice_to_have == 0:
+            score = 50
+        elif total_must_have == 0:
+            score = nice_to_have_pct
+        elif total_nice_to_have == 0:
+            score = must_have_pct
+        else:
+            score = int(must_have_pct * self.MUST_HAVE_WEIGHT + nice_to_have_pct * self.NICE_TO_HAVE_WEIGHT)
+
+        return {
+            "score": score,
+            "category": self._get_score_category(score),
+            "matched": matched,
+            "missing": missing,
+        }
+
+    def _match_requirement_from_text(
+        self, req_text: str, req_type: str, req_category: str | None, user_skills: list[UserSkill]
+    ) -> dict:
+        """Match a requirement (raw text) against user skills.
+
+        Returns dict with match_type (full/partial/missing) and skill_name.
+        """
+        req_text_lower = req_text.lower()
+        req_years = self._extract_years(req_text_lower)
+
+        best_match = None
+        best_match_score = 0
+
+        for skill in user_skills:
+            skill_name_lower = skill.skill_name.lower()
+
+            match_score = self._calculate_match_score(
+                req_text_lower, skill_name_lower, req_category, skill.skill_category
+            )
+
+            if match_score > best_match_score:
+                best_match_score = match_score
+                best_match = skill
+
+        if best_match and best_match_score >= 0.5:
+            if req_years is not None and best_match.experience_years is not None:
+                if best_match.experience_years >= req_years:
+                    return {"match_type": "full", "skill_name": best_match.skill_name}
+                return {"match_type": "partial", "skill_name": best_match.skill_name}
+            return {"match_type": "full", "skill_name": best_match.skill_name}
+
+        return {"match_type": "missing", "skill_name": ""}
+
     def _match_requirement(self, requirement: JobRequirement, user_skills: list[UserSkill]) -> SkillMatch:
         """
         Try to match a job requirement against user skills.
@@ -140,8 +276,6 @@ class JobFitCalculator:
 
         for skill in user_skills:
             skill_name_lower = skill.skill_name.lower()
-
-            # Check if skill matches requirement
             match_score = self._calculate_match_score(
                 req_text, skill_name_lower, requirement.skill_category, skill.skill_category
             )
@@ -151,9 +285,7 @@ class JobFitCalculator:
                 best_match = skill
 
         if best_match and best_match_score >= 0.5:
-            # Found a matching skill
             if req_years is not None and best_match.experience_years is not None:
-                # Check experience years
                 if best_match.experience_years >= req_years:
                     return SkillMatch(
                         requirement_text=requirement.requirement_text,
@@ -175,7 +307,6 @@ class JobFitCalculator:
                     match_type="partial",
                     match_reason=f"Skill '{best_match.skill_name}' vorhanden, aber nur {best_match.experience_years} statt {req_years} Jahre Erfahrung",
                 )
-            # No experience years comparison needed
             return SkillMatch(
                 requirement_text=requirement.requirement_text,
                 requirement_type=requirement.requirement_type,
@@ -187,7 +318,6 @@ class JobFitCalculator:
                 match_reason=f"Skill '{best_match.skill_name}' erfüllt Anforderung",
             )
 
-        # No match found
         return SkillMatch(
             requirement_text=requirement.requirement_text,
             requirement_type=requirement.requirement_type,
@@ -215,21 +345,34 @@ class JobFitCalculator:
         elif req_text in skill_name:
             score = 0.9
         else:
-            # Check for partial word matches
-            skill_words = set(skill_name.split())
-            req_words = set(req_text.split())
-            common_words = skill_words & req_words
-            if common_words:
-                # Filter out common stop words
-                meaningful_common = [w for w in common_words if len(w) > 2]
-                if meaningful_common:
-                    score = len(meaningful_common) / max(len(skill_words), 1) * 0.7
+            # Check for known skill variations (e.g. "python" matches "django")
+            if self._check_variation_match(skill_name, req_text):
+                score = 0.8
+            else:
+                # Check for partial word matches
+                skill_words = set(skill_name.split())
+                req_words = set(req_text.split())
+                common_words = skill_words & req_words
+                if common_words:
+                    # Filter out common stop words
+                    meaningful_common = [w for w in common_words if len(w) > 2]
+                    if meaningful_common:
+                        score = len(meaningful_common) / max(len(skill_words), 1) * 0.7
 
         # Boost score if categories match
         if req_category and skill_category and req_category == skill_category:
             score = min(1.0, score + 0.2)
 
         return score
+
+    def _check_variation_match(self, skill_name: str, req_text: str) -> bool:
+        """Check if a skill matches requirement text via known variations."""
+        for base_skill, alts in self.SKILL_VARIATIONS.items():
+            if base_skill in skill_name and any(alt in req_text for alt in alts):
+                return True
+            if skill_name in alts and base_skill in req_text:
+                return True
+        return False
 
     def _extract_years(self, text: str) -> float | None:
         """Extract years of experience from requirement text."""
