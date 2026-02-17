@@ -41,31 +41,33 @@ def auto_search_jobs(app: Flask) -> None:
             recommender = JobRecommender()
 
             users_with_skills = (
-                db.session.query(User.id)
+                db.session.query(User)
                 .join(UserSkill, User.id == UserSkill.user_id)
                 .filter(User.is_active == True)  # noqa: E712
                 .distinct()
                 .all()
             )
 
-            for (user_id,) in users_with_skills:
+            for user in users_with_skills:
                 try:
-                    jobs = recommender.find_jobs_for_user(user_id=user_id, max_results=5)
-                    for job_data in jobs:
-                        fit_score = job_data.get("fit_score", 50)
-                        fit_category = JobRecommender.score_to_category(fit_score)
-
-                        if fit_score >= JobRecommender.MIN_FIT_SCORE and (
-                            not job_data.get("url") or not recommender.check_duplicate(user_id, job_data["url"])
-                        ):
+                    result = recommender.search_and_score_jobs(
+                        user_id=user.id,
+                        location=user.preferred_location or "",
+                        working_time=user.preferred_working_time or "",
+                        max_results=5,
+                    )
+                    # search_and_score_jobs already filters duplicates and sets fit_score/fit_category
+                    for job_data in result.get("results", []):
+                        fit_score = job_data.get("fit_score", 0)
+                        if fit_score >= JobRecommender.MIN_FIT_SCORE:
                             recommender.create_recommendation(
-                                user_id=user_id,
+                                user_id=user.id,
                                 job_data=job_data,
                                 fit_score=fit_score,
-                                fit_category=fit_category,
+                                fit_category=job_data.get("fit_category", "niedrig"),
                             )
                 except Exception as e:
-                    logger.error(f"Error searching jobs for user {user_id}: {e}")
+                    logger.error(f"Error searching jobs for user {user.id}: {e}")
                     continue
 
             logger.info(f"Auto-search completed for {len(users_with_skills)} users")

@@ -46,6 +46,12 @@ class User(db.Model):  # type: ignore[name-defined]
     # Weekly goal tracking
     weekly_goal = db.Column(db.Integer, default=5, nullable=False)
 
+    # Job search preferences (used by auto-recommendation scheduler)
+    preferred_location = db.Column(db.String(255), nullable=True)  # e.g. "Berlin", "München"
+    preferred_working_time = db.Column(
+        db.String(10), nullable=True
+    )  # 'vz' (Vollzeit), 'tz' (Teilzeit), 'ho' (Homeoffice)
+
     # Personal contact details (for templates/PDFs)
     phone = db.Column(db.String(50), nullable=True)
     address = db.Column(db.String(255), nullable=True)
@@ -92,4 +98,6 @@ class User(db.Model):  # type: ignore[name-defined]
             "city": self.city,
             "postal_code": self.postal_code,
             "website": self.website,
+            "preferred_location": self.preferred_location,
+            "preferred_working_time": self.preferred_working_time,
         }
