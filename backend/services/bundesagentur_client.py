@@ -6,6 +6,7 @@ API docs: https://jobsuche.api.bund.dev/
 """
 
 import logging
+import warnings
 from dataclasses import dataclass, field
 
 import requests
@@ -46,7 +47,6 @@ class BundesagenturClient:
 
     BASE_URL = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service/pc/v4/jobs"
     API_KEY = "jobboerse-jobsuche"
-    DETAIL_DELAY = 0.5  # seconds between detail requests
 
     def __init__(self):
         self.session = requests.Session()
@@ -101,29 +101,18 @@ class BundesagenturClient:
         return jobs, total
 
     def get_job_details(self, refnr: str) -> BundesagenturJob | None:
-        """Fetch full job details including description, or None if not found.
-
-        NOTE: This endpoint currently returns 403 (deprecated by Bundesagentur).
-        Kept for backwards compatibility; callers should handle None gracefully.
-        """
-        url = f"{self.BASE_URL}/{refnr}"
-
-        try:
-            response = self.session.get(url, timeout=15)
-            response.raise_for_status()
-            data = response.json()
-        except requests.RequestException as e:
-            logger.error("Bundesagentur detail API error for %s: %s", refnr, e)
-            return None
-        except ValueError:
-            return None
-
-        description_parts = [data[key] for key in ("stellenbeschreibung", "arbeitgeberdarstellung") if data.get(key)]
-
-        job = self._parse_job(data)
-        job.refnr = data.get("refnr", refnr)
-        job.beschreibung = "\n\n".join(description_parts)
-        return job
+        """DEPRECATED: Detail endpoint returns 403. Use search results instead."""
+        warnings.warn(
+            "BundesagenturClient.get_job_details() is deprecated: "
+            "the detail API endpoint returns 403. Use search results instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        logger.warning(
+            "get_job_details(%s) skipped: detail endpoint is deprecated (403)",
+            refnr,
+        )
+        return None
 
     def _job_url(self, refnr: str) -> str:
         return f"https://www.arbeitsagentur.de/jobsuche/jobdetail/{refnr}"
@@ -131,6 +120,13 @@ class BundesagenturClient:
     def _parse_job(self, item: dict) -> BundesagenturJob:
         arbeitsort = item.get("arbeitsort", {})
         refnr = item.get("refnr", "")
+
+        # Beschreibung aus verfuegbaren Suchfeldern zusammensetzen
+        description_parts = [
+            item[key] for key in ("stellenbeschreibung", "berufsbeschreibung", "kurzbeschreibung") if item.get(key)
+        ]
+        beschreibung = "\n\n".join(description_parts)
+
         return BundesagenturJob(
             refnr=refnr,
             titel=item.get("titel", ""),
@@ -142,6 +138,7 @@ class BundesagenturClient:
             veroeffentlicht_am=item.get("aktuelleVeroeffentlichungsdatum", ""),
             befristung=item.get("befristung", ""),
             arbeitszeit=item.get("arbeitszeit", ""),
+            beschreibung=beschreibung,
             url=self._job_url(refnr),
         )
 

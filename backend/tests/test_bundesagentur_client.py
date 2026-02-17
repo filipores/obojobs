@@ -1,5 +1,6 @@
 """Tests for the Bundesagentur API client."""
 
+import warnings
 from unittest.mock import MagicMock, patch
 
 from services.bundesagentur_client import BundesagenturClient, BundesagenturJob
@@ -87,37 +88,49 @@ class TestBundesagenturClient:
         assert total == 0
         assert len(jobs) == 0
 
+    def test_get_job_details_deprecated_returns_none(self):
+        with warnings.catch_warnings(record=True) as w:
+            warnings.simplefilter("always")
+            job = self.client.get_job_details("10000-123")
+
+        assert job is None
+        assert len(w) == 1
+        assert issubclass(w[0].category, DeprecationWarning)
+        assert "deprecated" in str(w[0].message).lower()
+
     @patch("services.bundesagentur_client.requests.Session.get")
-    def test_get_job_details_success(self, mock_get):
+    def test_get_job_details_does_not_make_http_call(self, mock_get):
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            self.client.get_job_details("10000-123")
+
+        mock_get.assert_not_called()
+
+    @patch("services.bundesagentur_client.requests.Session.get")
+    def test_search_jobs_extracts_description(self, mock_get):
         mock_response = MagicMock()
         mock_response.status_code = 200
         mock_response.json.return_value = {
-            "refnr": "10000-123",
-            "titel": "Python Developer",
-            "arbeitgeber": "Tech GmbH",
-            "arbeitsort": {"ort": "Berlin"},
-            "stellenbeschreibung": "Full job description here",
-            "arbeitgeberdarstellung": "Company description",
+            "maxErgebnisse": 1,
+            "stellenangebote": [
+                {
+                    "refnr": "10000-999",
+                    "titel": "DevOps Engineer",
+                    "arbeitgeber": "Cloud GmbH",
+                    "arbeitsort": {"ort": "München"},
+                    "stellenbeschreibung": "Manage CI/CD pipelines",
+                    "berufsbeschreibung": "DevOps role description",
+                }
+            ],
         }
         mock_response.raise_for_status = MagicMock()
         mock_get.return_value = mock_response
 
-        job = self.client.get_job_details("10000-123")
+        jobs, _ = self.client.search_jobs("DevOps")
 
-        assert job is not None
-        assert job.titel == "Python Developer"
-        assert "Full job description here" in job.beschreibung
-        assert "Company description" in job.beschreibung
-
-    @patch("services.bundesagentur_client.requests.Session.get")
-    def test_get_job_details_not_found(self, mock_get):
-        import requests as req
-
-        mock_get.side_effect = req.RequestException("404")
-
-        job = self.client.get_job_details("nonexistent")
-
-        assert job is None
+        assert len(jobs) == 1
+        assert "Manage CI/CD pipelines" in jobs[0].beschreibung
+        assert "DevOps role description" in jobs[0].beschreibung
 
     def test_parse_arbeitsort_full(self):
         result = self.client._parse_arbeitsort({"ort": "Berlin", "region": "Berlin"})
