@@ -1805,6 +1805,56 @@ class TestUpdateProfile:
         data = response.get_json()
         assert "100 Zeichen" in data["error"]
 
+    def test_update_profile_preferred_location(self, client, auth_headers):
+        """Test setting and clearing preferred_location."""
+        # Set location
+        response = client.put(
+            "/api/auth/profile",
+            json={"preferred_location": "Berlin, München"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+        assert response.get_json()["user"]["preferred_location"] == "Berlin, München"
+
+        # Clear location
+        response = client.put(
+            "/api/auth/profile",
+            json={"preferred_location": ""},
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+        assert response.get_json()["user"]["preferred_location"] is None
+
+    def test_update_profile_preferred_working_time_validation(self, client, auth_headers):
+        """Test that preferred_working_time only accepts vz/tz/ho or empty."""
+        # Valid values
+        for value in ["vz", "tz", "ho"]:
+            response = client.put(
+                "/api/auth/profile",
+                json={"preferred_working_time": value},
+                headers=auth_headers,
+            )
+            assert response.status_code == 200
+            assert response.get_json()["user"]["preferred_working_time"] == value
+
+        # Clear value
+        response = client.put(
+            "/api/auth/profile",
+            json={"preferred_working_time": ""},
+            headers=auth_headers,
+        )
+        assert response.status_code == 200
+        assert response.get_json()["user"]["preferred_working_time"] is None
+
+        # Invalid value
+        response = client.put(
+            "/api/auth/profile",
+            json={"preferred_working_time": "invalid"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+        assert "vz" in response.get_json()["error"]
+
     def test_update_profile_requires_authentication(self, client):
         """Test that profile update requires authentication."""
         response = client.put(

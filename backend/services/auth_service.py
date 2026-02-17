@@ -12,6 +12,9 @@ logger = logging.getLogger(__name__)
 MAX_FAILED_ATTEMPTS = 5
 LOCKOUT_DURATION_MINUTES = 15
 
+# Valid working time preference values
+VALID_WORKING_TIMES = ("vz", "tz", "ho")
+
 
 class AuthService:
     """Authentication service for user management"""
@@ -277,22 +280,27 @@ class AuthService:
             raise ValueError("Benutzer nicht gefunden")
 
         profile_fields = [
-            ("full_name", "full_name", 255, "Name"),
-            ("display_name", "display_name", 100, "Anzeigename"),
-            ("phone", "phone", 50, "Telefonnummer"),
-            ("address", "address", 255, "Adresse"),
-            ("city", "city", 100, "Stadt"),
-            ("postal_code", "postal_code", 20, "PLZ"),
-            ("website", "website", 255, "Website"),
+            ("full_name", 255, "Name"),
+            ("display_name", 100, "Anzeigename"),
+            ("phone", 50, "Telefonnummer"),
+            ("address", 255, "Adresse"),
+            ("city", 100, "Stadt"),
+            ("postal_code", 20, "PLZ"),
+            ("website", 255, "Website"),
+            ("preferred_location", 255, "Bevorzugter Standort"),
+            ("preferred_working_time", 10, "Bevorzugte Arbeitszeit"),
         ]
 
-        for json_key, attr, max_length, label in profile_fields:
-            if json_key not in data:
+        for field, max_length, label in profile_fields:
+            if field not in data:
                 continue
-            value = data[json_key]
+            value = data[field]
             if value and len(value) > max_length:
                 raise ValueError(f"{label} darf maximal {max_length} Zeichen haben")
-            setattr(user, attr, value.strip() if value else None)
+            setattr(user, field, value.strip() if value else None)
+
+        if user.preferred_working_time and user.preferred_working_time not in VALID_WORKING_TIMES:
+            raise ValueError("Bevorzugte Arbeitszeit muss 'vz', 'tz' oder 'ho' sein")
 
         db.session.commit()
 

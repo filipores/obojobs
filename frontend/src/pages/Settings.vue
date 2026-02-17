@@ -180,6 +180,36 @@
                   <p class="form-hint">Persönliche Website oder Portfolio</p>
                 </div>
 
+                <div class="form-divider"></div>
+                <p class="form-section-label">Jobsuche-Präferenzen</p>
+
+                <div class="form-group">
+                  <label for="preferred-location">Bevorzugter Standort</label>
+                  <input
+                    id="preferred-location"
+                    v-model="profileForm.preferredLocation"
+                    type="text"
+                    class="zen-input"
+                    placeholder="z.B. Berlin, München"
+                    maxlength="255"
+                  />
+                </div>
+
+                <div class="form-group">
+                  <label for="preferred-working-time">Bevorzugte Arbeitszeit</label>
+                  <select
+                    id="preferred-working-time"
+                    v-model="profileForm.preferredWorkingTime"
+                    class="zen-input"
+                  >
+                    <option value="">Keine Präferenz</option>
+                    <option value="vz">Vollzeit</option>
+                    <option value="tz">Teilzeit</option>
+                    <option value="ho">Remote</option>
+                  </select>
+                  <p class="form-hint">Wird für automatische Jobvorschläge alle 6 Stunden verwendet</p>
+                </div>
+
                 <div v-if="profileError" class="profile-error-message">
                   {{ profileError }}
                 </div>
@@ -603,7 +633,9 @@ const profileFieldMap = {
   address: 'address',
   city: 'city',
   postalCode: 'postal_code',
-  website: 'website'
+  website: 'website',
+  preferredLocation: 'preferred_location',
+  preferredWorkingTime: 'preferred_working_time'
 }
 const profileFieldKeys = Object.keys(profileFieldMap)
 
