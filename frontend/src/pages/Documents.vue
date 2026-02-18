@@ -280,6 +280,7 @@ import api from '../api/client'
 import SkillsOverview from '../components/SkillsOverview.vue'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
+import { authStore } from '../stores/auth'
 
 const route = useRoute()
 const skillsSection = ref(null)
@@ -380,6 +381,11 @@ const upload = async (docType) => {
 
     await loadDocuments()
     skillsRefreshKey.value++
+
+    // Refresh user data if CV upload auto-populated profile fields
+    if (data.profile_updated) {
+      await authStore.fetchUser()
+    }
 
     // Trigger auto-search for matching jobs after CV upload with skills
     if (docType === 'lebenslauf' && data.skills_extracted > 0) {
