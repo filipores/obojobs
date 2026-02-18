@@ -382,6 +382,7 @@ def change_plan() -> tuple[Response, int]:
             new_price_id=new_price_id,
             proration_behavior=proration_behavior,
         )
+        subscription_data_service.update_subscription_plan(subscription, new_plan)
 
         logger.info(
             f"User {user.id} changed plan from {current_plan} to {new_plan} "

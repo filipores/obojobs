@@ -26,3 +26,11 @@ def mark_subscription_canceled(subscription: Subscription) -> None:
     subscription.cancel_at_period_end = True
     subscription.canceled_at = datetime.utcnow()
     db.session.commit()
+
+
+def update_subscription_plan(subscription: Subscription, plan_name: str) -> None:
+    """Update a subscription's plan (optimistic update before webhook confirms)."""
+    from models.subscription import SubscriptionPlan
+
+    subscription.plan = SubscriptionPlan[plan_name]
+    db.session.commit()
