@@ -293,13 +293,67 @@ class ArbeitsagenturParser(JobBoardParser):
                 ["@arbeitsagentur.de", "support@", "info@arbeitsagentur"],
             )
 
-        # Fallback: if description is empty, look for Kooperationspartner
-        # external link that may contain the full job posting
-        if not result.get("description"):
-            koop_link = soup.find(
-                "a", href=re.compile(r"https?://", re.I), string=re.compile(r"Kooperationspartner", re.I)
-            )
-            if koop_link:
-                result["kooperationspartner_url"] = koop_link["href"]
+        # Look for external links to job boards (Kooperationspartner, "Zum Stellenangebot", etc.)
+        # These often contain the full job posting with contact person details
+        external_url = self._extract_external_url(soup)
+        if external_url:
+            result["external_url"] = external_url
 
         return result
+
+    @staticmethod
+    def _extract_external_url(soup: BeautifulSoup) -> str | None:
+        """Extract external job board URL from Arbeitsagentur page.
+
+        Arbeitsagentur often links to the original posting on external job boards
+        (Xing, StepStone, Softgarden, persy.jobs, etc.) where contact person details
+        are available.
+        """
+        known_job_boards = [
+            "xing.com",
+            "stepstone.de",
+            "softgarden.io",
+            "persy.jobs",
+            "personio.de",
+            "indeed.com",
+            "linkedin.com",
+            "jobs.de",
+            "monster.de",
+            "karriere.at",
+            "stellenanzeigen.de",
+            "jobware.de",
+            "join.com",
+            "recruitee.com",
+            "greenhouse.io",
+            "lever.co",
+            "workday.com",
+        ]
+
+        # 1. Kooperationspartner link
+        koop_link = soup.find("a", href=re.compile(r"https?://", re.I), string=re.compile(r"Kooperationspartner", re.I))
+        if koop_link:
+            return koop_link["href"]
+
+        # 2. "Zum Stellenangebot" / "Zur Bewerbung" links
+        for pattern in [r"Zum\s+Stellenangebot", r"Zur\s+Bewerbung", r"Jetzt\s+bewerben"]:
+            link = soup.find("a", href=re.compile(r"https?://", re.I), string=re.compile(pattern, re.I))
+            if link:
+                href = link["href"]
+                # Only follow if it points to a known job board
+                parsed = urlparse(href)
+                hostname = parsed.netloc.lower().replace("www.", "")
+                if any(board in hostname for board in known_job_boards):
+                    return href
+
+        # 3. Any external link to a known job board in the page
+        for link in soup.find_all("a", href=re.compile(r"https?://", re.I)):
+            href = link["href"]
+            parsed = urlparse(href)
+            hostname = parsed.netloc.lower().replace("www.", "")
+            # Skip arbeitsagentur-internal links
+            if "arbeitsagentur.de" in hostname:
+                continue
+            if any(board in hostname for board in known_job_boards):
+                return href
+
+        return None

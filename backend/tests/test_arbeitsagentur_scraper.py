@@ -350,8 +350,8 @@ class TestArbeitsagenturHTMLParsing:
 
         assert result["company"] == "TechFirma Berlin GmbH"
 
-    def test_extracts_kooperationspartner_url_when_no_description(self, parser):
-        """Should extract Kooperationspartner link as fallback when description is empty."""
+    def test_extracts_external_url_from_kooperationspartner(self, parser):
+        """Should extract Kooperationspartner link as external_url."""
         html = """
         <html>
         <body>
@@ -363,23 +363,54 @@ class TestArbeitsagenturHTMLParsing:
         soup = BeautifulSoup(html, "html.parser")
         result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
 
-        assert result.get("kooperationspartner_url") == "https://external-portal.de/job/123"
+        assert result.get("external_url") == "https://external-portal.de/job/123"
 
-    def test_no_kooperationspartner_when_description_exists(self, parser):
-        """Should not set kooperationspartner_url when description is present."""
+    def test_extracts_external_url_from_zum_stellenangebot(self, parser):
+        """Should extract 'Zum Stellenangebot' link to known job board."""
         html = """
         <html>
         <body>
             <h1>Developer</h1>
-            <div class="stellenbeschreibung">Full job description here.</div>
-            <a href="https://external-portal.de/job/123">Kooperationspartner</a>
+            <div class="stellenbeschreibung">Job description here.</div>
+            <a href="https://www.xing.com/jobs/12345">Zum Stellenangebot</a>
         </body>
         </html>
         """
         soup = BeautifulSoup(html, "html.parser")
         result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
 
-        assert result.get("kooperationspartner_url") is None
+        assert result.get("external_url") == "https://www.xing.com/jobs/12345"
+
+    def test_extracts_external_url_from_known_jobboard_link(self, parser):
+        """Should extract link to known job board even without specific link text."""
+        html = """
+        <html>
+        <body>
+            <h1>Developer</h1>
+            <div class="stellenbeschreibung">Job description here.</div>
+            <a href="https://jobs.softgarden.io/company/abc/job/123">Bewerben</a>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
+
+        assert result.get("external_url") == "https://jobs.softgarden.io/company/abc/job/123"
+
+    def test_no_external_url_for_unknown_domains(self, parser):
+        """Should not extract external_url for unknown domains."""
+        html = """
+        <html>
+        <body>
+            <h1>Developer</h1>
+            <a href="https://random-website.de/page">Some link</a>
+        </body>
+        </html>
+        """
+        soup = BeautifulSoup(html, "html.parser")
+        result = parser.parse(soup, "https://www.arbeitsagentur.de/jobsuche/jobdetail/12345")
+
+        assert result.get("external_url") is None
 
 
 class TestArbeitsagenturHeaders:

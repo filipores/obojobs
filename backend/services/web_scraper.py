@@ -253,7 +253,7 @@ class WebScraper:
         company = domain.split(".")[0]
         return company.capitalize()
 
-    def fetch_structured_job_posting(self, url: str) -> dict[str, Any]:
+    def fetch_structured_job_posting(self, url: str, _follow_external: bool = True) -> dict[str, Any]:
         """
         Fetched und parst eine Stellenanzeige mit job-board-spezifischem Parser.
 
@@ -347,6 +347,8 @@ class WebScraper:
                 "description": None,
                 "requirements": None,
                 "contact_email": None,
+                "contact_person": None,
+                "contact_phone": None,
                 "posted_date": None,
                 "application_deadline": None,
                 "employment_type": None,
@@ -367,6 +369,8 @@ class WebScraper:
                     "description",
                     "requirements",
                     "contact_email",
+                    "contact_person",
+                    "contact_phone",
                     "posted_date",
                     "application_deadline",
                     "employment_type",
@@ -378,6 +382,29 @@ class WebScraper:
             # Use email from links if not found by parser
             if not result["contact_email"] and email_links:
                 result["contact_email"] = email_links[0]["email"]
+
+            # Enrichment: follow external URLs from Arbeitsagentur to get missing data
+            external_url = structured_data.get("external_url") if structured_data else None
+            if (
+                _follow_external
+                and result.get("source") == "arbeitsagentur"
+                and not result.get("contact_person")
+                and external_url
+            ):
+                try:
+                    logger.info("Following external URL from Arbeitsagentur: %s", external_url)
+                    original_timeout = self.timeout
+                    self.timeout = 5
+                    try:
+                        external_data = self.fetch_structured_job_posting(external_url, _follow_external=False)
+                    finally:
+                        self.timeout = original_timeout
+                    # Merge missing fields from external source
+                    for key in ["contact_person", "contact_email", "contact_phone", "description"]:
+                        if not result.get(key) and external_data.get(key):
+                            result[key] = external_data[key]
+                except Exception as e:
+                    logger.warning("Failed to fetch external URL %s: %s", external_url, e)
 
             return result
 
