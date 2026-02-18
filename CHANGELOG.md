@@ -1,3 +1,10 @@
+## [1.62.1](https://github.com/filipores/obojobs/compare/v1.62.0...v1.62.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* **documents:** refresh user data after cv upload populates profile ([4b07861](https://github.com/filipores/obojobs/commit/4b078613d517a865617dc2912544bda0ab7bd55c))
+
 # [1.62.0](https://github.com/filipores/obojobs/compare/v1.61.1...v1.62.0) (2026-02-18)
 
 
