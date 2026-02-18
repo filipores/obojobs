@@ -238,6 +238,7 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
     data = request.json
     url = data.get("url", "").strip()
     tone = data.get("tone", "modern")
+    model = data.get("model", "qwen")
     user_company = data.get("company", "").strip()
     user_description = data.get("description", "").strip()
 
@@ -251,7 +252,7 @@ def generate_from_url(current_user: Any) -> tuple[Response, int]:
         company, job_text = _resolve_job_data(url, user_company, user_description)
         user_details = _build_user_details(data)
 
-        generator = BewerbungsGenerator(user_id=current_user.id)
+        generator = BewerbungsGenerator(user_id=current_user.id, model=model)
         generator.prepare()
         pdf_path = generator.generate_bewerbung(url, company, user_details=user_details, tonalitaet=tone)
 
@@ -291,6 +292,7 @@ def generate_from_url_stream(current_user: Any) -> Response:
     data = request.json
     url = data.get("url", "").strip()
     tone = data.get("tone", "modern")
+    model = data.get("model", "qwen")
 
     if not url:
         return jsonify({"success": False, "error": "URL ist erforderlich"}), 400
@@ -309,6 +311,9 @@ def generate_from_url_stream(current_user: Any) -> Response:
     progress_queue = queue.Queue()
     result_holder = {"result": None, "error": None}
 
+    def thinking_cb(text):
+        progress_queue.put({"type": "thinking", "text": text})
+
     def run_generation():
         with flask_app.app_context():
             user = get_user_by_id(user_id)
@@ -318,6 +323,8 @@ def generate_from_url_stream(current_user: Any) -> Response:
                 generator = BewerbungsGenerator(
                     user_id=user_id,
                     progress_callback=progress_queue.put,
+                    model=model,
+                    thinking_callback=thinking_cb if model == "kimi" else None,
                 )
                 generator.prepare()
                 pdf_path = generator.generate_bewerbung(
@@ -326,6 +333,9 @@ def generate_from_url_stream(current_user: Any) -> Response:
                     user_details=user_details,
                     tonalitaet=tone,
                 )
+
+                if model == "kimi":
+                    progress_queue.put({"type": "thinking_done"})
 
                 latest = application_service.get_latest_application(user_id)
                 if latest:
@@ -399,6 +409,7 @@ def generate_from_text(current_user: Any) -> tuple[Response, int]:
     company = data.get("company", "").strip()
     title = data.get("title", "").strip()
     tone = data.get("tone", "modern")
+    model = data.get("model", "qwen")
     description = data.get("description", "").strip()  # Structured description for interview prep
 
     if not job_text:
@@ -421,7 +432,7 @@ def generate_from_text(current_user: Any) -> tuple[Response, int]:
 
         try:
             # Generate application using existing generator with temp file
-            generator = BewerbungsGenerator(user_id=current_user.id)
+            generator = BewerbungsGenerator(user_id=current_user.id, model=model)
             generator.prepare()
             pdf_path = generator.generate_bewerbung(temp_file, company, tonalitaet=tone)
 

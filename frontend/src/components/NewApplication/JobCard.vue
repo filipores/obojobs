@@ -43,6 +43,14 @@
       <p class="card-position">{{ job.quickData?.title }}</p>
       <div class="card-actions-row">
         <select
+          class="model-select"
+          :value="job.model"
+          @change="emit('update:model', $event.target.value)"
+        >
+          <option value="qwen">Schnell</option>
+          <option value="kimi">Schlau</option>
+        </select>
+        <select
           class="tone-select"
           :value="job.tone"
           @change="emit('update:tone', $event.target.value)"
@@ -65,6 +73,10 @@
         <span class="generating-spinner" />
         <span class="generating-text">{{ progressMessage || 'Anschreiben wird generiert...' }}</span>
       </div>
+      <details v-if="job.model === 'kimi' && job.thinkingText" class="thinking-details" open>
+        <summary class="thinking-summary">Kimi denkt nach...</summary>
+        <pre class="thinking-content" ref="thinkingPre">{{ job.thinkingText }}</pre>
+      </details>
     </template>
 
     <!-- COMPLETED STATE -->
@@ -111,7 +123,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 
 const props = defineProps({
   job: {
@@ -133,8 +145,19 @@ const emit = defineEmits([
   'download-pdf',
   'download-email',
   'view-application',
-  'update:tone'
+  'update:tone',
+  'update:model'
 ])
+
+const thinkingPre = ref(null)
+
+// Auto-scroll thinking content
+watch(() => props.job.thinkingText, async () => {
+  await nextTick()
+  if (thinkingPre.value) {
+    thinkingPre.value.scrollTop = thinkingPre.value.scrollHeight
+  }
+})
 
 const displayUrl = computed(() => {
   try {
@@ -329,6 +352,7 @@ const portalClass = computed(() => {
   gap: var(--space-sm);
 }
 
+.model-select,
 .tone-select {
   appearance: none;
   background: var(--color-washi);
@@ -344,14 +368,51 @@ const portalClass = computed(() => {
   background-position: right var(--space-sm) center;
 }
 
+.model-select:hover,
 .tone-select:hover {
   border-color: var(--color-ai, hsl(217, 91%, 60%));
 }
 
+.model-select:focus,
 .tone-select:focus {
   outline: none;
   border-color: var(--color-ai, hsl(217, 91%, 60%));
   box-shadow: 0 0 0 2px hsla(217, 91%, 60%, 0.15);
+}
+
+/* Thinking display */
+.thinking-details {
+  margin-top: var(--space-sm);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.thinking-summary {
+  padding: var(--space-xs) var(--space-sm);
+  font-size: 0.8125rem;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  user-select: none;
+  background: var(--color-washi-aged, rgba(0,0,0,0.03));
+}
+
+.thinking-summary:hover {
+  color: var(--color-text-secondary);
+}
+
+.thinking-content {
+  max-height: 200px;
+  overflow-y: auto;
+  padding: var(--space-sm);
+  margin: 0;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  color: var(--color-text-tertiary);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--color-washi);
 }
 
 /* Generating state */
@@ -439,6 +500,7 @@ const portalClass = computed(() => {
     align-items: stretch;
   }
 
+  .model-select,
   .tone-select {
     width: 100%;
   }

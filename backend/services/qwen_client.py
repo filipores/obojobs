@@ -27,6 +27,7 @@ class QwenAPIClient:
         self.client = OpenAI(api_key=self.api_key, base_url=config.QWEN_API_BASE)
         self.model = config.QWEN_MODEL
         self.fast_model = config.QWEN_FAST_MODEL
+        self.kimi_model = config.KIMI_MODEL
         self.max_tokens = config.QWEN_MAX_TOKENS
         self.temperature = config.QWEN_TEMPERATURE
 
@@ -193,6 +194,96 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         result = self._postprocess_anschreiben(raw)
         result = self._remove_forbidden_phrases(result)
         return result
+
+    def generate_anschreiben_stream(
+        self,
+        cv_text: str,
+        stellenanzeige_text: str,
+        firma_name: str,
+        position: str,
+        ansprechpartner: str,
+        quelle: str = "eure Website",
+        zeugnis_text: str | None = None,
+        bewerber_vorname: str | None = None,
+        bewerber_name: str | None = None,
+        user_skills: list | None = None,
+        tonalitaet: str = "modern",
+        details: dict | None = None,
+        thinking_callback=None,
+    ) -> str | None:
+        """Generate a cover letter using Kimi K2.5 with streaming and reasoning.
+
+        Together.xyz exposes Kimi's chain-of-thought via the `reasoning` API parameter.
+        Reasoning tokens arrive in `delta.reasoning`, content in `delta.content`.
+
+        No @retry_with_backoff — streaming responses cannot be retried mid-stream.
+        """
+        # Use pre-extracted compact version if available
+        if details and details.get("stellenanzeige_kompakt"):
+            stellenanzeige_text = details["stellenanzeige_kompakt"]
+        elif stellenanzeige_text and len(stellenanzeige_text) > 2000:
+            stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
+
+        system_prompt = build_anschreiben_system_prompt(
+            cv_text=cv_text,
+            position=position,
+            quelle=quelle,
+            ansprechpartner=ansprechpartner,
+            bewerber_vorname=bewerber_vorname,
+            bewerber_name=bewerber_name,
+            user_skills=user_skills,
+            tonalitaet=tonalitaet,
+        )
+
+        if zeugnis_text:
+            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}"
+
+        firma_info = f" (Firma: {firma_name})" if firma_name else ""
+        user_prompt = f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
+{stellenanzeige_text[:2000]}
+
+Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
+
+        try:
+            response = self.client.chat.completions.create(
+                model=self.kimi_model,
+                messages=[
+                    {"role": "system", "content": system_prompt},
+                    {"role": "user", "content": user_prompt},
+                ],
+                max_tokens=config.KIMI_MAX_TOKENS,
+                temperature=config.KIMI_TEMPERATURE,
+                stream=True,
+                extra_body={"reasoning": {"enabled": True}},
+            )
+
+            output_parts = []
+
+            for chunk in response:
+                if not chunk.choices:
+                    continue
+                delta = chunk.choices[0].delta
+                # Forward reasoning tokens via callback
+                reasoning = getattr(delta, "reasoning", None)
+                if reasoning and thinking_callback:
+                    thinking_callback(reasoning)
+                # Accumulate content tokens
+                content = delta.content
+                if content:
+                    output_parts.append(content)
+
+            result = "".join(output_parts)
+            if not result.strip():
+                logger.error("Kimi stream returned empty output")
+                return None
+
+            result = self._postprocess_anschreiben(result)
+            result = self._remove_forbidden_phrases(result)
+            return result
+
+        except Exception as e:
+            logger.error("Kimi streaming Fehler: %s", e)
+            raise
 
     def chat_complete(self, messages: list[dict], max_tokens: int = 2000, temperature: float = 0.7) -> str:
         return self._call_api(messages=messages, max_tokens=max_tokens, temperature=temperature)

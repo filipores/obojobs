@@ -2,8 +2,6 @@ import json
 import logging
 import os
 import re
-import threading
-import time
 from datetime import datetime
 from typing import Any
 
@@ -13,6 +11,7 @@ from config import config
 from models import Application, Document, User, db
 
 from .contact_extractor import ContactExtractor
+from .doc_cache import get_cached_doc_text
 from .email_formatter import EmailFormatter
 from .output_validator import OutputValidator
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
@@ -22,35 +21,6 @@ logger = logging.getLogger(__name__)
 
 # Pre-compiled regex
 _TRIPLE_NEWLINE_RE = re.compile(r"\n{3,}")
-
-# --- Document text cache ---
-# Key: (user_id, doc_id, updated_at_str) -> (text, monotonic_timestamp)
-_doc_cache: dict[tuple[int, int, str], tuple[str, float]] = {}
-_doc_cache_lock = threading.Lock()
-_DOC_CACHE_MAX = 100
-_DOC_CACHE_TTL = 600  # 10 minutes
-
-
-def _get_cached_doc_text(file_path: str, user_id: int, doc_id: int, updated_at) -> str:
-    """Return cached document text or read from disk and cache it."""
-    key = (user_id, doc_id, str(updated_at))
-    now = time.monotonic()
-
-    with _doc_cache_lock:
-        entry = _doc_cache.get(key)
-        if entry and (now - entry[1]) < _DOC_CACHE_TTL:
-            return entry[0]
-
-    text = read_document(file_path)
-
-    with _doc_cache_lock:
-        if len(_doc_cache) >= _DOC_CACHE_MAX:
-            # Evict oldest entry
-            oldest_key = min(_doc_cache, key=lambda k: _doc_cache[k][1])
-            del _doc_cache[oldest_key]
-        _doc_cache[key] = (text, now)
-
-    return text
 
 
 _GERMAN_MONTHS = [
@@ -70,7 +40,7 @@ _GERMAN_MONTHS = [
 
 
 class BewerbungsGenerator:
-    def __init__(self, user_id: int, progress_callback=None):
+    def __init__(self, user_id: int, progress_callback=None, model="qwen", thinking_callback=None):
         self.user_id = user_id
         self.api_client = QwenAPIClient()
         self.validator = OutputValidator()
@@ -81,6 +51,8 @@ class BewerbungsGenerator:
         self._prepared = False
         self.warnings = []
         self.progress_callback = progress_callback
+        self.model = model
+        self.thinking_callback = thinking_callback
 
     def _emit_progress(self, step, total_steps, message):
         """Emit progress event if callback is set."""
@@ -122,11 +94,11 @@ class BewerbungsGenerator:
 
         if not cv_doc or not os.path.exists(cv_doc.file_path):
             raise ValueError("Lebenslauf nicht gefunden. Bitte lade deinen Lebenslauf hoch.")
-        self.cv_text = _get_cached_doc_text(cv_doc.file_path, self.user_id, cv_doc.id, cv_doc.uploaded_at)
+        self.cv_text = get_cached_doc_text(cv_doc.file_path, self.user_id, cv_doc.id, cv_doc.uploaded_at)
         logger.info("Lebenslauf geladen")
 
         if zeugnis_doc and os.path.exists(zeugnis_doc.file_path):
-            self.zeugnis_text = _get_cached_doc_text(
+            self.zeugnis_text = get_cached_doc_text(
                 zeugnis_doc.file_path, self.user_id, zeugnis_doc.id, zeugnis_doc.uploaded_at
             )
             logger.info("Arbeitszeugnis geladen")
@@ -174,7 +146,10 @@ class BewerbungsGenerator:
         details = self._extract_details(stellenanzeige_text, firma_name, user_details)
 
         # Step 3: Generate cover letter body
-        self._emit_progress(3, 7, "Anschreiben wird generiert...")
+        if self.model == "kimi":
+            self._emit_progress(3, 7, "Kimi denkt nach...")
+        else:
+            self._emit_progress(3, 7, "Anschreiben wird generiert...")
         anschreiben_body = self._generate_letter_body(stellenanzeige_text, firma_name, details, tonalitaet)
 
         # Step 4: Build complete letter with header
@@ -287,27 +262,47 @@ class BewerbungsGenerator:
         details: dict[str, str],
         tonalitaet: str,
     ) -> str:
-        """Generate the AI-written cover letter body via Qwen."""
-        logger.info("3/5 Generiere vollständiges Anschreiben...")
+        """Generate the AI-written cover letter body via Qwen or Kimi."""
+        if self.model == "kimi":
+            logger.info("3/5 Kimi K2.5 generiert Anschreiben (Reasoning-Modell)...")
+        else:
+            logger.info("3/5 Generiere vollständiges Anschreiben...")
 
         # Prepare user inputs
         full_name, bewerber_vorname, user_skills = self._extract_user_inputs()
 
-        # Generate body via API
-        anschreiben_body = self.api_client.generate_anschreiben(
-            cv_text=self.cv_text,
-            stellenanzeige_text=stellenanzeige_text,
-            firma_name=firma_name,
-            position=details["position"],
-            ansprechpartner=details["ansprechpartner"],
-            quelle=details["quelle"],
-            zeugnis_text=self.zeugnis_text,
-            bewerber_vorname=bewerber_vorname,
-            bewerber_name=full_name,
-            user_skills=user_skills,
-            tonalitaet=tonalitaet,
-            details=details,
-        )
+        # Generate body via API — route based on model
+        if self.model == "kimi":
+            anschreiben_body = self.api_client.generate_anschreiben_stream(
+                cv_text=self.cv_text,
+                stellenanzeige_text=stellenanzeige_text,
+                firma_name=firma_name,
+                position=details["position"],
+                ansprechpartner=details["ansprechpartner"],
+                quelle=details["quelle"],
+                zeugnis_text=self.zeugnis_text,
+                bewerber_vorname=bewerber_vorname,
+                bewerber_name=full_name,
+                user_skills=user_skills,
+                tonalitaet=tonalitaet,
+                details=details,
+                thinking_callback=self.thinking_callback,
+            )
+        else:
+            anschreiben_body = self.api_client.generate_anschreiben(
+                cv_text=self.cv_text,
+                stellenanzeige_text=stellenanzeige_text,
+                firma_name=firma_name,
+                position=details["position"],
+                ansprechpartner=details["ansprechpartner"],
+                quelle=details["quelle"],
+                zeugnis_text=self.zeugnis_text,
+                bewerber_vorname=bewerber_vorname,
+                bewerber_name=full_name,
+                user_skills=user_skills,
+                tonalitaet=tonalitaet,
+                details=details,
+            )
         logger.info("Anschreiben generiert (%d Zeichen)", len(anschreiben_body))
 
         # Fix gray-zone skill claims before validation

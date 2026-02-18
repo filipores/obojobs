@@ -51,6 +51,11 @@ class Config:
     QWEN_ANSCHREIBEN_MAX_TOKENS = int(os.getenv("QWEN_ANSCHREIBEN_MAX_TOKENS", "1200"))
     QWEN_ANSCHREIBEN_TEMPERATURE = float(os.getenv("QWEN_ANSCHREIBEN_TEMPERATURE", "0.65"))
 
+    # Kimi K2.5 (reasoning model via Together.xyz)
+    KIMI_MODEL = os.getenv("KIMI_MODEL", "moonshotai/Kimi-K2.5")
+    KIMI_MAX_TOKENS = int(os.getenv("KIMI_MAX_TOKENS", "8000"))
+    KIMI_TEMPERATURE = float(os.getenv("KIMI_TEMPERATURE", "1.0"))
+
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
 

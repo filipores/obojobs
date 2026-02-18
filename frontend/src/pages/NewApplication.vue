@@ -157,6 +157,7 @@
             @download-email="downloadJobEmail(job.id)"
             @view-application="viewJobApplication(job.id)"
             @update:tone="job.tone = $event"
+            @update:model="job.model = $event"
           />
         </TransitionGroup>
       </section>
@@ -243,9 +244,11 @@ function saveJobsToStorage() {
     quickData: j.quickData,
     editableData: j.editableData,
     tone: j.tone,
+    model: j.model,
     generatedApp: j.generatedApp,
     error: j.error,
-    progressMessage: null
+    progressMessage: null,
+    thinkingText: null
   }))
   sessionStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(serializable))
 }
@@ -337,9 +340,11 @@ async function addJob(submittedUrl) {
     quickData: null,
     editableData: null,
     tone: 'modern',
+    model: 'qwen',
     generatedApp: null,
     error: null,
-    progressMessage: null
+    progressMessage: null,
+    thinkingText: ''
   }
 
   jobs.value.unshift(job)
@@ -391,6 +396,7 @@ function getPayloadForJob(job) {
   return {
     url: job.url,
     tone: job.tone,
+    model: job.model,
     company: job.editableData.company,
     title: job.editableData.title,
     contact_person: job.editableData.contact_person,
@@ -417,6 +423,7 @@ function handleGenerationSuccess(job, data) {
 }
 
 async function generateJobWithSSE(job) {
+  job.thinkingText = ''
   const token = localStorage.getItem('token')
   const payload = getPayloadForJob(job)
 
@@ -460,6 +467,14 @@ async function generateJobWithSSE(job) {
         const err = new Error(event.error)
         err.isServerError = true
         throw err
+      }
+      if (event.type === 'thinking') {
+        job.thinkingText += event.text
+        continue
+      }
+      if (event.type === 'thinking_done') {
+        job.progressMessage = 'Anschreiben wird finalisiert...'
+        continue
       }
       if (event.step && event.message) {
         job.progressMessage = `${event.step}/${event.total_steps}: ${event.message}`
@@ -575,25 +590,30 @@ async function downloadJobPDF(jobId) {
   }
 }
 
-async function downloadJobEmail(jobId) {
+function resolveTemplateVars(text, app) {
+  if (!text) return ''
+  return text
+    .replace(/\{\{FIRMA\}\}/g, app.firma || '')
+    .replace(/\{\{POSITION\}\}/g, app.position || '')
+    .replace(/\{\{ANSPRECHPARTNER\}\}/g, app.ansprechpartner || '')
+    .replace(/\{\{QUELLE\}\}/g, app.quelle || '')
+}
+
+function downloadJobEmail(jobId) {
   const job = findJob(jobId)
-  if (!job?.generatedApp?.id) return
+  if (!job?.generatedApp) return
 
-  try {
-    const response = await api.get(`/applications/${job.generatedApp.id}/email-draft`, {
-      responseType: 'blob'
-    })
-    const firma = job.generatedApp.firma || 'Bewerbung'
-    downloadBlob(response.data, 'message/rfc822', `Bewerbung_${firma}.eml`)
+  const app = job.generatedApp
+  const to = app.email || ''
+  const subject = resolveTemplateVars(app.betreff || '', app)
+  const body = resolveTemplateVars(app.email_text || '', app)
 
-    if (window.$toast) {
-      window.$toast('E-Mail-Entwurf heruntergeladen', 'success', 6000)
-    }
-  } catch (_err) {
-    if (window.$toast) {
-      window.$toast('Fehler beim Erstellen des E-Mail-Entwurfs', 'error')
-    }
-  }
+  const params = new URLSearchParams()
+  if (subject) params.set('subject', subject)
+  if (body) params.set('body', body)
+
+  const query = params.toString()
+  window.location.href = `mailto:${encodeURIComponent(to)}${query ? '?' + query : ''}`
 }
 
 function viewJobApplication(jobId) {

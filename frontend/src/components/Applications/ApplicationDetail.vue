@@ -157,13 +157,32 @@
             </svg>
             {{ t('applications.interviewPrep') }}
           </router-link>
-          <button @click="$emit('download-email-draft', selectedApp)" class="zen-btn zen-btn-ai">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
-              <polyline points="22,6 12,13 2,6"/>
-            </svg>
-            {{ t('applications.sendViaEmail') }}
-          </button>
+          <div class="email-split-btn">
+            <button @click="openInEmailClient" class="zen-btn zen-btn-ai">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                <polyline points="22,6 12,13 2,6"/>
+              </svg>
+              {{ t('applications.openInEmailClient') }}
+            </button>
+            <div class="email-dropdown-wrapper">
+              <button @click.stop="emlDropdownOpen = !emlDropdownOpen" class="zen-btn zen-btn-ai email-dropdown-toggle">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="6 9 12 15 18 9"/>
+                </svg>
+              </button>
+              <div v-if="emlDropdownOpen" class="email-dropdown" @click="emlDropdownOpen = false">
+                <button @click="$emit('download-email-draft', selectedApp)" class="email-dropdown-item">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  {{ t('applications.downloadEml') }}
+                </button>
+              </div>
+            </div>
+          </div>
           <button @click="$emit('download-pdf', selectedApp.id)" class="zen-btn">
             {{ t('applications.downloadPdf') }}
           </button>
@@ -177,6 +196,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import ATSOptimizer from '../ATSOptimizer.vue'
 import GapAnalysis from '../GapAnalysis.vue'
@@ -184,8 +204,9 @@ import InterviewTracker from '../InterviewTracker.vue'
 import { getFullLocale } from '../../i18n'
 
 const { t } = useI18n()
+const emlDropdownOpen = ref(false)
 
-defineProps({
+const props = defineProps({
   selectedApp: { type: Object, default: null },
   jobFitData: { type: Object, default: null },
   jobFitLoading: { type: Boolean, default: false }
@@ -201,6 +222,45 @@ defineEmits([
   'interview-updated',
   'ats-optimized'
 ])
+
+const resolveTemplateVars = (text, app) => {
+  if (!text) return ''
+  return text
+    .replace(/\{\{FIRMA\}\}/g, app.firma || '')
+    .replace(/\{\{POSITION\}\}/g, app.position || '')
+    .replace(/\{\{ANSPRECHPARTNER\}\}/g, app.ansprechpartner || '')
+    .replace(/\{\{QUELLE\}\}/g, app.quelle || '')
+}
+
+const openInEmailClient = () => {
+  const app = props.selectedApp
+  if (!app) return
+
+  const to = app.email || ''
+  const subject = resolveTemplateVars(app.betreff || '', app)
+  const body = resolveTemplateVars(app.email_text || '', app)
+
+  const params = new URLSearchParams()
+  if (subject) params.set('subject', subject)
+  if (body) params.set('body', body)
+
+  const query = params.toString()
+  window.location.href = `mailto:${encodeURIComponent(to)}${query ? '?' + query : ''}`
+}
+
+const closeDropdown = (e) => {
+  if (!e.target.closest('.email-split-btn')) {
+    emlDropdownOpen.value = false
+  }
+}
+
+onMounted(() => {
+  document.addEventListener('click', closeDropdown)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeDropdown)
+})
 
 const formatDateTime = (date) => {
   return new Date(date).toLocaleString(getFullLocale(), {
@@ -382,6 +442,66 @@ const getSentViaLabel = (provider) => {
 .modal-footer .zen-btn svg {
   margin-right: var(--space-xs);
   vertical-align: middle;
+}
+
+/* Email split button */
+.email-split-btn {
+  display: inline-flex;
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 140px;
+}
+
+.email-split-btn > .zen-btn {
+  flex: 1;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.email-dropdown-wrapper {
+  position: relative;
+}
+
+.email-dropdown-toggle {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
+  border-left: 1px solid rgba(255, 255, 255, 0.2);
+  padding-left: var(--space-sm);
+  padding-right: var(--space-sm);
+  min-width: unset;
+}
+
+.email-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: var(--space-xs);
+  background: var(--color-bg-elevated, #fff);
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  min-width: 220px;
+  overflow: hidden;
+}
+
+.email-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-sm);
+  width: 100%;
+  padding: var(--space-sm) var(--space-md);
+  background: none;
+  border: none;
+  color: var(--color-sumi);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: background var(--transition-base);
+  white-space: nowrap;
+}
+
+.email-dropdown-item:hover {
+  background: var(--color-washi);
 }
 
 .zen-btn-interview {

@@ -2,6 +2,8 @@ import { ref, computed } from 'vue'
 import api from '../api/client'
 import { getFullLocale } from '../i18n'
 
+const DEFAULT_MODEL = 'qwen'
+
 const WORK_TYPE_MAP = {
   vollzeit: 'vz',
   teilzeit: 'tz',
@@ -112,7 +114,7 @@ export function useJobRecommendations() {
       const { data } = await api.silent.get('/recommendations', {
         params: { limit: perPage }
       })
-      suggestions.value = data.recommendations || []
+      suggestions.value = (data.recommendations || []).map(r => ({ ...r, model: r.model || DEFAULT_MODEL }))
       hasMore.value = suggestions.value.length >= perPage
     } catch (error) {
       console.error('Failed to load suggestions:', error)
@@ -133,7 +135,7 @@ export function useJobRecommendations() {
       if (all.length <= suggestions.value.length) {
         hasMore.value = false
       } else {
-        suggestions.value = all
+        suggestions.value = all.map(r => ({ ...r, model: r.model || DEFAULT_MODEL }))
         hasMore.value = all.length >= perPage * page.value
       }
     } catch (error) {
@@ -191,6 +193,7 @@ export function useJobRecommendations() {
         {
           url: rec.job_url,
           tone: 'modern',
+          model: rec.model || DEFAULT_MODEL,
           company: rec.company_name || '',
           title: rec.job_title || '',
           fit_score: rec.fit_score ?? undefined,
