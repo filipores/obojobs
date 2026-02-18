@@ -1,3 +1,10 @@
+# [1.61.0](https://github.com/filipores/obojobs/compare/v1.60.0...v1.61.0) (2026-02-18)
+
+
+### Features
+
+* **scraper:** follow external urls from arbeitsagentur for contact enrichment ([1684ebb](https://github.com/filipores/obojobs/commit/1684ebb633f12cfa575c943a710cd3434f2d9100))
+
 # [1.60.0](https://github.com/filipores/obojobs/compare/v1.59.5...v1.60.0) (2026-02-17)
 
 
