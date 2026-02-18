@@ -1,3 +1,10 @@
+# [1.62.0](https://github.com/filipores/obojobs/compare/v1.61.1...v1.62.0) (2026-02-18)
+
+
+### Features
+
+* **ai:** add kimi k2.5 reasoning model with live thinking stream ([7a88e43](https://github.com/filipores/obojobs/commit/7a88e43cc10b07ad198b1ab408b4a8385284d31c))
+
 ## [1.61.1](https://github.com/filipores/obojobs/compare/v1.61.0...v1.61.1) (2026-02-18)
 
 
