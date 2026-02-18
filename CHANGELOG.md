@@ -1,3 +1,10 @@
+## [1.61.1](https://github.com/filipores/obojobs/compare/v1.61.0...v1.61.1) (2026-02-18)
+
+
+### Bug Fixes
+
+* **subscriptions:** update plan in db on upgrade instead of waiting for webhook ([f3b85fb](https://github.com/filipores/obojobs/commit/f3b85fbbfbfbe3afe6ce2dc1f825c664a6316dc1))
+
 # [1.61.0](https://github.com/filipores/obojobs/compare/v1.60.0...v1.61.0) (2026-02-18)
 
 
