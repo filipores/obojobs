@@ -47,7 +47,7 @@ ignore = [
 # Tests may use print for debugging and have simpler control flow
 "tests/**" = ["T20", "SIM"]
 # Standalone test scripts use print for output
-"test_*.py" = ["T20", "I", "E741"]
+"test_*.py" = ["T20", "I", "E402", "E741"]
 # Startup banner prints are intentional
 "app.py" = ["T20"]
 "config.py" = ["T20"]

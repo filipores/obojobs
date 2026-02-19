@@ -7,9 +7,9 @@ No database persistence - results are returned directly.
 
 from urllib.parse import urlparse
 
+from .ai_client import AIClient
 from .email_formatter import EmailFormatter
 from .pdf_handler import read_document
-from .qwen_client import QwenAPIClient
 
 
 class DemoGenerator:
@@ -22,7 +22,7 @@ class DemoGenerator:
     """
 
     def __init__(self) -> None:
-        self.api_client = QwenAPIClient()
+        self.api_client = AIClient()
 
     def generate_demo(self, job_url: str, cv_text: str) -> dict[str, str]:
         """Generate a demo application from a job URL.

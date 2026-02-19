@@ -4,7 +4,7 @@ Profile Extractor Service - Extracts personal profile data from CV text using Qw
 
 import logging
 
-from services.qwen_client import QwenAPIClient
+from services.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -15,7 +15,7 @@ class ProfileExtractor:
     PROFILE_FIELDS = ["full_name", "phone", "email", "address", "city", "postal_code", "website"]
 
     def __init__(self):
-        self.client = QwenAPIClient()
+        self.client = AIClient()
 
     def extract_profile_from_cv(self, cv_text: str) -> dict:
         """

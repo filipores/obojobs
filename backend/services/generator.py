@@ -10,12 +10,12 @@ from sqlalchemy.orm import joinedload
 from config import config
 from models import Application, Document, User, db
 
+from .ai_client import AIClient
 from .contact_extractor import ContactExtractor
 from .doc_cache import get_cached_doc_text
 from .email_formatter import EmailFormatter
 from .output_validator import OutputValidator
 from .pdf_handler import create_anschreiben_pdf, is_url, read_document
-from .qwen_client import QwenAPIClient
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +44,7 @@ class BewerbungsGenerator:
         self, user_id: int, progress_callback=None, model="qwen", thinking_callback=None, content_callback=None
     ):
         self.user_id = user_id
-        self.api_client = QwenAPIClient()
+        self.api_client = AIClient()
         self.validator = OutputValidator()
         self.cv_text = None
         self.zeugnis_text = None
@@ -287,6 +287,7 @@ class BewerbungsGenerator:
             "bewerber_name": full_name,
             "user_skills": user_skills,
             "tonalitaet": tonalitaet,
+            "user_city": self.user.city if self.user else None,
             "details": details,
         }
 

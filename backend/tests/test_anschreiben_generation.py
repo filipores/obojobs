@@ -10,9 +10,9 @@ from models import Application, Document, db
 
 
 class TestGenerateAnschreiben:
-    """Tests for QwenAPIClient.generate_anschreiben()"""
+    """Tests for AIClient.generate_anschreiben()"""
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_generate_anschreiben_basic(self, mock_openai_cls, app):
         """Test basic Anschreiben generation with required params."""
         mock_client = MagicMock()
@@ -26,9 +26,9 @@ class TestGenerateAnschreiben:
         )
         mock_client.chat.completions.create.return_value = mock_response
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
         result = client.generate_anschreiben(
             cv_text="Max Mustermann, 5 Jahre Erfahrung als Entwickler",
             stellenanzeige_text="Wir suchen einen Entwickler",
@@ -41,7 +41,7 @@ class TestGenerateAnschreiben:
         assert "Mit freundlichen Grüßen" in result
         mock_client.chat.completions.create.assert_called_once()
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_generate_anschreiben_with_tone(self, mock_openai_cls, app):
         """Test Anschreiben generation respects tone parameter."""
         mock_client = MagicMock()
@@ -51,9 +51,9 @@ class TestGenerateAnschreiben:
         mock_response.choices[0].message.content = "Sehr geehrte Frau Schmidt,\n\nText.\n\nMit freundlichen Grüßen\nMax"
         mock_client.chat.completions.create.return_value = mock_response
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
 
         for tone in ["formal", "modern", "kreativ"]:
             client.generate_anschreiben(
@@ -67,7 +67,7 @@ class TestGenerateAnschreiben:
 
         assert mock_client.chat.completions.create.call_count == 3
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_generate_anschreiben_with_skills(self, mock_openai_cls, app):
         """Test that user skills are included in the prompt."""
         mock_client = MagicMock()
@@ -83,9 +83,9 @@ class TestGenerateAnschreiben:
         mock_skill2 = MagicMock()
         mock_skill2.skill_name = "JavaScript"
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
         client.generate_anschreiben(
             cv_text="CV with Python and JavaScript",
             stellenanzeige_text="Looking for developer",
@@ -102,7 +102,7 @@ class TestGenerateAnschreiben:
         assert "Python" in system_msg
         assert "JavaScript" in system_msg
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_generate_anschreiben_retries_on_error(self, mock_openai_cls, app):
         """Test that generate_anschreiben retries on API errors via _call_api_with_retry."""
         mock_client = MagicMock()
@@ -119,10 +119,10 @@ class TestGenerateAnschreiben:
             mock_response,
         ]
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
         with patch("services.retry.time.sleep"):
-            client = QwenAPIClient(api_key="test-key")
+            client = AIClient(api_key="test-key")
             result = client.generate_anschreiben(
                 cv_text="CV",
                 stellenanzeige_text="Job",
@@ -134,17 +134,17 @@ class TestGenerateAnschreiben:
         assert "Sehr geehrte Damen und Herren" in result
         assert mock_client.chat.completions.create.call_count == 3
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_generate_anschreiben_raises_after_retries(self, mock_openai_cls, app):
         """Test that generate_anschreiben raises after exhausting retries."""
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
         mock_client.chat.completions.create.side_effect = Exception("API down")
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
         with patch("services.retry.time.sleep"):
-            client = QwenAPIClient(api_key="test-key")
+            client = AIClient(api_key="test-key")
             with pytest.raises(Exception, match="API down"):
                 client.generate_anschreiben(
                     cv_text="CV",
@@ -158,74 +158,74 @@ class TestGenerateAnschreiben:
 class TestPostprocessAnschreiben:
     """Tests for the postprocessing of AI-generated cover letters."""
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_removes_preamble(self, mock_openai_cls, app):
         """Test that preambles are stripped from AI output."""
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
 
         text = "Hier ist das Anschreiben:\n\nSehr geehrte Damen und Herren,\n\nText."
         result = client._postprocess_anschreiben(text)
         assert result.startswith("Sehr geehrte Damen und Herren")
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_replaces_dashes(self, mock_openai_cls, app):
         """Test that dashes are replaced with commas."""
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
 
         text = "Ich bin erfahren – sowohl in Python — als auch in JavaScript"
         result = client._postprocess_anschreiben(text)
         assert "–" not in result
         assert "—" not in result
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_normalizes_line_breaks(self, mock_openai_cls, app):
         """Test that excessive line breaks are normalized."""
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
 
         text = "Absatz 1\n\n\n\n\nAbsatz 2"
         result = client._postprocess_anschreiben(text)
         assert "\n\n\n" not in result
         assert "Absatz 1\n\nAbsatz 2" == result
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_strips_code_fences(self, mock_openai_cls, app):
         """Test that code fences are removed."""
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
 
         text = "```\nSehr geehrte Damen und Herren,\n\nText.\n```"
         result = client._postprocess_anschreiben(text)
         assert "```" not in result
         assert "Sehr geehrte Damen und Herren" in result
 
-    @patch("services.qwen_client.OpenAI")
+    @patch("services.ai_client.OpenAI")
     def test_strips_surrounding_quotes(self, mock_openai_cls, app):
         """Test that surrounding quotes are removed."""
         mock_client = MagicMock()
         mock_openai_cls.return_value = mock_client
 
-        from services.qwen_client import QwenAPIClient
+        from services.ai_client import AIClient
 
-        client = QwenAPIClient(api_key="test-key")
+        client = AIClient(api_key="test-key")
 
         text = '"Sehr geehrte Damen und Herren,\n\nText."'
         result = client._postprocess_anschreiben(text)
@@ -236,7 +236,7 @@ class TestPostprocessAnschreiben:
 class TestGeneratorWithoutTemplate:
     """Tests for BewerbungsGenerator without template system."""
 
-    @patch("services.generator.QwenAPIClient")
+    @patch("services.generator.AIClient")
     def test_generator_load_documents_no_template(self, mock_api_cls, app, test_user):
         """Test that load_user_documents only loads CV and Arbeitszeugnis, not templates."""
         with app.app_context():
@@ -255,7 +255,7 @@ class TestGeneratorWithoutTemplate:
                 db.session.add(doc)
                 db.session.commit()
 
-                with patch("services.generator.read_document", return_value="CV text content"):
+                with patch("services.doc_cache.read_document", return_value="CV text content"):
                     from services.generator import BewerbungsGenerator
 
                     gen = BewerbungsGenerator(user_id=test_user["id"])
@@ -271,7 +271,7 @@ class TestGeneratorWithoutTemplate:
 class TestDemoGeneratorNoTemplate:
     """Tests for DemoGenerator without template system."""
 
-    @patch("services.demo_generator.QwenAPIClient")
+    @patch("services.demo_generator.AIClient")
     @patch("services.demo_generator.read_document")
     def test_demo_uses_generate_anschreiben(self, mock_read, mock_api_cls):
         """Test that demo generator uses generate_anschreiben instead of templates."""
@@ -307,7 +307,7 @@ class TestDemoGeneratorNoTemplate:
             "Sehr geehrte Damen und Herren,\n\nAnschreiben text.\n\n" "Mit freundlichen Grüßen\nMax"
         )
 
-    @patch("services.demo_generator.QwenAPIClient")
+    @patch("services.demo_generator.AIClient")
     @patch("services.demo_generator.read_document")
     def test_demo_returns_all_fields(self, mock_read, mock_api_cls):
         """Test that demo generator returns all expected fields."""

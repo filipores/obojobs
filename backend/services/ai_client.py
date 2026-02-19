@@ -6,7 +6,7 @@ import httpx
 from openai import OpenAI
 
 from config import config
-from services.qwen_prompts import (
+from services.prompts import (
     FORBIDDEN_PHRASES,
     build_anschreiben_system_prompt,
     build_einleitung_system_prompt,
@@ -18,7 +18,7 @@ from services.retry import retry_with_backoff
 logger = logging.getLogger(__name__)
 
 
-class QwenAPIClient:
+class AIClient:
     IGNORED_VALUES = {"keine angabe", "nicht vorhanden", "n/a", ""}
 
     def __init__(self, api_key: str | None = None):
@@ -167,6 +167,7 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         user_skills: list | None,
         tonalitaet: str,
         details: dict | None,
+        user_city: str | None = None,
     ) -> list[dict]:
         """Build the system/user message pair shared by all Anschreiben generators."""
         if details and details.get("stellenanzeige_kompakt"):
@@ -183,10 +184,11 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
             bewerber_name=bewerber_name,
             user_skills=user_skills,
             tonalitaet=tonalitaet,
+            user_city=user_city,
         )
 
         if zeugnis_text:
-            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}"
+            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:500]}"
 
         firma_info = f" (Firma: {firma_name})" if firma_name else ""
         user_prompt = f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
@@ -213,6 +215,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         user_skills: list | None = None,
         tonalitaet: str = "modern",
         details: dict | None = None,
+        user_city: str | None = None,
     ) -> str | None:
         """Generate a complete cover letter body (greeting through closing).
 
@@ -235,6 +238,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
             user_skills,
             tonalitaet,
             details,
+            user_city=user_city,
         )
 
         raw = self._call_api_with_retry(
@@ -261,6 +265,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         user_skills: list | None = None,
         tonalitaet: str = "modern",
         details: dict | None = None,
+        user_city: str | None = None,
         thinking_callback=None,
         content_callback=None,
     ) -> str | None:
@@ -284,6 +289,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
             user_skills,
             tonalitaet,
             details,
+            user_city=user_city,
         )
 
         try:
@@ -293,7 +299,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
                 max_tokens=config.KIMI_MAX_TOKENS,
                 temperature=config.KIMI_TEMPERATURE,
                 stream=True,
-                extra_body={"thinking": {"type": "enabled", "budget_tokens": 4096}},
+                extra_body={"thinking": {"type": "enabled", "budget_tokens": config.KIMI_THINKING_BUDGET}},
             )
 
             output_parts = []
@@ -440,3 +446,6 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         result = "\n".join(cleaned_paragraphs)
         result = re.sub(r"\n{3,}", "\n\n", result)
         return result.strip()
+
+
+QwenAPIClient = AIClient

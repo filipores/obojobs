@@ -57,6 +57,7 @@ class Config:
     KIMI_MODEL = os.getenv("KIMI_MODEL", "accounts/fireworks/models/kimi-k2p5")
     KIMI_MAX_TOKENS = int(os.getenv("KIMI_MAX_TOKENS", "12000"))
     KIMI_TEMPERATURE = float(os.getenv("KIMI_TEMPERATURE", "1.0"))
+    KIMI_THINKING_BUDGET = int(os.getenv("KIMI_THINKING_BUDGET", "4096"))
 
     # CORS
     CORS_ORIGINS = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")

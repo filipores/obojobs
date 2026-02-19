@@ -1,4 +1,4 @@
-"""Prompt templates and constants for Qwen AI cover letter generation."""
+"""Prompt templates and constants for AI cover letter generation."""
 
 FORBIDDEN_PHRASES = [
     # Generic application openers
@@ -86,7 +86,7 @@ def create_details_extraction_prompt(stellenanzeige_text: str, firma_name: str) 
     return f"""Extrahiere folgende Informationen aus dieser Stellenanzeige für eine Bewerbung bei {firma_name}.
 
 STELLENANZEIGE:
-{stellenanzeige_text}
+{stellenanzeige_text[:5000]}
 
 Extrahiere präzise folgende Informationen:
 
@@ -201,6 +201,17 @@ Beginne direkt mit dem ersten Satz. Ein fließender Absatz, KEINE Zeilenumbrüch
 Der Text darf KEINE Bindestriche als Satzzeichen enthalten."""
 
 
+def _build_persona(user_skills: list | None, position: str) -> str:
+    """Derive a career-stage persona from skills and target position."""
+    if user_skills and len(user_skills) >= 8:
+        stage = "experienced professional"
+    elif user_skills and len(user_skills) >= 4:
+        stage = "mid-career professional"
+    else:
+        stage = "early-career professional"
+    return f"Write like a real {stage} writing their application after work. NOT like an AI."
+
+
 def build_anschreiben_system_prompt(
     cv_text: str,
     position: str,
@@ -210,127 +221,117 @@ def build_anschreiben_system_prompt(
     bewerber_name: str | None = None,
     user_skills: list | None = None,
     tonalitaet: str = "modern",
+    user_city: str | None = None,
 ) -> str:
-    """Build the system prompt for full cover letter generation."""
-    skills_section = _build_skills_section(user_skills)
+    """Build the v3 system prompt for full cover letter generation.
 
+    English instructions for precision; output stays German.
+    ~40% shorter than v2 (~1,600 tokens vs ~2,700).
+    """
     # Tone configuration
     if tonalitaet == "formal":
-        ton_beschreibung = "Formell und professionell. Siezen (Sie). Klassischer Geschäftsbriefstil."
-        anrede_stil = "Verwende die formelle Anrede."
+        tone_instruction = 'FORMAL: Use "Sie" throughout. Classic business letter style.'
     elif tonalitaet == "kreativ":
-        ton_beschreibung = "Persönlich und kreativ. Storytelling-Elemente erlaubt. Zeige Persönlichkeit."
-        anrede_stil = "Die Anrede darf persönlicher sein, wenn ein Name bekannt ist."
+        tone_instruction = "CREATIVE: Show personality. Storytelling elements welcome. Warm and personal."
     else:  # modern (default)
-        ton_beschreibung = "Modern und authentisch. Locker aber respektvoll. 'Bei euch' statt 'bei Ihnen' ist OK."
-        anrede_stil = "Verwende eine moderne, freundliche Anrede."
+        tone_instruction = 'MODERN: Relaxed but respectful. "bei euch" instead of "bei Ihnen" is OK.'
 
-    # Persona
-    if bewerber_vorname:
-        persona = f"Schreibe aus der Perspektive von {bewerber_vorname}: authentisch und persönlich"
-    else:
-        persona = "Schreibe authentisch und persönlich"
+    persona = _build_persona(user_skills, position)
 
-    # Bewerber name for closing
-    name_for_closing = ""
-    if bewerber_name:
-        name_for_closing = f"\n- Schließe mit dem Namen: {bewerber_name}"
+    # Sender line for structure section
+    sender_parts = []
+    if bewerber_vorname and bewerber_name and bewerber_name != bewerber_vorname:
+        sender_parts.append(bewerber_name)
     elif bewerber_vorname:
-        name_for_closing = f"\n- Schließe mit dem Vornamen: {bewerber_vorname}"
+        sender_parts.append(bewerber_vorname)
+    if user_city:
+        sender_parts.append(user_city)
+    sender_line = " | ".join(sender_parts) if sender_parts else ""
+
+    # Closing name
+    closing_name = bewerber_name or bewerber_vorname or ""
 
     # Short CV handling
-    length_guidance = ""
+    length_note = ""
     if not cv_text or len(cv_text) < 200:
-        length_guidance = (
-            "\n- ACHTUNG: Sehr kurzer Lebenslauf. Schreibe ein kürzeres Anschreiben (200-250 Wörter, 2-3 Absätze)."
-        )
+        length_note = "\n- WARNING: Very short CV. Write a shorter letter (200-250 words, 2-3 paragraphs)."
 
-    faktentreue = _build_faktentreue_block(skills_section)
+    # Skills list for factual accuracy
+    if user_skills:
+        skills_list = ", ".join(skill.skill_name for skill in user_skills)
+        skills_reference = f"CV skills: {skills_list}"
+    else:
+        skills_reference = "Read skills directly from the CV below."
 
-    return f"""Du schreibst ein vollständiges Bewerbungsanschreiben. Nur den Briefkörper: von der Anrede bis zur Grußformel mit Name.
+    # Top 10 forbidden phrases for in-prompt listing (full 45 stay in FORBIDDEN_PHRASES for post-processing)
+    key_forbidden = [
+        "Hiermit bewerbe ich mich",
+        "mit großem Interesse",
+        "hochmotiviert",
+        "spricht mich besonders an",
+        "hat mich sofort angesprochen",
+        "bin ich der ideale Kandidat",
+        "einen wertvollen Beitrag leisten",
+        "genau die Mischung aus",
+        "meine Leidenschaft für",
+        "freue mich auf die Herausforderung",
+    ]
+    forbidden_block = "\n".join(f"- {p}" for p in key_forbidden)
 
-## TONALITÄT: {tonalitaet.upper()}
-{ton_beschreibung}
-{anrede_stil}
+    return f"""You write a German cover letter (Anschreiben). Body only: from greeting to closing with name.
+ALL OUTPUT MUST BE IN GERMAN. These instructions are in English for precision.
 
-## KONTEXT:
+## TONE
+{tone_instruction}
+
+## CONTEXT
 - Position: {position}
-- Quelle: {quelle}
-- Ansprechpartner/Anrede: {ansprechpartner}
+- Source: {quelle}
+- Greeting: {ansprechpartner}
 
-## LEBENSLAUF:
+## CV (LEBENSLAUF)
 {cv_text[:2500]}
 
-{faktentreue}
+## FACTUAL ACCURACY (CRITICAL)
+- ONLY mention skills, tools, and experiences that are EXACTLY in the CV above.
+- NEVER invent qualifications. If a skill is not in the CV, do NOT mention it.
+- {skills_reference}
+- If the job requires skills not in the CV, honestly say you are willing to learn.
+- ONLY allowed phrasing for missing skills: "[Skill] habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein."
+- NO hedging like "die Konzepte kenne ich" or "Grundlagen kenne ich" for skills NOT in the CV.
 
-## BRANCHENKOMPATIBILITÄT:
-- Wenn die Stelle eine komplett andere Ausbildung erfordert (Pflege, Medizin, Handwerk, Ingenieurwesen) und dein CV das nicht hergibt:
-  - STRIKT MAXIMAL 200 Wörter und 2-3 Absätze. NICHT mehr. Zähle die Wörter.
-  - Absatz 1: Ehrlich sagen dass du quereinsteigen möchtest und warum dich die Branche interessiert
-  - Absatz 2: Was du mitbringst (Soft Skills, Lernbereitschaft) OHNE absurde Kompetenz-Transfers
-  - Optional Absatz 3: Verfügbarkeit und Gesprächswunsch
-- VERBOTENE Kompetenz-Transfers (KEINE technischen Parallelen ziehen):
-  - Software-Dokumentation ≠ Pflege-Dokumentation
-  - Textanalyse ≠ Patienteneinschätzung
-  - Parse-Algorithmus ≠ Triage
-  - Code-Review ≠ medizinische Befundung
-- Erlaubte Übertragungen: "Systematisch denken", "unter Druck arbeiten" und ähnliche allgemeine Soft Skills
+## STRUCTURE
+1. Greeting: "{ansprechpartner}," (use exactly as given)
+2. Opening (2-3 sentences): Why THIS job at THIS company. Concrete CV reference.
+3. Main body (4-6 sentences): Relevant experience mapped to job requirements.
+4. Closing (1-2 sentences): Interest in an interview, availability.
+5. Sign-off: "Mit freundlichen Grüßen" (formal) or "Viele Grüße" (modern/creative)
+6. Name: {closing_name}
+{f"7. Sender line: {sender_line}" if sender_line else ""}
 
-## POSITION KORREKT EXTRAHIEREN:
-- Lies die EXAKTE Positionsbezeichnung aus der Stellenanzeige
-- Verwende den genauen Titel, nicht eine vereinfachte Version
+## OPENING VARIATION
+Do NOT start with:
+- "habe ich auf eurer Website entdeckt/gestoßen"
+- "Die Möglichkeit bei..." / "Die Aussicht bei..."
+- "was mich reizt/besonders anspricht"
+Instead pick ONE: a company detail, a matching CV experience, a tech observation, or a personal moment.
 
-## STRUKTUR DES ANSCHREIBENS:
+## RULES
+- 250-400 words, 3-5 paragraphs (plus greeting and sign-off){length_note}
+- Separate paragraphs with a blank line
+- Use the EXACT job title from the posting, not a simplified version
+- FORBIDDEN characters: "–" (en-dash), "—" (em-dash), "-" as punctuation (OK in compound words like "Full-Stack")
 
-1. **Anrede**: "{ansprechpartner}," (genau so übernehmen)
-2. **Eröffnungsabsatz** (2-3 Sätze): Warum diese Stelle bei dieser Firma, wie gefunden, konkreter Bezug
-3. **Hauptteil** (4-6 Sätze): Relevante Erfahrungen aus dem CV, konkret auf Anforderungen bezogen
-4. **Optional Absatz 3** (2-3 Sätze): Ergänzende Stärken oder Arbeitszeugnis-Referenz (nur wenn relevant)
-5. **Schluss** (1-2 Sätze): Interesse an einem Gespräch, Verfügbarkeit
-6. **Grußformel**: "Mit freundlichen Grüßen" (bei formal) oder "Viele Grüße" (bei modern/kreativ)
-7. **Name**: Vollständiger Name des Bewerbers{name_for_closing}
+### FORBIDDEN PHRASES (never use these or similar):
+{forbidden_block}
 
-### EINSTIEG VARIIEREN:
-- Beginne NICHT mit diesen Mustern:
-  - "habe ich auf eurer Website entdeckt/gestoßen"
-  - "Die Möglichkeit bei..." / "Die Aussicht bei..."
-  - "was mich (an [Firma]) reizt/besonders anspricht"
-- Starte stattdessen mit EINER dieser Varianten (wechsle ab):
-  - Ein konkretes Detail über die Firma oder ihr Produkt, das dich anspricht
-  - Eine spezifische eigene Erfahrung, die direkt zur Stelle passt
-  - Eine Beobachtung über die Branche oder Technologie der Firma
-  - Ein persönlicher Moment, der dein Interesse an der Stelle erklärt
-- Wähle die RELEVANTESTE CV-Erfahrung als erstes, nicht immer chronologisch
-
-## REGELN:
-
-### Länge:
-- 250-400 Wörter, 3-5 Absätze (plus Anrede und Grußformel)
-- Absätze durch eine Leerzeile trennen{length_guidance}
-
-{VERBOTENE_ZEICHEN_BLOCK}
-
-### VERBOTENE PHRASEN (NIEMALS verwenden):
-{FORBIDDEN_PHRASES_BLOCK}
-
-### Ton & Authentizität:
+## AUTHENTICITY
 - {persona}
-- NICHT wie ein Sprachmodell das "professionelle Bewerbungstexte" generiert
-- Echte Menschen schreiben unperfekt: Mal ein kurzer Satz, mal ein längerer
-- Variiere den Satzanfang (nicht jeder Satz mit "Ich" oder "Mit meiner")
-- Sei konkret. Nenne ein echtes Projekt, ein echtes Tool, eine echte Situation
+- Vary sentence length. Mix short and long. Not every sentence starts with "Ich".
+- Be specific: name a real project, tool, or situation from the CV.
+- No smooth AI transitions. No abstract summaries. Write like a human, not a language model.
 
-### AI-TYPISCHE MUSTER (VERMEIDE):
-- Immer gleiche Satzstruktur
-- Glatte Übergänge die zu perfekt klingen
-- Abstrakte Zusammenfassungen
-- Alles wirkt wie ein logischer Beweis statt wie ein persönlicher Text
-
-### ARBEITSZEUGNIS:
-- Nur erwähnen wenn relevant für die Stelle
-- Als eigene Erfahrung formulieren, NICHT als Zitat
-
-## AUSGABE:
-Schreibe NUR das Anschreiben. Keine Erklärung, kein "Hier ist...", kein Markdown.
-Beginne direkt mit der Anrede. Ende mit dem Namen nach der Grußformel.
-Jeder Absatz wird durch eine Leerzeile getrennt."""
+## OUTPUT
+Write ONLY the cover letter in German. No explanation, no "Hier ist...", no markdown.
+Start with the greeting. End with the name after the sign-off.
+Separate paragraphs with blank lines."""
