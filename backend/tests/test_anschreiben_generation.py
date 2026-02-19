@@ -300,7 +300,6 @@ class TestDemoGeneratorNoTemplate:
         gen = DemoGenerator()
         result = gen.generate_demo("https://example.com/job", "CV text")
 
-        # Verify generate_anschreiben was called (not generate_einleitung)
         mock_api.generate_anschreiben.assert_called_once()
         assert "anschreiben" in result
         assert result["anschreiben"] == (

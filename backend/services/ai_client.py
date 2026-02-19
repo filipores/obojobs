@@ -9,7 +9,6 @@ from config import config
 from services.prompts import (
     FORBIDDEN_PHRASES,
     build_anschreiben_system_prompt,
-    build_einleitung_system_prompt,
     create_details_extraction_prompt,
     create_extraction_prompt,
 )
@@ -106,53 +105,6 @@ class AIClient:
         except Exception as e:
             raise Exception(f"Informationsextraktion fehlgeschlagen: {e!s}") from e
 
-    def generate_einleitung(
-        self,
-        cv_text: str,
-        stellenanzeige_text: str,
-        firma_name: str | None = None,
-        zeugnis_text: str | None = None,
-        details: dict[str, str] | None = None,
-        use_extraction: bool = True,
-        bewerber_vorname: str | None = None,
-        user_skills: list | None = None,
-    ) -> str | None:
-        if details and details.get("stellenanzeige_kompakt"):
-            stellenanzeige_text = details["stellenanzeige_kompakt"]
-        elif use_extraction:
-            logger.info("Extrahiere Kerninformationen aus Stellenanzeige...")
-            stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
-            logger.info("Extraktion abgeschlossen (%d Zeichen)", len(stellenanzeige_text))
-
-        position = details.get("position", "Softwareentwickler") if details else "Softwareentwickler"
-        quelle = details.get("quelle", "eure Website") if details else "eure Website"
-
-        system_prompt = build_einleitung_system_prompt(cv_text, position, quelle, bewerber_vorname, user_skills)
-
-        if zeugnis_text:
-            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}"
-
-        firma_info = f" (Firma: {firma_name})" if firma_name else ""
-        user_prompt = f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
-{stellenanzeige_text[:2000]}
-
-Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Lebenslauf und der Stellenanzeige:"""
-
-        try:
-            einleitung = self._call_api_with_retry(
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
-                max_tokens=self.max_tokens,
-                temperature=self.temperature,
-            )
-            if einleitung.startswith('"') and einleitung.endswith('"'):
-                einleitung = einleitung[1:-1]
-            return einleitung
-        except Exception as e:
-            raise Exception(f"Qwen API Fehler: {e!s}") from e
-
     def _prepare_anschreiben_messages(
         self,
         cv_text: str,
@@ -218,9 +170,6 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         user_city: str | None = None,
     ) -> str | None:
         """Generate a complete cover letter body (greeting through closing).
-
-        Unlike generate_einleitung() which only produces an intro paragraph,
-        this generates the full letter body for direct use in PDF generation.
 
         API-level retries are handled by _call_api_with_retry. Forbidden phrases
         are removed via post-processing instead of re-generation.
