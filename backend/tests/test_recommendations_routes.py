@@ -34,24 +34,24 @@ class TestGetRecommendations:
         mock = mock_cls.return_value
         rec = MagicMock()
         rec.to_dict.return_value = {"id": 1, "fit_score": 80}
-        mock.get_recommendations.return_value = [rec]
+        mock.get_recommendations.return_value = ([rec], 1)
         assert client.get("/api/recommendations", headers=auth_headers).get_json()["total"] == 1
 
     @patch("routes.recommendations.JobRecommender")
     def test_respects_limit(self, mock_cls, client, auth_headers):
-        mock_cls.return_value.get_recommendations.return_value = []
+        mock_cls.return_value.get_recommendations.return_value = ([], 0)
         client.get("/api/recommendations?limit=5", headers=auth_headers)
         assert mock_cls.return_value.get_recommendations.call_args.kwargs["limit"] == 5
 
     @patch("routes.recommendations.JobRecommender")
     def test_invalid_limit_uses_default(self, mock_cls, client, auth_headers):
-        mock_cls.return_value.get_recommendations.return_value = []
+        mock_cls.return_value.get_recommendations.return_value = ([], 0)
         client.get("/api/recommendations?limit=abc", headers=auth_headers)
         assert mock_cls.return_value.get_recommendations.call_args.kwargs["limit"] == 20
 
     @patch("routes.recommendations.JobRecommender")
     def test_include_dismissed(self, mock_cls, client, auth_headers):
-        mock_cls.return_value.get_recommendations.return_value = []
+        mock_cls.return_value.get_recommendations.return_value = ([], 0)
         client.get("/api/recommendations?include_dismissed=true", headers=auth_headers)
         assert mock_cls.return_value.get_recommendations.call_args.kwargs["include_dismissed"] is True
 

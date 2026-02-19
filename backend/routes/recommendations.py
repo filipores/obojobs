@@ -13,25 +13,36 @@ from services.job_recommender import JobRecommender
 bp = Blueprint("recommendations", __name__)
 
 
+def _parse_int(value: Any, default: int, *, min_val: int | None = None, max_val: int | None = None) -> int:
+    """Parse a value as int with bounds, falling back to default on invalid input."""
+    try:
+        result = int(value) if value is not None else default
+    except (ValueError, TypeError):
+        return default
+    if min_val is not None:
+        result = max(min_val, result)
+    if max_val is not None:
+        result = min(max_val, result)
+    return result
+
+
 @bp.route("/recommendations", methods=["GET"])
 @jwt_required_custom
 def get_recommendations(current_user: Any) -> Response:
     """Get job recommendations for the current user."""
     include_dismissed = request.args.get("include_dismissed", "false").lower() == "true"
-    try:
-        limit = min(int(request.args.get("limit", 20)), 50)
-    except ValueError:
-        limit = 20
+    limit = _parse_int(request.args.get("limit"), 20, max_val=50)
+    offset = _parse_int(request.args.get("offset"), 0, min_val=0)
 
     recommender = JobRecommender()
-    recommendations = recommender.get_recommendations(
-        user_id=current_user.id, include_dismissed=include_dismissed, limit=limit
+    recommendations, total = recommender.get_recommendations(
+        user_id=current_user.id, include_dismissed=include_dismissed, limit=limit, offset=offset
     )
 
     return jsonify(
         {
             "recommendations": [r.to_dict() for r in recommendations],
-            "total": len(recommendations),
+            "total": total,
         }
     )
 
@@ -125,14 +136,8 @@ def search_jobs(current_user: Any) -> Response:
     location = data.get("location", "")
     working_time = data.get("working_time", "")
     keywords = data.get("keywords", "")
-    try:
-        max_results = min(int(data.get("max_results", 10)), 25)
-    except (ValueError, TypeError):
-        max_results = 10
-    try:
-        page = max(1, int(data.get("page", 1)))
-    except (ValueError, TypeError):
-        page = 1
+    max_results = _parse_int(data.get("max_results"), 10, max_val=25)
+    page = _parse_int(data.get("page"), 1, min_val=1)
 
     recommender = JobRecommender()
     result = recommender.search_and_score_jobs(

@@ -10,6 +10,14 @@ const WORK_TYPE_MAP = {
   remote: 'ho',
 }
 
+const SOURCE_LABELS = {
+  indeed: 'Indeed',
+  stepstone: 'StepStone',
+  xing: 'XING',
+  arbeitsagentur: 'Arbeitsagentur',
+  generic: 'Web',
+}
+
 /**
  * Streams a cover letter generation via SSE from the backend.
  * Returns the complete event payload on success, or throws on error.
@@ -65,20 +73,24 @@ async function streamGeneration(payload, onProgress) {
   }
 }
 
-export function useJobRecommendations() {
-  const suggestions = ref([])
-  const stats = ref(null)
-  const loading = ref(false)
-  const loadingMore = ref(false)
-  const hasMore = ref(false)
-  const filters = ref({
-    location: '',
-    workType: ''
-  })
-  const hasSkills = ref(true)
-  const page = ref(1)
-  const perPage = 12
+// Shared state (module-level singleton)
+const suggestions = ref([])
+const stats = ref(null)
+const loading = ref(false)
+const loadingMore = ref(false)
+const hasMore = ref(false)
+const filters = ref({
+  location: '',
+  workType: ''
+})
+const hasSkills = ref(true)
+const page = ref(1)
+const perPage = 12
+const generatingIds = ref(new Set())
+const searching = ref(false)
+const error = ref(null)
 
+export function useJobRecommendations() {
   const filteredSuggestions = computed(() => {
     let result = suggestions.value
     if (filters.value.location) {
@@ -96,11 +108,15 @@ export function useJobRecommendations() {
     return result
   })
 
-  const loadSuggestions = async () => {
+  function addDefaultModel(recommendations) {
+    return (recommendations || []).map(r => ({ ...r, model: r.model || DEFAULT_MODEL }))
+  }
+
+  async function loadSuggestions() {
     loading.value = true
+    error.value = null
     page.value = 1
     try {
-      // Check if user has skills
       const skillsRes = await api.silent.get('/users/me/skills')
       const userSkills = skillsRes.data.skills || []
       if (userSkills.length === 0) {
@@ -111,78 +127,76 @@ export function useJobRecommendations() {
       }
       hasSkills.value = true
 
-      const { data } = await api.silent.get('/recommendations', {
+      const { data } = await api.get('/recommendations', {
         params: { limit: perPage }
       })
-      suggestions.value = (data.recommendations || []).map(r => ({ ...r, model: r.model || DEFAULT_MODEL }))
+      suggestions.value = addDefaultModel(data.recommendations)
       hasMore.value = suggestions.value.length >= perPage
-    } catch (error) {
-      console.error('Failed to load suggestions:', error)
+    } catch (err) {
+      error.value = err.message || 'Fehler beim Laden der Jobs'
+      console.error('Failed to load suggestions:', err)
     } finally {
       loading.value = false
     }
   }
 
-  const loadMore = async () => {
+  async function loadMore() {
     if (loadingMore.value || !hasMore.value) return
     loadingMore.value = true
-    page.value++
+    const offset = suggestions.value.length
     try {
       const { data } = await api.silent.get('/recommendations', {
-        params: { limit: perPage * page.value }
+        params: { limit: perPage, offset }
       })
-      const all = data.recommendations || []
-      if (all.length <= suggestions.value.length) {
-        hasMore.value = false
-      } else {
-        suggestions.value = all.map(r => ({ ...r, model: r.model || DEFAULT_MODEL }))
-        hasMore.value = all.length >= perPage * page.value
-      }
-    } catch (error) {
-      console.error('Failed to load more:', error)
+      const newItems = addDefaultModel(data.recommendations)
+      suggestions.value = [...suggestions.value, ...newItems]
+      hasMore.value = newItems.length >= perPage
+    } catch (err) {
+      console.error('Failed to load more:', err)
     } finally {
       loadingMore.value = false
     }
   }
 
-  const loadStats = async () => {
+  async function loadStats() {
     try {
       const { data } = await api.silent.get('/recommendations/stats')
       stats.value = data
-    } catch (error) {
-      console.error('Failed to load stats:', error)
+    } catch (err) {
+      console.error('Failed to load stats:', err)
     }
   }
 
-  const dismissSuggestion = async (id) => {
+  async function dismissSuggestion(id) {
     try {
       await api.post(`/recommendations/${id}/dismiss`)
       suggestions.value = suggestions.value.filter(r => r.id !== id)
       await loadStats()
-    } catch (error) {
-      console.error('Failed to dismiss:', error)
+    } catch (err) {
+      console.error('Failed to dismiss:', err)
     }
   }
 
-  const markAsApplied = async (id, applicationId) => {
+  async function markAsApplied(id, applicationId) {
     try {
       const body = applicationId ? { application_id: applicationId } : {}
       await api.post(`/recommendations/${id}/apply`, body)
-    } catch (error) {
-      console.error('Failed to mark as applied:', error)
+    } catch (err) {
+      console.error('Failed to mark as applied:', err)
     }
   }
 
-  const generatingIds = ref(new Set())
+  function isGenerating(id) {
+    return generatingIds.value.has(id)
+  }
 
-  const isGenerating = (id) => generatingIds.value.has(id)
-
-  const applyToJob = async (rec) => {
+  async function applyToJob(rec) {
     if (!rec.job_url || generatingIds.value.has(rec.id)) return
 
     generatingIds.value = new Set([...generatingIds.value, rec.id])
     const toastId = window.$toast?.('Stellenanzeige wird geladen...', 'info', 0)
-    const updateToast = (msg, type, opts) => {
+
+    function updateToast(msg, type, opts) {
       if (toastId != null && window.$toast?.update) {
         window.$toast.update(toastId, msg, type, opts)
       }
@@ -196,9 +210,9 @@ export function useJobRecommendations() {
           model: rec.model || DEFAULT_MODEL,
           company: rec.company_name || '',
           title: rec.job_title || '',
-          fit_score: rec.fit_score ?? undefined,
+          fit_score: rec.fit_score,
         },
-        (message) => updateToast(message)
+        updateToast
       )
 
       await markAsApplied(rec.id, result.application?.id)
@@ -221,17 +235,11 @@ export function useJobRecommendations() {
     }
   }
 
-  const SOURCE_LABELS = {
-    indeed: 'Indeed',
-    stepstone: 'StepStone',
-    xing: 'XING',
-    arbeitsagentur: 'Arbeitsagentur',
-    generic: 'Web',
+  function getSourceLabel(source) {
+    return SOURCE_LABELS[source] || source
   }
 
-  const getSourceLabel = (source) => SOURCE_LABELS[source] || source
-
-  const formatDate = (dateStr) => {
+  function formatDate(dateStr) {
     if (!dateStr) return ''
     return new Date(dateStr).toLocaleDateString(getFullLocale(), {
       day: '2-digit',
@@ -240,13 +248,11 @@ export function useJobRecommendations() {
     })
   }
 
-  const openJobUrl = (url) => {
+  function openJobUrl(url) {
     window.open(url, '_blank')
   }
 
-  const searching = ref(false)
-
-  const searchJobs = async ({ location, workType, keywords } = {}) => {
+  async function searchJobs({ location, workType, keywords } = {}) {
     searching.value = true
     try {
       const body = {}
@@ -256,8 +262,8 @@ export function useJobRecommendations() {
       await api.post('/recommendations/search', body)
       await loadSuggestions()
       await loadStats()
-    } catch (error) {
-      console.error('Failed to search jobs:', error)
+    } catch (err) {
+      console.error('Failed to search jobs:', err)
     } finally {
       searching.value = false
     }
@@ -273,6 +279,7 @@ export function useJobRecommendations() {
     filters,
     hasSkills,
     searching,
+    error,
     loadSuggestions,
     loadMore,
     loadStats,

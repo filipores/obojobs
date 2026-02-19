@@ -64,6 +64,25 @@ class JobRecommender:
 
         return keywords[:5]
 
+    def _search_deduplicated(self, search_keywords: list[str], **search_params) -> tuple[list, int]:
+        """Search Bundesagentur API per keyword and deduplicate results by refnr.
+
+        Returns (unique_jobs, total_found_across_searches).
+        """
+        seen_refnrs = set()
+        all_jobs = []
+        total = 0
+
+        for keyword in search_keywords[:5]:
+            jobs, found = self.ba_client.search_jobs(keywords=keyword, **search_params)
+            total += found
+            for job in jobs:
+                if job.refnr not in seen_refnrs:
+                    seen_refnrs.add(job.refnr)
+                    all_jobs.append(job)
+
+        return all_jobs, total
+
     def find_jobs_for_user(self, user_id: int, location: str = "Deutschland", max_results: int = 20) -> list[dict]:
         """Search for jobs matching user's skill profile via Bundesagentur API."""
         keywords = self.get_user_search_keywords(user_id)
@@ -71,19 +90,7 @@ class JobRecommender:
         if not keywords:
             return []
 
-        # Search per keyword individually (API uses AND logic)
-        seen_refnrs = set()
-        all_jobs = []
-        for keyword in keywords[:5]:
-            jobs, _ = self.ba_client.search_jobs(
-                keywords=keyword,
-                location=location,
-                size=max_results,
-            )
-            for job in jobs:
-                if job.refnr not in seen_refnrs:
-                    seen_refnrs.add(job.refnr)
-                    all_jobs.append(job)
+        all_jobs, _ = self._search_deduplicated(keywords, location=location, size=max_results)
 
         results = []
         for job in all_jobs:
@@ -111,24 +118,13 @@ class JobRecommender:
         if not search_keywords:
             return {"results": [], "total_found": 0, "saved_count": 0, "page": page, "has_more": False}
 
-        # Search per keyword individually (API uses AND logic, combining keywords returns too few results)
-        seen_refnrs = set()
-        all_jobs = []
-        total = 0
-
-        for keyword in search_keywords[:5]:
-            jobs, found = self.ba_client.search_jobs(
-                keywords=keyword,
-                location=location,
-                working_time=working_time,
-                size=min(max_results, 25),
-                page=page,
-            )
-            total += found
-            for job in jobs:
-                if job.refnr not in seen_refnrs:
-                    seen_refnrs.add(job.refnr)
-                    all_jobs.append(job)
+        all_jobs, total = self._search_deduplicated(
+            search_keywords,
+            location=location,
+            working_time=working_time,
+            size=min(max_results, 25),
+            page=page,
+        )
 
         if keywords.strip():
             all_jobs = [job for job in all_jobs if self._is_relevant(job, search_keywords)]
@@ -310,19 +306,24 @@ class JobRecommender:
         return recommendation
 
     def get_recommendations(
-        self, user_id: int, include_dismissed: bool = False, limit: int = 20
-    ) -> list[JobRecommendation]:
-        """Get job recommendations for a user, sorted by fit score."""
+        self, user_id: int, include_dismissed: bool = False, limit: int = 20, offset: int = 0
+    ) -> tuple[list[JobRecommendation], int]:
+        """Get job recommendations for a user, sorted by fit score. Returns (recommendations, total_count)."""
         query = JobRecommendation.query.filter_by(user_id=user_id)
 
         if not include_dismissed:
             query = query.filter_by(dismissed=False)
 
-        return (
+        total = query.count()
+
+        recommendations = (
             query.order_by(JobRecommendation.fit_score.desc(), JobRecommendation.recommended_at.desc())
+            .offset(offset)
             .limit(limit)
             .all()
         )
+
+        return recommendations, total
 
     def dismiss_recommendation(self, recommendation_id: int, user_id: int) -> bool:
         """Dismiss a recommendation. Returns True on success."""
