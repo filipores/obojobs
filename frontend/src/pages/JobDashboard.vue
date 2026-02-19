@@ -471,6 +471,7 @@ onMounted(async () => {
   align-items: center;
   gap: var(--space-sm);
   margin-top: auto;
+  flex-wrap: wrap;
 }
 
 .action-btn {

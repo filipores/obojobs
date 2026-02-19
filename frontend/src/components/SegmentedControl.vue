@@ -7,6 +7,7 @@
       :class="{ active: modelValue === opt.value }"
       :aria-pressed="modelValue === opt.value"
       :disabled="disabled"
+      :title="opt.hint"
       @click="$emit('update:modelValue', opt.value)"
     >
       {{ opt.label }}

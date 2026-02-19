@@ -354,7 +354,8 @@ const portalClass = computed(() => {
 
 .card-settings {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  align-items: center;
   gap: var(--space-sm);
   margin-bottom: var(--space-sm);
 }
