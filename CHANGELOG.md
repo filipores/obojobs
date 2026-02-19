@@ -1,3 +1,10 @@
+## [1.63.3](https://github.com/filipores/obojobs/compare/v1.63.2...v1.63.3) (2026-02-19)
+
+
+### Bug Fixes
+
+* **ai:** update default greeting and restore kimi max_tokens to 12000 ([086d31b](https://github.com/filipores/obojobs/commit/086d31bd6bb704e45c3722f36112eed084678fe6))
+
 ## [1.63.2](https://github.com/filipores/obojobs/compare/v1.63.1...v1.63.2) (2026-02-19)
 
 
