@@ -1,3 +1,10 @@
+## [1.63.6](https://github.com/filipores/obojobs/compare/v1.63.5...v1.63.6) (2026-02-19)
+
+
+### Bug Fixes
+
+* **ui:** resolve job dashboard bugs and improve mobile layout ([f91f91d](https://github.com/filipores/obojobs/commit/f91f91d22b5a5b3b44e70f9b0d203e4dc5068f69))
+
 ## [1.63.5](https://github.com/filipores/obojobs/compare/v1.63.4...v1.63.5) (2026-02-19)
 
 
