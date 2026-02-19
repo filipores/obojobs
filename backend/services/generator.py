@@ -140,35 +140,45 @@ class BewerbungsGenerator:
 
         logger.info("Generiere Bewerbung fuer: %s", firma_name)
 
-        # Step 1: Load job posting
-        self._emit_progress(1, 7, "Stellenanzeige wird geladen...")
-        stellenanzeige_text = self._load_job_posting(stellenanzeige_path, user_details)
+        is_kimi = self.model == "kimi"
 
-        # Step 2: Extract details
-        self._emit_progress(2, 7, "Details werden extrahiert...")
-        details = self._extract_details(stellenanzeige_text, firma_name, user_details)
+        if is_kimi:
+            # Kimi: 4 consolidated steps (steps 1-2 and 4-7 are instant)
+            self._emit_progress(1, 4, "Stellenanzeige wird analysiert...")
+            stellenanzeige_text = self._load_job_posting(stellenanzeige_path, user_details)
+            details = self._extract_details(stellenanzeige_text, firma_name, user_details)
 
-        # Step 3: Generate cover letter body
-        if self.model == "kimi":
-            self._emit_progress(3, 7, "Kimi denkt nach...")
+            self._emit_progress(2, 4, "obo denkt nach...")
+            anschreiben_body = self._generate_letter_body(stellenanzeige_text, firma_name, details, tonalitaet)
+
+            self._emit_progress(3, 4, "Anschreiben wird finalisiert...")
+            anschreiben_vollstaendig = self._build_complete_letter(firma_name, details, anschreiben_body)
+            output_path = self._create_pdf(firma_name, anschreiben_vollstaendig, output_filename)
+            betreff, email_text = self._generate_email_data(firma_name, details)
+
+            self._emit_progress(4, 4, "Bewerbung wird gespeichert...")
         else:
+            # Qwen: 7 granular steps (each takes meaningful time)
+            self._emit_progress(1, 7, "Stellenanzeige wird geladen...")
+            stellenanzeige_text = self._load_job_posting(stellenanzeige_path, user_details)
+
+            self._emit_progress(2, 7, "Details werden extrahiert...")
+            details = self._extract_details(stellenanzeige_text, firma_name, user_details)
+
             self._emit_progress(3, 7, "Anschreiben wird generiert...")
-        anschreiben_body = self._generate_letter_body(stellenanzeige_text, firma_name, details, tonalitaet)
+            anschreiben_body = self._generate_letter_body(stellenanzeige_text, firma_name, details, tonalitaet)
 
-        # Step 4: Build complete letter with header
-        self._emit_progress(4, 7, "Anschreiben wird formatiert...")
-        anschreiben_vollstaendig = self._build_complete_letter(firma_name, details, anschreiben_body)
+            self._emit_progress(4, 7, "Anschreiben wird formatiert...")
+            anschreiben_vollstaendig = self._build_complete_letter(firma_name, details, anschreiben_body)
 
-        # Step 5: Create PDF
-        self._emit_progress(5, 7, "PDF wird erstellt...")
-        output_path = self._create_pdf(firma_name, anschreiben_vollstaendig, output_filename)
+            self._emit_progress(5, 7, "PDF wird erstellt...")
+            output_path = self._create_pdf(firma_name, anschreiben_vollstaendig, output_filename)
 
-        # Step 6: Generate email data
-        self._emit_progress(6, 7, "E-Mail-Daten werden vorbereitet...")
-        betreff, email_text = self._generate_email_data(firma_name, details)
+            self._emit_progress(6, 7, "E-Mail-Daten werden vorbereitet...")
+            betreff, email_text = self._generate_email_data(firma_name, details)
 
-        # Step 7: Save to database
-        self._emit_progress(7, 7, "Bewerbung wird gespeichert...")
+            self._emit_progress(7, 7, "Bewerbung wird gespeichert...")
+
         job_url = stellenanzeige_path if is_url(stellenanzeige_path) else None
         self._save_application(
             firma_name,

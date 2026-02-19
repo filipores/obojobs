@@ -68,7 +68,7 @@
       </div>
       <pre v-if="job.model === 'kimi' && job.streamedContent" class="streamed-content" ref="streamedPre">{{ job.streamedContent }}</pre>
       <details v-if="job.model === 'kimi' && job.thinkingText" class="thinking-details">
-        <summary class="thinking-summary">Kimi denkt nach...</summary>
+        <summary class="thinking-summary">obo denkt nach...</summary>
         <pre class="thinking-content" ref="thinkingPre">{{ job.thinkingText }}</pre>
       </details>
     </template>
@@ -148,7 +148,7 @@ const emit = defineEmits([
 const thinkingPre = ref(null)
 const streamedPre = ref(null)
 
-// RAF-batched auto-scroll: scrolls an element to the bottom when watched data changes
+// RAF-batched auto-scroll: only scrolls if user is already near bottom (within 30px)
 function useAutoScroll(elementRef, watchSource) {
   let scheduled = false
   watch(watchSource, async () => {
@@ -156,8 +156,12 @@ function useAutoScroll(elementRef, watchSource) {
     scheduled = true
     await nextTick()
     window.requestAnimationFrame(() => {
-      if (elementRef.value) {
-        elementRef.value.scrollTop = elementRef.value.scrollHeight
+      const el = elementRef.value
+      if (el) {
+        const isNearBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 30
+        if (isNearBottom) {
+          el.scrollTop = el.scrollHeight
+        }
       }
       scheduled = false
     })
