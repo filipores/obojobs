@@ -1,3 +1,10 @@
+# [1.64.0](https://github.com/filipores/obojobs/compare/v1.63.7...v1.64.0) (2026-02-19)
+
+
+### Features
+
+* **ai:** improve job analysis depth and add quality self-check ([52b534c](https://github.com/filipores/obojobs/commit/52b534cf5a9e34de93098f66a2f641b0af4004c5))
+
 ## [1.63.7](https://github.com/filipores/obojobs/compare/v1.63.6...v1.63.7) (2026-02-19)
 
 
