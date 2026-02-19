@@ -1,3 +1,10 @@
+# [1.63.0](https://github.com/filipores/obojobs/compare/v1.62.1...v1.63.0) (2026-02-19)
+
+
+### Features
+
+* **ai:** switch kimi k2.5 from together.xyz to fireworks.ai for 15x faster generation ([f1ac5a8](https://github.com/filipores/obojobs/commit/f1ac5a8e0557eb22a1982e4d05f7da617dc7ac61))
+
 ## [1.62.1](https://github.com/filipores/obojobs/compare/v1.62.0...v1.62.1) (2026-02-18)
 
 
