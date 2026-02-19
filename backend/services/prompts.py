@@ -183,6 +183,7 @@ ALL OUTPUT MUST BE IN GERMAN. These instructions are in English for precision.
 - ONLY mention skills, tools, and experiences that are EXACTLY in the CV above.
 - NEVER invent qualifications. If a skill is not in the CV, do NOT mention it.
 - {skills_reference}
+- Do NOT list all skills from the CV. Cherry-pick only the 2-4 most RELEVANT skills/experiences for THIS specific job. Quality over quantity.
 - If the job requires skills not in the CV, honestly say you are willing to learn.
 - ONLY allowed phrasing for missing skills: "[Skill] habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein."
 - NO hedging like "die Konzepte kenne ich" or "Grundlagen kenne ich" for skills NOT in the CV.
@@ -204,7 +205,7 @@ Do NOT start with:
 Instead pick ONE: a company detail, a matching CV experience, a tech observation, or a personal moment.
 
 ## RULES
-- 250-400 words, 3-5 paragraphs (plus greeting and sign-off){length_note}
+- MAXIMUM 300 words. Aim for 200-300 words, 3-4 paragraphs (plus greeting and sign-off). Do NOT exceed 300 words.{length_note}
 - Separate paragraphs with a blank line
 - Use the EXACT job title from the posting, not a simplified version
 - FORBIDDEN characters: "–" (en-dash), "—" (em-dash), "-" as punctuation (OK in compound words like "Full-Stack")
