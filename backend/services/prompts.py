@@ -44,43 +44,6 @@ FORBIDDEN_PHRASES = [
     "Diese Erfahrung hat mich gelehrt",
 ]
 
-FORBIDDEN_PHRASES_BLOCK = "\n".join(f'- "{phrase}"' for phrase in FORBIDDEN_PHRASES)
-
-VERBOTENE_ZEICHEN_BLOCK = """### VERBOTENE ZEICHEN:
-- Das Zeichen "–" (Gedankenstrich/En-Dash) ist VERBOTEN
-- Das Zeichen "—" (Em-Dash) ist VERBOTEN
-- Das Zeichen "-" als Satzzeichen ist VERBOTEN (als Bindestrich in Wörtern wie "Full-Stack" ist es OK)
-- Verwende stattdessen Kommas, Punkte oder Semikolons"""
-
-
-def _build_skills_section(user_skills: list | None) -> str:
-    """Format user skills into a prompt line for skill references."""
-    if user_skills:
-        skills_list = ", ".join(skill.skill_name for skill in user_skills)
-        return f"- Die Skills im CV sind: {skills_list}"
-    return "- Lies die Skills direkt aus dem Lebenslauf"
-
-
-def _build_faktentreue_block(skills_section: str) -> str:
-    """Build the FAKTENTREUE (factual accuracy) rules block used in both prompts."""
-    return f"""## KRITISCHE REGEL — FAKTENTREUE:
-- Nenne NUR Skills, Tools und Erfahrungen die EXAKT im Lebenslauf stehen
-- ERFINDE KEINE Kenntnisse. Wenn ein Skill nicht im CV steht, erwähne ihn NICHT
-- Beispiele für VERBOTENE Erfindungen: React, Angular, Spring Boot, Python, C++, XSLT, Kubernetes — wenn es nicht im CV steht, NICHT verwenden
-{skills_section}
-- Wenn die Stelle Skills fordert die nicht im CV stehen: Sage ehrlich dass du dich einarbeiten willst, statt die Skills zu erfinden
-- Lieber eine ehrliche Lücke als eine erfundene Qualifikation
-- Sage NICHT dass du einen Skill "kennst" oder "erste Erfahrung hast" wenn er NICHT im CV steht. Verbotene Formulierungen:
-  - "Konzepte verstehst" / "die Konzepte kenne ich aus"
-  - "Grundlagen kenne ich" / "in kleinen Projekten genutzt"
-  - "aus der Praxis vertraut"
-  - "die Arbeit mit X ist mir nicht fremd"
-  - "ich verstehe wie X funktioniert"
-- Einzige erlaubte Formulierung für fehlende Skills:
-  "[Skill] habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein."
-  KEINE andere Formulierung, KEIN Relativieren, KEIN "aber die Konzepte kenne ich"
-- KEINE Pflegeerfahrung, Laborerfahrung oder andere fachfremde Erfahrung erfinden"""
-
 
 def create_details_extraction_prompt(stellenanzeige_text: str, firma_name: str) -> str:
     return f"""Extrahiere folgende Informationen aus dieser Stellenanzeige für eine Bewerbung bei {firma_name}.
