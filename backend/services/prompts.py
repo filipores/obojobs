@@ -72,20 +72,25 @@ Extrahiere jetzt die Informationen als JSON:"""
 
 
 def create_extraction_prompt(stellenanzeige_text: str) -> str:
-    return f"""Extrahiere die wichtigsten Informationen aus dieser Stellenanzeige. Fokussiere dich auf das Wesentliche.
+    return f"""Analyze this German job posting in depth. Go beyond the surface. Output in German.
 
-STELLENANZEIGE:
+JOB POSTING:
 {stellenanzeige_text}
 
-Extrahiere folgende Informationen in kompakter Form:
-1. Firmenname und Branche
-2. Position/Stellenbezeichnung (falls vorhanden)
-3. Kernaufgaben und Tätigkeitsbereich (max. 3-4 Punkte)
-4. Wichtigste Anforderungen/Skills (max. 3-4)
-5. Besonderheiten des Unternehmens (Kultur, Arbeitsweise, Projekte)
+Extract the following in compact form:
 
-WICHTIG: Fasse dich sehr kurz. Keine langen Beschreibungen. Nur die Kernfakten.
-Schreibe die Extraktion in Stichpunkten oder kurzen Sätzen:"""
+1. FACTS: Company name, industry, position (max 2 lines)
+
+2. WHAT THEY REALLY NEED: What are the 2-3 most important requirements? Not the buzzword list — what actually matters most to them. Read between the lines.
+
+3. PAIN POINTS: What problems or challenges are hinted at in the text? (e.g. "fast-growing team" = they urgently need people, "independent work" = little structure/onboarding, "modernization" = legacy code)
+
+4. COMPANY CULTURE: What tone comes through? (startup vs. corporate, casual vs. formal, remote vs. on-site, flat vs. hierarchical). Back up with specific phrases from the posting.
+
+5. CORE TASKS: The 3-4 most important responsibilities (not the full list, only what truly counts).
+
+IMPORTANT: Keep it short. Bullet points or brief sentences. No long descriptions.
+Be analytical, not descriptive. "They need someone who can X" not "The role involves X"."""
 
 
 def _build_persona(user_skills: list | None, position: str) -> str:
@@ -218,6 +223,15 @@ Instead pick ONE: a company detail, a matching CV experience, a tech observation
 - Vary sentence length. Mix short and long. Not every sentence starts with "Ich".
 - Be specific: name a real project, tool, or situation from the CV.
 - No smooth AI transitions. No abstract summaries. Write like a human, not a language model.
+
+## SELF-CHECK (verify BEFORE outputting)
+Before writing your final output, mentally verify all 6 points:
+1. FLOSKEL-CHECK: Read each sentence. Could it appear in ANY random application? If yes, rewrite it.
+2. SPECIFICITY-CHECK: Does the text contain at least 3 concrete details (projects, tools, numbers, results) from the CV?
+3. READ-ALOUD-CHECK: Would this sound natural spoken aloud? Or does it sound stiff and formulaic?
+4. ICH-CHECK: Do more than 1 in 3 sentences start with "Ich"? If yes, rephrase some.
+5. UNIQUENESS-CHECK: Is it obvious this letter was written for THIS specific company and role? Could it be sent to a different company unchanged? If yes, make it more specific.
+6. UMLAUT-CHECK: All German umlauts (ä, ö, ü, ß) must be correct. Never use ae/oe/ue/ss substitutes.
 
 ## OUTPUT
 Write ONLY the cover letter in German. No explanation, no "Hier ist...", no markdown.
