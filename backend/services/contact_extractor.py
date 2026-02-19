@@ -381,7 +381,7 @@ Antworte NUR als JSON-Objekt mit diesen Keys:
         """
         if not contact_person:
             if company_name:
-                return f"Moin Moin liebes {company_name} Team"
+                return f"Hey liebes {company_name} Team"
             return "Sehr geehrte Damen und Herren"
 
         contact_lower = contact_person.lower()

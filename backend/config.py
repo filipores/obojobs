@@ -55,7 +55,7 @@ class Config:
     FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
     KIMI_API_BASE = os.getenv("KIMI_API_BASE", "https://api.fireworks.ai/inference/v1")
     KIMI_MODEL = os.getenv("KIMI_MODEL", "accounts/fireworks/models/kimi-k2p5")
-    KIMI_MAX_TOKENS = int(os.getenv("KIMI_MAX_TOKENS", "2000"))
+    KIMI_MAX_TOKENS = int(os.getenv("KIMI_MAX_TOKENS", "12000"))
     KIMI_TEMPERATURE = float(os.getenv("KIMI_TEMPERATURE", "1.0"))
     KIMI_THINKING_BUDGET = int(os.getenv("KIMI_THINKING_BUDGET", "4096"))
 
