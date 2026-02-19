@@ -1,3 +1,10 @@
+## [1.63.2](https://github.com/filipores/obojobs/compare/v1.63.1...v1.63.2) (2026-02-19)
+
+
+### Bug Fixes
+
+* **ai:** enforce 300-word max and selective skill mentions in prompt ([c06ad8e](https://github.com/filipores/obojobs/commit/c06ad8e91b578ba4a3b94d8099898d474f8856b6))
+
 ## [1.63.1](https://github.com/filipores/obojobs/compare/v1.63.0...v1.63.1) (2026-02-19)
 
 
