@@ -1,3 +1,10 @@
+## [1.63.7](https://github.com/filipores/obojobs/compare/v1.63.6...v1.63.7) (2026-02-19)
+
+
+### Bug Fixes
+
+* **ui:** resolve 14 bugs and improvements from ui audit ([6a97f54](https://github.com/filipores/obojobs/commit/6a97f5441c7b297d731bd0b65244b24f1e82e3d1))
+
 ## [1.63.6](https://github.com/filipores/obojobs/compare/v1.63.5...v1.63.6) (2026-02-19)
 
 
