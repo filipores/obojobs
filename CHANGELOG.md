@@ -1,3 +1,11 @@
+## [1.63.5](https://github.com/filipores/obojobs/compare/v1.63.4...v1.63.5) (2026-02-19)
+
+
+### Bug Fixes
+
+* **jobs:** shared state, pagination, error handling for job recommendations ([2620218](https://github.com/filipores/obojobs/commit/2620218379cdddb763690e3799d1c8bf59a983c6))
+* **ux:** improve kimi progress steps, rebrand to obo, fix auto-scroll ([5d85110](https://github.com/filipores/obojobs/commit/5d851103faefeaed04632dcf2a1dffa581fbdda0))
+
 ## [1.63.4](https://github.com/filipores/obojobs/compare/v1.63.3...v1.63.4) (2026-02-19)
 
 
