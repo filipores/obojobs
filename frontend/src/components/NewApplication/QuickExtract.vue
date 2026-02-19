@@ -25,11 +25,12 @@
       <!-- Tone Selection -->
       <div class="form-group tone-selection">
         <label class="form-label">Anschreiben-Stil</label>
-        <select v-model="localTone" class="form-select" :disabled="generating">
-          <option value="modern">Modern (Empfohlen)</option>
-          <option value="formal">Formal</option>
-          <option value="kreativ">Kreativ</option>
-        </select>
+        <SegmentedControl
+          :modelValue="localTone"
+          @update:modelValue="localTone = $event"
+          :options="toneOptions"
+          :disabled="generating"
+        />
       </div>
 
       <!-- Quick Actions -->
@@ -73,7 +74,7 @@
       </p>
 
       <!-- Error Message -->
-      <div v-if="error" class="error-box" :class="{ 'error-with-action': isDocumentMissingError || isSubscriptionLimitError }">
+      <div v-if="error" class="error-box" :class="{ 'error-with-action': isDocMissing || isSubLimitError }">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <line x1="15" y1="9" x2="9" y2="15"/>
@@ -81,12 +82,12 @@
         </svg>
         <div class="error-content">
           <span>{{ error }}</span>
-          <div v-if="isDocumentMissingError" class="error-actions">
+          <div v-if="isDocMissing" class="error-actions">
             <router-link to="/documents" class="zen-btn zen-btn-sm">
               Zu den Dokumenten
             </router-link>
           </div>
-          <div v-if="isSubscriptionLimitError" class="error-actions">
+          <div v-if="isSubLimitError" class="error-actions">
             <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
               Abo upgraden
             </router-link>
@@ -99,6 +100,10 @@
 
 <script setup>
 import { computed } from 'vue'
+import SegmentedControl from '../SegmentedControl.vue'
+import { toneOptions } from '../../data/applicationOptions.js'
+import { isDocumentMissingError, isSubscriptionLimitError } from '../../utils/errorClassification.js'
+import { capitalize } from '../../utils/format.js'
 
 const props = defineProps({
   quickConfirmData: { type: Object, required: true },
@@ -117,26 +122,11 @@ const localTone = computed({
   set: (val) => emit('update:selectedTone', val)
 })
 
-const isDocumentMissingError = computed(() => {
-  if (!props.error) return false
-  const errorLower = props.error.toLowerCase()
-  return errorLower.includes('lebenslauf') ||
-         errorLower.includes('resume') ||
-         errorLower.includes('cv')
-})
+const isDocMissing = computed(() => isDocumentMissingError(props.error))
+const isSubLimitError = computed(() => isSubscriptionLimitError(props.error))
 
-const isSubscriptionLimitError = computed(() => {
-  if (!props.error) return false
-  const errorLower = props.error.toLowerCase()
-  return errorLower.includes('limit') ||
-         errorLower.includes('subscription') ||
-         errorLower.includes('abonnement') ||
-         errorLower.includes('kontingent')
-})
-
-const getPlanLabel = () => {
-  const plan = props.usage?.plan || 'free'
-  return plan.charAt(0).toUpperCase() + plan.slice(1)
+function getPlanLabel() {
+  return capitalize(props.usage?.plan || 'free')
 }
 </script>
 

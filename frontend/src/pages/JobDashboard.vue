@@ -144,14 +144,13 @@
             </div>
 
             <div class="card-actions">
-              <select
+              <SegmentedControl
                 v-if="rec.job_url && !isGenerating(rec.id)"
-                v-model="rec.model"
-                class="model-select-sm"
-              >
-                <option value="qwen">Schnell</option>
-                <option value="kimi">Schlau</option>
-              </select>
+                :modelValue="rec.model"
+                @update:modelValue="rec.model = $event"
+                :options="modelOptions"
+                size="sm"
+              />
               <button
                 v-if="rec.job_url"
                 @click="applyToJob(rec)"
@@ -220,7 +219,9 @@
 
 <script setup>
 import { onMounted } from 'vue'
-import { useJobRecommendations } from '../composables/useJobRecommendations'
+import { useJobRecommendations } from '../composables/useJobRecommendations.js'
+import SegmentedControl from '../components/SegmentedControl.vue'
+import { modelOptions } from '../data/applicationOptions.js'
 
 const {
   filteredSuggestions,
@@ -243,7 +244,7 @@ const {
   openJobUrl
 } = useJobRecommendations()
 
-const refresh = async () => {
+async function refresh() {
   await searchJobs({
     location: filters.value.location,
     workType: filters.value.workType,
@@ -470,21 +471,6 @@ onMounted(async () => {
   align-items: center;
   gap: var(--space-sm);
   margin-top: auto;
-}
-
-.model-select-sm {
-  padding: var(--space-xs) var(--space-sm);
-  font-size: 0.8125rem;
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-elevated);
-  color: var(--color-sumi);
-  cursor: pointer;
-}
-
-.model-select-sm:focus {
-  border-color: var(--color-ai);
-  outline: none;
 }
 
 .action-btn {

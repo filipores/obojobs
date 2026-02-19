@@ -41,28 +41,21 @@
     <template v-else-if="job.status === 'extracted'">
       <h3 class="card-company">{{ job.quickData?.company }}</h3>
       <p class="card-position">{{ job.quickData?.title }}</p>
-      <div class="card-actions-row">
-        <select
-          class="model-select"
-          :value="job.model"
-          @change="emit('update:model', $event.target.value)"
-        >
-          <option value="qwen">Schnell</option>
-          <option value="kimi">Schlau</option>
-        </select>
-        <select
-          class="tone-select"
-          :value="job.tone"
-          @change="emit('update:tone', $event.target.value)"
-        >
-          <option value="modern">Modern (Empfohlen)</option>
-          <option value="formal">Formal</option>
-          <option value="kreativ">Kreativ</option>
-        </select>
-        <button class="zen-btn zen-btn-ai" @click="emit('generate')">
-          Bewerbung generieren
-        </button>
+      <div class="card-settings">
+        <SegmentedControl
+          :modelValue="job.model"
+          @update:modelValue="emit('update:model', $event)"
+          :options="modelOptions"
+        />
+        <SegmentedControl
+          :modelValue="job.tone"
+          @update:modelValue="emit('update:tone', $event)"
+          :options="toneOptions"
+        />
       </div>
+      <button class="zen-btn zen-btn-ai" @click="emit('generate')">
+        Bewerbung generieren
+      </button>
     </template>
 
     <!-- GENERATING STATE -->
@@ -125,6 +118,8 @@
 
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
+import SegmentedControl from '../SegmentedControl.vue'
+import { modelOptions, toneOptions } from '../../data/applicationOptions.js'
 
 const props = defineProps({
   job: {
@@ -186,14 +181,12 @@ const einleitungPreview = computed(() => {
   return text.substring(0, 150) + '...'
 })
 
+const PORTAL_CLASSES = ['stepstone', 'indeed', 'xing', 'arbeitsagentur']
+
 const portalClass = computed(() => {
-  const portal = props.job.quickData?.portal_id || props.job.quickData?.portal || ''
-  const key = portal.toLowerCase()
-  if (key.includes('stepstone')) return 'portal-stepstone'
-  if (key.includes('indeed')) return 'portal-indeed'
-  if (key.includes('xing')) return 'portal-xing'
-  if (key.includes('arbeitsagentur')) return 'portal-arbeitsagentur'
-  return 'portal-generic'
+  const portal = (props.job.quickData?.portal_id || props.job.quickData?.portal || '').toLowerCase()
+  const match = PORTAL_CLASSES.find((name) => portal.includes(name))
+  return match ? `portal-${match}` : 'portal-generic'
 })
 </script>
 
@@ -359,38 +352,11 @@ const portalClass = computed(() => {
   margin: 0 0 var(--space-md);
 }
 
-.card-actions-row {
+.card-settings {
   display: flex;
-  align-items: center;
+  flex-direction: column;
   gap: var(--space-sm);
-}
-
-.model-select,
-.tone-select {
-  appearance: none;
-  background: var(--color-washi);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  padding: var(--space-xs) var(--space-lg) var(--space-xs) var(--space-sm);
-  font-size: 0.875rem;
-  color: var(--color-sumi);
-  cursor: pointer;
-  transition: var(--transition-base);
-  background-image: url("data:image/svg+xml,%3Csvg width='10' height='6' viewBox='0 0 10 6' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1L5 5L9 1' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right var(--space-sm) center;
-}
-
-.model-select:hover,
-.tone-select:hover {
-  border-color: var(--color-ai, hsl(217, 91%, 60%));
-}
-
-.model-select:focus,
-.tone-select:focus {
-  outline: none;
-  border-color: var(--color-ai, hsl(217, 91%, 60%));
-  box-shadow: 0 0 0 2px hsla(217, 91%, 60%, 0.15);
+  margin-bottom: var(--space-sm);
 }
 
 /* Thinking display */
@@ -522,16 +488,6 @@ const portalClass = computed(() => {
 
   .card-action-buttons .zen-btn {
     justify-content: center;
-    width: 100%;
-  }
-
-  .card-actions-row {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .model-select,
-  .tone-select {
     width: 100%;
   }
 

@@ -41,7 +41,7 @@
             <input
               id="preview-company"
               :value="editableData.company"
-              @input="$emit('update:editableData', { ...editableData, company: $event.target.value })"
+              @input="updateField('company', $event.target.value)"
               type="text"
               class="form-input"
               :class="{ 'field-warning': !editableData.company }"
@@ -55,7 +55,7 @@
             <input
               id="preview-title"
               :value="editableData.title"
-              @input="$emit('update:editableData', { ...editableData, title: $event.target.value })"
+              @input="updateField('title', $event.target.value)"
               type="text"
               class="form-input"
               :class="{ 'field-warning': !editableData.title }"
@@ -73,7 +73,7 @@
             <input
               id="location-input"
               :value="editableData.location"
-              @input="$emit('update:editableData', { ...editableData, location: $event.target.value })"
+              @input="updateField('location', $event.target.value)"
               type="text"
               class="form-input"
               placeholder="z.B. Berlin, Hamburg"
@@ -84,7 +84,7 @@
             <input
               id="employment-type-input"
               :value="editableData.employment_type"
-              @input="$emit('update:editableData', { ...editableData, employment_type: $event.target.value })"
+              @input="updateField('employment_type', $event.target.value)"
               type="text"
               class="form-input"
               placeholder="z.B. Vollzeit, Teilzeit"
@@ -99,7 +99,7 @@
             <input
               id="contact-person-input"
               :value="editableData.contact_person"
-              @input="$emit('update:editableData', { ...editableData, contact_person: $event.target.value })"
+              @input="updateField('contact_person', $event.target.value)"
               type="text"
               class="form-input"
               placeholder="Name des Ansprechpartners"
@@ -110,7 +110,7 @@
             <input
               id="contact-email-input"
               :value="editableData.contact_email"
-              @input="$emit('update:editableData', { ...editableData, contact_email: $event.target.value })"
+              @input="updateField('contact_email', $event.target.value)"
               type="email"
               class="form-input"
               placeholder="email@firma.de"
@@ -124,7 +124,7 @@
           <input
             id="salary-input"
             :value="editableData.salary"
-            @input="$emit('update:editableData', { ...editableData, salary: $event.target.value })"
+            @input="updateField('salary', $event.target.value)"
             type="text"
             class="form-input"
             placeholder="Gehaltsangabe"
@@ -161,7 +161,7 @@
           <div v-show="showDescription" id="description-content" class="description-content">
             <textarea
               :value="editableData.description"
-              @input="$emit('update:editableData', { ...editableData, description: $event.target.value })"
+              @input="updateField('description', $event.target.value)"
               class="form-textarea"
               rows="8"
               placeholder="Stellenbeschreibung..."
@@ -174,11 +174,12 @@
       <!-- Tone Selection -->
       <div class="form-group tone-selection">
         <label class="form-label">Anschreiben-Stil</label>
-        <select :value="selectedTone" @change="$emit('update:selectedTone', $event.target.value)" class="form-select" :disabled="generating">
-          <option value="modern">Modern (Empfohlen)</option>
-          <option value="formal">Formal</option>
-          <option value="kreativ">Kreativ</option>
-        </select>
+        <SegmentedControl
+          :modelValue="selectedTone"
+          @update:modelValue="$emit('update:selectedTone', $event)"
+          :options="toneOptions"
+          :disabled="generating"
+        />
       </div>
 
       <!-- Generate Button -->
@@ -210,7 +211,7 @@
       </div>
 
       <!-- Error Message -->
-      <div v-if="error" class="error-box" :class="{ 'error-with-action': isDocumentMissingError || isSubscriptionLimitError }">
+      <div v-if="error" class="error-box" :class="{ 'error-with-action': isDocMissing || isSubLimitError }">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="10"/>
           <line x1="15" y1="9" x2="9" y2="15"/>
@@ -218,7 +219,7 @@
         </svg>
         <div class="error-content">
           <span>{{ error }}</span>
-          <div v-if="isDocumentMissingError" class="error-actions">
+          <div v-if="isDocMissing" class="error-actions">
             <router-link to="/documents" class="zen-btn zen-btn-sm">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
@@ -230,7 +231,7 @@
               Zu den Dokumenten
             </router-link>
           </div>
-          <div v-if="isSubscriptionLimitError" class="error-actions">
+          <div v-if="isSubLimitError" class="error-actions">
             <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/>
@@ -248,6 +249,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import SegmentedControl from '../SegmentedControl.vue'
+import { toneOptions } from '../../data/applicationOptions.js'
+import { isDocumentMissingError, isSubscriptionLimitError } from '../../utils/errorClassification.js'
+import { capitalize } from '../../utils/format.js'
 
 const props = defineProps({
   previewData: { type: Object, required: true },
@@ -260,30 +265,19 @@ const props = defineProps({
   error: { type: String, default: '' }
 })
 
-defineEmits(['reset', 'generate', 'update:editableData', 'update:selectedTone'])
+const emit = defineEmits(['reset', 'generate', 'update:editableData', 'update:selectedTone'])
 
 const showDescription = ref(false)
 
-const isDocumentMissingError = computed(() => {
-  if (!props.error) return false
-  const errorLower = props.error.toLowerCase()
-  return errorLower.includes('lebenslauf') ||
-         errorLower.includes('resume') ||
-         errorLower.includes('cv')
-})
+const isDocMissing = computed(() => isDocumentMissingError(props.error))
+const isSubLimitError = computed(() => isSubscriptionLimitError(props.error))
 
-const isSubscriptionLimitError = computed(() => {
-  if (!props.error) return false
-  const errorLower = props.error.toLowerCase()
-  return errorLower.includes('limit') ||
-         errorLower.includes('subscription') ||
-         errorLower.includes('abonnement') ||
-         errorLower.includes('kontingent')
-})
+function getPlanLabel() {
+  return capitalize(props.usage?.plan || 'free')
+}
 
-const getPlanLabel = () => {
-  const plan = props.usage?.plan || 'free'
-  return plan.charAt(0).toUpperCase() + plan.slice(1)
+function updateField(field, value) {
+  emit('update:editableData', { ...props.editableData, [field]: value })
 }
 </script>
 
