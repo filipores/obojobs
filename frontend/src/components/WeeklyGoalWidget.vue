@@ -143,7 +143,7 @@ const celebrationShownThisWeek = ref(false)
 
 const remaining = computed(() => Math.max(0, goal.value - completed.value))
 const extra = computed(() => Math.max(0, completed.value - goal.value))
-const cappedProgress = computed(() => Math.min(progress.value, 100))
+const cappedProgress = computed(() => Math.min(progress.value || 0, 100))
 
 // Get current week identifier (ISO week)
 const getCurrentWeekId = () => {

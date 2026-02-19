@@ -562,7 +562,7 @@
               </svg>
               <p class="testimonial-text">{{ $t('landing.testimonials.t2Quote') }}</p>
               <div class="testimonial-author">
-                <div class="testimonial-avatar">TK</div>
+                <div class="testimonial-avatar">LK</div>
                 <div>
                   <div class="testimonial-name">{{ $t('landing.testimonials.t2Name') }}</div>
                   <div class="testimonial-role">{{ $t('landing.testimonials.t2Role') }}</div>
@@ -626,7 +626,8 @@
             </div>
 
             <!-- Basic -->
-            <div class="pricing-card" data-reveal>
+            <div class="pricing-card pricing-card-featured" data-reveal>
+              <div class="pricing-badge">Beliebt</div>
               <div class="pricing-header">
                 <h3>Basic</h3>
                 <div class="pricing-price">
@@ -663,8 +664,7 @@
             </div>
 
             <!-- Pro -->
-            <div class="pricing-card pricing-card-featured" data-reveal>
-              <div class="pricing-badge">Beliebt</div>
+            <div class="pricing-card" data-reveal>
               <div class="pricing-header">
                 <h3>Pro</h3>
                 <div class="pricing-price">
@@ -788,7 +788,7 @@
               <h4>{{ $t('landing.footer.product') }}</h4>
               <a href="#features" @click.prevent="scrollToSection('features')">{{ $t('landing.footer.features') }}</a>
               <router-link to="/pricing">{{ $t('landing.footer.pricing') }}</router-link>
-              <a href="#" @click.prevent="scrollToTop">{{ $t('landing.footer.demo') }}</a>
+              <router-link to="/register">{{ $t('auth.register') }}</router-link>
             </div>
             <div class="footer-col">
               <h4>{{ $t('landing.footer.legal') }}</h4>
@@ -1608,6 +1608,8 @@ onMounted(() => {
   display: flex;
   align-items: center;
   gap: var(--space-sm);
+  flex-wrap: wrap;
+  justify-content: flex-end;
 }
 
 .nav-link {
@@ -2080,10 +2082,12 @@ onMounted(() => {
   max-width: 800px;
   margin: 0 auto;
   overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .comparison-table {
   width: 100%;
+  min-width: 480px;
   border-collapse: collapse;
   font-size: 0.9375rem;
 }
@@ -2157,6 +2161,8 @@ onMounted(() => {
   border: 1px solid var(--color-border-light);
   padding: var(--space-xl);
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .testimonial-quote-icon {
@@ -2171,6 +2177,7 @@ onMounted(() => {
   color: var(--color-text-secondary);
   line-height: var(--leading-relaxed);
   margin-bottom: var(--space-lg);
+  flex: 1;
 }
 
 .testimonial-author {
@@ -2511,6 +2518,11 @@ onMounted(() => {
 
   .nav-links {
     gap: var(--space-xs);
+  }
+
+  .nav-link {
+    padding: 4px var(--space-xs);
+    font-size: 0.8125rem;
   }
 
   .trust-badges {

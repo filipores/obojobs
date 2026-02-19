@@ -466,7 +466,9 @@ const formatDate = (dateString) => {
 // Check if this is user's first visit to documents page
 const checkFirstVisit = () => {
   const hasVisited = localStorage.getItem('documentsPageVisited')
-  if (!hasVisited) {
+  // Don't show onboarding if user already has documents uploaded
+  const hasExistingDocuments = !!documents.value.lebenslauf || !!documents.value.arbeitszeugnis
+  if (!hasVisited && !hasExistingDocuments) {
     showOnboardingTooltip.value = true
   }
 }

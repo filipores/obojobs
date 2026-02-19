@@ -292,23 +292,25 @@ def get_company_stats(current_user: Any) -> tuple[Response, int]:
     # Get all applications for the user grouped by company
     applications = stats_service.get_all_applications(user_id)
 
-    # Group applications by company
-    company_data = {}
+    # Group applications by company (case-insensitive, trimmed)
+    company_data = {}  # normalized_key -> data dict
     for app in applications:
-        firma = app.firma or "Unbekannt"
-        if firma not in company_data:
-            company_data[firma] = {
-                "firma": firma,
+        firma = (app.firma or "Unbekannt").strip()
+        normalized = firma.lower()
+        if normalized not in company_data:
+            company_data[normalized] = {
+                "name_variants": [],
                 "bewerbungen": 0,
                 "antworten": 0,
                 "antwortzeiten": [],
             }
+        company_data[normalized]["name_variants"].append(firma)
 
-        company_data[firma]["bewerbungen"] += 1
+        company_data[normalized]["bewerbungen"] += 1
 
         # Count responses (antwort_erhalten, interview, absage, zusage)
         if app.status in ["antwort_erhalten", "interview", "absage", "zusage"]:
-            company_data[firma]["antworten"] += 1
+            company_data[normalized]["antworten"] += 1
 
             # Calculate response time from status_history if available
             history = app.get_status_history()
@@ -330,13 +332,17 @@ def get_company_stats(current_user: Any) -> tuple[Response, int]:
                     response_dt = datetime.fromisoformat(response_timestamp)
                     days_diff = (response_dt - sent_dt).total_seconds() / 86400
                     if days_diff >= 0:
-                        company_data[firma]["antwortzeiten"].append(days_diff)
+                        company_data[normalized]["antwortzeiten"].append(days_diff)
                 except (ValueError, TypeError):
                     pass
 
     # Calculate metrics for each company
     company_list = []
-    for firma, data in company_data.items():
+    for data in company_data.values():
+        # Pick the most common casing variant as display name
+        variants = data["name_variants"]
+        firma = max(set(variants), key=variants.count)
+
         antwortrate = 0
         if data["bewerbungen"] > 0:
             antwortrate = round((data["antworten"] / data["bewerbungen"]) * 100, 1)

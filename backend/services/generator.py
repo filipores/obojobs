@@ -235,7 +235,7 @@ class BewerbungsGenerator:
                 "firma": firma_name,
                 "position": user_details.get("position") or "Softwareentwickler",
                 "ansprechpartner": ansprechpartner,
-                "quelle": user_details.get("quelle") or "eure Website",
+                "quelle": user_details.get("quelle") or "Manuelle Eingabe",
                 "email": user_details.get("contact_email") or "",
                 "stellenanzeige_kompakt": stellenanzeige_text[:500] if stellenanzeige_text else "",
             }

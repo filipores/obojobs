@@ -123,6 +123,12 @@
               <p class="betreff-text">{{ application.betreff }}</p>
             </div>
 
+            <!-- Cover Letter Body (Anschreiben) -->
+            <div v-if="application.email_text" class="detail-card zen-card">
+              <h3>{{ t('applicationDetail.coverLetter') }}</h3>
+              <div class="cover-letter-text">{{ application.email_text }}</div>
+            </div>
+
             <!-- Notes -->
             <div class="detail-card zen-card">
               <h3>{{ t('applicationDetail.notes') }}</h3>
@@ -139,13 +145,13 @@
             <div v-if="jobFitData" class="detail-card zen-card">
               <h3>{{ t('applicationDetail.jobFitScore') }}</h3>
               <div class="fit-score-display">
-                <div class="fit-score-value" :class="getFitCategory(jobFitData.score)">
-                  {{ jobFitData.score }}%
+                <div class="fit-score-value" :class="getFitCategory(jobFitData.overall_score)">
+                  {{ jobFitData.overall_score }}%
                 </div>
-                <div v-if="jobFitData.recommendations?.length" class="fit-recommendations">
+                <div v-if="jobFitData.learning_recommendations?.length" class="fit-recommendations">
                   <h4>{{ t('applicationDetail.recommendations') }}</h4>
                   <ul>
-                    <li v-for="rec in jobFitData.recommendations" :key="rec">{{ rec }}</li>
+                    <li v-for="rec in jobFitData.learning_recommendations" :key="rec.title">{{ rec.title }}: {{ rec.description }}</li>
                   </ul>
                 </div>
               </div>
@@ -664,6 +670,19 @@ onUnmounted(() => {
   white-space: pre-wrap;
   margin: 0;
   color: var(--color-sumi);
+}
+
+.cover-letter-text {
+  padding: var(--space-lg);
+  background: var(--color-washi);
+  border-radius: var(--radius-sm);
+  white-space: pre-wrap;
+  line-height: var(--leading-relaxed);
+  color: var(--color-sumi);
+  font-size: 0.9375rem;
+  border-left: 3px solid var(--color-ai);
+  max-height: 500px;
+  overflow-y: auto;
 }
 
 /* Status select */

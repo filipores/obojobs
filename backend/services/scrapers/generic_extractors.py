@@ -8,6 +8,27 @@ from urllib.parse import urlparse
 
 from bs4 import BeautifulSoup, Tag
 
+JOB_BOARD_NAMES = {
+    "linkedin",
+    "indeed",
+    "xing",
+    "glassdoor",
+    "monster",
+    "stepstone",
+    "stellenanzeigen",
+    "hokify",
+    "willhaben",
+    "karriere.at",
+    "jobware",
+    "jobs.at",
+}
+
+# Pre-compiled pattern to strip trailing "| LinkedIn", "- StepStone", etc.
+_TRAILING_JOB_BOARD_RE = re.compile(
+    r"\s*[|–—·-]\s*(" + "|".join(re.escape(n) for n in JOB_BOARD_NAMES) + r")\s*$",
+    re.I,
+)
+
 
 def clean_text(text: str | None) -> str | None:
     """Clean extracted text: strip whitespace, normalize spaces, decode entities."""
@@ -19,6 +40,20 @@ def clean_text(text: str | None) -> str | None:
     if len(text) > 10000:
         text = text[:10000] + "..."
     return text if text else None
+
+
+def clean_company_from_title(company: str | None) -> str | None:
+    """Remove trailing job board names from company extracted via title tag.
+
+    E.g. "Company Name | LinkedIn" -> "Company Name"
+    """
+    if not company:
+        return None
+    cleaned = _TRAILING_JOB_BOARD_RE.sub("", company).strip()
+    # If the entire string was a job board name, return None
+    if cleaned.lower() in JOB_BOARD_NAMES or not cleaned:
+        return None
+    return cleaned
 
 
 def extract_opengraph(soup: BeautifulSoup, result: dict) -> tuple[dict, bool]:
@@ -45,7 +80,7 @@ def extract_opengraph(soup: BeautifulSoup, result: dict) -> tuple[dict, bool]:
         og_site = soup.find("meta", property="og:site_name")
         if isinstance(og_site, Tag):
             content = og_site.get("content")
-            if content:
+            if content and str(content).strip().lower() not in JOB_BOARD_NAMES:
                 result["company"] = clean_text(str(content))
                 extracted = True
 
@@ -119,6 +154,7 @@ def extract_from_title_tag(soup: BeautifulSoup, result: dict) -> tuple[dict, boo
                     company_part = re.sub(
                         r"\s*[-–|]\s*(Jobs?|Karriere|Career|Stellenangebote?).*$", "", company_part, flags=re.I
                     )
+                    company_part = clean_company_from_title(company_part)
                     if company_part:
                         result["company"] = clean_text(company_part)
                         extracted = True

@@ -384,7 +384,7 @@ const stats = computed(() => {
 
 const statusOptions = computed(() => {
   const counts = {
-    '': applications.value.length,
+    '': totalApplications.value,
     'erstellt': applications.value.filter(a => a.status === 'erstellt').length,
     'versendet': applications.value.filter(a => a.status === 'versendet').length,
     'antwort_erhalten': applications.value.filter(a => a.status === 'antwort_erhalten').length,
