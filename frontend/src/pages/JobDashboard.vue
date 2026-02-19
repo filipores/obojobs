@@ -43,6 +43,34 @@
             </svg>
           </button>
         </div>
+
+        <!-- Active Filter Chips -->
+        <div v-if="hasActiveFilters" class="filter-chips">
+          <span
+            v-if="filters.location"
+            class="filter-chip"
+            @click="clearFilter('location')"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+              <circle cx="12" cy="10" r="3"/>
+            </svg>
+            {{ filters.location }}
+            <span class="chip-remove">&times;</span>
+          </span>
+          <span
+            v-if="filters.workType"
+            class="filter-chip"
+            @click="clearFilter('workType')"
+          >
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 6v6l4 2"/>
+            </svg>
+            {{ workTypeLabel }}
+            <span class="chip-remove">&times;</span>
+          </span>
+        </div>
       </div>
     </section>
 
@@ -183,9 +211,14 @@
               <button
                 v-if="rec.job_url"
                 @click="openJobUrl(rec.job_url)"
-                class="zen-btn zen-btn-sm zen-btn-ghost"
+                class="zen-btn zen-btn-sm zen-btn-ghost open-job-btn"
               >
                 {{ $t('jobDashboard.openJob') }}
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>
+                  <polyline points="15 3 21 3 21 9"/>
+                  <line x1="10" y1="14" x2="21" y2="3"/>
+                </svg>
               </button>
               <button
                 @click="dismissSuggestion(rec.id)"
@@ -212,23 +245,23 @@
     </section>
 
     <!-- Stats Summary -->
-    <section v-if="stats && !loading" class="stats-section">
+    <section v-if="displayStats && !loading" class="stats-section">
       <div class="container">
         <div class="stats-row">
           <div class="stat-item">
-            <span class="stat-value">{{ stats.active }}</span>
+            <span class="stat-value">{{ displayStats.active }}</span>
             <span class="stat-label">{{ $t('jobDashboard.statsActive') }}</span>
           </div>
           <div class="stat-item stat-sehr-gut">
-            <span class="stat-value">{{ stats.by_score?.sehr_gut || 0 }}</span>
+            <span class="stat-value">{{ displayStats.by_score?.sehr_gut || 0 }}</span>
             <span class="stat-label">{{ $t('jobDashboard.statsSehrGut') }}</span>
           </div>
           <div class="stat-item stat-gut">
-            <span class="stat-value">{{ stats.by_score?.gut || 0 }}</span>
+            <span class="stat-value">{{ displayStats.by_score?.gut || 0 }}</span>
             <span class="stat-label">{{ $t('jobDashboard.statsGut') }}</span>
           </div>
           <div class="stat-item">
-            <span class="stat-value">{{ stats.applied }}</span>
+            <span class="stat-value">{{ displayStats.applied }}</span>
             <span class="stat-label">{{ $t('jobDashboard.statsApplied') }}</span>
           </div>
         </div>
@@ -238,7 +271,7 @@
 </template>
 
 <script setup>
-import { onMounted } from 'vue'
+import { onMounted, computed } from 'vue'
 import { useJobRecommendations } from '../composables/useJobRecommendations.js'
 import SegmentedControl from '../components/SegmentedControl.vue'
 import { modelOptions } from '../data/applicationOptions.js'
@@ -264,6 +297,39 @@ const {
   getSourceLabel,
   openJobUrl
 } = useJobRecommendations()
+
+const WORK_TYPE_LABELS = { vollzeit: 'Vollzeit', teilzeit: 'Teilzeit', remote: 'Remote' }
+
+const hasActiveFilters = computed(() => {
+  return !!(filters.value.location || filters.value.workType)
+})
+
+const workTypeLabel = computed(() => {
+  return WORK_TYPE_LABELS[filters.value.workType] || filters.value.workType
+})
+
+const displayStats = computed(() => {
+  if (!hasActiveFilters.value) return stats.value
+
+  const items = filteredSuggestions.value
+  const byScore = { sehr_gut: 0, gut: 0, mittel: 0, niedrig: 0 }
+  let applied = 0
+  for (const r of items) {
+    if (r.fit_category && byScore[r.fit_category] !== undefined) {
+      byScore[r.fit_category]++
+    }
+    if (r.status === 'applied') applied++
+  }
+  return {
+    active: items.length,
+    applied,
+    by_score: byScore,
+  }
+})
+
+function clearFilter(key) {
+  filters.value[key] = ''
+}
 
 async function refresh() {
   await searchJobs({
@@ -369,6 +435,38 @@ onMounted(async () => {
 .refresh-btn:hover {
   border-color: var(--color-ai);
   color: var(--color-ai);
+}
+
+.filter-chips {
+  display: flex;
+  gap: var(--space-xs);
+  flex-wrap: wrap;
+  width: 100%;
+  margin-top: var(--space-xs);
+}
+
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-xs) var(--space-sm);
+  background: var(--color-ai-subtle);
+  color: var(--color-ai);
+  border-radius: var(--radius-full, 9999px);
+  font-size: 0.8125rem;
+  cursor: pointer;
+  transition: all var(--transition-base);
+}
+
+.filter-chip:hover {
+  background: var(--color-ai);
+  color: white;
+}
+
+.chip-remove {
+  font-size: 1rem;
+  line-height: 1;
+  margin-left: 2px;
 }
 
 .spinning {
@@ -504,6 +602,16 @@ onMounted(async () => {
   cursor: pointer;
   transition: all var(--transition-base);
   margin-left: auto;
+}
+
+.open-job-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+}
+
+.open-job-btn:hover {
+  text-decoration: underline;
 }
 
 .action-dismiss:hover {

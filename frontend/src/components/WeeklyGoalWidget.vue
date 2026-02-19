@@ -63,7 +63,13 @@
               <polyline points="22 4 12 14.01 9 11.01"/>
             </svg>
           </span>
-          <span class="goal-text">
+          <span v-if="isAchieved && extra > 0" class="goal-text">
+            <strong>{{ goal }}/{{ goal }}</strong> Ziel erreicht · +{{ extra }} zusätzliche
+          </span>
+          <span v-else-if="isAchieved" class="goal-text">
+            <strong>{{ goal }}/{{ goal }}</strong> Ziel erreicht!
+          </span>
+          <span v-else class="goal-text">
             <strong>{{ completed }}</strong> von <strong>{{ goal }}</strong> Bewerbungen diese Woche
           </span>
         </div>
@@ -74,11 +80,11 @@
         <div class="progress-bar">
           <div
             class="progress-fill"
-            :style="{ width: `${progress}%` }"
+            :style="{ width: cappedProgress + '%' }"
             :class="{ 'achieved': isAchieved }"
           ></div>
         </div>
-        <span class="progress-text">{{ progress }}%</span>
+        <span class="progress-text">{{ cappedProgress }}%</span>
       </div>
 
       <!-- Achievement Message -->
@@ -136,6 +142,8 @@ const CELEBRATION_KEY = 'obojobs-goal-celebration'
 const celebrationShownThisWeek = ref(false)
 
 const remaining = computed(() => Math.max(0, goal.value - completed.value))
+const extra = computed(() => Math.max(0, completed.value - goal.value))
+const cappedProgress = computed(() => Math.min(progress.value, 100))
 
 // Get current week identifier (ISO week)
 const getCurrentWeekId = () => {

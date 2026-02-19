@@ -4,6 +4,8 @@ Job Recommender Service - Finds and recommends jobs based on user skills and pro
 
 from datetime import datetime, timedelta
 
+from sqlalchemy import func
+
 from models import JobRecommendation, UserSkill, db
 from services.bundesagentur_client import BundesagenturClient
 from services.job_fit_calculator import JobFitCalculator
@@ -308,11 +310,25 @@ class JobRecommender:
     def get_recommendations(
         self, user_id: int, include_dismissed: bool = False, limit: int = 20, offset: int = 0
     ) -> tuple[list[JobRecommendation], int]:
-        """Get job recommendations for a user, sorted by fit score. Returns (recommendations, total_count)."""
-        query = JobRecommendation.query.filter_by(user_id=user_id)
+        """Get job recommendations for a user, sorted by fit score, deduplicated by job_title+company_name.
+
+        When multiple recommendations share the same (job_title, company_name), only the most
+        recent one (highest id) is kept.  Returns (recommendations, total_count).
+        """
+        base = JobRecommendation.query.filter_by(user_id=user_id)
 
         if not include_dismissed:
-            query = query.filter_by(dismissed=False)
+            base = base.filter_by(dismissed=False)
+
+        # Subquery: for each (job_title, company_name) group keep the highest id (most recent).
+        dedup_sub = db.session.query(func.max(JobRecommendation.id).label("max_id")).filter(
+            JobRecommendation.user_id == user_id
+        )
+        if not include_dismissed:
+            dedup_sub = dedup_sub.filter(JobRecommendation.dismissed == False)  # noqa: E712
+        dedup_sub = dedup_sub.group_by(JobRecommendation.job_title, JobRecommendation.company_name).subquery()
+
+        query = base.filter(JobRecommendation.id.in_(db.session.query(dedup_sub.c.max_id)))
 
         total = query.count()
 

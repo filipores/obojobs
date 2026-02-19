@@ -212,7 +212,7 @@ export function useJobRecommendations() {
           title: rec.job_title || '',
           fit_score: rec.fit_score,
         },
-        updateToast
+        (msg) => updateToast(msg, 'info')
       )
 
       await markAsApplied(rec.id, result.application?.id)
