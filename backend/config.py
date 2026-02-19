@@ -51,9 +51,11 @@ class Config:
     QWEN_ANSCHREIBEN_MAX_TOKENS = int(os.getenv("QWEN_ANSCHREIBEN_MAX_TOKENS", "1200"))
     QWEN_ANSCHREIBEN_TEMPERATURE = float(os.getenv("QWEN_ANSCHREIBEN_TEMPERATURE", "0.65"))
 
-    # Kimi K2.5 (reasoning model via Together.xyz)
-    KIMI_MODEL = os.getenv("KIMI_MODEL", "moonshotai/Kimi-K2.5")
-    KIMI_MAX_TOKENS = int(os.getenv("KIMI_MAX_TOKENS", "8000"))
+    # Kimi K2.5 (reasoning model via Fireworks AI)
+    FIREWORKS_API_KEY = os.getenv("FIREWORKS_API_KEY")
+    KIMI_API_BASE = os.getenv("KIMI_API_BASE", "https://api.fireworks.ai/inference/v1")
+    KIMI_MODEL = os.getenv("KIMI_MODEL", "accounts/fireworks/models/kimi-k2p5")
+    KIMI_MAX_TOKENS = int(os.getenv("KIMI_MAX_TOKENS", "12000"))
     KIMI_TEMPERATURE = float(os.getenv("KIMI_TEMPERATURE", "1.0"))
 
     # CORS

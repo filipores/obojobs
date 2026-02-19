@@ -314,6 +314,9 @@ def generate_from_url_stream(current_user: Any) -> Response:
     def thinking_cb(text):
         progress_queue.put({"type": "thinking", "text": text})
 
+    def content_cb(text):
+        progress_queue.put({"type": "content", "text": text})
+
     def run_generation():
         with flask_app.app_context():
             user = get_user_by_id(user_id)
@@ -325,6 +328,7 @@ def generate_from_url_stream(current_user: Any) -> Response:
                     progress_callback=progress_queue.put,
                     model=model,
                     thinking_callback=thinking_cb if model == "kimi" else None,
+                    content_callback=content_cb if model == "kimi" else None,
                 )
                 generator.prepare()
                 pdf_path = generator.generate_bewerbung(
@@ -423,61 +427,40 @@ def generate_from_text(current_user: Any) -> tuple[Response, int]:
     if not company:
         return jsonify({"success": False, "error": "Firmenname ist erforderlich"}), 400
 
+    # Write job text to a temp file for the generator pipeline
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False, encoding="utf-8") as f:
+        f.write(job_text)
+        temp_file = f.name
+
     try:
-        # Save job text to temporary file for generator
-        temp_dir = tempfile.mkdtemp()
-        temp_file = os.path.join(temp_dir, "job_posting.txt")
-        with open(temp_file, "w", encoding="utf-8") as f:
-            f.write(job_text)
+        generator = BewerbungsGenerator(user_id=current_user.id, model=model)
+        generator.prepare()
+        pdf_path = generator.generate_bewerbung(temp_file, company, tonalitaet=tone)
 
-        try:
-            # Generate application using existing generator with temp file
-            generator = BewerbungsGenerator(user_id=current_user.id, model=model)
-            generator.prepare()
-            pdf_path = generator.generate_bewerbung(temp_file, company, tonalitaet=tone)
+        latest = application_service.get_latest_application(current_user.id)
 
-            # Get the newly created application
-            latest = application_service.get_latest_application(current_user.id)
+        if latest:
+            updates = {}
+            if title:
+                updates["position"] = title
+            if description:
+                updates["notizen"] = description
+            if updates:
+                application_service.update_application_fields(latest, **updates)
 
-            # Update application with title and description if provided
-            if latest:
-                updates = {}
-                if title:
-                    updates["position"] = title
-                if description:
-                    updates["notizen"] = description
-                if updates:
-                    application_service.update_application_fields(latest, **updates)
+            start_job_fit_calculation(latest, job_text, current_user.id)
 
-                # Calculate and store job-fit score (non-blocking background thread)
-                start_job_fit_calculation(latest, job_text, current_user.id)
+        usage = get_subscription_usage(current_user)
+        result = _build_generation_result(latest, pdf_path, usage, generator, current_user, company)
 
-            # Get updated usage info (increment already done by @check_subscription_limit)
-            usage = get_subscription_usage(current_user)
-
-            result = {
-                "success": True,
-                "application": latest.to_dict() if latest else None,
-                "pdf_path": pdf_path,
-                "usage": usage,
-                "message": f"Bewerbung für {company} erstellt",
-            }
-            _add_generation_warnings(result, generator, current_user)
-
-            return jsonify(result), 200
-
-        finally:
-            # Cleanup temp file
-            if os.path.exists(temp_file):
-                os.remove(temp_file)
-            if os.path.exists(temp_dir):
-                os.rmdir(temp_dir)
+        return jsonify(result), 200
 
     except ValueError as e:
-        # Generation failed -- rollback the counter
         decrement_application_count(current_user)
         return jsonify({"success": False, "error": str(e)}), 400
     except Exception as e:
-        # Generation failed -- rollback the counter
         decrement_application_count(current_user)
         return jsonify({"success": False, "error": f"Fehler bei der Generierung: {str(e)}"}), 500
+    finally:
+        if os.path.exists(temp_file):
+            os.unlink(temp_file)

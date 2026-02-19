@@ -248,7 +248,8 @@ function saveJobsToStorage() {
     generatedApp: j.generatedApp,
     error: j.error,
     progressMessage: null,
-    thinkingText: null
+    thinkingText: null,
+    streamedContent: null
   }))
   sessionStorage.setItem(JOBS_STORAGE_KEY, JSON.stringify(serializable))
 }
@@ -344,7 +345,8 @@ async function addJob(submittedUrl) {
     generatedApp: null,
     error: null,
     progressMessage: null,
-    thinkingText: ''
+    thinkingText: '',
+    streamedContent: ''
   }
 
   jobs.value.unshift(job)
@@ -424,6 +426,7 @@ function handleGenerationSuccess(job, data) {
 
 async function generateJobWithSSE(job) {
   job.thinkingText = ''
+  job.streamedContent = ''
   const token = localStorage.getItem('token')
   const payload = getPayloadForJob(job)
 
@@ -476,6 +479,12 @@ async function generateJobWithSSE(job) {
         job.progressMessage = 'Anschreiben wird finalisiert...'
         continue
       }
+      if (event.type === 'content') {
+        if (!job.streamedContent) job.streamedContent = ''
+        job.streamedContent += event.text
+        job.progressMessage = 'Anschreiben wird geschrieben...'
+        continue
+      }
       if (event.step && event.message) {
         job.progressMessage = `${event.step}/${event.total_steps}: ${event.message}`
       }
@@ -487,14 +496,14 @@ async function generateJobFallback(job) {
   const payload = getPayloadForJob(job)
   startProgressTimers(job.id)
 
-  const { data } = await api.post('/applications/generate-from-url', payload)
-
-  clearProgressTimers(job.id)
-
-  if (data.success) {
+  try {
+    const { data } = await api.post('/applications/generate-from-url', payload)
+    if (!data.success) {
+      throw new Error(data.error || 'Unbekannter Fehler')
+    }
     return data
-  } else {
-    throw new Error(data.error || 'Unbekannter Fehler')
+  } finally {
+    clearProgressTimers(job.id)
   }
 }
 

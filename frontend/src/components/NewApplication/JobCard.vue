@@ -73,7 +73,8 @@
         <span class="generating-spinner" />
         <span class="generating-text">{{ progressMessage || 'Anschreiben wird generiert...' }}</span>
       </div>
-      <details v-if="job.model === 'kimi' && job.thinkingText" class="thinking-details" open>
+      <pre v-if="job.model === 'kimi' && job.streamedContent" class="streamed-content" ref="streamedPre">{{ job.streamedContent }}</pre>
+      <details v-if="job.model === 'kimi' && job.thinkingText" class="thinking-details">
         <summary class="thinking-summary">Kimi denkt nach...</summary>
         <pre class="thinking-content" ref="thinkingPre">{{ job.thinkingText }}</pre>
       </details>
@@ -150,14 +151,26 @@ const emit = defineEmits([
 ])
 
 const thinkingPre = ref(null)
+const streamedPre = ref(null)
 
-// Auto-scroll thinking content
-watch(() => props.job.thinkingText, async () => {
-  await nextTick()
-  if (thinkingPre.value) {
-    thinkingPre.value.scrollTop = thinkingPre.value.scrollHeight
-  }
-})
+// RAF-batched auto-scroll: scrolls an element to the bottom when watched data changes
+function useAutoScroll(elementRef, watchSource) {
+  let scheduled = false
+  watch(watchSource, async () => {
+    if (scheduled) return
+    scheduled = true
+    await nextTick()
+    window.requestAnimationFrame(() => {
+      if (elementRef.value) {
+        elementRef.value.scrollTop = elementRef.value.scrollHeight
+      }
+      scheduled = false
+    })
+  })
+}
+
+useAutoScroll(thinkingPre, () => props.job.thinkingText)
+useAutoScroll(streamedPre, () => props.job.streamedContent)
 
 const displayUrl = computed(() => {
   try {
@@ -413,6 +426,23 @@ const portalClass = computed(() => {
   white-space: pre-wrap;
   word-break: break-word;
   background: var(--color-washi);
+}
+
+/* Streamed content display */
+.streamed-content {
+  max-height: 250px;
+  overflow-y: auto;
+  padding: var(--space-sm) var(--space-md);
+  margin: var(--space-sm) 0 0;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--color-sumi);
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--color-washi-warm, rgba(0,0,0,0.02));
+  border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-sm);
 }
 
 /* Generating state */

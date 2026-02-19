@@ -122,7 +122,6 @@ class TestAutoSearchJob:
 
         mock_class = MagicMock(return_value=mock_recommender)
         mock_class.MIN_FIT_SCORE = JobRecommender.MIN_FIT_SCORE
-        mock_class.score_to_category = JobRecommender.score_to_category
 
         with (
             patch("models.db") as mock_db,

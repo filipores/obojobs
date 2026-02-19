@@ -40,7 +40,9 @@ _GERMAN_MONTHS = [
 
 
 class BewerbungsGenerator:
-    def __init__(self, user_id: int, progress_callback=None, model="qwen", thinking_callback=None):
+    def __init__(
+        self, user_id: int, progress_callback=None, model="qwen", thinking_callback=None, content_callback=None
+    ):
         self.user_id = user_id
         self.api_client = QwenAPIClient()
         self.validator = OutputValidator()
@@ -53,6 +55,7 @@ class BewerbungsGenerator:
         self.progress_callback = progress_callback
         self.model = model
         self.thinking_callback = thinking_callback
+        self.content_callback = content_callback
 
     def _emit_progress(self, step, total_steps, message):
         """Emit progress event if callback is set."""
@@ -271,38 +274,31 @@ class BewerbungsGenerator:
         # Prepare user inputs
         full_name, bewerber_vorname, user_skills = self._extract_user_inputs()
 
-        # Generate body via API — route based on model
+        # Shared kwargs for both generation methods
+        gen_kwargs = {
+            "cv_text": self.cv_text,
+            "stellenanzeige_text": stellenanzeige_text,
+            "firma_name": firma_name,
+            "position": details["position"],
+            "ansprechpartner": details["ansprechpartner"],
+            "quelle": details["quelle"],
+            "zeugnis_text": self.zeugnis_text,
+            "bewerber_vorname": bewerber_vorname,
+            "bewerber_name": full_name,
+            "user_skills": user_skills,
+            "tonalitaet": tonalitaet,
+            "details": details,
+        }
+
+        # Generate body via API -- route based on model
         if self.model == "kimi":
             anschreiben_body = self.api_client.generate_anschreiben_stream(
-                cv_text=self.cv_text,
-                stellenanzeige_text=stellenanzeige_text,
-                firma_name=firma_name,
-                position=details["position"],
-                ansprechpartner=details["ansprechpartner"],
-                quelle=details["quelle"],
-                zeugnis_text=self.zeugnis_text,
-                bewerber_vorname=bewerber_vorname,
-                bewerber_name=full_name,
-                user_skills=user_skills,
-                tonalitaet=tonalitaet,
-                details=details,
+                **gen_kwargs,
                 thinking_callback=self.thinking_callback,
+                content_callback=self.content_callback,
             )
         else:
-            anschreiben_body = self.api_client.generate_anschreiben(
-                cv_text=self.cv_text,
-                stellenanzeige_text=stellenanzeige_text,
-                firma_name=firma_name,
-                position=details["position"],
-                ansprechpartner=details["ansprechpartner"],
-                quelle=details["quelle"],
-                zeugnis_text=self.zeugnis_text,
-                bewerber_vorname=bewerber_vorname,
-                bewerber_name=full_name,
-                user_skills=user_skills,
-                tonalitaet=tonalitaet,
-                details=details,
-            )
+            anschreiben_body = self.api_client.generate_anschreiben(**gen_kwargs)
         logger.info("Anschreiben generiert (%d Zeichen)", len(anschreiben_body))
 
         # Fix gray-zone skill claims before validation

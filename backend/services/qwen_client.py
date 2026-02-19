@@ -2,6 +2,7 @@ import json
 import logging
 import re
 
+import httpx
 from openai import OpenAI
 
 from config import config
@@ -24,7 +25,26 @@ class QwenAPIClient:
         self.api_key = api_key or config.TOGETHER_API_KEY
         if not self.api_key:
             raise ValueError("TOGETHER_API_KEY nicht gesetzt")
-        self.client = OpenAI(api_key=self.api_key, base_url=config.QWEN_API_BASE)
+        self.client = OpenAI(
+            api_key=self.api_key,
+            base_url=config.QWEN_API_BASE,
+            timeout=90.0,
+            http_client=httpx.Client(
+                timeout=90.0,
+                limits=httpx.Limits(keepalive_expiry=30),
+            ),
+        )
+        # Separate client for Kimi K2.5 via Fireworks AI (4.5x faster than Together.xyz)
+        kimi_api_key = config.FIREWORKS_API_KEY or self.api_key
+        self.kimi_client = OpenAI(
+            api_key=kimi_api_key,
+            base_url=config.KIMI_API_BASE,
+            timeout=120.0,
+            http_client=httpx.Client(
+                timeout=120.0,
+                limits=httpx.Limits(keepalive_expiry=30),
+            ),
+        )
         self.model = config.QWEN_MODEL
         self.fast_model = config.QWEN_FAST_MODEL
         self.kimi_model = config.KIMI_MODEL
@@ -133,6 +153,52 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         except Exception as e:
             raise Exception(f"Qwen API Fehler: {e!s}") from e
 
+    def _prepare_anschreiben_messages(
+        self,
+        cv_text: str,
+        stellenanzeige_text: str,
+        firma_name: str,
+        position: str,
+        ansprechpartner: str,
+        quelle: str,
+        zeugnis_text: str | None,
+        bewerber_vorname: str | None,
+        bewerber_name: str | None,
+        user_skills: list | None,
+        tonalitaet: str,
+        details: dict | None,
+    ) -> list[dict]:
+        """Build the system/user message pair shared by all Anschreiben generators."""
+        if details and details.get("stellenanzeige_kompakt"):
+            stellenanzeige_text = details["stellenanzeige_kompakt"]
+        elif stellenanzeige_text and len(stellenanzeige_text) > 2000:
+            stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
+
+        system_prompt = build_anschreiben_system_prompt(
+            cv_text=cv_text,
+            position=position,
+            quelle=quelle,
+            ansprechpartner=ansprechpartner,
+            bewerber_vorname=bewerber_vorname,
+            bewerber_name=bewerber_name,
+            user_skills=user_skills,
+            tonalitaet=tonalitaet,
+        )
+
+        if zeugnis_text:
+            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}"
+
+        firma_info = f" (Firma: {firma_name})" if firma_name else ""
+        user_prompt = f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
+{stellenanzeige_text[:2000]}
+
+Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
+
+        return [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt},
+        ]
+
     def generate_anschreiben(
         self,
         cv_text: str,
@@ -156,37 +222,23 @@ Schreibe jetzt den Einleitungsabsatz basierend auf den Informationen aus dem Leb
         API-level retries are handled by _call_api_with_retry. Forbidden phrases
         are removed via post-processing instead of re-generation.
         """
-        # Use pre-extracted compact version if available
-        if details and details.get("stellenanzeige_kompakt"):
-            stellenanzeige_text = details["stellenanzeige_kompakt"]
-        elif stellenanzeige_text and len(stellenanzeige_text) > 2000:
-            stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
-
-        system_prompt = build_anschreiben_system_prompt(
-            cv_text=cv_text,
-            position=position,
-            quelle=quelle,
-            ansprechpartner=ansprechpartner,
-            bewerber_vorname=bewerber_vorname,
-            bewerber_name=bewerber_name,
-            user_skills=user_skills,
-            tonalitaet=tonalitaet,
+        messages = self._prepare_anschreiben_messages(
+            cv_text,
+            stellenanzeige_text,
+            firma_name,
+            position,
+            ansprechpartner,
+            quelle,
+            zeugnis_text,
+            bewerber_vorname,
+            bewerber_name,
+            user_skills,
+            tonalitaet,
+            details,
         )
 
-        if zeugnis_text:
-            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}"
-
-        firma_info = f" (Firma: {firma_name})" if firma_name else ""
-        user_prompt = f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
-{stellenanzeige_text[:2000]}
-
-Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
-
         raw = self._call_api_with_retry(
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt},
-            ],
+            messages=messages,
             max_tokens=config.QWEN_ANSCHREIBEN_MAX_TOKENS,
             temperature=config.QWEN_ANSCHREIBEN_TEMPERATURE,
         )
@@ -210,51 +262,38 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         tonalitaet: str = "modern",
         details: dict | None = None,
         thinking_callback=None,
+        content_callback=None,
     ) -> str | None:
-        """Generate a cover letter using Kimi K2.5 with streaming and reasoning.
+        """Generate a cover letter using Kimi K2.5 with streaming.
 
-        Together.xyz exposes Kimi's chain-of-thought via the `reasoning` API parameter.
-        Reasoning tokens arrive in `delta.reasoning`, content in `delta.content`.
+        Runs in instant mode (no reasoning) for fast output. Content tokens are
+        streamed via content_callback as they arrive for real-time display.
 
-        No @retry_with_backoff — streaming responses cannot be retried mid-stream.
+        No @retry_with_backoff -- streaming responses cannot be retried mid-stream.
         """
-        # Use pre-extracted compact version if available
-        if details and details.get("stellenanzeige_kompakt"):
-            stellenanzeige_text = details["stellenanzeige_kompakt"]
-        elif stellenanzeige_text and len(stellenanzeige_text) > 2000:
-            stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
-
-        system_prompt = build_anschreiben_system_prompt(
-            cv_text=cv_text,
-            position=position,
-            quelle=quelle,
-            ansprechpartner=ansprechpartner,
-            bewerber_vorname=bewerber_vorname,
-            bewerber_name=bewerber_name,
-            user_skills=user_skills,
-            tonalitaet=tonalitaet,
+        messages = self._prepare_anschreiben_messages(
+            cv_text,
+            stellenanzeige_text,
+            firma_name,
+            position,
+            ansprechpartner,
+            quelle,
+            zeugnis_text,
+            bewerber_vorname,
+            bewerber_name,
+            user_skills,
+            tonalitaet,
+            details,
         )
 
-        if zeugnis_text:
-            system_prompt += f"\n\n## ARBEITSZEUGNIS (LETZTE POSITION):\n{zeugnis_text[:1000]}"
-
-        firma_info = f" (Firma: {firma_name})" if firma_name else ""
-        user_prompt = f"""STELLENANZEIGE / FIRMENBESCHREIBUNG{firma_info}:
-{stellenanzeige_text[:2000]}
-
-Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
-
         try:
-            response = self.client.chat.completions.create(
+            response = self.kimi_client.chat.completions.create(
                 model=self.kimi_model,
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_prompt},
-                ],
+                messages=messages,
                 max_tokens=config.KIMI_MAX_TOKENS,
                 temperature=config.KIMI_TEMPERATURE,
                 stream=True,
-                extra_body={"reasoning": {"enabled": True}},
+                extra_body={"thinking": {"type": "enabled", "budget_tokens": 4096}},
             )
 
             output_parts = []
@@ -263,14 +302,15 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
                 if not chunk.choices:
                     continue
                 delta = chunk.choices[0].delta
-                # Forward reasoning tokens via callback
-                reasoning = getattr(delta, "reasoning", None)
+                # Forward reasoning tokens via callback (Fireworks uses reasoning_content)
+                reasoning = getattr(delta, "reasoning_content", None)
                 if reasoning and thinking_callback:
                     thinking_callback(reasoning)
-                # Accumulate content tokens
                 content = delta.content
                 if content:
                     output_parts.append(content)
+                    if content_callback:
+                        content_callback(content)
 
             result = "".join(output_parts)
             if not result.strip():
@@ -337,6 +377,22 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         ]
         for pattern in preamble_patterns:
             text = re.sub(pattern, "", text, flags=re.IGNORECASE)
+
+        # Strip everything before the greeting line (address block, duplicate subject)
+        # Kimi sometimes generates "Firma GmbH\nz. Hd. ...\n[Datum]\n**Betreff**\n\nSehr geehrte..."
+        greeting_match = re.search(
+            r"^((?:Sehr geehrte|Moin|Liebe[rs]?\s|Hallo|Guten Tag)[^\n]*)",
+            text,
+            flags=re.MULTILINE,
+        )
+        if greeting_match:
+            text = text[greeting_match.start() :]
+
+        # Remove markdown bold markers (**text**)
+        text = re.sub(r"\*\*([^*]+)\*\*", r"\1", text)
+
+        # Remove placeholder date tags like [Datum: aktuelles Datum]
+        text = re.sub(r"\[Datum:[^\]]*\]", "", text)
 
         # Replace dashes used as punctuation (en-dash, em-dash)
         text = text.replace(" – ", ", ").replace(" — ", ", ")

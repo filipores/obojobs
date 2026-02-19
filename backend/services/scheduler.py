@@ -26,9 +26,9 @@ def cleanup_old_recommendations(app: Flask) -> None:
             recommender = JobRecommender()
             deleted = recommender.cleanup_old_recommendations(days=30)
             if deleted:
-                logger.info(f"Cleaned up {deleted} old recommendations")
+                logger.info("Cleaned up %d old recommendations", deleted)
         except Exception as e:
-            logger.error(f"Error cleaning up recommendations: {e}")
+            logger.error("Error cleaning up recommendations: %s", e)
 
 
 def auto_search_jobs(app: Flask) -> None:
@@ -56,23 +56,21 @@ def auto_search_jobs(app: Flask) -> None:
                         working_time=user.preferred_working_time or "",
                         max_results=5,
                     )
-                    # search_and_score_jobs already filters duplicates and sets fit_score/fit_category
                     for job_data in result.get("results", []):
-                        fit_score = job_data.get("fit_score", 0)
-                        if fit_score >= JobRecommender.MIN_FIT_SCORE:
+                        if job_data.get("fit_score", 0) >= JobRecommender.MIN_FIT_SCORE:
                             recommender.create_recommendation(
                                 user_id=user.id,
                                 job_data=job_data,
-                                fit_score=fit_score,
-                                fit_category=job_data.get("fit_category", "niedrig"),
+                                fit_score=job_data["fit_score"],
+                                fit_category=job_data["fit_category"],
                             )
                 except Exception as e:
-                    logger.error(f"Error searching jobs for user {user.id}: {e}")
+                    logger.error("Error searching jobs for user %s: %s", user.id, e)
                     continue
 
-            logger.info(f"Auto-search completed for {len(users_with_skills)} users")
+            logger.info("Auto-search completed for %d users", len(users_with_skills))
         except Exception as e:
-            logger.error(f"Error in auto_search_jobs: {e}")
+            logger.error("Error in auto_search_jobs: %s", e)
 
 
 def init_scheduler(app: Flask) -> None:

@@ -648,5 +648,62 @@
       "updateSuccess": "User updated",
       "updateError": "Error updating user"
     }
+  },
+  "pricing": {
+    "pageTitle": "Pricing",
+    "title": "Simple, transparent pricing",
+    "subtitle": "Choose the plan that fits you. Cancel anytime.",
+    "free": {
+      "name": "Free",
+      "price": "0",
+      "period": "free",
+      "description": "Perfect for trying out",
+      "cta": "Get started for free"
+    },
+    "basic": {
+      "name": "Basic",
+      "price": "9.99",
+      "period": "per month",
+      "description": "For active job seekers",
+      "cta": "Choose Basic",
+      "popular": "Popular"
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "19.99",
+      "period": "per month",
+      "description": "For power applicants",
+      "cta": "Choose Pro"
+    },
+    "features": {
+      "applicationsPerMonth": "Applications per month",
+      "aiCoverLetters": "AI cover letters",
+      "pdfExport": "PDF export",
+      "emailDrafts": "Email drafts",
+      "atsOptimization": "ATS optimization",
+      "companyInsights": "Company insights",
+      "interviewPrep": "Interview preparation",
+      "jobMatching": "Job matching",
+      "prioritySupport": "Priority support",
+      "chromeExtension": "Chrome extension",
+      "applicationTracking": "Application tracking",
+      "skillAnalysis": "Skill analysis"
+    },
+    "faq": {
+      "title": "Pricing questions",
+      "q1": "Can I cancel anytime?",
+      "a1": "Yes, you can cancel your subscription at any time. You keep access until the end of the billing period.",
+      "q2": "Is there a money-back guarantee?",
+      "a2": "Try obo for free with the Free plan. For paid plans, you can cancel within 14 days without giving a reason.",
+      "q3": "Can I change plans?",
+      "a3": "Yes, you can upgrade or downgrade at any time. When upgrading, the difference is charged on a pro-rata basis.",
+      "q4": "What payment methods are accepted?",
+      "a4": "We accept all major credit cards, SEPA direct debit, and other payment methods through our payment partner Stripe."
+    },
+    "cta": {
+      "title": "Ready to get started?",
+      "subtitle": "Start for free and upgrade when you're ready.",
+      "button": "Register for free"
+    }
   }
 }
