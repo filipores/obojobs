@@ -1,3 +1,10 @@
+## [1.63.1](https://github.com/filipores/obojobs/compare/v1.63.0...v1.63.1) (2026-02-19)
+
+
+### Bug Fixes
+
+* **ai:** reduce kimi max_tokens default from 12000 to 2000 ([186e760](https://github.com/filipores/obojobs/commit/186e76032b1775e9283a85fd755e292b1a569ae5))
+
 # [1.63.0](https://github.com/filipores/obojobs/compare/v1.62.1...v1.63.0) (2026-02-19)
 
 
