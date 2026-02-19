@@ -1,3 +1,10 @@
+## [1.63.4](https://github.com/filipores/obojobs/compare/v1.63.3...v1.63.4) (2026-02-19)
+
+
+### Bug Fixes
+
+* **ui:** compact segmented controls and add hover tooltips ([10f7c93](https://github.com/filipores/obojobs/commit/10f7c93881e1028758e305b341db9e1fe2c69be2))
+
 ## [1.63.3](https://github.com/filipores/obojobs/compare/v1.63.2...v1.63.3) (2026-02-19)
 
 
