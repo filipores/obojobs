@@ -5,11 +5,14 @@ Generates ephemeral job applications for anonymous users using their uploaded CV
 No database persistence - results are returned directly.
 """
 
+import base64
+import os
+import tempfile
 from urllib.parse import urlparse
 
 from .ai_client import AIClient
 from .email_formatter import EmailFormatter
-from .pdf_handler import read_document
+from .pdf_handler import create_zen_anschreiben_pdf, read_document
 
 
 class DemoGenerator:
@@ -63,7 +66,17 @@ class DemoGenerator:
             tonalitaet="modern",
         )
 
-        # Phase 4: Generate email content (no PDF for demo)
+        # Phase 4: Generate PDF
+        with tempfile.NamedTemporaryFile(suffix='.pdf', delete=False) as tmp:
+            tmp_path = tmp.name
+        try:
+            create_zen_anschreiben_pdf(anschreiben_body, tmp_path, firma_name)
+            with open(tmp_path, 'rb') as f:
+                pdf_base64 = base64.b64encode(f.read()).decode('utf-8')
+        finally:
+            os.remove(tmp_path)
+
+        # Phase 5: Generate email content
         betreff = EmailFormatter.generate_betreff(details["position"], firma_name, style="professional")
         email_text = EmailFormatter.generate_email_text(
             position=details["position"],
@@ -81,4 +94,5 @@ class DemoGenerator:
             "anschreiben": anschreiben_body,
             "betreff": betreff,
             "email_text": email_text,
+            "pdf_base64": pdf_base64,
         }
