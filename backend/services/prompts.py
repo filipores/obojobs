@@ -1,5 +1,7 @@
 """Prompt templates and constants for AI cover letter generation."""
 
+from services.industry_rules import get_industry_prompt_block
+
 FORBIDDEN_PHRASES = [
     # Generic application openers
     "Hiermit bewerbe ich mich",
@@ -63,10 +65,14 @@ Extrahiere präzise folgende Informationen:
 
 5. zusammenfassung: Eine kompakte Zusammenfassung der wichtigsten Infos (Firma, Branche, Kernaufgaben, Skills) in Stichpunkten.
 
-Antworte NUR als JSON-Objekt mit den Keys: ansprechpartner, position, quelle, email, zusammenfassung
+6. branche: Die Branche des Unternehmens. Wähle EINEN der folgenden Werte: "it_software", "consulting", "maschinenbau", "marketing", "gesundheit", "andere". Falls unklar, gib "andere" zurück.
+
+7. unternehmensgroesse: Die Größe des Unternehmens. Wähle EINEN der folgenden Werte: "kmu" (unter ~500 Mitarbeiter, Startup, Mittelstand, Agentur, Pflegeheim), "konzern" (über ~500 Mitarbeiter, DAX, MBB, Big4, Krankenhaus-Kette), "unbekannt". Falls unklar, gib "unbekannt" zurück.
+
+Antworte NUR als JSON-Objekt mit den Keys: ansprechpartner, position, quelle, email, zusammenfassung, branche, unternehmensgroesse
 
 Beispiel:
-{{"ansprechpartner": "Sehr geehrte Frau Schmidt", "position": "Frontend Developer", "quelle": "LinkedIn", "email": "bewerbung@firma.de", "zusammenfassung": "- IT-Unternehmen\\n- Webentwicklung mit React\\n- Teamarbeit"}}
+{{"ansprechpartner": "Sehr geehrte Frau Schmidt", "position": "Frontend Developer", "quelle": "LinkedIn", "email": "bewerbung@firma.de", "zusammenfassung": "- IT-Unternehmen\\n- Webentwicklung mit React\\n- Teamarbeit", "branche": "it_software", "unternehmensgroesse": "kmu"}}
 
 Extrahiere jetzt die Informationen als JSON:"""
 
@@ -114,6 +120,8 @@ def build_anschreiben_system_prompt(
     user_skills: list | None = None,
     tonalitaet: str = "modern",
     user_city: str | None = None,
+    branche: str | None = None,
+    unternehmensgroesse: str | None = None,
 ) -> str:
     """Build the v3 system prompt for full cover letter generation.
 
@@ -170,13 +178,16 @@ def build_anschreiben_system_prompt(
     ]
     forbidden_block = "\n".join(f"- {p}" for p in key_forbidden)
 
+    industry_block = get_industry_prompt_block(branche, unternehmensgroesse)
+    industry_section = f"{industry_block}\n" if industry_block else ""
+
     return f"""You write a German cover letter (Anschreiben). Body only: from greeting to closing with name.
 ALL OUTPUT MUST BE IN GERMAN. These instructions are in English for precision.
 
 ## TONE
 {tone_instruction}
 
-## CONTEXT
+{industry_section}## CONTEXT
 - Position: {position}
 - Source: {quelle}
 - Greeting: {ansprechpartner}

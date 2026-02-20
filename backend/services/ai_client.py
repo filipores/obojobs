@@ -137,6 +137,8 @@ class AIClient:
             user_skills=user_skills,
             tonalitaet=tonalitaet,
             user_city=user_city,
+            branche=details.get("branche") if details else None,
+            unternehmensgroesse=details.get("unternehmensgroesse") if details else None,
         )
 
         if zeugnis_text:
@@ -309,6 +311,15 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         if data.get("zusammenfassung"):
             defaults["stellenanzeige_kompakt"] = str(data["zusammenfassung"])
 
+        # Parse industry classification (filter out "andere"/"unbekannt" → None)
+        branche = str(data.get("branche", "")).strip().lower()
+        if branche and branche != "andere":
+            defaults["branche"] = branche
+
+        groesse = str(data.get("unternehmensgroesse", "")).strip().lower()
+        if groesse and groesse != "unbekannt":
+            defaults["unternehmensgroesse"] = groesse
+
         return defaults
 
     def _get_default_details(self, firma_name: str) -> dict:
@@ -319,6 +330,8 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
             "quelle": "Manuelle Eingabe",
             "email": "",
             "stellenanzeige_kompakt": "",
+            "branche": None,
+            "unternehmensgroesse": None,
             "warnings": [],
         }
 
