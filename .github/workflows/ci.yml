@@ -102,6 +102,8 @@ jobs:
 
   ci-summary:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     needs: [backend-tests, frontend-tests]
     if: always()
     permissions:
