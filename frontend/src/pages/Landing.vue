@@ -1180,10 +1180,6 @@ function goToRegister() {
   router.push('/register')
 }
 
-function scrollToTop() {
-  window.scrollTo({ top: 0, behavior: 'smooth' })
-}
-
 onMounted(() => {
   // Clear leftover demo state if user is no longer authenticated
   if (!authStore.isAuthenticated() && demoStore.isInDemoFlow()) {

@@ -388,12 +388,10 @@ const upload = async (docType) => {
     skillsRefreshKey.value++
 
     // Notify user about skill extraction results
-    if (docType === 'lebenslauf' && data.skills_extracted > 0) {
-      if (window.$toast) {
+    if (docType === 'lebenslauf' && window.$toast) {
+      if (data.skills_extracted > 0) {
         window.$toast(`${data.skills_extracted} Skills aus deinem Lebenslauf extrahiert!`, 'success')
-      }
-    } else if (docType === 'lebenslauf' && data.skills_extracted === 0) {
-      if (window.$toast) {
+      } else {
         window.$toast('Lebenslauf hochgeladen. Klicke auf "Neu extrahieren" um Skills zu erkennen.', 'info')
       }
     }
