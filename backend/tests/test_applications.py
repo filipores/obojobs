@@ -717,20 +717,15 @@ class TestExportApplications:
 
 
 class TestSubscriptionLimit:
-    """Verify that @check_subscription_limit blocks exhausted free users."""
+    """Verify that @check_subscription_limit blocks users with no credits."""
 
     def test_limit_reached_generate_from_url(self, client, auth_headers, app, test_user):
-        """Free user who has used 3 applications should be blocked."""
-        from datetime import datetime
-
+        """User with 0 credits should be blocked."""
         from models import User
 
         with app.app_context():
             user = db.session.get(User, test_user["id"])
-            user.applications_this_month = 3
-            # Set month_reset_at to current month so counter is not reset
-            now = datetime.utcnow()
-            user.month_reset_at = datetime(now.year, now.month, 1)
+            user.credits_remaining = 0
             db.session.commit()
 
         response = client.post(
@@ -743,15 +738,11 @@ class TestSubscriptionLimit:
         assert data["error_code"] == "SUBSCRIPTION_LIMIT_REACHED"
 
     def test_limit_reached_generate_from_text(self, client, auth_headers, app, test_user):
-        from datetime import datetime
-
         from models import User
 
         with app.app_context():
             user = db.session.get(User, test_user["id"])
-            user.applications_this_month = 3
-            now = datetime.utcnow()
-            user.month_reset_at = datetime(now.year, now.month, 1)
+            user.credits_remaining = 0
             db.session.commit()
 
         long_text = "A" * 150

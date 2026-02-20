@@ -6,7 +6,7 @@ from . import db
 
 class SubscriptionPlan(enum.Enum):
     free = "free"
-    basic = "basic"
+    starter = "starter"
     pro = "pro"
 
 

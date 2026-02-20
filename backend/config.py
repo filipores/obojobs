@@ -74,16 +74,18 @@ class Config:
     STRIPE_PUBLISHABLE_KEY = os.getenv("STRIPE_PUBLISHABLE_KEY")
     STRIPE_WEBHOOK_SECRET = os.getenv("STRIPE_WEBHOOK_SECRET")
 
-    # Stripe Subscription Plans (Price IDs from Stripe Dashboard)
-    STRIPE_PRICE_BASIC = os.getenv("STRIPE_PRICE_BASIC", "price_dev_basic_mock")  # €9.99/month
-    STRIPE_PRICE_PRO = os.getenv("STRIPE_PRICE_PRO", "price_dev_pro_mock")  # €19.99/month
+    # Stripe One-Time Purchase Plans (Price IDs from Stripe Dashboard)
+    STRIPE_PRICE_STARTER = os.getenv(
+        "STRIPE_PRICE_STARTER", os.getenv("STRIPE_PRICE_BASIC", "price_dev_starter_mock")
+    )  # €9.90 one-time
+    STRIPE_PRICE_PRO = os.getenv("STRIPE_PRICE_PRO", "price_dev_pro_mock")  # €19.90 one-time
 
     @staticmethod
     def is_stripe_enabled():
         """Check if Stripe payments are properly configured."""
         return bool(
             Config.STRIPE_SECRET_KEY
-            and not Config.STRIPE_PRICE_BASIC.startswith("price_dev_")
+            and not Config.STRIPE_PRICE_STARTER.startswith("price_dev_")
             and not Config.STRIPE_PRICE_PRO.startswith("price_dev_")
         )
 

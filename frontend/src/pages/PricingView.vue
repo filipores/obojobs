@@ -37,7 +37,7 @@
             :class="{ 'pricing-card-featured': plan.featured }"
           >
             <div v-if="plan.featured" class="pricing-badge">
-              {{ $t('pricing.basic.popular') }}
+              {{ $t('pricing.starter.popular') }}
             </div>
             <div class="pricing-header">
               <h3>{{ $t(`pricing.${plan.key}.name`) }}</h3>
@@ -82,7 +82,7 @@
               <tr>
                 <th>Feature</th>
                 <th>Free</th>
-                <th class="pricing-table-featured">Basic</th>
+                <th class="pricing-table-featured">Starter</th>
                 <th>Pro</th>
               </tr>
             </thead>
@@ -101,14 +101,14 @@
                   </template>
                 </td>
                 <td class="pricing-table-featured">
-                  <template v-if="row.basic === true">
+                  <template v-if="row.starter === true">
                     <svg class="pricing-check" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-koke)" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
                   </template>
-                  <template v-else-if="row.basic === false">
+                  <template v-else-if="row.starter === false">
                     <svg class="pricing-cross" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--color-text-ghost)" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
                   </template>
                   <template v-else>
-                    <span class="pricing-text-value">{{ row.basic }}</span>
+                    <span class="pricing-text-value">{{ row.starter }}</span>
                   </template>
                 </td>
                 <td>

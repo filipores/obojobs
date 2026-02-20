@@ -16,11 +16,11 @@ def get_stats(current_user: Any) -> Response:
     total_applications = admin_service.get_total_applications()
     active_users_30d = admin_service.get_active_users_30d()
     applications_this_month = admin_service.get_applications_this_month()
-    basic_count, pro_count = admin_service.get_subscription_counts()
-    free_count = total_users - basic_count - pro_count
+    starter_count, pro_count = admin_service.get_subscription_counts()
+    free_count = total_users - starter_count - pro_count
     signups_last_7_days = admin_service.get_signups_last_7_days()
     email_verified_count = admin_service.get_email_verified_count()
-    revenue_estimate = round(basic_count * 9.99 + pro_count * 19.99, 2)
+    revenue_estimate = round(starter_count * 9.90 + pro_count * 19.90, 2)
 
     return jsonify(
         {
@@ -30,7 +30,7 @@ def get_stats(current_user: Any) -> Response:
             "applications_this_month": applications_this_month,
             "subscriptions": {
                 "free": free_count,
-                "basic": basic_count,
+                "starter": starter_count,
                 "pro": pro_count,
             },
             "signups_last_7_days": signups_last_7_days,

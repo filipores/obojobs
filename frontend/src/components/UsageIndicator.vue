@@ -12,39 +12,28 @@
           <line x1="12" y1="9" x2="12" y2="13"/>
           <line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
-        <span v-if="unlimited">Unbegrenzte Bewerbungen</span>
-        <span v-else-if="isAtLimit">Monatliches Limit erreicht</span>
-        <span v-else-if="isNearLimit">Fast am Limit</span>
-        <span v-else>Diesen Monat</span>
+        <span v-if="isAtLimit">Keine Credits mehr</span>
+        <span v-else-if="isNearLimit">Wenige Credits übrig</span>
+        <span v-else>Verfügbar</span>
       </div>
       <div class="usage-count">
-        <span v-if="unlimited" class="unlimited-badge">{{ planLabel }} Plan</span>
-        <template v-else>
-          <strong>{{ used }}</strong> von <strong>{{ limit }}</strong> Bewerbungen
-        </template>
+        <strong>{{ limit }}</strong> Credits
       </div>
-    </div>
-
-    <div v-if="!unlimited" class="usage-bar-container">
-      <div class="usage-bar">
-        <div class="usage-bar-fill" :style="{ width: percentageWidth }"></div>
-      </div>
-      <span class="usage-percentage">{{ percentage }}%</span>
     </div>
 
     <div v-if="isAtLimit" class="usage-cta">
-      <p>Upgrade dein Abo für mehr Bewerbungen</p>
+      <p>Kaufe einen Karriere-Pass für mehr Bewerbungen</p>
       <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 2L2 7l10 5 10-5-10-5z"/>
           <path d="M2 17l10 5 10-5"/>
           <path d="M2 12l10 5 10-5"/>
         </svg>
-        Abo upgraden
+        Credits kaufen
       </router-link>
     </div>
     <div v-else-if="isNearLimit" class="usage-hint">
-      <router-link to="/subscription">Upgrade für mehr Bewerbungen</router-link>
+      <router-link to="/subscription">Mehr Credits kaufen</router-link>
     </div>
   </div>
 </template>
@@ -71,26 +60,14 @@ const props = defineProps({
   }
 })
 
-const percentage = computed(() => {
-  if (props.unlimited || props.limit <= 0) return 0
-  return Math.min(Math.round((props.used / props.limit) * 100), 100)
-})
+const isNearLimit = computed(() => props.limit > 0 && props.limit <= 3)
 
-const percentageWidth = computed(() => `${percentage.value}%`)
-
-const isNearLimit = computed(() => !props.unlimited && percentage.value >= 80 && percentage.value < 100)
-
-const isAtLimit = computed(() => !props.unlimited && props.used >= props.limit)
+const isAtLimit = computed(() => props.limit <= 0)
 
 const statusClass = computed(() => {
-  if (props.unlimited) return 'status-unlimited'
   if (isAtLimit.value) return 'status-limit'
   if (isNearLimit.value) return 'status-warning'
   return 'status-normal'
-})
-
-const planLabel = computed(() => {
-  return props.plan.charAt(0).toUpperCase() + props.plan.slice(1)
 })
 </script>
 
@@ -112,17 +89,11 @@ const planLabel = computed(() => {
   border-color: var(--color-error);
 }
 
-.usage-indicator.status-unlimited {
-  background: var(--color-ai-subtle);
-  border-color: var(--color-ai-light);
-}
-
 .usage-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   gap: var(--space-md);
-  margin-bottom: var(--space-sm);
 }
 
 .usage-label {
@@ -142,10 +113,6 @@ const planLabel = computed(() => {
   color: var(--color-error);
 }
 
-.status-unlimited .usage-label {
-  color: var(--color-ai);
-}
-
 .usage-label svg {
   flex-shrink: 0;
 }
@@ -157,64 +124,6 @@ const planLabel = computed(() => {
 
 .usage-count strong {
   color: var(--color-text-primary);
-}
-
-.unlimited-badge {
-  display: inline-flex;
-  align-items: center;
-  padding: var(--space-xs) var(--space-sm);
-  background: var(--color-ai);
-  color: white;
-  border-radius: var(--radius-sm);
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.025em;
-}
-
-.usage-bar-container {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-}
-
-.usage-bar {
-  flex: 1;
-  height: 6px;
-  background: var(--color-border);
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.usage-bar-fill {
-  height: 100%;
-  background: var(--color-ai);
-  border-radius: 3px;
-  transition: width 0.3s ease;
-}
-
-.status-warning .usage-bar-fill {
-  background: var(--color-warning);
-}
-
-.status-limit .usage-bar-fill {
-  background: var(--color-error);
-}
-
-.usage-percentage {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--color-text-tertiary);
-  min-width: 36px;
-  text-align: right;
-}
-
-.status-warning .usage-percentage {
-  color: var(--color-warning);
-}
-
-.status-limit .usage-percentage {
-  color: var(--color-error);
 }
 
 .usage-cta {

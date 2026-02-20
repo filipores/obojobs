@@ -43,10 +43,28 @@ def get_plan_from_price_id(price_id: str) -> SubscriptionPlan:
     from config import config
 
     price_to_plan = {
-        config.STRIPE_PRICE_BASIC: SubscriptionPlan.basic,
+        config.STRIPE_PRICE_STARTER: SubscriptionPlan.starter,
         config.STRIPE_PRICE_PRO: SubscriptionPlan.pro,
     }
     return price_to_plan.get(price_id, SubscriptionPlan.free)
+
+
+def get_credits_for_plan(plan_name: str) -> int:
+    """Return the number of credits granted for a plan purchase."""
+    credits_map = {"starter": 50, "pro": 150}
+    return credits_map.get(plan_name, 0)
+
+
+def add_credits_to_user(user: User, credits: int) -> None:
+    """Add credits to a user's account."""
+    from sqlalchemy import text
+
+    db.session.execute(
+        text("UPDATE users SET credits_remaining = credits_remaining + :credits WHERE id = :user_id"),
+        {"credits": credits, "user_id": user.id},
+    )
+    db.session.commit()
+    db.session.refresh(user)
 
 
 def _extract_period(subscription_data: dict[str, Any]) -> tuple[datetime, datetime]:
@@ -86,7 +104,7 @@ def upsert_subscription(
 ) -> Subscription:
     """Create or update a subscription record from Stripe subscription data."""
     price_id = _extract_price_id(subscription_data)
-    plan = get_plan_from_price_id(price_id) if price_id else SubscriptionPlan.basic
+    plan = get_plan_from_price_id(price_id) if price_id else SubscriptionPlan.starter
     status = map_stripe_status(subscription_data.get("status", "active"))
     period_start, period_end = _extract_period(subscription_data)
 

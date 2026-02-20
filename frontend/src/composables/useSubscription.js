@@ -1,14 +1,14 @@
 /**
  * Subscription Composable
  *
- * Handles subscription-related operations including
+ * Handles credit-based plan operations including
  * plan fetching, checkout creation, and status management.
  */
 
 import { ref, readonly } from 'vue'
 import api from '../api/client'
 
-const PAID_PLANS = ['basic', 'pro']
+const PAID_PLANS = ['starter', 'pro']
 
 const plans = ref([])
 const paymentsAvailable = ref(true)
@@ -21,7 +21,7 @@ function extractErrorMessage(err) {
 
 function validatePaidPlan(plan) {
   if (!PAID_PLANS.includes(plan)) {
-    throw new Error('Invalid plan. Must be "basic" or "pro"')
+    throw new Error('Invalid plan. Must be "starter" or "pro"')
   }
 }
 
@@ -96,85 +96,6 @@ async function fetchCurrentSubscription() {
   }
 }
 
-async function changePlan(plan) {
-  validatePaidPlan(plan)
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const { data } = await api.post('/subscriptions/change-plan', { plan })
-    if (data.success) {
-      return data.data
-    }
-    throw new Error(data.error || 'Failed to change plan')
-  } catch (err) {
-    error.value = extractErrorMessage(err)
-    throw err
-  } finally {
-    isLoading.value = false
-  }
-}
-
-async function previewPlanChange(plan) {
-  validatePaidPlan(plan)
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const { data } = await api.post('/subscriptions/preview-change', { plan })
-    if (data.success) {
-      return data.data
-    }
-    throw new Error(data.error || 'Failed to preview plan change')
-  } catch (err) {
-    error.value = extractErrorMessage(err)
-    throw err
-  } finally {
-    isLoading.value = false
-  }
-}
-
-async function cancelSubscription() {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const { data } = await api.post('/subscriptions/cancel')
-    if (data.success) {
-      return data.data
-    }
-    throw new Error(data.error || 'Failed to cancel subscription')
-  } catch (err) {
-    error.value = extractErrorMessage(err)
-    throw err
-  } finally {
-    isLoading.value = false
-  }
-}
-
-async function openBillingPortal() {
-  isLoading.value = true
-  error.value = null
-
-  try {
-    const returnUrl = `${window.location.origin}/settings`
-    const { data } = await api.post('/subscriptions/portal', {
-      return_url: returnUrl
-    })
-
-    if (data.success && data.data.portal_url) {
-      window.location.href = data.data.portal_url
-    } else {
-      throw new Error(data.error || 'Failed to open billing portal')
-    }
-  } catch (err) {
-    error.value = extractErrorMessage(err)
-    throw err
-  } finally {
-    isLoading.value = false
-  }
-}
-
 /**
  * Composable for subscription operations
  */
@@ -186,11 +107,7 @@ export function useSubscription() {
     error: readonly(error),
     fetchPlans,
     startCheckout,
-    changePlan,
-    previewPlanChange,
-    cancelSubscription,
-    fetchCurrentSubscription,
-    openBillingPortal
+    fetchCurrentSubscription
   }
 }
 

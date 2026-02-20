@@ -205,13 +205,13 @@
             </p>
             <div class="upgrade-buttons">
               <button
-                @click="handleUpgrade('basic')"
+                @click="handleUpgrade('starter')"
                 class="zen-btn zen-btn-filled"
-                :class="{ 'is-loading-other': isUpgrading && upgradingPlan !== 'basic' }"
+                :class="{ 'is-loading-other': isUpgrading && upgradingPlan !== 'starter' }"
                 :disabled="isUpgrading || !paymentsAvailable"
               >
-                <span v-if="upgradingPlan === 'basic'" class="btn-spinner"></span>
-                {{ upgradingPlan === 'basic' ? t('common.loading') : `Basic - 9,99 ${t('subscription.perMonth')} ${t('subscription.includingVatShort')}` }}
+                <span v-if="upgradingPlan === 'starter'" class="btn-spinner"></span>
+                {{ upgradingPlan === 'starter' ? t('common.loading') : `Starter - 9,90 ${t('subscription.perMonth')} ${t('subscription.includingVatShort')}` }}
               </button>
               <button
                 @click="handleUpgrade('pro')"
@@ -220,7 +220,7 @@
                 :disabled="isUpgrading || !paymentsAvailable"
               >
                 <span v-if="upgradingPlan === 'pro'" class="btn-spinner"></span>
-                {{ upgradingPlan === 'pro' ? t('common.loading') : `Pro - 19,99 ${t('subscription.perMonth')} ${t('subscription.includingVatShort')}` }}
+                {{ upgradingPlan === 'pro' ? t('common.loading') : `Pro - 19,90 ${t('subscription.perMonth')} ${t('subscription.includingVatShort')}` }}
               </button>
             </div>
           </div>
@@ -580,7 +580,7 @@ import { useSubscription } from '../composables/useSubscription'
 import { getFullLocale } from '../i18n'
 
 const { t } = useI18n()
-const { fetchPlans, fetchCurrentSubscription, openBillingPortal, startCheckout, changePlan, previewPlanChange, cancelSubscription, isLoading, paymentsAvailable } = useSubscription()
+const { fetchPlans, fetchCurrentSubscription, startCheckout, isLoading, paymentsAvailable } = useSubscription()
 
 const subscription = ref(null)
 const availablePlans = ref([])
@@ -595,7 +595,7 @@ const isPreviewLoading = ref(false)
 const showCancelModal = ref(false)
 const isCanceling = ref(false)
 
-const PLAN_ORDER = { free: 0, basic: 1, pro: 2 }
+const PLAN_ORDER = { free: 0, starter: 1, pro: 2 }
 
 const fallbackPlans = computed(() => [
   {
@@ -610,9 +610,9 @@ const fallbackPlans = computed(() => [
     ]
   },
   {
-    plan_id: 'basic',
-    name: 'Basic',
-    price: 9.99,
+    plan_id: 'starter',
+    name: 'Starter',
+    price: 9.90,
     price_formatted: t('subscription.basicPriceFormatted'),
     features: [
       `20 ${t('subscription.applicationsPerMonth')}`,
@@ -625,7 +625,7 @@ const fallbackPlans = computed(() => [
   {
     plan_id: 'pro',
     name: 'Pro',
-    price: 19.99,
+    price: 19.90,
     price_formatted: t('subscription.proPriceFormatted'),
     features: [
       t('subscription.unlimitedApplications'),
@@ -663,7 +663,7 @@ const getAvailablePlans = computed(() => {
 const getPlanDisplayName = (plan) => {
   const names = {
     free: t('subscription.free'),
-    basic: t('subscription.basic'),
+    starter: t('subscription.starter'),
     pro: t('subscription.pro')
   }
   return names[plan] || t('subscription.free')
@@ -705,7 +705,7 @@ const getUpgradeButtonText = (planId) => {
 const getApplicationLimit = (planId) => {
   const limits = {
     free: '3',
-    basic: '20',
+    starter: '50',
     pro: t('subscription.unlimited')
   }
   return limits[planId] || '3'
@@ -796,7 +796,7 @@ const cancelConfirmation = () => {
 
 const isPaidActive = computed(() => {
   return subscription.value &&
-    ['basic', 'pro'].includes(subscription.value.plan) &&
+    ['starter', 'pro'].includes(subscription.value.plan) &&
     subscription.value.status === 'active' &&
     !subscription.value.cancel_at_period_end
 })
@@ -957,7 +957,7 @@ onMounted(() => {
   color: white;
 }
 
-.plan-badge.basic {
+.plan-badge.starter {
   background: var(--color-koke);
   color: white;
 }

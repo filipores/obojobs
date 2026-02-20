@@ -36,10 +36,10 @@ class StripeService:
         cancel_url: str,
         metadata: dict | None = None,
     ) -> stripe.checkout.Session:
-        """Create a Stripe Checkout session for subscription purchase."""
+        """Create a Stripe Checkout session for one-time credit purchase."""
         session_params = {
             "customer": customer_id,
-            "mode": "subscription",
+            "mode": "payment",
             "payment_method_types": ["card"],
             "line_items": [{"price": price_id, "quantity": 1}],
             "success_url": success_url,

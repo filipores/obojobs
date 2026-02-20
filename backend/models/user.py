@@ -43,6 +43,9 @@ class User(db.Model):  # type: ignore[name-defined]
     applications_this_month = db.Column(db.Integer, default=0, nullable=False)
     month_reset_at = db.Column(db.DateTime, nullable=True)
 
+    # Credit-based system: one-time purchases add credits, each generation costs 1
+    credits_remaining = db.Column(db.Integer, default=10, nullable=False)
+
     # Weekly goal tracking
     weekly_goal = db.Column(db.Integer, default=5, nullable=False)
 
@@ -90,6 +93,7 @@ class User(db.Model):  # type: ignore[name-defined]
             "stripe_customer_id": self.stripe_customer_id,
             "applications_this_month": self.applications_this_month,
             "month_reset_at": self.month_reset_at.isoformat() if self.month_reset_at else None,
+            "credits_remaining": self.credits_remaining,
             "subscription": self.subscription.to_dict() if self.subscription else None,
             "weekly_goal": self.weekly_goal,
             "language": self.language,

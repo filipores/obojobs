@@ -15,12 +15,16 @@ webhooks_bp = Blueprint("webhooks", __name__)
 
 
 def _handle_checkout_completed(session: dict[str, Any]) -> None:
-    """Handle checkout.session.completed: create/update subscription after checkout."""
+    """Handle checkout.session.completed: grant credits for one-time purchase."""
     customer_id = session.get("customer")
-    subscription_id = session.get("subscription")
+    payment_status = session.get("payment_status")
 
-    if not customer_id or not subscription_id:
-        logger.warning("Checkout session missing customer or subscription ID")
+    if not customer_id:
+        logger.warning("Checkout session missing customer ID")
+        return
+
+    if payment_status != "paid":
+        logger.info(f"Checkout payment_status is {payment_status}, skipping credit grant")
         return
 
     user = webhook_service.get_user_by_stripe_customer(customer_id)
@@ -28,9 +32,20 @@ def _handle_checkout_completed(session: dict[str, Any]) -> None:
         logger.error(f"No user found for Stripe customer {customer_id}")
         return
 
-    stripe_service = StripeService()
-    stripe_subscription = stripe_service.get_subscription(subscription_id)
-    webhook_service.upsert_subscription(user, customer_id, subscription_id, stripe_subscription)
+    # Get credits from session metadata
+    metadata = session.get("metadata", {})
+    plan = metadata.get("plan")
+    credits = int(metadata.get("credits", 0)) if metadata.get("credits") else 0
+
+    # Fall back to plan-based credit lookup
+    if not credits and plan:
+        credits = webhook_service.get_credits_for_plan(plan)
+
+    if credits > 0:
+        webhook_service.add_credits_to_user(user, credits)
+        logger.info(f"Granted {credits} credits to user {user.id} (plan={plan})")
+    else:
+        logger.warning(f"No credits to grant for checkout session (plan={plan}, metadata={metadata})")
 
 
 def _handle_subscription_created(subscription_data: dict[str, Any]) -> None:

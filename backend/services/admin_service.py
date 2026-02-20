@@ -45,16 +45,16 @@ def get_applications_this_month() -> Any:
 
 
 def get_subscription_counts() -> tuple[int, int]:
-    """Return counts of basic and pro active subscriptions."""
-    basic_count = Subscription.query.filter(
-        Subscription.plan == SubscriptionPlan.basic,
+    """Return counts of starter and pro active subscriptions."""
+    starter_count = Subscription.query.filter(
+        Subscription.plan == SubscriptionPlan.starter,
         Subscription.status == SubscriptionStatus.active,
     ).count()
     pro_count = Subscription.query.filter(
         Subscription.plan == SubscriptionPlan.pro,
         Subscription.status == SubscriptionStatus.active,
     ).count()
-    return basic_count, pro_count
+    return starter_count, pro_count
 
 
 def get_signups_last_7_days() -> int:
@@ -81,12 +81,12 @@ def list_users_paginated(
     if plan_filter:
         if plan_filter == "free":
             subquery = db.session.query(Subscription.user_id).filter(
-                Subscription.plan.in_([SubscriptionPlan.basic, SubscriptionPlan.pro]),
+                Subscription.plan.in_([SubscriptionPlan.starter, SubscriptionPlan.pro]),
                 Subscription.status == SubscriptionStatus.active,
             )
             query = query.filter(~User.id.in_(subquery))
-        elif plan_filter in ("basic", "pro"):
-            plan_enum = SubscriptionPlan.basic if plan_filter == "basic" else SubscriptionPlan.pro
+        elif plan_filter in ("starter", "pro"):
+            plan_enum = SubscriptionPlan.starter if plan_filter == "starter" else SubscriptionPlan.pro
             subquery = db.session.query(Subscription.user_id).filter(
                 Subscription.plan == plan_enum,
                 Subscription.status == SubscriptionStatus.active,

@@ -1,5 +1,10 @@
+"""Credit-based usage limiter.
+
+Each user starts with FREE_CREDITS (10).  One-time purchases (Starter / Pro)
+add credits via ``add_credits``.  Every generation consumes one credit.
+"""
+
 from collections.abc import Callable
-from datetime import datetime
 from functools import wraps
 from typing import Any
 
@@ -9,144 +14,97 @@ from sqlalchemy import text
 
 from middleware.jwt_required import get_current_user_id
 from models import User, db
-from models.subscription import SubscriptionPlan, SubscriptionStatus
 
-# Plan limits (applications per month)
-PLAN_LIMITS = {
-    SubscriptionPlan.free: 3,
-    SubscriptionPlan.basic: 20,
-    SubscriptionPlan.pro: -1,  # -1 = unlimited
-}
+# Credits granted per one-time purchase
+CREDIT_GRANTS = {"starter": 50, "pro": 150}
 
-
-def _get_user_plan(user: Any) -> SubscriptionPlan:
-    """Get the user's current subscription plan."""
-    if not user.subscription:
-        return SubscriptionPlan.free
-
-    # Only count active or trialing subscriptions
-    if user.subscription.status not in [SubscriptionStatus.active, SubscriptionStatus.trialing]:
-        return SubscriptionPlan.free
-
-    return user.subscription.plan or SubscriptionPlan.free
-
-
-def _check_and_reset_monthly_counter(user: Any) -> None:
-    """
-    Check if the monthly counter needs to be reset.
-    Resets at the beginning of each month.
-    """
-    now = datetime.utcnow()
-    current_month_start = datetime(now.year, now.month, 1)
-
-    # If month_reset_at is not set or is from a previous month, reset the counter
-    if user.month_reset_at is None or user.month_reset_at < current_month_start:
-        user.applications_this_month = 0
-        user.month_reset_at = current_month_start
-        db.session.commit()
+# Credits given to every new user on signup
+FREE_CREDITS = 10
 
 
 def get_subscription_usage(user: Any) -> dict:
-    """
-    Get the user's current subscription usage information.
-
-    Returns:
-        dict with plan, limit, used, and remaining counts
-    """
-    _check_and_reset_monthly_counter(user)
-
-    plan = _get_user_plan(user)
-    limit = PLAN_LIMITS.get(plan, 3)
-
-    # Refresh the user object to get the latest counter value
+    """Return the user's current credit balance as a usage dict."""
     db.session.refresh(user)
 
     return {
-        "plan": plan.value,
-        "limit": limit,
-        "used": user.applications_this_month,
-        "remaining": -1 if limit == -1 else max(0, limit - user.applications_this_month),
-        "unlimited": limit == -1,
+        "plan": "free",
+        "limit": user.credits_remaining,
+        "used": 0,
+        "remaining": user.credits_remaining,
+        "unlimited": False,
+        "credits_remaining": user.credits_remaining,
     }
 
 
 def try_increment_application_count(user: Any, plan_limit: int) -> bool:
-    """Atomically check limit and increment counter.
+    """Atomically consume one credit.
 
-    Uses a single UPDATE with a WHERE clause to prevent TOCTOU race conditions.
-    The row is only updated if the current count is still below the limit.
+    Uses a single UPDATE with a WHERE clause so that no credit is consumed
+    when the balance is already zero.
 
     Args:
         user: The User model instance.
-        plan_limit: The maximum number of applications allowed (-1 for unlimited).
+        plan_limit: Ignored (kept for API compat).
 
     Returns:
-        True if the increment succeeded (was within limit), False otherwise.
+        True if one credit was consumed, False if balance was zero.
     """
-    if plan_limit == -1:  # unlimited
-        return True
-
-    _check_and_reset_monthly_counter(user)
-
     result = db.session.execute(
         text(
             "UPDATE users"
-            " SET applications_this_month = applications_this_month + 1"
-            " WHERE id = :user_id AND applications_this_month < :limit"
+            " SET credits_remaining = credits_remaining - 1"
+            " WHERE id = :user_id AND credits_remaining > 0"
         ),
-        {"user_id": user.id, "limit": plan_limit},
+        {"user_id": user.id},
     )
     db.session.commit()
-
-    # Refresh user object so it reflects the new counter value
     db.session.refresh(user)
 
     return result.rowcount > 0
 
 
 def decrement_application_count(user: Any) -> None:
-    """Decrement the user's monthly application counter (rollback on failure).
-
-    Used when a generation fails after the atomic increment already happened,
-    so the user is not penalised for a failed attempt.
-    """
-    _check_and_reset_monthly_counter(user)
-
+    """Refund one credit (rollback after a failed generation)."""
     db.session.execute(
         text(
             "UPDATE users"
-            " SET applications_this_month = CASE"
-            "   WHEN applications_this_month > 0 THEN applications_this_month - 1"
-            "   ELSE 0"
-            " END"
+            " SET credits_remaining = credits_remaining + 1"
             " WHERE id = :user_id"
         ),
         {"user_id": user.id},
     )
     db.session.commit()
+    db.session.refresh(user)
 
-    # Refresh user object so it reflects the new counter value
+
+def add_credits(user: Any, amount: int) -> None:
+    """Grant *amount* credits to the user (after a purchase)."""
+    db.session.execute(
+        text(
+            "UPDATE users"
+            " SET credits_remaining = credits_remaining + :amount"
+            " WHERE id = :user_id"
+        ),
+        {"user_id": user.id, "amount": amount},
+    )
+    db.session.commit()
     db.session.refresh(user)
 
 
 def check_subscription_limit(fn: Callable) -> Callable:
-    """
-    Decorator that atomically checks the subscription limit AND increments the
-    counter in one step, preventing TOCTOU race conditions.
+    """Decorator that atomically consumes one credit before calling *fn*.
 
-    Must be used with @jwt_required() or @jwt_required_custom before this decorator.
-    Expects current_user in kwargs (from jwt_required_custom) or fetches it from JWT identity.
+    Must be used with ``@jwt_required()`` or ``@jwt_required_custom`` before
+    this decorator.  On success the credit is already consumed -- the wrapped
+    function does NOT need to decrement manually.
 
-    On success the counter is already incremented -- the wrapped function does NOT
-    need to call increment_application_count().  If the wrapped function raises an
-    exception, the counter is rolled back via decrement_application_count().
+    If the wrapped function raises, the credit is refunded.
 
-    Returns 403 if the user has reached their monthly limit.
+    Returns 403 when no credits remain.
     """
 
     @wraps(fn)
     def wrapper(*args: Any, **kwargs: Any) -> Any:
-        # Get user from kwargs (if using jwt_required_custom) or fetch from JWT
         current_user = kwargs.get("current_user")
 
         if not current_user:
@@ -157,33 +115,22 @@ def check_subscription_limit(fn: Callable) -> Callable:
             if not current_user or not current_user.is_active:
                 return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 401
 
-        # Get user's plan and limit
-        plan = _get_user_plan(current_user)
-        limit = PLAN_LIMITS.get(plan, 3)
-
-        # Atomically check limit and increment
-        if not try_increment_application_count(current_user, limit):
-            # Refresh to get accurate count for the error response
+        if not try_increment_application_count(current_user, 0):
             db.session.refresh(current_user)
-            plan_name = plan.value.capitalize()
             return jsonify(
                 {
                     "success": False,
-                    "error": f"Monatliches Limit erreicht. Dein {plan_name}-Plan erlaubt {limit} Bewerbungen pro Monat. Upgrade für mehr Bewerbungen.",
+                    "error": "Keine Credits mehr verfügbar. Kaufe einen Karriere-Pass für mehr Bewerbungen.",
                     "error_code": "SUBSCRIPTION_LIMIT_REACHED",
                     "usage": {
-                        "plan": plan.value,
-                        "limit": limit,
-                        "used": current_user.applications_this_month,
+                        "credits_remaining": current_user.credits_remaining,
                     },
                 }
             ), 403
 
-        # Increment succeeded -- call the wrapped function
         try:
             return fn(*args, **kwargs)
         except Exception:
-            # Roll back the counter so the user isn't penalised for a failed generation
             decrement_application_count(current_user)
             raise
 
@@ -191,16 +138,5 @@ def check_subscription_limit(fn: Callable) -> Callable:
 
 
 def increment_application_count(user: Any) -> None:
-    """
-    Increment the user's monthly application counter.
-
-    .. deprecated::
-        Kept for backwards compatibility (e.g. the extension ``/generate``
-        endpoint which uses ``@api_key_required`` instead of
-        ``@check_subscription_limit``).  Endpoints that use the
-        ``@check_subscription_limit`` decorator no longer need to call this
-        because the decorator performs the increment atomically.
-    """
-    _check_and_reset_monthly_counter(user)
-    user.applications_this_month += 1
-    db.session.commit()
+    """Consume one credit (legacy helper for the extension endpoint)."""
+    try_increment_application_count(user, 0)
