@@ -10,9 +10,9 @@ import api from '../api/client.js'
 
 const FALLBACK_LEGAL = {
   company_name: 'obo - Filip Ores',
-  company_address: '',
-  company_postal_code: '',
-  company_city: '',
+  company_address: 'Nöltingstraße 31',
+  company_postal_code: '22765',
+  company_city: 'Hamburg',
   company_email: 'kontakt@obojobs.de',
   company_phone: ''
 }

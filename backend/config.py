@@ -100,9 +100,9 @@ class Config:
 
     # Legal / Impressum
     COMPANY_NAME = os.getenv("COMPANY_NAME", "obo - Filip Ores")
-    COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", "Teststraße 1")
-    COMPANY_POSTAL_CODE = os.getenv("COMPANY_POSTAL_CODE", "80331")
-    COMPANY_CITY = os.getenv("COMPANY_CITY", "München")
+    COMPANY_ADDRESS = os.getenv("COMPANY_ADDRESS", "Nöltingstraße 31")
+    COMPANY_POSTAL_CODE = os.getenv("COMPANY_POSTAL_CODE", "22765")
+    COMPANY_CITY = os.getenv("COMPANY_CITY", "Hamburg")
     COMPANY_EMAIL = os.getenv("COMPANY_EMAIL", "kontakt@obojobs.de")
     COMPANY_PHONE = os.getenv("COMPANY_PHONE", "")
 
