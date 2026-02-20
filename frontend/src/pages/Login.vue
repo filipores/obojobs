@@ -273,12 +273,15 @@ const handleLogin = async () => {
   emailTouched.value = true
   passwordTouched.value = true
 
-  // Check if there are validation errors
-  if (emailError.value || passwordError.value) {
+  // Validate directly (don't rely on computed reactivity within same tick)
+  const hasEmailError = !email.value || !isValidEmail(email.value)
+  const hasPasswordError = !password.value
+
+  if (hasEmailError || hasPasswordError) {
     // Focus first invalid field for better UX
-    if (emailError.value) {
+    if (hasEmailError) {
       document.getElementById('email')?.focus()
-    } else if (passwordError.value) {
+    } else if (hasPasswordError) {
       document.getElementById('password')?.focus()
     }
     return // Don't submit if validation fails
