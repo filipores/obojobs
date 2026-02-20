@@ -1,3 +1,15 @@
+# [1.65.0](https://github.com/filipores/obojobs/compare/v1.64.0...v1.65.0) (2026-02-20)
+
+
+### Bug Fixes
+
+* **ci:** add pull-requests write permission to ci-summary job ([689aef0](https://github.com/filipores/obojobs/commit/689aef064b9849cfb5e75a3aeb9fe0b1fce908e6))
+
+
+### Features
+
+* extract i18n strings for NewApplication components ([dffa4a8](https://github.com/filipores/obojobs/commit/dffa4a8c4eb1dfb4459128da2c5505b56c28f913))
+
 # [1.64.0](https://github.com/filipores/obojobs/compare/v1.63.7...v1.64.0) (2026-02-19)
 
 
