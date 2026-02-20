@@ -55,7 +55,7 @@
           <polyline points="14 2 14 8 20 8"/>
         </svg>
         <p class="drop-zone-text">
-          <strong>PDF hier ablegen</strong> oder <button type="button" @click="triggerFileSelect" class="drop-zone-link">Datei auswählen</button>
+          <strong>Lebenslauf ablegen</strong> oder <button type="button" @click="triggerFileSelect" class="drop-zone-link">Datei auswählen</button>
         </p>
       </div>
 

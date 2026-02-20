@@ -175,52 +175,104 @@
       @complete="onCraftingComplete"
     />
 
-    <!-- Demo Result Overlay -->
+    <!-- Demo Result Overlay (3-phase reveal) -->
     <Teleport to="body">
       <Transition name="demo-result">
-        <div v-if="showDemoResult" class="demo-result-overlay">
-          <div class="demo-result-content">
-            <!-- Enso circle -->
-            <div class="demo-result-enso">
-              <svg viewBox="0 0 100 100" width="80" height="80">
-                <circle
-                  cx="50" cy="50" r="45"
-                  fill="none"
-                  stroke="var(--color-koke)"
-                  stroke-width="3"
-                  stroke-linecap="round"
-                />
+        <div v-if="showDemoResult" class="demo-reveal-overlay" @click="showDemoResult = false">
+          <div class="demo-reveal-modal" role="dialog" aria-modal="true" @click.stop>
+            <!-- Close button -->
+            <button @click="showDemoResult = false" class="demo-reveal-close" aria-label="Schließen">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
               </svg>
+            </button>
+
+            <!-- Phase 1: Enso Circle -->
+            <div class="demo-reveal-enso" :class="{ 'demo-reveal-enso--visible': revealPhase >= 1 }">
+              <EnsoCircle state="complete" size="lg" :duration="600" />
             </div>
 
-            <h2 class="demo-result-title">Bewerbung erstellt</h2>
-            <p v-if="demoResultData?.firma" class="demo-result-subtitle">
-              {{ demoResultData.firma }} — {{ demoResultData.position }}
+            <!-- Phase 2: Content reveal -->
+            <div class="demo-reveal-content" :class="{ 'demo-reveal-content--visible': revealPhase >= 2 }">
+              <div class="demo-reveal-header">
+                <h2 class="demo-reveal-title">Bewerbung erstellt</h2>
+                <p v-if="demoResultData?.firma" class="demo-reveal-company">
+                  {{ demoResultData.position }} bei <strong>{{ demoResultData.firma }}</strong>
+                </p>
+              </div>
+
+              <!-- Peek card for intro preview -->
+              <div
+                v-if="einleitungPreview"
+                class="demo-reveal-peek"
+                :class="{ 'demo-reveal-peek--expanded': peekExpanded }"
+                @mouseenter="peekExpanded = true"
+                @mouseleave="peekExpanded = false"
+                @click="peekExpanded = !peekExpanded"
+              >
+                <div class="demo-reveal-peek-header">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                  <span class="demo-reveal-peek-label">Vorschau</span>
+                  <svg class="demo-reveal-peek-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"/>
+                  </svg>
+                </div>
+                <div class="demo-reveal-peek-body">
+                  <p class="demo-reveal-peek-text">{{ einleitungPreview }}</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Phase 3: Action buttons -->
+            <div class="demo-reveal-actions" :class="{ 'demo-reveal-actions--visible': revealPhase >= 3 }">
+              <div class="demo-reveal-buttons">
+                <button @click="downloadDemoPdf" class="zen-btn zen-btn-ai demo-reveal-btn-primary">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                    <polyline points="7 10 12 15 17 10"/>
+                    <line x1="12" y1="15" x2="12" y2="3"/>
+                  </svg>
+                  {{ demoResultData?.pdf_base64 ? 'PDF herunterladen' : 'Kostenlos registrieren' }}
+                </button>
+                <button @click="showDemoResult = false" class="zen-btn demo-reveal-btn-secondary">
+                  Zurück zur Startseite
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
+    <!-- Registration Nudge Modal -->
+    <Teleport to="body">
+      <Transition name="nudge-modal">
+        <div v-if="showRegistrationNudge" class="nudge-overlay" @click="dismissNudge">
+          <div class="nudge-modal" @click.stop>
+            <div class="nudge-enso">
+              <EnsoCircle state="breathing" size="md" />
+            </div>
+
+            <h2 class="nudge-title">Hat dir dein Anschreiben gefallen?</h2>
+            <p class="nudge-subtitle">
+              Erstelle jetzt 3 weitere Bewerbungen — kostenlos und ohne Kreditkarte.
             </p>
 
-            <!-- Anschreiben preview card -->
-            <div class="demo-result-preview">
-              <div class="demo-result-preview-header">
-                <span class="demo-result-preview-label">Anschreiben</span>
-              </div>
-              <div class="demo-result-preview-body" :class="{ 'expanded': previewExpanded }">
-                {{ demoResultData?.anschreiben || demoResultData?.einleitung || '' }}
-              </div>
-              <button
-                v-if="(demoResultData?.anschreiben || demoResultData?.einleitung || '').length > 200"
-                @click="previewExpanded = !previewExpanded"
-                class="demo-result-expand-btn"
-              >
-                {{ previewExpanded ? 'Weniger anzeigen' : 'Mehr anzeigen' }}
-              </button>
-            </div>
+            <ul class="nudge-features">
+              <li>Professionelle PDF-Bewerbungen</li>
+              <li>Job-Fit Analyse deiner Qualifikation</li>
+              <li>E-Mail-Vorlagen direkt zum Versenden</li>
+            </ul>
 
-            <!-- CTA -->
-            <button @click="onDemoRegister" class="zen-btn zen-btn-ai zen-btn-lg demo-result-cta">
+            <button @click="goToRegister" class="zen-btn zen-btn-ai zen-btn-lg nudge-cta">
               Kostenlos registrieren
             </button>
-            <button @click="showDemoResult = false" class="demo-result-dismiss">
-              Zurück zur Startseite
+            <button @click="dismissNudge" class="nudge-dismiss">
+              Vielleicht später
             </button>
           </div>
         </div>
@@ -811,12 +863,13 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import DemoGenerator from '../components/landing/DemoGenerator.vue'
 import CraftingOverlay from '../components/application/CraftingOverlay.vue'
 import FaqAccordion from '../components/landing/FaqAccordion.vue'
+import EnsoCircle from '../components/application/EnsoCircle.vue'
 import { useScrollReveal } from '../composables/useScrollReveal.js'
 import { demoStore } from '../stores/demo'
 import { authStore } from '../stores/auth'
@@ -863,11 +916,37 @@ const showCraftingScreen = ref(false)
 const craftingData = ref(null)
 const demoResultData = ref(null)
 const showDemoResult = ref(false)
-const previewExpanded = ref(false)
 const apiComplete = ref(false)
+
+// 3-phase reveal state
+const revealPhase = ref(0)
+const peekExpanded = ref(false)
+const showRegistrationNudge = ref(false)
 
 const showCvUploadFlow = computed(() => {
   return authStore.isAuthenticated() && demoStore.isInDemoFlow()
+})
+
+const einleitungPreview = computed(() => {
+  if (!demoResultData.value?.einleitung) return ''
+  const text = demoResultData.value.einleitung
+  const sentences = text.match(/[^.!?]*[.!?]+/g) || []
+  return sentences.slice(0, 3).join(' ').trim()
+})
+
+// Trigger 3-phase reveal when demo result shows
+watch(showDemoResult, (show) => {
+  if (show) {
+    revealPhase.value = 0
+    peekExpanded.value = false
+    setTimeout(() => { revealPhase.value = 1 }, 200)
+    setTimeout(() => { revealPhase.value = 2 }, 800)
+    setTimeout(() => { revealPhase.value = 3 }, 1400)
+    document.body.style.overflow = 'hidden'
+  } else {
+    revealPhase.value = 0
+    document.body.style.overflow = ''
+  }
 })
 
 function handleFileSelection(file) {
@@ -1058,6 +1137,46 @@ function onCraftingComplete() {
 
 function onDemoRegister() {
   showDemoResult.value = false
+  router.push('/register')
+}
+
+function downloadDemoPdf() {
+  if (!demoResultData.value?.pdf_base64) {
+    // Fallback if no PDF available: go straight to register
+    onDemoRegister()
+    return
+  }
+
+  const byteCharacters = window.atob(demoResultData.value.pdf_base64)
+  const byteNumbers = new Array(byteCharacters.length)
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i)
+  }
+  const byteArray = new Uint8Array(byteNumbers)
+  const blob = new Blob([byteArray], { type: 'application/pdf' })
+
+  const url = window.URL.createObjectURL(blob)
+  const a = document.createElement('a')
+  a.href = url
+  a.download = `Anschreiben_${demoResultData.value.firma || 'Bewerbung'}.pdf`
+  document.body.appendChild(a)
+  a.click()
+  window.URL.revokeObjectURL(url)
+  document.body.removeChild(a)
+
+  // Show nudge modal after brief delay
+  setTimeout(() => {
+    showDemoResult.value = false
+    showRegistrationNudge.value = true
+  }, 500)
+}
+
+function dismissNudge() {
+  showRegistrationNudge.value = false
+}
+
+function goToRegister() {
+  showRegistrationNudge.value = false
   router.push('/register')
 }
 
@@ -1401,130 +1520,290 @@ onMounted(() => {
 }
 
 /* ========================================
-   DEMO RESULT OVERLAY
+   DEMO REVEAL OVERLAY (3-phase)
    ======================================== */
-.demo-result-overlay {
+.demo-reveal-overlay {
   position: fixed;
-  inset: 0;
-  z-index: var(--z-modal);
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(
-    135deg,
-    var(--color-washi) 0%,
-    var(--color-washi-warm) 50%,
-    var(--color-washi-aged) 100%
-  );
+  z-index: var(--z-modal);
   padding: var(--space-lg);
 }
 
-.demo-result-content {
-  max-width: 560px;
+.demo-reveal-modal {
   width: 100%;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: var(--space-md);
+  max-width: 480px;
+  max-height: calc(100dvh - 2 * var(--space-lg));
+  overflow-y: auto;
+  background: var(--color-washi);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: var(--space-2xl) var(--space-xl) var(--space-xl);
+  position: relative;
 }
 
-.demo-result-enso {
-  animation: resultEnsoEnter 0.8s var(--ease-zen);
+.demo-reveal-close {
+  position: absolute;
+  top: var(--space-md);
+  right: var(--space-md);
+  background: transparent;
+  border: none;
+  color: var(--color-stone);
+  cursor: pointer;
+  padding: var(--space-xs);
+  border-radius: var(--radius-sm);
+  opacity: 0.6;
+  transition: opacity var(--transition-base), color var(--transition-base);
+  z-index: 10;
 }
 
-@keyframes resultEnsoEnter {
-  0% {
-    opacity: 0;
-    transform: scale(0.8);
-  }
-  60% {
-    transform: scale(1.05);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
-
-.demo-result-title {
-  font-size: clamp(1.75rem, 4vw, 2.25rem);
-  font-weight: 400;
+.demo-reveal-close:hover {
+  opacity: 1;
   color: var(--color-sumi);
+}
+
+/* Phase 1: Enso */
+.demo-reveal-enso {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-xl) 0 var(--space-lg);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 0.4s var(--ease-zen), transform 0.4s var(--ease-zen);
+}
+
+.demo-reveal-enso--visible {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* Phase 2: Content */
+.demo-reveal-content {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.5s var(--ease-zen) 0.1s, transform 0.5s var(--ease-zen) 0.1s;
+}
+
+.demo-reveal-content--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.demo-reveal-header {
+  text-align: center;
+  margin-bottom: var(--space-lg);
+}
+
+.demo-reveal-title {
+  font-size: 1.75rem;
+  font-weight: 400;
   letter-spacing: -0.02em;
+  color: var(--color-sumi);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.demo-reveal-company {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
   margin: 0;
 }
 
-.demo-result-subtitle {
-  font-size: 1.125rem;
+.demo-reveal-company strong {
   color: var(--color-ai);
   font-weight: 500;
-  margin: 0;
 }
 
-.demo-result-preview {
-  width: 100%;
-  background: var(--color-bg-elevated);
-  border-radius: var(--radius-lg);
+/* Peek card */
+.demo-reveal-peek {
   border: 1px solid var(--color-border-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-md);
+  cursor: pointer;
+  transition: border-color 0.2s var(--ease-zen), box-shadow 0.2s var(--ease-zen);
   overflow: hidden;
+}
+
+.demo-reveal-peek:hover {
+  border-color: var(--color-ai);
+  box-shadow: 0 2px 8px rgba(61, 90, 108, 0.08);
+}
+
+.demo-reveal-peek-header {
+  display: flex;
+  align-items: center;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
+  color: var(--color-text-tertiary);
+  font-size: 0.75rem;
+  letter-spacing: var(--tracking-wider);
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+.demo-reveal-peek-label {
+  flex: 1;
+}
+
+.demo-reveal-peek-chevron {
+  transition: transform 0.2s var(--ease-zen);
+  flex-shrink: 0;
+}
+
+.demo-reveal-peek--expanded .demo-reveal-peek-chevron {
+  transform: rotate(180deg);
+}
+
+.demo-reveal-peek-body {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s var(--ease-zen), padding 0.3s var(--ease-zen);
+  padding: 0 var(--space-md);
+}
+
+.demo-reveal-peek--expanded .demo-reveal-peek-body {
+  max-height: 120px;
+  padding: 0 var(--space-md) var(--space-md);
+}
+
+.demo-reveal-peek-text {
+  font-size: 0.875rem;
+  line-height: var(--leading-relaxed);
+  color: var(--color-text-secondary);
+  margin: 0;
+  font-style: italic;
+}
+
+/* Phase 3: Actions */
+.demo-reveal-actions {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.5s var(--ease-zen), transform 0.5s var(--ease-zen);
+  padding-top: var(--space-md);
+}
+
+.demo-reveal-actions--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.demo-reveal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+  align-items: center;
+}
+
+.demo-reveal-btn-primary {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+}
+
+.demo-reveal-btn-secondary {
+  width: 100%;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+}
+
+.demo-reveal-btn-secondary:hover {
+  border-color: var(--color-sumi);
+  color: var(--color-sumi);
+  background: var(--color-washi-warm);
+}
+
+/* ========================================
+   REGISTRATION NUDGE MODAL
+   ======================================== */
+.nudge-overlay {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: rgba(30, 30, 30, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: var(--z-modal);
+  padding: var(--space-lg);
+}
+
+.nudge-modal {
+  width: 100%;
+  max-width: 440px;
+  background: var(--color-washi);
+  border-radius: var(--radius-lg);
+  box-shadow:
+    0 25px 50px -12px rgba(0, 0, 0, 0.25),
+    0 0 0 1px rgba(255, 255, 255, 0.1);
+  padding: var(--space-2xl) var(--space-xl) var(--space-xl);
+  text-align: center;
+}
+
+.nudge-enso {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.nudge-title {
+  font-size: 1.5rem;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  color: var(--color-sumi);
+  margin: 0 0 var(--space-sm) 0;
+}
+
+.nudge-subtitle {
+  font-size: 1rem;
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-lg) 0;
+  line-height: var(--leading-relaxed);
+}
+
+.nudge-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 var(--space-xl) 0;
   text-align: left;
 }
 
-.demo-result-preview-header {
-  padding: var(--space-sm) var(--space-md);
-  background: var(--color-washi-warm);
-  border-bottom: 1px solid var(--color-border-light);
-}
-
-.demo-result-preview-label {
-  font-size: 0.75rem;
-  font-weight: 500;
-  text-transform: uppercase;
-  letter-spacing: var(--tracking-wider);
-  color: var(--color-text-ghost);
-}
-
-.demo-result-preview-body {
-  padding: var(--space-md) var(--space-lg);
+.nudge-features li {
+  position: relative;
+  padding: var(--space-xs) 0 var(--space-xs) var(--space-xl);
   font-size: 0.9375rem;
-  line-height: var(--leading-relaxed);
   color: var(--color-text-secondary);
-  max-height: 4.5em;
-  overflow: hidden;
-  transition: max-height 0.3s var(--ease-zen);
-  white-space: pre-wrap;
+  line-height: var(--leading-relaxed);
 }
 
-.demo-result-preview-body.expanded {
-  max-height: 500px;
+.nudge-features li::before {
+  content: "\2713";
+  position: absolute;
+  left: 0;
+  color: var(--color-koke);
+  font-weight: 600;
 }
 
-.demo-result-expand-btn {
-  display: block;
+.nudge-cta {
   width: 100%;
-  padding: var(--space-sm);
-  background: none;
-  border: none;
-  border-top: 1px solid var(--color-border-light);
-  color: var(--color-ai);
-  font-size: 0.8125rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background var(--transition-base);
+  margin-bottom: var(--space-md);
 }
 
-.demo-result-expand-btn:hover {
-  background: var(--color-ai-subtle);
-}
-
-.demo-result-cta {
-  width: 100%;
-  max-width: 320px;
-  margin-top: var(--space-sm);
-}
-
-.demo-result-dismiss {
+.nudge-dismiss {
   background: none;
   border: none;
   color: var(--color-text-tertiary);
@@ -1533,20 +1812,29 @@ onMounted(() => {
   transition: color var(--transition-base);
 }
 
-.demo-result-dismiss:hover {
+.nudge-dismiss:hover {
   color: var(--color-ai);
 }
 
 /* Demo result transitions */
 .demo-result-enter-active {
-  animation: demoResultEnter 0.5s var(--ease-zen);
+  animation: demoRevealEnter 0.4s var(--ease-zen);
 }
 
 .demo-result-leave-active {
-  animation: demoResultLeave 0.3s var(--ease-zen);
+  animation: demoRevealLeave 0.3s var(--ease-zen);
 }
 
-@keyframes demoResultEnter {
+/* Nudge modal transitions */
+.nudge-modal-enter-active {
+  animation: nudgeEnter 0.4s var(--ease-zen);
+}
+
+.nudge-modal-leave-active {
+  animation: nudgeLeave 0.3s var(--ease-zen);
+}
+
+@keyframes demoRevealEnter {
   0% {
     opacity: 0;
   }
@@ -1555,7 +1843,28 @@ onMounted(() => {
   }
 }
 
-@keyframes demoResultLeave {
+@keyframes demoRevealLeave {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes nudgeEnter {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes nudgeLeave {
   0% {
     opacity: 1;
   }
@@ -2528,6 +2837,45 @@ onMounted(() => {
   .trust-badges {
     flex-direction: column;
     gap: var(--space-md);
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .demo-reveal-enso,
+  .demo-reveal-content,
+  .demo-reveal-actions {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .demo-reveal-peek-body,
+  .demo-reveal-peek-chevron {
+    transition: none;
+  }
+}
+
+/* Mobile responsive for reveal + nudge */
+@media (max-width: 768px) {
+  .demo-reveal-modal {
+    padding: var(--space-xl) var(--space-lg) var(--space-lg);
+    margin: var(--space-md);
+    max-width: calc(100% - var(--space-lg));
+  }
+
+  .demo-reveal-title {
+    font-size: 1.5rem;
+  }
+
+  .nudge-modal {
+    padding: var(--space-xl) var(--space-lg) var(--space-lg);
+    margin: var(--space-md);
+    max-width: calc(100% - var(--space-lg));
+  }
+
+  .nudge-title {
+    font-size: 1.25rem;
   }
 }
 </style>
