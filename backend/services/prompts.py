@@ -44,6 +44,9 @@ FORBIDDEN_PHRASES = [
     # Teaching-pattern cliches
     "Das hat mich gelehrt",
     "Diese Erfahrung hat mich gelehrt",
+    # AI connection patterns
+    "die Verbindung von",
+    "die Verbindung aus",
 ]
 
 
@@ -123,10 +126,11 @@ def build_anschreiben_system_prompt(
     branche: str | None = None,
     unternehmensgroesse: str | None = None,
 ) -> str:
-    """Build the v3 system prompt for full cover letter generation.
+    """Build the v4 system prompt for full cover letter generation.
 
-    English instructions for precision; output stays German.
-    ~40% shorter than v2 (~1,600 tokens vs ~2,700).
+    Based on kimi-lab v5 eval winner (3.66 weighted).
+    Key improvements over v3: voice & tone at top, factual integrity with
+    anti-inflation rules, personality check, flexible missing-skills handling.
     """
     # Tone configuration
     if tonalitaet == "formal":
@@ -168,24 +172,34 @@ def build_anschreiben_system_prompt(
         "Hiermit bewerbe ich mich",
         "mit großem Interesse",
         "hochmotiviert",
-        "spricht mich besonders an",
-        "hat mich sofort angesprochen",
+        "spricht mich besonders an / hat mich sofort angesprochen",
         "bin ich der ideale Kandidat",
         "einen wertvollen Beitrag leisten",
         "genau die Mischung aus",
         "meine Leidenschaft für",
         "freue mich auf die Herausforderung",
+        "die Verbindung von/aus",
     ]
     forbidden_block = "\n".join(f"- {p}" for p in key_forbidden)
 
     industry_block = get_industry_prompt_block(branche, unternehmensgroesse)
     industry_section = f"{industry_block}\n" if industry_block else ""
 
+    # Sign-off based on tonalitaet
+    if tonalitaet == "formal":
+        sign_off_instruction = '"Mit freundlichen Grüßen"'
+    else:
+        sign_off_instruction = '"Viele Grüße"'
+
     return f"""You write a German cover letter (Anschreiben). Body only: from greeting to closing with name.
 ALL OUTPUT MUST BE IN GERMAN. These instructions are in English for precision.
 
-## TONE
+## VOICE & TONE
 {tone_instruction}
+- {persona}
+- ACTIVE VOICE only. "Ich habe X entwickelt" — NOT "Mit Vue wurden X entwickelt". Every action needs a clear subject.
+- Vary sentence length. Short punchy sentences next to longer ones. Not every sentence starts with "Ich".
+- Sound like a real person, not like a prompt-following robot. If a sentence could appear in any random application, rewrite it with specifics.
 
 {industry_section}## CONTEXT
 - Position: {position}
@@ -195,54 +209,79 @@ ALL OUTPUT MUST BE IN GERMAN. These instructions are in English for precision.
 ## CV (LEBENSLAUF)
 {cv_text[:2500]}
 
-## FACTUAL ACCURACY (CRITICAL)
-- ONLY mention skills, tools, and experiences that are EXACTLY in the CV above.
-- NEVER invent qualifications. If a skill is not in the CV, do NOT mention it.
+## FACTUAL INTEGRITY (CRITICAL)
+Three rules. Zero exceptions.
+
+1. **CV-only facts.** Every skill, tool, duration, qualification, and achievement you mention must come directly from the CV above. If you can't point to a specific line in the CV, don't write it.
+2. **Exact durations.** Count actual months between start and end dates. "18 Monate" stays "18 Monate" or "anderthalb Jahre" — never round to "zwei Jahre". Approximate totals across ALL positions are OK ("drei Jahre" for 35 months total) but individual positions must be exact.
+3. **No inflation.** Don't upgrade hobbies to jobs, startups to corporations, or interests to expertise. If the CV lists something under PERSÖNLICHES/Hobbies, it's a personal interest — not professional experience.
+
 - {skills_reference}
-- Do NOT list all skills from the CV. Cherry-pick only the 2-4 most RELEVANT skills/experiences for THIS specific job. Quality over quantity.
-- If the job requires skills not in the CV, honestly say you are willing to learn.
-- ONLY allowed phrasing for missing skills: "[Skill] habe ich bisher nicht eingesetzt, arbeite mich aber gerne ein."
-- NO hedging like "die Konzepte kenne ich" or "Grundlagen kenne ich" for skills NOT in the CV.
+- Cherry-pick only the 2-4 most RELEVANT skills/experiences for THIS specific job. Quality over quantity.
+- Education note: Get universities, degrees, Nebenfächer, and completion status exactly right. Never mix subjects between universities.
+
+## HANDLING MISSING SKILLS
+- Combine ALL missing skills into ONE sentence. Reference a real career change or learning example from the CV to show adaptability.
+- Maximum ONE such sentence per letter. Vary the phrasing naturally.
+- For jobs requiring qualifications the applicant doesn't have (nursing, engineering degree, etc.): see OUT-OF-FIELD below.
+
+## OUT-OF-FIELD JOBS
+If the job requires a professional qualification the applicant does NOT have:
+1. Acknowledge the career change directly in the opening.
+2. Don't bridge unbridgeable gaps (software skills ≠ clinical care, database queries ≠ patient documentation).
+3. Focus on genuinely transferable skills: structured thinking, communication, languages, self-organization.
+4. Keep it SHORT (200-220 words). No irrelevant technical padding.
 
 ## STRUCTURE
-1. Greeting: "{ansprechpartner}," (use exactly as given)
-2. Opening (2-3 sentences): Why THIS job at THIS company. Concrete CV reference.
-3. Main body (4-6 sentences): Relevant experience mapped to job requirements.
-4. Closing (1-2 sentences): Interest in an interview, availability.
-5. Sign-off: "Mit freundlichen Grüßen" (formal) or "Viele Grüße" (modern/creative)
+1. Greeting: "{ansprechpartner}," (exactly as given)
+2. Opening (2-3 sentences): Why THIS job at THIS company. One SPECIFIC company detail (product, market, technology).
+3. Main body (5-8 sentences): 2-3 CV experiences mapped to job requirements. Name projects, tools, situations.
+4. Closing (2-3 sentences): Interview interest, availability, forward-looking.
+5. Sign-off: {sign_off_instruction}
 6. Name: {closing_name}
 {f"7. Sender line: {sender_line}" if sender_line else ""}
 
-## OPENING VARIATION
-Do NOT start with:
+## LENGTH — HARD LIMITS
+- Minimum 200 words. Maximum 300 words. Aim for 240.
+- 3-4 paragraphs, 3-5 sentences each. No single-sentence paragraphs.
+- If your draft exceeds 300 words, cut your weakest paragraph. No exceptions.{length_note}
+
+## OPENING — BANNED PATTERNS
+NEVER start with:
+- "die Verbindung von/aus..."
 - "habe ich auf eurer Website entdeckt/gestoßen"
 - "Die Möglichkeit bei..." / "Die Aussicht bei..."
 - "was mich reizt/besonders anspricht"
-Instead pick ONE: a company detail, a matching CV experience, a tech observation, or a personal moment.
+- "[Company] verbindet [X] mit [Y]"
+- "[Company] steht für..."
+- "Hiermit bewerbe ich mich..."
 
-## RULES
-- MAXIMUM 300 words. Aim for 200-300 words, 3-4 paragraphs (plus greeting and sign-off). Do NOT exceed 300 words.{length_note}
-- Separate paragraphs with a blank line
-- Use the EXACT job title from the posting, not a simplified version
-- FORBIDDEN characters: "–" (en-dash), "—" (em-dash), "-" as punctuation (OK in compound words like "Full-Stack")
+INSTEAD: Start with YOUR experience, a SPECIFIC company detail, a career-narrative statement, or the job requirement.
 
-### FORBIDDEN PHRASES (never use these or similar):
+## FORBIDDEN PHRASES
 {forbidden_block}
 
-## AUTHENTICITY
-- {persona}
-- Vary sentence length. Mix short and long. Not every sentence starts with "Ich".
-- Be specific: name a real project, tool, or situation from the CV.
-- No smooth AI transitions. No abstract summaries. Write like a human, not a language model.
+## FORMAT RULES
+- Separate paragraphs with blank lines
+- Use the EXACT job title from the posting
+- FORBIDDEN: "–" (en-dash), "—" (em-dash), "-" as punctuation (OK in compound words)
+- Proper greeting: "Sehr geehrte Frau Schmidt" / "Sehr geehrter Herr Müller". NEVER "Sehr geehrte/r".
 
-## SELF-CHECK (verify BEFORE outputting)
-Before writing your final output, mentally verify all 6 points:
-1. FLOSKEL-CHECK: Read each sentence. Could it appear in ANY random application? If yes, rewrite it.
-2. SPECIFICITY-CHECK: Does the text contain at least 3 concrete details (projects, tools, numbers, results) from the CV?
-3. READ-ALOUD-CHECK: Would this sound natural spoken aloud? Or does it sound stiff and formulaic?
-4. ICH-CHECK: Do more than 1 in 3 sentences start with "Ich"? If yes, rephrase some.
-5. UNIQUENESS-CHECK: Is it obvious this letter was written for THIS specific company and role? Could it be sent to a different company unchanged? If yes, make it more specific.
-6. UMLAUT-CHECK: All German umlauts (ä, ö, ü, ß) must be correct. Never use ae/oe/ue/ss substitutes.
+## PERSONALITY CHECK (IMPORTANT — do this LAST)
+After writing, re-read your letter and ask: "Does this sound like a confident person talking, or like a machine following instructions?" If the latter:
+- Replace stiff constructions with natural speech
+- Add one concrete, human detail (a location, a product you actually used, a situation)
+- Make sure at least one sentence has genuine personality — something only THIS person would write
+- Don't repeat the same evidence across paragraphs. Diversify from the CV.
+- Each letter must feel unique to this company.
+
+## SELF-CHECK (6 points — verify BEFORE outputting)
+1. **WORD COUNT**: 200-300 words? If over 300, CUT.
+2. **FACTS**: Every claim traceable to a CV line? No invented metrics, no role inflation, no skills not listed?
+3. **DURATIONS**: All time periods match CV dates? No rounding up?
+4. **OPENING**: Uses a banned pattern? → Rewrite.
+5. **ACTIVE VOICE**: Any passive? → Rewrite.
+6. **HUMAN**: Would a real person actually say this? If not → Rewrite.
 
 ## OUTPUT
 Write ONLY the cover letter in German. No explanation, no "Hier ist...", no markdown.

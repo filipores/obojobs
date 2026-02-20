@@ -158,12 +158,12 @@ class TestPromptIntegration:
         assert "## INDUSTRY RULES" not in result
 
     def test_industry_block_between_tone_and_context(self):
-        """Industry rules must appear between ## TONE and ## CONTEXT."""
+        """Industry rules must appear between ## VOICE & TONE and ## CONTEXT."""
         result = build_anschreiben_system_prompt(
             **self.PROMPT_DEFAULTS,
             branche="consulting",
         )
-        tone_pos = result.index("## TONE")
+        tone_pos = result.index("## VOICE & TONE")
         industry_pos = result.index("## INDUSTRY RULES")
         context_pos = result.index("## CONTEXT")
         assert tone_pos < industry_pos < context_pos
