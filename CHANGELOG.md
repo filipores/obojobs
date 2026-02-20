@@ -1,3 +1,10 @@
+## [1.66.1](https://github.com/filipores/obojobs/compare/v1.66.0...v1.66.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* ensure industry classification runs for pre-provided job details ([b098078](https://github.com/filipores/obojobs/commit/b098078c49f195825e0994beb15de55e44cde01d))
+
 # [1.66.0](https://github.com/filipores/obojobs/compare/v1.65.1...v1.66.0) (2026-02-20)
 
 
