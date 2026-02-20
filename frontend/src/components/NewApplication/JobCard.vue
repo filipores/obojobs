@@ -8,7 +8,7 @@
     <!-- Shared card header -->
     <div class="card-header">
       <div class="skeleton-line skeleton-tag" v-if="job.status === 'extracting'" />
-      <span v-else-if="job.status === 'error'" class="error-label">Fehler</span>
+      <span v-else-if="job.status === 'error'" class="error-label">{{ t('newApplication.jobCard.error') }}</span>
       <span
         v-else-if="job.quickData?.portal"
         :class="['portal-tag', portalClass]"
@@ -19,7 +19,7 @@
       <button
         v-if="job.status !== 'generating'"
         class="remove-btn"
-        aria-label="Entfernen"
+        :aria-label="t('newApplication.jobCard.remove')"
         @click="emit('remove')"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -33,7 +33,7 @@
     <template v-if="job.status === 'extracting'">
       <div class="skeleton-line skeleton-title" />
       <div class="skeleton-line skeleton-subtitle" />
-      <p class="extracting-text">Stellenanzeige wird gelesen...</p>
+      <p class="extracting-text">{{ t('newApplication.jobCard.readingJob') }}</p>
       <p class="extracting-url">{{ displayUrl }}</p>
     </template>
 
@@ -54,7 +54,7 @@
         />
       </div>
       <button class="zen-btn zen-btn-ai" @click="emit('generate')">
-        Bewerbung generieren
+        {{ t('newApplication.jobCard.generateApplication') }}
       </button>
     </template>
 
@@ -64,11 +64,11 @@
       <p class="card-position">{{ job.quickData?.title }}</p>
       <div class="generating-indicator">
         <span class="generating-spinner" />
-        <span class="generating-text">{{ progressMessage || 'Anschreiben wird generiert...' }}</span>
+        <span class="generating-text">{{ progressMessage || t('newApplication.jobCard.generatingCoverLetter') }}</span>
       </div>
       <pre v-if="job.model === 'kimi' && job.streamedContent" class="streamed-content" ref="streamedPre">{{ job.streamedContent }}</pre>
       <details v-if="job.model === 'kimi' && job.thinkingText" class="thinking-details">
-        <summary class="thinking-summary">obo denkt nach...</summary>
+        <summary class="thinking-summary">{{ t('newApplication.jobCard.thinking') }}</summary>
         <pre class="thinking-content" ref="thinkingPre">{{ job.thinkingText }}</pre>
       </details>
     </template>
@@ -76,7 +76,7 @@
     <!-- COMPLETED STATE -->
     <template v-else-if="job.status === 'completed'">
       <h3 class="card-title-completed">
-        {{ job.quickData?.title }} bei {{ job.quickData?.company }}
+        {{ job.quickData?.title }} {{ t('newApplication.quickExtract.at') }} {{ job.quickData?.company }}
       </h3>
       <p class="card-preview">{{ einleitungPreview }}</p>
       <div class="card-action-buttons">
@@ -86,17 +86,17 @@
             <polyline points="7 10 12 15 17 10" />
             <line x1="12" y1="15" x2="12" y2="3" />
           </svg>
-          PDF herunterladen
+          {{ t('newApplication.generationResult.downloadPdf') }}
         </button>
         <button class="zen-btn zen-btn-secondary" @click="emit('download-email')">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
             <polyline points="22,6 12,13 2,6" />
           </svg>
-          E-Mail-Entwurf
+          {{ t('newApplication.jobCard.emailDraft') }}
         </button>
         <button class="zen-btn zen-btn-ghost" @click="emit('view-application')">
-          Ansehen
+          {{ t('newApplication.jobCard.view') }}
         </button>
       </div>
     </template>
@@ -106,10 +106,10 @@
       <p class="error-message">{{ job.error }}</p>
       <div class="card-action-buttons">
         <button class="zen-btn zen-btn-ai" @click="emit('retry')">
-          Erneut versuchen
+          {{ t('newApplication.jobCard.retry') }}
         </button>
         <button class="zen-btn zen-btn-ghost" @click="emit('remove')">
-          Entfernen
+          {{ t('newApplication.jobCard.remove') }}
         </button>
       </div>
     </template>
@@ -118,8 +118,11 @@
 
 <script setup>
 import { computed, ref, watch, nextTick } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SegmentedControl from '../SegmentedControl.vue'
 import { modelOptions, toneOptions } from '../../data/applicationOptions.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   job: {

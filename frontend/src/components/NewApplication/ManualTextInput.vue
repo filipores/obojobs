@@ -5,10 +5,10 @@
         <EnsoCircle state="breathing" size="md" color="var(--color-ai)" :duration="4000" />
       </div>
       <div class="manual-fallback-intro">
-        <h3>Füge den Stellentext ein</h3>
-        <p>Wir analysieren ihn und erstellen dein Anschreiben.</p>
+        <h3>{{ t('newApplication.manualTextInput.title') }}</h3>
+        <p>{{ t('newApplication.manualTextInput.description') }}</p>
       </div>
-      <button @click="$emit('close')" class="close-fallback-btn" aria-label="Schließen">
+      <button @click="$emit('close')" class="close-fallback-btn" :aria-label="t('newApplication.manualTextInput.close')">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <line x1="18" y1="6" x2="6" y2="18"/>
           <line x1="6" y1="6" x2="18" y2="18"/>
@@ -19,46 +19,46 @@
     <div class="manual-fallback-fields">
       <div class="form-row manual-compact-row">
         <div class="form-group">
-          <label class="form-label">Firmenname</label>
+          <label class="form-label">{{ t('newApplication.manualTextInput.companyLabel') }}</label>
           <input
             v-model="manualCompany"
             type="text"
             class="form-input"
-            placeholder="z.B. Beispiel GmbH"
+            :placeholder="t('newApplication.manualTextInput.companyPlaceholder')"
             :disabled="analyzingManualText"
           />
         </div>
 
         <div class="form-group">
-          <label class="form-label">Position (optional)</label>
+          <label class="form-label">{{ t('newApplication.manualTextInput.positionLabel') }}</label>
           <input
             v-model="manualTitle"
             type="text"
             class="form-input"
-            placeholder="z.B. Software Entwickler (m/w/d)"
+            :placeholder="t('newApplication.manualTextInput.positionPlaceholder')"
             :disabled="analyzingManualText"
           />
         </div>
       </div>
 
       <div class="form-group manual-text-group">
-        <label class="form-label required" for="manual-job-text">Stellentext</label>
+        <label class="form-label required" for="manual-job-text">{{ t('newApplication.manualTextInput.jobTextLabel') }}</label>
         <textarea
           id="manual-job-text"
           ref="manualTextareaRef"
           v-model="manualJobText"
           class="form-textarea manual-text-area"
           rows="10"
-          placeholder="Kopiere den vollständigen Text der Stellenanzeige hierher..."
+          :placeholder="t('newApplication.manualTextInput.jobTextPlaceholder')"
           :disabled="analyzingManualText"
           required
           aria-required="true"
         ></textarea>
         <p class="form-hint">
           <span v-if="manualJobText.length > 0" class="char-count" :class="{ 'char-count--valid': canAnalyzeManualText }">
-            {{ manualJobText.length }} / 100 Zeichen
+            {{ manualJobText.length }} / 100 {{ t('newApplication.manualTextInput.chars') }}
           </span>
-          <span v-else>Mindestens 100 Zeichen erforderlich</span>
+          <span v-else>{{ t('newApplication.manualTextInput.minChars') }}</span>
         </p>
       </div>
 
@@ -74,10 +74,10 @@
         >
           <span v-if="analyzingManualText" class="btn-loading">
             <EnsoCircle state="rotating" size="sm" color="currentColor" :duration="1500" />
-            <span>Analysiere...</span>
+            <span>{{ t('newApplication.manualTextInput.analyzing') }}</span>
           </span>
           <span v-else>
-            Bewerbung erstellen
+            {{ t('newApplication.manualTextInput.createApplication') }}
           </span>
         </button>
       </div>
@@ -87,7 +87,10 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import EnsoCircle from '../application/EnsoCircle.vue'
+
+const { t } = useI18n()
 
 defineProps({
   analyzingManualText: { type: Boolean, default: false }

@@ -795,5 +795,93 @@
       "subtitle": "Starten Sie kostenlos und upgraden Sie, wenn Sie bereit sind.",
       "button": "Kostenlos registrieren"
     }
+  },
+  "newApplication": {
+    "generationResult": {
+      "closeModal": "Modal schließen",
+      "applicationCreated": "Bewerbung erstellt",
+      "introPreview": "Vorschau Einstieg",
+      "downloadPdf": "PDF herunterladen",
+      "sendEmail": "E-Mail versenden",
+      "allApplications": "Alle Bewerbungen"
+    },
+    "jobCard": {
+      "error": "Fehler",
+      "remove": "Entfernen",
+      "readingJob": "Stellenanzeige wird gelesen...",
+      "generateApplication": "Bewerbung generieren",
+      "generatingCoverLetter": "Anschreiben wird generiert...",
+      "thinking": "obo denkt nach...",
+      "emailDraft": "E-Mail-Entwurf",
+      "view": "Ansehen",
+      "retry": "Erneut versuchen"
+    },
+    "jobPreview": {
+      "title": "Stellenanzeige Preview",
+      "reload": "Neu laden",
+      "missingData": "Fehlende Daten",
+      "missingDataMessage": "Folgende wichtige Felder konnten nicht automatisch erkannt werden:",
+      "company": "Firma",
+      "companyPlaceholder": "Firmenname eingeben",
+      "position": "Position",
+      "positionPlaceholder": "Stellentitel eingeben",
+      "location": "Standort",
+      "locationPlaceholder": "z.B. Berlin, Hamburg",
+      "employmentType": "Anstellungsart",
+      "employmentTypePlaceholder": "z.B. Vollzeit, Teilzeit",
+      "contactPerson": "Ansprechpartner",
+      "contactPersonPlaceholder": "Name des Ansprechpartners",
+      "contactEmail": "Kontakt-Email",
+      "contactEmailPlaceholder": "email@firma.de",
+      "salary": "Gehalt",
+      "salaryPlaceholder": "Gehaltsangabe",
+      "description": "Stellenbeschreibung",
+      "descriptionPlaceholder": "Stellenbeschreibung...",
+      "toneStyle": "Anschreiben-Stil",
+      "generating": "Generiere Bewerbung...",
+      "limitReached": "Limit erreicht",
+      "upgradeToGenerateMore": "Upgrade dein Abo um weitere Bewerbungen zu generieren",
+      "unlimitedApps": "Unbegrenzte Bewerbungen ({plan})",
+      "remainingApps": "Noch {remaining} von {limit} Bewerbungen diesen Monat",
+      "goToDocuments": "Zu den Dokumenten",
+      "upgradeSubscription": "Abo upgraden"
+    },
+    "jobUrlInput": {
+      "label": "Stellenanzeigen-URL",
+      "placeholder": "https://example.com/jobs/stellenanzeige",
+      "validation": {
+        "protocol": "URL muss mit http:// oder https:// beginnen",
+        "invalidDomain": "Ungültige Domain (z.B. example.com)",
+        "domainDot": "Domain darf nicht mit einem Punkt enden",
+        "invalidFormat": "Ungültiges URL-Format",
+        "valid": "URL ist gültig",
+        "invalid": "URL ungültig: {message}"
+      },
+      "portalOther": "Sonstige",
+      "hint": "Kopiere die URL der Stellenanzeige und füge sie hier ein"
+    },
+    "manualTextInput": {
+      "title": "Füge den Stellentext ein",
+      "description": "Wir analysieren ihn und erstellen dein Anschreiben.",
+      "close": "Schließen",
+      "companyLabel": "Firmenname",
+      "companyPlaceholder": "z.B. Beispiel GmbH",
+      "positionLabel": "Position (optional)",
+      "positionPlaceholder": "z.B. Software Entwickler (m/w/d)",
+      "jobTextLabel": "Stellentext",
+      "jobTextPlaceholder": "Kopiere den vollständigen Text der Stellenanzeige hierher...",
+      "chars": "Zeichen",
+      "minChars": "Mindestens 100 Zeichen erforderlich",
+      "analyzing": "Analysiere...",
+      "createApplication": "Bewerbung erstellen"
+    },
+    "quickExtract": {
+      "title": "Bewerbung erstellen?",
+      "positionFallback": "Position",
+      "at": "bei",
+      "companyFallback": "Unbekannt",
+      "loadDetails": "Lade Details...",
+      "editDetails": "Details bearbeiten"
+    }
   }
 }

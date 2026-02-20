@@ -706,5 +706,93 @@
       "subtitle": "Start for free and upgrade when you're ready.",
       "button": "Register for free"
     }
+  },
+  "newApplication": {
+    "generationResult": {
+      "closeModal": "Close modal",
+      "applicationCreated": "Application created",
+      "introPreview": "Intro preview",
+      "downloadPdf": "Download PDF",
+      "sendEmail": "Send email",
+      "allApplications": "All applications"
+    },
+    "jobCard": {
+      "error": "Error",
+      "remove": "Remove",
+      "readingJob": "Reading job ad...",
+      "generateApplication": "Generate application",
+      "generatingCoverLetter": "Generating cover letter...",
+      "thinking": "obo is thinking...",
+      "emailDraft": "Email draft",
+      "view": "View",
+      "retry": "Try again"
+    },
+    "jobPreview": {
+      "title": "Job Ad Preview",
+      "reload": "Reload",
+      "missingData": "Missing data",
+      "missingDataMessage": "The following important fields could not be automatically detected:",
+      "company": "Company",
+      "companyPlaceholder": "Enter company name",
+      "position": "Position",
+      "positionPlaceholder": "Enter job title",
+      "location": "Location",
+      "locationPlaceholder": "e.g. Berlin, Hamburg",
+      "employmentType": "Employment type",
+      "employmentTypePlaceholder": "e.g. Full-time, Part-time",
+      "contactPerson": "Contact person",
+      "contactPersonPlaceholder": "Name of contact person",
+      "contactEmail": "Contact email",
+      "contactEmailPlaceholder": "email@company.com",
+      "salary": "Salary",
+      "salaryPlaceholder": "Salary information",
+      "description": "Job description",
+      "descriptionPlaceholder": "Job description...",
+      "toneStyle": "Cover letter style",
+      "generating": "Generating application...",
+      "limitReached": "Limit reached",
+      "upgradeToGenerateMore": "Upgrade your subscription to generate more applications",
+      "unlimitedApps": "Unlimited applications ({plan})",
+      "remainingApps": "{remaining} of {limit} applications remaining this month",
+      "goToDocuments": "Go to documents",
+      "upgradeSubscription": "Upgrade subscription"
+    },
+    "jobUrlInput": {
+      "label": "Job Ad URL",
+      "placeholder": "https://example.com/jobs/job-ad",
+      "validation": {
+        "protocol": "URL must start with http:// or https://",
+        "invalidDomain": "Invalid domain (e.g. example.com)",
+        "domainDot": "Domain must not end with a dot",
+        "invalidFormat": "Invalid URL format",
+        "valid": "URL is valid",
+        "invalid": "Invalid URL: {message}"
+      },
+      "portalOther": "Other",
+      "hint": "Copy the job ad URL and paste it here"
+    },
+    "manualTextInput": {
+      "title": "Paste job text",
+      "description": "We will analyze it and create your cover letter.",
+      "close": "Close",
+      "companyLabel": "Company name",
+      "companyPlaceholder": "e.g. Example Ltd.",
+      "positionLabel": "Position (optional)",
+      "positionPlaceholder": "e.g. Software Developer",
+      "jobTextLabel": "Job text",
+      "jobTextPlaceholder": "Paste the full text of the job ad here...",
+      "chars": "Characters",
+      "minChars": "At least 100 characters required",
+      "analyzing": "Analyzing...",
+      "createApplication": "Create application"
+    },
+    "quickExtract": {
+      "title": "Create application?",
+      "positionFallback": "Position",
+      "at": "at",
+      "companyFallback": "Unknown",
+      "loadDetails": "Loading details...",
+      "editDetails": "Edit details"
+    }
   }
 }
