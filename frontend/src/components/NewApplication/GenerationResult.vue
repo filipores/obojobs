@@ -10,7 +10,7 @@
         @keydown.tab="trapFocus"
       >
         <!-- Close button -->
-        <button @click="$emit('close')" class="premium-reveal-close" aria-label="Modal schließen">
+        <button @click="$emit('close')" class="premium-reveal-close" :aria-label="t('newApplication.generationResult.closeModal')">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
             <line x1="6" y1="6" x2="18" y2="18"/>
@@ -26,8 +26,8 @@
         <div class="premium-reveal-content" :class="{ 'premium-reveal-content--visible': revealPhase >= 2 }">
           <!-- Success header -->
           <div class="premium-reveal-header">
-            <h2 id="success-modal-title" class="premium-reveal-title">Bewerbung erstellt</h2>
-            <p class="premium-reveal-company">{{ generatedApp.position }} bei <strong>{{ generatedApp.firma }}</strong></p>
+            <h2 id="success-modal-title" class="premium-reveal-title">{{ t('newApplication.generationResult.applicationCreated') }}</h2>
+            <p class="premium-reveal-company">{{ generatedApp.position }} {{ t('newApplication.quickExtract.at') }} <strong>{{ generatedApp.firma }}</strong></p>
           </div>
 
           <!-- Peek card for intro preview -->
@@ -44,7 +44,7 @@
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              <span class="premium-reveal-peek-label">Vorschau Einstieg</span>
+              <span class="premium-reveal-peek-label">{{ t('newApplication.generationResult.introPreview') }}</span>
               <svg class="premium-reveal-peek-chevron" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
@@ -64,17 +64,17 @@
                 <polyline points="7 10 12 15 17 10"/>
                 <line x1="12" y1="15" x2="12" y2="3"/>
               </svg>
-              PDF herunterladen
+              {{ t('newApplication.generationResult.downloadPdf') }}
             </button>
             <button @click="$emit('download-email-draft')" class="zen-btn premium-reveal-btn-email">
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
                 <polyline points="22,6 12,13 2,6"/>
               </svg>
-              E-Mail versenden
+              {{ t('newApplication.generationResult.sendEmail') }}
             </button>
             <button @click="$emit('go-to-applications')" class="zen-btn premium-reveal-btn-secondary">
-              Alle Bewerbungen
+              {{ t('newApplication.generationResult.allApplications') }}
             </button>
           </div>
         </div>
@@ -85,7 +85,10 @@
 
 <script setup>
 import { ref, computed, watch, onUnmounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import EnsoCircle from '../application/EnsoCircle.vue'
+
+const { t } = useI18n()
 
 const props = defineProps({
   generatedApp: { type: Object, default: null },

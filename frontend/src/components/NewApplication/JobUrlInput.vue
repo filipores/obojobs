@@ -1,7 +1,7 @@
 <template>
   <div class="form-card zen-card">
     <div class="form-group">
-      <label class="form-label">Stellenanzeigen-URL</label>
+      <label class="form-label">{{ t('newApplication.jobUrlInput.label') }}</label>
       <div class="url-input-wrapper">
         <svg class="url-icon" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
@@ -10,7 +10,7 @@
         <input
           v-model="localUrl"
           type="url"
-          placeholder="https://example.com/jobs/stellenanzeige"
+          :placeholder="t('newApplication.jobUrlInput.placeholder')"
           class="form-input url-input"
           :class="{
             'url-valid': showUrlValidation && urlValidation.isValid === true,
@@ -39,7 +39,7 @@
       <p v-if="showUrlValidation && urlValidation.isValid === false" class="url-validation-message">
         {{ urlValidation.message }}
       </p>
-      <p v-else class="form-hint">Kopiere die URL der Stellenanzeige und füge sie hier ein</p>
+      <p v-else class="form-hint">{{ t('newApplication.jobUrlInput.hint') }}</p>
       <div class="sr-only" aria-live="polite" aria-atomic="true">
         {{ urlValidationAnnouncement }}
       </div>
@@ -49,6 +49,9 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 const props = defineProps({
   modelValue: { type: String, default: '' },
@@ -73,23 +76,23 @@ const urlValidation = computed(() => {
   }
 
   if (!/^https?:\/\//i.test(urlValue)) {
-    return { isValid: false, message: 'URL muss mit http:// oder https:// beginnen' }
+    return { isValid: false, message: t('newApplication.jobUrlInput.validation.protocol') }
   }
 
   try {
     const parsedUrl = new URL(urlValue)
 
     if (!parsedUrl.hostname.includes('.')) {
-      return { isValid: false, message: 'Ungültige Domain (z.B. example.com)' }
+      return { isValid: false, message: t('newApplication.jobUrlInput.validation.invalidDomain') }
     }
 
     if (parsedUrl.hostname.endsWith('.')) {
-      return { isValid: false, message: 'Domain darf nicht mit einem Punkt enden' }
+      return { isValid: false, message: t('newApplication.jobUrlInput.validation.domainDot') }
     }
 
     return { isValid: true, message: '' }
   } catch {
-    return { isValid: false, message: 'Ungültiges URL-Format' }
+    return { isValid: false, message: t('newApplication.jobUrlInput.validation.invalidFormat') }
   }
 })
 
@@ -100,10 +103,10 @@ const showUrlValidation = computed(() => {
 const urlValidationAnnouncement = computed(() => {
   if (!showUrlValidation.value) return ''
   if (urlValidation.value.isValid === true) {
-    return 'URL ist gültig'
+    return t('newApplication.jobUrlInput.validation.valid')
   }
   if (urlValidation.value.isValid === false) {
-    return `URL ungültig: ${urlValidation.value.message}`
+    return t('newApplication.jobUrlInput.validation.invalid', { message: urlValidation.value.message })
   }
   return ''
 })
@@ -127,7 +130,7 @@ const detectedPortal = computed(() => {
   }
 
   if (props.modelValue.startsWith('http')) {
-    return { id: 'generic', name: 'Sonstige' }
+    return { id: 'generic', name: t('newApplication.jobUrlInput.portalOther') }
   }
 
   return null

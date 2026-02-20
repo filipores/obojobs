@@ -3,7 +3,7 @@
     <div class="preview-card zen-card">
       <div class="preview-header">
         <div class="preview-title-row">
-          <h2>Stellenanzeige Preview</h2>
+          <h2>{{ t('newApplication.jobPreview.title') }}</h2>
           <span :class="['portal-tag', `portal-${previewData.portal_id}`]">
             {{ previewData.portal }}
           </span>
@@ -15,7 +15,7 @@
             <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/>
             <path d="M8 16H3v5"/>
           </svg>
-          Neu laden
+          {{ t('newApplication.jobPreview.reload') }}
         </button>
       </div>
 
@@ -27,8 +27,8 @@
           <line x1="12" y1="17" x2="12.01" y2="17"/>
         </svg>
         <div>
-          <strong>Fehlende Daten</strong>
-          <p>Folgende wichtige Felder konnten nicht automatisch erkannt werden: {{ previewData.missing_fields.join(', ') }}</p>
+          <strong>{{ t('newApplication.jobPreview.missingData') }}</strong>
+          <p>{{ t('newApplication.jobPreview.missingDataMessage') }} {{ previewData.missing_fields.join(', ') }}</p>
         </div>
       </div>
 
@@ -37,7 +37,7 @@
         <!-- Core Fields Row -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label required" for="preview-company">Firma</label>
+            <label class="form-label required" for="preview-company">{{ t('newApplication.jobPreview.company') }}</label>
             <input
               id="preview-company"
               :value="editableData.company"
@@ -45,13 +45,13 @@
               type="text"
               class="form-input"
               :class="{ 'field-warning': !editableData.company }"
-              placeholder="Firmenname eingeben"
+              :placeholder="t('newApplication.jobPreview.companyPlaceholder')"
               required
               aria-required="true"
             />
           </div>
           <div class="form-group">
-            <label class="form-label required" for="preview-title">Position</label>
+            <label class="form-label required" for="preview-title">{{ t('newApplication.jobPreview.position') }}</label>
             <input
               id="preview-title"
               :value="editableData.title"
@@ -59,7 +59,7 @@
               type="text"
               class="form-input"
               :class="{ 'field-warning': !editableData.title }"
-              placeholder="Stellentitel eingeben"
+              :placeholder="t('newApplication.jobPreview.positionPlaceholder')"
               required
               aria-required="true"
             />
@@ -69,25 +69,25 @@
         <!-- Location and Employment Type Row -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="location-input">Standort</label>
+            <label class="form-label" for="location-input">{{ t('newApplication.jobPreview.location') }}</label>
             <input
               id="location-input"
               :value="editableData.location"
               @input="updateField('location', $event.target.value)"
               type="text"
               class="form-input"
-              placeholder="z.B. Berlin, Hamburg"
+              :placeholder="t('newApplication.jobPreview.locationPlaceholder')"
             />
           </div>
           <div class="form-group">
-            <label class="form-label" for="employment-type-input">Anstellungsart</label>
+            <label class="form-label" for="employment-type-input">{{ t('newApplication.jobPreview.employmentType') }}</label>
             <input
               id="employment-type-input"
               :value="editableData.employment_type"
               @input="updateField('employment_type', $event.target.value)"
               type="text"
               class="form-input"
-              placeholder="z.B. Vollzeit, Teilzeit"
+              :placeholder="t('newApplication.jobPreview.employmentTypePlaceholder')"
             />
           </div>
         </div>
@@ -95,39 +95,39 @@
         <!-- Contact Fields Row -->
         <div class="form-row">
           <div class="form-group">
-            <label class="form-label" for="contact-person-input">Ansprechpartner</label>
+            <label class="form-label" for="contact-person-input">{{ t('newApplication.jobPreview.contactPerson') }}</label>
             <input
               id="contact-person-input"
               :value="editableData.contact_person"
               @input="updateField('contact_person', $event.target.value)"
               type="text"
               class="form-input"
-              placeholder="Name des Ansprechpartners"
+              :placeholder="t('newApplication.jobPreview.contactPersonPlaceholder')"
             />
           </div>
           <div class="form-group">
-            <label class="form-label" for="contact-email-input">Kontakt-Email</label>
+            <label class="form-label" for="contact-email-input">{{ t('newApplication.jobPreview.contactEmail') }}</label>
             <input
               id="contact-email-input"
               :value="editableData.contact_email"
               @input="updateField('contact_email', $event.target.value)"
               type="email"
               class="form-input"
-              placeholder="email@firma.de"
+              :placeholder="t('newApplication.jobPreview.contactEmailPlaceholder')"
             />
           </div>
         </div>
 
         <!-- Salary (if available) -->
         <div v-if="editableData.salary || previewData.salary" class="form-group">
-          <label class="form-label" for="salary-input">Gehalt</label>
+          <label class="form-label" for="salary-input">{{ t('newApplication.jobPreview.salary') }}</label>
           <input
             id="salary-input"
             :value="editableData.salary"
             @input="updateField('salary', $event.target.value)"
             type="text"
             class="form-input"
-            placeholder="Gehaltsangabe"
+            :placeholder="t('newApplication.jobPreview.salaryPlaceholder')"
           />
         </div>
 
@@ -143,7 +143,7 @@
             @keydown.enter.prevent="showDescription = !showDescription"
             @keydown.space.prevent="showDescription = !showDescription"
           >
-            <label class="form-label">Stellenbeschreibung</label>
+            <label class="form-label">{{ t('newApplication.jobPreview.description') }}</label>
             <button type="button" class="toggle-btn" tabindex="-1" aria-hidden="true">
               <svg
                 :class="['toggle-icon', { rotated: showDescription }]"
@@ -164,7 +164,7 @@
               @input="updateField('description', $event.target.value)"
               class="form-textarea"
               rows="8"
-              placeholder="Stellenbeschreibung..."
+              :placeholder="t('newApplication.jobPreview.descriptionPlaceholder')"
             ></textarea>
           </div>
         </div>
@@ -173,7 +173,7 @@
 
       <!-- Tone Selection -->
       <div class="form-group tone-selection">
-        <label class="form-label">Anschreiben-Stil</label>
+        <label class="form-label">{{ t('newApplication.jobPreview.toneStyle') }}</label>
         <SegmentedControl
           :modelValue="selectedTone"
           @update:modelValue="$emit('update:selectedTone', $event)"
@@ -192,21 +192,21 @@
         >
           <span v-if="generating" class="btn-loading">
             <span class="loading-spinner"></span>
-            Generiere Bewerbung...
+            {{ t('newApplication.jobPreview.generating') }}
           </span>
           <span v-else-if="isAtUsageLimit">
-            Limit erreicht
+            {{ t('newApplication.jobPreview.limitReached') }}
           </span>
           <span v-else>
-            Bewerbung generieren
+            {{ t('newApplication.jobCard.generateApplication') }}
           </span>
         </button>
         <p v-if="isAtUsageLimit" class="usage-info usage-info-limit">
-          <router-link to="/subscription">Upgrade dein Abo</router-link> um weitere Bewerbungen zu generieren
+          <router-link to="/subscription">{{ t('newApplication.jobPreview.upgradeToGenerateMore') }}</router-link>
         </p>
         <p v-else class="usage-info">
-          <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
-          <span v-else>Noch {{ usage?.remaining || 0 }} von {{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
+          <span v-if="usage?.unlimited">{{ t('newApplication.jobPreview.unlimitedApps', { plan: getPlanLabel() }) }}</span>
+          <span v-else>{{ t('newApplication.jobPreview.remainingApps', { remaining: usage?.remaining || 0, limit: usage?.limit || 3 }) }}</span>
         </p>
       </div>
 
@@ -228,7 +228,7 @@
                 <line x1="16" y1="17" x2="8" y2="17"/>
                 <line x1="10" y1="9" x2="8" y2="9"/>
               </svg>
-              Zu den Dokumenten
+              {{ t('newApplication.jobPreview.goToDocuments') }}
             </router-link>
           </div>
           <div v-if="isSubLimitError" class="error-actions">
@@ -238,7 +238,7 @@
                 <path d="M2 17l10 5 10-5"/>
                 <path d="M2 12l10 5 10-5"/>
               </svg>
-              Abo upgraden
+              {{ t('newApplication.jobPreview.upgradeSubscription') }}
             </router-link>
           </div>
         </div>
@@ -249,10 +249,13 @@
 
 <script setup>
 import { ref, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SegmentedControl from '../SegmentedControl.vue'
 import { toneOptions } from '../../data/applicationOptions.js'
 import { isDocumentMissingError, isSubscriptionLimitError } from '../../utils/errorClassification.js'
 import { capitalize } from '../../utils/format.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   previewData: { type: Object, required: true },

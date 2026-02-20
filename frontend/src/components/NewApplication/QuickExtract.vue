@@ -14,17 +14,17 @@
       </div>
 
       <div class="quick-confirm-content">
-        <h2 class="quick-confirm-title">Bewerbung erstellen?</h2>
+        <h2 class="quick-confirm-title">{{ t('newApplication.quickExtract.title') }}</h2>
         <p class="quick-confirm-job">
-          <strong>{{ quickConfirmData.title || 'Position' }}</strong>
-          <span class="quick-confirm-at">bei</span>
-          <strong>{{ quickConfirmData.company || 'Unbekannt' }}</strong>
+          <strong>{{ quickConfirmData.title || t('newApplication.quickExtract.positionFallback') }}</strong>
+          <span class="quick-confirm-at">{{ t('newApplication.quickExtract.at') }}</span>
+          <strong>{{ quickConfirmData.company || t('newApplication.quickExtract.companyFallback') }}</strong>
         </p>
       </div>
 
       <!-- Tone Selection -->
       <div class="form-group tone-selection">
-        <label class="form-label">Anschreiben-Stil</label>
+        <label class="form-label">{{ t('newApplication.jobPreview.toneStyle') }}</label>
         <SegmentedControl
           :modelValue="localTone"
           @update:modelValue="localTone = $event"
@@ -42,10 +42,10 @@
         >
           <span v-if="generating" class="btn-loading">
             <span class="loading-spinner"></span>
-            Generiere Bewerbung...
+            {{ t('newApplication.jobPreview.generating') }}
           </span>
           <span v-else>
-            Bewerbung generieren
+            {{ t('newApplication.jobCard.generateApplication') }}
           </span>
         </button>
 
@@ -56,21 +56,21 @@
         >
           <span v-if="loading" class="btn-loading">
             <span class="loading-spinner"></span>
-            Lade Details...
+            {{ t('newApplication.quickExtract.loadDetails') }}
           </span>
           <span v-else>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
               <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
             </svg>
-            Details bearbeiten
+            {{ t('newApplication.quickExtract.editDetails') }}
           </span>
         </button>
       </div>
 
       <p class="usage-info">
-        <span v-if="usage?.unlimited">Unbegrenzte Bewerbungen ({{ getPlanLabel() }})</span>
-        <span v-else>Noch {{ usage?.remaining || 0 }} von {{ usage?.limit || 3 }} Bewerbungen diesen Monat</span>
+        <span v-if="usage?.unlimited">{{ t('newApplication.jobPreview.unlimitedApps', { plan: getPlanLabel() }) }}</span>
+        <span v-else>{{ t('newApplication.jobPreview.remainingApps', { remaining: usage?.remaining || 0, limit: usage?.limit || 3 }) }}</span>
       </p>
 
       <!-- Error Message -->
@@ -84,12 +84,12 @@
           <span>{{ error }}</span>
           <div v-if="isDocMissing" class="error-actions">
             <router-link to="/documents" class="zen-btn zen-btn-sm">
-              Zu den Dokumenten
+              {{ t('newApplication.jobPreview.goToDocuments') }}
             </router-link>
           </div>
           <div v-if="isSubLimitError" class="error-actions">
             <router-link to="/subscription" class="zen-btn zen-btn-sm zen-btn-ai">
-              Abo upgraden
+              {{ t('newApplication.jobPreview.upgradeSubscription') }}
             </router-link>
           </div>
         </div>
@@ -100,10 +100,13 @@
 
 <script setup>
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SegmentedControl from '../SegmentedControl.vue'
 import { toneOptions } from '../../data/applicationOptions.js'
 import { isDocumentMissingError, isSubscriptionLimitError } from '../../utils/errorClassification.js'
 import { capitalize } from '../../utils/format.js'
+
+const { t } = useI18n()
 
 const props = defineProps({
   quickConfirmData: { type: Object, required: true },
