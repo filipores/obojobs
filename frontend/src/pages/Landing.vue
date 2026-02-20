@@ -814,9 +814,9 @@
           <div class="cta-content" data-reveal>
             <h2>{{ $t('landing.cta.title') }}</h2>
             <p>{{ $t('landing.cta.subtitle') }}</p>
-            <button @click="scrollToTop" class="zen-btn zen-btn-ai zen-btn-lg">
+            <router-link to="/register" class="zen-btn zen-btn-ai zen-btn-lg">
               {{ $t('landing.cta.button') }}
-            </button>
+            </router-link>
           </div>
         </div>
       </section>
