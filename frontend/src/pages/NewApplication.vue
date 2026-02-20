@@ -100,6 +100,21 @@
           v-model="url"
           @submit="addJob"
         />
+        <button v-if="hasResume && !showManualInput && !checkingResume" @click="showManualInput = true" class="manual-input-toggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+          </svg>
+          Oder Stellenanzeige manuell eingeben
+        </button>
+      </section>
+
+      <section v-if="showManualInput && hasResume && !checkingResume" class="manual-input-section animate-fade-up">
+        <ManualTextInput
+          :analyzingManualText="analyzingManualText"
+          @analyze="handleManualAnalyze"
+          @close="showManualInput = false"
+        />
       </section>
 
       <section v-if="jobs.length > 0" class="jobs-section">
@@ -202,6 +217,7 @@ import UsageIndicator from '../components/UsageIndicator.vue'
 import EnsoCircle from '../components/application/EnsoCircle.vue'
 import JobUrlInput from '../components/NewApplication/JobUrlInput.vue'
 import JobCard from '../components/NewApplication/JobCard.vue'
+import ManualTextInput from '../components/NewApplication/ManualTextInput.vue'
 
 const router = useRouter()
 
@@ -213,6 +229,8 @@ const profileIncomplete = ref(false)
 
 const url = ref('')
 const usage = ref(null)
+const showManualInput = ref(false)
+const analyzingManualText = ref(false)
 
 const jobs = ref([])
 let nextJobId = 0
@@ -355,6 +373,51 @@ async function addJob(submittedUrl) {
 
   if (autoGenerate.value && job.status === 'extracted') {
     generateJob(jobId)
+  }
+}
+
+async function handleManualAnalyze({ jobText, company, title }) {
+  if (isAtUsageLimit()) {
+    if (window.$toast) {
+      window.$toast('Bewerbungslimit erreicht. Bitte Abo upgraden.', 'warning')
+    }
+    return
+  }
+
+  analyzingManualText.value = true
+
+  const jobId = nextJobId++
+  const job = {
+    id: jobId,
+    url: '',
+    status: 'extracted',
+    quickData: null,
+    editableData: {
+      company: company || '',
+      title: title || '',
+      location: '',
+      employment_type: '',
+      contact_person: '',
+      contact_email: '',
+      salary: '',
+      description: jobText
+    },
+    tone: 'modern',
+    model: 'qwen',
+    generatedApp: null,
+    error: null,
+    progressMessage: null,
+    thinkingText: '',
+    streamedContent: ''
+  }
+
+  jobs.value.unshift(job)
+  showManualInput.value = false
+
+  try {
+    await generateJob(jobId)
+  } finally {
+    analyzingManualText.value = false
   }
 }
 
@@ -872,6 +935,28 @@ onBeforeUnmount(() => {
 
 .profile-dismiss-btn {
   font-size: 0.875rem;
+}
+
+.manual-input-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  color: var(--color-ai);
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: var(--space-xs) 0;
+  margin-top: var(--space-sm);
+}
+
+.manual-input-toggle:hover {
+  text-decoration: underline;
+}
+
+.manual-input-section {
+  max-width: 640px;
+  margin-bottom: var(--space-xl);
 }
 
 .form-section {
