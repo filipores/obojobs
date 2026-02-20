@@ -579,7 +579,89 @@
     "emailDraftError": "Fehler beim Erstellen des E-Mail-Entwurfs"
   },
   "dashboard": {
-    "closeHint": "Hinweis schließen"
+    "closeHint": "Hinweis schließen",
+    "verifyEmailNotification": "Verifiziere deine E-Mail für Benachrichtigungen",
+    "hero": {
+      "greeting": "Guten Tag",
+      "welcomeBack": "Willkommen zurück",
+      "subtitle": "Verwalten Sie Ihre Bewerbungen mit Ruhe und Präzision"
+    },
+    "onboarding": {
+      "title": "Erste Schritte",
+      "uploadCv": "Lebenslauf hochladen",
+      "skillsExtracted": "Skills werden automatisch extrahiert",
+      "upload": "Hochladen",
+      "verifyEmail": "E-Mail verifizieren",
+      "notificationsAndSecurity": "Benachrichtigungen und Sicherheit",
+      "verify": "Verifizieren",
+      "createFirstApp": "Erste Bewerbung erstellen",
+      "aiGenerated": "KI generiert Ihr Anschreiben",
+      "create": "Erstellen"
+    },
+    "stats": {
+      "thisMonth": "Diesen Monat",
+      "unlimited": "Unbegrenzt",
+      "remaining": "Verbleibend",
+      "plan": "Plan",
+      "total": "Gesamt",
+      "applications": "Bewerbungen",
+      "created": "Erstellt",
+      "coverLetters": "Anschreiben",
+      "sent": "Gesendet",
+      "today": "heute",
+      "responses": "Antworten",
+      "new": "neu",
+      "received": "Erhalten",
+      "interviews": "Interviews",
+      "prepare": "Vorbereiten",
+      "planned": "Geplant",
+      "noInterviewsPlanned": "Keine Interviews geplant",
+      "loadError": "Statistiken konnten nicht geladen werden",
+      "retry": "Erneut versuchen"
+    },
+    "actions": {
+      "title": "Schnellzugriff",
+      "uploadCvDesc": "Skills werden automatisch per KI extrahiert",
+      "setupExtension": "Extension einrichten",
+      "setupExtensionDesc": "Chrome Extension installieren",
+      "discoverJobs": "Jobs entdecken",
+      "uploadCvFirst": "Erst Lebenslauf hochladen",
+      "createFirstAppDesc": "KI generiert Ihr personalisiertes Anschreiben",
+      "discoverJobsDesc": "Passende Stellenangebote finden",
+      "manageApplications": "Bewerbungen verwalten",
+      "createAppFirst": "Erst eine Bewerbung erstellen",
+      "documents": "Dokumente",
+      "manageDocs": "CV, Zeugnisse und Dokumente verwalten",
+      "allApplications": "Übersicht aller Bewerbungen"
+    },
+    "info": {
+      "howItWorks": "Wie funktioniert's?",
+      "description": "Laden Sie Ihre Dokumente hoch, erstellen Sie Templates und nutzen Sie die Chrome Extension, um mit einem Klick personalisierte Bewerbungen zu generieren."
+    },
+    "aria": {
+      "subscriptionUnlimited": "Diesen Monat: Unbegrenzte Bewerbungen im {plan} Plan",
+      "subscriptionRemaining": "Diesen Monat: {count} Bewerbungen verbleibend im {plan} Plan"
+    },
+    "time": {
+      "todayAt": "Heute {time}",
+      "tomorrowAt": "Morgen {time}",
+      "today": "heute",
+      "tomorrow": "morgen",
+      "inDays": "in {days} Tagen"
+    }
+  },
+  "weeklyGoal": {
+    "title": "Wochenziel",
+    "editGoal": "Ziel bearbeiten",
+    "applications": "Bewerbungen",
+    "goalAchievedExtra": "Ziel erreicht · +{extra} zusätzliche",
+    "goalAchievedExcl": "Ziel erreicht!",
+    "progress": "{completed} von {goal} Bewerbungen diese Woche",
+    "goalAchievedKeepItUp": "Ziel erreicht! Weiter so!",
+    "oneLeft": "Noch eine Bewerbung bis zum Ziel!",
+    "fewLeft": "Fast geschafft - nur noch {count} Bewerbungen!",
+    "manyLeft": "Noch {count} Bewerbungen bis zum Wochenziel",
+    "newApplication": "Neue Bewerbung"
   },
   "admin": {
     "dashboard": {
@@ -840,7 +922,8 @@
       "toneStyle": "Anschreiben-Stil",
       "generating": "Generiere Bewerbung...",
       "limitReached": "Limit erreicht",
-      "upgradeToGenerateMore": "Upgrade dein Abo um weitere Bewerbungen zu generieren",
+      "upgradeCta": "Upgrade dein Abo",
+      "upgradeToGenerateMore": "um weitere Bewerbungen zu generieren",
       "unlimitedApps": "Unbegrenzte Bewerbungen ({plan})",
       "remainingApps": "Noch {remaining} von {limit} Bewerbungen diesen Monat",
       "goToDocuments": "Zu den Dokumenten",
