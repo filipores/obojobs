@@ -1,3 +1,10 @@
+## [1.65.1](https://github.com/filipores/obojobs/compare/v1.65.0...v1.65.1) (2026-02-20)
+
+
+### Bug Fixes
+
+* resolve merge conflicts and improve i18n quality ([4024ffd](https://github.com/filipores/obojobs/commit/4024ffd3c0178adee831d7e0981ae86ba73597aa))
+
 # [1.65.0](https://github.com/filipores/obojobs/compare/v1.64.0...v1.65.0) (2026-02-20)
 
 
