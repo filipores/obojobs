@@ -127,6 +127,10 @@ class AIClient:
         elif stellenanzeige_text and len(stellenanzeige_text) > 2000:
             stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
 
+        branche = details.get("branche") if details else None
+        unternehmensgroesse = details.get("unternehmensgroesse") if details else None
+        logger.debug("Industry routing: branche=%s, groesse=%s", branche, unternehmensgroesse)
+
         system_prompt = build_anschreiben_system_prompt(
             cv_text=cv_text,
             position=position,
@@ -137,8 +141,8 @@ class AIClient:
             user_skills=user_skills,
             tonalitaet=tonalitaet,
             user_city=user_city,
-            branche=details.get("branche") if details else None,
-            unternehmensgroesse=details.get("unternehmensgroesse") if details else None,
+            branche=branche,
+            unternehmensgroesse=unternehmensgroesse,
         )
 
         if zeugnis_text:
@@ -319,6 +323,14 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         groesse = str(data.get("unternehmensgroesse", "")).strip().lower()
         if groesse and groesse != "unbekannt":
             defaults["unternehmensgroesse"] = groesse
+
+        logger.debug(
+            "Extraction: branche=%r → %s, groesse=%r → %s",
+            data.get("branche"),
+            defaults.get("branche"),
+            data.get("unternehmensgroesse"),
+            defaults.get("unternehmensgroesse"),
+        )
 
         return defaults
 

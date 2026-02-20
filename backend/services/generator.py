@@ -238,7 +238,10 @@ class BewerbungsGenerator:
                 "quelle": user_details.get("quelle") or "Manuelle Eingabe",
                 "email": user_details.get("contact_email") or "",
                 "stellenanzeige_kompakt": stellenanzeige_text[:500] if stellenanzeige_text else "",
+                "branche": None,
+                "unternehmensgroesse": None,
             }
+            self._classify_industry(details, stellenanzeige_text, firma_name)
             logger.info("Details aus Vorschau verwendet")
         else:
             logger.info("2/5 Extrahiere Details (Position, Ansprechpartner, Quelle)...")
@@ -246,18 +249,22 @@ class BewerbungsGenerator:
             logger.info("Details extrahiert")
 
         self.warnings.extend(details.pop("warnings", []))
-
-        logger.info("Position: %s", details["position"])
-        logger.info("Ansprechpartner: %s", details["ansprechpartner"])
-        logger.info("Quelle: %s", details["quelle"])
+        logger.info("Position: %s, Ansprechpartner: %s", details["position"], details["ansprechpartner"])
         return details
 
-    def _extract_user_inputs(self) -> tuple[str | None, str | None, list]:
-        """Extract user data for cover letter generation.
+    def _classify_industry(self, details: dict, stellenanzeige_text: str, firma_name: str) -> None:
+        """Classify branche/unternehmensgroesse via AI extraction if enough text is available."""
+        if not stellenanzeige_text or len(stellenanzeige_text) < 50:
+            return
+        try:
+            extracted = self.api_client.extract_bewerbung_details(stellenanzeige_text, firma_name)
+            details["branche"] = extracted.get("branche")
+            details["unternehmensgroesse"] = extracted.get("unternehmensgroesse")
+        except Exception:
+            logger.warning("Branchenklassifizierung fehlgeschlagen")
 
-        Returns:
-            Tuple of (full_name, first_name, user_skills)
-        """
+    def _extract_user_inputs(self) -> tuple[str | None, str | None, list]:
+        """Extract (full_name, first_name, user_skills) from the loaded user."""
         if not self.user:
             return None, None, []
 
