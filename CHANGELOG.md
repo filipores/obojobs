@@ -1,3 +1,21 @@
+# [1.68.0](https://github.com/filipores/obojobs/compare/v1.67.0...v1.68.0) (2026-02-20)
+
+
+### Bug Fixes
+
+* correct credits count to 3, update legal address, improve email verification UX ([11f7d51](https://github.com/filipores/obojobs/commit/11f7d5133b8262d28ff7ccd4f761a840caf54492))
+* improve skills refresh after CV upload with delay and user feedback ([7658fcc](https://github.com/filipores/obojobs/commit/7658fcc949f325f7a6ac56f479e04c909c3300e6))
+* repair landing CTA button and unify du/Sie to informal du throughout ([e73c3d5](https://github.com/filipores/obojobs/commit/e73c3d535ecd101c8a15d5f0eb077108455ce7d5))
+* show validation errors on empty login form submission ([53fd98e](https://github.com/filipores/obojobs/commit/53fd98e01d5e600122e6aec55ba6d3a168a97fc9))
+* wire up ManualTextInput component as fallback for failed URL scraping ([948c86b](https://github.com/filipores/obojobs/commit/948c86b0cf63ff19a2e83b1e86fae84fb758c15d))
+
+
+### Features
+
+* add PDF generation to demo endpoint ([e595a82](https://github.com/filipores/obojobs/commit/e595a82a75b5664ebc6176b0148e4852b3759555))
+* overhaul demo UX with PDF download and registration nudge ([c7bbb97](https://github.com/filipores/obojobs/commit/c7bbb9715d1a2f1dcf25cf648cfca5861b117c5e))
+* switch from monthly subscriptions to credit-based pricing ([e4dbb3f](https://github.com/filipores/obojobs/commit/e4dbb3f02715bb6f5bbda07e6c8ea0fa8715ee87))
+
 # [1.67.0](https://github.com/filipores/obojobs/compare/v1.66.1...v1.67.0) (2026-02-20)
 
 
