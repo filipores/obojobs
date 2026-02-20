@@ -1,3 +1,10 @@
+# [1.66.0](https://github.com/filipores/obojobs/compare/v1.65.1...v1.66.0) (2026-02-20)
+
+
+### Features
+
+* add industry-specific prompt rules for anschreiben generation ([5ab2fa2](https://github.com/filipores/obojobs/commit/5ab2fa26e559e5e70bbca5de06a21bb8cfa6dd6b))
+
 ## [1.65.1](https://github.com/filipores/obojobs/compare/v1.65.0...v1.65.1) (2026-02-20)
 
 
