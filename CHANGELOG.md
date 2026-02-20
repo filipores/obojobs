@@ -1,3 +1,10 @@
+# [1.67.0](https://github.com/filipores/obojobs/compare/v1.66.1...v1.67.0) (2026-02-20)
+
+
+### Features
+
+* upgrade anschreiben prompt to v4 based on kimi-lab eval results ([699b429](https://github.com/filipores/obojobs/commit/699b42922b479503f9f6c85bb5020762ea5c41e0))
+
 ## [1.66.1](https://github.com/filipores/obojobs/compare/v1.66.0...v1.66.1) (2026-02-20)
 
 
