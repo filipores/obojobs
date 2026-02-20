@@ -6,13 +6,13 @@
           <circle cx="12" cy="12" r="10"/>
           <path d="M12 6v6l4 2"/>
         </svg>
-        <h3>Wochenziel</h3>
+        <h3>{{ t('weeklyGoal.title') }}</h3>
       </div>
       <button
         v-if="!editing"
         @click="startEditing"
         class="edit-goal-btn"
-        aria-label="Ziel bearbeiten"
+        :aria-label="t('weeklyGoal.editGoal')"
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
           <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
@@ -41,7 +41,7 @@
             @keyup.escape="cancelEditing"
             class="goal-input"
           />
-          <span class="goal-suffix">Bewerbungen</span>
+          <span class="goal-suffix">{{ t('weeklyGoal.applications') }}</span>
           <div class="edit-actions">
             <button @click="saveGoal" class="save-btn" :disabled="saving">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -64,13 +64,13 @@
             </svg>
           </span>
           <span v-if="isAchieved && extra > 0" class="goal-text">
-            <strong>{{ goal }}/{{ goal }}</strong> Ziel erreicht · +{{ extra }} zusätzliche
+            <strong>{{ goal }}/{{ goal }}</strong> {{ t('weeklyGoal.goalAchievedExtra', { extra }) }}
           </span>
           <span v-else-if="isAchieved" class="goal-text">
-            <strong>{{ goal }}/{{ goal }}</strong> Ziel erreicht!
+            <strong>{{ goal }}/{{ goal }}</strong> {{ t('weeklyGoal.goalAchievedExcl') }}
           </span>
           <span v-else class="goal-text">
-            <strong>{{ completed }}</strong> von <strong>{{ goal }}</strong> Bewerbungen diese Woche
+            {{ t('weeklyGoal.progress', { completed, goal }) }}
           </span>
         </div>
       </div>
@@ -94,14 +94,14 @@
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
         </span>
-        <span>Ziel erreicht! Weiter so!</span>
+        <span>{{ t('weeklyGoal.goalAchievedKeepItUp') }}</span>
       </div>
 
       <!-- Motivational Message -->
       <div v-else class="motivation-message">
-        <span v-if="remaining === 1">Noch eine Bewerbung bis zum Ziel!</span>
-        <span v-else-if="remaining <= 2">Fast geschafft - nur noch {{ remaining }} Bewerbungen!</span>
-        <span v-else>Noch {{ remaining }} Bewerbungen bis zum Wochenziel</span>
+        <span v-if="remaining === 1">{{ t('weeklyGoal.oneLeft') }}</span>
+        <span v-else-if="remaining <= 2">{{ t('weeklyGoal.fewLeft', { count: remaining }) }}</span>
+        <span v-else>{{ t('weeklyGoal.manyLeft', { count: remaining }) }}</span>
       </div>
 
       <!-- CTA Button -->
@@ -110,7 +110,7 @@
           <line x1="12" y1="5" x2="12" y2="19"/>
           <line x1="5" y1="12" x2="19" y2="12"/>
         </svg>
-        Neue Bewerbung
+        {{ t('weeklyGoal.newApplication') }}
       </router-link>
     </div>
 
@@ -123,7 +123,10 @@
 
 <script setup>
 import { ref, computed, onMounted, nextTick, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import api from '../api/client'
+
+const { t } = useI18n()
 
 const loading = ref(true)
 const goal = ref(5)

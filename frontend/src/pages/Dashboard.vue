@@ -8,7 +8,7 @@
             <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
             <polyline points="22,6 12,13 2,6"/>
           </svg>
-          <span>Verifiziere deine E-Mail für Benachrichtigungen</span>
+          <span>{{ t('dashboard.verifyEmailNotification') }}</span>
           <svg class="arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M5 12h14M12 5l7 7-7 7"/>
           </svg>
@@ -27,11 +27,11 @@
       <div class="container">
         <div class="hero-content animate-fade-up">
           <div class="hero-greeting">
-            <span class="greeting-label">Guten Tag</span>
-            <h1>Willkommen zurück</h1>
+            <span class="greeting-label">{{ t('dashboard.hero.greeting') }}</span>
+            <h1>{{ t('dashboard.hero.welcomeBack') }}</h1>
           </div>
           <p class="hero-subtitle">
-            Verwalten Sie Ihre Bewerbungen mit Ruhe und Präzision
+            {{ t('dashboard.hero.subtitle') }}
           </p>
         </div>
 
@@ -45,7 +45,7 @@
       <div class="container">
         <div class="onboarding-card zen-card">
           <div class="onboarding-header">
-            <h2>Erste Schritte</h2>
+            <h2>{{ t('dashboard.onboarding.title') }}</h2>
             <span class="onboarding-progress">{{ completedSteps }}/3</span>
           </div>
           <div class="onboarding-steps">
@@ -58,10 +58,10 @@
                 <span v-else>1</span>
               </div>
               <div class="step-content">
-                <h4>Lebenslauf hochladen</h4>
-                <p>Skills werden automatisch extrahiert</p>
+                <h4>{{ t('dashboard.onboarding.uploadCv') }}</h4>
+                <p>{{ t('dashboard.onboarding.skillsExtracted') }}</p>
                 <router-link v-if="!hasSkills" to="/documents" class="zen-btn zen-btn-sm zen-btn-ai">
-                  Hochladen
+                  {{ t('dashboard.onboarding.upload') }}
                 </router-link>
               </div>
             </div>
@@ -75,10 +75,10 @@
                 <span v-else>2</span>
               </div>
               <div class="step-content">
-                <h4>E-Mail verifizieren</h4>
-                <p>Benachrichtigungen und Sicherheit</p>
+                <h4>{{ t('dashboard.onboarding.verifyEmail') }}</h4>
+                <p>{{ t('dashboard.onboarding.notificationsAndSecurity') }}</p>
                 <router-link v-if="!hasVerifiedEmail" to="/email-verification" class="zen-btn zen-btn-sm zen-btn-ghost">
-                  Verifizieren
+                  {{ t('dashboard.onboarding.verify') }}
                 </router-link>
               </div>
             </div>
@@ -92,10 +92,10 @@
                 <span v-else>3</span>
               </div>
               <div class="step-content">
-                <h4>Erste Bewerbung erstellen</h4>
-                <p>KI generiert Ihr Anschreiben</p>
+                <h4>{{ t('dashboard.onboarding.createFirstApp') }}</h4>
+                <p>{{ t('dashboard.onboarding.aiGenerated') }}</p>
                 <router-link v-if="!hasApplications" to="/new-application" class="zen-btn zen-btn-sm zen-btn-ghost">
-                  Erstellen
+                  {{ t('dashboard.onboarding.create') }}
                 </router-link>
               </div>
             </div>
@@ -122,7 +122,7 @@
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Diesen Monat</span>
+              <span class="stat-label">{{ t('dashboard.stats.thisMonth') }}</span>
               <div class="stat-icon" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <circle cx="12" cy="12" r="10"/>
@@ -131,9 +131,9 @@
               </div>
             </div>
             <div class="stat-value" aria-hidden="true">{{ usage?.unlimited ? '∞' : usage?.remaining || 0 }}</div>
-            <div class="stat-name" aria-hidden="true">{{ usage?.unlimited ? 'Unbegrenzt' : 'Verbleibend' }}</div>
+            <div class="stat-name" aria-hidden="true">{{ usage?.unlimited ? t('dashboard.stats.unlimited') : t('dashboard.stats.remaining') }}</div>
             <router-link to="/subscription" class="stat-link">
-              {{ getPlanLabel() }} Plan
+              {{ getPlanLabel() }} {{ t('dashboard.stats.plan') }}
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -143,55 +143,55 @@
           <!-- Applications Card -->
           <div
             class="stat-card stagger-item"
-            :aria-label="`Gesamt: ${stats.gesamt} Bewerbungen`"
+            :aria-label="`${t('dashboard.stats.total')}: ${stats.gesamt} ${t('dashboard.stats.applications')}`"
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Gesamt</span>
+              <span class="stat-label">{{ t('dashboard.stats.total') }}</span>
             </div>
             <div class="stat-value" aria-hidden="true">{{ stats.gesamt }}</div>
-            <div class="stat-name" aria-hidden="true">Bewerbungen</div>
+            <div class="stat-name" aria-hidden="true">{{ t('dashboard.stats.applications') }}</div>
           </div>
 
           <!-- Created Card -->
           <div
             class="stat-card stagger-item"
-            :aria-label="`Erstellt: ${stats.erstellt} Anschreiben`"
+            :aria-label="`${t('dashboard.stats.created')}: ${stats.erstellt} ${t('dashboard.stats.coverLetters')}`"
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Erstellt</span>
+              <span class="stat-label">{{ t('dashboard.stats.created') }}</span>
             </div>
             <div class="stat-value" aria-hidden="true">{{ stats.erstellt }}</div>
-            <div class="stat-name" aria-hidden="true">Anschreiben</div>
+            <div class="stat-name" aria-hidden="true">{{ t('dashboard.stats.coverLetters') }}</div>
           </div>
 
           <!-- Sent Card -->
           <div
             class="stat-card stagger-item"
-            :aria-label="`Gesendet: ${stats.versendet} Bewerbungen`"
+            :aria-label="`${t('dashboard.stats.sent')}: ${stats.versendet} ${t('dashboard.stats.applications')}`"
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Gesendet</span>
-              <span v-if="stats.versendet_heute > 0" class="stat-badge">+{{ stats.versendet_heute }} heute</span>
+              <span class="stat-label">{{ t('dashboard.stats.sent') }}</span>
+              <span v-if="stats.versendet_heute > 0" class="stat-badge">+{{ stats.versendet_heute }} {{ t('dashboard.stats.today') }}</span>
             </div>
             <div class="stat-value" aria-hidden="true">{{ stats.versendet }}</div>
-            <div class="stat-name" aria-hidden="true">Bewerbungen</div>
+            <div class="stat-name" aria-hidden="true">{{ t('dashboard.stats.applications') }}</div>
           </div>
 
           <!-- Responses Card (from topaz) -->
           <div
             class="stat-card stagger-item"
-            :aria-label="`Antworten: ${stats.antwort_erhalten} erhalten`"
+            :aria-label="`${t('dashboard.stats.responses')}: ${stats.antwort_erhalten} ${t('dashboard.stats.received')}`"
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Antworten</span>
-              <span v-if="stats.antworten_heute > 0" class="stat-badge stat-badge-new">+{{ stats.antworten_heute }} neu</span>
+              <span class="stat-label">{{ t('dashboard.stats.responses') }}</span>
+              <span v-if="stats.antworten_heute > 0" class="stat-badge stat-badge-new">+{{ stats.antworten_heute }} {{ t('dashboard.stats.new') }}</span>
             </div>
             <div class="stat-value" aria-hidden="true">{{ stats.antwort_erhalten }}</div>
-            <div class="stat-name" aria-hidden="true">Erhalten</div>
+            <div class="stat-name" aria-hidden="true">{{ t('dashboard.stats.received') }}</div>
           </div>
 
           <!-- Interviews Card - Prominent display of upcoming interviews (from opal) -->
@@ -199,12 +199,12 @@
             v-if="nextInterview"
             :to="`/applications/${nextInterview.id}/interview`"
             class="stat-card stat-interviews stagger-item"
-            :aria-label="`${upcomingInterviewCount} Interview${upcomingInterviewCount !== 1 ? 's' : ''} geplant, nächstes: ${nextInterview.firma} ${getRelativeTime(nextInterview.interview_date)}`"
+            :aria-label="`${upcomingInterviewCount} Interview${upcomingInterviewCount !== 1 ? 's' : ''} ${t('dashboard.stats.planned')}, ${t('common.next')}: ${nextInterview.firma} ${getRelativeTime(nextInterview.interview_date)}`"
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Interviews</span>
-              <span v-if="stats.interviews_heute > 0" class="stat-badge stat-badge-new">+{{ stats.interviews_heute }} neu</span>
+              <span class="stat-label">{{ t('dashboard.stats.interviews') }}</span>
+              <span v-if="stats.interviews_heute > 0" class="stat-badge stat-badge-new">+{{ stats.interviews_heute }} {{ t('dashboard.stats.new') }}</span>
               <div class="stat-icon" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -220,7 +220,7 @@
             </div>
             <div class="stat-interview-company">{{ nextInterview.firma }}</div>
             <div class="stat-interview-cta">
-              Vorbereiten
+              {{ t('dashboard.stats.prepare') }}
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M5 12h14M12 5l7 7-7 7"/>
               </svg>
@@ -231,11 +231,11 @@
           <div
             v-else
             class="stat-card stagger-item"
-            aria-label="Keine Interviews geplant"
+            :aria-label="t('dashboard.stats.noInterviewsPlanned')"
             role="region"
           >
             <div class="stat-header">
-              <span class="stat-label">Interviews</span>
+              <span class="stat-label">{{ t('dashboard.stats.interviews') }}</span>
               <div class="stat-icon" aria-hidden="true">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
@@ -246,17 +246,17 @@
               </div>
             </div>
             <div class="stat-value" aria-hidden="true">0</div>
-            <div class="stat-name" aria-hidden="true">Geplant</div>
+            <div class="stat-name" aria-hidden="true">{{ t('dashboard.stats.planned') }}</div>
           </div>
         </div>
 
         <!-- Loading State -->
         <!-- SKEL-002-BUG-001: Changed from 5 to 6 skeletons to match actual stats count -->
-        <div v-else-if="!loadError && !stats" class="stats-grid" role="status" aria-label="Statistiken werden geladen">
+        <div v-else-if="!loadError && !stats" class="stats-grid" role="status" :aria-label="t('common.loading')">
           <div v-for="i in 6" :key="i" class="stat-card">
             <div class="skeleton skeleton-card" aria-hidden="true"></div>
           </div>
-          <span class="sr-only">Statistiken werden geladen...</span>
+          <span class="sr-only">{{ t('common.loading') }}</span>
         </div>
 
         <!-- Error State -->
@@ -266,9 +266,9 @@
             <line x1="12" y1="8" x2="12" y2="12"/>
             <line x1="12" y1="16" x2="12.01" y2="16"/>
           </svg>
-          <p class="loading-error-message">Statistiken konnten nicht geladen werden</p>
+          <p class="loading-error-message">{{ t('dashboard.stats.loadError') }}</p>
           <button @click="retryLoadStats" class="loading-error-retry">
-            Erneut versuchen
+            {{ t('dashboard.stats.retry') }}
           </button>
         </div>
       </div>
@@ -282,7 +282,7 @@
     <!-- Quick Actions -->
     <section class="actions-section">
       <div class="container">
-        <h2 class="section-title">Schnellzugriff</h2>
+        <h2 class="section-title">{{ t('dashboard.actions.title') }}</h2>
 
         <div class="actions-grid">
           <!-- State: No skills (CV not uploaded) -->
@@ -297,8 +297,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Lebenslauf hochladen</h3>
-                <p>Skills werden automatisch per KI extrahiert</p>
+                <h3>{{ t('dashboard.onboarding.uploadCv') }}</h3>
+                <p>{{ t('dashboard.actions.uploadCvDesc') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -316,8 +316,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Extension einrichten</h3>
-                <p>Chrome Extension installieren</p>
+                <h3>{{ t('dashboard.actions.setupExtension') }}</h3>
+                <p>{{ t('dashboard.actions.setupExtensionDesc') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -326,7 +326,7 @@
               </div>
             </router-link>
 
-            <div class="action-card action-card-disabled stagger-item" title="Erst Lebenslauf hochladen">
+            <div class="action-card action-card-disabled stagger-item" :title="t('dashboard.actions.uploadCvFirst')">
               <div class="action-icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <circle cx="11" cy="11" r="8"/>
@@ -334,8 +334,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Jobs entdecken</h3>
-                <p>Erst Lebenslauf hochladen</p>
+                <h3>{{ t('dashboard.actions.discoverJobs') }}</h3>
+                <p>{{ t('dashboard.actions.uploadCvFirst') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -355,8 +355,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Erste Bewerbung erstellen</h3>
-                <p>KI generiert Ihr personalisiertes Anschreiben</p>
+                <h3>{{ t('dashboard.onboarding.createFirstApp') }}</h3>
+                <p>{{ t('dashboard.actions.createFirstAppDesc') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -373,8 +373,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Jobs entdecken</h3>
-                <p>Passende Stellenangebote finden</p>
+                <h3>{{ t('dashboard.actions.discoverJobs') }}</h3>
+                <p>{{ t('dashboard.actions.discoverJobsDesc') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -383,7 +383,7 @@
               </div>
             </router-link>
 
-            <div class="action-card action-card-disabled stagger-item" title="Erst eine Bewerbung erstellen">
+            <div class="action-card action-card-disabled stagger-item" :title="t('dashboard.actions.createAppFirst')">
               <div class="action-icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
                   <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -392,8 +392,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Bewerbungen verwalten</h3>
-                <p>Erst eine Bewerbung erstellen</p>
+                <h3>{{ t('dashboard.actions.manageApplications') }}</h3>
+                <p>{{ t('dashboard.actions.createAppFirst') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -416,8 +416,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Dokumente</h3>
-                <p>CV, Zeugnisse und Dokumente verwalten</p>
+                <h3>{{ t('dashboard.actions.documents') }}</h3>
+                <p>{{ t('dashboard.actions.manageDocs') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -434,8 +434,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Jobs entdecken</h3>
-                <p>Passende Stellenangebote finden</p>
+                <h3>{{ t('dashboard.actions.discoverJobs') }}</h3>
+                <p>{{ t('dashboard.actions.discoverJobsDesc') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -453,8 +453,8 @@
                 </svg>
               </div>
               <div class="action-content">
-                <h3>Bewerbungen</h3>
-                <p>Übersicht aller Bewerbungen</p>
+                <h3>{{ t('dashboard.stats.applications') }}</h3>
+                <p>{{ t('dashboard.actions.allApplications') }}</p>
               </div>
               <div class="action-arrow">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -493,14 +493,13 @@
             </svg>
           </div>
           <div class="info-content">
-            <h3>Wie funktioniert's?</h3>
+            <h3>{{ t('dashboard.info.howItWorks') }}</h3>
             <p>
-              Laden Sie Ihre Dokumente hoch, erstellen Sie Templates und nutzen Sie
-              die Chrome Extension, um mit einem Klick personalisierte Bewerbungen zu generieren.
+              {{ t('dashboard.info.description') }}
             </p>
           </div>
           <router-link to="/settings" class="zen-btn zen-btn-ai zen-btn-sm">
-            Extension einrichten
+            {{ t('dashboard.actions.setupExtension') }}
           </router-link>
         </div>
       </div>
@@ -542,10 +541,10 @@ function getPlanLabel() {
 
 function getSubscriptionAriaLabel() {
   if (usage.value?.unlimited) {
-    return `Diesen Monat: Unbegrenzte Bewerbungen im ${getPlanLabel()} Plan`
+    return t('dashboard.aria.subscriptionUnlimited', { plan: getPlanLabel() })
   }
   const remaining = usage.value?.remaining || 0
-  return `Diesen Monat: ${remaining} Bewerbungen verbleibend im ${getPlanLabel()} Plan`
+  return t('dashboard.aria.subscriptionRemaining', { count: remaining, plan: getPlanLabel() })
 }
 
 async function loadStats() {
@@ -603,8 +602,8 @@ function formatInterviewDate(dateStr) {
   const diffDays = daysFromNow(dateStr)
   const time = date.toLocaleTimeString(getFullLocale(), { hour: '2-digit', minute: '2-digit' })
 
-  if (diffDays === 0) return `Heute ${time}`
-  if (diffDays === 1) return `Morgen ${time}`
+  if (diffDays === 0) return t('dashboard.time.todayAt', { time })
+  if (diffDays === 1) return t('dashboard.time.tomorrowAt', { time })
 
   const dayNames = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
   return `${dayNames[date.getDay()]} ${time}`
@@ -614,9 +613,9 @@ function getRelativeTime(dateStr) {
   if (!dateStr) return ''
   const diffDays = daysFromNow(dateStr)
 
-  if (diffDays === 0) return 'heute'
-  if (diffDays === 1) return 'morgen'
-  return `in ${diffDays} Tagen`
+  if (diffDays === 0) return t('dashboard.time.today')
+  if (diffDays === 1) return t('dashboard.time.tomorrow')
+  return t('dashboard.time.inDays', { days: diffDays })
 }
 
 // Onboarding step computeds

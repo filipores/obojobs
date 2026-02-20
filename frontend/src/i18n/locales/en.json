@@ -578,7 +578,89 @@
     "emailDraftError": "Error creating email draft"
   },
   "dashboard": {
-    "closeHint": "Close hint"
+    "closeHint": "Close hint",
+    "verifyEmailNotification": "Verify your email for notifications",
+    "hero": {
+      "greeting": "Good day",
+      "welcomeBack": "Welcome back",
+      "subtitle": "Manage your applications with calm and precision"
+    },
+    "onboarding": {
+      "title": "Getting Started",
+      "uploadCv": "Upload CV",
+      "skillsExtracted": "Skills are automatically extracted",
+      "upload": "Upload",
+      "verifyEmail": "Verify Email",
+      "notificationsAndSecurity": "Notifications and Security",
+      "verify": "Verify",
+      "createFirstApp": "Create first application",
+      "aiGenerated": "AI generates your cover letter",
+      "create": "Create"
+    },
+    "stats": {
+      "thisMonth": "This Month",
+      "unlimited": "Unlimited",
+      "remaining": "Remaining",
+      "plan": "Plan",
+      "total": "Total",
+      "applications": "Applications",
+      "created": "Created",
+      "coverLetters": "Cover Letters",
+      "sent": "Sent",
+      "today": "today",
+      "responses": "Responses",
+      "new": "new",
+      "received": "Received",
+      "interviews": "Interviews",
+      "prepare": "Prepare",
+      "planned": "Planned",
+      "noInterviewsPlanned": "No interviews planned",
+      "loadError": "Could not load statistics",
+      "retry": "Retry"
+    },
+    "actions": {
+      "title": "Quick Access",
+      "uploadCvDesc": "Skills are automatically extracted via AI",
+      "setupExtension": "Setup Extension",
+      "setupExtensionDesc": "Install Chrome Extension",
+      "discoverJobs": "Discover Jobs",
+      "uploadCvFirst": "Upload CV first",
+      "createFirstAppDesc": "AI generates your personalized cover letter",
+      "discoverJobsDesc": "Find matching job offers",
+      "manageApplications": "Manage Applications",
+      "createAppFirst": "Create an application first",
+      "documents": "Documents",
+      "manageDocs": "Manage CV, certificates and documents",
+      "allApplications": "Overview of all applications"
+    },
+    "info": {
+      "howItWorks": "How it works?",
+      "description": "Upload your documents, create templates and use the Chrome Extension to generate personalized applications with one click."
+    },
+    "aria": {
+      "subscriptionUnlimited": "This month: Unlimited applications in {plan} plan",
+      "subscriptionRemaining": "This month: {count} applications remaining in {plan} plan"
+    },
+    "time": {
+      "todayAt": "Today {time}",
+      "tomorrowAt": "Tomorrow {time}",
+      "today": "today",
+      "tomorrow": "tomorrow",
+      "inDays": "in {days} days"
+    }
+  },
+  "weeklyGoal": {
+    "title": "Weekly Goal",
+    "editGoal": "Edit Goal",
+    "applications": "Applications",
+    "goalAchievedExtra": "Goal achieved · +{extra} extra",
+    "goalAchievedExcl": "Goal achieved!",
+    "progress": "{completed} of {goal} applications this week",
+    "goalAchievedKeepItUp": "Goal achieved! Keep it up!",
+    "oneLeft": "One more application to go!",
+    "fewLeft": "Almost there - only {count} applications left!",
+    "manyLeft": "{count} applications left to reach weekly goal",
+    "newApplication": "New Application"
   },
   "admin": {
     "dashboard": {
@@ -751,7 +833,8 @@
       "toneStyle": "Cover letter style",
       "generating": "Generating application...",
       "limitReached": "Limit reached",
-      "upgradeToGenerateMore": "Upgrade your subscription to generate more applications",
+      "upgradeCta": "Upgrade your subscription",
+      "upgradeToGenerateMore": "to generate more applications",
       "unlimitedApps": "Unlimited applications ({plan})",
       "remainingApps": "{remaining} of {limit} applications remaining this month",
       "goToDocuments": "Go to documents",

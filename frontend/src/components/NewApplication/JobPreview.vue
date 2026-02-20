@@ -202,7 +202,7 @@
           </span>
         </button>
         <p v-if="isAtUsageLimit" class="usage-info usage-info-limit">
-          <router-link to="/subscription">{{ t('newApplication.jobPreview.upgradeToGenerateMore') }}</router-link>
+          <router-link to="/subscription">{{ t('newApplication.jobPreview.upgradeCta') }}</router-link> {{ t('newApplication.jobPreview.upgradeToGenerateMore') }}
         </p>
         <p v-else class="usage-info">
           <span v-if="usage?.unlimited">{{ t('newApplication.jobPreview.unlimitedApps', { plan: getPlanLabel() }) }}</span>
