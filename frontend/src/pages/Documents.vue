@@ -380,7 +380,23 @@ const upload = async (docType) => {
     if (input) input.value = ''
 
     await loadDocuments()
+
+    // Give backend time to persist extracted skills before refreshing
+    if (docType === 'lebenslauf') {
+      await new Promise(resolve => setTimeout(resolve, 500))
+    }
     skillsRefreshKey.value++
+
+    // Notify user about skill extraction results
+    if (docType === 'lebenslauf' && data.skills_extracted > 0) {
+      if (window.$toast) {
+        window.$toast(`${data.skills_extracted} Skills aus deinem Lebenslauf extrahiert!`, 'success')
+      }
+    } else if (docType === 'lebenslauf' && data.skills_extracted === 0) {
+      if (window.$toast) {
+        window.$toast('Lebenslauf hochgeladen. Klicke auf "Neu extrahieren" um Skills zu erkennen.', 'info')
+      }
+    }
 
     // Refresh user data if CV upload auto-populated profile fields
     if (data.profile_updated) {
