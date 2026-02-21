@@ -1,3 +1,10 @@
+## [1.69.1](https://github.com/filipores/obojobs/compare/v1.69.0...v1.69.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* resolve manual entry bug, align pricing, unify du-form, fix all credit-model tests ([885fb62](https://github.com/filipores/obojobs/commit/885fb62606530d9f06dbed58f52ae47a04c9f4dc))
+
 # [1.69.0](https://github.com/filipores/obojobs/compare/v1.68.2...v1.69.0) (2026-02-21)
 
 
