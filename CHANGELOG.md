@@ -1,3 +1,10 @@
+## [1.69.2](https://github.com/filipores/obojobs/compare/v1.69.1...v1.69.2) (2026-02-21)
+
+
+### Bug Fixes
+
+* resolve "bei" display bug for manual entries and clear session on logout ([#65](https://github.com/filipores/obojobs/issues/65)) ([3e05d03](https://github.com/filipores/obojobs/commit/3e05d03a34e20dea12cd91caf3bee993f9bd7ea6))
+
 ## [1.69.1](https://github.com/filipores/obojobs/compare/v1.69.0...v1.69.1) (2026-02-21)
 
 
