@@ -287,3 +287,44 @@ After writing, re-read your letter and ask: "Does this sound like a confident pe
 Write ONLY the cover letter in German. No explanation, no "Hier ist...", no markdown.
 Start with the greeting. End with the name after the sign-off.
 Separate paragraphs with blank lines."""
+
+
+def create_email_body_prompt(
+    position: str,
+    firma_name: str,
+    ansprechpartner: str,
+    anschreiben_snippet: str,
+    branche: str | None = None,
+) -> str:
+    """Build prompt for AI-generated email body text.
+
+    The prompt is in English (same convention as other prompts),
+    but instructs the model to output in German.
+    """
+    branche_hint = f"\nIndustry context: {branche}." if branche else ""
+
+    return f"""Write a SHORT professional German email body (3-5 sentences) for a job application.
+The applicant is sending their cover letter and CV as attachments.
+ALL OUTPUT MUST BE IN GERMAN.{branche_hint}
+
+Context:
+- Position: {position}
+- Company: {firma_name}
+- Greeting: {ansprechpartner}
+
+Cover letter opening (for context only — do NOT repeat this content):
+{anschreiben_snippet}
+
+Rules:
+- Start with the greeting ("{ansprechpartner},") followed by a blank line.
+- Reference the specific position and company name naturally.
+- Mention that application documents are attached.
+- Express interest in a conversation/interview.
+- End with "Mit freundlichen Grüßen" (no name — signature is added separately).
+- Do NOT repeat content from the cover letter snippet above.
+- Do NOT include a subject line.
+- Do NOT include any signature or name after "Mit freundlichen Grüßen".
+- Keep it concise: 3-5 sentences maximum.
+- Sound professional but natural, not robotic.
+
+Write ONLY the email body in German. No explanation, no markdown."""

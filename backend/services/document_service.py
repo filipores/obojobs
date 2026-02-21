@@ -59,9 +59,17 @@ def save_extracted_skills_for_upload(user_id: int, extracted_skills: list[dict[s
     """Save extracted skills during document upload. Returns count of new skills added."""
     UserSkill.query.filter_by(user_id=user_id, source_document_id=document_id).delete()
 
+    # Pre-fetch existing skills for this user to avoid N+1 queries
+    skill_names = [s["skill_name"] for s in extracted_skills]
+    existing_skills = UserSkill.query.filter(UserSkill.user_id == user_id, UserSkill.skill_name.in_(skill_names)).all()
+
+    # Create a lookup dictionary for existing skills
+    existing_map = {skill.skill_name: skill for skill in existing_skills}
+
     skills_extracted = 0
     for skill_data in extracted_skills:
-        existing = UserSkill.query.filter_by(user_id=user_id, skill_name=skill_data["skill_name"]).first()
+        skill_name = skill_data["skill_name"]
+        existing = existing_map.get(skill_name)
 
         if existing:
             if skill_data["experience_years"] and (
@@ -73,12 +81,13 @@ def save_extracted_skills_for_upload(user_id: int, extracted_skills: list[dict[s
 
         skill = UserSkill(
             user_id=user_id,
-            skill_name=skill_data["skill_name"],
+            skill_name=skill_name,
             skill_category=skill_data["skill_category"],
             experience_years=skill_data["experience_years"],
             source_document_id=document_id,
         )
         db.session.add(skill)
+        existing_map[skill_name] = skill
         skills_extracted += 1
 
     db.session.commit()

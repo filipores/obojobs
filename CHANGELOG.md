@@ -1,3 +1,24 @@
+# [1.69.0](https://github.com/filipores/obojobs/compare/v1.68.2...v1.69.0) (2026-02-21)
+
+
+### Features
+
+* ai-personalized email body for job applications ([e1fa261](https://github.com/filipores/obojobs/commit/e1fa26192aaed33a2cdd3ceeeff0b80e5f6e5a23))
+
+## [1.68.2](https://github.com/filipores/obojobs/compare/v1.68.1...v1.68.2) (2026-02-21)
+
+
+### Performance Improvements
+
+* optimize N+1 query in save_extracted_skills_for_upload ([2f8aab2](https://github.com/filipores/obojobs/commit/2f8aab2f578c88a877ea71a2207d32bf88023a47))
+
+## [1.68.1](https://github.com/filipores/obojobs/compare/v1.68.0...v1.68.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* **tests:** align tests with credit-based pricing model ([87d9007](https://github.com/filipores/obojobs/commit/87d9007a90b891bdb8adb421636d3949312b9941))
+
 # [1.68.0](https://github.com/filipores/obojobs/compare/v1.67.0...v1.68.0) (2026-02-20)
 
 

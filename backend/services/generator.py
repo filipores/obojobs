@@ -154,7 +154,7 @@ class BewerbungsGenerator:
             self._emit_progress(3, 4, "Anschreiben wird finalisiert...")
             anschreiben_vollstaendig = self._build_complete_letter(firma_name, details, anschreiben_body)
             output_path = self._create_pdf(firma_name, anschreiben_vollstaendig, output_filename)
-            betreff, email_text = self._generate_email_data(firma_name, details)
+            betreff, email_text = self._generate_email_data(firma_name, details, anschreiben_body)
 
             self._emit_progress(4, 4, "Bewerbung wird gespeichert...")
         else:
@@ -174,8 +174,8 @@ class BewerbungsGenerator:
             self._emit_progress(5, 7, "PDF wird erstellt...")
             output_path = self._create_pdf(firma_name, anschreiben_vollstaendig, output_filename)
 
-            self._emit_progress(6, 7, "E-Mail-Daten werden vorbereitet...")
-            betreff, email_text = self._generate_email_data(firma_name, details)
+            self._emit_progress(6, 7, "E-Mail wird personalisiert...")
+            betreff, email_text = self._generate_email_data(firma_name, details, anschreiben_body)
 
             self._emit_progress(7, 7, "Bewerbung wird gespeichert...")
 
@@ -364,15 +364,9 @@ class BewerbungsGenerator:
         if self.user.postal_code or self.user.city:
             header_parts.append(f"{self.user.postal_code or ''} {self.user.city or ''}".strip())
 
-        contact_parts = []
-        if self.user.phone:
-            contact_parts.append(self.user.phone)
-        if self.user.email:
-            contact_parts.append(self.user.email)
-        if self.user.website:
-            contact_parts.append(self.user.website)
-        if contact_parts:
-            header_parts.append(" | ".join(contact_parts))
+        contact_line = " | ".join(filter(None, [self.user.phone, self.user.email, self.user.website]))
+        if contact_line:
+            header_parts.append(contact_line)
 
         header_parts.append("")
         header_parts.append(firma_name)
@@ -404,30 +398,44 @@ class BewerbungsGenerator:
         logger.info("Bewerbung erstellt: %s", output_path)
         return output_path
 
-    def _generate_email_data(self, firma_name: str, details: dict[str, str]) -> tuple[str, str]:
-        """Generate email subject and body text."""
+    def _user_contact_kwargs(self) -> dict:
+        user = self.user
+        return {
+            "user_name": user.full_name,
+            "user_email": user.email,
+            "user_phone": user.phone,
+            "user_city": user.city,
+            "user_website": user.website,
+        }
+
+    def _generate_email_data(
+        self, firma_name: str, details: dict[str, str], anschreiben_body: str | None = None
+    ) -> tuple[str, str]:
+        """Generate email subject and body text (AI-personalized with static fallback)."""
         betreff = EmailFormatter.generate_betreff(
             details["position"], firma_name, style="professional", user_name=self.user.full_name
         )
-        # Build attachments list dynamically from user's uploaded documents
-        attachments = ["Anschreiben", "Lebenslauf"]
-        user_docs = Document.query.filter_by(user_id=self.user_id).all()
-        for doc in user_docs:
-            if doc.doc_type == "arbeitszeugnis":
-                attachments.append(doc.original_filename or "Arbeitszeugnis")
-            elif doc.doc_type != "lebenslauf":
-                attachments.append(doc.original_filename or doc.doc_type)
-        email_text = EmailFormatter.generate_email_text(
-            position=details["position"],
-            ansprechperson=details["ansprechpartner"],
-            firma_name=firma_name,
-            attachments=attachments,
-            user_name=self.user.full_name,
-            user_email=self.user.email,
-            user_phone=self.user.phone,
-            user_city=self.user.city,
-            user_website=self.user.website,
-        )
+        contact = self._user_contact_kwargs()
+
+        ai_email_body = None
+        if anschreiben_body:
+            ai_email_body = self.api_client.generate_email_body(
+                position=details["position"],
+                firma_name=firma_name,
+                ansprechpartner=details["ansprechpartner"],
+                anschreiben_body=anschreiben_body,
+                branche=details.get("branche"),
+            )
+
+        if ai_email_body:
+            email_text = EmailFormatter.combine_email_body_with_signature(ai_body=ai_email_body, **contact)
+        else:
+            email_text = EmailFormatter.generate_email_text(
+                position=details["position"],
+                ansprechperson=details["ansprechpartner"],
+                firma_name=firma_name,
+                **contact,
+            )
         return betreff, email_text
 
     def _save_application(
@@ -472,27 +480,18 @@ class BewerbungsGenerator:
         logger.info("Email an: %s", details.get("email") or "Keine E-Mail-Adresse gefunden")
         logger.info("Betreff: %s", betreff)
         logger.debug("Email-Text: %s", email_text)
-
-        if extracted_info["email_links"]:
-            for link in extracted_info["email_links"]:
-                logger.info("E-Mail-Link: %s (%s)", link["email"], link["text"])
-
-        if extracted_info["application_links"]:
-            for link in extracted_info["application_links"][:5]:
-                logger.info("Bewerbungs-Link: %s: %s", link["text"], link["url"])
+        for link in extracted_info.get("email_links", []):
+            logger.info("E-Mail-Link: %s (%s)", link["email"], link["text"])
+        for link in extracted_info.get("application_links", [])[:5]:
+            logger.info("Bewerbungs-Link: %s: %s", link["text"], link["url"])
 
     def process_firma(self, firma_config: dict[str, str]) -> str | None:
-        """Process a single company config dict and generate an application.
-
-        Returns the output PDF path on success, or None on failure.
-        """
+        """Process a single company config dict. Returns PDF path or None on failure."""
         try:
             firma_name = firma_config.get("name")
             stellenanzeige_path = firma_config.get("stellenanzeige")
-
             if not firma_name or not stellenanzeige_path:
                 raise ValueError("Firma-Config muss 'name' und 'stellenanzeige' enthalten")
-
             return self.generate_bewerbung(stellenanzeige_path, firma_name)
         except Exception as e:
             logger.error("Fehler bei %s: %s", firma_config.get("name", "unbekannt"), e)

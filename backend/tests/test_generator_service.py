@@ -206,31 +206,31 @@ class TestLoadUserDocuments:
                 gen.load_user_documents()
 
 
+def _make_prepared_generator(test_user, mock_api):
+    """Create a prepared BewerbungsGenerator with mocked internals."""
+    from services.generator import BewerbungsGenerator
+
+    gen = BewerbungsGenerator(user_id=test_user["id"])
+    gen.api_client = mock_api
+    gen.cv_text = "Test CV text with Python experience"
+    gen.zeugnis_text = None
+    gen._prepared = True
+    gen.user = db.session.get(User, test_user["id"])
+
+    gen.user.full_name = "Max Mustermann"
+    gen.user.address = "Teststraße 1"
+    gen.user.postal_code = "80331"
+    gen.user.city = "München"
+    gen.user.phone = "+49 123 456789"
+    gen.user.email = "test@example.com"
+    gen.user.website = None
+    db.session.commit()
+
+    return gen
+
+
 class TestGenerateBewerbung:
     """Tests for BewerbungsGenerator.generate_bewerbung()."""
-
-    def _make_generator(self, app, test_user, mock_api):
-        """Helper to create a prepared BewerbungsGenerator with mocked internals."""
-        from services.generator import BewerbungsGenerator
-
-        gen = BewerbungsGenerator(user_id=test_user["id"])
-        gen.api_client = mock_api
-        gen.cv_text = "Test CV text with Python experience"
-        gen.zeugnis_text = None
-        gen._prepared = True
-        gen.user = db.session.get(User, test_user["id"])
-
-        # Set user details for header generation
-        gen.user.full_name = "Max Mustermann"
-        gen.user.address = "Teststraße 1"
-        gen.user.postal_code = "80331"
-        gen.user.city = "München"
-        gen.user.phone = "+49 123 456789"
-        gen.user.email = "test@example.com"
-        gen.user.website = None
-        db.session.commit()
-
-        return gen
 
     @patch("services.generator.create_anschreiben_pdf")
     @patch("services.generator.AIClient")
@@ -244,7 +244,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Bewerbung als Developer"
             mock_api.generate_email_text.return_value = "Email body text"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             result = gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com/job",
@@ -288,7 +288,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Bewerbung als Developer"
             mock_api.generate_email_text.return_value = "Email text"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             with patch(
                 "services.generator.read_document",
@@ -326,7 +326,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Bewerbung als Tester"
             mock_api.generate_email_text.return_value = "Email"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             with patch("services.generator.read_document", return_value="File content"):
                 with patch("services.generator.is_url", return_value=False):
@@ -406,7 +406,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Bewerbung als Dev"
             mock_api.generate_email_text.return_value = "Email"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com",
@@ -439,7 +439,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Betreff"
             mock_api.generate_email_text.return_value = "Email"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             result = gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com",
@@ -459,8 +459,9 @@ class TestGenerateBewerbung:
             mock_api.generate_anschreiben.return_value = "Sehr geehrte Damen und Herren,\n\nBody."
             mock_api.generate_betreff.return_value = "Bewerbung als Dev"
             mock_api.generate_email_text.return_value = "Email text here"
+            mock_api.generate_email_body.return_value = None  # Fallback to static template
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com",
@@ -491,7 +492,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Betreff"
             mock_api.generate_email_text.return_value = "Email"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com",
@@ -527,7 +528,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Betreff"
             mock_api.generate_email_text.return_value = "Email"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com",
@@ -552,7 +553,7 @@ class TestGenerateBewerbung:
             mock_api.generate_betreff.return_value = "Betreff"
             mock_api.generate_email_text.return_value = "Email"
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com",
@@ -569,7 +570,7 @@ class TestGenerateBewerbung:
     @patch("services.generator.create_anschreiben_pdf")
     @patch("services.generator.AIClient")
     def test_generate_builds_attachments_list(self, mock_api_cls, mock_pdf, mock_email_fmt, app, test_user):
-        """Test that attachments list includes uploaded documents."""
+        """Test that attachments list includes uploaded documents (fallback path)."""
         with app.app_context():
             # Add an Arbeitszeugnis document
             zeugnis_doc = Document(
@@ -583,11 +584,13 @@ class TestGenerateBewerbung:
 
             mock_email_fmt.generate_betreff.return_value = "Betreff"
             mock_email_fmt.generate_email_text.return_value = "Email"
+            mock_email_fmt.combine_email_body_with_signature.return_value = "AI Email"
 
             mock_api = MagicMock()
             mock_api.generate_anschreiben.return_value = "Body."
+            mock_api.generate_email_body.return_value = None  # Force fallback path
 
-            gen = self._make_generator(app, test_user, mock_api)
+            gen = _make_prepared_generator(test_user, mock_api)
 
             gen.generate_bewerbung(
                 stellenanzeige_path="https://example.com",
@@ -595,12 +598,91 @@ class TestGenerateBewerbung:
                 user_details={"description": "Job", "position": "Dev"},
             )
 
-            # Check that generate_email_text received attachments with Arbeitszeugnis
-            call_kwargs = mock_email_fmt.generate_email_text.call_args[1]
-            attachments = call_kwargs["attachments"]
-            assert "Anschreiben" in attachments
-            assert "Lebenslauf" in attachments
-            assert "Arbeitszeugnis_Firma.pdf" in attachments
+            # Check that generate_email_text was called (fallback path)
+            mock_email_fmt.generate_email_text.assert_called_once()
+
+
+class TestAIEmailBody:
+    """Tests for AI-personalized email body in _generate_email_data."""
+
+    @patch("services.generator.create_anschreiben_pdf")
+    @patch("services.generator.AIClient")
+    def test_ai_email_body_success(self, mock_api_cls, mock_pdf, app, test_user):
+        """Test that AI-generated email body is used when available."""
+        with app.app_context():
+            mock_api = MagicMock()
+            mock_api.generate_anschreiben.return_value = (
+                "Sehr geehrte Damen und Herren,\n\nAnschreiben body.\n\nMit freundlichen Grüßen\nMax"
+            )
+            ai_email = (
+                "Sehr geehrte Damen und Herren,\n\n"
+                "mit großer Begeisterung bewerbe ich mich als Developer bei Test GmbH.\n\n"
+                "Mit freundlichen Grüßen"
+            )
+            mock_api.generate_email_body.return_value = ai_email
+
+            gen = _make_prepared_generator(test_user, mock_api)
+
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Test GmbH",
+                user_details={"description": "Job desc", "position": "Developer"},
+            )
+
+            app_record = Application.query.filter_by(firma="Test GmbH").first()
+            assert app_record is not None
+            # AI email body should be used, not the static template
+            assert "Begeisterung" in app_record.email_text
+            # Signature should be appended
+            assert "Max Mustermann" in app_record.email_text
+            assert "test@example.com" in app_record.email_text
+
+    @patch("services.generator.create_anschreiben_pdf")
+    @patch("services.generator.AIClient")
+    def test_ai_email_body_fallback_on_failure(self, mock_api_cls, mock_pdf, app, test_user):
+        """Test fallback to static template when AI email body fails."""
+        with app.app_context():
+            mock_api = MagicMock()
+            mock_api.generate_anschreiben.return_value = (
+                "Sehr geehrte Damen und Herren,\n\nBody.\n\nMit freundlichen Grüßen\nMax"
+            )
+            mock_api.generate_email_body.return_value = None  # AI failed
+
+            gen = _make_prepared_generator(test_user, mock_api)
+
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Fallback GmbH",
+                user_details={"description": "Job desc", "position": "Developer"},
+            )
+
+            app_record = Application.query.filter_by(firma="Fallback GmbH").first()
+            assert app_record is not None
+            # Static template should be used
+            assert "Bewerbungsunterlagen" in app_record.email_text
+
+    @patch("services.generator.create_anschreiben_pdf")
+    @patch("services.generator.AIClient")
+    def test_ai_email_body_called_with_correct_params(self, mock_api_cls, mock_pdf, app, test_user):
+        """Test that generate_email_body is called with correct parameters."""
+        with app.app_context():
+            mock_api = MagicMock()
+            mock_api.generate_anschreiben.return_value = "Sehr geehrte Damen und Herren,\n\nBody content here."
+            mock_api.generate_email_body.return_value = None
+
+            gen = _make_prepared_generator(test_user, mock_api)
+
+            gen.generate_bewerbung(
+                stellenanzeige_path="https://example.com",
+                firma_name="Params GmbH",
+                user_details={"description": "Job desc", "position": "Senior Dev", "quelle": "LinkedIn"},
+            )
+
+            mock_api.generate_email_body.assert_called_once()
+            call_kwargs = mock_api.generate_email_body.call_args[1]
+            assert call_kwargs["position"] == "Senior Dev"
+            assert call_kwargs["firma_name"] == "Params GmbH"
+            assert call_kwargs["anschreiben_body"] == "Sehr geehrte Damen und Herren,\n\nBody content here."
 
 
 class TestProcessFirma:

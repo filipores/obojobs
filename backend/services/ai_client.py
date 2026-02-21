@@ -10,6 +10,7 @@ from services.prompts import (
     FORBIDDEN_PHRASES,
     build_anschreiben_system_prompt,
     create_details_extraction_prompt,
+    create_email_body_prompt,
     create_extraction_prompt,
 )
 from services.retry import retry_with_backoff
@@ -104,6 +105,38 @@ class AIClient:
             )
         except Exception as e:
             raise Exception(f"Informationsextraktion fehlgeschlagen: {e!s}") from e
+
+    def generate_email_body(
+        self,
+        position: str,
+        firma_name: str,
+        ansprechpartner: str,
+        anschreiben_body: str,
+        branche: str | None = None,
+    ) -> str | None:
+        """Generate a personalized email body using the fast model.
+
+        Returns None on any error so the caller can fall back to the static template.
+        """
+        snippet = anschreiben_body[:200] if anschreiben_body else ""
+        prompt = create_email_body_prompt(
+            position=position,
+            firma_name=firma_name,
+            ansprechpartner=ansprechpartner,
+            anschreiben_snippet=snippet,
+            branche=branche,
+        )
+
+        try:
+            return self._call_api_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=200,
+                temperature=0.4,
+                model=self.fast_model,
+            )
+        except Exception:
+            logger.warning("E-Mail-Body-Generierung fehlgeschlagen, verwende Fallback")
+            return None
 
     def _prepare_anschreiben_messages(
         self,
