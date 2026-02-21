@@ -41,11 +41,10 @@ class Config:
     TEMPERATURE = 0.7
     USE_EXTRACTION = True
 
-    # Together.xyz / Qwen API
-    TOGETHER_API_KEY = os.getenv("TOGETHER_API_KEY")
-    QWEN_MODEL = os.getenv("QWEN_MODEL", "Qwen/Qwen3-235B-A22B-Instruct-2507-tput")
-    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "Qwen/Qwen3-Next-80B-A3B-Instruct")
-    QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://api.together.xyz/v1")
+    # Qwen API (via Fireworks AI)
+    QWEN_MODEL = os.getenv("QWEN_MODEL", "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507")
+    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "accounts/fireworks/models/qwen3-next-80b-a3b-instruct")
+    QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://api.fireworks.ai/inference/v1")
     QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
     QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))
     QWEN_ANSCHREIBEN_MAX_TOKENS = int(os.getenv("QWEN_ANSCHREIBEN_MAX_TOKENS", "1200"))
@@ -115,8 +114,8 @@ class Config:
     @staticmethod
     def validate_config():
         """Validate required configuration"""
-        if not Config.TOGETHER_API_KEY:
-            raise ValueError("TOGETHER_API_KEY environment variable is required")
+        if not Config.FIREWORKS_API_KEY:
+            raise ValueError("FIREWORKS_API_KEY environment variable is required")
 
         # Create upload folder if it doesn't exist
         os.makedirs(Config.UPLOAD_FOLDER, exist_ok=True)

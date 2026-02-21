@@ -22,9 +22,9 @@ class AIClient:
     IGNORED_VALUES = {"keine angabe", "nicht vorhanden", "n/a", ""}
 
     def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.TOGETHER_API_KEY
+        self.api_key = api_key or config.FIREWORKS_API_KEY
         if not self.api_key:
-            raise ValueError("TOGETHER_API_KEY nicht gesetzt")
+            raise ValueError("FIREWORKS_API_KEY nicht gesetzt")
         self.client = OpenAI(
             api_key=self.api_key,
             base_url=config.QWEN_API_BASE,
@@ -34,10 +34,9 @@ class AIClient:
                 limits=httpx.Limits(keepalive_expiry=30),
             ),
         )
-        # Separate client for Kimi K2.5 via Fireworks AI (4.5x faster than Together.xyz)
-        kimi_api_key = config.FIREWORKS_API_KEY or self.api_key
+        # Kimi K2.5 uses separate base URL but same Fireworks API key
         self.kimi_client = OpenAI(
-            api_key=kimi_api_key,
+            api_key=self.api_key,
             base_url=config.KIMI_API_BASE,
             timeout=120.0,
             http_client=httpx.Client(

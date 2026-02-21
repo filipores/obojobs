@@ -2,6 +2,7 @@
 Skills API Routes - Manage user skills extracted from CV documents.
 """
 
+import logging
 import os
 from typing import Any
 
@@ -10,6 +11,8 @@ from flask import Blueprint, Response, jsonify, request
 from middleware.jwt_required import jwt_required_custom
 from services import skill_service
 from services.skill_extractor import SkillExtractor
+
+logger = logging.getLogger(__name__)
 
 skills_bp = Blueprint("skills", __name__)
 
@@ -161,7 +164,8 @@ def extract_skills_from_document(doc_id: int, current_user: Any) -> tuple[Respon
         extracted_skills = extractor.extract_skills_from_cv(cv_text)
 
         if not extracted_skills:
-            return jsonify({"error": "Keine Skills konnten extrahiert werden"}), 400
+            logger.warning("Skill-Extraktion ergab 0 Skills für Dokument %s (Text-Länge: %d)", doc_id, len(cv_text))
+            return jsonify({"error": "Keine Skills erkannt. Versuche es erneut oder füge Skills manuell hinzu."}), 400
 
         added_skills, skipped_count = skill_service.save_extracted_skills(current_user.id, extracted_skills, doc_id)
 

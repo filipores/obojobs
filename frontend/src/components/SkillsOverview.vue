@@ -414,13 +414,17 @@ const reextractSkills = async () => {
 
   extracting.value = true
   try {
-    const { data } = await api.post(`/documents/${cvDocumentId.value}/extract-skills`)
+    const { data } = await api.silent.post(`/documents/${cvDocumentId.value}/extract-skills`)
     if (window.$toast) {
       window.$toast(data.message || 'Skills extrahiert', 'success')
     }
     await loadSkills()
   } catch (error) {
     console.error('Failed to extract skills:', error)
+    if (window.$toast) {
+      const msg = error.response?.data?.error || 'Skill-Extraktion fehlgeschlagen'
+      window.$toast(msg, 'error')
+    }
   } finally {
     extracting.value = false
   }

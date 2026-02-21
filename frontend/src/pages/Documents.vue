@@ -442,8 +442,15 @@ const deleteDoc = async (id, docType) => {
       : `/documents/${id}`
     await api.delete(url)
     await loadDocuments()
+
+    // Refresh skills overview when skills were deleted
+    if (deleteSkills) {
+      skillsRefreshKey.value++
+    }
   } catch (e) {
-    if (window.$toast) { window.$toast('Fehler beim Löschen: ' + (e.response?.data?.error || 'Unbekannter Fehler'), 'error') }
+    if (window.$toast) {
+      window.$toast('Fehler beim Löschen: ' + (e.response?.data?.error || 'Unbekannter Fehler'), 'error')
+    }
   }
 }
 

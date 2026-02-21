@@ -8,9 +8,9 @@ The platform uses **two AI providers** for different tasks:
 
 - **Client**: `QwenAPIClient` (`services/qwen_client.py`)
 - **Library**: `openai` Python SDK (OpenAI-compatible API)
-- **Model**: `Qwen/Qwen3-235B-A22B-Instruct-2507-tput` via Together.xyz
-- **Base URL**: `https://api.together.xyz/v1`
-- **Env var**: `TOGETHER_API_KEY`
+- **Model**: `accounts/fireworks/models/qwen3-235b-a22b-instruct-2507` via Fireworks AI
+- **Base URL**: `https://api.fireworks.ai/inference/v1`
+- **Env var**: `FIREWORKS_API_KEY`
 - **Used for**: Cover letter generation, detail extraction, email/subject generation
 
 ### 2. Anthropic Claude -- Secondary for Analysis
