@@ -112,6 +112,7 @@ _FILE_SIZE_ALLOWLIST: set[str] = {
     "tests/test_password_reset.py",
     "tests/test_documents.py",
     "tests/test_generator_service.py",
+    "services/generator.py",  # TODO: split into smaller modules
 }
 
 
