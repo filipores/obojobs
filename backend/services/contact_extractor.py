@@ -7,13 +7,10 @@ using a combination of regex patterns and AI-based NLP extraction.
 UX-004: Automatische Extraktion von Kontaktdaten aus manuellem Text
 """
 
-import json
 import logging
 import re
 
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -156,11 +153,10 @@ class ContactExtractor:
 
     def __init__(self) -> None:
         """Initialize the contact extractor."""
-        self.api_key: str | None = config.ANTHROPIC_API_KEY
-        self.client: Anthropic | None = None
-        if self.api_key:
-            self.client = Anthropic(api_key=self.api_key)
-        self.model: str = config.CLAUDE_MODEL
+        try:
+            self.client: AIClient | None = AIClient()
+        except Exception:
+            self.client = None
 
     def extract_contact_data(self, job_text: str) -> dict[str, str | None]:
         """
@@ -310,37 +306,15 @@ Antworte NUR als JSON-Objekt mit diesen Keys:
 {{"ansprechpartner": "Name der Kontaktperson oder null", "email": "E-Mail-Adresse oder null", "standort": "Stadt/Region oder null", "anstellungsart": "Vollzeit/Teilzeit/Remote/Hybrid oder null"}}"""
 
         try:
-            response = self.client.messages.create(
-                model=self.model,
+            data = self.client._call_api_json_with_retry(
+                messages=[{"role": "user", "content": prompt}],
                 max_tokens=300,
                 temperature=0.1,
-                messages=[{"role": "user", "content": prompt}],
             )
-            response_text = response.content[0].text.strip()
-            data = self._parse_json_object(response_text)
-            if data is None:
-                return {}
             return self._normalize_nlp_response(data)
         except Exception as e:
             logger.error("NLP extraction failed: %s", e)
             return {}
-
-    def _parse_json_object(self, text: str) -> dict | None:
-        """Parse a JSON object from potentially wrapped text (e.g. markdown code blocks)."""
-        try:
-            return json.loads(text)
-        except (json.JSONDecodeError, TypeError):
-            pass
-
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group())
-            except (json.JSONDecodeError, TypeError):
-                pass
-
-        logger.warning("Keine JSON-Struktur in NLP-Antwort gefunden")
-        return None
 
     def _normalize_nlp_response(self, data: dict) -> dict[str, str]:
         """Normalize JSON response from Claude NLP into contact data dict."""

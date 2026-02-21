@@ -7,11 +7,8 @@ detailed improvement suggestions for each missing or weak component.
 
 import json
 import logging
-import time
 
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -50,12 +47,8 @@ class STARAnalyzer:
         },
     }
 
-    def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
-        if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-        self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+    def __init__(self):
+        self.client = AIClient()
 
     def analyze_star(
         self,
@@ -63,7 +56,6 @@ class STARAnalyzer:
         answer_text: str,
         position: str | None = None,
         firma: str | None = None,
-        retry_count: int = 3,
     ) -> dict:
         """
         Perform detailed STAR method analysis on a behavioral interview answer.
@@ -73,7 +65,6 @@ class STARAnalyzer:
             answer_text: The user's answer to analyze
             position: Optional job position for context
             firma: Optional company name for context
-            retry_count: Number of retries on API failure
 
         Returns:
             Dictionary with:
@@ -85,27 +76,17 @@ class STARAnalyzer:
         """
         prompt = self._create_analysis_prompt(question_text, answer_text, position, firma)
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=3000,
-                    temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}],
-                )
+        try:
+            response_text = self.client._call_api_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=3000,
+                temperature=0.3,
+            )
+            return self._parse_analysis_response(response_text)
 
-                response_text = response.content[0].text.strip()
-                return self._parse_analysis_response(response_text)
-
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning("STAR-Analyse fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e)
-                    time.sleep(2)
-                else:
-                    logger.error("STAR-Analyse fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
-                    return self._get_fallback_analysis()
-
-        return self._get_fallback_analysis()
+        except Exception as e:
+            logger.error("STAR-Analyse fehlgeschlagen: %s", e)
+            return self._get_fallback_analysis()
 
     def _create_analysis_prompt(
         self, question_text: str, answer_text: str, position: str | None, firma: str | None

@@ -14,12 +14,7 @@ Score is weighted: hard_skills (40%), qualifications (25%),
 experience (20%), soft_skills (15%)
 """
 
-import json
-import re
-
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 
 # Weights for score calculation
 CATEGORY_WEIGHTS = {
@@ -33,21 +28,16 @@ CATEGORY_WEIGHTS = {
 class ATSService:
     """Service for analyzing CVs against job descriptions."""
 
-    def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
-        if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-        self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+    def __init__(self):
+        self.client = AIClient()
 
-    def analyze_cv_against_job(self, cv_text: str, job_description: str, retry_count: int = 3) -> dict:
+    def analyze_cv_against_job(self, cv_text: str, job_description: str) -> dict:
         """
         Analyze a CV against a job description.
 
         Args:
             cv_text: The text content of the CV/resume
             job_description: The job posting text
-            retry_count: Number of retries on API failure
 
         Returns:
             dict with keys:
@@ -60,7 +50,7 @@ class ATSService:
 
         Raises:
             ValueError: If cv_text or job_description is empty
-            Exception: If API call fails after all retries
+            Exception: If API call fails after retries
         """
         if not cv_text or not cv_text.strip():
             raise ValueError("CV text cannot be empty")
@@ -69,23 +59,17 @@ class ATSService:
 
         prompt = self._create_analysis_prompt(cv_text, job_description)
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=2000,
-                    temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}],
-                )
-                response_text = response.content[0].text.strip()
-                return self._parse_analysis_response(response_text)
-            except ValueError:
-                raise
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    continue
-                raise Exception(f"ATS analysis failed after {retry_count} attempts: {str(e)}") from e
-        return {}
+        try:
+            data = self.client._call_api_json_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=2000,
+                temperature=0.3,
+            )
+            return self._parse_analysis_response(data)
+        except ValueError:
+            raise
+        except Exception as e:
+            raise Exception(f"ATS analysis failed: {str(e)}") from e
 
     def _create_analysis_prompt(self, cv_text: str, job_description: str) -> str:
         """Create the prompt for ATS analysis."""
@@ -137,40 +121,31 @@ WICHTIG: Antworte NUR mit einem JSON-Objekt in genau diesem Format:
 
 Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
 
-    def _parse_analysis_response(self, response_text: str) -> dict:
-        """Parse the API response into structured data."""
-        json_match = re.search(r"\{[\s\S]*\}", response_text)
-        if not json_match:
-            return self._get_default_response()
+    def _parse_analysis_response(self, data: dict) -> dict:
+        """Parse the API response dict into structured data."""
+        # Parse categories
+        categories = self._parse_categories(data.get("categories", {}))
 
-        try:
-            data = json.loads(json_match.group())
+        # Calculate weighted score
+        score = self._calculate_weighted_score(categories)
 
-            # Parse categories
-            categories = self._parse_categories(data.get("categories", {}))
+        # Flatten keywords for backward compatibility
+        matched_keywords = []
+        missing_keywords = []
+        for cat_data in categories.values():
+            matched_keywords.extend(cat_data.get("matched", []))
+            missing_keywords.extend(cat_data.get("missing", []))
 
-            # Calculate weighted score
-            score = self._calculate_weighted_score(categories)
+        # Parse suggestions with priority
+        suggestions = self._parse_suggestions(data.get("suggestions", []))
 
-            # Flatten keywords for backward compatibility
-            matched_keywords = []
-            missing_keywords = []
-            for cat_data in categories.values():
-                matched_keywords.extend(cat_data.get("matched", []))
-                missing_keywords.extend(cat_data.get("missing", []))
-
-            # Parse suggestions with priority
-            suggestions = self._parse_suggestions(data.get("suggestions", []))
-
-            return {
-                "score": score,
-                "matched_keywords": matched_keywords,
-                "missing_keywords": missing_keywords,
-                "suggestions": suggestions,
-                "categories": categories,
-            }
-        except json.JSONDecodeError:
-            return self._get_default_response()
+        return {
+            "score": score,
+            "matched_keywords": matched_keywords,
+            "missing_keywords": missing_keywords,
+            "suggestions": suggestions,
+            "categories": categories,
+        }
 
     def _parse_categories(self, categories_data: dict) -> dict:
         """Parse and validate category data."""
@@ -254,17 +229,16 @@ Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
         }
 
 
-def analyze_cv_against_job(cv_text: str, job_description: str, api_key: str | None = None) -> dict:
+def analyze_cv_against_job(cv_text: str, job_description: str) -> dict:
     """
     Convenience function to analyze a CV against a job description.
 
     Args:
         cv_text: The text content of the CV/resume
         job_description: The job posting text
-        api_key: Optional API key (uses config default if not provided)
 
     Returns:
         dict with score, matched_keywords, missing_keywords, suggestions
     """
-    service = ATSService(api_key=api_key)
+    service = ATSService()
     return service.analyze_cv_against_job(cv_text, job_description)

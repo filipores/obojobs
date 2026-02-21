@@ -11,7 +11,6 @@ os.environ["FLASK_ENV"] = "testing"
 os.environ["DATABASE_URL"] = "sqlite:///:memory:"
 os.environ["SECRET_KEY"] = "test-secret-key"
 os.environ["JWT_SECRET_KEY"] = "test-jwt-secret-key"
-os.environ["ANTHROPIC_API_KEY"] = "test-api-key"
 os.environ["MAIL_USERNAME"] = ""
 os.environ["MAIL_PASSWORD"] = ""
 

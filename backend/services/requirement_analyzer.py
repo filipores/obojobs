@@ -6,10 +6,7 @@ import json
 import logging
 import re
 
-from anthropic import Anthropic
-
-from config import config
-from services.retry import retry_with_backoff
+from services.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -34,12 +31,8 @@ class RequirementAnalyzer:
         "education": "certifications",
     }
 
-    def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
-        if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-        self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+    def __init__(self):
+        self.client = AIClient()
 
     def analyze_requirements(self, job_text: str) -> list[dict]:
         """
@@ -57,22 +50,19 @@ class RequirementAnalyzer:
         prompt = self._create_extraction_prompt(job_text)
 
         try:
-            response = self._call_api_with_retry(prompt)
+            response = self._call_ai(prompt)
             return self._parse_requirements_response(response)
         except Exception as e:
             logger.error("Requirement-Analyse fehlgeschlagen: %s", e)
             return []
 
-    @retry_with_backoff(max_attempts=3, base_delay=2.0)
-    def _call_api_with_retry(self, prompt: str) -> str:
-        """Send a message to the Claude API with automatic retry on failure."""
-        response = self.client.messages.create(
-            model=self.model,
+    def _call_ai(self, prompt: str) -> str:
+        """Send a message to the AI API with automatic retry on failure."""
+        return self.client._call_api_with_retry(
+            messages=[{"role": "user", "content": prompt}],
             max_tokens=2000,
             temperature=0.2,
-            messages=[{"role": "user", "content": prompt}],
         )
-        return response.content[0].text.strip()
 
     def _create_extraction_prompt(self, job_text: str) -> str:
         """Create the prompt for requirement extraction."""

@@ -2,13 +2,9 @@
 Interview Generator Service - Generates interview questions based on job posting and user profile using Claude API.
 """
 
-import json
 import logging
-import time
 
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -28,12 +24,8 @@ class InterviewGenerator:
         "Erzähl uns etwas über dich.",
     ]
 
-    def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
-        if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-        self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+    def __init__(self):
+        self.client = AIClient()
 
     def generate_questions(
         self,
@@ -67,32 +59,23 @@ class InterviewGenerator:
 
         prompt = self._create_generation_prompt(job_text, firma, position, user_skills, question_count)
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=4000,
-                    temperature=0.7,  # Slightly higher for creative variety
-                    messages=[{"role": "user", "content": prompt}],
-                )
+        try:
+            data = self.client._call_api_json_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=4000,
+                temperature=0.7,
+            )
 
-                response_text = response.content[0].text.strip()
-                questions = self._parse_questions_response(response_text)
+            questions_raw = data.get("questions", [])
+            questions = self._parse_questions(questions_raw)
 
-                # Ensure we have enough questions
-                if len(questions) >= 10:
-                    return questions[:15]  # Cap at 15
+            # Ensure we have enough questions
+            if len(questions) >= 10:
+                return questions[:15]  # Cap at 15
 
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning(
-                        "Interview-Fragen Generierung fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e
-                    )
-                    time.sleep(2)
-                else:
-                    logger.error("Interview-Fragen Generierung fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
-                    # Return fallback questions
-                    return self._get_fallback_questions(firma, position)
+        except Exception as e:
+            logger.error("Interview-Fragen Generierung fehlgeschlagen: %s", e)
+            return self._get_fallback_questions(firma, position)
 
         return self._get_fallback_questions(firma, position)
 
@@ -144,7 +127,7 @@ Für jede Frage gib an:
 4. sample_answer: Eine Beispiel-Antwort-Strategie (2-3 Sätze), die dem Bewerber hilft sich vorzubereiten. Gib Tipps WIE man antworten sollte, nicht eine wortwörtliche Antwort.
 
 WICHTIG:
-- Antworte NUR mit einem JSON-Array. Keine anderen Texte.
+- Antworte NUR mit einem JSON-Objekt mit dem Key "questions" das ein Array enthält. Keine anderen Texte.
 - Mische verschiedene Fragentypen für ein realistisches Interview
 - Beziehe Fragen auf die konkrete Stelle bei {firma}
 - Mindestens 2-3 behavioral Fragen
@@ -152,93 +135,78 @@ WICHTIG:
 - 1-2 Fragen zu Gehalt/Konditionen
 
 Beispiel-Format:
-[
-  {{
-    "question_text": "Wo siehst du dich beruflich in fünf Jahren?",
-    "question_type": "behavioral",
-    "difficulty": "medium",
-    "sample_answer": "Zeige Ambition ohne unrealistisch zu wirken. Verknüpfe deine Ziele mit dem Unternehmen und der Position. Betone Lernbereitschaft und Entwicklungswünsche."
-  }},
-  {{
-    "question_text": "Welche Erfahrungen hast du mit [Technologie X]?",
-    "question_type": "technical",
-    "difficulty": "medium",
-    "sample_answer": "Nenne konkrete Projekte und Ergebnisse. Quantifiziere wenn möglich. Zeige kontinuierliches Lernen in diesem Bereich."
-  }}
-]
+{{
+  "questions": [
+    {{
+      "question_text": "Wo siehst du dich beruflich in fünf Jahren?",
+      "question_type": "behavioral",
+      "difficulty": "medium",
+      "sample_answer": "Zeige Ambition ohne unrealistisch zu wirken. Verknüpfe deine Ziele mit dem Unternehmen und der Position. Betone Lernbereitschaft und Entwicklungswünsche."
+    }},
+    {{
+      "question_text": "Welche Erfahrungen hast du mit [Technologie X]?",
+      "question_type": "technical",
+      "difficulty": "medium",
+      "sample_answer": "Nenne konkrete Projekte und Ergebnisse. Quantifiziere wenn möglich. Zeige kontinuierliches Lernen in diesem Bereich."
+    }}
+  ]
+}}
 
-Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
+Generiere jetzt {question_count} Interview-Fragen als JSON-Objekt:"""
 
-    def _parse_questions_response(self, response_text: str) -> list[dict[str, str]]:
-        """Parse the Claude response into a list of question dictionaries."""
-        text = response_text.strip()
-
-        # Find JSON array bounds
-        start_idx = text.find("[")
-        end_idx = text.rfind("]")
-
-        if start_idx == -1 or end_idx == -1:
-            logger.warning("Keine JSON-Struktur in der Antwort gefunden")
+    def _parse_questions(self, questions: list) -> list[dict[str, str]]:
+        """Parse and validate a list of question dictionaries."""
+        if not isinstance(questions, list):
             return []
 
-        json_text = text[start_idx : end_idx + 1]
+        valid_questions = []
+        for q in questions:
+            if not isinstance(q, dict):
+                continue
 
-        try:
-            questions = json.loads(json_text)
+            question_text = q.get("question_text", "").strip()
+            question_type = q.get("question_type", "").strip().lower()
+            difficulty = q.get("difficulty", "medium").strip().lower()
+            sample_answer = q.get("sample_answer", "").strip()
 
-            # Validate and clean questions
-            valid_questions = []
-            for q in questions:
-                if not isinstance(q, dict):
-                    continue
+            # Skip invalid entries
+            if not question_text:
+                continue
 
-                question_text = q.get("question_text", "").strip()
-                question_type = q.get("question_type", "").strip().lower()
-                difficulty = q.get("difficulty", "medium").strip().lower()
-                sample_answer = q.get("sample_answer", "").strip()
+            # Validate question type
+            if question_type not in self.VALID_TYPES:
+                # Try to map common variations
+                type_mapping = {
+                    "verhaltens": "behavioral",
+                    "verhalten": "behavioral",
+                    "technisch": "technical",
+                    "fachlich": "technical",
+                    "situations": "situational",
+                    "hypothetisch": "situational",
+                    "unternehmen": "company_specific",
+                    "firma": "company_specific",
+                    "motivation": "company_specific",
+                    "gehalt": "salary_negotiation",
+                    "salary": "salary_negotiation",
+                    "konditionen": "salary_negotiation",
+                }
+                question_type = type_mapping.get(question_type, "behavioral")
 
-                # Skip invalid entries
-                if not question_text:
-                    continue
+            # Validate difficulty
+            if difficulty not in self.VALID_DIFFICULTIES:
+                difficulty = "medium"
 
-                # Validate question type
-                if question_type not in self.VALID_TYPES:
-                    # Try to map common variations
-                    type_mapping = {
-                        "verhaltens": "behavioral",
-                        "verhalten": "behavioral",
-                        "technisch": "technical",
-                        "fachlich": "technical",
-                        "situations": "situational",
-                        "hypothetisch": "situational",
-                        "unternehmen": "company_specific",
-                        "firma": "company_specific",
-                        "motivation": "company_specific",
-                        "gehalt": "salary_negotiation",
-                        "salary": "salary_negotiation",
-                        "konditionen": "salary_negotiation",
-                    }
-                    question_type = type_mapping.get(question_type, "behavioral")
+            valid_questions.append(
+                {
+                    "question_text": question_text,
+                    "question_type": question_type,
+                    "difficulty": difficulty,
+                    "sample_answer": sample_answer
+                    or "Bereite eine konkrete Antwort mit Beispielen aus deiner Berufserfahrung vor.",
+                }
+            )
 
-                # Validate difficulty
-                if difficulty not in self.VALID_DIFFICULTIES:
-                    difficulty = "medium"
-
-                valid_questions.append(
-                    {
-                        "question_text": question_text,
-                        "question_type": question_type,
-                        "difficulty": difficulty,
-                        "sample_answer": sample_answer
-                        or "Bereite eine konkrete Antwort mit Beispielen aus deiner Berufserfahrung vor.",
-                    }
-                )
-
-            return valid_questions
-
-        except json.JSONDecodeError as e:
-            logger.error("JSON Parse Error: %s", e)
-            return []
+        return valid_questions
 
     def _get_fallback_questions(self, firma: str, position: str) -> list[dict[str, str]]:
         """Return fallback questions if API call fails."""

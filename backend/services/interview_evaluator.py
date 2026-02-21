@@ -3,14 +3,10 @@ Interview Evaluator Service - Evaluates interview answer responses using Claude 
 Provides feedback on structure, content, length, and STAR method compliance.
 """
 
-import json
 import logging
-import time
 from typing import Any
 
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
@@ -18,12 +14,8 @@ logger = logging.getLogger(__name__)
 class InterviewEvaluator:
     """Service to evaluate interview answers and provide structured feedback."""
 
-    def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
-        if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-        self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+    def __init__(self):
+        self.client = AIClient()
 
     def evaluate_answer(
         self,
@@ -58,27 +50,17 @@ class InterviewEvaluator:
         """
         prompt = self._create_evaluation_prompt(question_text, question_type, answer_text, position, firma)
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=2000,
-                    temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}],
-                )
+        try:
+            data = self.client._call_api_json_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=2000,
+                temperature=0.3,
+            )
+            return self._parse_evaluation_response(data, question_type)
 
-                response_text = response.content[0].text.strip()
-                return self._parse_evaluation_response(response_text, question_type)
-
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning("Antwort-Bewertung fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e)
-                    time.sleep(2)
-                else:
-                    logger.error("Antwort-Bewertung fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
-                    return self._get_fallback_evaluation(question_type)
-
-        return self._get_fallback_evaluation(question_type)
+        except Exception as e:
+            logger.error("Antwort-Bewertung fehlgeschlagen: %s", e)
+            return self._get_fallback_evaluation(question_type)
 
     def _create_evaluation_prompt(
         self, question_text: str, question_type: str, answer_text: str, position: str | None, firma: str | None
@@ -168,64 +150,45 @@ Antworte NUR mit einem JSON-Objekt im folgenden Format:
 
 Gib jetzt das JSON-Objekt aus:"""
 
-    def _parse_evaluation_response(self, response_text: str, question_type: str) -> dict[str, Any]:
-        """Parse the Claude response into a structured evaluation."""
-        text = response_text.strip()
+    def _parse_evaluation_response(self, evaluation: dict, question_type: str) -> dict[str, Any]:
+        """Parse the API response dict into a structured evaluation."""
+        # Validate and ensure all required fields
+        result = {
+            "overall_score": min(100, max(0, evaluation.get("overall_score", 50))),
+            "overall_rating": evaluation.get("overall_rating", "adequate"),
+            "strengths": evaluation.get("strengths", [])[:5],
+            "improvements": evaluation.get("improvements", [])[:5],
+            "suggestion": evaluation.get("suggestion", ""),
+            "length_assessment": evaluation.get(
+                "length_assessment", {"rating": "adequate", "feedback": "Keine spezifische Bewertung verfügbar."}
+            ),
+            "structure_assessment": evaluation.get(
+                "structure_assessment",
+                {"rating": "partially_structured", "feedback": "Keine spezifische Bewertung verfügbar."},
+            ),
+        }
 
-        # Find JSON object bounds
-        start_idx = text.find("{")
-        end_idx = text.rfind("}")
+        # Validate overall_rating
+        valid_ratings = ["excellent", "good", "adequate", "needs_improvement"]
+        if result["overall_rating"] not in valid_ratings:
+            # Map score to rating
+            score = result["overall_score"]
+            if score >= 80:
+                result["overall_rating"] = "excellent"
+            elif score >= 60:
+                result["overall_rating"] = "good"
+            elif score >= 40:
+                result["overall_rating"] = "adequate"
+            else:
+                result["overall_rating"] = "needs_improvement"
 
-        if start_idx == -1 or end_idx == -1:
-            logger.warning("Keine JSON-Struktur in der Antwort gefunden")
-            return self._get_fallback_evaluation(question_type)
+        # Add STAR analysis for behavioral questions
+        if question_type == "behavioral" and "star_analysis" in evaluation:
+            result["star_analysis"] = self._validate_star_analysis(evaluation["star_analysis"])
+        elif question_type == "behavioral":
+            result["star_analysis"] = self._get_default_star_analysis()
 
-        json_text = text[start_idx : end_idx + 1]
-
-        try:
-            evaluation = json.loads(json_text)
-
-            # Validate and ensure all required fields
-            result = {
-                "overall_score": min(100, max(0, evaluation.get("overall_score", 50))),
-                "overall_rating": evaluation.get("overall_rating", "adequate"),
-                "strengths": evaluation.get("strengths", [])[:5],
-                "improvements": evaluation.get("improvements", [])[:5],
-                "suggestion": evaluation.get("suggestion", ""),
-                "length_assessment": evaluation.get(
-                    "length_assessment", {"rating": "adequate", "feedback": "Keine spezifische Bewertung verfügbar."}
-                ),
-                "structure_assessment": evaluation.get(
-                    "structure_assessment",
-                    {"rating": "partially_structured", "feedback": "Keine spezifische Bewertung verfügbar."},
-                ),
-            }
-
-            # Validate overall_rating
-            valid_ratings = ["excellent", "good", "adequate", "needs_improvement"]
-            if result["overall_rating"] not in valid_ratings:
-                # Map score to rating
-                score = result["overall_score"]
-                if score >= 80:
-                    result["overall_rating"] = "excellent"
-                elif score >= 60:
-                    result["overall_rating"] = "good"
-                elif score >= 40:
-                    result["overall_rating"] = "adequate"
-                else:
-                    result["overall_rating"] = "needs_improvement"
-
-            # Add STAR analysis for behavioral questions
-            if question_type == "behavioral" and "star_analysis" in evaluation:
-                result["star_analysis"] = self._validate_star_analysis(evaluation["star_analysis"])
-            elif question_type == "behavioral":
-                result["star_analysis"] = self._get_default_star_analysis()
-
-            return result
-
-        except json.JSONDecodeError as e:
-            logger.error("JSON Parse Error: %s", e)
-            return self._get_fallback_evaluation(question_type)
+        return result
 
     def _validate_star_analysis(self, star_data: dict[str, Any]) -> dict[str, Any]:
         """Validate and clean STAR analysis data."""

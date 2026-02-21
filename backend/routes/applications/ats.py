@@ -144,9 +144,7 @@ def optimize_cover_letter_for_ats(app_id: int, current_user: Any) -> tuple[Respo
         - optimized_text: The optimized cover letter text
         - changes_made: List of changes/keywords incorporated
     """
-    from anthropic import Anthropic
-
-    from config import config
+    from services.ai_client import AIClient
 
     app = application_service.get_application(app_id, current_user.id)
 
@@ -204,13 +202,9 @@ def optimize_cover_letter_for_ats(app_id: int, current_user: Any) -> tuple[Respo
             }
         ), 200
 
-    # Use Claude to optimize the cover letter
+    # Use AI to optimize the cover letter
     try:
-        api_key = config.ANTHROPIC_API_KEY
-        if not api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-
-        client = Anthropic(api_key=api_key)
+        client = AIClient()
 
         prompt = f"""Du bist ein Experte für Bewerbungsoptimierung. Optimiere das folgende Anschreiben für ATS-Systeme (Applicant Tracking Systems).
 
@@ -242,13 +236,11 @@ Antworte im JSON-Format:
 
 Antworte NUR mit dem JSON, keine zusätzlichen Erklärungen."""
 
-        response = client.messages.create(
-            model=config.CLAUDE_MODEL,
+        response_text = client._call_api_with_retry(
+            messages=[{"role": "user", "content": prompt}],
             max_tokens=4000,
             temperature=0.3,
-            messages=[{"role": "user", "content": prompt}],
         )
-        response_text = response.content[0].text.strip()
 
         # Parse JSON response
         json_match = re.search(r"\{[\s\S]*\}", response_text)

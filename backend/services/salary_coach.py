@@ -5,11 +5,8 @@ Supports German salary negotiation culture with personalized tips and negotiatio
 
 import json
 import logging
-import time
 
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 from services.salary_coach_data import (
     VALID_CATEGORIES,
     NegotiationStrategy,
@@ -25,12 +22,8 @@ logger = logging.getLogger(__name__)
 class SalaryCoach:
     """Service for salary negotiation coaching using Claude API."""
 
-    def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
-        if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-        self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+    def __init__(self):
+        self.client = AIClient()
 
     def research_salary(
         self,
@@ -38,7 +31,6 @@ class SalaryCoach:
         region: str = "deutschland",
         experience_years: int = 3,
         industry: str | None = None,
-        retry_count: int = 3,
     ) -> SalaryResearch:
         """
         Research salary range for a position in a specific region.
@@ -48,34 +40,23 @@ class SalaryCoach:
             region: City or region in Germany
             experience_years: Years of experience
             industry: Optional industry for more accurate ranges
-            retry_count: Number of retries on failure
 
         Returns:
             SalaryResearch with min/max/median salary and sources
         """
         prompt = self._create_salary_research_prompt(position, region, experience_years, industry)
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=1500,
-                    temperature=0.3,
-                    messages=[{"role": "user", "content": prompt}],
-                )
+        try:
+            response_text = self.client._call_api_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=1500,
+                temperature=0.3,
+            )
+            return self._parse_salary_research(response_text, position, region, experience_years)
 
-                response_text = response.content[0].text.strip()
-                return self._parse_salary_research(response_text, position, region, experience_years)
-
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning("Salary research failed (attempt %s/%s): %s", attempt + 1, retry_count, e)
-                    time.sleep(2)
-                else:
-                    logger.error("Salary research failed after %s attempts: %s", retry_count, e)
-                    return get_fallback_salary_research(position, region, experience_years, industry)
-
-        return get_fallback_salary_research(position, region, experience_years, industry)
+        except Exception as e:
+            logger.error("Salary research failed: %s", e)
+            return get_fallback_salary_research(position, region, experience_years, industry)
 
     def generate_negotiation_tips(
         self,
@@ -85,7 +66,6 @@ class SalaryCoach:
         experience_years: int = 3,
         company_name: str | None = None,
         job_offer_details: str | None = None,
-        retry_count: int = 3,
     ) -> NegotiationStrategy:
         """
         Generate personalized salary negotiation tips and strategy.
@@ -97,7 +77,6 @@ class SalaryCoach:
             experience_years: Years of experience
             company_name: Company name for context
             job_offer_details: Details about the job offer
-            retry_count: Number of retries on failure
 
         Returns:
             NegotiationStrategy with tips, scripts, and arguments
@@ -111,29 +90,17 @@ class SalaryCoach:
             job_offer_details,
         )
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=3000,
-                    temperature=0.5,
-                    messages=[{"role": "user", "content": prompt}],
-                )
+        try:
+            response_text = self.client._call_api_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=3000,
+                temperature=0.5,
+            )
+            return self._parse_negotiation_strategy(response_text, target_salary, current_salary)
 
-                response_text = response.content[0].text.strip()
-                return self._parse_negotiation_strategy(response_text, target_salary, current_salary)
-
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning(
-                        "Negotiation tips generation failed (attempt %s/%s): %s", attempt + 1, retry_count, e
-                    )
-                    time.sleep(2)
-                else:
-                    logger.error("Negotiation tips generation failed after %s attempts: %s", retry_count, e)
-                    return get_fallback_negotiation_strategy(target_salary, current_salary, position)
-
-        return get_fallback_negotiation_strategy(target_salary, current_salary, position)
+        except Exception as e:
+            logger.error("Negotiation tips generation failed: %s", e)
+            return get_fallback_negotiation_strategy(target_salary, current_salary, position)
 
     def _create_salary_research_prompt(
         self,

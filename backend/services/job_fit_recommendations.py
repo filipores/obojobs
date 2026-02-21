@@ -8,9 +8,7 @@ with a fallback to generic recommendations.
 import json
 import re
 
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 from services.job_fit_models import LearningRecommendation, SkillMatch
 
 
@@ -59,11 +57,7 @@ def generate_learning_recommendations(
     skills_to_learn = skills_to_learn[:10]
 
     try:
-        api_key = config.ANTHROPIC_API_KEY
-        if not api_key:
-            return _generate_fallback_recommendations(skills_to_learn)
-
-        client = Anthropic(api_key=api_key)
+        client = AIClient()
 
         prompt = f"""Du bist ein Karriereberater. Erstelle Lernempfehlungen für folgende fehlende Skills.
 
@@ -106,13 +100,11 @@ WICHTIG:
 
 Antworte NUR mit dem JSON."""
 
-        response = client.messages.create(
-            model=config.CLAUDE_MODEL,
+        response_text = client._call_api_with_retry(
+            messages=[{"role": "user", "content": prompt}],
             max_tokens=2000,
             temperature=0.3,
-            messages=[{"role": "user", "content": prompt}],
         )
-        response_text = response.content[0].text.strip()
 
         # Parse JSON response
         json_match = re.search(r"\{[\s\S]*\}", response_text)

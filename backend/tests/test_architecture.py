@@ -12,7 +12,7 @@ Layer rules (top = may depend on layers below):
     services -X-> routes
 
 Additional rules:
-    - Anthropic API usage only in services/
+    - AI API usage (Anthropic/AIClient) only in services/
     - No single Python file > 500 lines (keeps modules reviewable)
 """
 
@@ -95,10 +95,8 @@ def _relative_path(filepath: Path) -> str:
 _ROUTES_IMPORTING_MODELS_ALLOWLIST: set[str] = set()
 
 # Task 10: Files outside services/ that currently use the Anthropic API.
-# TODO: Move Anthropic usage in routes/applications/ats.py into a service.
-_ANTHROPIC_OUTSIDE_SERVICES_ALLOWLIST: set[str] = {
-    "routes/applications/ats.py",
-}
+# All violations resolved: migrated from Anthropic to AIClient (DeepSeek via Fireworks).
+_ANTHROPIC_OUTSIDE_SERVICES_ALLOWLIST: set[str] = set()
 
 # Task 10: Files that currently exceed the line limit.
 # TODO: Split these files into smaller, focused modules.
@@ -108,7 +106,6 @@ _FILE_SIZE_ALLOWLIST: set[str] = {
     "tests/test_ats_routes.py",
     "tests/test_admin.py",
     "tests/test_generic_scraper.py",
-    "tests/test_ats_service.py",
     "tests/test_password_reset.py",
     "tests/test_documents.py",
     "tests/test_generator_service.py",
@@ -374,19 +371,17 @@ class TestAnthropicApiConfinedToServices:
             )
             pytest.fail("\n".join(msg_parts))
 
-    @pytest.mark.xfail(
-        reason="Known tech debt: routes/applications/ats.py uses Anthropic " "directly. TODO: move to a service.",
-        strict=True,
-    )
     def test_all_anthropic_violations_are_tracked(self):
-        """Ensure allowlist covers all current violations."""
+        """Ensure no files outside services/ import anthropic.
+
+        All violations have been resolved: migrated from Anthropic to AIClient.
+        """
         all_violations = self._find_anthropic_imports(
             BACKEND_DIR,
             exclude_dirs={"tests/", "venv/", "evals/", "migrations/"},
         )
         assert not all_violations, (
-            "All Anthropic-outside-services violations should have been "
-            "resolved. Remove this xfail marker and the allowlist."
+            "Anthropic should not be imported outside services/. " "All code has been migrated to AIClient."
         )
 
     def test_anthropic_allowlist_has_no_stale_entries(self):
