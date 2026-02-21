@@ -1,9 +1,11 @@
+import contextlib
 import json
 import logging
 import os
 import re
 from datetime import datetime
 from typing import Any
+from urllib.parse import urlparse
 
 from sqlalchemy.orm import joinedload
 
@@ -180,6 +182,12 @@ class BewerbungsGenerator:
             self._emit_progress(7, 7, "Bewerbung wird gespeichert...")
 
         job_url = stellenanzeige_path if is_url(stellenanzeige_path) else None
+
+        # Use domain as quelle when a URL is present but quelle is still the default
+        if job_url and details.get("quelle") in ("Manuelle Eingabe", None, ""):
+            with contextlib.suppress(Exception):
+                details["quelle"] = urlparse(job_url).hostname.removeprefix("www.")
+
         self._save_application(
             firma_name,
             details,

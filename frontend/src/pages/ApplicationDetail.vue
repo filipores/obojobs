@@ -95,7 +95,7 @@
                 </div>
                 <div v-if="application.quelle || application.job_url" class="info-item">
                   <label>{{ t('applicationDetail.source') }}</label>
-                  <a v-if="application.job_url" :href="application.job_url" target="_blank" rel="noopener noreferrer">{{ application.quelle || getDomain(application.job_url) }}</a>
+                  <a v-if="application.job_url" :href="application.job_url" target="_blank" rel="noopener noreferrer">{{ (application.quelle && application.quelle !== 'Manuelle Eingabe') ? application.quelle : getDomain(application.job_url) }}</a>
                   <p v-else>{{ application.quelle }}</p>
                 </div>
                 <div class="info-item">
