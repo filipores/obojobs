@@ -1,3 +1,10 @@
+## [1.68.2](https://github.com/filipores/obojobs/compare/v1.68.1...v1.68.2) (2026-02-21)
+
+
+### Performance Improvements
+
+* optimize N+1 query in save_extracted_skills_for_upload ([2f8aab2](https://github.com/filipores/obojobs/commit/2f8aab2f578c88a877ea71a2207d32bf88023a47))
+
 ## [1.68.1](https://github.com/filipores/obojobs/compare/v1.68.0...v1.68.1) (2026-02-21)
 
 
