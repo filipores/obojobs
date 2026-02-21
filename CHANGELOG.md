@@ -1,3 +1,10 @@
+## [1.69.4](https://github.com/filipores/obojobs/compare/v1.69.3...v1.69.4) (2026-02-21)
+
+
+### Bug Fixes
+
+* use domain as quelle for url-based applications instead of manual fallback ([2c0391a](https://github.com/filipores/obojobs/commit/2c0391adabcd4d0613bab2320bc411607af334a5))
+
 ## [1.69.3](https://github.com/filipores/obojobs/compare/v1.69.2...v1.69.3) (2026-02-21)
 
 
