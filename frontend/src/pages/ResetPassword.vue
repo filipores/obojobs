@@ -234,6 +234,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../api/client'
+import { validatePassword as validatePasswordUtil, isPasswordValid as isPasswordValidUtil } from '../utils/validation'
 
 const route = useRoute()
 
@@ -283,18 +284,12 @@ const toggleTheme = () => {
 }
 
 const validatePassword = () => {
-  const pwd = password.value
-  passwordChecks.min_length = pwd.length >= 8
-  passwordChecks.has_uppercase = /[A-Z]/.test(pwd)
-  passwordChecks.has_lowercase = /[a-z]/.test(pwd)
-  passwordChecks.has_number = /\d/.test(pwd)
+  const validationResults = validatePasswordUtil(password.value)
+  Object.assign(passwordChecks, validationResults)
 }
 
 const isPasswordValid = () => {
-  return passwordChecks.min_length &&
-         passwordChecks.has_uppercase &&
-         passwordChecks.has_lowercase &&
-         passwordChecks.has_number
+  return isPasswordValidUtil(passwordChecks)
 }
 
 const handleSubmit = async () => {

@@ -250,6 +250,7 @@ import { useI18n } from 'vue-i18n'
 import { authStore } from '../stores/auth'
 import { demoStore } from '../stores/demo'
 import LanguageSwitcher from '../components/LanguageSwitcher.vue'
+import { validatePassword as validatePasswordUtil, isPasswordValid as isPasswordValidUtil } from '../utils/validation'
 
 const { t } = useI18n()
 
@@ -298,18 +299,12 @@ const passwordChecks = reactive({
 })
 
 const validatePassword = () => {
-  const pwd = password.value
-  passwordChecks.min_length = pwd.length >= 8
-  passwordChecks.has_uppercase = /[A-Z]/.test(pwd)
-  passwordChecks.has_lowercase = /[a-z]/.test(pwd)
-  passwordChecks.has_number = /\d/.test(pwd)
+  const validationResults = validatePasswordUtil(password.value)
+  Object.assign(passwordChecks, validationResults)
 }
 
 const isPasswordValid = () => {
-  return passwordChecks.min_length &&
-         passwordChecks.has_uppercase &&
-         passwordChecks.has_lowercase &&
-         passwordChecks.has_number
+  return isPasswordValidUtil(passwordChecks)
 }
 
 const THEME_KEY = 'obojobs-theme'

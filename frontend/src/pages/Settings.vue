@@ -596,6 +596,7 @@ import api from '../api/client'
 import { authStore } from '../stores/auth'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
+import { validatePassword as validatePasswordUtil, isPasswordValid as isPasswordValidUtil } from '../utils/validation'
 
 const _router = useRouter()
 
@@ -714,7 +715,7 @@ const isChangingPassword = ref(false)
 const passwordError = ref('')
 
 const allPasswordRequirementsMet = computed(() => {
-  return Object.values(passwordChecks).every(v => v)
+  return isPasswordValidUtil(passwordChecks)
 })
 
 const showPasswordValidationMessages = computed(() => {
@@ -729,16 +730,13 @@ const canSubmitPassword = computed(() => {
     passwordForm.newPassword &&
     passwordForm.confirmPassword &&
     passwordForm.newPassword === passwordForm.confirmPassword &&
-    Object.values(passwordChecks).every(v => v)
+    isPasswordValidUtil(passwordChecks)
   )
 })
 
 const validatePassword = () => {
-  const pw = passwordForm.newPassword
-  passwordChecks.min_length = pw.length >= 8
-  passwordChecks.has_uppercase = /[A-Z]/.test(pw)
-  passwordChecks.has_lowercase = /[a-z]/.test(pw)
-  passwordChecks.has_number = /\d/.test(pw)
+  const validationResults = validatePasswordUtil(passwordForm.newPassword)
+  Object.assign(passwordChecks, validationResults)
 }
 
 const changePassword = async () => {
