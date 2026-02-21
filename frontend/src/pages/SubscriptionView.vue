@@ -401,7 +401,7 @@
             <h3>{{ plan.name }}</h3>
             <div class="plan-price">
               <span class="price-amount">{{ plan.price === 0 ? t('subscription.freeLabel') : plan.price.toFixed(2).replace('.', ',') + ' EUR' }}</span>
-              <span v-if="plan.price > 0" class="price-period">/ {{ t('pricing.basic.period') }}</span>
+              <span v-if="plan.price > 0" class="price-period">/ {{ t('pricing.starter.period') }}</span>
               <span v-if="plan.price > 0" class="mwst-hint">{{ t('subscription.includingVatShort') }}</span>
             </div>
 
@@ -582,6 +582,12 @@ import { getFullLocale } from '../i18n'
 const { t } = useI18n()
 const { fetchPlans, fetchCurrentSubscription, startCheckout, isLoading, paymentsAvailable } = useSubscription()
 
+// Stub functions for legacy subscription management (now credit-based)
+const openBillingPortal = async () => { console.warn('Billing portal not available in credit-based model') }
+const previewPlanChange = async () => ({ amount: 0 })
+const changePlan = async () => { console.warn('Plan changes not available in credit-based model') }
+const cancelSubscription = async () => { console.warn('Subscription cancellation not available in credit-based model') }
+
 const subscription = ref(null)
 const availablePlans = ref([])
 const isPortalLoading = ref(false)
@@ -613,9 +619,9 @@ const fallbackPlans = computed(() => [
     plan_id: 'starter',
     name: 'Starter',
     price: 9.90,
-    price_formatted: t('subscription.basicPriceFormatted'),
+    price_formatted: t('subscription.starterPriceFormatted'),
     features: [
-      `20 ${t('subscription.applicationsPerMonth')}`,
+      `50 ${t('subscription.applicationsPerMonth')}`,
       t('subscription.allTemplates'),
       t('subscription.pdfExport'),
       t('subscription.atsOptimization'),

@@ -238,12 +238,12 @@ const plans = [
     ]
   },
   {
-    key: 'basic',
-    price: '9,99',
+    key: 'starter',
+    price: '9,90',
     featured: true,
     btnClass: 'zen-btn-filled',
     features: [
-      '20 Bewerbungen/Monat',
+      '50 Bewerbungen/Monat',
       'KI-Anschreiben',
       'Alle Vorlagen',
       'PDF-Export',
@@ -254,7 +254,7 @@ const plans = [
   },
   {
     key: 'pro',
-    price: '19,99',
+    price: '19,90',
     featured: false,
     btnClass: 'zen-btn-ai',
     features: [
@@ -274,17 +274,17 @@ const plans = [
 ]
 
 const comparisonRows = [
-  { label: 'Bewerbungen/Monat', free: '3', basic: '20', pro: '\u221E' },
-  { label: 'Anschreiben-Generator', free: true, basic: true, pro: true },
-  { label: 'Vorlagen', free: 'Basis', basic: 'Alle', pro: 'Premium' },
-  { label: 'PDF-Export', free: true, basic: true, pro: true },
-  { label: 'ATS-Check', free: false, basic: true, pro: true },
-  { label: 'E-Mail-Entwurf', free: false, basic: true, pro: true },
-  { label: 'Job-Fit Score', free: false, basic: true, pro: true },
-  { label: 'Interview-Vorbereitung', free: false, basic: false, pro: true },
-  { label: 'Gehalts-Coach', free: false, basic: false, pro: true },
-  { label: 'Prioritäts-Support', free: false, basic: false, pro: true },
-  { label: 'Bewerbungs-Insights', free: false, basic: false, pro: true }
+  { label: 'Bewerbungen/Monat', free: '3', starter: '50', pro: '\u221E' },
+  { label: 'Anschreiben-Generator', free: true, starter: true, pro: true },
+  { label: 'Vorlagen', free: 'Basis', starter: 'Alle', pro: 'Premium' },
+  { label: 'PDF-Export', free: true, starter: true, pro: true },
+  { label: 'ATS-Check', free: false, starter: true, pro: true },
+  { label: 'E-Mail-Entwurf', free: false, starter: true, pro: true },
+  { label: 'Job-Fit Score', free: false, starter: true, pro: true },
+  { label: 'Interview-Vorbereitung', free: false, starter: false, pro: true },
+  { label: 'Gehalts-Coach', free: false, starter: false, pro: true },
+  { label: 'Prioritäts-Support', free: false, starter: false, pro: true },
+  { label: 'Bewerbungs-Insights', free: false, starter: false, pro: true }
 ]
 
 const pricingFaqItems = computed(() => [

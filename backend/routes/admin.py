@@ -144,9 +144,9 @@ def patch_user(user_id: int, current_user: Any) -> Response | tuple[Response, in
     # Prevent admins from deactivating or removing admin rights from themselves
     if user.id == current_user.id:
         if "is_active" in data and not data["is_active"]:
-            return jsonify({"error": "Sie können Ihr eigenes Konto nicht deaktivieren"}), 400
+            return jsonify({"error": "Du kannst dein eigenes Konto nicht deaktivieren"}), 400
         if "is_admin" in data and not data["is_admin"]:
-            return jsonify({"error": "Sie können sich nicht selbst die Admin-Rechte entziehen"}), 400
+            return jsonify({"error": "Du kannst dir nicht selbst die Admin-Rechte entziehen"}), 400
 
     for field in allowed_fields & data.keys():
         setattr(user, field, bool(data[field]))

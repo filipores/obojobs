@@ -33,7 +33,7 @@
           <select v-model="planFilter" @change="onPlanFilter" class="zen-input plan-filter">
             <option value="">{{ $t('admin.users.allPlans') }}</option>
             <option value="free">Free</option>
-            <option value="basic">Basic</option>
+            <option value="starter">Starter</option>
             <option value="pro">Pro</option>
           </select>
         </div>
@@ -357,7 +357,7 @@ onMounted(loadUsers)
   color: var(--color-text-secondary);
 }
 
-.plan-basic {
+.plan-starter {
   background: var(--color-ai-subtle);
   color: var(--color-ai);
 }

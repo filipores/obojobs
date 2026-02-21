@@ -231,7 +231,7 @@
   },
   "subscription": {
     "free": "Free",
-    "basic": "Basic",
+    "starter": "Starter",
     "pro": "Pro",
     "pageTitle": "Subscription",
     "pageSubtitle": "Manage your subscription and usage",
@@ -315,8 +315,8 @@
     "emailSupport": "Email support",
     "advancedAnalysis": "Advanced analysis",
     "freePriceFormatted": "€0/month",
-    "basicPriceFormatted": "€9.99/month",
-    "proPriceFormatted": "€19.99/month"
+    "starterPriceFormatted": "€9.90/month",
+    "proPriceFormatted": "€19.90/month"
   },
   "validation": {
     "invalidVerificationToken": "Invalid verification token",
@@ -743,17 +743,17 @@
       "description": "Perfect for trying out",
       "cta": "Get started for free"
     },
-    "basic": {
-      "name": "Basic",
-      "price": "9.99",
+    "starter": {
+      "name": "Starter",
+      "price": "9.90",
       "period": "per month",
       "description": "For active job seekers",
-      "cta": "Choose Basic",
+      "cta": "Choose Starter",
       "popular": "Popular"
     },
     "pro": {
       "name": "Pro",
-      "price": "19.99",
+      "price": "19.90",
       "period": "per month",
       "description": "For power applicants",
       "cta": "Choose Pro"

@@ -285,7 +285,7 @@
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
           </svg>
-          Ihre Argumente
+          Deine Argumente
         </h3>
         <ul class="arguments-list">
           <li v-for="(arg, idx) in strategy.counter_arguments" :key="idx">
@@ -332,7 +332,7 @@
               <p>"{{ obj.objection }}"</p>
             </div>
             <div class="response">
-              <span class="response-label">Ihre Antwort:</span>
+              <span class="response-label">Deine Antwort:</span>
               <p>"{{ obj.response }}"</p>
             </div>
           </div>
@@ -369,7 +369,7 @@
           <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
         </svg>
       </div>
-      <p>Geben Sie Ihre Daten ein und klicken Sie auf "Gehalt recherchieren" oder "Verhandlungsstrategie".</p>
+      <p>Gib deine Daten ein und klicke auf "Gehalt recherchieren" oder "Verhandlungsstrategie".</p>
     </div>
   </div>
 </template>

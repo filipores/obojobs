@@ -677,13 +677,13 @@
               </router-link>
             </div>
 
-            <!-- Basic -->
+            <!-- Starter -->
             <div class="pricing-card pricing-card-featured" data-reveal>
               <div class="pricing-badge">Beliebt</div>
               <div class="pricing-header">
-                <h3>Basic</h3>
+                <h3>Starter</h3>
                 <div class="pricing-price">
-                  <span class="price-amount">9,99</span>
+                  <span class="price-amount">9,90</span>
                   <span class="price-currency">EUR</span>
                   <span class="price-period">/Monat</span>
                 </div>
@@ -691,7 +691,7 @@
               <ul class="pricing-features">
                 <li>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
-                  20 Anschreiben pro Monat
+                  50 Anschreiben pro Monat
                 </li>
                 <li>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
@@ -710,8 +710,8 @@
                   E-Mail-Entwurf
                 </li>
               </ul>
-              <router-link to="/register?plan=basic" class="pricing-cta zen-btn zen-btn-filled">
-                Basic wählen
+              <router-link to="/register?plan=starter" class="pricing-cta zen-btn zen-btn-filled">
+                Starter wählen
               </router-link>
             </div>
 
@@ -720,7 +720,7 @@
               <div class="pricing-header">
                 <h3>Pro</h3>
                 <div class="pricing-price">
-                  <span class="price-amount">19,99</span>
+                  <span class="price-amount">19,90</span>
                   <span class="price-currency">EUR</span>
                   <span class="price-period">/Monat</span>
                 </div>

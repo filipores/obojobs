@@ -67,7 +67,7 @@ def analyze_cv(current_user: Any) -> Response | tuple[Response, int]:
             return jsonify(
                 {
                     "success": False,
-                    "error": "Kein Lebenslauf hochgeladen. Bitte laden Sie zuerst Ihren Lebenslauf hoch.",
+                    "error": "Kein Lebenslauf hochgeladen. Bitte lade zuerst deinen Lebenslauf hoch.",
                 }
             ), 400
 

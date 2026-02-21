@@ -120,7 +120,7 @@
       <section v-else class="empty-state">
         <div class="empty-enso"></div>
         <h3>Keine Firmen-Insights verfügbar</h3>
-        <p>Erstellen Sie Bewerbungen, um Insights zu generieren.</p>
+        <p>Erstelle Bewerbungen, um Insights zu generieren.</p>
         <router-link to="/applications" class="zen-btn">
           Zu den Bewerbungen
         </router-link>

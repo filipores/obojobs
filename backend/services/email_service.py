@@ -65,7 +65,7 @@ def send_verification_email(to_email: str, token: str) -> bool:
       </h2>
 
       <p style="font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0 0 24px;">
-        Klicken Sie auf den Button, um Ihre E-Mail-Adresse zu bestätigen und Ihr Konto zu aktivieren.
+        Klicke auf den Button, um deine E-Mail-Adresse zu bestätigen und dein Konto zu aktivieren.
       </p>
 
       <div style="text-align: center; margin: 32px 0;">
@@ -77,13 +77,13 @@ def send_verification_email(to_email: str, token: str) -> bool:
       </div>
 
       <p style="font-size: 13px; color: #888; line-height: 1.5; margin: 24px 0 0;">
-        Falls der Button nicht funktioniert, kopieren Sie diesen Link:<br>
+        Falls der Button nicht funktioniert, kopiere diesen Link:<br>
         <a href="{verify_url}" style="color: #666; word-break: break-all;">{verify_url}</a>
       </p>
 
       <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0 16px;">
       <p style="font-size: 12px; color: #aaa; margin: 0;">
-        Diese E-Mail wurde automatisch versendet. Falls Sie sich nicht registriert haben, ignorieren Sie diese Nachricht.
+        Diese E-Mail wurde automatisch versendet. Falls du dich nicht registriert hast, ignoriere diese Nachricht.
       </p>
     </div>
     """
@@ -107,8 +107,8 @@ def send_password_reset_email(to_email: str, token: str) -> bool:
       </h2>
 
       <p style="font-size: 15px; color: #4a4a4a; line-height: 1.6; margin: 0 0 24px;">
-        Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt.
-        Klicken Sie auf den Button, um ein neues Passwort zu wählen.
+        Du hast eine Anfrage zum Zurücksetzen deines Passworts gestellt.
+        Klicke auf den Button, um ein neues Passwort zu wählen.
       </p>
 
       <div style="text-align: center; margin: 32px 0;">
@@ -127,7 +127,7 @@ def send_password_reset_email(to_email: str, token: str) -> bool:
 
       <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0 16px;">
       <p style="font-size: 12px; color: #aaa; margin: 0;">
-        Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie diese E-Mail. Ihr Passwort bleibt unverändert.
+        Falls du diese Anfrage nicht gestellt hast, ignoriere diese E-Mail. Dein Passwort bleibt unverändert.
       </p>
     </div>
     """

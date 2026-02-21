@@ -31,7 +31,7 @@
     <!-- Empty State -->
     <div v-else-if="!stats || stats.total_interviews === 0" class="widget-empty">
       <p>Noch keine Interview-Daten vorhanden.</p>
-      <p class="hint">Tragen Sie Interview-Ergebnisse in Ihren Bewerbungen ein.</p>
+      <p class="hint">Trage Interview-Ergebnisse in deinen Bewerbungen ein.</p>
     </div>
 
     <!-- Stats Content -->

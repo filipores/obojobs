@@ -570,6 +570,27 @@ async function generateJobFallback(job) {
   }
 }
 
+async function generateJobFromText(job) {
+  startProgressTimers(job.id)
+
+  try {
+    const payload = {
+      job_text: job.editableData.description,
+      company: job.editableData.company,
+      title: job.editableData.title,
+      tone: job.tone,
+      model: job.model
+    }
+    const { data } = await api.post('/applications/generate-from-text', payload)
+    if (!data.success) {
+      throw new Error(data.error || 'Unbekannter Fehler')
+    }
+    return data
+  } finally {
+    clearProgressTimers(job.id)
+  }
+}
+
 async function generateJob(jobId) {
   const job = findJob(jobId)
   if (!job?.editableData) return
@@ -583,6 +604,21 @@ async function generateJob(jobId) {
   job.status = 'generating'
   job.error = null
   job.progressMessage = 'Stellenanzeige wird analysiert...'
+
+  // Manual text entry: use the text endpoint (no URL available)
+  if (!job.url) {
+    try {
+      const data = await generateJobFromText(job)
+      job.progressMessage = null
+      handleGenerationSuccess(job, data)
+    } catch (e) {
+      clearProgressTimers(jobId)
+      job.progressMessage = null
+      job.error = extractApiError(e, 'Fehler bei der Generierung. Bitte versuche es erneut.')
+      job.status = 'error'
+    }
+    return
+  }
 
   try {
     const data = await generateJobWithSSE(job)

@@ -146,12 +146,12 @@ class WebScraper:
         if status == 403:
             return Exception(
                 "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
-                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+                "Bitte kopiere den Text der Stellenanzeige manuell."
             )
         if status == 404:
-            return Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfen Sie die URL.")
+            return Exception("Stellenanzeige nicht gefunden (404). Bitte überprüfe die URL.")
         if status == 429:
-            return Exception("Zu viele Anfragen (429). Bitte warten Sie einen Moment und versuchen Sie es erneut.")
+            return Exception("Zu viele Anfragen (429). Bitte warte einen Moment und versuche es erneut.")
         return Exception(f"HTTP-Fehler beim Laden der Stellenanzeige ({status}): {e}")
 
     @staticmethod
@@ -239,7 +239,7 @@ class WebScraper:
         except (requests.ConnectionError, requests.Timeout) as e:
             raise Exception(
                 "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
-                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+                "Bitte kopiere den Text der Stellenanzeige manuell."
             ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e
@@ -413,7 +413,7 @@ class WebScraper:
         except (requests.ConnectionError, requests.Timeout) as e:
             raise Exception(
                 "Die Stellenanzeige konnte nicht geladen werden. Das Job-Portal blockiert möglicherweise den Zugriff. "
-                "Bitte kopieren Sie den Text der Stellenanzeige manuell."
+                "Bitte kopiere den Text der Stellenanzeige manuell."
             ) from e
         except requests.RequestException as e:
             raise Exception(f"Fehler beim Laden der URL: {str(e)}") from e

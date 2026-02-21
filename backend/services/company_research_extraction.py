@@ -181,15 +181,15 @@ def generate_interview_tips(result: CompanyResearchResult) -> list[str]:
 
     # Tip about company knowledge
     tips.append(
-        f"Zeigen Sie, dass Sie sich über {result.company_name} informiert haben - "
-        "erwähnen Sie spezifische Fakten aus Ihrer Recherche."
+        f"Zeige, dass du dich über {result.company_name} informiert hast - "
+        "erwähne spezifische Fakten aus deiner Recherche."
     )
 
     # Industry-specific tip
     if result.industry:
         tips.append(
             f"Die Firma ist in der Branche '{result.industry}' tätig. "
-            "Informieren Sie sich über aktuelle Trends und Herausforderungen in diesem Bereich."
+            "Informiere dich über aktuelle Trends und Herausforderungen in diesem Bereich."
         )
 
     # Products/Services tip
@@ -197,14 +197,14 @@ def generate_interview_tips(result: CompanyResearchResult) -> list[str]:
         products_str = ", ".join(result.products_services[:3])
         tips.append(
             f"Das Unternehmen bietet folgende Produkte/Dienstleistungen: {products_str}. "
-            "Überlegen Sie, wie Ihre Fähigkeiten dazu beitragen können."
+            "Überlege, wie deine Fähigkeiten dazu beitragen können."
         )
 
     # Mission/Values tip
     if result.mission_values:
         tips.append(
             "Das Unternehmen hat bestimmte Werte und eine Mission. "
-            "Beziehen Sie sich in Ihren Antworten auf diese Werte und zeigen Sie, dass Sie diese teilen."
+            "Beziehe dich in deinen Antworten auf diese Werte und zeige, dass du diese teilst."
         )
 
     # Company size tip
@@ -219,7 +219,7 @@ def generate_interview_tips(result: CompanyResearchResult) -> list[str]:
                 size_category = "größeres"
         tips.append(
             f"Mit {result.company_size} ist dies ein {size_category} Unternehmen. "
-            "Erwarten Sie entsprechende Strukturen und Prozesse."
+            "Erwarte entsprechende Strukturen und Prozesse."
         )
 
     # Founded year tip
@@ -230,17 +230,17 @@ def generate_interview_tips(result: CompanyResearchResult) -> list[str]:
             if age > 50:
                 tips.append(
                     f"Das Unternehmen wurde {result.founded_year} gegründet und hat eine lange Tradition. "
-                    "Betonen Sie Ihre Wertschätzung für etablierte Prozesse und Unternehmenskultur."
+                    "Betone deine Wertschätzung für etablierte Prozesse und Unternehmenskultur."
                 )
             elif age < 10:
                 tips.append(
                     f"Als {age}-jähriges Unternehmen ist die Firma noch relativ jung. "
-                    "Zeigen Sie Flexibilität und Bereitschaft, in einem dynamischen Umfeld zu arbeiten."
+                    "Zeige Flexibilität und Bereitschaft, in einem dynamischen Umfeld zu arbeiten."
                 )
         except ValueError:
             pass
 
     # Generic tips
-    tips.append("Bereiten Sie eigene Fragen zum Unternehmen vor - das zeigt echtes Interesse.")
+    tips.append("Bereite eigene Fragen zum Unternehmen vor - das zeigt echtes Interesse.")
 
     return tips[:6]  # Limit to 6 tips

@@ -3,7 +3,7 @@
     <div class="recommendations-header">
       <div class="header-content">
         <h2>Job-Empfehlungen</h2>
-        <p class="subtitle">Basierend auf Ihrem Profil und Ihren Skills</p>
+        <p class="subtitle">Basierend auf deinem Profil und deinen Skills</p>
       </div>
       <div class="header-actions">
         <router-link to="/job-dashboard" class="zen-btn zen-btn-sm zen-btn-ghost">
@@ -66,8 +66,8 @@
       <template v-else>
         <h3>Noch keine passenden Jobs gefunden</h3>
         <p>
-          Laden Sie Ihren Lebenslauf unter Dokumente hoch, damit wir
-          automatisch passende Stellen für Sie finden.
+          Lade deinen Lebenslauf unter Dokumente hoch, damit wir
+          automatisch passende Stellen für dich finden.
         </p>
         <router-link to="/documents" class="zen-btn zen-btn-ai">
           Lebenslauf hochladen

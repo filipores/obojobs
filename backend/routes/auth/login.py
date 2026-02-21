@@ -19,9 +19,7 @@ def register() -> tuple[Response, int]:
     """Register a new user"""
     # Check if registration is enabled
     if not Config.REGISTRATION_ENABLED:
-        return jsonify(
-            {"error": "Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator."}
-        ), 403
+        return jsonify({"error": "Registrierung ist derzeit deaktiviert. Bitte kontaktiere den Administrator."}), 403
 
     data = request.json
 

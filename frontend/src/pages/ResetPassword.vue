@@ -38,7 +38,7 @@
         <!-- Header -->
         <div class="auth-header">
           <h1>Neues Passwort</h1>
-          <p>Wählen Sie ein neues sicheres Passwort</p>
+          <p>Wähle ein neues sicheres Passwort</p>
         </div>
 
         <!-- Success Card -->
@@ -51,8 +51,8 @@
           </div>
           <h3>Passwort geändert</h3>
           <p class="success-message">
-            Ihr Passwort wurde erfolgreich zurückgesetzt.
-            Sie können sich jetzt mit Ihrem neuen Passwort anmelden.
+            Dein Passwort wurde erfolgreich zurückgesetzt.
+            Du kannst dich jetzt mit deinem neuen Passwort anmelden.
           </p>
           <router-link to="/login" class="zen-btn zen-btn-filled">
             Zum Login
@@ -199,8 +199,8 @@
         <div class="info-content">
           <h2>Sicheres<br/>Passwort wählen</h2>
           <p class="info-description">
-            Wählen Sie ein starkes Passwort, das Sie nicht für
-            andere Dienste verwenden.
+            Wähle ein starkes Passwort, das du nicht für
+            andere Dienste verwendest.
           </p>
 
           <ul class="feature-list">
@@ -300,7 +300,7 @@ const isPasswordValid = () => {
 const handleSubmit = async () => {
   // Frontend validation
   if (!isPasswordValid()) {
-    error.value = 'Bitte erfüllen Sie alle Passwort-Anforderungen.'
+    error.value = 'Bitte erfülle alle Passwort-Anforderungen.'
     return
   }
 
@@ -325,10 +325,10 @@ const handleSubmit = async () => {
     // Check for specific token errors
     if (errorMsg.includes('abgelaufen') || errorMsg.includes('expired')) {
       invalidToken.value = true
-      tokenError.value = 'Der Reset-Link ist abgelaufen. Bitte fordern Sie einen neuen Link an.'
+      tokenError.value = 'Der Reset-Link ist abgelaufen. Bitte fordere einen neuen Link an.'
     } else if (errorMsg.includes('ungültig') || errorMsg.includes('invalid')) {
       invalidToken.value = true
-      tokenError.value = 'Der Reset-Link ist ungültig. Bitte fordern Sie einen neuen Link an.'
+      tokenError.value = 'Der Reset-Link ist ungültig. Bitte fordere einen neuen Link an.'
     } else {
       error.value = errorMsg
     }
@@ -346,7 +346,7 @@ onMounted(() => {
 
   if (!token.value) {
     invalidToken.value = true
-    tokenError.value = 'Kein Reset-Token gefunden. Bitte fordern Sie einen neuen Link an.'
+    tokenError.value = 'Kein Reset-Token gefunden. Bitte fordere einen neuen Link an.'
   }
 })
 </script>

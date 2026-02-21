@@ -1,7 +1,7 @@
 <template>
   <div class="skills-overview">
     <div class="skills-header">
-      <h3>Ihre Skills</h3>
+      <h3>Deine Skills</h3>
       <div class="header-actions">
         <button @click="showAddModal = true" class="zen-btn zen-btn-sm">
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -84,7 +84,7 @@
         </svg>
       </div>
       <h4>Noch keine Skills</h4>
-      <p>Laden Sie einen Lebenslauf hoch, um Skills automatisch zu extrahieren, oder fügen Sie Skills manuell hinzu.</p>
+      <p>Lade einen Lebenslauf hoch, um Skills automatisch zu extrahieren, oder füge Skills manuell hinzu.</p>
       <router-link to="/documents" class="zen-btn zen-btn-ai">
         Lebenslauf hochladen
       </router-link>
@@ -438,7 +438,7 @@ const editSkill = (skill) => {
 const deleteSkill = async (skill) => {
   const confirmed = await confirm({
     title: 'Skill löschen',
-    message: `Möchten Sie den Skill "${skill.skill_name}" wirklich löschen?`,
+    message: `Möchtest du den Skill "${skill.skill_name}" wirklich löschen?`,
     confirmText: 'Löschen',
     cancelText: 'Abbrechen',
     type: 'danger'

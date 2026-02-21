@@ -52,7 +52,7 @@ const errorTranslations = {
   'No active subscription. Please subscribe first.': 'Kein aktives Abonnement. Bitte abonniere zuerst einen Plan.',
   'return_url is required': 'return_url ist erforderlich',
   'success_url and cancel_url are required': 'success_url und cancel_url sind erforderlich',
-  "Invalid plan. Must be 'basic' or 'pro'": "Ungültiger Plan. Muss 'basic' oder 'pro' sein.",
+  "Invalid plan. Must be 'starter' or 'pro'": "Ungültiger Plan. Muss 'starter' oder 'pro' sein.",
   'Plan not configured': 'Plan nicht konfiguriert',
   'Failed to create checkout session': 'Fehler beim Erstellen der Checkout-Sitzung',
   'Failed to create portal session': 'Fehler beim Erstellen der Portal-Sitzung',

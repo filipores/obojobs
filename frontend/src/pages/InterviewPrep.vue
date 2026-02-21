@@ -241,7 +241,7 @@
         <div class="empty-enso"></div>
         <h3>Keine Interview-Fragen vorhanden</h3>
         <p>
-          Generieren Sie Interview-Fragen basierend auf der Stellenausschreibung.
+          Generiere Interview-Fragen basierend auf der Stellenausschreibung.
         </p>
         <button @click="regenerateQuestions" :disabled="isGenerating" class="zen-btn zen-btn-ai">
           <svg v-if="!isGenerating" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

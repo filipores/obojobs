@@ -23,7 +23,7 @@
               </svg>
             </div>
             <h3>Lebenslauf hochladen</h3>
-            <p>Laden Sie Ihren Lebenslauf als PDF hoch. Der Text wird automatisch extrahiert und für Bewerbungen verwendet.</p>
+            <p>Lade deinen Lebenslauf als PDF hoch. Der Text wird automatisch extrahiert und für Bewerbungen verwendet.</p>
           </div>
           <div v-else class="onboarding-step">
             <div class="onboarding-icon">
@@ -34,7 +34,7 @@
               </svg>
             </div>
             <h3>Skills automatisch extrahieren</h3>
-            <p>Nach dem Upload werden Ihre Skills automatisch erkannt. Diese helfen bei der Job-Analyse und verbessern Ihre Bewerbungen.</p>
+            <p>Nach dem Upload werden deine Skills automatisch erkannt. Diese helfen bei der Job-Analyse und verbessern deine Bewerbungen.</p>
           </div>
         </div>
         <div class="onboarding-actions">
@@ -58,7 +58,7 @@
           Zurück zur Bewerbung
         </router-link>
         <span class="breadcrumb-info">
-          Laden Sie Ihren Lebenslauf hoch und kehren Sie dann zur Bewerbungserstellung zurück
+          Lade deinen Lebenslauf hoch und kehre dann zur Bewerbungserstellung zurück
         </span>
       </div>
 
@@ -66,7 +66,7 @@
       <section class="page-header animate-fade-up">
         <h1>Dokumente</h1>
         <p class="page-subtitle">
-          Laden Sie Ihre Bewerbungsunterlagen hoch. Der Text wird automatisch extrahiert.
+          Lade deine Bewerbungsunterlagen hoch. Der Text wird automatisch extrahiert.
         </p>
       </section>
 
@@ -109,7 +109,7 @@
               </div>
             </div>
 
-            <p class="document-description">Ihr aktueller Lebenslauf als PDF-Datei</p>
+            <p class="document-description">Dein aktueller Lebenslauf als PDF-Datei</p>
 
             <!-- Upload Area -->
             <div
@@ -188,7 +188,7 @@
             </div>
 
             <p class="document-description">
-              Ihr aktuellstes Arbeitszeugnis
+              Dein aktuellstes Arbeitszeugnis
               <span v-if="!documents.arbeitszeugnis" class="quality-hint">(verbessert Bewerbungsqualität)</span>
             </p>
 
@@ -255,7 +255,7 @@
         <div class="success-banner zen-card zen-card-featured">
           <div class="success-content">
             <h3>Alle Pflicht-Dokumente hochgeladen</h3>
-            <p>Sie können jetzt personalisierte Bewerbungen generieren.</p>
+            <p>Du kannst jetzt personalisierte Bewerbungen generieren.</p>
           </div>
           <router-link to="/new-application" class="zen-btn zen-btn-filled">
             Neue Bewerbung
@@ -420,8 +420,8 @@ const deleteDoc = async (id, docType) => {
   const result = await confirm({
     title: 'Dokument löschen',
     message: isLebenslauf
-      ? 'Möchten Sie dieses Dokument wirklich löschen? Die extrahierten Skills können erhalten bleiben oder ebenfalls gelöscht werden.'
-      : 'Möchten Sie dieses Dokument wirklich löschen?',
+      ? 'Möchtest du dieses Dokument wirklich löschen? Die extrahierten Skills können erhalten bleiben oder ebenfalls gelöscht werden.'
+      : 'Möchtest du dieses Dokument wirklich löschen?',
     confirmText: 'Löschen',
     cancelText: 'Abbrechen',
     type: 'danger',

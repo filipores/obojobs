@@ -420,9 +420,7 @@ def generate_from_text(current_user: Any) -> tuple[Response, int]:
         return jsonify({"success": False, "error": "Stellentext ist erforderlich"}), 400
 
     if len(job_text) < 100:
-        return jsonify(
-            {"success": False, "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."}
-        ), 400
+        return jsonify({"success": False, "error": "Stellentext zu kurz. Bitte füge den vollständigen Text ein."}), 400
 
     if not company:
         return jsonify({"success": False, "error": "Firmenname ist erforderlich"}), 400

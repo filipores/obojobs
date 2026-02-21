@@ -81,7 +81,7 @@
       <div class="container">
         <h2 class="section-title">{{ $t('admin.dashboard.subscriptions') }}</h2>
         <div class="subscription-cards">
-          <div class="sub-card" v-for="plan in ['free', 'basic', 'pro']" :key="plan">
+          <div class="sub-card" v-for="plan in ['free', 'starter', 'pro']" :key="plan">
             <div class="sub-plan-name">{{ capitalize(plan) }}</div>
             <div class="sub-plan-count">{{ stats.subscriptions[plan] || 0 }}</div>
             <div class="sub-plan-bar">

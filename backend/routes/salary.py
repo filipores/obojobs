@@ -90,7 +90,7 @@ def research_salary(current_user: Any) -> tuple[Response, int]:
         return jsonify(
             {
                 "success": False,
-                "error": "Fehler bei der Gehaltsrecherche. Bitte versuchen Sie es erneut.",
+                "error": "Fehler bei der Gehaltsrecherche. Bitte versuche es erneut.",
             }
         ), 500
 
@@ -191,7 +191,7 @@ def get_negotiation_tips(current_user: Any) -> tuple[Response, int]:
         return jsonify(
             {
                 "success": False,
-                "error": "Fehler bei der Strategieentwicklung. Bitte versuchen Sie es erneut.",
+                "error": "Fehler bei der Strategieentwicklung. Bitte versuche es erneut.",
             }
         ), 500
 

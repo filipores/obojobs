@@ -41,7 +41,7 @@ class EmailFormatter:
         if firma_name:
             position_text = f"die Position als {position} bei {firma_name}"
 
-        name = user_name or "Ihr Name"
+        name = user_name or "Dein Name"
         signature_parts = [name]
         contact_line = " | ".join(filter(None, [user_city, user_phone]))
         if contact_line:
@@ -55,9 +55,9 @@ class EmailFormatter:
 
         return f"""{ansprechperson},
 
-anbei finden Sie meine Bewerbungsunterlagen für {position_text}.
+anbei findest du meine Bewerbungsunterlagen für {position_text}.
 
-Ich freue mich auf Ihre Rückmeldung.
+Ich freue mich auf deine Rückmeldung.
 
 Mit freundlichen Grüßen
 {signature}"""

@@ -231,7 +231,7 @@
   },
   "subscription": {
     "free": "Free",
-    "basic": "Basic",
+    "starter": "Starter",
     "pro": "Pro",
     "pageTitle": "Abonnement",
     "pageSubtitle": "Verwalte dein Abo und deine Nutzung",
@@ -315,8 +315,8 @@
     "emailSupport": "E-Mail Support",
     "advancedAnalysis": "Erweiterte Analyse",
     "freePriceFormatted": "€0/Monat",
-    "basicPriceFormatted": "€9,99/Monat",
-    "proPriceFormatted": "€19,99/Monat"
+    "starterPriceFormatted": "€9,90/Monat",
+    "proPriceFormatted": "€19,90/Monat"
   },
   "validation": {
     "invalidVerificationToken": "Ungültiger Bestätigungstoken",
@@ -802,7 +802,7 @@
       "q4": "Welche Dateiformate werden unterstützt?",
       "a4": "Lebensläufe können als PDF hochgeladen werden. Anschreiben werden als professionell formatierte PDFs exportiert, bereit zum Versenden.",
       "q5": "Wie viele Bewerbungen kann ich erstellen?",
-      "a5": "Mit dem kostenlosen Plan kannst du 3 Bewerbungen pro Monat erstellen. Der Basic-Plan bietet 20 pro Monat, und mit Pro gibt es keine Begrenzung.",
+      "a5": "Mit dem kostenlosen Plan kannst du 3 Bewerbungen pro Monat erstellen. Der Starter-Plan bietet 50 pro Monat, und mit Pro gibt es keine Begrenzung.",
       "q6": "Gibt es eine Chrome-Extension?",
       "a6": "Ja! Mit unserer Chrome-Extension kannst du direkt von Stellenportalen wie Indeed, StepStone oder LinkedIn mit einem Klick eine Bewerbung erstellen."
     },
@@ -832,17 +832,17 @@
       "description": "Perfekt zum Ausprobieren",
       "cta": "Kostenlos starten"
     },
-    "basic": {
-      "name": "Basic",
-      "price": "9,99",
+    "starter": {
+      "name": "Starter",
+      "price": "9,90",
       "period": "pro Monat",
       "description": "Für aktive Jobsucher",
-      "cta": "Basic wählen",
+      "cta": "Starter wählen",
       "popular": "Beliebt"
     },
     "pro": {
       "name": "Pro",
-      "price": "19,99",
+      "price": "19,90",
       "period": "pro Monat",
       "description": "Für Power-Bewerber",
       "cta": "Pro wählen"
