@@ -147,9 +147,7 @@ const loadCompanyStats = async () => {
       params: { sort_by: sortBy.value }
     })
     companies.value = data.data?.companies || []
-  } catch (err) {
-    console.error('Fehler beim Laden der Company Stats:', err)
-  } finally {
+  } catch { /* ignore */ } finally {
     loading.value = false
   }
 }

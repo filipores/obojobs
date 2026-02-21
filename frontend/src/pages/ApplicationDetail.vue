@@ -305,8 +305,7 @@ const loadApplication = async () => {
   try {
     const { data } = await api.get(`/applications/${route.params.id}`)
     application.value = data.application || data
-  } catch (err) {
-    console.error('Fehler beim Laden:', err)
+  } catch {
     router.push('/applications')
   } finally {
     loading.value = false

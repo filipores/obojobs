@@ -515,9 +515,7 @@ const loadTimeline = async () => {
       params: { days: daysFilter.value }
     })
     timelineApps.value = data.data?.applications || []
-  } catch (err) {
-    console.error('Fehler beim Laden der Timeline:', err)
-  } finally {
+  } catch { /* ignore */ } finally {
     timelineLoading.value = false
   }
 }
@@ -574,8 +572,7 @@ const loadApplications = async (page = 1) => {
     currentPage.value = data.page || 1
     totalPages.value = data.pages || 1
     totalApplications.value = data.total || 0
-  } catch (err) {
-    console.error('Fehler beim Laden:', err)
+  } catch {
     loadError.value = true
     applications.value = []
   } finally {

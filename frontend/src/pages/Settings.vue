@@ -686,8 +686,8 @@ const updateProfile = async () => {
     setTimeout(() => {
       profileSuccess.value = ''
     }, 3000)
-  } catch (err) {
-    profileError.value = err.response?.data?.error || 'Fehler beim Aktualisieren des Profils'
+  } catch (e) {
+    profileError.value = e.response?.data?.error || 'Fehler beim Aktualisieren des Profils'
   } finally {
     isUpdatingProfile.value = false
   }
@@ -762,8 +762,8 @@ const changePassword = async () => {
     if (window.$toast) {
       window.$toast('Passwort erfolgreich geändert!', 'success')
     }
-  } catch (err) {
-    passwordError.value = err.response?.data?.error || 'Fehler beim Ändern des Passworts'
+  } catch (e) {
+    passwordError.value = e.response?.data?.error || 'Fehler beim Ändern des Passworts'
   } finally {
     isChangingPassword.value = false
   }
@@ -792,8 +792,7 @@ const copyKey = async () => {
     if (window.$toast) {
       window.$toast('API Key kopiert!', 'success')
     }
-  } catch (error) {
-    console.warn('Clipboard copy failed:', error)
+  } catch {
     if (window.$toast) {
       window.$toast('Kopieren fehlgeschlagen. Bitte manuell kopieren.', 'error')
     }
@@ -822,9 +821,7 @@ const loadKeys = async () => {
   try {
     const { data } = await api.get('/keys')
     apiKeys.value = data.api_keys
-  } catch (err) {
-    console.error('Fehler beim Laden:', err)
-  }
+  } catch { /* ignore */ }
 }
 
 const formatDate = (dateString) => {
@@ -840,18 +837,14 @@ const loadEmailAccounts = async () => {
   try {
     const { data } = await api.get('/email/accounts')
     emailAccounts.value = data.data
-  } catch (err) {
-    console.error('Fehler beim Laden der Email-Konten:', err)
-  }
+  } catch { /* ignore */ }
 }
 
 const loadIntegrationStatus = async () => {
   try {
     const { data } = await api.get('/email/integration-status')
     integrationStatus.value = data.data
-  } catch (err) {
-    console.error('Fehler beim Laden des Integrationsstatus:', err)
-  }
+  } catch { /* ignore */ }
 }
 
 const connectGmail = async () => {
@@ -970,8 +963,8 @@ const requestAccountDeletion = async () => {
       _router.push('/')
     }, 1000)
 
-  } catch (err) {
-    const errorMsg = err.response?.data?.error || 'Fehler beim Löschen des Kontos'
+  } catch (e) {
+    const errorMsg = e.response?.data?.error || 'Fehler beim Löschen des Kontos'
     if (window.$toast) {
       window.$toast(errorMsg, 'error')
     }

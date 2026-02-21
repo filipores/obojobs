@@ -463,9 +463,7 @@ const loadDocuments = async () => {
         documents.value[doc.doc_type] = doc
       }
     })
-  } catch (e) {
-    console.error('Fehler beim Laden der Dokumente:', e)
-  }
+  } catch { /* ignore */ }
 }
 
 const formatDate = (dateString) => {

@@ -152,9 +152,7 @@ const loadUsers = async () => {
     users.value = data.users
     total.value = data.total
     pages.value = data.pages
-  } catch (e) {
-    console.error('Failed to load users:', e)
-  } finally {
+  } catch { /* ignore */ } finally {
     loading.value = false
   }
 }

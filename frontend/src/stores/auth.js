@@ -58,9 +58,8 @@ export const authStore = reactive({
       if (this.token) {
         await api.post('/auth/logout')
       }
-    } catch (error) {
+    } catch {
       // Even if server logout fails, clear local state
-      console.warn('Server logout failed:', error)
     } finally {
       // Always clear local state
       this.clearAuthState()
@@ -90,9 +89,8 @@ export const authStore = reactive({
       }
 
       return true
-    } catch (error) {
+    } catch {
       // If parsing fails, token is invalid
-      console.warn('Invalid token format:', error)
       this.clearAuthState()
       return false
     }

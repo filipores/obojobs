@@ -580,7 +580,17 @@ import { useSubscription } from '../composables/useSubscription'
 import { getFullLocale } from '../i18n'
 
 const { t } = useI18n()
-const { fetchPlans, fetchCurrentSubscription, startCheckout, isLoading, paymentsAvailable } = useSubscription()
+const {
+  fetchPlans,
+  fetchCurrentSubscription,
+  startCheckout,
+  isLoading,
+  paymentsAvailable,
+  openBillingPortal,
+  previewPlanChange,
+  changePlan,
+  cancelSubscription
+} = useSubscription()
 
 const subscription = ref(null)
 const availablePlans = ref([])

@@ -554,8 +554,7 @@ async function loadStats() {
     const { data } = await api.silent.get('/stats')
     stats.value = data.stats
     usage.value = data.usage
-  } catch (error) {
-    console.error('Failed to load stats:', error)
+  } catch {
     loadError.value = true
   }
 }
@@ -564,9 +563,7 @@ async function loadSkills() {
   try {
     const { data } = await api.silent.get('/users/me/skills')
     skills.value = data.skills || []
-  } catch (error) {
-    console.error('Failed to load skills:', error)
-  } finally {
+  } catch { /* ignore */ } finally {
     skillsLoaded.value = true
   }
 }
@@ -577,9 +574,7 @@ async function loadInterviewStats() {
     if (data.success) {
       interviewStats.value = data.data
     }
-  } catch (error) {
-    console.error('Failed to load interview stats:', error)
-  }
+  } catch { /* ignore */ }
 }
 
 const upcomingInterviewCount = computed(() => {

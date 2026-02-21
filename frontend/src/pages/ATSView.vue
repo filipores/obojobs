@@ -622,9 +622,8 @@ const fetchHistory = async () => {
     if (data.success) {
       history.value = data.data.analyses || []
     }
-  } catch (e) {
+  } catch {
     // Silently fail - history is not critical
-    console.error('Failed to fetch history:', e)
   } finally {
     loadingHistory.value = false
   }

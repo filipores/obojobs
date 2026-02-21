@@ -139,9 +139,7 @@ onMounted(async () => {
     if (data.success) {
       stats.value = data.data
     }
-  } catch (err) {
-    console.error('Failed to load interview stats:', err)
-  } finally {
+  } catch { /* ignore */ } finally {
     loading.value = false
   }
 })

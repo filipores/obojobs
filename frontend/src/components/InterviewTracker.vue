@@ -142,7 +142,6 @@ const updateInterviewData = async () => {
       }, 2000)
     }
   } catch (err) {
-    console.error('Fehler beim Speichern:', err)
     saveStatus.value = {
       type: 'error',
       message: err.response?.data?.error || 'Fehler beim Speichern'

@@ -305,8 +305,7 @@ const loadApplication = async () => {
   try {
     const { data } = await api.get(`/applications/${applicationId.value}`)
     application.value = data.application
-  } catch (err) {
-    console.error('Fehler beim Laden der Bewerbung:', err)
+  } catch {
     router.push('/applications')
   }
 }
@@ -319,8 +318,7 @@ const loadQuestions = async () => {
       // API returns data.data.all_questions as array (data.data.questions is grouped object)
       questions.value = data.data?.all_questions || []
     }
-  } catch (err) {
-    console.error('Fehler beim Laden der Fragen:', err)
+  } catch {
     questions.value = []
   } finally {
     loading.value = false
@@ -338,7 +336,6 @@ const regenerateQuestions = async () => {
       expandedQuestions.value = new Set()
     }
   } catch (err) {
-    console.error('Fehler beim Generieren der Fragen:', err)
     if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler beim Generieren der Interview-Fragen', 'error') }
   } finally {
     isGenerating.value = false

@@ -118,8 +118,7 @@ const loadStats = async () => {
   try {
     const { data } = await api.get('/admin/stats')
     stats.value = data
-  } catch (e) {
-    console.error('Failed to load admin stats:', e)
+  } catch {
     error.value = true
   }
 }

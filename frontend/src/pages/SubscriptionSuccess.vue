@@ -120,8 +120,7 @@ const verifySubscription = async () => {
         error.value = true
         errorMessage.value = 'Kein aktives Abonnement gefunden. Falls Sie gerade bezahlt haben, warten Sie bitte einen Moment und aktualisieren Sie die Seite.'
       }
-    } catch (err) {
-      console.error('Failed to verify subscription:', err)
+    } catch {
       error.value = true
       errorMessage.value = 'Fehler beim Laden der Abonnement-Daten.'
     } finally {
@@ -145,7 +144,6 @@ const verifySubscription = async () => {
       subscription.value = null
     }
   } catch (err) {
-    console.error('Subscription verification error:', err)
     error.value = true
     errorMessage.value = err.response?.data?.error || err.message || 'Ein unerwarteter Fehler ist aufgetreten'
   } finally {

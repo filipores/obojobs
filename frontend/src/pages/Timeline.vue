@@ -332,9 +332,7 @@ const loadTimeline = async () => {
       params: { days: daysFilter.value }
     })
     applications.value = data.data?.applications || []
-  } catch (err) {
-    console.error('Fehler beim Laden der Timeline:', err)
-  } finally {
+  } catch { /* ignore */ } finally {
     loading.value = false
   }
 }

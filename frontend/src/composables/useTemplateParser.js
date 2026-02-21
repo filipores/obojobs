@@ -56,7 +56,6 @@ export function parseTemplate(plainText) {
 
   // Validate input size to prevent performance issues
   if (plainText.length > MAX_TEMPLATE_SIZE) {
-    console.warn(`Template too large (${plainText.length} chars), truncating to ${MAX_TEMPLATE_SIZE}`)
     plainText = plainText.slice(0, MAX_TEMPLATE_SIZE)
   }
 

@@ -393,8 +393,7 @@ const handleGoogleRegister = async () => {
         googleLoading.value = false
       }
     })
-  } catch (e) {
-    console.error('Google register error:', e)
+  } catch {
     error.value = t('register.googleRegistrationFailed')
     googleLoading.value = false
   }

@@ -96,6 +96,23 @@ async function fetchCurrentSubscription() {
   }
 }
 
+// Stubs for features not yet implemented in backend
+async function openBillingPortal() {
+  throw new Error('Billing portal not yet implemented')
+}
+
+async function previewPlanChange() {
+  throw new Error('Plan change preview not yet implemented')
+}
+
+async function changePlan() {
+  throw new Error('Plan change not yet implemented')
+}
+
+async function cancelSubscription() {
+  throw new Error('Subscription cancellation not yet implemented')
+}
+
 /**
  * Composable for subscription operations
  */
@@ -107,7 +124,11 @@ export function useSubscription() {
     error: readonly(error),
     fetchPlans,
     startCheckout,
-    fetchCurrentSubscription
+    fetchCurrentSubscription,
+    openBillingPortal,
+    previewPlanChange,
+    changePlan,
+    cancelSubscription
   }
 }
 

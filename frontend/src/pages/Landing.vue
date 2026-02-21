@@ -1077,8 +1077,7 @@ async function downloadPdf() {
     a.click()
     window.URL.revokeObjectURL(url)
     document.body.removeChild(a)
-  } catch (err) {
-    console.error('PDF download failed:', err)
+  } catch {
     router.push('/applications')
   }
 }

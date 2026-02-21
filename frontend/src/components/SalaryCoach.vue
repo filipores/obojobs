@@ -469,9 +469,7 @@ const loadSavedData = async () => {
       lastSavedAt.value = data.data.updatedAt
       hasLoadedData.value = true
     }
-  } catch (err) {
-    console.error('Error loading saved data:', err)
-  } finally {
+  } catch { /* ignore */ } finally {
     isLoading.value = false
   }
 }
@@ -503,9 +501,7 @@ const saveData = async () => {
         strategy: strategy.value
       })
       lastSavedAt.value = new Date().toISOString()
-    } catch (err) {
-      console.error('Error saving data:', err)
-    } finally {
+    } catch { /* ignore */ } finally {
       isSaving.value = false
     }
   }, 1000)
@@ -535,7 +531,6 @@ const researchSalary = async () => {
       saveData()
     }
   } catch (err) {
-    console.error('Salary research error:', err)
     if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der Gehaltsrecherche', 'error') }
   } finally {
     isResearching.value = false
@@ -563,7 +558,6 @@ const getStrategy = async () => {
       saveData()
     }
   } catch (err) {
-    console.error('Strategy generation error:', err)
     if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der Strategieentwicklung', 'error') }
   } finally {
     isGenerating.value = false

@@ -234,23 +234,19 @@ async function loadUser() {
   try {
     const { data } = await api.get(`/admin/users/${route.params.id}`)
     userData.value = data.user
-  } catch (e) {
-    console.error('Failed to load user:', e)
-  } finally {
+  } catch { /* ignore */ } finally {
     loading.value = false
   }
 }
 
-async function loadRelatedData(loadedRef, loadingRef, dataRef, endpoint, label) {
+async function loadRelatedData(loadedRef, loadingRef, dataRef, endpoint, _label) {
   if (loadedRef.value) return
   loadingRef.value = true
   try {
     const { data } = await api.get(`/admin/users/${route.params.id}/${endpoint}`)
     dataRef.value = data[endpoint]
     loadedRef.value = true
-  } catch (e) {
-    console.error(`Failed to load ${label}:`, e)
-  } finally {
+  } catch { /* ignore */ } finally {
     loadingRef.value = false
   }
 }
@@ -273,7 +269,6 @@ async function toggleField(field) {
     userData.value[field] = newValue
     window.$toast?.('success', t('admin.userDetail.updateSuccess'))
   } catch (e) {
-    console.error('Failed to update user:', e)
     const msg = e.response?.data?.error || t('admin.userDetail.updateError')
     window.$toast?.('error', msg)
   } finally {

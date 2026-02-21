@@ -709,9 +709,7 @@ async function loadUsage() {
   try {
     const { data } = await api.get('/stats')
     usage.value = data.usage
-  } catch (e) {
-    console.error('Fehler beim Laden der Nutzung:', e)
-  }
+  } catch { /* ignore */ }
 }
 
 async function checkUserSkills() {

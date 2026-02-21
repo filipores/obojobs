@@ -179,8 +179,6 @@ def get_current_subscription() -> tuple[Response, int]:
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
 
-    usage = get_subscription_usage(user)
-
     subscription_data = {
         "plan": "free",
         "status": "active",

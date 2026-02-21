@@ -586,8 +586,7 @@ const loadApplication = async () => {
     } else {
       throw new Error('Bewerbung nicht gefunden')
     }
-  } catch (err) {
-    console.error('Fehler beim Laden der Bewerbung:', err)
+  } catch (error) {
     error.value = 'Bewerbung konnte nicht geladen werden'
     loading.value = false
   }
@@ -608,8 +607,7 @@ const loadQuestions = async () => {
         }
       }
     }
-  } catch (err) {
-    console.error('Fehler beim Laden der Fragen:', err)
+  } catch {
     questions.value = []
   } finally {
     loading.value = false
@@ -764,7 +762,6 @@ const submitAnswer = async () => {
       })
     }
   } catch (err) {
-    console.error('Fehler bei der Bewertung:', err)
     if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der Bewertung der Antwort', 'error') }
   } finally {
     isEvaluating.value = false
@@ -800,7 +797,6 @@ const loadDetailedStarAnalysis = async () => {
       detailedStarAnalysis.value = data.data.star_analysis
     }
   } catch (err) {
-    console.error('Fehler bei der STAR-Analyse:', err)
     if (window.$toast) { window.$toast(err.response?.data?.error || 'Fehler bei der detaillierten STAR-Analyse', 'error') }
   } finally {
     isLoadingStarAnalysis.value = false
@@ -818,8 +814,7 @@ const finishInterview = async () => {
       summary.value = data.data.summary
       interviewComplete.value = true
     }
-  } catch (err) {
-    console.error('Fehler bei der Zusammenfassung:', err)
+  } catch {
     // Still show completion even if summary fails
     summary.value = {
       overall_score: answerHistory.value.reduce((sum, a) => sum + a.score, 0) / answerHistory.value.length,
@@ -963,7 +958,6 @@ const getQuestionTypeHint = (type) => {
 onMounted(async () => {
   // Validate application ID
   if (!applicationId.value || isNaN(parseInt(applicationId.value))) {
-    console.error('Invalid application ID:', applicationId.value)
     error.value = 'Ungültige Bewerbungs-ID'
     loading.value = false
     return
@@ -975,8 +969,7 @@ onMounted(async () => {
     if (!error.value) {
       await loadQuestions()
     }
-  } catch (err) {
-    console.error('Error during component initialization:', err)
+  } catch (error) {
     if (!error.value) {
       error.value = 'Fehler beim Laden der Daten'
     }

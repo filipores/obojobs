@@ -196,9 +196,7 @@ const saveGoal = async () => {
       isAchieved.value = data.data.is_achieved
       editing.value = false
     }
-  } catch (err) {
-    console.error('Failed to update goal:', err)
-  } finally {
+  } catch { /* ignore */ } finally {
     saving.value = false
   }
 }
@@ -213,9 +211,7 @@ const loadGoalData = async () => {
       isAchieved.value = data.data.is_achieved
       editGoal.value = data.data.goal
     }
-  } catch (err) {
-    console.error('Failed to load weekly goal:', err)
-  } finally {
+  } catch { /* ignore */ } finally {
     loading.value = false
   }
 }

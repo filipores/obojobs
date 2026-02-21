@@ -134,7 +134,6 @@ export function useJobRecommendations() {
       hasMore.value = suggestions.value.length >= perPage
     } catch (err) {
       error.value = err.message || 'Fehler beim Laden der Jobs'
-      console.error('Failed to load suggestions:', err)
     } finally {
       loading.value = false
     }
@@ -151,9 +150,7 @@ export function useJobRecommendations() {
       const newItems = addDefaultModel(data.recommendations)
       suggestions.value = [...suggestions.value, ...newItems]
       hasMore.value = newItems.length >= perPage
-    } catch (err) {
-      console.error('Failed to load more:', err)
-    } finally {
+    } catch { /* ignore */ } finally {
       loadingMore.value = false
     }
   }
@@ -162,9 +159,7 @@ export function useJobRecommendations() {
     try {
       const { data } = await api.silent.get('/recommendations/stats')
       stats.value = data
-    } catch (err) {
-      console.error('Failed to load stats:', err)
-    }
+    } catch { /* ignore */ }
   }
 
   async function dismissSuggestion(id) {
@@ -172,18 +167,14 @@ export function useJobRecommendations() {
       await api.post(`/recommendations/${id}/dismiss`)
       suggestions.value = suggestions.value.filter(r => r.id !== id)
       await loadStats()
-    } catch (err) {
-      console.error('Failed to dismiss:', err)
-    }
+    } catch { /* ignore */ }
   }
 
   async function markAsApplied(id, applicationId) {
     try {
       const body = applicationId ? { application_id: applicationId } : {}
       await api.post(`/recommendations/${id}/apply`, body)
-    } catch (err) {
-      console.error('Failed to mark as applied:', err)
-    }
+    } catch { /* ignore */ }
   }
 
   function isGenerating(id) {
@@ -262,9 +253,7 @@ export function useJobRecommendations() {
       await api.post('/recommendations/search', body)
       await loadSuggestions()
       await loadStats()
-    } catch (err) {
-      console.error('Failed to search jobs:', err)
-    } finally {
+    } catch { /* ignore */ } finally {
       searching.value = false
     }
   }

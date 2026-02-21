@@ -385,8 +385,7 @@ const loadSkills = async () => {
   try {
     const { data } = await api.get('/users/me/skills')
     skills.value = data.skills || []
-  } catch (error) {
-    console.error('Failed to load skills:', error)
+  } catch {
     loadError.value = true
   } finally {
     loading.value = false
@@ -404,9 +403,7 @@ const loadDocuments = async () => {
     const { data } = await api.get('/documents')
     const cv = data.documents?.find(d => d.doc_type === 'lebenslauf')
     if (cv) cvDocumentId.value = cv.id
-  } catch (error) {
-    console.error('Failed to load documents:', error)
-  }
+  } catch { /* ignore */ }
 }
 
 const reextractSkills = async () => {
@@ -419,9 +416,7 @@ const reextractSkills = async () => {
       window.$toast(data.message || 'Skills extrahiert', 'success')
     }
     await loadSkills()
-  } catch (error) {
-    console.error('Failed to extract skills:', error)
-  } finally {
+  } catch { /* ignore */ } finally {
     extracting.value = false
   }
 }
@@ -451,9 +446,7 @@ const deleteSkill = async (skill) => {
     if (window.$toast) {
       window.$toast('Skill gelöscht', 'success')
     }
-  } catch (error) {
-    console.error('Failed to delete skill:', error)
-  }
+  } catch { /* ignore */ }
 }
 
 const saveSkill = async () => {
@@ -482,7 +475,6 @@ const saveSkill = async () => {
     }
     closeModal()
   } catch (error) {
-    console.error('Failed to save skill:', error)
 
     // Handle duplicate skill error (409 CONFLICT)
     if (error.response?.status === 409) {

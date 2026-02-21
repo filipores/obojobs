@@ -73,9 +73,7 @@ const selectLanguage = async (langCode) => {
   if (authStore.isAuthenticated()) {
     try {
       await api.silent.put('/auth/language', { language: langCode })
-    } catch (error) {
-      console.warn('Failed to save language preference:', error)
-    }
+    } catch { /* ignore */ }
   }
 
   isOpen.value = false

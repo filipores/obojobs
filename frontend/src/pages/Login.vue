@@ -380,8 +380,7 @@ const handleGoogleLogin = async () => {
         })
       }
     })
-  } catch (e) {
-    console.error('Google login error:', e)
+  } catch {
     error.value = t('auth.googleLoginFailed')
     googleLoading.value = false
   }
