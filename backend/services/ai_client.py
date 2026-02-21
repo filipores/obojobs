@@ -49,7 +49,6 @@ class AIClient:
             ),
         )
         self.model = config.QWEN_MODEL
-        self.fast_model = config.QWEN_FAST_MODEL
         self.kimi_model = config.KIMI_MODEL
         self.max_tokens = config.QWEN_MAX_TOKENS
         self.temperature = config.QWEN_TEMPERATURE
@@ -85,7 +84,6 @@ class AIClient:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=500,
                 temperature=0.3,
-                model=self.fast_model,
             )
             return self._normalize_extracted_details(data, firma_name)
         except Exception:
@@ -104,7 +102,6 @@ class AIClient:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=400,
                 temperature=0.3,
-                model=self.fast_model,
             )
         except Exception as e:
             raise Exception(f"Informationsextraktion fehlgeschlagen: {e!s}") from e
@@ -117,7 +114,7 @@ class AIClient:
         anschreiben_body: str,
         branche: str | None = None,
     ) -> str | None:
-        """Generate a personalized email body using the fast model.
+        """Generate a personalized email body.
 
         Returns None on any error so the caller can fall back to the static template.
         """
@@ -135,7 +132,6 @@ class AIClient:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=200,
                 temperature=0.4,
-                model=self.fast_model,
             )
         except Exception:
             logger.warning("E-Mail-Body-Generierung fehlgeschlagen, verwende Fallback")

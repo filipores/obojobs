@@ -44,7 +44,6 @@ class Config:
     # Qwen3 (via OpenRouter)
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     QWEN_MODEL = os.getenv("QWEN_MODEL", "qwen/qwen3-235b-a22b-2507")
-    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "qwen/qwen3-235b-a22b-2507")
     QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://openrouter.ai/api/v1")
     QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
     QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))

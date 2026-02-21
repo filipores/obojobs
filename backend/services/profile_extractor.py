@@ -35,7 +35,7 @@ class ProfileExtractor:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=500,
                 temperature=0.1,
-                model=self.client.fast_model,
+                model=self.client.model,
             )
             return self._normalize_profile(data)
         except Exception as e:

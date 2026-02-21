@@ -42,7 +42,7 @@ class SkillExtractor:
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=2000,
                 temperature=0.2,
-                model=self.client.fast_model,
+                model=self.client.model,
             )
 
             skills = data.get("skills", [])
