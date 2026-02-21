@@ -270,7 +270,7 @@ Gib jetzt das JSON-Objekt aus:"""
             "improvements": [
                 "Detailliertere Analyse nicht verfügbar aufgrund eines technischen Problems",
             ],
-            "suggestion": "Bitte versuchen Sie es erneut für eine detaillierte Bewertung.",
+            "suggestion": "Bitte versuche es erneut für eine detaillierte Bewertung.",
             "length_assessment": {"rating": "adequate", "feedback": "Automatische Bewertung nicht verfügbar."},
             "structure_assessment": {
                 "rating": "partially_structured",
@@ -311,7 +311,7 @@ Gib jetzt das JSON-Objekt aus:"""
                 "category_scores": {},
                 "top_strengths": [],
                 "priority_improvements": [],
-                "next_steps": ["Beginnen Sie mit dem Mock-Interview um Feedback zu erhalten."],
+                "next_steps": ["Beginne mit dem Mock-Interview um Feedback zu erhalten."],
             }
 
         # Calculate category scores
@@ -334,15 +334,15 @@ Gib jetzt das JSON-Objekt aus:"""
 
         # Determine assessment
         if overall_score >= 80:
-            assessment = "Ausgezeichnet! Sie haben das Mock-Interview sehr gut gemeistert."
+            assessment = "Ausgezeichnet! Du hast das Mock-Interview sehr gut gemeistert."
         elif overall_score >= 60:
             assessment = (
-                "Gut gemacht! Ihre Antworten zeigen eine solide Vorbereitung mit einigen Verbesserungsmöglichkeiten."
+                "Gut gemacht! Deine Antworten zeigen eine solide Vorbereitung mit einigen Verbesserungsmöglichkeiten."
             )
         elif overall_score >= 40:
-            assessment = "Ordentliche Leistung. Mit etwas mehr Vorbereitung können Sie sich deutlich verbessern."
+            assessment = "Ordentliche Leistung. Mit etwas mehr Vorbereitung kannst du dich deutlich verbessern."
         else:
-            assessment = "Hier ist noch Übungsbedarf. Nutzen Sie die Verbesserungsvorschläge für die nächste Runde."
+            assessment = "Hier ist noch Übungsbedarf. Nutze die Verbesserungsvorschläge für die nächste Runde."
 
         # Collect strengths and improvements
         all_strengths = []
@@ -358,12 +358,12 @@ Gib jetzt das JSON-Objekt aus:"""
         # Generate next steps
         next_steps = []
         if overall_score < 60:
-            next_steps.append("Üben Sie die STAR-Methode für Verhaltensfragen.")
+            next_steps.append("Übe die STAR-Methode für Verhaltensfragen.")
         if category_scores.get("technical", 100) < 60:
-            next_steps.append("Bereiten Sie konkrete Beispiele für technische Fragen vor.")
+            next_steps.append("Bereite konkrete Beispiele für technische Fragen vor.")
         if category_scores.get("behavioral", 100) < 60:
-            next_steps.append("Sammeln Sie mehr Beispiele aus Ihrer Berufserfahrung.")
-        next_steps.append("Wiederholen Sie das Mock-Interview nach der Vorbereitung.")
+            next_steps.append("Sammle mehr Beispiele aus deiner Berufserfahrung.")
+        next_steps.append("Wiederhole das Mock-Interview nach der Vorbereitung.")
 
         return {
             "overall_score": round(overall_score, 1),

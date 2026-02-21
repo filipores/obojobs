@@ -4,7 +4,7 @@
       <!-- Header Section -->
       <section class="page-header animate-fade-up">
         <h1>Einstellungen</h1>
-        <p class="page-subtitle">Verwalten Sie Ihr Konto und API-Zugang</p>
+        <p class="page-subtitle">Verwalte dein Konto und API-Zugang</p>
       </section>
 
       <!-- Settings Layout with Sidebar -->
@@ -359,7 +359,7 @@
                     Passwort erfüllt nicht alle Anforderungen
                   </p>
                   <p v-if="(!passwordForm.currentPassword || !passwordForm.newPassword || !passwordForm.confirmPassword) && (passwordForm.currentPassword || passwordForm.newPassword || passwordForm.confirmPassword)" class="form-error">
-                    Bitte füllen Sie alle Felder aus
+                    Bitte fülle alle Felder aus
                   </p>
                 </div>
 
@@ -476,7 +476,7 @@
               <div class="settings-card zen-card">
                 <div class="api-key-header">
                   <p class="api-key-info">
-                    Erstellen Sie einen API Key, um die Chrome Extension mit Ihrem Konto zu verbinden.
+                    Erstelle einen API Key, um die Chrome Extension mit deinem Konto zu verbinden.
                   </p>
                   <button @click="generateKey" class="zen-btn" :disabled="isGeneratingKey">
                     {{ isGeneratingKey ? 'Wird generiert...' : 'Neuen Key generieren' }}
@@ -491,7 +491,7 @@
                       <line x1="12" y1="9" x2="12" y2="13"/>
                       <line x1="12" y1="17" x2="12.01" y2="17"/>
                     </svg>
-                    <strong>Speichern Sie diesen Key jetzt!</strong>
+                    <strong>Speichere diesen Key jetzt!</strong>
                   </div>
                   <p>Er wird nicht erneut angezeigt.</p>
                   <div class="key-display">
@@ -508,7 +508,7 @@
                 <!-- Existing Keys -->
                 <div v-if="apiKeys.length" class="api-keys-list">
                   <div class="list-header">
-                    <span>Ihre API Keys</span>
+                    <span>Deine API Keys</span>
                   </div>
                   <div class="keys-table">
                     <div v-for="key in apiKeys" :key="key.id" class="key-row">
@@ -527,7 +527,7 @@
                 </div>
 
                 <div v-else class="no-keys">
-                  <p>Sie haben noch keine API Keys erstellt.</p>
+                  <p>Du hast noch keine API Keys erstellt.</p>
                 </div>
               </div>
 
@@ -544,10 +544,10 @@
                   <div class="info-content">
                     <h3>Chrome Extension einrichten</h3>
                     <ol class="setup-steps">
-                      <li>Erstellen Sie einen API Key oben</li>
-                      <li>Installieren Sie die Chrome Extension</li>
-                      <li>Fügen Sie den API Key in der Extension ein</li>
-                      <li>Besuchen Sie eine Stellenanzeige und klicken Sie auf "Bewerbung generieren"</li>
+                      <li>Erstelle einen API Key oben</li>
+                      <li>Installiere die Chrome Extension</li>
+                      <li>Füge den API Key in der Extension ein</li>
+                      <li>Besuche eine Stellenanzeige und klicke auf "Bewerbung generieren"</li>
                     </ol>
                   </div>
                 </div>
@@ -575,7 +575,7 @@
               <div class="danger-action">
                 <div class="danger-info">
                   <h3>Konto löschen</h3>
-                  <p>Löscht Ihr Konto und alle zugehörigen Daten unwiderruflich. Diese Aktion kann nicht rückgängig gemacht werden.</p>
+                  <p>Löscht dein Konto und alle zugehörigen Daten unwiderruflich. Diese Aktion kann nicht rückgängig gemacht werden.</p>
                 </div>
                 <button class="zen-btn zen-btn-danger" @click="requestAccountDeletion">
                   Konto löschen
@@ -805,7 +805,7 @@ const copyKey = async () => {
 const deleteKey = async (id) => {
   const confirmed = await confirm({
     title: 'API Key löschen',
-    message: 'Möchten Sie den API Key wirklich löschen? Die Chrome Extension funktioniert dann nicht mehr.',
+    message: 'Möchtest du den API Key wirklich löschen? Die Chrome Extension funktioniert dann nicht mehr.',
     confirmText: 'Löschen',
     cancelText: 'Abbrechen',
     type: 'danger'
@@ -925,7 +925,7 @@ const connectOutlook = async () => {
 const disconnectAccount = async (accountId) => {
   const confirmed = await confirm({
     title: 'E-Mail-Konto trennen',
-    message: 'Möchten Sie das E-Mail-Konto wirklich trennen? Sie können dann keine Bewerbungen mehr über dieses Konto versenden.',
+    message: 'Möchtest du das E-Mail-Konto wirklich trennen? Du kannst dann keine Bewerbungen mehr über dieses Konto versenden.',
     confirmText: 'Trennen',
     cancelText: 'Abbrechen',
     type: 'danger'
@@ -948,7 +948,7 @@ const disconnectAccount = async (accountId) => {
 const requestAccountDeletion = async () => {
   const confirmed = await confirm({
     title: 'Konto löschen',
-    message: 'Sind Sie sicher, dass Sie Ihr Konto und alle zugehörigen Daten unwiderruflich löschen möchten? Diese Aktion kann nicht rückgängig gemacht werden.',
+    message: 'Bist du sicher, dass du dein Konto und alle zugehörigen Daten unwiderruflich löschen möchtest? Diese Aktion kann nicht rückgängig gemacht werden.',
     confirmText: 'Endgültig löschen',
     cancelText: 'Abbrechen',
     type: 'danger'
@@ -964,7 +964,7 @@ const requestAccountDeletion = async () => {
     authStore.logout()
 
     if (window.$toast) {
-      window.$toast('Ihr Konto wurde erfolgreich gelöscht.', 'success')
+      window.$toast('Dein Konto wurde erfolgreich gelöscht.', 'success')
     }
 
     // Redirect to home page after a brief delay

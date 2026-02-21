@@ -61,9 +61,7 @@ def save_extracted_skills_for_upload(user_id: int, extracted_skills: list[dict[s
 
     # Pre-fetch existing skills for this user to avoid N+1 queries
     skill_names = [s["skill_name"] for s in extracted_skills]
-    existing_skills = UserSkill.query.filter(
-        UserSkill.user_id == user_id, UserSkill.skill_name.in_(skill_names)
-    ).all()
+    existing_skills = UserSkill.query.filter(UserSkill.user_id == user_id, UserSkill.skill_name.in_(skill_names)).all()
 
     # Create a lookup dictionary for existing skills
     existing_map = {skill.skill_name: skill for skill in existing_skills}

@@ -35,13 +35,13 @@ let containerEl = null
  *
  * @example
  * // Simple usage
- * const confirmed = await confirm('Sind Sie sicher?')
+ * const confirmed = await confirm('Bist du sicher?')
  *
  * @example
  * // With options
  * const confirmed = await confirm({
  *   title: 'Löschen bestätigen',
- *   message: 'Möchten Sie diesen Eintrag wirklich löschen?',
+ *   message: 'Möchtest du diesen Eintrag wirklich löschen?',
  *   confirmText: 'Löschen',
  *   cancelText: 'Abbrechen',
  *   type: 'danger'
@@ -51,7 +51,7 @@ let containerEl = null
  * // With checkbox
  * const result = await confirm({
  *   title: 'Dokument löschen',
- *   message: 'Möchten Sie dieses Dokument wirklich löschen?',
+ *   message: 'Möchtest du dieses Dokument wirklich löschen?',
  *   showCheckbox: true,
  *   checkboxLabel: 'Auch extrahierte Skills löschen',
  *   type: 'danger'

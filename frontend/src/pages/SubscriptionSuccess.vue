@@ -6,7 +6,7 @@
         <div v-if="loading" class="state-card zen-card animate-fade-up">
           <div class="loading-enso"></div>
           <h2>Abo wird eingerichtet</h2>
-          <p>Bitte warten Sie, wahrend wir Ihr Abonnement aktivieren.</p>
+          <p>Bitte warte, wahrend wir dein Abonnement aktivieren.</p>
         </div>
 
         <!-- Error State -->
@@ -38,7 +38,7 @@
             </svg>
           </div>
           <h2>Abo erfolgreich aktiviert</h2>
-          <p class="success-message">Ihr Abonnement wurde erfolgreich eingerichtet.</p>
+          <p class="success-message">Dein Abonnement wurde erfolgreich eingerichtet.</p>
 
           <!-- Subscription Details -->
           <div v-if="subscription" class="subscription-details">
@@ -90,7 +90,7 @@ const subscription = ref(null)
 const getPlanName = (plan) => {
   const names = {
     'free': 'Free',
-    'basic': 'Basic',
+    'starter': 'Starter',
     'pro': 'Pro'
   }
   return names[plan] || plan
@@ -118,7 +118,7 @@ const verifySubscription = async () => {
         subscription.value = user.subscription
       } else {
         error.value = true
-        errorMessage.value = 'Kein aktives Abonnement gefunden. Falls Sie gerade bezahlt haben, warten Sie bitte einen Moment und aktualisieren Sie die Seite.'
+        errorMessage.value = 'Kein aktives Abonnement gefunden. Falls du gerade bezahlt hast, warte bitte einen Moment und aktualisiere die Seite.'
       }
     } catch (err) {
       console.error('Failed to verify subscription:', err)

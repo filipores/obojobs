@@ -14,7 +14,7 @@ const DEFAULT_PREVIEW_DATA = {
   POSITION: 'Software-Entwickler',
   ANSPRECHPARTNER: 'Frau Müller',
   QUELLE: 'LinkedIn',
-  EINLEITUNG: 'Mit großem Interesse habe ich Ihre Stellenausschreibung auf LinkedIn entdeckt und möchte mich bei Ihnen als engagierter Software-Entwickler bewerben.'
+  EINLEITUNG: 'Mit großem Interesse habe ich die Stellenausschreibung auf LinkedIn entdeckt und möchte mich als engagierter Software-Entwickler bewerben.'
 }
 
 /**

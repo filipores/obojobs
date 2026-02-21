@@ -245,11 +245,11 @@ const keywords = computed(() => {
 
 // Preview text for phase 3 — personalized with real data
 const previewText = computed(() => {
-  const company = props.companyName || 'Ihr Unternehmen'
+  const company = props.companyName || 'dein Unternehmen'
   const position = props.jobTitle || 'die ausgeschriebene Position'
   const contact = props.contactPerson
   const greeting = contact ? `Sehr geehrte/r ${contact},` : 'Sehr geehrte Damen und Herren,'
-  return `${greeting}\n\nmit großem Interesse habe ich Ihre Stellenausschreibung als ${position} bei ${company} gelesen...`
+  return `${greeting}\n\nmit großem Interesse habe ich die Stellenausschreibung als ${position} bei ${company} gelesen...`
 })
 
 // Checklist items for phase 4 -- personalized with real data when available

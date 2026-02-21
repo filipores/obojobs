@@ -655,7 +655,7 @@ const loadHistoryItem = async (item) => {
 const confirmDeleteAnalysis = async (item) => {
   const confirmed = await confirm({
     title: 'Analyse löschen',
-    message: 'Möchten Sie diese Analyse wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
+    message: 'Möchtest du diese Analyse wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.',
     confirmText: 'Löschen',
     cancelText: 'Abbrechen',
     type: 'danger'

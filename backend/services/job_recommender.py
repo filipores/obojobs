@@ -227,7 +227,7 @@ class JobRecommender:
                 "job_data": job_data,
                 "fit_score": 0,
                 "fit_category": "niedrig",
-                "error": "Keine Skills im Profil gefunden. Bitte laden Sie Ihren Lebenslauf hoch.",
+                "error": "Keine Skills im Profil gefunden. Bitte lade deinen Lebenslauf hoch.",
             }
 
         requirements = self.requirement_analyzer.analyze_requirements(job_text=job_text)

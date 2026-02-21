@@ -94,7 +94,7 @@ def analyze_manual_job(current_user: Any) -> Response | tuple[Response, int]:
     title = data.get("title", "").strip()
 
     if len(job_text) < 100:
-        return jsonify({"error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text ein."}), 400
+        return jsonify({"error": "Stellentext zu kurz. Bitte füge den vollständigen Text ein."}), 400
 
     recommender = JobRecommender()
     result = recommender.analyze_manual_job_for_user(current_user.id, job_text, company=company, title=title)

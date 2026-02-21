@@ -172,7 +172,7 @@ class AuthService:
         user = User.query.filter_by(email=email).first()
         if user and not user.google_id:
             return {
-                "error": "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse.",
+                "error": "Bitte bestätige zuerst deine E-Mail-Adresse.",
                 "email_not_verified": True,
             }
         return None
@@ -211,7 +211,7 @@ class AuthService:
                 db.session.commit()
             else:
                 if not registration_enabled:
-                    raise ValueError("Registrierung ist derzeit deaktiviert. Bitte kontaktieren Sie den Administrator.")
+                    raise ValueError("Registrierung ist derzeit deaktiviert. Bitte kontaktiere den Administrator.")
                 # Create new user
                 user = User(
                     email=email,
@@ -343,8 +343,8 @@ class AuthService:
 
             logger.info("[GDPR] Account deleted for user %s (ID: %s)", user_email, user_id)
 
-            return {"message": "Ihr Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}
+            return {"message": "Dein Konto und alle zugehörigen Daten wurden erfolgreich gelöscht."}
         except Exception as e:
             db.session.rollback()
             logger.error("Error deleting account for user %s: %s", user_id, e)
-            raise RuntimeError("Fehler beim Löschen des Kontos. Bitte kontaktieren Sie den Support.") from e
+            raise RuntimeError("Fehler beim Löschen des Kontos. Bitte kontaktiere den Support.") from e

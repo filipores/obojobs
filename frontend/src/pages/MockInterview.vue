@@ -57,7 +57,7 @@
             </svg>
           </div>
           <h2>Keine Fragen vorhanden</h2>
-          <p>Generieren Sie zuerst Interview-Fragen in der Interview-Vorbereitung.</p>
+          <p>Generiere zuerst Interview-Fragen in der Interview-Vorbereitung.</p>
           <router-link :to="applicationId ? `/applications/${applicationId}/interview` : '/applications'" class="zen-btn zen-btn-ai">
             Zur Interview-Vorbereitung
           </router-link>
@@ -165,7 +165,7 @@
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
               </svg>
-              <span>Tipp: Nutzen Sie die STAR-Methode (Situation, Task, Action, Result)</span>
+              <span>Tipp: Nutze die STAR-Methode (Situation, Task, Action, Result)</span>
             </div>
 
             <!-- Alternative tips for non-behavioral questions -->
@@ -183,13 +183,13 @@
 
             <!-- Answer Input -->
             <div class="answer-section">
-              <label for="answer-input" class="answer-label">Ihre Antwort:</label>
+              <label for="answer-input" class="answer-label">Deine Antwort:</label>
               <textarea
                 id="answer-input"
                 v-model="currentAnswer"
                 :disabled="isEvaluating"
                 class="answer-textarea"
-                placeholder="Tippen Sie hier Ihre Antwort ein..."
+                placeholder="Tippe hier deine Antwort ein..."
                 rows="6"
                 @keydown.ctrl.enter="submitAnswer"
               ></textarea>
@@ -415,7 +415,7 @@
                   <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/>
                   <polyline points="22 4 12 14.01 9 11.01"/>
                 </svg>
-                Ihre Staerken
+                Deine Staerken
               </h3>
               <ul>
                 <li v-for="(strength, index) in summary.top_strengths" :key="'ts-' + index">
@@ -891,7 +891,7 @@ const getRatingLabel = (rating) => {
 
 const getRatingDescription = (rating) => {
   const descriptions = {
-    excellent: 'Ihre Antwort war überzeugend und gut strukturiert.',
+    excellent: 'Deine Antwort war überzeugend und gut strukturiert.',
     good: t('mockInterview.goodWithImprovements'),
     adequate: 'Die Grundlagen sind da, aber es gibt Potenzial nach oben.',
     needs_improvement: 'Diese Antwort könnte deutlich verbessert werden.'

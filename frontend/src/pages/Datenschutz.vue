@@ -20,21 +20,21 @@
 
           <h3>Allgemeine Hinweise</h3>
           <p>
-            Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit Ihren
-            personenbezogenen Daten passiert, wenn Sie diese Website besuchen. Personenbezogene
-            Daten sind alle Daten, mit denen Sie persönlich identifiziert werden können.
+            Die folgenden Hinweise geben einen einfachen Überblick darüber, was mit deinen
+            personenbezogenen Daten passiert, wenn du diese Website besuchst. Personenbezogene
+            Daten sind alle Daten, mit denen du persönlich identifiziert werden kannst.
           </p>
 
           <h3>Datenerfassung auf dieser Website</h3>
           <p>
             <strong>Wer ist verantwortlich für die Datenerfassung auf dieser Website?</strong><br>
             Die Datenverarbeitung auf dieser Website erfolgt durch den Websitebetreiber.
-            Dessen Kontaktdaten können Sie dem Impressum dieser Website entnehmen.
+            Dessen Kontaktdaten kannst du dem Impressum dieser Website entnehmen.
           </p>
           <p>
-            <strong>Wie erfassen wir Ihre Daten?</strong><br>
-            Ihre Daten werden zum einen dadurch erhoben, dass Sie uns diese mitteilen.
-            Hierbei kann es sich z.B. um Daten handeln, die Sie bei der Registrierung eingeben.
+            <strong>Wie erfassen wir deine Daten?</strong><br>
+            Deine Daten werden zum einen dadurch erhoben, dass du uns diese mitteilst.
+            Hierbei kann es sich z.B. um Daten handeln, die du bei der Registrierung eingibst.
             Andere Daten werden automatisch beim Besuch der Website durch unsere IT-Systeme erfasst.
           </p>
         </div>
@@ -49,11 +49,11 @@
           <h3>Hetzner</h3>
           <p>
             Anbieter ist die Hetzner Online GmbH, Industriestr. 25, 91710 Gunzenhausen
-            (nachfolgend Hetzner). Wenn Sie unsere Website besuchen, erfasst Hetzner
-            verschiedene Logfiles inklusive Ihrer IP-Adressen.
+            (nachfolgend Hetzner). Wenn du unsere Website besuchst, erfasst Hetzner
+            verschiedene Logfiles inklusive deiner IP-Adressen.
           </p>
           <p>
-            Details entnehmen Sie der Datenschutzerklärung von Hetzner:
+            Details entnimmst du der Datenschutzerklärung von Hetzner:
             <a href="https://www.hetzner.com/de/rechtliches/datenschutz" target="_blank" rel="noopener">
               https://www.hetzner.com/de/rechtliches/datenschutz
             </a>
@@ -67,8 +67,8 @@
 
           <h3>Datenschutz</h3>
           <p>
-            Die Betreiber dieser Seiten nehmen den Schutz Ihrer persönlichen Daten sehr ernst.
-            Wir behandeln Ihre personenbezogenen Daten vertraulich und entsprechend den
+            Die Betreiber dieser Seiten nehmen den Schutz deiner persönlichen Daten sehr ernst.
+            Wir behandeln deine personenbezogenen Daten vertraulich und entsprechend den
             gesetzlichen Datenschutzvorschriften sowie dieser Datenschutzerklärung.
           </p>
 
@@ -84,42 +84,42 @@
           <h3>Speicherdauer</h3>
           <p>
             Soweit innerhalb dieser Datenschutzerklärung keine speziellere Speicherdauer
-            genannt wurde, verbleiben Ihre personenbezogenen Daten bei uns, bis der Zweck
-            für die Datenverarbeitung entfällt. Wenn Sie ein berechtigtes Löschersuchen
-            geltend machen oder eine Einwilligung zur Datenverarbeitung widerrufen, werden
-            Ihre Daten gelöscht, sofern wir keine anderen rechtlich zulässigen Gründe für
-            die Speicherung Ihrer personenbezogenen Daten haben.
+            genannt wurde, verbleiben deine personenbezogenen Daten bei uns, bis der Zweck
+            für die Datenverarbeitung entfällt. Wenn du ein berechtigtes Löschersuchen
+            geltend machst oder eine Einwilligung zur Datenverarbeitung widerrufst, werden
+            deine Daten gelöscht, sofern wir keine anderen rechtlich zulässigen Gründe für
+            die Speicherung deiner personenbezogenen Daten haben.
           </p>
 
           <h3>Rechtsgrundlagen der Verarbeitung</h3>
-          <p>Wir verarbeiten Ihre Daten auf folgenden Rechtsgrundlagen:</p>
+          <p>Wir verarbeiten deine Daten auf folgenden Rechtsgrundlagen:</p>
           <ul>
             <li><strong>Art. 6 Abs. 1 lit. a DSGVO (Einwilligung)</strong> - Google OAuth, E-Mail-Kontoverknüpfung</li>
             <li><strong>Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung)</strong> - Kontoverwaltung, KI-gestützte Bewerbungserstellung, Zahlungsabwicklung</li>
             <li><strong>Art. 6 Abs. 1 lit. f DSGVO (Berechtigtes Interesse)</strong> - Technische Nutzungsdaten, Sicherheitsmaßnahmen, Fehlerbehebung</li>
           </ul>
 
-          <h3>Ihre Rechte</h3>
-          <p>Sie haben jederzeit das Recht:</p>
+          <h3>Deine Rechte</h3>
+          <p>Du hast jederzeit das Recht:</p>
           <ul>
-            <li><strong>Auskunft</strong> (Art. 15 DSGVO) - über Ihre bei uns gespeicherten Daten zu erhalten</li>
+            <li><strong>Auskunft</strong> (Art. 15 DSGVO) - über deine bei uns gespeicherten Daten zu erhalten</li>
             <li><strong>Berichtigung</strong> (Art. 16 DSGVO) - unrichtige Daten korrigieren zu lassen</li>
-            <li><strong>Löschung</strong> (Art. 17 DSGVO) - Ihre Daten löschen zu lassen</li>
+            <li><strong>Löschung</strong> (Art. 17 DSGVO) - deine Daten löschen zu lassen</li>
             <li><strong>Einschränkung</strong> (Art. 18 DSGVO) - die Verarbeitung einzuschränken</li>
             <li><strong>Widerspruch</strong> (Art. 21 DSGVO) - der Verarbeitung zu widersprechen</li>
-            <li><strong>Datenportabilität</strong> (Art. 20 DSGVO) - Ihre Daten in einem gängigen Format zu erhalten</li>
+            <li><strong>Datenportabilität</strong> (Art. 20 DSGVO) - deine Daten in einem gängigen Format zu erhalten</li>
           </ul>
           <p>
-            Zur Ausübung Ihrer Rechte kontaktieren Sie uns bitte unter
+            Zur Ausübung deiner Rechte kontaktiere uns bitte unter
             <a :href="'mailto:' + legal.company_email">{{ legal.company_email }}</a>.
           </p>
 
           <h3>Beschwerderecht bei einer Aufsichtsbehörde</h3>
           <p>
-            Wenn Sie der Ansicht sind, dass die Verarbeitung Ihrer personenbezogenen Daten
-            gegen die DSGVO verstößt, haben Sie das Recht, sich bei einer Datenschutz-Aufsichtsbehörde
-            zu beschweren. Sie können sich insbesondere an die Aufsichtsbehörde Ihres
-            üblichen Aufenthaltsortes, Ihres Arbeitsplatzes oder unseres Firmensitzes wenden.
+            Wenn du der Ansicht bist, dass die Verarbeitung deiner personenbezogenen Daten
+            gegen die DSGVO verstößt, hast du das Recht, dich bei einer Datenschutz-Aufsichtsbehörde
+            zu beschweren. Du kannst dich insbesondere an die Aufsichtsbehörde deines
+            üblichen Aufenthaltsortes, deines Arbeitsplatzes oder unseres Firmensitzes wenden.
           </p>
         </div>
 
@@ -130,7 +130,7 @@
 
           <h3>Registrierung und Benutzerkonto</h3>
           <p>
-            Wenn Sie sich auf unserer Website registrieren, speichern wir folgende Daten:
+            Wenn du dich auf unserer Website registrierst, speichern wir folgende Daten:
           </p>
           <ul>
             <li>E-Mail-Adresse</li>
@@ -147,8 +147,8 @@
           <h3>Erstellte Bewerbungen</h3>
           <p>
             Die über unsere Plattform generierten Bewerbungen (Anschreiben, ATS-Analysen,
-            Interviewfragen) werden in Ihrem Benutzerkonto gespeichert, bis Sie diese
-            eigenständig löschen oder Ihr Konto löschen lassen. Die Verarbeitung erfolgt
+            Interviewfragen) werden in deinem Benutzerkonto gespeichert, bis du diese
+            eigenständig löschst oder dein Konto löschen lässt. Die Verarbeitung erfolgt
             auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO (Vertragserfüllung).
           </p>
 
@@ -163,8 +163,8 @@
 
           <h3>Hochgeladene Dokumente</h3>
           <p>
-            Sie können Dokumente (Lebensläufe, Zeugnisse) hochladen. Diese werden auf unserem
-            Server gespeichert und nur für die Erstellung Ihrer Bewerbungen verwendet.
+            Du kannst Dokumente (Lebensläufe, Zeugnisse) hochladen. Diese werden auf unserem
+            Server gespeichert und nur für die Erstellung deiner Bewerbungen verwendet.
             Die Dokumente werden nicht an Dritte weitergegeben (außer an die unten genannten
             Dienste zur Verarbeitung).
           </p>
@@ -172,10 +172,10 @@
           <h3>Cookies und Local Storage</h3>
           <p>
             Wir verwenden keine Tracking-Cookies. Wir speichern ausschließlich folgende
-            Daten im Local Storage Ihres Browsers:
+            Daten im Local Storage deines Browsers:
           </p>
           <ul>
-            <li>Authentifizierungs-Token (JWT) zur Identifizierung Ihrer Session</li>
+            <li>Authentifizierungs-Token (JWT) zur Identifizierung deiner Session</li>
             <li>Spracheinstellung (Deutsch/Englisch)</li>
             <li>Theme-Einstellung (Hell-/Dunkelmodus)</li>
           </ul>
@@ -196,7 +196,7 @@
             Anthropic, PBC (USA). Dabei werden folgende Daten übermittelt:
           </p>
           <ul>
-            <li>Inhalte Ihrer hochgeladenen Dokumente (zur Textgenerierung)</li>
+            <li>Inhalte deiner hochgeladenen Dokumente (zur Textgenerierung)</li>
             <li>Informationen zur Stellenanzeige</li>
           </ul>
           <p>
@@ -212,7 +212,7 @@
 
           <h3>Stripe</h3>
           <p>
-            Für Zahlungen nutzen wir Stripe, Inc. (USA). Bei der Zahlung werden Ihre
+            Für Zahlungen nutzen wir Stripe, Inc. (USA). Bei der Zahlung werden deine
             Zahlungsdaten direkt an Stripe übermittelt und dort verarbeitet. Wir
             speichern keine vollständigen Kreditkartendaten auf unseren Servern.
             Die Verarbeitung erfolgt auf Grundlage von Art. 6 Abs. 1 lit. b DSGVO
@@ -227,8 +227,8 @@
 
           <h3>Google OAuth</h3>
           <p>
-            Sie können sich optional über Ihr Google-Konto bei uns anmelden. Dabei
-            werden Ihr Name und Ihre E-Mail-Adresse von Google an uns übermittelt.
+            Du kannst dich optional über dein Google-Konto bei uns anmelden. Dabei
+            werden dein Name und deine E-Mail-Adresse von Google an uns übermittelt.
             Wir speichern keine Google-Passwörter. Die Verarbeitung erfolgt auf
             Grundlage von Art. 6 Abs. 1 lit. a DSGVO (Einwilligung).
           </p>
@@ -241,12 +241,12 @@
 
           <h3>Gmail und Outlook (E-Mail-Versand)</h3>
           <p>
-            Sie können optional Ihr Gmail- oder Outlook-Konto verbinden, um Bewerbungen
+            Du kannst optional dein Gmail- oder Outlook-Konto verbinden, um Bewerbungen
             direkt per E-Mail zu versenden. Dabei werden OAuth-Zugangstokens verschlüsselt
-            auf unserem Server gespeichert. Wir greifen ausschließlich zum Versenden Ihrer
-            Bewerbungen auf Ihr E-Mail-Konto zu. Die Verarbeitung erfolgt auf Grundlage
-            von Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Sie können die Verbindung
-            jederzeit in Ihren Kontoeinstellungen widerrufen.
+            auf unserem Server gespeichert. Wir greifen ausschließlich zum Versenden deiner
+            Bewerbungen auf dein E-Mail-Konto zu. Die Verarbeitung erfolgt auf Grundlage
+            von Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Du kannst die Verbindung
+            jederzeit in deinen Kontoeinstellungen widerrufen.
           </p>
         </div>
 
@@ -255,14 +255,14 @@
         <div class="legal-section">
           <h2>6. Speicherdauer und Datenlöschung</h2>
           <p>
-            Ihre Kontodaten (Name, E-Mail, Passwort) werden gespeichert, bis Sie Ihr
-            Konto löschen lassen. Ihre Bewerbungen und hochgeladenen Dokumente werden
-            gespeichert, bis Sie diese eigenständig löschen oder Ihr Konto löschen lassen.
+            Deine Kontodaten (Name, E-Mail, Passwort) werden gespeichert, bis du dein
+            Konto löschen lässt. Deine Bewerbungen und hochgeladenen Dokumente werden
+            gespeichert, bis du diese eigenständig löschst oder dein Konto löschen lässt.
           </p>
           <p>
-            Sie können Ihr Konto jederzeit löschen lassen. Kontaktieren Sie uns dazu
+            Du kannst dein Konto jederzeit löschen lassen. Kontaktiere uns dazu
             per E-Mail an <a :href="'mailto:' + legal.company_email">{{ legal.company_email }}</a>.
-            Bei der Kontolöschung werden alle Ihre personenbezogenen Daten,
+            Bei der Kontolöschung werden alle deine personenbezogenen Daten,
             hochgeladenen Dokumente und erstellten Bewerbungen unwiderruflich gelöscht.
           </p>
           <p>

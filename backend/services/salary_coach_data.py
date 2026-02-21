@@ -231,21 +231,21 @@ def get_fallback_negotiation_strategy(
         NegotiationTip(
             category="preparation",
             title="Marktrecherche durchführen",
-            description="Recherchieren Sie Gehälter für vergleichbare Positionen auf Stepstone, Kununu und Glassdoor. Dokumentieren Sie Ihre Qualifikationen und Erfolge.",
+            description="Recherchiere Gehälter für vergleichbare Positionen auf Stepstone, Kununu und Glassdoor. Dokumentiere deine Qualifikationen und Erfolge.",
             example_script="Ich habe den Markt analysiert und sehe, dass vergleichbare Positionen in der Region zwischen X und Y Euro liegen.",
             priority="high",
         ),
         NegotiationTip(
             category="preparation",
             title="Eigene Erfolge quantifizieren",
-            description="Listen Sie messbare Erfolge aus Ihrer bisherigen Tätigkeit auf. Zahlen und Fakten überzeugen.",
+            description="Liste messbare Erfolge aus deiner bisherigen Tätigkeit auf. Zahlen und Fakten überzeugen.",
             example_script="In meiner letzten Position konnte ich den Umsatz um 25% steigern und die Prozesseffizienz um 30% verbessern.",
             priority="high",
         ),
         NegotiationTip(
             category="opening",
             title="Gehaltsspanne nennen",
-            description="Nennen Sie eine Gehaltsspanne statt einer fixen Zahl. Setzen Sie die untere Grenze bei Ihrem Wunschgehalt.",
+            description="Nenne eine Gehaltsspanne statt einer fixen Zahl. Setze die untere Grenze bei deinem Wunschgehalt.",
             example_script=f"Basierend auf meiner Erfahrung und den Marktdaten liegt meine Gehaltsvorstellung bei {target_formatted}\u20ac bis {int(target_salary * 1.1):,}\u20ac.".replace(
                 ",", "."
             ),
@@ -254,28 +254,28 @@ def get_fallback_negotiation_strategy(
         NegotiationTip(
             category="counter",
             title="Bei niedrigem Angebot nachfragen",
-            description="Fragen Sie nach der Begründung und zeigen Sie Verhandlungsbereitschaft.",
+            description="Frage nach der Begründung und zeige Verhandlungsbereitschaft.",
             example_script="Ich verstehe. Können Sie mir erläutern, wie sich dieses Angebot zusammensetzt? Welche Entwicklungsmöglichkeiten gibt es?",
             priority="medium",
         ),
         NegotiationTip(
             category="counter",
             title="Gesamtpaket verhandeln",
-            description="Wenn das Grundgehalt fix ist, verhandeln Sie Benefits: Bonus, Home-Office, Urlaub, Weiterbildung.",
+            description="Wenn das Grundgehalt fix ist, verhandle Benefits: Bonus, Home-Office, Urlaub, Weiterbildung.",
             example_script="Wenn das Grundgehalt festgelegt ist, wären mir flexible Arbeitszeiten und ein höherer Urlaubsanspruch wichtig.",
             priority="medium",
         ),
         NegotiationTip(
             category="closing",
             title="Bedenkzeit erbeten",
-            description="Akzeptieren Sie nicht sofort. Bitten Sie um Zeit zum Nachdenken.",
+            description="Akzeptiere nicht sofort. Bitte um Zeit zum Nachdenken.",
             example_script="Vielen Dank für das Angebot. Ich würde gerne noch eine Nacht darüber schlafen und mich morgen melden.",
             priority="medium",
         ),
         NegotiationTip(
             category="timing",
             title="Richtiger Zeitpunkt",
-            description="In Deutschland wird das Gehalt meist erst im 2. oder 3. Gespräch besprochen. Warten Sie, bis der Arbeitgeber das Thema anspricht.",
+            description="In Deutschland wird das Gehalt meist erst im 2. oder 3. Gespräch besprochen. Warte, bis der Arbeitgeber das Thema anspricht.",
             example_script="Ich freue mich, dass wir über die Konditionen sprechen. Bevor wir das Gehalt besprechen, hätte ich noch eine Frage zu den Aufgaben...",
             priority="low",
         ),
@@ -285,7 +285,7 @@ def get_fallback_negotiation_strategy(
 
     counter_arguments = [
         "Ich bringe X Jahre Erfahrung in diesem Bereich mit, die direkt auf diese Position übertragbar sind.",
-        "In meiner letzten Position konnte ich nachweisbare Erfolge erzielen, die einen Mehrwert für Ihr Unternehmen bringen.",
+        "In meiner letzten Position konnte ich nachweisbare Erfolge erzielen, die einen Mehrwert für euer Unternehmen bringen.",
         "Die Marktdaten zeigen, dass vergleichbare Positionen in dieser Region bei diesem Gehaltsniveau liegen.",
     ]
 
@@ -309,7 +309,7 @@ def get_fallback_negotiation_strategy(
         },
         {
             "objection": "Andere Bewerber haben geringere Gehaltsvorstellungen.",
-            "response": "Ich bin überzeugt, dass meine Qualifikationen und Erfahrung einen entsprechenden Mehrwert bringen. Darf ich Ihnen konkret erläutern, was Sie von mir erwarten können?",
+            "response": "Ich bin überzeugt, dass meine Qualifikationen und Erfahrung einen entsprechenden Mehrwert bringen. Darf ich dir konkret erläutern, was du von mir erwarten kannst?",
         },
         {
             "objection": "Wir haben feste Gehaltsbänder.",

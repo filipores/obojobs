@@ -21,11 +21,11 @@ class InterviewGenerator:
 
     # German interview culture classics
     GERMAN_CLASSICS = [
-        "Wo sehen Sie sich in 5 Jahren?",
-        "Was sind Ihre Stärken und Schwächen?",
-        "Warum wollen Sie bei uns arbeiten?",
-        "Warum sollten wir Sie einstellen?",
-        "Erzählen Sie uns etwas über sich.",
+        "Wo siehst du dich in 5 Jahren?",
+        "Was sind deine Stärken und Schwächen?",
+        "Warum willst du bei uns arbeiten?",
+        "Warum sollten wir dich einstellen?",
+        "Erzähl uns etwas über dich.",
     ]
 
     def __init__(self, api_key: str | None = None):
@@ -120,20 +120,20 @@ STELLENANZEIGE:
 {job_text[:5000]}
 {skills_section}
 Generiere {question_count} Interview-Fragen für ein deutsches Vorstellungsgespräch. Berücksichtige die deutsche Interview-Kultur:
-- Formeller Ton, Sie-Form
+- Informeller Ton, du-Form
 - Direkte aber höfliche Fragen
 - Fokus auf Qualifikationen und Berufserfahrung
-- Typische deutsche Klassiker einbauen (z.B. "Wo sehen Sie sich in 5 Jahren?")
+- Typische deutsche Klassiker einbauen (z.B. "Wo siehst du dich in 5 Jahren?")
 
 Für jede Frage gib an:
 
-1. question_text: Die Interview-Frage auf Deutsch, in Sie-Form
+1. question_text: Die Interview-Frage auf Deutsch, in du-Form
 
 2. question_type: Die Kategorie der Frage:
-   - "behavioral": Verhaltensfragen über vergangene Erfahrungen ("Erzählen Sie von einer Situation, wo...")
+   - "behavioral": Verhaltensfragen über vergangene Erfahrungen ("Erzähl von einer Situation, wo...")
    - "technical": Fachliche Fragen zur Position und Skills
-   - "situational": Hypothetische Szenarien ("Was würden Sie tun, wenn...")
-   - "company_specific": Fragen zum Unternehmen und zur Motivation ("Warum wollen Sie bei uns...")
+   - "situational": Hypothetische Szenarien ("Was würdest du tun, wenn...")
+   - "company_specific": Fragen zum Unternehmen und zur Motivation ("Warum willst du bei uns...")
    - "salary_negotiation": Fragen zu Gehalt und Konditionen
 
 3. difficulty: Schwierigkeitsgrad
@@ -154,16 +154,16 @@ WICHTIG:
 Beispiel-Format:
 [
   {{
-    "question_text": "Wo sehen Sie sich beruflich in fünf Jahren?",
+    "question_text": "Wo siehst du dich beruflich in fünf Jahren?",
     "question_type": "behavioral",
     "difficulty": "medium",
-    "sample_answer": "Zeigen Sie Ambition ohne unrealistisch zu wirken. Verknüpfen Sie Ihre Ziele mit dem Unternehmen und der Position. Betonen Sie Lernbereitschaft und Entwicklungswünsche."
+    "sample_answer": "Zeige Ambition ohne unrealistisch zu wirken. Verknüpfe deine Ziele mit dem Unternehmen und der Position. Betone Lernbereitschaft und Entwicklungswünsche."
   }},
   {{
-    "question_text": "Welche Erfahrungen haben Sie mit [Technologie X]?",
+    "question_text": "Welche Erfahrungen hast du mit [Technologie X]?",
     "question_type": "technical",
     "difficulty": "medium",
-    "sample_answer": "Nennen Sie konkrete Projekte und Ergebnisse. Quantifizieren Sie wenn möglich. Zeigen Sie kontinuierliches Lernen in diesem Bereich."
+    "sample_answer": "Nenne konkrete Projekte und Ergebnisse. Quantifiziere wenn möglich. Zeige kontinuierliches Lernen in diesem Bereich."
   }}
 ]
 
@@ -230,7 +230,7 @@ Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
                         "question_type": question_type,
                         "difficulty": difficulty,
                         "sample_answer": sample_answer
-                        or "Bereiten Sie eine konkrete Antwort mit Beispielen aus Ihrer Berufserfahrung vor.",
+                        or "Bereite eine konkrete Antwort mit Beispielen aus deiner Berufserfahrung vor.",
                     }
                 )
 
@@ -244,75 +244,75 @@ Generiere jetzt {question_count} Interview-Fragen als JSON-Array:"""
         """Return fallback questions if API call fails."""
         return [
             {
-                "question_text": "Erzählen Sie uns etwas über sich.",
+                "question_text": "Erzähl uns etwas über dich.",
                 "question_type": "behavioral",
                 "difficulty": "easy",
-                "sample_answer": "Fassen Sie Ihren Werdegang in 2-3 Minuten zusammen. Fokussieren Sie auf relevante Erfahrungen für diese Position.",
+                "sample_answer": "Fasse deinen Werdegang in 2-3 Minuten zusammen. Fokussiere auf relevante Erfahrungen für diese Position.",
             },
             {
-                "question_text": f"Warum möchten Sie bei {firma} arbeiten?",
+                "question_text": f"Warum möchtest du bei {firma} arbeiten?",
                 "question_type": "company_specific",
                 "difficulty": "medium",
-                "sample_answer": "Zeigen Sie, dass Sie sich über das Unternehmen informiert haben. Verknüpfen Sie Ihre Ziele mit der Unternehmenskultur und Mission.",
+                "sample_answer": "Zeige, dass du dich über das Unternehmen informiert hast. Verknüpfe deine Ziele mit der Unternehmenskultur und Mission.",
             },
             {
-                "question_text": "Was sind Ihre größten Stärken?",
+                "question_text": "Was sind deine größten Stärken?",
                 "question_type": "behavioral",
                 "difficulty": "easy",
-                "sample_answer": "Nennen Sie 2-3 Stärken mit konkreten Beispielen. Wählen Sie Stärken, die für die Position relevant sind.",
+                "sample_answer": "Nenne 2-3 Stärken mit konkreten Beispielen. Wähle Stärken, die für die Position relevant sind.",
             },
             {
-                "question_text": "Was ist Ihre größte Schwäche?",
+                "question_text": "Was ist deine größte Schwäche?",
                 "question_type": "behavioral",
                 "difficulty": "medium",
-                "sample_answer": "Nennen Sie eine echte Schwäche, die Sie aktiv verbessern. Zeigen Sie Selbstreflexion und Entwicklungsbereitschaft.",
+                "sample_answer": "Nenne eine echte Schwäche, die du aktiv verbesserst. Zeige Selbstreflexion und Entwicklungsbereitschaft.",
             },
             {
-                "question_text": "Wo sehen Sie sich in fünf Jahren?",
+                "question_text": "Wo siehst du dich in fünf Jahren?",
                 "question_type": "behavioral",
                 "difficulty": "medium",
-                "sample_answer": "Zeigen Sie Ambition und langfristiges Engagement. Verknüpfen Sie Ihre Karriereziele mit dem Unternehmen.",
+                "sample_answer": "Zeige Ambition und langfristiges Engagement. Verknüpfe deine Karriereziele mit dem Unternehmen.",
             },
             {
-                "question_text": f"Welche Erfahrungen qualifizieren Sie für die Position als {position}?",
+                "question_text": f"Welche Erfahrungen qualifizieren dich für die Position als {position}?",
                 "question_type": "technical",
                 "difficulty": "medium",
-                "sample_answer": "Nennen Sie 2-3 konkrete Erfahrungen und Erfolge aus bisherigen Positionen, die direkt auf die neue Rolle übertragbar sind.",
+                "sample_answer": "Nenne 2-3 konkrete Erfahrungen und Erfolge aus bisherigen Positionen, die direkt auf die neue Rolle übertragbar sind.",
             },
             {
-                "question_text": "Erzählen Sie von einer herausfordernden Situation im Beruf und wie Sie diese gemeistert haben.",
+                "question_text": "Erzähl von einer herausfordernden Situation im Beruf und wie du diese gemeistert hast.",
                 "question_type": "behavioral",
                 "difficulty": "hard",
-                "sample_answer": "Nutzen Sie die STAR-Methode: Situation, Task, Action, Result. Wählen Sie ein Beispiel mit positivem Ausgang.",
+                "sample_answer": "Nutze die STAR-Methode: Situation, Task, Action, Result. Wähle ein Beispiel mit positivem Ausgang.",
             },
             {
-                "question_text": "Wie gehen Sie mit Konflikten im Team um?",
+                "question_text": "Wie gehst du mit Konflikten im Team um?",
                 "question_type": "situational",
                 "difficulty": "medium",
-                "sample_answer": "Beschreiben Sie Ihren konstruktiven Ansatz zur Konfliktlösung. Betonen Sie Kommunikation und Kompromissbereitschaft.",
+                "sample_answer": "Beschreibe deinen konstruktiven Ansatz zur Konfliktlösung. Betone Kommunikation und Kompromissbereitschaft.",
             },
             {
-                "question_text": "Was wissen Sie über unser Unternehmen?",
+                "question_text": "Was weißt du über unser Unternehmen?",
                 "question_type": "company_specific",
                 "difficulty": "easy",
-                "sample_answer": "Zeigen Sie, dass Sie recherchiert haben: Branche, Produkte, aktuelle Entwicklungen, Unternehmenskultur.",
+                "sample_answer": "Zeige, dass du recherchiert hast: Branche, Produkte, aktuelle Entwicklungen, Unternehmenskultur.",
             },
             {
-                "question_text": "Was sind Ihre Gehaltsvorstellungen?",
+                "question_text": "Was sind deine Gehaltsvorstellungen?",
                 "question_type": "salary_negotiation",
                 "difficulty": "hard",
-                "sample_answer": "Nennen Sie eine recherchierte Gehaltsspanne. Begründen Sie mit Ihrer Erfahrung und Qualifikation. Zeigen Sie Verhandlungsbereitschaft.",
+                "sample_answer": "Nenne eine recherchierte Gehaltsspanne. Begründe mit deiner Erfahrung und Qualifikation. Zeige Verhandlungsbereitschaft.",
             },
             {
-                "question_text": "Haben Sie Fragen an uns?",
+                "question_text": "Hast du Fragen an uns?",
                 "question_type": "company_specific",
                 "difficulty": "easy",
-                "sample_answer": "Stellen Sie 2-3 vorbereitete Fragen zur Rolle, zum Team oder zur Unternehmenskultur. Zeigen Sie echtes Interesse.",
+                "sample_answer": "Stelle 2-3 vorbereitete Fragen zur Rolle, zum Team oder zur Unternehmenskultur. Zeige echtes Interesse.",
             },
             {
-                "question_text": "Wann könnten Sie bei uns anfangen?",
+                "question_text": "Wann könntest du bei uns anfangen?",
                 "question_type": "salary_negotiation",
                 "difficulty": "easy",
-                "sample_answer": "Seien Sie ehrlich bezüglich Kündigungsfristen. Zeigen Sie Flexibilität wenn möglich.",
+                "sample_answer": "Sei ehrlich bezüglich Kündigungsfristen. Zeige Flexibilität wenn möglich.",
             },
         ]

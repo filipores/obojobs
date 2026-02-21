@@ -84,7 +84,7 @@ def quick_extract(current_user: Any) -> tuple[Response, int]:
             return jsonify(
                 {
                     "success": False,
-                    "error": "Konnte keine Stellendaten extrahieren. Bitte verwenden Sie die manuelle Eingabe.",
+                    "error": "Konnte keine Stellendaten extrahieren. Bitte verwende die manuelle Eingabe.",
                     "use_manual_input": True,
                 }
             ), 400
@@ -112,7 +112,7 @@ def quick_extract(current_user: Any) -> tuple[Response, int]:
         return jsonify(
             {
                 "success": False,
-                "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe.",
+                "error": "Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut oder verwende die manuelle Eingabe.",
             }
         ), 500
 
@@ -157,7 +157,7 @@ def preview_job(current_user: Any) -> tuple[Response, int]:
             return jsonify(
                 {
                     "success": False,
-                    "error": "Konnte keine Stellenanzeige von der URL laden. Die Seite scheint keine Stellenanzeige zu enthalten oder ist nicht zugänglich. Bitte verwenden Sie die manuelle Eingabe.",
+                    "error": "Konnte keine Stellenanzeige von der URL laden. Die Seite scheint keine Stellenanzeige zu enthalten oder ist nicht zugänglich. Bitte verwende die manuelle Eingabe.",
                     "use_manual_input": True,
                 }
             ), 400
@@ -196,7 +196,7 @@ def preview_job(current_user: Any) -> tuple[Response, int]:
         return jsonify(
             {
                 "success": False,
-                "error": "Fehler beim Laden der Stellenanzeige. Bitte versuchen Sie es erneut oder verwenden Sie die manuelle Eingabe.",
+                "error": "Fehler beim Laden der Stellenanzeige. Bitte versuche es erneut oder verwende die manuelle Eingabe.",
             }
         ), 500
 
@@ -223,7 +223,7 @@ def analyze_manual_text(current_user: Any) -> tuple[Response, int]:
         return jsonify(
             {
                 "success": False,
-                "error": "Stellentext zu kurz. Bitte fügen Sie den vollständigen Text der Stellenanzeige ein.",
+                "error": "Stellentext zu kurz. Bitte füge den vollständigen Text der Stellenanzeige ein.",
             }
         ), 400
 

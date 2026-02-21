@@ -32,20 +32,20 @@ class STARAnalyzer:
         },
         "task": {
             "name": "Aufgabe",
-            "description": "Die spezifische Aufgabe oder Herausforderung, die Sie bewältigen mussten",
-            "what_to_include": "Was war Ihre konkrete Verantwortung, was wurde von Ihnen erwartet",
+            "description": "Die spezifische Aufgabe oder Herausforderung, die du bewältigen musstest",
+            "what_to_include": "Was war deine konkrete Verantwortung, was wurde von dir erwartet",
             "example": "Meine Aufgabe war es, das Team zu reorganisieren und einen neuen Zeitplan zu erstellen, der das Projekt noch retten konnte.",
         },
         "action": {
             "name": "Handlung",
-            "description": "Die konkreten Schritte, die Sie unternommen haben",
-            "what_to_include": "Was haben SIE persönlich getan (nicht das Team), welche Methoden/Strategien haben Sie angewandt",
+            "description": "Die konkreten Schritte, die du unternommen hast",
+            "what_to_include": "Was hast DU persönlich getan (nicht das Team), welche Methoden/Strategien hast du angewandt",
             "example": "Ich habe zunächst eine Bestandsaufnahme gemacht, dann priorisiert und schließlich tägliche Stand-ups eingeführt...",
         },
         "result": {
             "name": "Ergebnis",
-            "description": "Das messbare Ergebnis Ihrer Handlungen",
-            "what_to_include": "Konkrete Zahlen, Feedback, was Sie gelernt haben, wie es ausgegangen ist",
+            "description": "Das messbare Ergebnis deiner Handlungen",
+            "what_to_include": "Konkrete Zahlen, Feedback, was du gelernt hast, wie es ausgegangen ist",
             "example": "Das Projekt wurde pünktlich abgeliefert, der Kunde war zufrieden, und wir haben den Folgeprozess für zukünftige Projekte übernommen.",
         },
     }
@@ -248,12 +248,12 @@ Gib jetzt das JSON-Objekt aus:"""
     def _get_default_tip(self, component: str) -> str:
         """Get default improvement tip for a component."""
         tips = {
-            "situation": "Beschreiben Sie konkret: Wo arbeiteten Sie? Wann war das? Wer war beteiligt? Was war die Ausgangslage?",
-            "task": "Erklären Sie genau: Was war Ihre spezifische Verantwortung? Was wurde von Ihnen erwartet?",
-            "action": "Betonen Sie Ihre persönlichen Handlungen mit 'Ich habe...' statt 'Wir haben...'. Welche Schritte haben Sie unternommen?",
-            "result": "Nennen Sie messbare Ergebnisse: Zahlen, Prozente, Zeitersparnis, Feedback vom Vorgesetzten oder Kunden.",
+            "situation": "Beschreibe konkret: Wo hast du gearbeitet? Wann war das? Wer war beteiligt? Was war die Ausgangslage?",
+            "task": "Erkläre genau: Was war deine spezifische Verantwortung? Was wurde von dir erwartet?",
+            "action": "Betone deine persönlichen Handlungen mit 'Ich habe...' statt 'Wir haben...'. Welche Schritte hast du unternommen?",
+            "result": "Nenne messbare Ergebnisse: Zahlen, Prozente, Zeitersparnis, Feedback vom Vorgesetzten oder Kunden.",
         }
-        return tips.get(component, "Fügen Sie mehr Details zu dieser Komponente hinzu.")
+        return tips.get(component, "Füge mehr Details zu dieser Komponente hinzu.")
 
     def _get_fallback_analysis(self) -> dict:
         """Return fallback analysis when API call fails."""
@@ -271,11 +271,11 @@ Gib jetzt das JSON-Objekt aus:"""
                 for comp in self.STAR_COMPONENTS
             },
             "improvement_suggestions": [
-                "Strukturieren Sie Ihre Antwort nach der STAR-Methode: Situation, Aufgabe, Handlung, Ergebnis.",
-                "Nennen Sie konkrete Beispiele aus Ihrer Berufserfahrung.",
-                "Quantifizieren Sie Ihre Ergebnisse wenn möglich.",
+                "Strukturiere deine Antwort nach der STAR-Methode: Situation, Aufgabe, Handlung, Ergebnis.",
+                "Nenne konkrete Beispiele aus deiner Berufserfahrung.",
+                "Quantifiziere deine Ergebnisse wenn möglich.",
             ],
-            "improved_answer_example": "Detaillierte Analyse nicht verfügbar. Bitte versuchen Sie es erneut.",
+            "improved_answer_example": "Detaillierte Analyse nicht verfügbar. Bitte versuche es erneut.",
             "general_feedback": "Automatische Bewertung konnte nicht durchgeführt werden.",
             "component_descriptions": self.COMPONENT_DESCRIPTIONS,
         }

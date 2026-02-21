@@ -96,9 +96,9 @@ class EmailFormatter:
 
         return f"""{ansprechperson},
 
-anbei finden Sie meine Bewerbungsunterlagen für {position_text}.
+anbei findest du meine Bewerbungsunterlagen für {position_text}.
 
-Ich freue mich auf Ihre Rückmeldung.
+Ich freue mich auf deine Rückmeldung.
 
 Mit freundlichen Grüßen
 {signature}"""

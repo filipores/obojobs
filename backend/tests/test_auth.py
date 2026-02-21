@@ -227,7 +227,7 @@ class TestLogin:
 
         assert response.status_code == 403
         data = response.get_json()
-        assert "Bitte bestätigen Sie zuerst Ihre E-Mail-Adresse" in data["error"]
+        assert "Bitte bestätige zuerst deine E-Mail-Adresse" in data["error"]
         assert data["email_not_verified"] is True
 
     def test_login_allowed_for_verified_email(self, client, test_user):

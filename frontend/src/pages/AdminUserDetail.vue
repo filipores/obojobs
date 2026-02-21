@@ -404,7 +404,7 @@ onMounted(async () => {
   color: var(--color-text-secondary);
 }
 
-.plan-basic {
+.plan-starter {
   background: var(--color-ai-subtle);
   color: var(--color-ai);
 }

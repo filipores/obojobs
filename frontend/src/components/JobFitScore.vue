@@ -58,7 +58,7 @@
       </svg>
       <div>
         <strong>Keine Skills gefunden</strong>
-        <p>Laden Sie einen Lebenslauf hoch oder fügen Sie Skills manuell hinzu, um den Job-Fit Score zu berechnen.</p>
+        <p>Lade einen Lebenslauf hoch oder füge Skills manuell hinzu, um den Job-Fit Score zu berechnen.</p>
         <router-link to="/documents#skills" class="zen-btn zen-btn-sm">
           Skills hinzufügen
         </router-link>
@@ -179,7 +179,7 @@
                 <line x1="12" y1="16" x2="12" y2="12"/>
                 <line x1="12" y1="8" x2="12.01" y2="8"/>
               </svg>
-              Tipp: Erwaehnen Sie relevante Erfahrungen oder Lernbereitschaft in Ihrer Bewerbung.
+              Tipp: Erwaehne relevante Erfahrungen oder Lernbereitschaft in deiner Bewerbung.
             </p>
           </div>
         </div>
@@ -225,7 +225,7 @@ const parseErrorResponse = (e) => {
   if (status >= 500) {
     return {
       message: 'Voruebergehender Serverfehler',
-      hint: 'Der Server ist momentan nicht erreichbar. Bitte versuchen Sie es in einigen Minuten erneut.',
+      hint: 'Der Server ist momentan nicht erreichbar. Bitte versuche es in einigen Minuten erneut.',
       isTemporary: true,
       showContactLink: false
     }
@@ -245,7 +245,7 @@ const parseErrorResponse = (e) => {
   if (status === 429) {
     return {
       message: 'Zu viele Anfragen',
-      hint: 'Bitte warten Sie einen Moment und versuchen Sie es dann erneut.',
+      hint: 'Bitte warte einen Moment und versuche es dann erneut.',
       isTemporary: true,
       showContactLink: false
     }
@@ -255,7 +255,7 @@ const parseErrorResponse = (e) => {
   if (status === 401 || status === 403) {
     return {
       message: 'Zugriff verweigert',
-      hint: 'Bitte melden Sie sich erneut an.',
+      hint: 'Bitte melde dich erneut an.',
       isTemporary: false,
       showContactLink: false
     }
@@ -275,7 +275,7 @@ const parseErrorResponse = (e) => {
   if (!e.response) {
     return {
       message: 'Netzwerkfehler',
-      hint: 'Bitte pruefen Sie Ihre Internetverbindung und versuchen Sie es erneut.',
+      hint: 'Bitte pruefe deine Internetverbindung und versuche es erneut.',
       isTemporary: true,
       showContactLink: false
     }
@@ -284,7 +284,7 @@ const parseErrorResponse = (e) => {
   // Other/unknown errors
   return {
     message: serverError || 'Fehler beim Laden des Job-Fit Scores',
-    hint: 'Falls das Problem weiterhin besteht, kontaktieren Sie bitte den Support.',
+    hint: 'Falls das Problem weiterhin besteht, kontaktiere bitte den Support.',
     isTemporary: false,
     showContactLink: true
   }

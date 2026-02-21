@@ -174,7 +174,7 @@ def evaluate_interview_answer(current_user: Any) -> tuple[Response, int]:
 
     if len(answer_text) < 10:
         return jsonify(
-            {"success": False, "error": "Die Antwort ist zu kurz. Bitte geben Sie eine ausführlichere Antwort."}
+            {"success": False, "error": "Die Antwort ist zu kurz. Bitte gib eine ausführlichere Antwort."}
         ), 400
 
     # Get the question
@@ -313,7 +313,7 @@ def analyze_star_method(current_user: Any) -> tuple[Response, int]:
         return jsonify(
             {
                 "success": False,
-                "error": "Die Antwort ist zu kurz für eine STAR-Analyse. Bitte geben Sie eine ausführlichere Antwort.",
+                "error": "Die Antwort ist zu kurz für eine STAR-Analyse. Bitte gib eine ausführlichere Antwort.",
             }
         ), 400
 

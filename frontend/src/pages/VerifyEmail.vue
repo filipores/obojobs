@@ -50,7 +50,7 @@
           </svg>
         </div>
         <h2>E-Mail wird verifiziert...</h2>
-        <p>Bitte warten Sie einen Moment.</p>
+        <p>Bitte warte einen Moment.</p>
       </div>
 
       <!-- Success State -->
@@ -62,7 +62,7 @@
           </svg>
         </div>
         <h2>E-Mail erfolgreich verifiziert!</h2>
-        <p>Ihr Konto ist jetzt vollständig aktiviert. Sie werden in {{ formattedRedirectCountdown }} zum Dashboard weitergeleitet.</p>
+        <p>Dein Konto ist jetzt vollständig aktiviert. Du wirst in {{ formattedRedirectCountdown }} zum Dashboard weitergeleitet.</p>
         <router-link to="/" class="zen-btn zen-btn-filled zen-btn-lg">
           Zum Dashboard
         </router-link>
@@ -163,7 +163,7 @@ const verifyEmail = async () => {
 
   if (!token) {
     loading.value = false
-    error.value = 'Kein Verifizierungs-Token gefunden. Bitte verwenden Sie den Link aus Ihrer E-Mail.'
+    error.value = 'Kein Verifizierungs-Token gefunden. Bitte verwende den Link aus deiner E-Mail.'
     return
   }
 
@@ -185,13 +185,13 @@ const verifyEmail = async () => {
   } catch (e) {
     const errorCode = e.response?.data?.error
     if (errorCode === 'Bestätigungstoken ist abgelaufen') {
-      error.value = 'Der Verifizierungs-Link ist abgelaufen. Bitte fordern Sie einen neuen Link an.'
+      error.value = 'Der Verifizierungs-Link ist abgelaufen. Bitte fordere einen neuen Link an.'
     } else if (errorCode === 'Ungültiger Bestätigungstoken') {
-      error.value = 'Der Verifizierungs-Link ist ungültig. Bitte fordern Sie einen neuen Link an.'
+      error.value = 'Der Verifizierungs-Link ist ungültig. Bitte fordere einen neuen Link an.'
     } else if (errorCode === 'E-Mail ist bereits bestätigt') {
-      error.value = 'Ihre E-Mail-Adresse wurde bereits verifiziert. Sie können sich anmelden.'
+      error.value = 'Deine E-Mail-Adresse wurde bereits verifiziert. Du kannst dich anmelden.'
     } else {
-      error.value = errorCode || 'Ein unbekannter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.'
+      error.value = errorCode || 'Ein unbekannter Fehler ist aufgetreten. Bitte versuche es erneut.'
     }
   } finally {
     loading.value = false
