@@ -1,3 +1,10 @@
+## [1.69.5](https://github.com/filipores/obojobs/compare/v1.69.4...v1.69.5) (2026-02-21)
+
+
+### Bug Fixes
+
+* use deepseek-v3p1 for all non-streaming ai tasks ([97b4dba](https://github.com/filipores/obojobs/commit/97b4dbae8d7f6923660153e42a35d7b6c050593d))
+
 ## [1.69.4](https://github.com/filipores/obojobs/compare/v1.69.3...v1.69.4) (2026-02-21)
 
 
