@@ -14,15 +14,34 @@ function safeParseUser() {
   }
 }
 
+// Helper to decode token expiration
+function getExpiration(token) {
+  if (!token) return null
+  try {
+    const parts = token.split('.')
+    if (parts.length !== 3) return null
+    const payload = JSON.parse(window.atob(parts[1]))
+    return payload.exp ? payload.exp * 1000 : null
+  } catch {
+    return null
+  }
+}
+
 export const authStore = reactive({
   user: safeParseUser(),
   token: localStorage.getItem('token'),
+  tokenExpiration: getExpiration(localStorage.getItem('token')),
+
+  setToken(token) {
+    this.token = token
+    this.tokenExpiration = getExpiration(token)
+    localStorage.setItem('token', token)
+  },
 
   async login(email, password) {
     const { data } = await api.silent.post('/auth/login', { email, password })
-    this.token = data.access_token
+    this.setToken(data.access_token)
     this.user = data.user
-    localStorage.setItem('token', data.access_token)
     localStorage.setItem('user', JSON.stringify(data.user))
   },
 
@@ -35,9 +54,8 @@ export const authStore = reactive({
 
   async loginWithGoogle(credential) {
     const { data } = await api.silent.post('/auth/google', { credential })
-    this.token = data.access_token
+    this.setToken(data.access_token)
     this.user = data.user
-    localStorage.setItem('token', data.access_token)
     localStorage.setItem('user', JSON.stringify(data.user))
     return data
   },
@@ -72,6 +90,15 @@ export const authStore = reactive({
       return false
     }
 
+    // Optimization: check cached expiration
+    if (this.tokenExpiration) {
+      if (this.tokenExpiration < Date.now()) {
+        this.clearAuthState()
+        return false
+      }
+      return true
+    }
+
     try {
       // Check if token is a valid JWT structure (3 parts separated by dots)
       const parts = this.token.split('.')
@@ -101,6 +128,7 @@ export const authStore = reactive({
   clearAuthState() {
     this.user = null
     this.token = null
+    this.tokenExpiration = null
     localStorage.removeItem('token')
     localStorage.removeItem('user')
   }
