@@ -1,3 +1,10 @@
+## [1.69.6](https://github.com/filipores/obojobs/compare/v1.69.5...v1.69.6) (2026-02-21)
+
+
+### Bug Fixes
+
+* use percent-encoding for spaces in mailto links for outlook compatibility ([5b0dde5](https://github.com/filipores/obojobs/commit/5b0dde5dc56912a9ccd7a2d6080762252485615f))
+
 ## [1.69.5](https://github.com/filipores/obojobs/compare/v1.69.4...v1.69.5) (2026-02-21)
 
 
