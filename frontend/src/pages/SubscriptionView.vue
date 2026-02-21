@@ -469,6 +469,7 @@
         <div v-if="showCancelModal" class="modal-overlay" @click.self="showCancelModal = false">
           <div class="modal-content zen-card cancel-modal">
             <h3>{{ t('subscription.confirmCancelTitle') }}</h3>
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <p class="modal-description" v-html="t('subscription.confirmCancelMessage', { plan: getPlanDisplayName(subscription?.plan), date: formatDate(subscription?.next_billing_date) })">
             </p>
             <div class="modal-actions">
@@ -580,7 +581,17 @@ import { useSubscription } from '../composables/useSubscription'
 import { getFullLocale } from '../i18n'
 
 const { t } = useI18n()
-const { fetchPlans, fetchCurrentSubscription, startCheckout, isLoading, paymentsAvailable } = useSubscription()
+const {
+  fetchPlans,
+  fetchCurrentSubscription,
+  startCheckout,
+  isLoading,
+  paymentsAvailable,
+  openBillingPortal,
+  previewPlanChange,
+  changePlan,
+  cancelSubscription
+} = useSubscription()
 
 const subscription = ref(null)
 const availablePlans = ref([])

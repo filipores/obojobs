@@ -172,14 +172,10 @@ def create_checkout() -> tuple[Response, int]:
 @jwt_required()
 def get_current_subscription() -> tuple[Response, int]:
     """Get the current user's credit balance and plan details."""
-    from middleware.subscription_limit import get_subscription_usage
-
     user_id = get_current_user_id()
     user = subscription_data_service.get_user(user_id)
     if not user:
         return jsonify({"success": False, "error": "Benutzer nicht gefunden"}), 404
-
-    usage = get_subscription_usage(user)
 
     subscription_data = {
         "plan": "free",

@@ -78,6 +78,7 @@ export const authStore = reactive({
       }
     } catch (error) {
       // Even if server logout fails, clear local state
+      // eslint-disable-next-line no-console
       console.warn('Server logout failed:', error)
     } finally {
       // Always clear local state
@@ -119,6 +120,7 @@ export const authStore = reactive({
       return true
     } catch (error) {
       // If parsing fails, token is invalid
+      // eslint-disable-next-line no-console
       console.warn('Invalid token format:', error)
       this.clearAuthState()
       return false

@@ -96,6 +96,30 @@ async function fetchCurrentSubscription() {
   }
 }
 
+async function openBillingPortal() {
+  // eslint-disable-next-line no-console
+  console.warn('Billing portal not implemented')
+  throw new Error('Not implemented')
+}
+
+async function previewPlanChange(planId) {
+  // eslint-disable-next-line no-console
+  console.warn('Plan change preview not implemented for plan:', planId)
+  return { immediate_charge: 0, next_billing_date: Date.now() / 1000, new_plan_price: '0.00 EUR' }
+}
+
+async function changePlan(planId) {
+  // eslint-disable-next-line no-console
+  console.warn('Change plan not implemented for plan:', planId)
+  throw new Error('Not implemented')
+}
+
+async function cancelSubscription() {
+  // eslint-disable-next-line no-console
+  console.warn('Cancel subscription not implemented')
+  throw new Error('Not implemented')
+}
+
 /**
  * Composable for subscription operations
  */
@@ -107,7 +131,11 @@ export function useSubscription() {
     error: readonly(error),
     fetchPlans,
     startCheckout,
-    fetchCurrentSubscription
+    fetchCurrentSubscription,
+    openBillingPortal,
+    previewPlanChange,
+    changePlan,
+    cancelSubscription
   }
 }
 
