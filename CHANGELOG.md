@@ -1,3 +1,10 @@
+# [1.70.0](https://github.com/filipores/obojobs/compare/v1.69.6...v1.70.0) (2026-02-21)
+
+
+### Features
+
+* switch to qwen3.5-plus for faster generation (~3x speedup) ([d733d9b](https://github.com/filipores/obojobs/commit/d733d9ba5791142a0ffa75d0d1247e34df371b45))
+
 ## [1.69.6](https://github.com/filipores/obojobs/compare/v1.69.5...v1.69.6) (2026-02-21)
 
 
