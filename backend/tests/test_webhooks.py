@@ -53,22 +53,22 @@ class TestWebhookSignature:
 
 class TestCheckoutCompleted:
     @patch("routes.webhooks.StripeService")
-    def test_creates_subscription(self, mock_service_class, client, user_with_stripe, app):
+    def test_grants_credits(self, mock_service_class, client, user_with_stripe, app):
         mock_service = MagicMock()
         mock_service.construct_webhook_event.return_value = _make_webhook_event(
             "checkout.session.completed",
             {
                 "customer": "cus_test_123",
-                "subscription": "sub_test_123",
+                "payment_status": "paid",
+                "metadata": {"plan": "starter", "user_id": str(user_with_stripe["id"])},
             },
         )
-        mock_service.get_subscription.return_value = {
-            "status": "active",
-            "current_period_start": 1700000000,
-            "current_period_end": 1702600000,
-            "items": {"data": [{"price": {"id": "price_dev_basic_mock"}}]},
-        }
         mock_service_class.return_value = mock_service
+
+        # Get initial credits
+        with app.app_context():
+            user = User.query.get(user_with_stripe["id"])
+            initial_credits = user.credits_remaining
 
         response = client.post(
             "/api/webhooks/stripe",
@@ -79,9 +79,9 @@ class TestCheckoutCompleted:
         assert response.status_code == 200
 
         with app.app_context():
-            sub = Subscription.query.filter_by(user_id=user_with_stripe["id"]).first()
-            assert sub is not None
-            assert sub.stripe_subscription_id == "sub_test_123"
+            user = User.query.get(user_with_stripe["id"])
+            # Starter plan grants 50 credits
+            assert user.credits_remaining == initial_credits + 50
 
 
 class TestSubscriptionDeleted:
@@ -93,7 +93,7 @@ class TestSubscriptionDeleted:
                 user_id=user_with_stripe["id"],
                 stripe_customer_id="cus_test_123",
                 stripe_subscription_id="sub_test_456",
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
@@ -140,7 +140,7 @@ class TestWebhookIdempotency:
                 user_id=user_with_stripe["id"],
                 stripe_customer_id="cus_test_123",
                 stripe_subscription_id="sub_test_dup",
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
@@ -180,7 +180,7 @@ class TestWebhookIdempotency:
                 "status": "active",
                 "current_period_start": 1700000000,
                 "current_period_end": 1702600000,
-                "items": {"data": [{"price": {"id": "price_dev_basic_mock"}}]},
+                "items": {"data": [{"price": {"id": "price_dev_starter_mock"}}]},
             },
             event_id="evt_record_001",
         )
@@ -191,7 +191,7 @@ class TestWebhookIdempotency:
                 user_id=user_with_stripe["id"],
                 stripe_customer_id="cus_test_123",
                 stripe_subscription_id="sub_test_record",
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
@@ -221,7 +221,7 @@ class TestInvoicePaymentFailed:
                 user_id=user_with_stripe["id"],
                 stripe_customer_id="cus_test_123",
                 stripe_subscription_id="sub_test_fail",
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
@@ -258,7 +258,7 @@ class TestInvoicePaymentSucceeded:
                 user_id=user_with_stripe["id"],
                 stripe_customer_id="cus_test_123",
                 stripe_subscription_id="sub_test_success",
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.past_due,
             )
             db.session.add(sub)
@@ -309,7 +309,7 @@ class TestSubscriptionUpdatedTracking:
                 user_id=user_with_stripe["id"],
                 stripe_customer_id="cus_test_123",
                 stripe_subscription_id="sub_test_cancel",
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
@@ -327,7 +327,7 @@ class TestSubscriptionUpdatedTracking:
                 "trial_end": None,
                 "current_period_start": 1700000000,
                 "current_period_end": 1702600000,
-                "items": {"data": [{"price": {"id": "price_dev_basic_mock"}}]},
+                "items": {"data": [{"price": {"id": "price_dev_starter_mock"}}]},
             },
             event_id="evt_cancel_track_001",
         )

@@ -118,7 +118,7 @@ class TestAdminStats:
         assert data["total_applications"] == 0
         assert data["applications_this_month"] == 0
         assert data["subscriptions"]["free"] == 1
-        assert data["subscriptions"]["basic"] == 0
+        assert data["subscriptions"]["starter"] == 0
         assert data["subscriptions"]["pro"] == 0
         assert data["revenue_estimate"] == 0.0
         assert data["email_verified_count"] == 1  # admin is verified
@@ -141,7 +141,7 @@ class TestAdminStats:
             # Create subscriptions
             sub1 = Subscription(
                 user_id=user1.id,
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             sub2 = Subscription(
@@ -167,10 +167,10 @@ class TestAdminStats:
         assert data["total_users"] == 3  # admin + 2 users
         assert data["total_applications"] == 3
         assert data["applications_this_month"] == 8  # 5 + 3 + 0 (admin)
-        assert data["subscriptions"]["basic"] == 1
+        assert data["subscriptions"]["starter"] == 1
         assert data["subscriptions"]["pro"] == 1
         assert data["subscriptions"]["free"] == 1  # admin user
-        assert data["revenue_estimate"] == round(9.99 + 19.99, 2)
+        assert data["revenue_estimate"] == round(9.90 + 19.90, 2)
         assert data["email_verified_count"] == 2  # admin + user1
 
     def test_stats_active_users_30d(self, client, admin_headers, app):
@@ -305,7 +305,7 @@ class TestAdminUsers:
 
             sub = Subscription(
                 user_id=paid_user.id,
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
@@ -318,26 +318,26 @@ class TestAdminUsers:
         emails = [u["email"] for u in data["users"]]
         assert "paid@example.com" not in emails
 
-    def test_list_users_plan_filter_basic(self, client, admin_headers, app):
-        """Filter by basic plan."""
+    def test_list_users_plan_filter_starter(self, client, admin_headers, app):
+        """Filter by starter plan."""
         with app.app_context():
-            user = User(email="basic_user@example.com", full_name="Basic User")
+            user = User(email="starter_user@example.com", full_name="Starter User")
             user.set_password("Pass1234!")
             db.session.add(user)
             db.session.flush()
 
             sub = Subscription(
                 user_id=user.id,
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
             db.session.commit()
 
-        response = client.get("/api/admin/users?plan=basic", headers=admin_headers)
+        response = client.get("/api/admin/users?plan=starter", headers=admin_headers)
         data = response.get_json()
         assert data["total"] == 1
-        assert data["users"][0]["email"] == "basic_user@example.com"
+        assert data["users"][0]["email"] == "starter_user@example.com"
 
     def test_list_users_plan_filter_pro(self, client, admin_headers, app):
         """Filter by pro plan."""
