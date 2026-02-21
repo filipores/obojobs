@@ -342,6 +342,7 @@ class TestDemoGeneratorNoTemplate:
             "anschreiben",
             "betreff",
             "email_text",
+            "pdf_base64",
         }
         assert expected_keys == set(result.keys())
 

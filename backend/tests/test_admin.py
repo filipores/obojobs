@@ -118,7 +118,7 @@ class TestAdminStats:
         assert data["total_applications"] == 0
         assert data["applications_this_month"] == 0
         assert data["subscriptions"]["free"] == 1
-        assert data["subscriptions"]["basic"] == 0
+        assert data["subscriptions"]["starter"] == 0
         assert data["subscriptions"]["pro"] == 0
         assert data["revenue_estimate"] == 0.0
         assert data["email_verified_count"] == 1  # admin is verified
@@ -167,7 +167,7 @@ class TestAdminStats:
         assert data["total_users"] == 3  # admin + 2 users
         assert data["total_applications"] == 3
         assert data["applications_this_month"] == 8  # 5 + 3 + 0 (admin)
-        assert data["subscriptions"]["basic"] == 1
+        assert data["subscriptions"]["starter"] == 1
         assert data["subscriptions"]["pro"] == 1
         assert data["subscriptions"]["free"] == 1  # admin user
         assert data["revenue_estimate"] == round(9.99 + 19.99, 2)

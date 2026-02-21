@@ -73,7 +73,7 @@ class TestStripeServiceMethods:
         service.create_checkout_session("cus_123", "price_basic", "http://ok", "http://cancel")
         call_kwargs = mock_stripe.checkout.Session.create.call_args.kwargs
         assert call_kwargs["customer"] == "cus_123"
-        assert call_kwargs["mode"] == "subscription"
+        assert call_kwargs["mode"] == "payment"
 
     @patch("services.stripe_service.stripe")
     @patch("services.stripe_service.config")

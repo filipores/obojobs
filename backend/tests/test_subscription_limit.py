@@ -24,9 +24,9 @@ class TestGetSubscriptionUsage:
             user = User.query.get(test_user["id"])
             usage = get_subscription_usage(user)
             assert usage["plan"] == "free"
-            assert usage["limit"] == 3
+            assert usage["limit"] == 10
             assert usage["used"] == 0
-            assert usage["remaining"] == 3
+            assert usage["remaining"] == 10
 
     def test_pro_user_unlimited(self, app, test_user):
         with app.app_context():
