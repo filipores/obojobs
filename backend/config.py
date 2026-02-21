@@ -41,9 +41,9 @@ class Config:
     TEMPERATURE = 0.7
     USE_EXTRACTION = True
 
-    # Qwen API (via Fireworks AI)
-    QWEN_MODEL = os.getenv("QWEN_MODEL", "accounts/fireworks/models/qwen3-235b-a22b-instruct-2507")
-    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "accounts/fireworks/models/qwen3-next-80b-a3b-instruct")
+    # AI Models (via Fireworks AI)
+    QWEN_MODEL = os.getenv("QWEN_MODEL", "accounts/fireworks/models/deepseek-v3p1")
+    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "accounts/fireworks/models/deepseek-v3p1")
     QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://api.fireworks.ai/inference/v1")
     QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
     QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))
