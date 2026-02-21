@@ -22,6 +22,51 @@ class EmailFormatter:
         return f"Bewerbung um die Position als {position}"
 
     @staticmethod
+    def build_signature(
+        user_name=None,
+        user_email=None,
+        user_phone=None,
+        user_city=None,
+        user_website=None,
+    ):
+        """Build email signature block from user contact details."""
+        name = user_name or "Ihr Name"
+        signature_parts = [name]
+        contact_line = " | ".join(filter(None, [user_city, user_phone]))
+        if contact_line:
+            signature_parts.append(contact_line)
+        if user_email:
+            signature_parts.append(user_email)
+        if user_website:
+            signature_parts.append(user_website)
+        return "\n".join(signature_parts)
+
+    @staticmethod
+    def combine_email_body_with_signature(
+        ai_body,
+        user_name=None,
+        user_email=None,
+        user_phone=None,
+        user_city=None,
+        user_website=None,
+    ):
+        """Combine AI-generated email body with user signature.
+
+        The AI body should end with "Mit freundlichen Grüßen" (no name).
+        This method appends the signature block after it.
+        """
+        signature = EmailFormatter.build_signature(
+            user_name=user_name,
+            user_email=user_email,
+            user_phone=user_phone,
+            user_city=user_city,
+            user_website=user_website,
+        )
+        # Strip trailing whitespace from AI body and append signature
+        body = ai_body.rstrip()
+        return f"{body}\n{signature}"
+
+    @staticmethod
     def generate_email_text(
         position,
         ansprechperson,
@@ -33,7 +78,7 @@ class EmailFormatter:
         user_city=None,
         user_website=None,
     ):
-        """Generate personalized email text for job application."""
+        """Generate static fallback email text for job application."""
         if attachments is None:
             attachments = ["Anschreiben", "Lebenslauf"]
 
@@ -41,17 +86,13 @@ class EmailFormatter:
         if firma_name:
             position_text = f"die Position als {position} bei {firma_name}"
 
-        name = user_name or "Ihr Name"
-        signature_parts = [name]
-        contact_line = " | ".join(filter(None, [user_city, user_phone]))
-        if contact_line:
-            signature_parts.append(contact_line)
-        if user_email:
-            signature_parts.append(user_email)
-        if user_website:
-            signature_parts.append(user_website)
-
-        signature = "\n".join(signature_parts)
+        signature = EmailFormatter.build_signature(
+            user_name=user_name,
+            user_email=user_email,
+            user_phone=user_phone,
+            user_city=user_city,
+            user_website=user_website,
+        )
 
         return f"""{ansprechperson},
 
