@@ -438,7 +438,8 @@ const openInEmailClient = () => {
   if (subject) params.set('subject', subject)
   if (body) params.set('body', body)
 
-  const query = params.toString()
+  // URLSearchParams encodes spaces as '+', but mailto: requires '%20' (RFC 6068)
+  const query = params.toString().replaceAll('+', '%20')
   window.location.href = `mailto:${encodeURIComponent(to)}${query ? '?' + query : ''}`
 }
 
