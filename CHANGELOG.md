@@ -1,3 +1,10 @@
+# [1.69.0](https://github.com/filipores/obojobs/compare/v1.68.2...v1.69.0) (2026-02-21)
+
+
+### Features
+
+* ai-personalized email body for job applications ([e1fa261](https://github.com/filipores/obojobs/commit/e1fa26192aaed33a2cdd3ceeeff0b80e5f6e5a23))
+
 ## [1.68.2](https://github.com/filipores/obojobs/compare/v1.68.1...v1.68.2) (2026-02-21)
 
 
