@@ -391,7 +391,7 @@ async function handleManualAnalyze({ jobText, company, title }) {
     id: jobId,
     url: '',
     status: 'extracted',
-    quickData: null,
+    quickData: { company: company || '', title: title || '', portal: null },
     editableData: {
       company: company || '',
       title: title || '',

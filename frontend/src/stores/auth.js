@@ -103,5 +103,6 @@ export const authStore = reactive({
     this.token = null
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    sessionStorage.removeItem('obo_jobs_pipeline')
   }
 })
