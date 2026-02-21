@@ -1,4 +1,4 @@
-"""Tests for subscription routes."""
+"""Tests for subscription routes (credit-based pricing model)."""
 
 from unittest.mock import MagicMock, patch
 
@@ -24,21 +24,46 @@ class TestGetPlans:
         assert data["success"] is True
         assert len(data["data"]) == 3
         plan_ids = [p["plan_id"] for p in data["data"]]
-        assert plan_ids == ["free", "basic", "pro"]
+        assert plan_ids == ["free", "starter", "pro"]
 
     def test_free_plan_details(self, client):
         response = client.get("/api/subscriptions/plans")
         plans = response.get_json()["data"]
         free = plans[0]
         assert free["price"] == 0
-        assert free["limits"]["applications_per_month"] == 3
+        assert free["credits"] == 10
         assert free["stripe_price_id"] is None
 
-    def test_pro_plan_unlimited(self, client):
+    def test_pro_plan_credits(self, client):
+        """Pro plan should offer 150 credits."""
         response = client.get("/api/subscriptions/plans")
         plans = response.get_json()["data"]
         pro = plans[2]
-        assert pro["limits"]["applications_per_month"] == -1
+        assert pro["credits"] == 150
+        assert pro["plan_id"] == "pro"
+
+    def test_starter_plan_credits(self, client):
+        """Starter plan should offer 50 credits."""
+        response = client.get("/api/subscriptions/plans")
+        plans = response.get_json()["data"]
+        starter = plans[1]
+        assert starter["credits"] == 50
+        assert starter["plan_id"] == "starter"
+
+    def test_plans_include_features(self, client):
+        """Each plan should have a features list."""
+        response = client.get("/api/subscriptions/plans")
+        plans = response.get_json()["data"]
+        for plan in plans:
+            assert "features" in plan
+            assert isinstance(plan["features"], list)
+            assert len(plan["features"]) > 0
+
+    def test_payments_available_in_response(self, client):
+        """Response should include payments_available flag."""
+        response = client.get("/api/subscriptions/plans")
+        data = response.get_json()
+        assert "payments_available" in data
 
 
 class TestCreateCheckout:
@@ -63,13 +88,22 @@ class TestCreateCheckout:
         )
         assert response.status_code == 400
 
+    def test_free_plan_rejected(self, client, auth_headers):
+        """Free plan should not be purchasable via checkout."""
+        response = client.post(
+            "/api/subscriptions/create-checkout",
+            json={"plan": "free", "success_url": "http://x", "cancel_url": "http://x"},
+            headers=auth_headers,
+        )
+        assert response.status_code == 400
+
     def test_stripe_disabled_returns_503(self, client, auth_headers):
         """When Stripe is not configured, create-checkout should return 503"""
         with patch("routes.subscriptions.config") as mock_config:
             mock_config.is_stripe_enabled.return_value = False
             response = client.post(
                 "/api/subscriptions/create-checkout",
-                json={"plan": "basic", "success_url": "http://x", "cancel_url": "http://x"},
+                json={"plan": "starter", "success_url": "http://x", "cancel_url": "http://x"},
                 headers=auth_headers,
             )
             assert response.status_code == 503
@@ -79,203 +113,166 @@ class TestCreateCheckout:
     def test_missing_urls(self, client, auth_headers):
         response = client.post(
             "/api/subscriptions/create-checkout",
-            json={"plan": "basic"},
+            json={"plan": "starter"},
             headers=auth_headers,
         )
         assert response.status_code == 400
 
+    @patch("routes.subscriptions.StripeService")
+    def test_successful_checkout_starter(self, mock_service_class, client, auth_headers, app, test_user):
+        """Successful checkout for starter plan creates a Stripe session."""
+        mock_service = MagicMock()
+        mock_service_class.return_value = mock_service
+        mock_service.create_customer.return_value = "cus_new_123"
+        mock_session = MagicMock()
+        mock_session.url = "https://checkout.stripe.com/session_123"
+        mock_session.id = "cs_test_123"
+        mock_service.create_checkout_session.return_value = mock_session
 
-class TestPortalSession:
-    """Test POST /api/subscriptions/portal"""
+        with patch("routes.subscriptions.config") as mock_config:
+            mock_config.is_stripe_enabled.return_value = True
+            mock_config.STRIPE_PRICE_STARTER = "price_starter_test"
+            mock_config.STRIPE_PRICE_PRO = "price_pro_test"
 
-    def test_no_stripe_customer(self, client, auth_headers):
-        response = client.post(
-            "/api/subscriptions/portal",
-            json={"return_url": "http://localhost"},
-            headers=auth_headers,
-        )
-        assert response.status_code == 400
+            # Re-import to pick up patched config in SUBSCRIPTION_PLANS
+            # Instead, patch the plan data directly
+            with patch(
+                "routes.subscriptions.SUBSCRIPTION_PLANS",
+                {
+                    "starter": {
+                        "plan_id": "starter",
+                        "name": "Starter",
+                        "price": 9.90,
+                        "credits": 50,
+                        "stripe_price_id": "price_starter_test",
+                    },
+                    "pro": {
+                        "plan_id": "pro",
+                        "name": "Pro",
+                        "price": 19.90,
+                        "credits": 150,
+                        "stripe_price_id": "price_pro_test",
+                    },
+                    "free": {
+                        "plan_id": "free",
+                        "name": "Free",
+                        "price": 0,
+                        "credits": 10,
+                        "stripe_price_id": None,
+                    },
+                },
+            ):
+                response = client.post(
+                    "/api/subscriptions/create-checkout",
+                    json={
+                        "plan": "starter",
+                        "success_url": "http://localhost/success",
+                        "cancel_url": "http://localhost/cancel",
+                    },
+                    headers=auth_headers,
+                )
 
-    def test_missing_return_url(self, client, auth_headers):
-        response = client.post(
-            "/api/subscriptions/portal",
-            json={},
-            headers=auth_headers,
-        )
-        assert response.status_code == 400
+        assert response.status_code == 200
+        data = response.get_json()
+        assert data["success"] is True
+        assert "checkout_url" in data["data"]
+        assert "session_id" in data["data"]
 
 
 class TestCurrentSubscription:
     """Test GET /api/subscriptions/current"""
 
     def test_free_user(self, client, auth_headers):
+        """Free user should have 10 credits (default)."""
         response = client.get("/api/subscriptions/current", headers=auth_headers)
         assert response.status_code == 200
         data = response.get_json()["data"]
         assert data["plan"] == "free"
-        assert data["usage"]["limit"] == 3
+        assert data["credits_remaining"] == 10
+        assert data["usage"]["limit"] == 10
+        assert data["usage"]["remaining"] == 10
 
-    def test_basic_user(self, client, auth_headers, app, test_user):
+    def test_credits_remaining_matches_user(self, client, auth_headers, app, test_user):
+        """Credits remaining should reflect the user's actual credit balance."""
         with app.app_context():
-            user = User.query.get(test_user["id"])
-            sub = Subscription(
-                user_id=user.id,
-                stripe_customer_id="cus_test",
-                plan=SubscriptionPlan.basic,
-                status=SubscriptionStatus.active,
-            )
-            db.session.add(sub)
+            user = db.session.get(User, test_user["id"])
+            user.credits_remaining = 75
             db.session.commit()
 
         response = client.get("/api/subscriptions/current", headers=auth_headers)
         assert response.status_code == 200
         data = response.get_json()["data"]
-        assert data["plan"] == "basic"
-        assert data["usage"]["limit"] == 20
+        assert data["credits_remaining"] == 75
+        assert data["usage"]["remaining"] == 75
 
-    def test_returns_cancel_at_period_end(self, client, auth_headers, app, test_user):
-        """Current subscription endpoint should return cancel_at_period_end."""
+    def test_zero_credits_remaining(self, client, auth_headers, app, test_user):
+        """User with zero credits should see zero remaining."""
         with app.app_context():
-            user = User.query.get(test_user["id"])
-            sub = Subscription(
-                user_id=user.id,
-                stripe_customer_id="cus_test",
-                plan=SubscriptionPlan.basic,
-                status=SubscriptionStatus.active,
-                cancel_at_period_end=True,
-            )
-            db.session.add(sub)
+            user = db.session.get(User, test_user["id"])
+            user.credits_remaining = 0
             db.session.commit()
 
         response = client.get("/api/subscriptions/current", headers=auth_headers)
         assert response.status_code == 200
         data = response.get_json()["data"]
-        assert data["cancel_at_period_end"] is True
+        assert data["credits_remaining"] == 0
+        assert data["usage"]["remaining"] == 0
 
+    def test_response_includes_plan_details(self, client, auth_headers):
+        """Current subscription response should include plan details."""
+        response = client.get("/api/subscriptions/current", headers=auth_headers)
+        assert response.status_code == 200
+        data = response.get_json()["data"]
+        assert "plan_details" in data
+        assert data["plan_details"]["plan_id"] == "free"
 
-class TestChangePlan:
-    """Test POST /api/subscriptions/change-plan"""
+    def test_response_includes_payments_available(self, client, auth_headers):
+        """Current subscription response should include payments_available."""
+        response = client.get("/api/subscriptions/current", headers=auth_headers)
+        assert response.status_code == 200
+        data = response.get_json()["data"]
+        assert "payments_available" in data
 
-    def test_no_subscription_returns_400(self, client, auth_headers):
-        """Users without an active subscription cannot change plan."""
-        response = client.post(
-            "/api/subscriptions/change-plan",
-            json={"plan": "pro"},
-            headers=auth_headers,
-        )
-        assert response.status_code == 400
+    def test_has_stripe_customer_flag(self, client, auth_headers, app, test_user):
+        """Should return has_stripe_customer based on user's stripe_customer_id."""
+        # Default user has no stripe customer
+        response = client.get("/api/subscriptions/current", headers=auth_headers)
+        data = response.get_json()["data"]
+        assert data["has_stripe_customer"] is False
 
-    def test_invalid_plan_returns_400(self, client, auth_headers):
-        """Invalid plan name should return 400."""
-        response = client.post(
-            "/api/subscriptions/change-plan",
-            json={"plan": "enterprise"},
-            headers=auth_headers,
-        )
-        assert response.status_code == 400
-
-    def test_same_plan_returns_400(self, client, auth_headers, app, test_user):
-        """Changing to the same plan should return 400."""
+        # Set stripe customer id
         with app.app_context():
-            user = User.query.get(test_user["id"])
-            sub = Subscription(
-                user_id=user.id,
-                stripe_customer_id="cus_test_change",
-                stripe_subscription_id="sub_test_change",
-                plan=SubscriptionPlan.basic,
-                status=SubscriptionStatus.active,
-            )
-            db.session.add(sub)
+            user = db.session.get(User, test_user["id"])
+            user.stripe_customer_id = "cus_test_123"
             db.session.commit()
 
-        response = client.post(
-            "/api/subscriptions/change-plan",
-            json={"plan": "basic"},
-            headers=auth_headers,
-        )
-        assert response.status_code == 400
+        response = client.get("/api/subscriptions/current", headers=auth_headers)
+        data = response.get_json()["data"]
+        assert data["has_stripe_customer"] is True
 
-    @patch("routes.subscriptions.StripeService")
-    def test_upgrade_basic_to_pro(self, mock_service_class, client, auth_headers, app, test_user):
-        """Upgrading from basic to pro should use always_invoice proration."""
-        with app.app_context():
-            user = User.query.get(test_user["id"])
-            sub = Subscription(
-                user_id=user.id,
-                stripe_customer_id="cus_test_upgrade",
-                stripe_subscription_id="sub_test_upgrade",
-                plan=SubscriptionPlan.basic,
-                status=SubscriptionStatus.active,
-            )
-            db.session.add(sub)
-            db.session.commit()
 
-        mock_service = MagicMock()
-        mock_service_class.return_value = mock_service
+class TestPaymentStatus:
+    """Test GET /api/subscriptions/status (public endpoint)"""
 
-        response = client.post(
-            "/api/subscriptions/change-plan",
-            json={"plan": "pro"},
-            headers=auth_headers,
-        )
+    def test_returns_status(self, client):
+        """Status endpoint should return payments_available flag."""
+        response = client.get("/api/subscriptions/status")
         assert response.status_code == 200
         data = response.get_json()
-        assert data["data"]["previous_plan"] == "basic"
-        assert data["data"]["new_plan"] == "pro"
-        assert data["data"]["is_upgrade"] is True
+        assert data["success"] is True
+        assert "payments_available" in data["data"]
 
-        # Verify proration behavior
-        mock_service.modify_subscription.assert_called_once()
-        call_kwargs = mock_service.modify_subscription.call_args
-        assert (
-            call_kwargs.kwargs.get("proration_behavior") == "always_invoice"
-            or (len(call_kwargs.args) >= 3 and call_kwargs.args[2] == "always_invoice")
-            or call_kwargs[1].get("proration_behavior") == "always_invoice"
-        )
-
-    @patch("routes.subscriptions.StripeService")
-    def test_downgrade_pro_to_basic(self, mock_service_class, client, auth_headers, app, test_user):
-        """Downgrading from pro to basic should use create_prorations proration."""
-        with app.app_context():
-            user = User.query.get(test_user["id"])
-            sub = Subscription(
-                user_id=user.id,
-                stripe_customer_id="cus_test_downgrade",
-                stripe_subscription_id="sub_test_downgrade",
-                plan=SubscriptionPlan.pro,
-                status=SubscriptionStatus.active,
-            )
-            db.session.add(sub)
-            db.session.commit()
-
-        mock_service = MagicMock()
-        mock_service_class.return_value = mock_service
-
-        response = client.post(
-            "/api/subscriptions/change-plan",
-            json={"plan": "basic"},
-            headers=auth_headers,
-        )
-        assert response.status_code == 200
-        data = response.get_json()
-        assert data["data"]["previous_plan"] == "pro"
-        assert data["data"]["new_plan"] == "basic"
-        assert data["data"]["is_upgrade"] is False
-
-    def test_stripe_disabled_returns_503(self, client, auth_headers):
-        """When Stripe is not configured, change-plan should return 503."""
-        with patch("routes.subscriptions.config") as mock_config:
-            mock_config.is_stripe_enabled.return_value = False
-            response = client.post(
-                "/api/subscriptions/change-plan",
-                json={"plan": "pro"},
-                headers=auth_headers,
-            )
-            assert response.status_code == 503
+    def test_stripe_disabled(self, client):
+        """When Stripe is disabled, payments_available should be False."""
+        with patch("routes.subscriptions.config.is_stripe_enabled", return_value=False):
+            response = client.get("/api/subscriptions/status")
+            assert response.status_code == 200
+            data = response.get_json()
+            assert data["data"]["payments_available"] is False
 
 
 class TestSubscriptionModelFields:
-    """Test that new subscription model fields work correctly."""
+    """Test that subscription model fields work correctly."""
 
     def test_default_cancel_at_period_end(self, app):
         """cancel_at_period_end should default to False."""
@@ -298,7 +295,7 @@ class TestSubscriptionModelFields:
         with app.app_context():
             sub = Subscription(
                 user_id=1,
-                plan=SubscriptionPlan.basic,
+                plan=SubscriptionPlan.starter,
                 status=SubscriptionStatus.active,
             )
             db.session.add(sub)
@@ -311,3 +308,24 @@ class TestSubscriptionModelFields:
             assert result["cancel_at_period_end"] is False
             assert result["canceled_at"] is None
             assert result["trial_end"] is None
+
+    def test_subscription_plan_enum_values(self, app):
+        """SubscriptionPlan should have free, starter, pro values."""
+        assert SubscriptionPlan.free.value == "free"
+        assert SubscriptionPlan.starter.value == "starter"
+        assert SubscriptionPlan.pro.value == "pro"
+
+    def test_to_dict_plan_value(self, app):
+        """to_dict() should return the plan enum value as string."""
+        with app.app_context():
+            sub = Subscription(
+                user_id=1,
+                plan=SubscriptionPlan.pro,
+                status=SubscriptionStatus.active,
+            )
+            db.session.add(sub)
+            db.session.commit()
+
+            result = sub.to_dict()
+            assert result["plan"] == "pro"
+            assert result["status"] == "active"
