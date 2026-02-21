@@ -1,3 +1,10 @@
+## [1.68.1](https://github.com/filipores/obojobs/compare/v1.68.0...v1.68.1) (2026-02-21)
+
+
+### Bug Fixes
+
+* **tests:** align tests with credit-based pricing model ([87d9007](https://github.com/filipores/obojobs/commit/87d9007a90b891bdb8adb421636d3949312b9941))
+
 # [1.68.0](https://github.com/filipores/obojobs/compare/v1.67.0...v1.68.0) (2026-02-20)
 
 
