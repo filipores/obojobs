@@ -34,16 +34,9 @@ class Config:
     MAX_CONTENT_LENGTH = int(os.getenv("MAX_CONTENT_LENGTH", 10 * 1024 * 1024))  # 10MB
     ALLOWED_EXTENSIONS = {"pdf"}  # Nur PDFs erlaubt
 
-    # Anthropic API
-    ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-    CLAUDE_MODEL = "claude-3-5-haiku-20241022"
-    MAX_TOKENS = 300
-    TEMPERATURE = 0.7
-    USE_EXTRACTION = True
-
-    # Qwen3 (via OpenRouter)
+    # Qwen3.5-Plus (via OpenRouter)
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-    QWEN_MODEL = os.getenv("QWEN_MODEL", "qwen/qwen3-235b-a22b-2507")
+    QWEN_MODEL = os.getenv("QWEN_MODEL", "qwen/qwen3.5-plus-02-15")
     QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://openrouter.ai/api/v1")
     QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
     QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))
