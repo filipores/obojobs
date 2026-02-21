@@ -41,10 +41,11 @@ class Config:
     TEMPERATURE = 0.7
     USE_EXTRACTION = True
 
-    # AI Models (via Fireworks AI)
-    QWEN_MODEL = os.getenv("QWEN_MODEL", "accounts/fireworks/models/deepseek-v3p1")
-    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "accounts/fireworks/models/deepseek-v3p1")
-    QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://api.fireworks.ai/inference/v1")
+    # Qwen3 (via OpenRouter)
+    OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
+    QWEN_MODEL = os.getenv("QWEN_MODEL", "qwen/qwen3-235b-a22b-2507")
+    QWEN_FAST_MODEL = os.getenv("QWEN_FAST_MODEL", "qwen/qwen3-235b-a22b-2507")
+    QWEN_API_BASE = os.getenv("QWEN_API_BASE", "https://openrouter.ai/api/v1")
     QWEN_MAX_TOKENS = int(os.getenv("QWEN_MAX_TOKENS", "400"))
     QWEN_TEMPERATURE = float(os.getenv("QWEN_TEMPERATURE", "0.7"))
     QWEN_ANSCHREIBEN_MAX_TOKENS = int(os.getenv("QWEN_ANSCHREIBEN_MAX_TOKENS", "1200"))
@@ -114,6 +115,8 @@ class Config:
     @staticmethod
     def validate_config():
         """Validate required configuration"""
+        if not Config.OPENROUTER_API_KEY:
+            raise ValueError("OPENROUTER_API_KEY environment variable is required")
         if not Config.FIREWORKS_API_KEY:
             raise ValueError("FIREWORKS_API_KEY environment variable is required")
 

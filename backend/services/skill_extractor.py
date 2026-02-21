@@ -1,67 +1,56 @@
 """
-Skill Extractor Service - Extracts skills from CV text using Claude API.
+Skill Extractor Service - Extracts skills from CV text using DeepSeek via Fireworks.
 """
 
-import json
 import logging
-import time
 
-from anthropic import Anthropic
-
-from config import config
+from services.ai_client import AIClient
 
 logger = logging.getLogger(__name__)
 
 
 class SkillExtractor:
-    """Service to extract skills from CV documents using Claude API."""
+    """Service to extract skills from CV documents using DeepSeek."""
 
     VALID_CATEGORIES = ["technical", "soft_skills", "languages", "tools", "certifications"]
 
-    def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.ANTHROPIC_API_KEY
-        if not self.api_key:
-            raise ValueError("ANTHROPIC_API_KEY nicht gesetzt")
-        self.client = Anthropic(api_key=self.api_key)
-        self.model = config.CLAUDE_MODEL
+    CATEGORY_MAPPING = {
+        "programming": "technical",
+        "programmierung": "technical",
+        "sprachen": "languages",
+        "language": "languages",
+        "soft_skill": "soft_skills",
+        "softskills": "soft_skills",
+        "tool": "tools",
+        "certification": "certifications",
+        "zertifikat": "certifications",
+        "zertifikate": "certifications",
+    }
 
-    def extract_skills_from_cv(self, cv_text: str, retry_count: int = 3) -> list[dict]:
-        """
-        Extract skills from CV text using Claude API.
+    def __init__(self):
+        self.client = AIClient()
 
-        Args:
-            cv_text: The text content of the CV
-            retry_count: Number of retries on failure
+    def extract_skills_from_cv(self, cv_text: str) -> list[dict]:
+        """Extract skills from CV text using DeepSeek via Fireworks.
 
-        Returns:
-            List of skill dictionaries with keys:
-            - skill_name: Name of the skill
-            - skill_category: One of technical, soft_skills, languages, tools, certifications
-            - experience_years: Years of experience (float or None)
+        Returns list of skill dicts with keys: skill_name, skill_category, experience_years
         """
         prompt = self._create_extraction_prompt(cv_text)
 
-        for attempt in range(retry_count):
-            try:
-                response = self.client.messages.create(
-                    model=self.model,
-                    max_tokens=2000,
-                    temperature=0.2,
-                    messages=[{"role": "user", "content": prompt}],
-                )
+        try:
+            data = self.client._call_api_json_with_retry(
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=2000,
+                temperature=0.2,
+                model=self.client.fast_model,
+            )
 
-                response_text = response.content[0].text.strip()
-                skills = self._parse_skills_response(response_text)
-                return skills
+            skills = data.get("skills", [])
+            return self._validate_skills(skills)
 
-            except Exception as e:
-                if attempt < retry_count - 1:
-                    logger.warning("Skill-Extraktion fehlgeschlagen (Versuch %s/%s): %s", attempt + 1, retry_count, e)
-                    time.sleep(2)
-                else:
-                    logger.error("Skill-Extraktion fehlgeschlagen nach %s Versuchen: %s", retry_count, e)
-                    return []
-        return []
+        except Exception as e:
+            logger.error("Skill-Extraktion fehlgeschlagen: %s", e)
+            return []
 
     def _create_extraction_prompt(self, cv_text: str) -> str:
         """Create the prompt for skill extraction."""
@@ -80,81 +69,42 @@ Extrahiere alle Skills und kategorisiere sie. Für jeden Skill gib an:
    - certifications: Zertifikate und Qualifikationen (z.B. AWS Certified, ISTQB)
 3. experience_years: Jahre Erfahrung (Zahl oder null wenn nicht erkennbar)
 
-WICHTIG: Antworte NUR mit einem JSON-Array. Keine anderen Texte.
+Antworte als JSON-Objekt mit einem "skills"-Array.
 
-Beispiel-Antwort:
-[
+Beispiel:
+{{"skills": [
   {{"skill_name": "Python", "skill_category": "technical", "experience_years": 5}},
   {{"skill_name": "Englisch", "skill_category": "languages", "experience_years": null}},
   {{"skill_name": "Git", "skill_category": "tools", "experience_years": 3}}
-]
+]}}"""
 
-Extrahiere jetzt alle Skills als JSON-Array:"""
+    def _validate_skills(self, skills: list) -> list[dict]:
+        """Validate and normalize extracted skills."""
+        valid_skills = []
+        for skill in skills:
+            if not isinstance(skill, dict):
+                continue
 
-    def _parse_skills_response(self, response_text: str) -> list[dict]:
-        """Parse the Claude response into a list of skill dictionaries."""
-        # Clean up the response - find JSON array
-        text = response_text.strip()
+            skill_name = skill.get("skill_name", "").strip()
+            skill_category = skill.get("skill_category", "").strip().lower()
+            experience_years = skill.get("experience_years")
 
-        # Find JSON array bounds
-        start_idx = text.find("[")
-        end_idx = text.rfind("]")
+            if not skill_name:
+                continue
 
-        if start_idx == -1 or end_idx == -1:
-            logger.warning("Keine JSON-Struktur in der Antwort gefunden")
-            return []
+            if skill_category not in self.VALID_CATEGORIES:
+                skill_category = self.CATEGORY_MAPPING.get(skill_category, "technical")
 
-        json_text = text[start_idx : end_idx + 1]
-
-        try:
-            skills = json.loads(json_text)
-
-            # Validate and clean skills
-            valid_skills = []
-            for skill in skills:
-                if not isinstance(skill, dict):
-                    continue
-
-                skill_name = skill.get("skill_name", "").strip()
-                skill_category = skill.get("skill_category", "").strip().lower()
-                experience_years = skill.get("experience_years")
-
-                # Skip invalid entries
-                if not skill_name:
-                    continue
-
-                # Validate category
-                if skill_category not in self.VALID_CATEGORIES:
-                    # Try to map common variations
-                    category_mapping = {
-                        "programming": "technical",
-                        "programmierung": "technical",
-                        "sprachen": "languages",
-                        "language": "languages",
-                        "soft_skill": "soft_skills",
-                        "softskills": "soft_skills",
-                        "tool": "tools",
-                        "certification": "certifications",
-                        "zertifikat": "certifications",
-                        "zertifikate": "certifications",
-                    }
-                    skill_category = category_mapping.get(skill_category, "technical")
-
-                # Validate experience_years
-                if experience_years is not None:
-                    try:
-                        experience_years = float(experience_years)
-                        if experience_years < 0:
-                            experience_years = None
-                    except (ValueError, TypeError):
+            if experience_years is not None:
+                try:
+                    experience_years = float(experience_years)
+                    if experience_years < 0:
                         experience_years = None
+                except (ValueError, TypeError):
+                    experience_years = None
 
-                valid_skills.append(
-                    {"skill_name": skill_name, "skill_category": skill_category, "experience_years": experience_years}
-                )
+            valid_skills.append(
+                {"skill_name": skill_name, "skill_category": skill_category, "experience_years": experience_years}
+            )
 
-            return valid_skills
-
-        except json.JSONDecodeError as e:
-            logger.error("JSON Parse Error: %s", e)
-            return []
+        return valid_skills

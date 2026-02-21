@@ -426,7 +426,7 @@ const deleteDoc = async (id, docType) => {
     cancelText: 'Abbrechen',
     type: 'danger',
     showCheckbox: isLebenslauf,
-    checkboxLabel: 'Auch extrahierte Skills löschen',
+    checkboxLabel: 'Alle Skills löschen',
     checkboxDefault: false
   })
 

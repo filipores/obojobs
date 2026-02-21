@@ -16,7 +16,7 @@ make install        # Frontend npm + Backend venv/pip
 
 # 2. Configure environment
 cp .env.example .env
-# Edit .env with required keys (FIREWORKS_API_KEY at minimum)
+# Edit .env with required keys (OPENROUTER_API_KEY + FIREWORKS_API_KEY)
 
 # 3. Start dev servers
 make dev            # Both frontend + backend in parallel
@@ -28,7 +28,8 @@ make dev-backend    # Flask on http://localhost:5002
 Frontend proxies `/api` requests to `http://127.0.0.1:5002` via Vite config.
 
 ### Required Environment Variables
-- `FIREWORKS_API_KEY` -- required for AI features (Fireworks AI / Qwen + Kimi)
+- `OPENROUTER_API_KEY` -- required for AI features (OpenRouter / Qwen3)
+- `FIREWORKS_API_KEY` -- required for AI features (Fireworks AI / Kimi K2.5)
 - `SECRET_KEY` -- Flask secret (default: dev value)
 - `JWT_SECRET_KEY` -- JWT signing (default: same as SECRET_KEY)
 
@@ -106,6 +107,7 @@ JWT_SECRET_KEY=<strong-random-key>
 DB_PASSWORD=<postgres-password>
 
 # AI
+OPENROUTER_API_KEY=<openrouter-api-key>
 FIREWORKS_API_KEY=<fireworks-api-key>
 ANTHROPIC_API_KEY=<anthropic-api-key>
 

@@ -39,6 +39,11 @@ def delete_document_skills(user_id: int, document_id: int) -> int:
     return UserSkill.query.filter_by(user_id=user_id, source_document_id=document_id).delete()
 
 
+def delete_all_user_skills(user_id: int) -> int:
+    """Delete ALL skills for a user. Returns count deleted."""
+    return UserSkill.query.filter_by(user_id=user_id).delete()
+
+
 def delete_document(document: Document) -> None:
     """Delete a document record from the database."""
     db.session.delete(document)

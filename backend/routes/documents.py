@@ -189,8 +189,8 @@ def delete_document(doc_id: int, current_user: Any) -> tuple[Response, int]:
     skills_deleted = 0
 
     if delete_skills and document.doc_type == "lebenslauf":
-        # Delete all skills associated with this document
-        skills_deleted = document_service.delete_document_skills(current_user.id, document.id)
+        # Delete ALL user skills (not just document-linked ones)
+        skills_deleted = document_service.delete_all_user_skills(current_user.id)
         document_service.flush()
 
     # Delete files

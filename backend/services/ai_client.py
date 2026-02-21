@@ -22,11 +22,12 @@ class AIClient:
     IGNORED_VALUES = {"keine angabe", "nicht vorhanden", "n/a", ""}
 
     def __init__(self, api_key: str | None = None):
-        self.api_key = api_key or config.FIREWORKS_API_KEY
-        if not self.api_key:
-            raise ValueError("FIREWORKS_API_KEY nicht gesetzt")
+        # Qwen3 via OpenRouter
+        qwen_key = api_key or config.OPENROUTER_API_KEY
+        if not qwen_key:
+            raise ValueError("OPENROUTER_API_KEY nicht gesetzt")
         self.client = OpenAI(
-            api_key=self.api_key,
+            api_key=qwen_key,
             base_url=config.QWEN_API_BASE,
             timeout=90.0,
             http_client=httpx.Client(
@@ -34,9 +35,12 @@ class AIClient:
                 limits=httpx.Limits(keepalive_expiry=30),
             ),
         )
-        # Kimi K2.5 uses separate base URL but same Fireworks API key
+        # Kimi K2.5 via Fireworks AI
+        kimi_key = config.FIREWORKS_API_KEY
+        if not kimi_key:
+            raise ValueError("FIREWORKS_API_KEY nicht gesetzt")
         self.kimi_client = OpenAI(
-            api_key=self.api_key,
+            api_key=kimi_key,
             base_url=config.KIMI_API_BASE,
             timeout=120.0,
             http_client=httpx.Client(
