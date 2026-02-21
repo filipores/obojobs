@@ -1,3 +1,10 @@
+## [1.69.3](https://github.com/filipores/obojobs/compare/v1.69.2...v1.69.3) (2026-02-21)
+
+
+### Bug Fixes
+
+* add generator.py to file-size allowlist ([3be815c](https://github.com/filipores/obojobs/commit/3be815cae6a4714e950006524d26f65c3463cbec))
+
 ## [1.69.2](https://github.com/filipores/obojobs/compare/v1.69.1...v1.69.2) (2026-02-21)
 
 
