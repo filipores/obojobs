@@ -47,7 +47,7 @@ def starte_session(current_user: Any) -> tuple[Response, int]:
         session_typ = data.get("session_typ", "onboarding")
         kontext = data.get("kontext")
 
-        if session_typ not in ("onboarding", "pre_bewerbung", "micro"):
+        if session_typ not in ("onboarding", "pre_bewerbung", "profil", "micro"):
             return jsonify({"error": "Ungueltiger Session-Typ"}), 400
 
         result = seele_service.starte_session(current_user.id, session_typ, kontext=kontext)
@@ -71,6 +71,20 @@ def aktuelle_session(current_user: Any) -> tuple[Response, int]:
     except Exception as e:
         logger.error("Fehler beim Laden der aktuellen Session: %s", e)
         return jsonify({"error": "Session konnte nicht geladen werden"}), 500
+
+
+@seele_bp.route("/sessions/<int:session_id>/beenden", methods=["POST"])
+@jwt_required_custom
+def beende_session(current_user: Any, session_id: int) -> tuple[Response, int]:
+    """End/abort an active session."""
+    try:
+        result = seele_service.beende_session(current_user.id, session_id)
+        return jsonify({"success": True, "session": result}), 200
+    except ValueError as e:
+        return jsonify({"error": str(e)}), 400
+    except Exception as e:
+        logger.error("Fehler beim Beenden der Seele-Session: %s", e)
+        return jsonify({"error": "Session konnte nicht beendet werden"}), 500
 
 
 @seele_bp.route("/antworten", methods=["POST"])

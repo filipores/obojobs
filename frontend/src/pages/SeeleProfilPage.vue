@@ -8,61 +8,95 @@ const showFlow = ref(false)
 const hasProfil = computed(() => !!seeleStore.profil)
 const vollstaendigkeit = computed(() => seeleStore.vollstaendigkeit)
 
-// Profile sections for display
+const sessionTyp = computed(() => 'profil')
+
+// Profile sections mapped to actual nested profile structure
 const sektionen = computed(() => {
   if (!seeleStore.profil) return []
   const p = seeleStore.profil
   const sections = []
 
-  if (p.arbeitsweise || p.teamrolle) {
-    sections.push({
-      titel: 'Arbeitsweise',
-      felder: [
-        p.arbeitsweise && { label: 'Bevorzugte Arbeitsweise', wert: p.arbeitsweise },
-        p.teamrolle && { label: 'Teamrolle', wert: p.teamrolle },
-      ].filter(Boolean)
-    })
+  const fmt = (val) => {
+    if (Array.isArray(val)) return val.length ? val.join(', ') : null
+    return val
   }
 
-  if (p.branche || p.erfahrung) {
-    sections.push({
-      titel: 'Berufliches',
-      felder: [
-        p.branche && { label: 'Branche', wert: p.branche },
-        p.erfahrung && { label: 'Erfahrung', wert: p.erfahrung },
-      ].filter(Boolean)
-    })
-  }
+  // Motivation & Situation
+  const mot = p.motivation || {}
+  const motFelder = [
+    mot.aktuelle_situation && { label: 'Aktuelle Situation', wert: mot.aktuelle_situation },
+    mot.wechselgrund && { label: 'Wechselgrund', wert: mot.wechselgrund },
+    mot.karriereziel && { label: 'Karriereziel', wert: mot.karriereziel },
+    mot.wechsel_tempo && { label: 'Verfügbarkeit', wert: mot.wechsel_tempo },
+    fmt(mot.wichtig_im_job) && { label: 'Wichtig im Job', wert: fmt(mot.wichtig_im_job) },
+    fmt(mot.werte) && { label: 'Werte', wert: fmt(mot.werte) },
+    fmt(mot.dealbreaker) && { label: 'Dealbreaker', wert: fmt(mot.dealbreaker) },
+  ].filter(Boolean)
+  if (motFelder.length) sections.push({ titel: 'Motivation & Situation', felder: motFelder })
 
-  if (p.motivation || p.werte?.length) {
-    sections.push({
-      titel: 'Motivation & Werte',
-      felder: [
-        p.motivation && { label: 'Motivation', wert: p.motivation },
-        p.werte?.length && { label: 'Werte', wert: p.werte.join(', ') },
-      ].filter(Boolean)
-    })
-  }
+  // Arbeitsstil
+  const arb = p.arbeitsstil || {}
+  const arbFelder = [
+    arb.typ && { label: 'Arbeitstyp', wert: arb.typ },
+    fmt(arb.arbeitsmodell) && { label: 'Arbeitsmodell', wert: fmt(arb.arbeitsmodell) },
+    arb.teamrolle && { label: 'Teamrolle', wert: arb.teamrolle },
+    arb.kommunikation && { label: 'Kommunikation', wert: arb.kommunikation },
+    fmt(arb.staerken) && { label: 'Stärken', wert: fmt(arb.staerken) },
+    fmt(arb.entwicklungsbereiche) && { label: 'Entwicklungsbereiche', wert: fmt(arb.entwicklungsbereiche) },
+  ].filter(Boolean)
+  if (arbFelder.length) sections.push({ titel: 'Arbeitsstil', felder: arbFelder })
 
-  if (p.staerken?.length || p.interessen?.length) {
-    sections.push({
-      titel: 'Staerken & Interessen',
-      felder: [
-        p.staerken?.length && { label: 'Staerken', wert: p.staerken.join(', ') },
-        p.interessen?.length && { label: 'Interessen', wert: p.interessen.join(', ') },
-      ].filter(Boolean)
-    })
-  }
+  // Berufserfahrung
+  const ber = p.berufserfahrung || {}
+  const berFelder = [
+    ber.aktuelle_position && { label: 'Aktuelle Position', wert: ber.aktuelle_position },
+    ber.aktueller_arbeitgeber && { label: 'Arbeitgeber', wert: ber.aktueller_arbeitgeber },
+    ber.branche && { label: 'Branche', wert: ber.branche },
+    ber.erfahrungsjahre && { label: 'Erfahrungsjahre', wert: String(ber.erfahrungsjahre) },
+    ber.fuehrungserfahrung && { label: 'Führungserfahrung', wert: ber.fuehrungserfahrung },
+    fmt(ber.highlights) && { label: 'Highlights', wert: fmt(ber.highlights) },
+  ].filter(Boolean)
+  if (berFelder.length) sections.push({ titel: 'Berufserfahrung', felder: berFelder })
 
-  if (p.kommunikationsstil || p.fuehrungspraeferenz) {
-    sections.push({
-      titel: 'Kommunikation',
-      felder: [
-        p.kommunikationsstil && { label: 'Kommunikationsstil', wert: p.kommunikationsstil },
-        p.fuehrungspraeferenz && { label: 'Fuehrungspraeferenz', wert: p.fuehrungspraeferenz },
-      ].filter(Boolean)
-    })
-  }
+  // Qualifikationen
+  const qual = p.qualifikationen || {}
+  const qualFelder = [
+    qual.ausbildung && { label: 'Ausbildung', wert: qual.ausbildung },
+    fmt(qual.zertifikate) && { label: 'Zertifikate', wert: fmt(qual.zertifikate) },
+    fmt(qual.sprachen) && { label: 'Sprachen', wert: fmt(qual.sprachen) },
+    fmt(qual.top_skills) && { label: 'Top-Skills', wert: fmt(qual.top_skills) },
+  ].filter(Boolean)
+  if (qualFelder.length) sections.push({ titel: 'Qualifikationen', felder: qualFelder })
+
+  // Gehaltsvorstellung
+  const geh = p.gehaltsvorstellung || {}
+  const gehFelder = [
+    geh.wunsch && { label: 'Wunschgehalt', wert: `${geh.wunsch} EUR` },
+    geh.minimum && { label: 'Minimum', wert: `${geh.minimum} EUR` },
+    geh.verhandelbar != null && { label: 'Verhandelbar', wert: geh.verhandelbar ? 'Ja' : 'Nein' },
+    fmt(geh.benefits_wichtig) && { label: 'Wichtige Benefits', wert: fmt(geh.benefits_wichtig) },
+  ].filter(Boolean)
+  if (gehFelder.length) sections.push({ titel: 'Gehaltsvorstellung', felder: gehFelder })
+
+  // Persönlichkeit
+  const pers = p.persoenlichkeit || {}
+  const persFelder = [
+    pers.selbstbeschreibung && { label: 'Selbstbeschreibung', wert: pers.selbstbeschreibung },
+    fmt(pers.hobbys_relevant) && { label: 'Relevante Hobbys', wert: fmt(pers.hobbys_relevant) },
+    pers.fun_fact && { label: 'Fun Fact', wert: pers.fun_fact },
+  ].filter(Boolean)
+  if (persFelder.length) sections.push({ titel: 'Persönlichkeit', felder: persFelder })
+
+  // Persönliche Daten
+  const pd = p.persoenliche_daten || {}
+  const pdFelder = [
+    pd.name && { label: 'Name', wert: pd.name },
+    pd.standort && { label: 'Standort', wert: pd.standort },
+    pd.verfuegbar_ab && { label: 'Verfügbar ab', wert: pd.verfuegbar_ab },
+    pd.kuendigungsfrist && { label: 'Kündigungsfrist', wert: pd.kuendigungsfrist },
+    fmt(pd.wunsch_standorte) && { label: 'Wunschstandorte', wert: fmt(pd.wunsch_standorte) },
+  ].filter(Boolean)
+  if (pdFelder.length) sections.push({ titel: 'Persönliche Daten', felder: pdFelder })
 
   return sections
 })
@@ -90,7 +124,7 @@ onMounted(() => {
     <div class="container">
       <!-- Header -->
       <section class="page-header animate-fade-up">
-        <h1>Persoenlichkeitsprofil</h1>
+        <h1>Persönlichkeitsprofil</h1>
         <p class="page-subtitle">
           Dein Profil hilft uns, Bewerbungen individuell auf dich zuzuschneiden.
         </p>
@@ -100,7 +134,7 @@ onMounted(() => {
       <section class="completeness-section animate-fade-up" style="animation-delay: 100ms;">
         <div class="completeness-card zen-card">
           <div class="completeness-info">
-            <span class="completeness-label">Vollstaendigkeit</span>
+            <span class="completeness-label">Vollständigkeit</span>
             <span class="completeness-value">{{ vollstaendigkeit }}%</span>
           </div>
           <div class="completeness-bar">
@@ -154,7 +188,7 @@ onMounted(() => {
     <SeeleFlow
       v-if="showFlow"
       :overlay="true"
-      session-typ="onboarding"
+      :session-typ="sessionTyp"
       @close="onFlowClose"
       @complete="onFlowComplete"
     />

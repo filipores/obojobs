@@ -12,10 +12,12 @@ const vorschau = computed(() => {
   if (!seeleStore.profil) return []
   const p = seeleStore.profil
   const items = []
-  if (p.arbeitsweise) items.push({ label: 'Arbeitsweise', wert: p.arbeitsweise })
-  if (p.branche) items.push({ label: 'Branche', wert: p.branche })
-  if (p.motivation) items.push({ label: 'Motivation', wert: p.motivation })
-  if (p.staerken?.length) items.push({ label: 'Staerken', wert: p.staerken.slice(0, 3).join(', ') })
+  if (p.motivation?.aktuelle_situation) items.push({ label: 'Situation', wert: p.motivation.aktuelle_situation })
+  if (p.arbeitsstil?.arbeitsmodell?.length) items.push({ label: 'Arbeitsmodell', wert: p.arbeitsstil.arbeitsmodell.join(', ') })
+  if (p.motivation?.wichtig_im_job?.length) items.push({ label: 'Prioritäten', wert: p.motivation.wichtig_im_job.slice(0, 3).join(', ') })
+  if (p.motivation?.wechsel_tempo) items.push({ label: 'Verfügbarkeit', wert: p.motivation.wechsel_tempo })
+  if (p.arbeitsstil?.staerken?.length) items.push({ label: 'Stärken', wert: p.arbeitsstil.staerken.slice(0, 3).join(', ') })
+  if (p.berufserfahrung?.branche) items.push({ label: 'Branche', wert: p.berufserfahrung.branche })
   return items.slice(0, 4)
 })
 
@@ -27,7 +29,7 @@ const dasharray = computed(() => `${(vollstaendigkeit.value / 100) * circumferen
 <template>
   <div class="seele-profil zen-card">
     <div class="profil-header">
-      <h3 class="profil-title">Persoenlichkeitsprofil</h3>
+      <h3 class="profil-title">Persönlichkeitsprofil</h3>
       <span v-if="hasProfil" class="profil-badge">
         {{ vollstaendigkeit }}%
       </span>
@@ -86,7 +88,7 @@ const dasharray = computed(() => `${(vollstaendigkeit.value / 100) * circumferen
           </svg>
         </div>
         <p class="empty-text">Noch kein Profil erstellt</p>
-        <p class="empty-hint">Beantworte ein paar Fragen, damit wir deine Bewerbungen personalisieren koennen.</p>
+        <p class="empty-hint">Beantworte ein paar Fragen, damit wir deine Bewerbungen personalisieren können.</p>
         <button class="zen-btn zen-btn-sm zen-btn-ai" @click="emit('erweitern')">
           Jetzt erstellen
         </button>

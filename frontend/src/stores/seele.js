@@ -39,7 +39,21 @@ export const seeleStore = reactive({
   async starteSession(typ, kontext = null) {
     this.loading = true
     try {
-      const { data } = await api.post('/seele/sessions', { session_typ: typ, kontext })
+      // Erst pruefen ob eine aktive Session existiert
+      const { data: aktuell } = await api.get('/seele/sessions/aktuell')
+      if (aktuell.session && aktuell.fragen?.length) {
+        // Gleicher Typ -> fortsetzen
+        if (aktuell.session.session_typ === typ) {
+          this.aktiveSession = aktuell.session
+          this.aktuelleFragen = aktuell.fragen
+          return aktuell
+        }
+        // Anderer Typ -> alte Session beenden, neue starten
+        await this.beendeSession(aktuell.session.id)
+      }
+
+      // Keine aktive Session -> neue starten
+      const { data } = await api.post('/seele/sessions', { session_typ: typ, kontext }, { suppressToast: true })
       this.aktiveSession = data.session
       this.aktuelleFragen = data.fragen || []
       return data
@@ -48,6 +62,16 @@ export const seeleStore = reactive({
       throw error
     } finally {
       this.loading = false
+    }
+  },
+
+  async beendeSession(sessionId) {
+    try {
+      await api.post(`/seele/sessions/${sessionId}/beenden`)
+      this.aktiveSession = null
+      this.aktuelleFragen = []
+    } catch (error) {
+      console.error('Session end error:', error)
     }
   },
 

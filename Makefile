@@ -7,7 +7,8 @@
         db-migrate db-upgrade db-downgrade db-reset \
         ralph ralph-status ralph-report ralph-reset ralph-headed ralph-split \
         logs docker-build docker-up docker-down docker-logs \
-        docker-prod-build docker-prod-up docker-prod-down docker-prod-logs
+        docker-prod-build docker-prod-up docker-prod-down docker-prod-logs \
+        mailpit mailpit-stop
 
 # Default target
 .DEFAULT_GOAL := help
@@ -76,6 +77,10 @@ help:
 	@echo "  make docker-prod-down   - Production Container stoppen"
 	@echo "  make docker-prod-logs   - Production Logs anzeigen"
 	@echo ""
+	@echo "$(GREEN)Mail (Dev):$(NC)"
+	@echo "  make mailpit        - Mailpit starten (lokaler Mail-Server)"
+	@echo "  make mailpit-stop   - Mailpit stoppen"
+	@echo ""
 	@echo "$(GREEN)Utilities:$(NC)"
 	@echo "  make logs           - Backend Logs anzeigen"
 	@echo "  make clean          - Build-Artefakte loeschen"
@@ -105,6 +110,7 @@ dev:
 	@echo "$(CYAN)Starte Frontend und Backend...$(NC)"
 	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
 	@echo "$(YELLOW)Backend:  http://localhost:5002$(NC)"
+	@echo "$(YELLOW)Mailpit:  http://localhost:8025  (make mailpit)$(NC)"
 	@echo ""
 	@trap 'kill 0' SIGINT; \
 	(cd $(FRONTEND_DIR) && npm run dev) & \
@@ -250,6 +256,22 @@ docker-prod-down:
 
 docker-prod-logs:
 	docker compose -f docker-compose.prod.yml logs -f
+
+# ===========================================
+# Mailpit (lokaler Dev-Mailserver)
+# ===========================================
+mailpit:
+	@echo "$(CYAN)Starte Mailpit...$(NC)"
+	@docker run -d --name obojobs-mailpit -p 1025:1025 -p 8025:8025 axllent/mailpit:latest 2>/dev/null \
+		|| docker start obojobs-mailpit
+	@echo "$(GREEN)Mailpit laeuft$(NC)"
+	@echo "$(YELLOW)SMTP:    localhost:1025$(NC)"
+	@echo "$(YELLOW)Web-UI:  http://localhost:8025$(NC)"
+
+mailpit-stop:
+	@echo "$(CYAN)Stoppe Mailpit...$(NC)"
+	@docker stop obojobs-mailpit 2>/dev/null; docker rm obojobs-mailpit 2>/dev/null; true
+	@echo "$(GREEN)Mailpit gestoppt$(NC)"
 
 # ===========================================
 # Utilities

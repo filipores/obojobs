@@ -392,7 +392,8 @@
     "adminUsers": "Admin - Benutzer",
     "adminUserDetail": "Admin - Benutzerdetails",
     "pricing": "Preise",
-    "applicationDetail": "Bewerbungsdetails"
+    "applicationDetail": "Bewerbungsdetails",
+    "profil": "Persönlichkeitsprofil"
   },
   "applicationDetail": {
     "backToApplications": "Zur\u00fcck zu Bewerbungen",

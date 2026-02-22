@@ -19,7 +19,14 @@ FRONTEND_URL = config.CORS_ORIGINS[0] if config.CORS_ORIGINS else "http://localh
 
 
 def _is_configured() -> bool:
-    """Check if email sending is configured."""
+    """Check if email sending is configured.
+
+    For authenticated SMTP (Gmail etc.) both username and password are required.
+    For local dev servers (Mailpit on port 1025) credentials are not needed.
+    """
+    if not config.MAIL_USE_TLS:
+        # Local dev mail server (Mailpit) — no credentials required
+        return bool(config.MAIL_SERVER)
     return bool(config.MAIL_USERNAME and config.MAIL_PASSWORD)
 
 
@@ -38,8 +45,9 @@ def _send_email(to_email: str, subject: str, html_body: str) -> bool:
 
     try:
         server = smtplib.SMTP(config.MAIL_SERVER, config.MAIL_PORT, timeout=10)
-        server.starttls()
-        server.login(config.MAIL_USERNAME, config.MAIL_PASSWORD)
+        if config.MAIL_USE_TLS:
+            server.starttls()
+            server.login(config.MAIL_USERNAME, config.MAIL_PASSWORD)
         server.sendmail(config.MAIL_DEFAULT_SENDER, to_email, msg.as_string())
         server.quit()
         logger.info(f"Email sent to {to_email}: {subject}")

@@ -391,7 +391,8 @@
     "admin": "Admin",
     "adminUsers": "Admin - Users",
     "adminUserDetail": "Admin - User Details",
-    "applicationDetail": "Application Details"
+    "applicationDetail": "Application Details",
+    "profil": "Personality Profile"
   },
   "applicationDetail": {
     "backToApplications": "Back to Applications",

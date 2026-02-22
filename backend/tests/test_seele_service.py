@@ -6,7 +6,7 @@ from unittest.mock import patch
 import pytest
 
 from models import SeeleAntwort, SeeleProfile, SeeleSession, db
-from services import seele_service
+from services import seele_cv_extraktor, seele_service
 from services.seele_profile_builder import (
     berechne_vollstaendigkeit,
     erstelle_leeres_profil,
@@ -15,7 +15,7 @@ from services.seele_profile_builder import (
 )
 
 # Mock-Fragen fuer Tests (simulieren AI-generierte Fragen)
-MOCK_ONBOARDING_FRAGEN = [
+MOCK_PROFIL_FRAGEN = [
     {
         "key": "motivation.aktuelle_situation",
         "frage": "Was beschreibt deine aktuelle Situation am besten?",
@@ -206,39 +206,43 @@ class TestSeeleService:
         profil = profile.get_profil()
         assert profil.get("meta", {}).get("quellen", {}).get("hacked") is None
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_starte_session_onboarding(self, mock_gen, mock_micro, app, test_user):
-        """Start onboarding session returns questions."""
-        result = seele_service.starte_session(test_user["id"], "onboarding")
-        assert result["session"]["session_typ"] == "onboarding"
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_starte_session_profil(self, mock_gen, mock_micro, mock_auto, app, test_user):
+        """Start profil session returns questions."""
+        result = seele_service.starte_session(test_user["id"], "profil")
+        assert result["session"]["session_typ"] == "profil"
         assert result["session"]["status"] == "aktiv"
         assert len(result["fragen"]) > 0
         assert result["session"]["fragen_geplant"] == len(result["fragen"])
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_starte_session_caches_fragen(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_starte_session_caches_fragen(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Started session caches generated questions in kontext_json."""
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session = SeeleSession.query.get(result["session"]["id"])
         kontext = json.loads(session.kontext_json)
         assert "generierte_fragen" in kontext
-        assert len(kontext["generierte_fragen"]) == len(MOCK_ONBOARDING_FRAGEN)
+        assert len(kontext["generierte_fragen"]) == len(MOCK_PROFIL_FRAGEN)
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_starte_session_duplicate_blocked(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_starte_session_duplicate_blocked(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Cannot start session while one is active."""
-        seele_service.starte_session(test_user["id"], "onboarding")
+        seele_service.starte_session(test_user["id"], "profil")
         with pytest.raises(ValueError, match="aktive Session"):
-            seele_service.starte_session(test_user["id"], "onboarding")
+            seele_service.starte_session(test_user["id"], "profil")
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_beantworte_frage(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_beantworte_frage(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Answer a question, profile gets updated."""
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session_id = result["session"]["id"]
         frage_key = result["fragen"][0]["key"]
 
@@ -251,18 +255,20 @@ class TestSeeleService:
         assert antwort is not None
         assert antwort.uebersprungen is False
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_beantworte_frage_invalid_session(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_beantworte_frage_invalid_session(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Answering for non-existent session raises ValueError."""
         with pytest.raises(ValueError, match="nicht gefunden"):
             seele_service.beantworte_frage(test_user["id"], 9999, "key", "val")
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_ueberspringe_frage(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_ueberspringe_frage(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Skip a question, counter increments."""
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session_id = result["session"]["id"]
         frage_key = result["fragen"][0]["key"]
 
@@ -274,11 +280,12 @@ class TestSeeleService:
         assert antwort is not None
         assert antwort.uebersprungen is True
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_beende_session(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_beende_session(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """End session early sets status to abgebrochen."""
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session_id = result["session"]["id"]
 
         ended = seele_service.beende_session(test_user["id"], session_id)
@@ -290,11 +297,12 @@ class TestSeeleService:
         with pytest.raises(ValueError, match="nicht gefunden"):
             seele_service.beende_session(test_user["id"], 9999)
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_get_aktuelle_session(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_get_aktuelle_session(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Get active session with questions from cache."""
-        seele_service.starte_session(test_user["id"], "onboarding")
+        seele_service.starte_session(test_user["id"], "profil")
         result = seele_service.get_aktuelle_session(test_user["id"])
         assert result is not None
         assert result["session"]["status"] == "aktiv"
@@ -333,16 +341,17 @@ class TestSeeleService:
         assert "Aktiv auf Jobsuche" in result
 
     def test_soll_session_starten_no_profile(self, app, test_user):
-        """No profile -> recommend onboarding."""
+        """No profile -> recommend profil session."""
         result = seele_service.soll_session_starten(test_user["id"], "dashboard")
         assert result["soll_starten"] is True
-        assert result["session_typ"] == "onboarding"
+        assert result["session_typ"] == "profil"
 
     def test_soll_session_starten_low_completeness(self, app, test_user):
-        """Low completeness on dashboard -> recommend onboarding."""
+        """Low completeness on dashboard -> recommend profil session."""
         seele_service.get_or_create_profil(test_user["id"])
         result = seele_service.soll_session_starten(test_user["id"], "dashboard")
         assert result["soll_starten"] is True
+        assert result["session_typ"] == "profil"
 
     def test_soll_session_starten_sufficient(self, app, test_user):
         """Sufficient completeness -> no session recommended."""
@@ -357,20 +366,36 @@ class TestSeeleService:
         result = seele_service.soll_session_starten(test_user["id"], "dashboard")
         assert result["soll_starten"] is False
 
+    def test_soll_session_starten_pre_bewerbung_threshold(self, app, test_user):
+        """Pre_bewerbung trigger with 55% completeness -> recommend session."""
+        profile = SeeleProfile(
+            user_id=test_user["id"],
+            profil_json="{}",
+            vollstaendigkeit=55,
+        )
+        db.session.add(profile)
+        db.session.commit()
+
+        result = seele_service.soll_session_starten(test_user["id"], "pre_bewerbung")
+        assert result["soll_starten"] is True
+        assert result["session_typ"] == "profil"
+
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_soll_session_starten_active_session(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_soll_session_starten_active_session(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Active session exists -> returns that session."""
-        seele_service.starte_session(test_user["id"], "onboarding")
+        seele_service.starte_session(test_user["id"], "profil")
         result = seele_service.soll_session_starten(test_user["id"], "dashboard")
         assert result["soll_starten"] is True
         assert result["session_id"] is not None
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_full_session_lifecycle(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_full_session_lifecycle(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Full lifecycle: start -> answer all -> auto-close."""
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session_id = result["session"]["id"]
         fragen = result["fragen"]
 
@@ -390,14 +415,83 @@ class TestSeeleService:
         assert profile is not None
         assert profile.vollstaendigkeit > 0
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_get_aktuelle_session_reads_from_cache(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_get_aktuelle_session_reads_from_cache(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """get_aktuelle_session reads questions from cache, not regenerating."""
-        seele_service.starte_session(test_user["id"], "onboarding")
+        seele_service.starte_session(test_user["id"], "profil")
         mock_gen.reset_mock()
 
         result = seele_service.get_aktuelle_session(test_user["id"])
         assert result is not None
         assert len(result["fragen"]) > 0
         mock_gen.assert_not_called()
+
+
+class TestAutoExtraktion:
+    """Tests for CV auto-extraction feature."""
+
+    @patch("services.seele_cv_extraktor.AIClient")
+    def test_auto_extraktion_fills_empty_fields(self, mock_client_cls, app, test_user):
+        """Auto-extraction fills empty auto-extractable fields."""
+        mock_instance = mock_client_cls.return_value
+        mock_instance._call_api_json_with_retry.return_value = {
+            "persoenliche_daten.name": "Max Mustermann",
+            "berufserfahrung.aktuelle_position": "Software Engineer",
+            "berufserfahrung.branche": "IT",
+        }
+
+        seele_service.get_or_create_profil(test_user["id"])
+        profile = SeeleProfile.query.filter_by(user_id=test_user["id"]).first()
+        profil_data = profile.get_profil()
+
+        updated_profil, updated_profile = seele_cv_extraktor.auto_extrahiere_cv_felder(
+            test_user["id"], "Max Mustermann, Software Engineer bei TechCorp", profil_data, profile
+        )
+
+        assert updated_profil["persoenliche_daten"]["name"] == "Max Mustermann"
+        assert updated_profil["berufserfahrung"]["aktuelle_position"] == "Software Engineer"
+        assert updated_profil["berufserfahrung"]["branche"] == "IT"
+
+    @patch("services.seele_cv_extraktor.AIClient")
+    def test_auto_extraktion_skips_filled_fields(self, mock_client_cls, app, test_user):
+        """Auto-extraction does not overwrite existing values."""
+        seele_service.get_or_create_profil(test_user["id"])
+        seele_service.update_profil(
+            test_user["id"],
+            {"persoenliche_daten": {"name": "Existing Name"}},
+        )
+
+        profile = SeeleProfile.query.filter_by(user_id=test_user["id"]).first()
+        profil_data = profile.get_profil()
+
+        # The AI call won't include persoenliche_daten.name since it's already filled
+        mock_instance = mock_client_cls.return_value
+        mock_instance._call_api_json_with_retry.return_value = {
+            "berufserfahrung.aktuelle_position": "Developer",
+        }
+
+        updated_profil, _ = seele_cv_extraktor.auto_extrahiere_cv_felder(
+            test_user["id"], "Test CV", profil_data, profile
+        )
+
+        # Existing value preserved
+        assert updated_profil["persoenliche_daten"]["name"] == "Existing Name"
+
+    @patch("services.seele_cv_extraktor.AIClient")
+    def test_auto_extraktion_handles_error(self, mock_client_cls, app, test_user):
+        """Auto-extraction failure returns original data unchanged."""
+        mock_instance = mock_client_cls.return_value
+        mock_instance._call_api_json_with_retry.side_effect = Exception("API error")
+
+        seele_service.get_or_create_profil(test_user["id"])
+        profile = SeeleProfile.query.filter_by(user_id=test_user["id"]).first()
+        profil_data = profile.get_profil()
+
+        updated_profil, updated_profile = seele_cv_extraktor.auto_extrahiere_cv_felder(
+            test_user["id"], "Test CV", profil_data, profile
+        )
+
+        # Should return original data unchanged
+        assert updated_profil == profil_data

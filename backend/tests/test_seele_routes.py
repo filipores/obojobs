@@ -2,7 +2,7 @@
 
 from unittest.mock import patch
 
-MOCK_ONBOARDING_FRAGEN = [
+MOCK_PROFIL_FRAGEN = [
     {
         "key": "motivation.aktuelle_situation",
         "frage": "Was beschreibt deine aktuelle Situation am besten?",
@@ -91,10 +91,27 @@ class TestSeeleProfilRoutes:
 class TestSeeleSessionRoutes:
     """Tests for POST /sessions and GET /sessions/aktuell."""
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_starte_session(self, mock_gen, mock_micro, client, auth_headers):
-        """POST /sessions starts onboarding session."""
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_starte_session_profil(self, mock_gen, mock_micro, mock_auto, client, auth_headers):
+        """POST /sessions starts profil session."""
+        response = client.post(
+            "/api/seele/sessions",
+            headers=auth_headers,
+            json={"session_typ": "profil"},
+        )
+        assert response.status_code == 201
+        data = response.get_json()
+        assert data["success"] is True
+        assert data["session"]["session_typ"] == "profil"
+        assert len(data["fragen"]) > 0
+
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
+    @patch("services.seele_service.generiere_micro_frage", return_value=None)
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_starte_session_onboarding_backward_compat(self, mock_gen, mock_micro, mock_auto, client, auth_headers):
+        """POST /sessions with old 'onboarding' type still works."""
         response = client.post(
             "/api/seele/sessions",
             headers=auth_headers,
@@ -104,7 +121,6 @@ class TestSeeleSessionRoutes:
         data = response.get_json()
         assert data["success"] is True
         assert data["session"]["session_typ"] == "onboarding"
-        assert len(data["fragen"]) > 0
 
     def test_starte_session_invalid_type(self, client, auth_headers):
         """POST /sessions with invalid type returns 400."""
@@ -115,37 +131,39 @@ class TestSeeleSessionRoutes:
         )
         assert response.status_code == 400
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_starte_session_duplicate(self, mock_gen, mock_micro, client, auth_headers):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_starte_session_duplicate(self, mock_gen, mock_micro, mock_auto, client, auth_headers):
         """POST /sessions twice returns 400 (active session exists)."""
         client.post(
             "/api/seele/sessions",
             headers=auth_headers,
-            json={"session_typ": "onboarding"},
+            json={"session_typ": "profil"},
         )
         response = client.post(
             "/api/seele/sessions",
             headers=auth_headers,
-            json={"session_typ": "onboarding"},
+            json={"session_typ": "profil"},
         )
         assert response.status_code == 400
         assert "aktive Session" in response.get_json()["error"]
 
     def test_starte_session_unauthenticated(self, client):
         """POST /sessions returns 401 without auth."""
-        response = client.post("/api/seele/sessions", json={"session_typ": "onboarding"})
+        response = client.post("/api/seele/sessions", json={"session_typ": "profil"})
         assert response.status_code in (401, 422)
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_aktuelle_session(self, mock_gen, mock_micro, client, auth_headers):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_aktuelle_session(self, mock_gen, mock_micro, mock_auto, client, auth_headers):
         """GET /sessions/aktuell returns active session."""
         # Start session first
         client.post(
             "/api/seele/sessions",
             headers=auth_headers,
-            json={"session_typ": "onboarding"},
+            json={"session_typ": "profil"},
         )
         response = client.get("/api/seele/sessions/aktuell", headers=auth_headers)
         assert response.status_code == 200
@@ -164,15 +182,16 @@ class TestSeeleSessionRoutes:
 class TestSeeleAntwortRoutes:
     """Tests for POST /antworten and POST /antworten/ueberspringen."""
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_antwort_einreichen(self, mock_gen, mock_micro, client, auth_headers):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_antwort_einreichen(self, mock_gen, mock_micro, mock_auto, client, auth_headers):
         """POST /antworten saves answer and returns next questions."""
         # Start session
         start = client.post(
             "/api/seele/sessions",
             headers=auth_headers,
-            json={"session_typ": "onboarding"},
+            json={"session_typ": "profil"},
         )
         session_id = start.get_json()["session"]["id"]
         frage_key = start.get_json()["fragen"][0]["key"]
@@ -226,15 +245,16 @@ class TestSeeleAntwortRoutes:
         )
         assert response.status_code == 400
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_frage_ueberspringen(self, mock_gen, mock_micro, client, auth_headers):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_frage_ueberspringen(self, mock_gen, mock_micro, mock_auto, client, auth_headers):
         """POST /antworten/ueberspringen skips question."""
         # Start session
         start = client.post(
             "/api/seele/sessions",
             headers=auth_headers,
-            json={"session_typ": "onboarding"},
+            json={"session_typ": "profil"},
         )
         session_id = start.get_json()["session"]["id"]
         frage_key = start.get_json()["fragen"][0]["key"]
@@ -277,13 +297,13 @@ class TestSeeleCheckRoute:
     """Tests for GET /check."""
 
     def test_check_no_profile(self, client, auth_headers):
-        """GET /check recommends session when no profile."""
+        """GET /check recommends profil session when no profile."""
         response = client.get("/api/seele/check?trigger=dashboard", headers=auth_headers)
         assert response.status_code == 200
         data = response.get_json()
         assert data["success"] is True
         assert data["soll_starten"] is True
-        assert data["session_typ"] == "onboarding"
+        assert data["session_typ"] == "profil"
 
     def test_check_default_trigger(self, client, auth_headers):
         """GET /check defaults to dashboard trigger."""

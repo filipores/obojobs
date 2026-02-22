@@ -148,7 +148,7 @@ function skip() {
         type="button"
         @click="skip"
       >
-        Ueberspringen
+        Überspringen
       </button>
       <button
         class="zen-btn zen-btn-ai"

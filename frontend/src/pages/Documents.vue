@@ -273,7 +273,7 @@
       <!-- Seele Personality Profile Section -->
       <section class="seele-section animate-fade-up" style="animation-delay: 300ms;">
         <div class="ink-stroke"></div>
-        <h2 class="section-title">Persoenlichkeitsprofil</h2>
+        <h2 class="section-title">Persönlichkeitsprofil</h2>
         <SeeleProfil @erweitern="showSeeleFlow = true" />
       </section>
     </div>
@@ -282,7 +282,7 @@
     <SeeleFlow
       v-if="showSeeleFlow"
       :overlay="true"
-      session-typ="onboarding"
+      session-typ="profil"
       @close="showSeeleFlow = false"
       @complete="showSeeleFlow = false; seeleStore.fetchProfil()"
     />

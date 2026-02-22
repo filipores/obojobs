@@ -6,7 +6,7 @@ from unittest.mock import patch
 from models import SeeleAntwort, SeeleProfile, SeeleSession, db
 from services import seele_service
 
-MOCK_ONBOARDING_FRAGEN = [
+MOCK_PROFIL_FRAGEN = [
     {
         "key": "motivation.aktuelle_situation",
         "frage": "Was beschreibt deine aktuelle Situation am besten?",
@@ -42,19 +42,21 @@ MOCK_ONBOARDING_FRAGEN = [
 class TestEndToEndSessionFlow:
     """End-to-end: Start session -> Answer questions -> Profile in prompt."""
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_full_flow_via_api(self, mock_gen, mock_micro, client, auth_headers, test_user):
-        """Complete flow through API endpoints."""
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_full_flow_via_api(self, mock_gen, mock_micro, mock_auto, client, auth_headers, test_user):
+        """Complete flow through API endpoints with profil session type."""
         # 1. Check: should recommend session
         check = client.get("/api/seele/check?trigger=dashboard", headers=auth_headers)
         assert check.get_json()["soll_starten"] is True
+        assert check.get_json()["session_typ"] == "profil"
 
         # 2. Start session
         start = client.post(
             "/api/seele/sessions",
             headers=auth_headers,
-            json={"session_typ": "onboarding"},
+            json={"session_typ": "profil"},
         )
         assert start.status_code == 201
         session_id = start.get_json()["session"]["id"]
@@ -115,12 +117,13 @@ class TestEndToEndSessionFlow:
         profil_data = profil.get_json()["profil"]
         assert profil_data["vollstaendigkeit"] > 0
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_profile_in_prompt_after_session(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_profile_in_prompt_after_session(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """After answering questions, profile text is available for prompt injection."""
         # Start and complete a session
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session_id = result["session"]["id"]
 
         for frage in result["fragen"]:
@@ -156,12 +159,13 @@ class TestEndToEndSessionFlow:
         assert profil["motivation"]["aktuelle_situation"] == "Karrierewechsel"
         assert profil["arbeitsstil"]["typ"] == "Remote"
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_session_abort_and_restart(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_session_abort_and_restart(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Abort session, then start new one."""
         # Start and abort
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session_id = result["session"]["id"]
         seele_service.beende_session(test_user["id"], session_id)
 
@@ -170,7 +174,7 @@ class TestEndToEndSessionFlow:
         assert session.status == "abgebrochen"
 
         # Start new session (should work since old one is not active)
-        result2 = seele_service.starte_session(test_user["id"], "onboarding")
+        result2 = seele_service.starte_session(test_user["id"], "profil")
         assert result2["session"]["id"] != session_id
         assert result2["session"]["status"] == "aktiv"
 
@@ -244,12 +248,12 @@ class TestDatabaseIntegrity:
         """User can have multiple sessions (but only one active)."""
         s1 = SeeleSession(
             user_id=test_user["id"],
-            session_typ="onboarding",
+            session_typ="profil",
             status="abgeschlossen",
         )
         s2 = SeeleSession(
             user_id=test_user["id"],
-            session_typ="pre_bewerbung",
+            session_typ="profil",
             status="aktiv",
         )
         db.session.add_all([s1, s2])
@@ -260,8 +264,8 @@ class TestDatabaseIntegrity:
 
     def test_answers_linked_to_correct_session(self, app, test_user):
         """Answers are correctly linked to their session."""
-        s1 = SeeleSession(user_id=test_user["id"], session_typ="onboarding")
-        s2 = SeeleSession(user_id=test_user["id"], session_typ="pre_bewerbung")
+        s1 = SeeleSession(user_id=test_user["id"], session_typ="profil")
+        s2 = SeeleSession(user_id=test_user["id"], session_typ="profil")
         db.session.add_all([s1, s2])
         db.session.commit()
 
@@ -286,15 +290,16 @@ class TestDatabaseIntegrity:
         assert s2.antworten.count() == 1
         assert s1.antworten.first().frage_key == "test.key1"
 
+    @patch("services.seele_service.auto_extrahiere_cv_felder", side_effect=lambda uid, cv, p, pr: (p, pr))
     @patch("services.seele_service.generiere_micro_frage", return_value=None)
-    @patch("services.seele_service.generiere_fragen", return_value=MOCK_ONBOARDING_FRAGEN)
-    def test_cached_fragen_survive_reload(self, mock_gen, mock_micro, app, test_user):
+    @patch("services.seele_service.generiere_fragen", return_value=MOCK_PROFIL_FRAGEN)
+    def test_cached_fragen_survive_reload(self, mock_gen, mock_micro, mock_auto, app, test_user):
         """Questions cached in kontext_json persist across session lookups."""
-        result = seele_service.starte_session(test_user["id"], "onboarding")
+        result = seele_service.starte_session(test_user["id"], "profil")
         session_id = result["session"]["id"]
 
         # Simulate page reload - get session again
         session = SeeleSession.query.get(session_id)
         kontext = json.loads(session.kontext_json)
         assert "generierte_fragen" in kontext
-        assert len(kontext["generierte_fragen"]) == len(MOCK_ONBOARDING_FRAGEN)
+        assert len(kontext["generierte_fragen"]) == len(MOCK_PROFIL_FRAGEN)

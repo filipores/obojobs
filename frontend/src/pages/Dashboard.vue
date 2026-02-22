@@ -118,7 +118,7 @@
     <SeeleFlow
       v-if="showSeeleFlow"
       :overlay="true"
-      session-typ="onboarding"
+      :session-typ="seeleSessionTyp"
       @close="showSeeleFlow = false"
       @complete="showSeeleFlow = false; seeleStore.fetchProfil()"
     />
@@ -654,6 +654,7 @@ const showSeeleNudge = computed(() =>
   (!seeleStore.profil || seeleStore.vollstaendigkeit < 50) &&
   !seeleStore.nudgeDismissed
 )
+const seeleSessionTyp = computed(() => 'profil')
 
 function retryLoadStats() {
   stats.value = null

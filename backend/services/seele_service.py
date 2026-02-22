@@ -7,8 +7,9 @@ from datetime import datetime
 from models import SeeleAntwort, SeeleProfile, SeeleSession, UserSkill, db
 from services.doc_cache import get_cached_doc_text
 from services.document_service import get_document_by_type
+from services.seele_cv_extraktor import auto_extrahiere_cv_felder
 from services.seele_frage_generator import generiere_micro_frage
-from services.seele_fragen import FALLBACK_FRAGEN, generiere_fragen, get_naechste_fragen
+from services.seele_fragen import _get_fallback_fragen, generiere_fragen, get_naechste_fragen
 from services.seele_profile_builder import (
     erstelle_leeres_profil,
     merge_antwort,
@@ -111,6 +112,10 @@ def starte_session(user_id, session_typ, kontext=None):
     # Determine questions
     cv_text, zeugnis_text, skills = _lade_cv_kontext(user_id)
 
+    # Auto-Extraktion: CV-Felder automatisch ins Profil übernehmen
+    if cv_text and session_typ != "micro":
+        profil_data, profile = auto_extrahiere_cv_felder(user_id, cv_text, profil_data, profile)
+
     if session_typ == "micro":
         micro_frage = generiere_micro_frage(
             profil_data, kontext, cv_text=cv_text, zeugnis_text=zeugnis_text, skills=skills
@@ -124,9 +129,11 @@ def starte_session(user_id, session_typ, kontext=None):
             skills=skills,
             profil=profil_data,
         )
+        # Filter out questions whose profile fields are already filled
+        fragen = _filtere_bereits_ausgefuellte(fragen, profil_data)
 
     if not fragen:
-        raise ValueError("Keine offenen Fragen fuer diesen Session-Typ")
+        raise ValueError("Alle Fragen in diesem Bereich sind bereits beantwortet")
 
     # Cache generierte Fragen in kontext_json
     kontext_data = kontext or {}
@@ -155,7 +162,7 @@ def get_aktuelle_session(user_id):
     if not session:
         return None
 
-    # Get profile to filter answered questions
+    # Get profile for micro sessions
     profile = SeeleProfile.query.filter_by(user_id=user_id).first()
     profil_data = profile.get_profil() if profile else {}
 
@@ -167,9 +174,10 @@ def get_aktuelle_session(user_id):
         if micro_frage:
             fragen = [micro_frage]
     else:
-        # Fragen aus Cache lesen, nicht neu generieren
+        # Fragen aus Cache lesen, filtern nach Session-Antworten
         cached_fragen = _get_cached_fragen(session)
-        fragen = get_naechste_fragen(cached_fragen, profil_data)
+        beantwortete_keys = _get_session_answered_keys(session.id)
+        fragen = get_naechste_fragen(cached_fragen, profil_data, beantwortete_keys=beantwortete_keys)
 
     # Auto-close if no more questions
     if not fragen:
@@ -227,11 +235,12 @@ def beantworte_frage(user_id, session_id, frage_key, antwort):
     profile.set_profil(profil_data)
     profile.berechne_vollstaendigkeit()
 
-    # Get next questions from cache
+    # Get next questions from cache, filtered by session answers
     if session.session_typ == "micro":
         naechste_fragen = []
     else:
-        naechste_fragen = get_naechste_fragen(cached_fragen, profil_data)
+        beantwortete_keys = _get_session_answered_keys(session_id)
+        naechste_fragen = get_naechste_fragen(cached_fragen, profil_data, beantwortete_keys=beantwortete_keys)
 
     # Auto-close if done
     if not naechste_fragen:
@@ -278,7 +287,8 @@ def ueberspringe_frage(user_id, session_id, frage_key):
     if session.session_typ == "micro":
         naechste_fragen = []
     else:
-        naechste_fragen = get_naechste_fragen(cached_fragen, profil_data)
+        beantwortete_keys = _get_session_answered_keys(session_id)
+        naechste_fragen = get_naechste_fragen(cached_fragen, profil_data, beantwortete_keys=beantwortete_keys)
 
     # Auto-close if done
     if not naechste_fragen:
@@ -342,28 +352,28 @@ def soll_session_starten(user_id, trigger):
     profile = SeeleProfile.query.filter_by(user_id=user_id).first()
 
     if not profile:
-        # No profile at all -> onboarding
+        # No profile at all -> profil session
         return {
             "soll_starten": True,
-            "session_typ": "onboarding",
+            "session_typ": "profil",
             "grund": "Kein Profil vorhanden",
             "session_id": None,
         }
 
     vollstaendigkeit = profile.vollstaendigkeit or 0
 
-    if trigger == "dashboard" and vollstaendigkeit < 30:
+    if trigger == "dashboard" and vollstaendigkeit < 50:
         return {
             "soll_starten": True,
-            "session_typ": "onboarding",
+            "session_typ": "profil",
             "grund": "Profil unvollstaendig",
             "session_id": None,
         }
 
-    if trigger == "pre_bewerbung" and vollstaendigkeit < 50:
+    if trigger == "pre_bewerbung" and vollstaendigkeit < 60:
         return {
             "soll_starten": True,
-            "session_typ": "pre_bewerbung",
+            "session_typ": "profil",
             "grund": "Profil-Luecken vor Bewerbung",
             "session_id": None,
         }
@@ -376,10 +386,16 @@ def soll_session_starten(user_id, trigger):
     }
 
 
+def _get_session_answered_keys(session_id):
+    """Get set of frage_keys already answered/skipped in this session."""
+    antworten = SeeleAntwort.query.filter_by(session_id=session_id).all()
+    return {a.frage_key for a in antworten}
+
+
 def _get_cached_fragen(session):
     """Lese gecachte Fragen aus session.kontext_json."""
     if not session.kontext_json:
-        return FALLBACK_FRAGEN.get(session.session_typ, [])
+        return _get_fallback_fragen(session.session_typ)
 
     try:
         kontext = json.loads(session.kontext_json)
@@ -389,7 +405,7 @@ def _get_cached_fragen(session):
     except (json.JSONDecodeError, TypeError):
         pass
 
-    return FALLBACK_FRAGEN.get(session.session_typ, [])
+    return _get_fallback_fragen(session.session_typ)
 
 
 def _get_frage_text(frage_key, cached_fragen=None):
@@ -408,3 +424,25 @@ def _get_antwort_typ(frage_key, cached_fragen=None):
             if frage.get("key") == frage_key:
                 return frage.get("typ", "freitext")
     return "freitext"
+
+
+def _filtere_bereits_ausgefuellte(fragen, profil):
+    """Filter out questions whose profile fields are already filled."""
+    if not profil or not fragen:
+        return fragen
+
+    offene = []
+    for frage in fragen:
+        key = frage.get("key", "")
+        if "." not in key:
+            offene.append(frage)
+            continue
+        section, field = key.split(".", 1)
+        section_data = profil.get(section, {})
+        if not isinstance(section_data, dict):
+            offene.append(frage)
+            continue
+        val = section_data.get(field)
+        if not val or val == [] or val == {}:
+            offene.append(frage)
+    return offene

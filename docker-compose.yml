@@ -17,6 +17,12 @@ services:
       - FLASK_ENV=production
       - UPLOAD_FOLDER=/app/uploads
       - CORS_ORIGINS=http://localhost,http://localhost:80
+      - MAIL_SERVER=mailpit
+      - MAIL_PORT=1025
+      - MAIL_USE_TLS=false
+      - MAIL_DEFAULT_SENDER=noreply@obojobs.local
+    depends_on:
+      - mailpit
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5002/api/health"]
@@ -39,6 +45,14 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: obojobs-mailpit
+    ports:
+      - "1025:1025"   # SMTP
+      - "8025:8025"   # Web-UI
+    restart: unless-stopped
 
 volumes:
   uploads:

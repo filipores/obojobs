@@ -13,12 +13,12 @@ const emit = defineEmits(['starten', 'dismiss'])
       </div>
       <div class="nudge-text">
         <h4>Lass uns dich kennenlernen</h4>
-        <p>Beantworte ein paar kurze Fragen, damit wir deine Bewerbungen besser personalisieren koennen.</p>
+        <p>Beantworte ein paar kurze Fragen, damit wir deine Bewerbungen besser personalisieren können.</p>
       </div>
     </div>
     <div class="nudge-actions">
       <button class="zen-btn zen-btn-sm" @click="emit('dismiss')">
-        Spaeter
+        Später
       </button>
       <button class="zen-btn zen-btn-sm zen-btn-ai" @click="emit('starten')">
         Los geht's

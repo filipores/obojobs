@@ -5,7 +5,7 @@ import { seeleStore } from '../../stores/seele'
 
 const props = defineProps({
   overlay: { type: Boolean, default: true },
-  sessionTyp: { type: String, default: 'onboarding' },
+  sessionTyp: { type: String, default: 'profil' },
   kontext: { type: Object, default: null }
 })
 
@@ -30,7 +30,12 @@ async function starten() {
     frageIndex.value = 0
     screen.value = 'fragen'
   } catch (e) {
-    error.value = 'Sitzung konnte nicht gestartet werden. Bitte versuche es erneut.'
+    // If all questions are already answered, show completion screen
+    if (e.response?.status === 400) {
+      screen.value = 'complete'
+    } else {
+      error.value = 'Sitzung konnte nicht gestartet werden. Bitte versuche es erneut.'
+    }
     console.error('SeeleFlow start error:', e)
   }
 }
@@ -40,6 +45,7 @@ async function onAntwort({ frage_key, antwort }) {
   if (!sessionId) return
 
   try {
+    hatGeantwortet.value = true
     const result = await seeleStore.beantworte(sessionId, frage_key, antwort)
     advanceOrComplete(result)
   } catch (e) {
@@ -67,12 +73,19 @@ function advanceOrComplete(result) {
   }
 }
 
+const hatGeantwortet = ref(false)
+
 function fertig() {
   emit('complete')
   emit('close')
 }
 
 function close() {
+  // Abort session if user closes without answering any questions
+  const sessionId = seeleStore.aktiveSession?.id
+  if (sessionId && !hatGeantwortet.value && screen.value === 'fragen') {
+    seeleStore.beendeSession(sessionId)
+  }
   emit('close')
 }
 
@@ -96,9 +109,9 @@ onUnmounted(() => {
 <template>
   <Teleport v-if="overlay" to="body">
     <div class="seele-flow-overlay" @click.self="close">
-      <div class="seele-flow-card" role="dialog" aria-modal="true" aria-label="Seele Persoenlichkeitsprofil">
+      <div class="seele-flow-card" role="dialog" aria-modal="true" aria-label="Seele Persönlichkeitsprofil">
         <!-- Close button -->
-        <button class="flow-close" type="button" @click="close" aria-label="Schliessen">
+        <button class="flow-close" type="button" @click="close" aria-label="Schließen">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
@@ -115,7 +128,7 @@ onUnmounted(() => {
           </div>
           <h2 class="intro-title">Lass uns dich kennenlernen</h2>
           <p class="intro-desc">
-            Ein paar kurze Fragen, damit wir deine Bewerbungen noch besser personalisieren koennen.
+            Ein paar kurze Fragen, damit wir deine Bewerbungen noch besser personalisieren können.
           </p>
           <p class="intro-time">Weniger als 2 Minuten</p>
           <div v-if="error" class="flow-error">{{ error }}</div>
@@ -166,7 +179,7 @@ onUnmounted(() => {
           </div>
           <h2 class="complete-title">Danke!</h2>
           <p class="complete-desc">
-            Dein Profil ist jetzt zu {{ seeleStore.vollstaendigkeit }}% ausgefuellt.
+            Dein Profil ist jetzt zu {{ seeleStore.vollstaendigkeit }}% ausgefüllt.
           </p>
           <button class="zen-btn zen-btn-ai" @click="fertig">
             Fertig
@@ -181,7 +194,7 @@ onUnmounted(() => {
     <div v-if="screen === 'intro'" class="flow-screen flow-intro">
       <h2 class="intro-title">Lass uns dich kennenlernen</h2>
       <p class="intro-desc">
-        Ein paar kurze Fragen, damit wir deine Bewerbungen noch besser personalisieren koennen.
+        Ein paar kurze Fragen, damit wir deine Bewerbungen noch besser personalisieren können.
       </p>
       <div v-if="error" class="flow-error">{{ error }}</div>
       <button
@@ -206,7 +219,7 @@ onUnmounted(() => {
 
     <div v-else-if="screen === 'complete'" class="flow-screen flow-complete">
       <h2 class="complete-title">Danke!</h2>
-      <p class="complete-desc">Profil zu {{ seeleStore.vollstaendigkeit }}% ausgefuellt.</p>
+      <p class="complete-desc">Profil zu {{ seeleStore.vollstaendigkeit }}% ausgefüllt.</p>
       <button class="zen-btn zen-btn-ai" @click="fertig">Fertig</button>
     </div>
   </div>
