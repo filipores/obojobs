@@ -1,3 +1,10 @@
+# [1.72.0](https://github.com/filipores/obojobs/compare/v1.71.0...v1.72.0) (2026-02-22)
+
+
+### Features
+
+* dynamic cv-gap-based seele questions with expanded fallback coverage ([ad956cd](https://github.com/filipores/obojobs/commit/ad956cd89948bad64c2cfca43f7c4b6822df4f19))
+
 # [1.71.0](https://github.com/filipores/obojobs/compare/v1.70.0...v1.71.0) (2026-02-22)
 
 
