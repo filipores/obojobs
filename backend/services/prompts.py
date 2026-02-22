@@ -50,56 +50,36 @@ FORBIDDEN_PHRASES = [
 ]
 
 
-def create_details_extraction_prompt(stellenanzeige_text: str, firma_name: str) -> str:
-    return f"""Extrahiere folgende Informationen aus dieser Stellenanzeige für eine Bewerbung bei {firma_name}.
-
-STELLENANZEIGE:
-{stellenanzeige_text[:5000]}
-
-Extrahiere präzise folgende Informationen:
-
-1. ansprechpartner: Wenn ein konkreter Name genannt wird (z.B. "Frau Schmidt", "Herr Müller"), gib "Sehr geehrte/r [Name]" zurück. Wenn kein Name vorhanden ist, gib "Sehr geehrte Damen und Herren" zurück.
-
-2. position: Die Stellenbezeichnung/Position (z.B. "Fullstack Developer", "Frontend Engineer"). Falls keine konkrete Position genannt wird, gib "Softwareentwickler" zurück.
-
-3. quelle: Wo wurde die Anzeige gefunden/wo ist das Unternehmen präsent? (z.B. "LinkedIn", "StepStone", "Indeed"). Falls nicht erkennbar, gib "Manuelle Eingabe" zurück.
-
-4. email: Die E-Mail-Adresse für Bewerbungen (z.B. "bewerbung@firma.de", "jobs@company.com"). Falls keine E-Mail-Adresse erkennbar ist, gib "" zurück.
-
-5. zusammenfassung: Eine kompakte Zusammenfassung der wichtigsten Infos (Firma, Branche, Kernaufgaben, Skills) in Stichpunkten.
-
-6. branche: Die Branche des Unternehmens. Wähle EINEN der folgenden Werte: "it_software", "consulting", "maschinenbau", "marketing", "gesundheit", "andere". Falls unklar, gib "andere" zurück.
-
-7. unternehmensgroesse: Die Größe des Unternehmens. Wähle EINEN der folgenden Werte: "kmu" (unter ~500 Mitarbeiter, Startup, Mittelstand, Agentur, Pflegeheim), "konzern" (über ~500 Mitarbeiter, DAX, MBB, Big4, Krankenhaus-Kette), "unbekannt". Falls unklar, gib "unbekannt" zurück.
-
-Antworte NUR als JSON-Objekt mit den Keys: ansprechpartner, position, quelle, email, zusammenfassung, branche, unternehmensgroesse
-
-Beispiel:
-{{"ansprechpartner": "Sehr geehrte Frau Schmidt", "position": "Frontend Developer", "quelle": "LinkedIn", "email": "bewerbung@firma.de", "zusammenfassung": "- IT-Unternehmen\\n- Webentwicklung mit React\\n- Teamarbeit", "branche": "it_software", "unternehmensgroesse": "kmu"}}
-
-Extrahiere jetzt die Informationen als JSON:"""
-
-
-def create_extraction_prompt(stellenanzeige_text: str) -> str:
-    return f"""Analyze this German job posting in depth. Go beyond the surface. Output in German.
+def create_extraction_prompt(stellenanzeige_text: str, firma_name: str) -> str:
+    return f"""Analyze this German job posting for {firma_name}. Extract structured data AND a compact analytical summary. All output in German.
 
 JOB POSTING:
-{stellenanzeige_text}
+{stellenanzeige_text[:5000]}
 
-Extract the following in compact form:
+Return a JSON object with these keys:
 
-1. FACTS: Company name, industry, position (max 2 lines)
+1. "ansprechpartner": If a specific name is mentioned (e.g. "Frau Schmidt", "Herr Müller"), return "Sehr geehrte/r [Name]". Otherwise return "Sehr geehrte Damen und Herren".
 
-2. WHAT THEY REALLY NEED: What are the 2-3 most important requirements? Not the buzzword list — what actually matters most to them. Read between the lines.
+2. "position": The job title (e.g. "Fullstack Developer", "Frontend Engineer"). If unclear, return "Softwareentwickler".
 
-3. PAIN POINTS: What problems or challenges are hinted at in the text? (e.g. "fast-growing team" = they urgently need people, "independent work" = little structure/onboarding, "modernization" = legacy code)
+3. "quelle": Where was the posting found? (e.g. "LinkedIn", "StepStone", "Indeed"). If unclear, return "Manuelle Eingabe".
 
-4. COMPANY CULTURE: What tone comes through? (startup vs. corporate, casual vs. formal, remote vs. on-site, flat vs. hierarchical). Back up with specific phrases from the posting.
+4. "email": The application email address. If none found, return "".
 
-5. CORE TASKS: The 3-4 most important responsibilities (not the full list, only what truly counts).
+5. "branche": Company industry. Pick ONE: "it_software", "consulting", "maschinenbau", "marketing", "gesundheit", "andere".
 
-IMPORTANT: Keep it short. Bullet points or brief sentences. No long descriptions.
-Be analytical, not descriptive. "They need someone who can X" not "The role involves X"."""
+6. "unternehmensgroesse": Company size. Pick ONE: "kmu" (under ~500 employees, startup, Mittelstand, agency), "konzern" (over ~500, DAX, MBB, Big4), "unbekannt".
+
+7. "analyse": A compact analytical summary in German. Go beyond the surface. Include:
+   - Core facts: company, industry, position (max 2 lines)
+   - What they REALLY need: 2-3 most important requirements -- read between the lines, not the buzzword list
+   - Pain points hinted at (e.g. "fast-growing team" = urgently need people, "modernization" = legacy code)
+   - Company culture: tone, startup vs. corporate, remote vs. on-site -- backed by specific phrases
+   - Core tasks: only the 3-4 that truly matter
+   Use bullet points. Be analytical ("They need someone who can X"), not descriptive ("The role involves X").
+
+Reply ONLY with the JSON object. Example:
+{{"ansprechpartner": "Sehr geehrte Frau Schmidt", "position": "Frontend Developer", "quelle": "LinkedIn", "email": "bewerbung@firma.de", "branche": "it_software", "unternehmensgroesse": "kmu", "analyse": "- Mittelstaendisches IT-Unternehmen, Webentwicklung\\n- Brauchen jemanden der eigenstaendig React-Frontends baut\\n- 'wachsendes Team' = akuter Bedarf, wenig Onboarding\\n- Duzen, Remote-Option = lockere Startup-Kultur\\n- Kernaufgaben: React-SPAs, API-Integration, Code-Reviews"}}}}"""
 
 
 def _build_persona(user_skills: list | None, position: str) -> str:

@@ -9,7 +9,6 @@ from config import config
 from services.prompts import (
     FORBIDDEN_PHRASES,
     build_anschreiben_system_prompt,
-    create_details_extraction_prompt,
     create_email_body_prompt,
     create_extraction_prompt,
 )
@@ -77,12 +76,12 @@ class AIClient:
         return self._call_api_json(messages=messages, max_tokens=max_tokens, temperature=temperature, model=model)
 
     def extract_bewerbung_details(self, stellenanzeige_text: str, firma_name: str) -> dict:
-        prompt = create_details_extraction_prompt(stellenanzeige_text, firma_name)
+        prompt = create_extraction_prompt(stellenanzeige_text, firma_name)
 
         try:
             data = self._call_api_json_with_retry(
                 messages=[{"role": "user", "content": prompt}],
-                max_tokens=500,
+                max_tokens=800,
                 temperature=0.3,
             )
             return self._normalize_extracted_details(data, firma_name)
@@ -93,18 +92,6 @@ class AIClient:
                 "Detail-Extraktion fehlgeschlagen. Position und Ansprechpartner wurden auf Standardwerte gesetzt."
             ]
             return defaults
-
-    def extract_key_information(self, stellenanzeige_text: str) -> str | None:
-        prompt = create_extraction_prompt(stellenanzeige_text)
-
-        try:
-            return self._call_api_with_retry(
-                messages=[{"role": "user", "content": prompt}],
-                max_tokens=400,
-                temperature=0.3,
-            )
-        except Exception as e:
-            raise Exception(f"Informationsextraktion fehlgeschlagen: {e!s}") from e
 
     def generate_email_body(
         self,
@@ -157,8 +144,6 @@ class AIClient:
         """Build the system/user message pair shared by all Anschreiben generators."""
         if details and details.get("stellenanzeige_kompakt"):
             stellenanzeige_text = details["stellenanzeige_kompakt"]
-        elif stellenanzeige_text and len(stellenanzeige_text) > 2000:
-            stellenanzeige_text = self.extract_key_information(stellenanzeige_text)
 
         branche = details.get("branche") if details else None
         unternehmensgroesse = details.get("unternehmensgroesse") if details else None
@@ -350,8 +335,8 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
                     continue
                 defaults[key] = value
 
-        if data.get("zusammenfassung"):
-            defaults["stellenanzeige_kompakt"] = str(data["zusammenfassung"])
+        if data.get("analyse"):
+            defaults["stellenanzeige_kompakt"] = str(data["analyse"])
 
         # Parse industry classification (filter out "andere"/"unbekannt" → None)
         branche = str(data.get("branche", "")).strip().lower()
