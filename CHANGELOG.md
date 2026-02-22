@@ -1,3 +1,10 @@
+# [1.71.0](https://github.com/filipores/obojobs/compare/v1.70.0...v1.71.0) (2026-02-22)
+
+
+### Features
+
+* add seele personality profiling with cv-based personalized questions ([#66](https://github.com/filipores/obojobs/issues/66)) ([61e909a](https://github.com/filipores/obojobs/commit/61e909a2ea55740764da288a4b19ed365b2d2edd))
+
 # [1.70.0](https://github.com/filipores/obojobs/compare/v1.69.6...v1.70.0) (2026-02-21)
 
 
