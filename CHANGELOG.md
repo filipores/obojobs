@@ -1,3 +1,10 @@
+## [1.73.1](https://github.com/filipores/obojobs/compare/v1.73.0...v1.73.1) (2026-02-22)
+
+
+### Bug Fixes
+
+* send verification email automatically on registration ([7333062](https://github.com/filipores/obojobs/commit/7333062cfcfd5e66ae16eafc20bb61cb4dadfaac))
+
 # [1.73.0](https://github.com/filipores/obojobs/compare/v1.72.0...v1.73.0) (2026-02-22)
 
 
