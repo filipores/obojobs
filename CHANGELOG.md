@@ -1,3 +1,10 @@
+# [1.73.0](https://github.com/filipores/obojobs/compare/v1.72.0...v1.73.0) (2026-02-22)
+
+
+### Features
+
+* add container-based dev setup with debugpy and hot-reload ([186b59e](https://github.com/filipores/obojobs/commit/186b59ee4fa0882fb5df8cc1401bd1f6e684552b))
+
 # [1.72.0](https://github.com/filipores/obojobs/compare/v1.71.0...v1.72.0) (2026-02-22)
 
 
