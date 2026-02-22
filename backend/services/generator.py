@@ -283,6 +283,16 @@ class BewerbungsGenerator:
 
         return full_name, first_name, user_skills
 
+    def _load_seele_profil(self):
+        """Load Seele profile text for prompt injection. Returns None if unavailable."""
+        try:
+            from services import seele_service
+
+            return seele_service.get_profil_fuer_generation(self.user.id)
+        except Exception:
+            logger.debug("Seele-Profil konnte nicht geladen werden")
+            return None
+
     def _generate_letter_body(
         self,
         stellenanzeige_text: str,
@@ -299,6 +309,9 @@ class BewerbungsGenerator:
         # Prepare user inputs
         full_name, bewerber_vorname, user_skills = self._extract_user_inputs()
 
+        # Load Seele profile for personalization
+        seele_profil_text = self._load_seele_profil()
+
         # Shared kwargs for both generation methods
         gen_kwargs = {
             "cv_text": self.cv_text,
@@ -314,6 +327,7 @@ class BewerbungsGenerator:
             "tonalitaet": tonalitaet,
             "user_city": self.user.city if self.user else None,
             "details": details,
+            "seele_profil_text": seele_profil_text,
         }
 
         # Generate body via API -- route based on model

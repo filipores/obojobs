@@ -152,6 +152,7 @@ class AIClient:
         tonalitaet: str,
         details: dict | None,
         user_city: str | None = None,
+        seele_profil_text: str | None = None,
     ) -> list[dict]:
         """Build the system/user message pair shared by all Anschreiben generators."""
         if details and details.get("stellenanzeige_kompakt"):
@@ -175,6 +176,7 @@ class AIClient:
             user_city=user_city,
             branche=branche,
             unternehmensgroesse=unternehmensgroesse,
+            seele_profil_text=seele_profil_text,
         )
 
         if zeugnis_text:
@@ -206,6 +208,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         tonalitaet: str = "modern",
         details: dict | None = None,
         user_city: str | None = None,
+        seele_profil_text: str | None = None,
     ) -> str | None:
         """Generate a complete cover letter body (greeting through closing).
 
@@ -226,6 +229,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
             tonalitaet,
             details,
             user_city=user_city,
+            seele_profil_text=seele_profil_text,
         )
 
         raw = self._call_api_with_retry(
@@ -253,6 +257,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
         tonalitaet: str = "modern",
         details: dict | None = None,
         user_city: str | None = None,
+        seele_profil_text: str | None = None,
         thinking_callback=None,
         content_callback=None,
     ) -> str | None:
@@ -277,6 +282,7 @@ Schreibe jetzt das vollständige Anschreiben (Anrede bis Grußformel):"""
             tonalitaet,
             details,
             user_city=user_city,
+            seele_profil_text=seele_profil_text,
         )
 
         try:
