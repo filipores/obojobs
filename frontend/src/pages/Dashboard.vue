@@ -104,6 +104,25 @@
       </div>
     </section>
 
+    <!-- Seele Nudge (after onboarding) -->
+    <section v-if="showSeeleNudge" class="seele-nudge-section">
+      <div class="container">
+        <SeeleNudge
+          @starten="showSeeleFlow = true"
+          @dismiss="seeleStore.dismissNudge()"
+        />
+      </div>
+    </section>
+
+    <!-- SeeleFlow Overlay -->
+    <SeeleFlow
+      v-if="showSeeleFlow"
+      :overlay="true"
+      session-typ="onboarding"
+      @close="showSeeleFlow = false"
+      @complete="showSeeleFlow = false; seeleStore.fetchProfil()"
+    />
+
     <!-- Weekly Goal Section -->
     <section class="weekly-goal-section">
       <div class="container">
@@ -512,9 +531,12 @@ import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import api from '../api/client'
 import { authStore } from '../stores/auth'
+import { seeleStore } from '../stores/seele'
 import WeeklyGoalWidget from '../components/WeeklyGoalWidget.vue'
 import InterviewStatsWidget from '../components/InterviewStatsWidget.vue'
 import JobRecommendations from '../components/JobRecommendations.vue'
+import SeeleNudge from '../components/seele/SeeleNudge.vue'
+import SeeleFlow from '../components/seele/SeeleFlow.vue'
 import { getFullLocale } from '../i18n'
 
 const { t } = useI18n()
@@ -526,6 +548,7 @@ const loadError = ref(false)
 const skills = ref([])
 const skillsLoaded = ref(false)
 const interviewStats = ref(null)
+const showSeeleFlow = ref(false)
 
 const needsVerification = computed(() => authStore.user?.email_verified === false)
 
@@ -626,6 +649,11 @@ const completedSteps = computed(() =>
   [hasSkills.value, hasVerifiedEmail.value, hasApplications.value].filter(Boolean).length
 )
 const showOnboarding = computed(() => skillsLoaded.value && completedSteps.value < 3)
+const showSeeleNudge = computed(() =>
+  hasSkills.value &&
+  (!seeleStore.profil || seeleStore.vollstaendigkeit < 50) &&
+  !seeleStore.nudgeDismissed
+)
 
 function retryLoadStats() {
   stats.value = null
@@ -633,7 +661,7 @@ function retryLoadStats() {
 }
 
 onMounted(async () => {
-  await Promise.all([loadStats(), loadSkills(), loadInterviewStats()])
+  await Promise.all([loadStats(), loadSkills(), loadInterviewStats(), seeleStore.fetchProfil()])
 })
 </script>
 
@@ -859,6 +887,13 @@ onMounted(async () => {
   border-width: 2px 3px 2px 2.5px;
   opacity: 0.03;
   pointer-events: none;
+}
+
+/* ========================================
+   SEELE NUDGE SECTION
+   ======================================== */
+.seele-nudge-section {
+  padding: 0 0 var(--space-lg);
 }
 
 /* ========================================

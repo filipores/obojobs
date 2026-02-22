@@ -22,6 +22,9 @@ from models import (  # noqa: F401
     JobRecommendation,
     JobRequirement,
     SalaryCoachData,
+    SeeleAntwort,
+    SeeleProfile,
+    SeeleSession,
     Subscription,
     Template,
     TokenBlacklist,
@@ -117,6 +120,7 @@ def create_app():
     from routes.legal import legal_bp
     from routes.recommendations import bp as recommendations_bp
     from routes.salary import salary_bp
+    from routes.seele import seele_bp
     from routes.skills import skills_bp
     from routes.stats import stats_bp
     from routes.subscriptions import subscriptions_bp
@@ -140,6 +144,7 @@ def create_app():
     app.register_blueprint(salary_bp, url_prefix="/api/salary")
     app.register_blueprint(legal_bp, url_prefix="/api/legal")
     app.register_blueprint(admin_bp, url_prefix="/api/admin")
+    app.register_blueprint(seele_bp, url_prefix="/api/seele")
 
     # Initialize background scheduler
     from services.scheduler import init_scheduler, shutdown_scheduler

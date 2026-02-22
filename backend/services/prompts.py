@@ -125,6 +125,7 @@ def build_anschreiben_system_prompt(
     user_city: str | None = None,
     branche: str | None = None,
     unternehmensgroesse: str | None = None,
+    seele_profil_text: str | None = None,
 ) -> str:
     """Build the v4 system prompt for full cover letter generation.
 
@@ -185,6 +186,13 @@ def build_anschreiben_system_prompt(
     industry_block = get_industry_prompt_block(branche, unternehmensgroesse)
     industry_section = f"{industry_block}\n" if industry_block else ""
 
+    seele_section = ""
+    if seele_profil_text:
+        seele_section = f"""## SEELE-PROFIL (Bewerber-Kontext)
+{seele_profil_text}
+
+"""
+
     # Sign-off based on tonalitaet
     if tonalitaet == "formal":
         sign_off_instruction = '"Mit freundlichen Grüßen"'
@@ -201,7 +209,7 @@ ALL OUTPUT MUST BE IN GERMAN. These instructions are in English for precision.
 - Vary sentence length. Short punchy sentences next to longer ones. Not every sentence starts with "Ich".
 - Sound like a real person, not like a prompt-following robot. If a sentence could appear in any random application, rewrite it with specifics.
 
-{industry_section}## CONTEXT
+{industry_section}{seele_section}## CONTEXT
 - Position: {position}
 - Source: {quelle}
 - Greeting: {ansprechpartner}
@@ -215,6 +223,7 @@ Three rules. Zero exceptions.
 1. **CV-only facts.** Every skill, tool, duration, qualification, and achievement you mention must come directly from the CV above. If you can't point to a specific line in the CV, don't write it.
 2. **Exact durations.** Count actual months between start and end dates. "18 Monate" stays "18 Monate" or "anderthalb Jahre" — never round to "zwei Jahre". Approximate totals across ALL positions are OK ("drei Jahre" for 35 months total) but individual positions must be exact.
 3. **No inflation.** Don't upgrade hobbies to jobs, startups to corporations, or interests to expertise. If the CV lists something under PERSÖNLICHES/Hobbies, it's a personal interest — not professional experience.
+4. **SEELE PROFILE** data supplements the CV. Use for tone and motivation context — but NEVER invent facts from it.
 
 - {skills_reference}
 - Cherry-pick only the 2-4 most RELEVANT skills/experiences for THIS specific job. Quality over quantity.

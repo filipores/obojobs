@@ -269,7 +269,23 @@
         <h2 class="section-title">Extrahierte Skills</h2>
         <SkillsOverview :key="skillsRefreshKey" />
       </section>
+
+      <!-- Seele Personality Profile Section -->
+      <section class="seele-section animate-fade-up" style="animation-delay: 300ms;">
+        <div class="ink-stroke"></div>
+        <h2 class="section-title">Persoenlichkeitsprofil</h2>
+        <SeeleProfil @erweitern="showSeeleFlow = true" />
+      </section>
     </div>
+
+    <!-- SeeleFlow Overlay -->
+    <SeeleFlow
+      v-if="showSeeleFlow"
+      :overlay="true"
+      session-typ="onboarding"
+      @close="showSeeleFlow = false"
+      @complete="showSeeleFlow = false; seeleStore.fetchProfil()"
+    />
   </div>
 </template>
 
@@ -278,15 +294,19 @@ import { ref, onMounted, computed, nextTick, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '../api/client'
 import SkillsOverview from '../components/SkillsOverview.vue'
+import SeeleProfil from '../components/seele/SeeleProfil.vue'
+import SeeleFlow from '../components/seele/SeeleFlow.vue'
 import { confirm } from '../composables/useConfirm'
 import { getFullLocale } from '../i18n'
 import { authStore } from '../stores/auth'
+import { seeleStore } from '../stores/seele'
 
 const route = useRoute()
 const skillsSection = ref(null)
 const lebenslaufSection = ref(null)
 const showOnboardingTooltip = ref(false)
 const onboardingStep = ref(1)
+const showSeeleFlow = ref(false)
 
 // Check if user came from new-application page
 const fromApplication = computed(() => route.query.from === 'new-application')
@@ -404,6 +424,14 @@ const upload = async (docType) => {
     // Trigger auto-search for matching jobs after CV upload with skills
     if (docType === 'lebenslauf' && data.skills_extracted > 0) {
       api.post('/recommendations/search', {}).catch(() => {})
+    }
+
+    // Check if Seele flow should be triggered after CV upload
+    if (docType === 'lebenslauf') {
+      const empfohlen = await seeleStore.checkTrigger('cv_upload')
+      if (empfohlen) {
+        showSeeleFlow.value = true
+      }
     }
   } catch (e) {
     messages.value[docType] = e.response?.data?.error || 'Upload fehlgeschlagen'
@@ -524,6 +552,7 @@ watch(showOnboardingTooltip, (isOpen) => {
 
 onMounted(async () => {
   await loadDocuments()
+  seeleStore.fetchProfil()
 
   // Scroll to skills section if hash is present
   if (route.hash === '#skills') {
@@ -956,6 +985,17 @@ onMounted(async () => {
 }
 
 .skills-section .ink-stroke {
+  margin-bottom: var(--space-ma);
+}
+
+/* ========================================
+   SEELE SECTION
+   ======================================== */
+.seele-section {
+  margin-top: var(--space-ma);
+}
+
+.seele-section .ink-stroke {
   margin-bottom: var(--space-ma);
 }
 

@@ -35,6 +35,7 @@ const routes = [
   { path: '/applications/:id/interview', component: () => import('../pages/InterviewPrep.vue'), meta: { requiresAuth: true, titleKey: 'pages.interviewPrep', breadcrumbs: [{ path: '/applications', labelKey: 'pages.applications' }, { label: 'Interview-Vorbereitung' }] } },
   { path: '/applications/:id/mock-interview', component: () => import('../pages/MockInterview.vue'), meta: { requiresAuth: true, titleKey: 'pages.mockInterview', breadcrumbs: [{ path: '/applications', labelKey: 'pages.applications' }, { label: 'Mock-Interview' }] } },
   { path: '/job-dashboard', component: () => import('../pages/JobDashboard.vue'), meta: { requiresAuth: true, titleKey: 'pages.jobDashboard' } },
+  { path: '/profil', component: () => import('../pages/SeeleProfilPage.vue'), meta: { requiresAuth: true, titleKey: 'pages.profil' } },
 
   // Admin routes
   { path: '/admin', component: () => import('../pages/AdminDashboard.vue'), meta: { requiresAuth: true, requiresAdmin: true, titleKey: 'pages.admin' } },
