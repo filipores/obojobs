@@ -4,6 +4,8 @@ from datetime import datetime, timedelta
 from flask_jwt_extended import create_access_token, create_refresh_token
 
 from models import TokenBlacklist, User, db
+from services.email_service import send_verification_email
+from services.email_verification_service import EmailVerificationService
 from services.password_validator import PasswordValidator
 
 logger = logging.getLogger(__name__)
@@ -51,6 +53,13 @@ class AuthService:
 
         db.session.add(user)
         db.session.commit()
+
+        # Send verification email
+        try:
+            token = EmailVerificationService.create_verification_token(user)
+            send_verification_email(user.email, token)
+        except Exception:
+            logger.warning(f"Failed to send verification email to {email}")
 
         return user
 

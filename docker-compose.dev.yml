@@ -21,6 +21,9 @@ services:
       - FLASK_ENV=development
       - FLASK_DEBUG=1
       - DEBUGPY_ENABLE=1
+      - MAIL_SERVER=mailpit
+      - MAIL_PORT=1025
+      - MAIL_USE_TLS=false
     env_file:
       - ./.env
     depends_on:
