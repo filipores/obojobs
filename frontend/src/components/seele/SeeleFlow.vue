@@ -60,7 +60,7 @@ async function onUeberspringen(frageKey) {
 }
 
 function advanceOrComplete(result) {
-  if (!seeleStore.aktuelleFragen.length || result?.abgeschlossen) {
+  if (!seeleStore.aktuelleFragen.length || result?.fertig) {
     screen.value = 'complete'
   } else {
     frageIndex.value = 0

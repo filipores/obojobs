@@ -109,17 +109,14 @@ def starte_session(user_id, session_typ, kontext=None):
     profil_data = profile.get_profil() if profile else {}
 
     # Determine questions
+    cv_text, zeugnis_text, skills = _lade_cv_kontext(user_id)
+
     if session_typ == "micro":
-        fragen = []
-        cv_text, zeugnis_text, skills = _lade_cv_kontext(user_id)
         micro_frage = generiere_micro_frage(
             profil_data, kontext, cv_text=cv_text, zeugnis_text=zeugnis_text, skills=skills
         )
-        if micro_frage:
-            fragen = [micro_frage]
+        fragen = [micro_frage] if micro_frage else []
     else:
-        # CV-basierte personalisierte Fragen generieren
-        cv_text, zeugnis_text, skills = _lade_cv_kontext(user_id)
         fragen = generiere_fragen(
             session_typ,
             cv_text=cv_text,

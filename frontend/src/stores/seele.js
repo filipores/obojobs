@@ -26,8 +26,8 @@ export const seeleStore = reactive({
   async fetchProfil() {
     try {
       const { data } = await api.get('/seele/profil')
-      this.profil = data.profil
-      this.vollstaendigkeit = data.vollstaendigkeit || 0
+      this.profil = data.profil?.profil || null
+      this.vollstaendigkeit = data.profil?.vollstaendigkeit || 0
       this._save()
     } catch (error) {
       if (error.response?.status !== 404) {
@@ -39,7 +39,7 @@ export const seeleStore = reactive({
   async starteSession(typ, kontext = null) {
     this.loading = true
     try {
-      const { data } = await api.post('/seele/sessions', { typ, kontext })
+      const { data } = await api.post('/seele/sessions', { session_typ: typ, kontext })
       this.aktiveSession = data.session
       this.aktuelleFragen = data.fragen || []
       return data
@@ -60,8 +60,8 @@ export const seeleStore = reactive({
       })
       this.aktuelleFragen = data.naechste_fragen || []
       if (data.profil) {
-        this.profil = data.profil
-        this.vollstaendigkeit = data.vollstaendigkeit || 0
+        this.profil = data.profil.profil || null
+        this.vollstaendigkeit = data.profil.vollstaendigkeit || 0
         this._save()
       }
       return data
@@ -88,7 +88,7 @@ export const seeleStore = reactive({
   async checkTrigger(trigger) {
     try {
       const { data } = await api.get(`/seele/check?trigger=${trigger}`)
-      return data.empfohlen || false
+      return data.soll_starten || false
     } catch {
       return false
     }
