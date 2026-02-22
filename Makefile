@@ -7,6 +7,7 @@
         db-migrate db-upgrade db-downgrade db-reset \
         ralph ralph-status ralph-report ralph-reset ralph-headed ralph-split \
         logs docker-build docker-up docker-down docker-logs \
+        docker-dev docker-dev-down docker-dev-logs \
         docker-prod-build docker-prod-up docker-prod-down docker-prod-logs \
         mailpit mailpit-stop
 
@@ -67,6 +68,9 @@ help:
 	@echo "  make ralph-split    - Split-Screen (tmux)"
 	@echo ""
 	@echo "$(GREEN)Docker (Dev):$(NC)"
+	@echo "  make docker-dev     - Dev-Container starten (Hot-Reload + debugpy)"
+	@echo "  make docker-dev-down - Dev-Container stoppen"
+	@echo "  make docker-dev-logs - Dev-Container Logs anzeigen"
 	@echo "  make docker-build   - Docker Images bauen"
 	@echo "  make docker-up      - Container starten"
 	@echo "  make docker-down    - Container stoppen"
@@ -219,6 +223,25 @@ ralph-headed:
 ralph-split:
 	@echo "$(CYAN)Ralph im Split-Screen Modus$(NC)"
 	./$(RALPH_DIR)/ralph.sh --split
+
+# ===========================================
+# Docker (Dev - Container mit Hot-Reload + debugpy)
+# ===========================================
+docker-dev:
+	@echo "$(CYAN)Starte Dev-Container (Hot-Reload + debugpy)...$(NC)"
+	docker compose -f docker-compose.dev.yml up --build
+	@echo "$(GREEN)Dev-Container gestartet$(NC)"
+	@echo "$(YELLOW)Frontend: http://localhost:3000$(NC)"
+	@echo "$(YELLOW)Backend:  http://localhost:5002$(NC)"
+	@echo "$(YELLOW)Debugger: localhost:5678 (VS Code Attach)$(NC)"
+	@echo "$(YELLOW)Mailpit:  http://localhost:8025$(NC)"
+
+docker-dev-down:
+	@echo "$(CYAN)Stoppe Dev-Container...$(NC)"
+	docker compose -f docker-compose.dev.yml down
+
+docker-dev-logs:
+	docker compose -f docker-compose.dev.yml logs -f
 
 # ===========================================
 # Docker

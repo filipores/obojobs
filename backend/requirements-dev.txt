@@ -9,6 +9,9 @@ pytest-json-report>=1.5.0
 # Linting
 ruff>=0.8.0
 
+# Debugging
+debugpy>=1.8.0
+
 # Type checking
 mypy>=1.8.0
 types-requests>=2.31.0

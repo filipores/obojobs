@@ -40,6 +40,12 @@ migrate = Migrate()
 
 def create_app():
     """Create and configure Flask application"""
+    # Enable debugpy in dev containers (only in reloader's child process)
+    if os.environ.get("DEBUGPY_ENABLE") and os.environ.get("WERKZEUG_RUN_MAIN"):
+        import debugpy
+
+        debugpy.listen(("0.0.0.0", 5678))
+
     app = Flask(__name__)
 
     # Trust X-Forwarded-For from reverse proxy (Caddy)
